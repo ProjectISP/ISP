@@ -1,0 +1,7 @@
+numpy
+scipy
+obspy
+pandas
+PyQt5
+mtspec
+nitime
