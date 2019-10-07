@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="icons">
+    <file  alias="compass-icon.png">images/icons/Compas.png</file>
+    <file  alias="pen-icon.png">images/icons/Lapiz.png</file>
+    <file  alias="balcony-icon.png">images/icons/Balc¢n.png</file>
+  </qresource>
+</RCC>

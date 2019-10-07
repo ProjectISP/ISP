@@ -7,6 +7,9 @@ Created on Sat Mar 10 12:07:15 2018
 @author: robertocabieces
 """
 import warnings
+
+from isp.seismogramInspector.Auxiliary2 import MTspectrum
+
 warnings.filterwarnings("ignore")
 from obspy import UTCDateTime as UDT, read, Trace, Stream
 from obspy.core import UTCDateTime
@@ -16,7 +19,6 @@ from os import listdir
 from os.path import isfile, join
 import obspy
 from obspy.imaging.cm import obspy_sequential
-from Auxiliary2 import MTspectrum
 import matplotlib.pyplot as plt
 
 win=150

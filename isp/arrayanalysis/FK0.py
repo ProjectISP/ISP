@@ -95,7 +95,7 @@ def FK(path,pathpower,fmin,fmax,slim,sres,win_len,win_frac):
     kwargs = dict(
         # slowness grid: X min, X max, Y min, Y max, Slow Step
         sll_x=-1*slim, slm_x=slim, sll_y=-1*slim, slm_y=slim, sl_s=sres,
-        # sliding window properties
+        # sliding open_main_window properties
         win_len=win_len, win_frac=win_frac,
         # frequency properties
         frqlow=0.05, frqhigh=0.1, prewhiten=0,

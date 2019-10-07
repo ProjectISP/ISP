@@ -2702,7 +2702,7 @@ border-color: rgb(1, 34, 102);</string>
   <action name="PlotSingleRecord">
    <property name="icon">
     <iconset>
-     <normalon>:/Iconos/Imagenes/Compas.png</normalon>
+     <normalon>:/icons/compass-icon.png</normalon>
     </iconset>
    </property>
    <property name="text">
@@ -2712,7 +2712,7 @@ border-color: rgb(1, 34, 102);</string>
   <action name="PlotAllRecords">
    <property name="icon">
     <iconset>
-     <normalon>:/Iconos/Imagenes/Lapiz.png</normalon>
+     <normalon>:/icons/pen-icon.png</normalon>
     </iconset>
    </property>
    <property name="text">
@@ -2722,7 +2722,7 @@ border-color: rgb(1, 34, 102);</string>
   <action name="actionExit">
    <property name="icon">
     <iconset>
-     <normalon>:/Iconos/Imagenes/Balc¢n.png</normalon>
+     <normalon>:/icons/balcony-icon.png</normalon>
     </iconset>
    </property>
    <property name="text">
@@ -2781,12 +2781,12 @@ border-color: rgb(1, 34, 102);</string>
   <customwidget>
    <class>MatplotlibWidget_special</class>
    <extends>QWidget</extends>
-   <header location="global">clases_mpl_pyqt</header>
+   <header location="global">isp/seismogramInspector/clases_mpl_pyqt</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="recursos_1.qrc"/>
+  <include location="../resources.qrc"/>
  </resources>
  <connections/>
 </ui>

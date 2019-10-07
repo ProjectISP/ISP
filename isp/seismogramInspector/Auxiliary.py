@@ -357,9 +357,9 @@ def classic_sta_lta_py(a, nsta, nlta):
     :type a: NumPy :class:`~numpy.ndarray`
     :param a: Seismic Trace
     :type nsta: int
-    :param nsta: Length of short time average window in samples
+    :param nsta: Length of short time average open_main_window in samples
     :type nlta: int
-    :param nlta: Length of long time average window in samples
+    :param nlta: Length of long time average open_main_window in samples
     :rtype: NumPy :class:`~numpy.ndarray`
     :return: Characteristic function of classic STA/LTA
     """

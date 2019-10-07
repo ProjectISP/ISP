@@ -1,14 +1,10 @@
 import os
-import subprocess as sp
 
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import QMainWindow
-
-from isp import ROOT_DIR, IMAGES_PATH
-from isp.Gui import UiMainFrame
+from isp import IMAGES_PATH
+from isp.Gui import UiMainFrame, pw, pqg, qt
 
 
-class MainFrame(QMainWindow, UiMainFrame):
+class MainFrame(pw.QMainWindow, UiMainFrame):
 
     def __init__(self):
         super(MainFrame, self).__init__()
@@ -16,12 +12,12 @@ class MainFrame(QMainWindow, UiMainFrame):
         # Set up the user interface from Designer.
         self.setupUi(self)
 
-        icon1 = QtGui.QPixmap(os.path.join(IMAGES_PATH, '02.png'))
-        icon2 = QtGui.QPixmap(os.path.join(IMAGES_PATH, '03.png'))
-        icon3 = QtGui.QPixmap(os.path.join(IMAGES_PATH, '04.png'))
-        icon4 = QtGui.QPixmap(os.path.join(IMAGES_PATH, '05.png'))
-        icon5 = QtGui.QPixmap(os.path.join(IMAGES_PATH, '01.png'))
-        iconLogo = QtGui.QPixmap(os.path.join(IMAGES_PATH, 'LOGO.png'))
+        icon1 = pqg.QPixmap(os.path.join(IMAGES_PATH, '02.png'))
+        icon2 = pqg.QPixmap(os.path.join(IMAGES_PATH, '03.png'))
+        icon3 = pqg.QPixmap(os.path.join(IMAGES_PATH, '04.png'))
+        icon4 = pqg.QPixmap(os.path.join(IMAGES_PATH, '05.png'))
+        icon5 = pqg.QPixmap(os.path.join(IMAGES_PATH, '01.png'))
+        iconLogo = pqg.QPixmap(os.path.join(IMAGES_PATH, 'LOGO.png'))
 
         self.LOGO.setPixmap(iconLogo)
         self.labelManage.setPixmap(icon1)
@@ -30,16 +26,14 @@ class MainFrame(QMainWindow, UiMainFrame):
         self.labelMTI.setPixmap(icon4)
         self.labelarray.setPixmap(icon5)
 
-        self.SeismogramAnalysis.clicked.connect(self.runSeismogram)
-        self.ArrayAnalysis.clicked.connect(self.array)
+        self.SeismogramAnalysis.clicked.connect(self.onClickSeismogramAnalysis)
+        # self.ArrayAnalysis.clicked.connect(self.array)
 
-    def runSeismogram(self):
-        print("Hello")
-        # path = ROOT_DIR + "/seismogramInspector/"
-        # command = "cd "+path+";"+"python main.py"
-        # sp.Popen(command, shell=True)
+    # Press esc key event
+    def keyPressEvent(self, e):
+        if e.key() == qt.Key_Escape:
+            self.close()
 
-    def array(self):
-        path = ROOT_DIR + "/arrayanalysis/"
-        command = "cd " + path + ";" + "python main.py"
-        sp.Popen(command, shell=True)
+    def onClickSeismogramAnalysis(self):
+        pass
+

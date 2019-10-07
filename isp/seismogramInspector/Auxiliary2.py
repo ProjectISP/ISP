@@ -9,9 +9,11 @@ from mtspec import mtspec
 import numpy as np
 from obspy import read
 import math
-from entropy import *
 import scipy.signal
 import matplotlib.pyplot as plt
+
+from isp.seismogramInspector.entropy import spectral_entropy
+
 
 def find_nearest(array, value):
     idx,val = min(enumerate(array), key=lambda x: abs(x[1]-value))
@@ -249,7 +251,7 @@ def cohe(tr1,tr2,fs,nfft):
     
     Phh=scipy.signal.welch(tr1, fs=fs, window='hamming', nperseg=nfft, noverlap=noverlap, nfft=None, detrend=False, return_onesided=True, scaling='density', axis=-1)
     Pzz=scipy.signal.welch(tr1, fs=fs, window='hamming', nperseg=nfft, noverlap=noverlap, nfft=None, detrend=False, return_onesided=True, scaling='density', axis=-1)
-    #Pzh=scipy.signal.csd(tr2, tr1, fs=fs, window='hamming', nperseg=nfft, noverlap=noverlap, nfft=None, detrend=False, return_onesided=True, scaling='density', axis=-1)
+    #Pzh=scipy.signal.csd(tr2, tr1, fs=fs, open_main_window='hamming', nperseg=nfft, noverlap=noverlap, nfft=None, detrend=False, return_onesided=True, scaling='density', axis=-1)
     Phz=scipy.signal.csd(tr1, tr2, fs=fs, window='hamming', nperseg=nfft, noverlap=noverlap, nfft=None, detrend=False, return_onesided=True, scaling='density', axis=-1)
     f=Pzz[0]
     num=Phz[1]

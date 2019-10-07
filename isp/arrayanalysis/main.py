@@ -12,7 +12,7 @@ app = QtGui.QApplication(sys.argv)
 window = MyMainWindow(app)
 #window2 = MyDialog1(app)
 
-#window.resultChanged.connect(window2.imprimeRes)
+#open_main_window.resultChanged.connect(window2.imprimeRes)
 
 window.show()
 #window2.show()

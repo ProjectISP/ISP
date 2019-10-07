@@ -1,10 +1,11 @@
 import numpy as np
 #from numba import jit
 from math import factorial, log
-from sklearn.neighbors import KDTree
+#from sklearn.neighbors import KDTree
 from scipy.signal import periodogram, welch
 
 #from .utils import _embed
+from isp.seismogramInspector.utilsEntropy import _embed
 
 all = ['perm_entropy', 'spectral_entropy', 'svd_entropy', 'app_entropy',
        'sample_entropy']
@@ -462,7 +463,7 @@ def sample_entropy(x, order=2, metric='chebyshev'):
     """
     x = np.asarray(x, dtype=np.float64)
     if metric == 'chebyshev' and x.size < 5000:
-        return _numba_sampen(x, mm=order, r=0.2)
+        return None #_numba_sampen(x, mm=order, r=0.2)
     else:
         phi = _app_samp_entropy(x, order=order, metric=metric,
                                 approximate=False)

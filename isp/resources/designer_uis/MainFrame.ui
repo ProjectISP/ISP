@@ -333,7 +333,7 @@ font: 20pt &quot;DIN Alternate&quot;;</string>
   <action name="actionOpen_Project">
    <property name="icon">
     <iconset>
-     <normalon>:/Iconos/Imagenes/Compas.png</normalon>
+     <normalon>:/icons/compass-icon.png</normalon>
     </iconset>
    </property>
    <property name="text">
@@ -346,7 +346,7 @@ font: 20pt &quot;DIN Alternate&quot;;</string>
    </property>
    <property name="icon">
     <iconset>
-     <normalon>:/Iconos/Imagenes/Lapiz.png</normalon>
+     <normalon>:/icons/pen-icon.png</normalon>
     </iconset>
    </property>
    <property name="text">
@@ -356,7 +356,7 @@ font: 20pt &quot;DIN Alternate&quot;;</string>
   <action name="actionExit">
    <property name="icon">
     <iconset>
-     <normalon>:/Iconos/Imagenes/Balc¢n.png</normalon>
+     <normalon>:/icons/balcony-icon.png</normalon>
     </iconset>
    </property>
    <property name="text">
@@ -365,7 +365,7 @@ font: 20pt &quot;DIN Alternate&quot;;</string>
   </action>
  </widget>
  <resources>
-  <include location="resources.qrc"/>
+  <include location="../resources.qrc"/>
  </resources>
  <connections/>
 </ui>

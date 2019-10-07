@@ -1,25 +1,26 @@
-import sys
-
 import PyQt5 as PyQt
-from PyQt5.QtWidgets import QApplication
+from PyQt5 import QtGui
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import Qt
 
-from isp.Gui.Utils.pyqt_utils import load_ui_designers
+
+# pyqt5 vars
 
 pyqt = PyQt
+pqg = QtGui
+pw = QtWidgets
+qt = Qt
 
-# Add new ui designers here. The *.ui files must be placed inside resources/designer_uis
-UiMainFrame = load_ui_designers("MainFrame.ui")
+from isp.Gui.uis_frames import UiMainFrame, UiSeismogramFrame
+from isp.Gui.main import MainFrame
+from isp.Gui.controllers import Controller
 
+controller = Controller()
 
-def window():
-    from isp.Gui.main import MainFrame
+if __name__ == '__main__':
+    import sys
 
-    app = QApplication(sys.argv)
-    # Start the ui designer
-    win = MainFrame()
-
-    win.show()
+    app = QtWidgets.QApplication(sys.argv)
+    controller.open_main_window()
     sys.exit(app.exec_())
 
-
-window()

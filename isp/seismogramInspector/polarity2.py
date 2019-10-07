@@ -5,6 +5,7 @@ Created on Tue Sep 24 23:08:07 2019
 
 @author: robertocabieces
 """
+from isp.seismogramInspector.plotpm import plotpmNEZ
 
 """
 Created on Tue Sep 24 17:29:03 2019
@@ -13,14 +14,14 @@ Created on Tue Sep 24 17:29:03 2019
 """
 import numpy as np
 import matplotlib.pyplot as plt
-import mplcursors
+# import mplcursors
 import os
 from obspy import read
 from obspy.core import UTCDateTime
 from obspy.signal.polarization import flinn
 from obspy.signal.polarization import polarization_analysis,particle_motion_odr
-from plotpm import *
-from autoscale import *
+#from plotpm import *
+#from autoscale import *
 import matplotlib.dates as mdates
 print("Running Analysis")
 def AP(t1,dt,trz,trn,tre,fmin,fmax,tw):    
@@ -138,8 +139,8 @@ def AP(t1,dt,trz,trn,tre,fmin,fmax,tw):
     
     
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
-    autoscale(ax, 'y', margin=0.1)
-    autoscale(ax, 'x', margin=0.1)
+    plt.autoscale(ax, 'y', margin=0.1)
+    plt.autoscale(ax, 'x', margin=0.1)
     #autoscale(ax0, 'y', margin=0.1)
     #autoscale(ax1, 'y', margin=0.1)
     #autoscale(ax2, 'y', margin=0.1)
