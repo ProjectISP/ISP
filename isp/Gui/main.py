@@ -4,7 +4,21 @@ from isp import IMAGES_PATH
 from isp.Gui import UiMainFrame, pw, pqg, qt
 
 
-class MainFrame(pw.QMainWindow, UiMainFrame):
+class BaseFrame(pw.QMainWindow):
+
+    def __init__(self):
+        super().__init__()
+
+    # Press esc key event
+    def keyPressEvent(self, e):
+        if e.key() == qt.Key_Escape:
+            self.close()
+
+    def closeEvent(self, ce):
+        print("Closed")
+
+
+class MainFrame(BaseFrame, UiMainFrame):
 
     def __init__(self):
         super(MainFrame, self).__init__()
@@ -28,11 +42,6 @@ class MainFrame(pw.QMainWindow, UiMainFrame):
 
         self.SeismogramAnalysis.clicked.connect(self.onClickSeismogramAnalysis)
         # self.ArrayAnalysis.clicked.connect(self.array)
-
-    # Press esc key event
-    def keyPressEvent(self, e):
-        if e.key() == qt.Key_Escape:
-            self.close()
 
     def onClickSeismogramAnalysis(self):
         pass

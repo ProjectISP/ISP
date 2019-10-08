@@ -11,8 +11,9 @@ from obspy import read
 from scipy.signal import hilbert
 from obspy.core import UTCDateTime
 
-
-from isp.Gui import UiSeismogramFrame, pw
+from isp import ROOT_DIR
+from isp.Gui import UiSeismogramFrame, pw, BaseFrame
+from isp.Gui.Frames import MatplotlibFrame
 from isp.arrayanalysis.diccionary import dictionary
 from isp.seismogramInspector import diccionary
 from isp.seismogramInspector.Auxiliary import scan1, singleplot, allplot, spectrumelement, classic_sta_lta_py, \
@@ -26,12 +27,12 @@ from isp.seismogramInspector.scan2 import scan
 from isp.seismogramInspector.traveltimes import arrivals2
 
 
-class SeismogramFrame(pw.QMainWindow, UiSeismogramFrame):
+class SeismogramFrame(BaseFrame, UiSeismogramFrame):
 
     def __init__(self, ):
         super(SeismogramFrame, self).__init__()
-
         self.setupUi(self)
+
         self.Net1.setText("WM")
         self.Sta1.setText("OBS01")
         self.Loc1.setText("")
@@ -47,9 +48,10 @@ class SeismogramFrame(pw.QMainWindow, UiSeismogramFrame):
 
         # Inicializacion Plot
 
-        self.Pathwaveforms.setText("/Users/robertocabieces/Desktop/GUIPYTHON/ArrayProcessing/260/Velocity")
+        self.Pathwaveforms.setText(os.path.join(ROOT_DIR, "260", "RAW"))
         # Inicializacion de elementos de la interfaz Seismogram Inspector.
-        self.pathseismogram.setText("/Users/robertocabieces/Desktop/GUIPYTHON/ArrayProcessing/260/RAW")
+        # self.pathseismogram.setText(os.path.join(ROOT_DIR, "260", "RAW"))
+        self.pathseismogram.setText(os.path.join(ROOT_DIR, "260", "Velocity"))
         self.pathdataless.setText("/Users/robertocabieces/Desktop/GUIPYTHON/ArrayProcessing/260/dataless")
         self.pathoutput.setText("/Users/robertocabieces/Desktop/GUIPYTHON/ArrayProcessing/260/Velocity")
         # self.Date.setText("2015-09-17T15:11:00.00")
@@ -800,7 +802,10 @@ class SeismogramFrame(pw.QMainWindow, UiSeismogramFrame):
             st = read(Path + "/" + "*.*")
             # allplot(Path)
             S = get_info2(Path)
-            st.plot()
+            # st.plot()
+            print("Plot")
+            self.aw = MatplotlibFrame(st)
+            self.aw.show()
             self.resultados.setText(S)
         else:
             time = self.Date.dateTime().toString("yyyy-MM-dd hh:mm:ss")
@@ -866,7 +871,16 @@ class SeismogramFrame(pw.QMainWindow, UiSeismogramFrame):
         ntapers = 5
         win = 150
         Path = self.pathseismogram.text()
-        MTspectrogram(Path, win, tbp, ntapers, lf, hf)
+        fig = MTspectrogram(Path, win, tbp, ntapers, lf, hf)
+        st = read(Path + "/" + "*.*")
+        self.aw = MatplotlibFrame(st)
+        self.aw.show()
+        self.aw2 = MatplotlibFrame(fig=fig)
+        self.aw2.show()
+
+        # st.plot()
+        # mp = MatplotlibFrame(st)
+        # mp.show()
 
     @pyqtSlot()
     def __test10__(self):
