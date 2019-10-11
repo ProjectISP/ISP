@@ -1,19 +1,18 @@
 import os
 
-from PyQt5.QtCore import pyqtSlot
-
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+from PyQt5.QtCore import pyqtSlot
 from matplotlib.colorbar import ColorbarBase
 from matplotlib.colors import Normalize
 from obspy import read
-from scipy.signal import hilbert
 from obspy.core import UTCDateTime
+from scipy.signal import hilbert
 
 from isp import ROOT_DIR
-from isp.Gui import UiSeismogramFrame, pw, BaseFrame
-from isp.Gui.Frames import MatplotlibFrame
+from isp.Gui import pw
+from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiSeismogramFrame
 from isp.arrayanalysis.diccionary import dictionary
 from isp.seismogramInspector import diccionary
 from isp.seismogramInspector.Auxiliary import scan1, singleplot, allplot, spectrumelement, classic_sta_lta_py, \
@@ -79,7 +78,7 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         self.Envelope.clicked.connect(self.__test6__)
         self.Spectrum.clicked.connect(self.__test7__)
         self.Deconvolve.clicked.connect(self.__test8__)
-        self.Spectrogram.clicked.connect(self.__test9__)
+        self.Spectrogram.clicked.connect(self.onClick_spectrogram)
         self.PRS1.clicked.connect(self.__test10__)
         self.PlotSeismogram.clicked.connect(self.__test11__)
         self.PlotSeismogram2.clicked.connect(self.__test12__)
@@ -106,6 +105,10 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         self.PlotSingleRecord.triggered.connect(self.plotsinglerecord)
         # self.PlotAllRecords.triggered.connect(self.PlotAll)
 
+        # self.LFs.valueChanged.connect(self.val_change)
+        # self.load()
+
+
         try:
             os.remove("output.txt")
         except:
@@ -125,6 +128,12 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
                                    'PriorWt'])
 
         df.to_csv('output.txt', sep=" ", index=True)
+
+    @pyqtSlot(float)
+    @pyqtSlot(str)
+    def val_change(self, val):
+        print(val)
+        # print(self.LFs.value())
 
     def loadFile(self):
         startfolder = os.getcwd
@@ -149,8 +158,7 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
     def load2(self):
         startfolder = os.getcwd
         startfolder = str(startfolder)
-        my_dir = pw.QFileDialog.getExistingDirectory(self, "Open a folder", startfolder,
-                                                        pw.QFileDialog.ShowDirsOnly)
+        my_dir = pw.QFileDialog.getExistingDirectory(self, "Open a folder", startfolder, pw.QFileDialog.ShowDirsOnly)
         self.pathdataless.setText(my_dir)
 
     def loadout(self):
@@ -862,25 +870,21 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         out = self.pathoutput.text()
         deconv(Path, Dataless, out, physical_unit)
 
-    @pyqtSlot()
-    def __test9__(self):
+    # @pyqtSlot()
+    def onClick_spectrogram(self):
         # MTspectrogram(ficheros_procesar_path,win,tbp,ntapers,fmin,fsup)
         lf = self.LFs.value()
         hf = self.HFs.value()
         tbp = 3
         ntapers = 5
         win = 150
-        Path = self.pathseismogram.text()
-        fig = MTspectrogram(Path, win, tbp, ntapers, lf, hf)
-        st = read(Path + "/" + "*.*")
-        self.aw = MatplotlibFrame(st)
-        self.aw.show()
-        self.aw2 = MatplotlibFrame(fig=fig)
-        self.aw2.show()
+        roo_dir = self.pathseismogram.text()
 
-        # st.plot()
-        # mp = MatplotlibFrame(st)
-        # mp.show()
+        mt_spectrogram = MTspectrogram(roo_dir, win, tbp, ntapers, lf, hf)
+        fig = mt_spectrogram.plot_spectrogram(show=False)
+        self.mpf = MatplotlibFrame(fig)
+        self.mpf.show()
+
 
     @pyqtSlot()
     def __test10__(self):

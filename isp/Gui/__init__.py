@@ -13,16 +13,25 @@ pw = QtWidgets
 pyc = QtCore
 qt = Qt
 
-from isp.Gui.uis_frames import UiMainFrame, UiSeismogramFrame
-from isp.Gui.main import BaseFrame, MainFrame
+# file to save ui fields
+user_preferences = pyc.QSettings("isp", "user_pref")
+
 from isp.Gui.controllers import Controller
 
 controller = Controller()
 
+
+def get_settings_file():
+    return user_preferences.fileName()
+
+
 if __name__ == '__main__':
     import sys
+    from isp import app_logger
 
+    # print(user_preferences.fileName()) location of user_preferences file.
     app = QtWidgets.QApplication(sys.argv)
     controller.open_main_window()
+    app_logger.info("ISP GUI Started")
     sys.exit(app.exec_())
 

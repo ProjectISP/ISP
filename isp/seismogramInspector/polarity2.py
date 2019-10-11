@@ -23,8 +23,8 @@ from obspy.signal.polarization import polarization_analysis,particle_motion_odr
 #from plotpm import *
 #from autoscale import *
 import matplotlib.dates as mdates
-print("Running Analysis")
-def AP(t1,dt,trz,trn,tre,fmin,fmax,tw):    
+
+def AP(t1,dt,trz,trn,tre,fmin,fmax,tw):
     t1=UTCDateTime(t1)
     st1=read(tre,starttime=t1,endtime=t1+dt)
     st2=read(trn,starttime=t1,endtime=t1+dt)
