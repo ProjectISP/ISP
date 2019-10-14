@@ -4,4 +4,5 @@ from isp.Gui.Utils.pyqt_utils import load_ui_designers
 # Add the new UiFrame to the imports at Frames.__init__
 UiMainFrame = load_ui_designers("MainFrame.ui")
 UiSeismogramFrame = load_ui_designers("SeismogramFrame.ui")
+UiEarthquakeAnalysisFrame = load_ui_designers("EarthquakeAnalysisFrame.ui")
 

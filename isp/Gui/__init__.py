@@ -29,7 +29,7 @@ if __name__ == '__main__':
     import sys
     from isp import app_logger
 
-    # print(user_preferences.fileName()) location of user_preferences file.
+    print(user_preferences.fileName())
     app = QtWidgets.QApplication(sys.argv)
     controller.open_main_window()
     app_logger.info("ISP GUI Started")

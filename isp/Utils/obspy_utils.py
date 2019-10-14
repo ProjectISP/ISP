@@ -1,6 +1,6 @@
 import os
 
-from obspy import Stream
+from obspy import Stream, read
 
 
 class ObspyUtil:
@@ -10,6 +10,11 @@ class ObspyUtil:
         if st:
             return st.plot(show=False)
         return None
+
+    @staticmethod
+    def get_tracer_from_file(file_path):
+        st = read(file_path)
+        return st[0]
 
 
 class MseedUtil:
