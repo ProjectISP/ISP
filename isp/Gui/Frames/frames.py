@@ -90,12 +90,12 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
 
         ##Funcion del menubar para crear un projecto
 
-        self.LoadPath0.clicked.connect(self.load0)
+        self.loadPathBtn.clicked.connect(self.load0)
         self.LoadPath1.clicked.connect(self.load1)
         self.LoadPath2.clicked.connect(self.load2)
         self.LoadPathout.clicked.connect(self.loadout)
 
-        self.LoadFile.clicked.connect(self.loadFile)
+        # self.LoadFile_noShadow.clicked.connect(self.loadFile)
         self.geteventinfo.clicked.connect(self.eventinfopick)
         self.actionMagnitude_Coherence.triggered.connect(self.Coherence)
 

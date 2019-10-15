@@ -1,4 +1,4 @@
-from isp.Gui import pw, qt, user_preferences, pyc
+from isp.Gui import pw, qt, user_preferences, pyc, pqg
 from isp.Gui.Frames import UiMainFrame
 
 
@@ -19,6 +19,7 @@ class BaseFrame(pw.QMainWindow, metaclass=SettingsLoader):
     def __load__(self):
         """ Method called after __init__"""
         self.load()
+        self.apply_shadow()
 
     # Press esc key event
     def keyPressEvent(self, e):
@@ -63,6 +64,15 @@ class BaseFrame(pw.QMainWindow, metaclass=SettingsLoader):
                 elif isinstance(item, pw.QLineEdit):
                     item.setText(value)
         user_preferences.endGroup()
+
+    def apply_shadow(self):
+        for child in self.findChildren((pw.QPushButton, pw.QCheckBox, pw.QLineEdit)):
+            ge = pw.QGraphicsDropShadowEffect()
+            ge.setBlurRadius(5)
+            ge.setOffset(2)
+            if "noShadow" not in child.objectName() and \
+                    "qt_spinbox_lineedit" not in child.objectName():
+                child.setGraphicsEffect(ge)
 
 
 class MainFrame(BaseFrame, UiMainFrame):
