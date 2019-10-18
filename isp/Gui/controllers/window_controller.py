@@ -18,7 +18,7 @@ class Controller:
     def __init__(self):
         self.main_frame = None
         self.seismogram_frame = None
-        self.mpw = None
+        self.earthquake_analysis_frame = None
 
     def open_main_window(self):
         # Start the ui designer
@@ -32,11 +32,12 @@ class Controller:
 
     def open_seismogram_window(self):
         # Start the ui designer
-        self.seismogram_frame = SeismogramFrame()
+        if not self.seismogram_frame:
+            self.seismogram_frame = SeismogramFrame()
         self.seismogram_frame.show()
-
 
     def open_earthquake_window(self):
         # Start the ui designer
-        self.earthquake_analysis_frame = EarthquakeAnalysisFrame()
+        if not self.earthquake_analysis_frame:
+            self.earthquake_analysis_frame = EarthquakeAnalysisFrame()
         self.earthquake_analysis_frame.show()

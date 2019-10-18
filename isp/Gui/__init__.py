@@ -16,9 +16,10 @@ qt = Qt
 # file to save ui fields
 user_preferences = pyc.QSettings("isp", "user_pref")
 
-from isp.Gui.controllers import Controller
 
-controller = Controller()
+def controller():
+    from isp.Gui.controllers import Controller
+    return Controller()
 
 
 def get_settings_file():
@@ -31,7 +32,7 @@ if __name__ == '__main__':
 
     print(user_preferences.fileName())
     app = QtWidgets.QApplication(sys.argv)
-    controller.open_main_window()
+    controller().open_main_window()
     app_logger.info("ISP GUI Started")
     sys.exit(app.exec_())
 

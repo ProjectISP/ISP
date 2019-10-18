@@ -70,7 +70,7 @@ class BaseFrame(pw.QMainWindow, metaclass=SettingsLoader):
             ge = pw.QGraphicsDropShadowEffect()
             ge.setBlurRadius(5)
             ge.setOffset(2)
-            if "noShadow" not in child.objectName() and \
+            if "noShadow".lower() not in child.objectName().lower() and \
                     "qt_spinbox_lineedit" not in child.objectName():
                 child.setGraphicsEffect(ge)
 

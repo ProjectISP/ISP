@@ -9,37 +9,9 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 
-class MplCanvas_special(FigureCanvas):
-    def __init__(self):
-        # self.fig = Figure(facecolor = "0.94")
-        self.fig = Figure()
-
-        self.ax1 = self.fig.add_subplot(211)
-
-        self.ax2 = self.fig.add_subplot(212)
-        self.ax3 = self.ax1.twinx()
-        ##If we want to join x axis
-        self.ax2.get_shared_x_axes().join(self.ax1, self.ax2)
-
-        ## if we want to show the colour bar
-        self.cax = self.fig.add_axes([0.94, 0.11, 0.025, 0.35])
-
-        FigureCanvas.__init__(self, self.fig)
-
-
-
 # class MplCanvas_special(FigureCanvas):
-#     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
-#
-#     def __init__(self, parent=None, obj=None):
-#         """
-#         Create a embed matplotlib canvas into pyqt.
-#
-#         :param parent: A QWidget to be parent of this canvas.
-#
-#         :param obj: Expected to be a obspy Stream or a matplotlib figure.
-#         """
-#         fig = Figure(facecolor = "0.94")
+#     def __init__(self):
+#         # self.fig = Figure(facecolor = "0.94")
 #         self.fig = Figure()
 #
 #         self.ax1 = self.fig.add_subplot(211)
@@ -52,12 +24,44 @@ class MplCanvas_special(FigureCanvas):
 #         ## if we want to show the colour bar
 #         self.cax = self.fig.add_axes([0.94, 0.11, 0.025, 0.35])
 #
-#         super().__init__(fig)
+#         FigureCanvas.__init__(self, self.fig)
 #
-#         self.setParent(parent)
+#         self.cax = self.fig.add_axes([0.94, 0.11, 0.025, 0.35])
 #
-#         FigureCanvas.setSizePolicy(self, pw.QSizePolicy.Expanding, pw.QSizePolicy.Expanding)
-#         FigureCanvas.updateGeometry(self)
+#         FigureCanvas.__init__(self, self.fig)
+
+
+
+class MplCanvas_special(FigureCanvas):
+    """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
+
+    def __init__(self, parent=None, obj=None):
+        """
+        Create a embed matplotlib canvas into pyqt.
+
+        :param parent: A QWidget to be parent of this canvas.
+
+        :param obj: Expected to be a obspy Stream or a matplotlib figure.
+        """
+        # fig = Figure(facecolor = "0.94")
+        self.fig = Figure()
+
+        self.ax1 = self.fig.add_subplot(211)
+
+        self.ax2 = self.fig.add_subplot(212)
+        self.ax3 = self.ax1.twinx()
+        ##If we want to join x axis
+        self.ax2.get_shared_x_axes().join(self.ax1, self.ax2)
+
+        ## if we want to show the colour bar
+        self.cax = self.fig.add_axes([0.94, 0.11, 0.025, 0.35])
+
+        super().__init__(self.fig)
+
+        # self.setParent(parent)
+
+        FigureCanvas.setSizePolicy(self, pw.QSizePolicy.Expanding, pw.QSizePolicy.Expanding)
+        FigureCanvas.updateGeometry(self)
 #
 #
 # class MatplotlibWidget_special(pw.QWidget):
@@ -81,6 +85,22 @@ class MatplotlibWidget_special(pw.QWidget):
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.vbl.addWidget(self.toolbar)
         self.setLayout(self.vbl)
+
+class MatplotlibWidget_special2(pw.QGraphicsView):
+    def __init__(self, parent=None):
+        pw.QGraphicsView.__init__(self, parent)
+        self.canvas = MplCanvas_special()
+        # self.vbl = pw.QVBoxLayout()
+        # self.vbl.addWidget(self.canvas)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        # self.vbl.addWidget(self.toolbar)
+        # self.setLayout(self.vbl)
+        # parent.setMinimumHeight(600)
+        self.canvas.setGeometry(0, 0, 1200, 600)
+        scene = pw.QGraphicsScene(self)
+        scene.addWidget(self.canvas)
+        scene.addWidget(self.toolbar)
+        self.setScene(scene)
 
 
 # class MplCanvas_1(FigureCanvas):

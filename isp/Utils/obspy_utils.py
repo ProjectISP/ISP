@@ -6,9 +6,9 @@ from obspy import Stream, read
 class ObspyUtil:
 
     @staticmethod
-    def get_figure_from_stream(st: Stream):
+    def get_figure_from_stream(st: Stream, **kwargs):
         if st:
-            return st.plot(show=False)
+            return st.plot(show=False, **kwargs)
         return None
 
     @staticmethod

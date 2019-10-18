@@ -13,6 +13,8 @@ from scipy.signal import hilbert
 from isp import ROOT_DIR
 from isp.Gui import pw
 from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiSeismogramFrame
+from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
+from isp.Gui.Utils import on_click_matplot, embed_matplot_canvas
 from isp.arrayanalysis.diccionary import dictionary
 from isp.seismogramInspector import diccionary
 from isp.seismogramInspector.Auxiliary import scan1, singleplot, allplot, spectrumelement, classic_sta_lta_py, \
@@ -80,7 +82,10 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         self.Deconvolve.clicked.connect(self.__test8__)
         self.Spectrogram.clicked.connect(self.onClick_spectrogram)
         self.PRS1.clicked.connect(self.__test10__)
-        self.PlotSeismogram.clicked.connect(self.__test11__)
+        #self.PlotSeismogram.clicked.connect(self.__test11__)
+        self.PlotSeismogram.clicked.connect(self.on_click_plot_seismogram)
+
+
         self.PlotSeismogram2.clicked.connect(self.__test12__)
         self.DP1.clicked.connect(self.__test13__)
         self.DP2.clicked.connect(self.__test14__)
@@ -107,7 +112,9 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
 
         # self.LFs.valueChanged.connect(self.val_change)
         # self.load()
-
+        self.canvas = MatplotlibCanvas(self.plotMat, nrows=2)
+        self.canvas.register_on_click()
+        self.canvas.on_double_click(self.on_click_matplotlib)
 
         try:
             os.remove("output.txt")
@@ -135,6 +142,131 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         print(val)
         # print(self.LFs.value())
 
+    def get_data(self):
+        global x_corr
+        import numpy as np
+        from obspy import read
+        from obspy.core import UTCDateTime
+
+        Filter = self.comboFilter.currentText()
+        Net = self.Net1.text()
+        Sta = self.Sta1.text()
+        Loc = self.Loc1.text()
+        Channel = self.Channel1.text()
+
+        f1 = self.Freq1p1.value()
+        f2 = self.Freq2p1.value()
+
+        t1 = self.Dateplot1.text()
+        t2 = float(self.secplot1.text())
+
+        t1 = UTCDateTime(t1)
+        t2 = t1 + t2
+
+        T1 = t1
+
+        Path1 = self.Pathwaveforms.text()
+        Path = Path1 + "/" + "*.*"
+
+        st = read(Path, starttime=t1, endtime=t2)
+        st.detrend()
+        st.taper(max_percentage=0.05)
+        L1 = len(st) - 1
+        if f1 and f2 > 0 and Filter == 'bandpass' or Filter == 'bandstop':
+            if f1 < f2:
+                st.filter(Filter, freqmin=f1, freqmax=f2, corners=4, zerophase=True)
+                st.detrend()
+
+        elif Filter == 'highpass':
+            print(Filter)
+            f1 = self.Freq1p1.value()
+            tr = st[L1]
+            f2 = (tr.stats.sampling_rate) / 2
+            st.filter(Filter, freq=f1, corners=4, zerophase=True)
+            st.detrend()
+            print("Filter Done")
+
+        elif Filter == 'lowpass':
+            print(Filter)
+            f1 = 0
+            f2 = self.Freq2p1.value()
+            st.filter(Filter, freq=f2, corners=4, zerophase=True)
+            st.detrend()
+            print("Filter Done")
+        else:
+            f1 = 0
+            tr = st[L1]
+            f2 = (tr.stats.sampling_rate) / 2
+
+        n1 = self.n1.value()
+
+        fmin = f1
+        fsup = f2
+        print(st)
+
+        if n1 > 98:
+            ## format WM.OBS01..SHZ.D.2015.260##
+            Path = Path1 + "/" + Net + "." + Sta + "." + Loc + "." + Channel + "*"
+            st = read(Path, starttime=t1, endtime=t2)
+            if f1 and f2 > 0 and Filter == 'bandpass' or Filter == 'bandstop':
+                if f1 < f2:
+                    st.filter(Filter, freqmin=f1, freqmax=f2, corners=4, zerophase=True)
+                    st.detrend()
+
+            elif Filter == 'highpass':
+                print(Filter)
+                f1 = self.Freq1p1.value()
+                print(str(f1))
+                f2 = tr.stats.sampling_rate / 2
+                st.filter(Filter, freq=f1, corners=4, zerophase=True)
+                st.detrend()
+                print("Filter Done")
+
+            elif Filter == 'lowpass':
+                print(Filter)
+                f1 = 0
+                f2 = self.Freq2p1.value()
+                st.filter(Filter, freq=f2, corners=4, zerophase=True)
+                st.detrend()
+                print("Filter Done")
+            else:
+                f1 = 0
+                tr = st[0]
+                f2 = (tr.stats.sampling_rate) / 2
+
+            n1 = 0
+
+        fmin = f1
+        fsup = f2
+
+        tr = st[n1]
+        starttime1 = tr.stats.starttime
+        sta = tr.stats.station
+        starttime = str(starttime1)
+        tr.detrend()
+        y = tr.data
+        npts = len(tr.data)
+        samprate = tr.stats.sampling_rate
+        delta = 1 / samprate
+        Fs = 1 / samprate
+        t1 = np.arange(0, npts / samprate, 1 / samprate)
+        return t1, y
+
+    def on_click_matplotlib(self, event, canvas):
+        if isinstance(canvas, MatplotlibCanvas):
+            phase = self.comboPick.currentText()
+            x1, y1 = event.xdata, event.ydata
+            canvas.draw_arrow(x1, 0, phase)
+
+    # @embed_matplot_canvas("plotMat")
+    def plot_seismogram(self, canvas: MatplotlibCanvas = None):
+        t, s1 = self.get_data()
+        self.canvas.plot(t, s1, 0)
+
+
+    def on_click_plot_seismogram(self):
+        self.plot_seismogram()
+
     def loadFile(self):
         startfolder = os.getcwd
         startfolder = str(startfolder)
@@ -144,16 +276,20 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
     def load0(self):
         startfolder = os.getcwd
         startfolder = str(startfolder)
-        my_dir = pw.QFileDialog.getExistingDirectory(self, "Open a folder", startfolder,
-                                                        pw.QFileDialog.ShowDirsOnly)
-        self.Pathwaveforms.setText(my_dir)
+        # dir_path = pw.QFileDialog.getExistingDirectory(self, "Open a folder", startfolder,
+        #                                                 pw.QFileDialog.ShowDirsOnly)
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
+
+        if dir_path:
+            self.Pathwaveforms.setText(dir_path)
 
     def load1(self):
         startfolder = os.getcwd
         startfolder = str(startfolder)
-        my_dir = pw.QFileDialog.getExistingDirectory(self, "Open a folder", startfolder,
-                                                        pw.QFileDialog.ShowDirsOnly)
-        self.pathseismogram.setText(my_dir)
+        dir_path = pw.QFileDialog.getExistingDirectory(self, "Open a folder", startfolder,
+                                                     pw.QFileDialog.ShowDirsOnly)
+        if dir_path:
+            self.pathseismogram.setText(dir_path)
 
     def load2(self):
         startfolder = os.getcwd
@@ -221,9 +357,12 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
             if f1 and f2 > 0:
                 if f1 < f2:
                     st.filter('bandpass', freqmin=f1, freqmax=f2, corners=4, zerophase=True)
-                    st.plot(type='dayplot')
+                    self.new_win = MatplotlibFrame(st, type='dayplot')
+                    self.new_win.show()
+                    # st.plot(type='dayplot')
             else:
-                st.plot(type='dayplot')
+                pass
+                #st.plot(type='dayplot')
 
     @pyqtSlot()
     def __test14__(self):
@@ -433,7 +572,9 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         def onclick(event):
 
             if event.dblclick:
-
+                print(event.inaxes)
+                print(self.grafico1.canvas.ax1)
+                print(event.inaxes == self.grafico1.canvas.ax1)
                 if event.button == 1:
                     Phase = self.comboPick.currentText()
 
@@ -450,7 +591,7 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
                     self.pickinfo.setText(Phase + " " + x1)
                     print(Phase, x1)
 
-                if event.button == 2 and self.actionPlot_Spectrum.isChecked() == True:
+                if event.button == 2 and self.actionPlot_Spectrum.isChecked():
                     # timewindow=float(self.secplot1.text())
                     timewindow = int(10 / delta)
                     x2 = event.xdata
@@ -466,7 +607,36 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
                     self.PlotSeismogram.setEnabled(True)
                     print("Picking closed")
 
-        #
+        def line_picker(line, mouseevent):
+            if mouseevent.dblclick:
+                Phase = self.comboPick.currentText()
+                x1, y1 = mouseevent.xdata, mouseevent.ydata
+                mpc.axes.annotate(Phase, xy=(x1, 0), xytext=(x1, -1 * OFFSET), bbox=bbox,
+                                                  arrowprops=dict(facecolor='red', shrink=0.05))
+                mpc.plot(x1, 0, clear=False, marker='|', markersize=100, color='red')
+                return True,  dict(pickx=mouseevent.xdata, picky=mouseevent.ydata)
+            return False, dict()
+
+
+        # test
+        mpc = MatplotlibCanvas(self.plotMat, nrows=3, ncols=1)
+
+        mpc.plot(t1, y, 0, label=sta, linewidth=0.5, color='k')
+        mpc.plot(t1, 2.*y, 1, label=sta, linewidth=0.5, color='k')
+        # mpc.axes[0].set_xlim(t1[0], t1[len(t1) - 1])
+        # mpc.plot(t1, 2.*y, 2, label=sta, linewidth=0.5, color='k')
+
+        @on_click_matplot(mpc)
+        def onclick2(event, canvas=None):
+            if event.dblclick:
+                print(event)
+                Phase = self.comboPick.currentText()
+                x1, y1 = event.xdata, event.ydata
+                canvas.axes[0].annotate(Phase, xy=(x1, 0), xytext=(x1, -1 * OFFSET), bbox=bbox,
+                                  arrowprops=dict(facecolor='red', shrink=0.05))
+                canvas.plot(x1, 0, 0, clear_plot=False, marker='|', markersize=100, color='red')
+        # mpc.on_pick(line_picker)
+        # mpc.mpl_connect('pick_event', onpick2)
 
         self.grafico1.canvas.ax1.clear()
         self.grafico1.canvas.ax1.plot(t1, y, label=sta, linewidth=0.5, color='k')
@@ -591,6 +761,7 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         if n2 > 98:
             ## format WM.OBS01..SHZ.D.2015.260##
             Path = Path1 + "/" + Net + "." + Sta + "." + Loc + "." + Channel + "*"
+            # print("Path: ", Path)
             st = read(Path, starttime=t1, endtime=t2)
             if f1 and f2 > 0 and Filter == 'bandpass' or Filter == 'bandstop':
                 if f1 < f2:
