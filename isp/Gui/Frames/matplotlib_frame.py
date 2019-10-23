@@ -47,8 +47,8 @@ class MatplotlibCanvas(FigureCanvas):
         """
         self.button_connection = None
         self.axes = None
-        self.callback_on_double_click = None
-        self.callback_on_click = None
+        self.__callback_on_double_click = None
+        self.__callback_on_click = None
 
         if not obj:
             fig = self.__construct_subplot(**kwargs)
@@ -61,22 +61,26 @@ class MatplotlibCanvas(FigureCanvas):
         super().__init__(fig)
 
         if parent and isinstance(parent, pw.QWidget):
-            if parent.layout():
-                parent.layout().itemAt(0).widget().setParent(None)
+            if parent.layout() is not None:
+                layout = parent.layout()
+                for child in parent.findChildren(MatplotlibWidget):
+                    child.setParent(None)
             else:
-                self.layout = pw.QVBoxLayout(parent)
-            self.mpw = MatplotlibWidget(parent, self)
-            self.layout.addWidget(self.mpw)
+                layout = pw.QVBoxLayout(parent)
 
+            mpw = MatplotlibWidget(parent, self)
+            layout.addWidget(mpw)
 
         FigureCanvas.setSizePolicy(self,
                                    pw.QSizePolicy.Expanding,
                                    pw.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
+        self.register_on_click()
+
     def __del__(self):
         print("disconnect")
-        self.mpl_disconnect(self.button_connection)
+        self.disconnect_click()
 
     def __construct_subplot(self, **kwargs):
         nrows = kwargs.get("nrows") if "nrows" in kwargs.keys() else 1
@@ -94,18 +98,22 @@ class MatplotlibCanvas(FigureCanvas):
         if not self.button_connection:
             self.button_connection = self.mpl_connect('button_press_event', self.__on_click)
 
+    def disconnect_click(self):
+        if self.button_connection:
+            self.mpl_disconnect(self.button_connection)
+
     def __on_click(self, event):
         if event.dblclick:
-            self.callback_on_double_click(event, self)
+            self.__callback_on_double_click(event, self)
 
     def set_new_subplot(self, nrows, ncols):
         self.figure = self.__construct_subplot(nrows=nrows, ncols=ncols)
 
     def on_double_click(self, func):
-        self.callback_on_double_click = func
+        self.__callback_on_double_click = func
 
     def onclick(self, func):
-        self.callback_on_click = func
+        self.__callback_on_click = func
 
     def __plot(self, x, y, ax, clear_plot=True, **kwargs):
         if clear_plot:

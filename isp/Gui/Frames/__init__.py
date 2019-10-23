@@ -1,3 +1,4 @@
+from isp.Gui.Frames.qt_components import FilesView
 from isp.Gui.Frames.uis_frames import UiMainFrame, UiSeismogramFrame, UiEarthquakeAnalysisFrame
 from isp.Gui.Frames.main import BaseFrame, MainFrame
 from isp.Gui.Frames.matplotlib_frame import MatplotlibFrame

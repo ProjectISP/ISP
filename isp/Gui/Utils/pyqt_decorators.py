@@ -1,14 +1,14 @@
 from functools import wraps
 
 
-def on_click_matplot(canvas):
+def on_double_click_matplot(canvas):
     """
-    Bind the decorated method to a click on matplot canvas, and inject the canvas
+    BindPyqtObject the decorated method to a click on matplot canvas, and inject the canvas
     and event from matplotlib to the method
 
     * Example::
 
-        @on_click_matplot(canvas)
+        @on_double_click_matplot(canvas)
         def my_func(event, canvas=None):
              "Call when user click the matplot canvas"
              pass
@@ -23,12 +23,13 @@ def on_click_matplot(canvas):
         raise AttributeError("Canvas must be an instance of MatplotlibCanvas")
 
     def app_decorator(func):
-        canvas.button_connection = canvas.mpl_connect('button_press_event',
-                                                      lambda event: func(event, canvas))
+        if isinstance(canvas, MatplotlibCanvas):
+            canvas.on_double_click(func)
+            # canvas.button_connection = canvas.mpl_connect('button_press_event', lambda event: func(event, canvas))
     return app_decorator
 
 
-def embed_matplot_canvas(widget_name):
+def embed_matplot_canvas(widget_name, nrows=1):
     """
     Embed a matplotlib to the parent widget and inject the canvas to the decorated method.
 
@@ -40,6 +41,8 @@ def embed_matplot_canvas(widget_name):
 
     :param widget_name: The name of the parent widget, QWidget or QFrame.
 
+    :param nrows: The numbers of rows at the subplot.
+
     :return:
     """
     def app_decorator(func):
@@ -50,7 +53,7 @@ def embed_matplot_canvas(widget_name):
             if isinstance(self, BaseFrame):
                 from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
                 parent = self.__dict__.get(widget_name)
-                mpc = MatplotlibCanvas(parent)
+                mpc = MatplotlibCanvas(parent, nrows=nrows)
             return func(self, mpc, *args, **kwargs)
         return wrap_func
     return app_decorator

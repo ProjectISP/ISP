@@ -99,7 +99,7 @@ QLineEdit {
 }
 
 QLineEdit:read-only {
-	background:rgb(200, 200, 133,150);
+	background-color:rgba(200, 200, 133,150);
 }
 </string>
   </property>
@@ -122,10 +122,10 @@ QLineEdit:read-only {
       <widget class="QWidget" name="scrollAreaWidgetContents">
        <property name="geometry">
         <rect>
-         <x>0</x>
-         <y>-86</y>
+         <x>-238</x>
+         <y>0</y>
          <width>1302</width>
-         <height>1380</height>
+         <height>1174</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -805,6 +805,20 @@ QLineEdit:read-only {
                    <number>0</number>
                   </property>
                   <item>
+                   <layout class="QVBoxLayout" name="verticalLayout_8">
+                    <item>
+                     <widget class="QWidget" name="fileSelector" native="true">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>100</height>
+                       </size>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
                    <widget class="QFrame" name="frame_2">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1094,58 +1108,6 @@ QPushButton:hover {
                        </property>
                       </widget>
                      </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QFrame" name="horizontalFrame">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <layout class="QHBoxLayout" name="horizontalLayout_2">
-                     <item>
-                      <widget class="MatplotlibWidget_special2" name="grafico1">
-                       <property name="enabled">
-                        <bool>true</bool>
-                       </property>
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="minimumSize">
-                        <size>
-                         <width>0</width>
-                         <height>300</height>
-                        </size>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QFrame" name="horizontalFrame">
-                    <property name="frameShape">
-                     <enum>QFrame::NoFrame</enum>
-                    </property>
-                    <layout class="QHBoxLayout" name="horizontalLayout_4">
-                     <property name="leftMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="topMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="rightMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="bottomMargin">
-                      <number>0</number>
-                     </property>
                     </layout>
                    </widget>
                   </item>
@@ -2928,11 +2890,6 @@ border-color: rgb(1, 34, 102);</string>
    <extends>QWidget</extends>
    <header location="global">isp/seismogramInspector/clases_mpl_pyqt</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>MatplotlibWidget_special2</class>
-   <extends>QGraphicsView</extends>
-   <header location="global">isp/seismogramInspector/clases_mpl_pyqt</header>
   </customwidget>
  </customwidgets>
  <resources>

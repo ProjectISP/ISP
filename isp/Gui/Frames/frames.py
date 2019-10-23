@@ -1,4 +1,5 @@
 import os
+from enum import Enum, unique
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,10 +12,11 @@ from obspy.core import UTCDateTime
 from scipy.signal import hilbert
 
 from isp import ROOT_DIR
-from isp.Gui import pw
-from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiSeismogramFrame
+from isp.Gui import pw, pyc
+from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiSeismogramFrame, FilesView
 from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
-from isp.Gui.Utils import on_click_matplot, embed_matplot_canvas
+from isp.Gui.Utils import on_double_click_matplot, embed_matplot_canvas
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.arrayanalysis.diccionary import dictionary
 from isp.seismogramInspector import diccionary
 from isp.seismogramInspector.Auxiliary import scan1, singleplot, allplot, spectrumelement, classic_sta_lta_py, \
@@ -26,6 +28,49 @@ from isp.seismogramInspector.polarity2 import AP
 from isp.seismogramInspector.readNLLevent import getNLLinfo
 from isp.seismogramInspector.scan2 import scan
 from isp.seismogramInspector.traveltimes import arrivals2
+
+
+@unique
+class Filters(Enum):
+
+    Default = "Filter"
+    BandPass = "bandpass"
+    BandStop = "bandstop"
+    LowPass = "lowpass"
+    HighPass = "highpass"
+
+    def __eq__(self, other):
+        return self.value == other
+
+    def __ne__(self, other):
+        return self.value != other
+
+    @classmethod
+    def get_filters(cls):
+        return [item.value for item in cls.__members__.values()]
+
+
+@unique
+class Phases(Enum):
+
+    Default = "Phase"
+    PPhase = "P"
+    PnPhase = "Pn"
+    PgPhase = "Pg"
+    SpPhase = "Sp"
+    SnPhase = "Sn"
+    SgPhase = "Sg"
+    LgPhase = "Lg"
+
+    def __eq__(self, other):
+        return self.value == other
+
+    def __ne__(self, other):
+        return self.value != other
+
+    @classmethod
+    def get_phases(cls):
+        return [item.value for item in cls.__members__.values()]
 
 
 class SeismogramFrame(BaseFrame, UiSeismogramFrame):
@@ -68,9 +113,6 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         self.TWPol.setValue(10)
         self.sec.setValue(240)
 
-        self.comboPick.addItems(["Phase", "P", "Pn", "Pg", "sp", "Sn", "Sg", "Lg"])
-        self.comboFilter.addItems(["Filter", "bandpass", "bandstop", "lowpass", "highpass"])
-
         # Conections
 
         self.Plot_Seismogram.clicked.connect(self.__test4__)
@@ -110,15 +152,26 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         self.PlotSingleRecord.triggered.connect(self.plotsinglerecord)
         # self.PlotAllRecords.triggered.connect(self.PlotAll)
 
-        # self.LFs.valueChanged.connect(self.val_change)
+        # self.LFs.__valueChanged.connect(self.val_change)
         # self.load()
         self.canvas = MatplotlibCanvas(self.plotMat, nrows=2)
-        self.canvas.register_on_click()
         self.canvas.on_double_click(self.on_click_matplotlib)
+        # self.bind("new_value")
+        # print(self.new_value)
+
+        # ======== new way ====================
+
+        self.comboPick.addItems(Phases.get_phases())
+        self.comboFilter.addItems(Filters.get_filters())
+
+        self.filter_pick = BindPyqtObject(self.comboFilter)
+        self.path_to_wave = BindPyqtObject(self.Pathwaveforms)
+        self.file_1 = BindPyqtObject(self.n1)
+        self.file_selector = FilesView(self.path_to_wave.value, self.fileSelector)
 
         try:
             os.remove("output.txt")
-        except:
+        except (FileNotFoundError, PermissionError):
             pass
 
         lst = {'Station_name': ["Sta"], 'Instrument': ["Instr"], 'Component': ["Comp"], 'P_phase_onset': ["Pho"],
@@ -142,20 +195,17 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         print(val)
         # print(self.LFs.value())
 
+
     def get_data(self):
         global x_corr
         import numpy as np
         from obspy import read
         from obspy.core import UTCDateTime
 
-        Filter = self.comboFilter.currentText()
-        Net = self.Net1.text()
-        Sta = self.Sta1.text()
-        Loc = self.Loc1.text()
-        Channel = self.Channel1.text()
+        filter_value = self.filter_pick.value
 
-        f1 = self.Freq1p1.value()
-        f2 = self.Freq2p1.value()
+        f_min = self.Freq1p1.value()
+        f_max = self.Freq2p1.value()
 
         t1 = self.Dateplot1.text()
         t2 = float(self.secplot1.text())
@@ -163,93 +213,30 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         t1 = UTCDateTime(t1)
         t2 = t1 + t2
 
-        T1 = t1
+        file_path = self.file_selector.file_path
+        st = read(file_path, starttime=t1, endtime=t2)
+        st.detrend(type="demean")
 
-        Path1 = self.Pathwaveforms.text()
-        Path = Path1 + "/" + "*.*"
+        if filter_value != Filters.Default:
+            if not (f_max - f_min) > 0:
+                print("Bad filter frequencies")
+                return
 
-        st = read(Path, starttime=t1, endtime=t2)
-        st.detrend()
-        st.taper(max_percentage=0.05)
-        L1 = len(st) - 1
-        if f1 and f2 > 0 and Filter == 'bandpass' or Filter == 'bandstop':
-            if f1 < f2:
-                st.filter(Filter, freqmin=f1, freqmax=f2, corners=4, zerophase=True)
-                st.detrend()
+            st.taper(max_percentage=0.05, type="blackman")
 
-        elif Filter == 'highpass':
-            print(Filter)
-            f1 = self.Freq1p1.value()
-            tr = st[L1]
-            f2 = (tr.stats.sampling_rate) / 2
-            st.filter(Filter, freq=f1, corners=4, zerophase=True)
-            st.detrend()
-            print("Filter Done")
+            if filter_value == Filters.BandPass or filter_value == Filters.BandStop:
+                st.filter(filter_value, freqmin=f_min, freqmax=f_max, corners=4, zerophase=True)
 
-        elif Filter == 'lowpass':
-            print(Filter)
-            f1 = 0
-            f2 = self.Freq2p1.value()
-            st.filter(Filter, freq=f2, corners=4, zerophase=True)
-            st.detrend()
-            print("Filter Done")
-        else:
-            f1 = 0
-            tr = st[L1]
-            f2 = (tr.stats.sampling_rate) / 2
+            elif filter_value == Filters.HighPass:
+                st.filter(filter_value, freq=f_min, corners=4, zerophase=True)
 
-        n1 = self.n1.value()
+            elif filter_value == Filters.LowPass:
+                st.filter(filter_value, freq=f_max, corners=4, zerophase=True)
 
-        fmin = f1
-        fsup = f2
-        print(st)
-
-        if n1 > 98:
-            ## format WM.OBS01..SHZ.D.2015.260##
-            Path = Path1 + "/" + Net + "." + Sta + "." + Loc + "." + Channel + "*"
-            st = read(Path, starttime=t1, endtime=t2)
-            if f1 and f2 > 0 and Filter == 'bandpass' or Filter == 'bandstop':
-                if f1 < f2:
-                    st.filter(Filter, freqmin=f1, freqmax=f2, corners=4, zerophase=True)
-                    st.detrend()
-
-            elif Filter == 'highpass':
-                print(Filter)
-                f1 = self.Freq1p1.value()
-                print(str(f1))
-                f2 = tr.stats.sampling_rate / 2
-                st.filter(Filter, freq=f1, corners=4, zerophase=True)
-                st.detrend()
-                print("Filter Done")
-
-            elif Filter == 'lowpass':
-                print(Filter)
-                f1 = 0
-                f2 = self.Freq2p1.value()
-                st.filter(Filter, freq=f2, corners=4, zerophase=True)
-                st.detrend()
-                print("Filter Done")
-            else:
-                f1 = 0
-                tr = st[0]
-                f2 = (tr.stats.sampling_rate) / 2
-
-            n1 = 0
-
-        fmin = f1
-        fsup = f2
-
-        tr = st[n1]
-        starttime1 = tr.stats.starttime
-        sta = tr.stats.station
-        starttime = str(starttime1)
-        tr.detrend()
+        tr = st[0]
         y = tr.data
-        npts = len(tr.data)
-        samprate = tr.stats.sampling_rate
-        delta = 1 / samprate
-        Fs = 1 / samprate
-        t1 = np.arange(0, npts / samprate, 1 / samprate)
+        sample_rate = tr.stats.sampling_rate
+        t1 = np.arange(0, len(tr.data) / sample_rate, 1. / sample_rate)
         return t1, y
 
     def on_click_matplotlib(self, event, canvas):
@@ -258,11 +245,9 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
             x1, y1 = event.xdata, event.ydata
             canvas.draw_arrow(x1, 0, phase)
 
-    # @embed_matplot_canvas("plotMat")
-    def plot_seismogram(self, canvas: MatplotlibCanvas = None):
+    def plot_seismogram(self):
         t, s1 = self.get_data()
         self.canvas.plot(t, s1, 0)
-
 
     def on_click_plot_seismogram(self):
         self.plot_seismogram()
@@ -626,7 +611,7 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         # mpc.axes[0].set_xlim(t1[0], t1[len(t1) - 1])
         # mpc.plot(t1, 2.*y, 2, label=sta, linewidth=0.5, color='k')
 
-        @on_click_matplot(mpc)
+        @on_double_click_matplot(mpc)
         def onclick2(event, canvas=None):
             if event.dblclick:
                 print(event)
