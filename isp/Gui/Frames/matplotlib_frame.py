@@ -37,13 +37,17 @@ class MatplotlibWidget(pw.QWidget):
 class MatplotlibCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
-    def __init__(self, parent=None, obj=None, **kwargs):
+    def __init__(self, parent, obj=None, **kwargs):
         """
-        Create a embed matplotlib canvas into pyqt.
+        Create an embed matplotlib canvas into pyqt.
 
         :param parent: A QWidget to be parent of this canvas.
 
-        :param obj: Expected to be a obspy Stream or a matplotlib figure.
+        :param obj: Expected to be an obspy Stream or a matplotlib figure. Leave as None if you want
+            to construct your own matplotlib figure.
+
+        :param kwargs: If obj is an obspy.Stream you can use valid kwargs for Stream objects. Otherwise, the
+            valid kwargs are "nrows" and "ncols" for the subplots.
         """
         self.button_connection = None
         self.axes = None
@@ -60,7 +64,7 @@ class MatplotlibCanvas(FigureCanvas):
 
         super().__init__(fig)
 
-        if parent and isinstance(parent, pw.QWidget):
+        if parent and (isinstance(parent, pw.QWidget) or isinstance(parent, pw.QFrame)):
             if parent.layout() is not None:
                 layout = parent.layout()
                 for child in parent.findChildren(MatplotlibWidget):
@@ -106,8 +110,16 @@ class MatplotlibCanvas(FigureCanvas):
         if event.dblclick:
             self.__callback_on_double_click(event, self)
 
+    def get_axe(self, index):
+        return self.axes.item(index)
+
     def set_new_subplot(self, nrows, ncols):
         self.figure = self.__construct_subplot(nrows=nrows, ncols=ncols)
+
+    def set_xlabel(self, axe_index, value):
+        ax = self.get_axe(axe_index)
+        if ax:
+            ax.set_xlabel(value)
 
     def on_double_click(self, func):
         self.__callback_on_double_click = func

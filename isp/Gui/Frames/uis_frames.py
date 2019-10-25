@@ -5,4 +5,6 @@ from isp.Gui.Utils.pyqt_utils import load_ui_designers
 UiMainFrame = load_ui_designers("MainFrame.ui")
 UiSeismogramFrame = load_ui_designers("SeismogramFrame.ui")
 UiEarthquakeAnalysisFrame = load_ui_designers("EarthquakeAnalysisFrame.ui")
+UiPaginationWidget = load_ui_designers("PaginationWidget.ui")
+
 

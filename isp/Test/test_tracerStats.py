@@ -28,3 +28,6 @@ class TestTracerStats(TestCase):
                 safe_key = trace_stat._fields[index]
                 self.assertEqual(stats.get(k), trace_stat.to_dict().get(safe_key))
 
+    def test_obspy(self):
+        st = read(file_path, starttime=t1, endtime=t2)
+

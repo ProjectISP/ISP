@@ -17,6 +17,7 @@ from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiSeismogramFrame, FilesV
 from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
 from isp.Gui.Utils import on_double_click_matplot, embed_matplot_canvas
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
+from isp.Utils import MseedUtil
 from isp.arrayanalysis.diccionary import dictionary
 from isp.seismogramInspector import diccionary
 from isp.seismogramInspector.Auxiliary import scan1, singleplot, allplot, spectrumelement, classic_sta_lta_py, \
@@ -89,12 +90,8 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         self.Dateplot2.setText("2015-09-17T15:11:00.00")
         self.secplot2.setText("240")
 
-        self.n1.setValue(99)
-        self.n2.setValue(99)
-
         # Inicializacion Plot
 
-        self.Pathwaveforms.setText(os.path.join(ROOT_DIR, "260", "RAW"))
         # Inicializacion de elementos de la interfaz Seismogram Inspector.
         # self.pathseismogram.setText(os.path.join(ROOT_DIR, "260", "RAW"))
         self.pathseismogram.setText(os.path.join(ROOT_DIR, "260", "Velocity"))
@@ -125,10 +122,8 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         self.Spectrogram.clicked.connect(self.onClick_spectrogram)
         self.PRS1.clicked.connect(self.__test10__)
         #self.PlotSeismogram.clicked.connect(self.__test11__)
-        self.PlotSeismogram.clicked.connect(self.on_click_plot_seismogram)
 
-
-        self.PlotSeismogram2.clicked.connect(self.__test12__)
+#        self.PlotSeismogram2.clicked.connect(self.__test12__)
         self.DP1.clicked.connect(self.__test13__)
         self.DP2.clicked.connect(self.__test14__)
         self.getevent.triggered.connect(self.__test15__)
@@ -137,10 +132,9 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
 
         ##Funcion del menubar para crear un projecto
 
-        self.loadPathBtn.clicked.connect(self.load0)
-        self.LoadPath1.clicked.connect(self.load1)
-        self.LoadPath2.clicked.connect(self.load2)
-        self.LoadPathout.clicked.connect(self.loadout)
+#        self.LoadPath1.clicked.connect(self.load1)
+#        self.LoadPath2.clicked.connect(self.load2)
+#        self.LoadPathout.clicked.connect(self.loadout)
 
         # self.LoadFile_noShadow.clicked.connect(self.loadFile)
         self.geteventinfo.clicked.connect(self.eventinfopick)
@@ -154,20 +148,34 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
 
         # self.LFs.__valueChanged.connect(self.val_change)
         # self.load()
-        self.canvas = MatplotlibCanvas(self.plotMat, nrows=2)
-        self.canvas.on_double_click(self.on_click_matplotlib)
         # self.bind("new_value")
         # print(self.new_value)
 
-        # ======== new way ====================
+        # ======== refactoring ====================
 
+        # embed matplotlib to qt widget
+        self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=2)
+        self.canvas.set_xlabel(1, "Time (s)")
+        self.canvas.on_double_click(self.on_click_matplotlib)
+        self.canvas_2 = MatplotlibCanvas(self.plotMatWidget_2, nrows=2)
+        self.canvas_2.set_xlabel(1, "Time (s)")
+        self.canvas_2.on_double_click(self.on_click_matplotlib)
+
+        # add items to combo boxes
         self.comboPick.addItems(Phases.get_phases())
         self.comboFilter.addItems(Filters.get_filters())
 
-        self.filter_pick = BindPyqtObject(self.comboFilter)
-        self.path_to_wave = BindPyqtObject(self.Pathwaveforms)
-        self.file_1 = BindPyqtObject(self.n1)
-        self.file_selector = FilesView(self.path_to_wave.value, self.fileSelector)
+        # Bind buttons
+        self.selectDirBtn.clicked.connect(self.onClick_select_directory)
+        self.plotSeismogramBtn.clicked.connect(lambda: self.on_click_plot_seismogram(self.canvas))
+        self.plotSeismogramBtn_2.clicked.connect(lambda: self.on_click_plot_seismogram(self.canvas_2))
+
+        # Bind qt objects
+        self.filter_pick_bind = BindPyqtObject(self.comboFilter)
+        self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
+
+        # Add file selector to the widget
+        self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget)
 
         try:
             os.remove("output.txt")
@@ -195,14 +203,23 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         print(val)
         # print(self.LFs.value())
 
+    def onChange_root_path(self, value):
+        """
+        Fired every time the root_path is changed
+
+        :param value: The path of the new directory.
+
+        :return:
+        """
+        self.file_selector.set_new_rootPath(value)
 
     def get_data(self):
-        global x_corr
+
         import numpy as np
         from obspy import read
         from obspy.core import UTCDateTime
 
-        filter_value = self.filter_pick.value
+        filter_value = self.filter_pick_bind.value
 
         f_min = self.Freq1p1.value()
         f_max = self.Freq2p1.value()
@@ -214,7 +231,9 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         t2 = t1 + t2
 
         file_path = self.file_selector.file_path
-        st = read(file_path, starttime=t1, endtime=t2)
+        st = read(file_path)
+        # check times
+        st.trim(starttime=t1, endtime=t2)
         st.detrend(type="demean")
 
         if filter_value != Filters.Default:
@@ -245,49 +264,22 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
             x1, y1 = event.xdata, event.ydata
             canvas.draw_arrow(x1, 0, phase)
 
-    def plot_seismogram(self):
+    def plot_seismogram(self, canvas):
         t, s1 = self.get_data()
-        self.canvas.plot(t, s1, 0)
+        canvas.plot(t, s1, 0)
 
-    def on_click_plot_seismogram(self):
-        self.plot_seismogram()
+    def on_click_plot_seismogram(self, canvas):
+        if MseedUtil.is_valid_mseed(self.file_selector.file_path):
+            self.plot_seismogram(canvas)
+        else:
+            print("No valid file to plot")
 
-    def loadFile(self):
-        startfolder = os.getcwd
-        startfolder = str(startfolder)
-        seismogram_file1 = pw.QFileDialog.getOpenFileName(self, "Open file", startfolder)
-        self.Pathwaveforms.setText(seismogram_file1)
-
-    def load0(self):
-        startfolder = os.getcwd
-        startfolder = str(startfolder)
-        # dir_path = pw.QFileDialog.getExistingDirectory(self, "Open a folder", startfolder,
-        #                                                 pw.QFileDialog.ShowDirsOnly)
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
+    def onClick_select_directory(self):
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value)
 
         if dir_path:
-            self.Pathwaveforms.setText(dir_path)
+            self.root_path_bind.value = dir_path
 
-    def load1(self):
-        startfolder = os.getcwd
-        startfolder = str(startfolder)
-        dir_path = pw.QFileDialog.getExistingDirectory(self, "Open a folder", startfolder,
-                                                     pw.QFileDialog.ShowDirsOnly)
-        if dir_path:
-            self.pathseismogram.setText(dir_path)
-
-    def load2(self):
-        startfolder = os.getcwd
-        startfolder = str(startfolder)
-        my_dir = pw.QFileDialog.getExistingDirectory(self, "Open a folder", startfolder, pw.QFileDialog.ShowDirsOnly)
-        self.pathdataless.setText(my_dir)
-
-    def loadout(self):
-        startfolder = os.getcwd
-        startfolder = str(startfolder)
-        my_dir = pw.QFileDialog.getExistingDirectory(self, "Open a folder", startfolder,
-                                                        pw.QFileDialog.ShowDirsOnly)
-        self.pathoutput.setText(my_dir)
 
     def plotsinglerecord(self):
         startfolder1 = os.getcwd()

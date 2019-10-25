@@ -1,6 +1,8 @@
 import os
 
 from obspy import Stream, read
+# noinspection PyProtectedMember
+from obspy.io.mseed.core import _is_mseed
 
 
 class ObspyUtil:
@@ -28,8 +30,6 @@ class MseedUtil:
 
         :return: A list of full path of mseed files.
         """
-        # noinspection PyProtectedMember
-        from obspy.io.mseed.core import _is_mseed
 
         if not os.path.exists(root_dir):
             return []
@@ -41,3 +41,7 @@ class MseedUtil:
                      os.path.isfile(os.path.join(root_dir, file)) and _is_mseed(os.path.join(root_dir, file))]
             files.sort()
             return files
+
+    @staticmethod
+    def is_valid_mseed(file_path):
+        return os.path.isfile(file_path) and _is_mseed(file_path)

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1098</width>
+    <width>1114</width>
     <height>932</height>
    </rect>
   </property>
@@ -101,6 +101,16 @@ QLineEdit {
 QLineEdit:read-only {
 	background-color:rgba(200, 200, 133,150);
 }
+
+QComboBox{
+ 	background-color: rgb(255, 255, 255);
+	selection-color: black;
+	selection-background-color: rgba(233, 185, 110, 150);
+}
+
+QComboBox QAbstractItemView {
+	background-color: rgb(255, 255, 255);
+}
 </string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -122,10 +132,10 @@ QLineEdit:read-only {
       <widget class="QWidget" name="scrollAreaWidgetContents">
        <property name="geometry">
         <rect>
-         <x>-238</x>
+         <x>0</x>
          <y>0</y>
          <width>1302</width>
-         <height>1174</height>
+         <height>1180</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -283,15 +293,21 @@ QLineEdit:read-only {
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>80</height>
+                <height>16777215</height>
                </size>
               </property>
               <layout class="QGridLayout" name="gridLayout_11">
                <item row="2" column="1">
-                <widget class="QLineEdit" name="Pathwaveforms">
+                <widget class="QLineEdit" name="rootPathForm">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                    <horstretch>0</horstretch>
@@ -342,7 +358,7 @@ QLineEdit:read-only {
                 </widget>
                </item>
                <item row="2" column="0">
-                <widget class="QPushButton" name="loadPathBtn">
+                <widget class="QPushButton" name="selectDirBtn">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
@@ -359,14 +375,28 @@ QLineEdit:read-only {
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
                  <property name="text">
-                  <string>Load Path</string>
+                  <string>Select directory</string>
                  </property>
                 </widget>
+               </item>
+               <item row="3" column="0" colspan="2">
+                <layout class="QVBoxLayout" name="verticalLayout_8">
+                 <item>
+                  <widget class="QWidget" name="fileSelectorWidget" native="true">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>100</height>
+                    </size>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </item>
               </layout>
              </widget>
             </item>
-            <item row="1" column="0">
+            <item row="2" column="0">
              <widget class="QFrame" name="frame">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
@@ -506,17 +536,13 @@ QLineEdit:read-only {
                   </item>
                   <item row="1" column="0">
                    <widget class="QComboBox" name="comboPick">
-                    <property name="styleSheet">
-                     <string notr="true">background-color: rgb(255, 255, 255);</string>
+                    <property name="editable">
+                     <bool>false</bool>
                     </property>
                    </widget>
                   </item>
                   <item row="1" column="1">
-                   <widget class="QComboBox" name="comboFilter">
-                    <property name="styleSheet">
-                     <string notr="true">background-color: rgb(255, 255, 255);</string>
-                    </property>
-                   </widget>
+                   <widget class="QComboBox" name="comboFilter"/>
                   </item>
                  </layout>
                 </widget>
@@ -753,7 +779,7 @@ QLineEdit:read-only {
               </layout>
              </widget>
             </item>
-            <item row="1" column="1">
+            <item row="2" column="1">
              <widget class="QFrame" name="frame">
               <property name="sizePolicy">
                <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
@@ -804,20 +830,6 @@ QLineEdit:read-only {
                   <property name="topMargin">
                    <number>0</number>
                   </property>
-                  <item>
-                   <layout class="QVBoxLayout" name="verticalLayout_8">
-                    <item>
-                     <widget class="QWidget" name="fileSelector" native="true">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>100</height>
-                       </size>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </item>
                   <item>
                    <widget class="QFrame" name="frame_2">
                     <property name="sizePolicy">
@@ -882,98 +894,12 @@ QLineEdit:read-only {
                        </property>
                        <property name="minimumSize">
                         <size>
-                         <width>122</width>
-                         <height>0</height>
-                        </size>
-                       </property>
-                       <property name="styleSheet">
-                        <string notr="true">background-color: rgb(255, 255, 255);</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="2" column="0">
-                      <widget class="QSpinBox" name="n1">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="minimumSize">
-                        <size>
                          <width>0</width>
                          <height>0</height>
                         </size>
                        </property>
                        <property name="styleSheet">
                         <string notr="true">background-color: rgb(255, 255, 255);</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="2" column="1">
-                      <widget class="QPushButton" name="DP1">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="cursor">
-                        <cursorShape>PointingHandCursor</cursorShape>
-                       </property>
-                       <property name="toolTip">
-                        <string extracomment="bla"/>
-                       </property>
-                       <property name="statusTip">
-                        <string extracomment="bla"/>
-                       </property>
-                       <property name="accessibleDescription">
-                        <string/>
-                       </property>
-                       <property name="styleSheet">
-                        <string notr="true">QPushButton { 
-	background-color: rgb(198, 198, 198); 
-	border-color: grey;
-}
-
-QPushButton:hover:pressed {
-      background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                        stop: 0 #dadbde, stop: 1 #f6f7fa);
-}
-
-QPushButton:hover {
-      background-color: rgb(211, 215, 207);
- }
-
-  QPushButton:flat {
-      border: none; /* no border for a flat push button */
-  }
-
-  QPushButton:default {
-      border-color: navy; /* make the default button prominent */
-  }</string>
-                       </property>
-                       <property name="text">
-                        <string>DP</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="3" column="0" colspan="2">
-                      <widget class="QPushButton" name="PlotSeismogram">
-                       <property name="minimumSize">
-                        <size>
-                         <width>122</width>
-                         <height>0</height>
-                        </size>
-                       </property>
-                       <property name="cursor">
-                        <cursorShape>PointingHandCursor</cursorShape>
-                       </property>
-                       <property name="toolTip">
-                        <string/>
-                       </property>
-                       <property name="text">
-                        <string>Plot</string>
                        </property>
                       </widget>
                      </item>
@@ -1068,6 +994,73 @@ QPushButton:hover {
                      <item row="3" column="5">
                       <widget class="QLineEdit" name="Channel1"/>
                      </item>
+                     <item row="2" column="0" colspan="2">
+                      <widget class="QPushButton" name="DP1">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="cursor">
+                        <cursorShape>PointingHandCursor</cursorShape>
+                       </property>
+                       <property name="toolTip">
+                        <string extracomment="bla"/>
+                       </property>
+                       <property name="statusTip">
+                        <string extracomment="bla"/>
+                       </property>
+                       <property name="accessibleDescription">
+                        <string/>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">QPushButton { 
+	background-color: rgb(198, 198, 198); 
+	border-color: grey;
+}
+
+QPushButton:hover:pressed {
+      background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                        stop: 0 #dadbde, stop: 1 #f6f7fa);
+}
+
+QPushButton:hover {
+      background-color: rgb(211, 215, 207);
+ }
+
+  QPushButton:flat {
+      border: none; /* no border for a flat push button */
+  }
+
+  QPushButton:default {
+      border-color: navy; /* make the default button prominent */
+  }</string>
+                       </property>
+                       <property name="text">
+                        <string>DP</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="3" column="0" colspan="2">
+                      <widget class="QPushButton" name="plotSeismogramBtn">
+                       <property name="minimumSize">
+                        <size>
+                         <width>122</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="cursor">
+                        <cursorShape>PointingHandCursor</cursorShape>
+                       </property>
+                       <property name="toolTip">
+                        <string/>
+                       </property>
+                       <property name="text">
+                        <string>Plot</string>
+                       </property>
+                      </widget>
+                     </item>
                     </layout>
                    </widget>
                   </item>
@@ -1102,7 +1095,7 @@ QPushButton:hover {
                       <number>0</number>
                      </property>
                      <item>
-                      <widget class="QWidget" name="plotMat" native="true">
+                      <widget class="QWidget" name="plotMatWidget" native="true">
                        <property name="styleSheet">
                         <string notr="true">background-color: rgb(255, 255, 255);</string>
                        </property>
@@ -1294,45 +1287,6 @@ QPushButton:hover {
                        </property>
                       </widget>
                      </item>
-                     <item row="2" column="1">
-                      <widget class="QPushButton" name="DP2">
-                       <property name="minimumSize">
-                        <size>
-                         <width>122</width>
-                         <height>0</height>
-                        </size>
-                       </property>
-                       <property name="cursor">
-                        <cursorShape>PointingHandCursor</cursorShape>
-                       </property>
-                       <property name="styleSheet">
-                        <string notr="true">QPushButton { 
-	background-color: rgb(198, 198, 198);
-	border-color: grey;
- }
-
-QPushButton:hover:pressed {
-      background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                        stop: 0 #dadbde, stop: 1 #f6f7fa);
-}
-
-QPushButton:hover {
-      background-color: rgb(211, 215, 207);
- }
-
-  QPushButton:flat {
-      border: none; /* no border for a flat push button */
-  }
-
-  QPushButton:default {
-      border-color: navy; /* make the default button prominent */
-  }</string>
-                       </property>
-                       <property name="text">
-                        <string>DP</string>
-                       </property>
-                      </widget>
-                     </item>
                      <item row="2" column="5">
                       <widget class="QLabel" name="label_64">
                        <property name="text">
@@ -1377,15 +1331,8 @@ QPushButton:hover {
                        </property>
                       </widget>
                      </item>
-                     <item row="2" column="0">
-                      <widget class="QSpinBox" name="n2">
-                       <property name="styleSheet">
-                        <string notr="true">background-color: rgb(255, 255, 255);</string>
-                       </property>
-                      </widget>
-                     </item>
                      <item row="3" column="0" colspan="2">
-                      <widget class="QPushButton" name="PlotSeismogram2">
+                      <widget class="QPushButton" name="plotSeismogramBtn_2">
                        <property name="minimumSize">
                         <size>
                          <width>122</width>
@@ -1397,6 +1344,91 @@ QPushButton:hover {
                        </property>
                        <property name="text">
                         <string>Plot</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="0" colspan="2">
+                      <widget class="QPushButton" name="DP2">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>122</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="cursor">
+                        <cursorShape>PointingHandCursor</cursorShape>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">QPushButton { 
+	background-color: rgb(198, 198, 198);
+	border-color: grey;
+ }
+
+QPushButton:hover:pressed {
+      background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                        stop: 0 #dadbde, stop: 1 #f6f7fa);
+}
+
+QPushButton:hover {
+      background-color: rgb(211, 215, 207);
+ }
+
+  QPushButton:flat {
+      border: none; /* no border for a flat push button */
+  }
+
+  QPushButton:default {
+      border-color: navy; /* make the default button prominent */
+  }</string>
+                       </property>
+                       <property name="text">
+                        <string>DP</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QFrame" name="horizontalFrame2_3">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>300</height>
+                     </size>
+                    </property>
+                    <property name="frameShape">
+                     <enum>QFrame::NoFrame</enum>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_7">
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QWidget" name="plotMatWidget_2" native="true">
+                       <property name="styleSheet">
+                        <string notr="true">background-color: rgb(255, 255, 255);</string>
                        </property>
                       </widget>
                      </item>
@@ -1427,25 +1459,6 @@ QPushButton:hover {
                      <property name="bottomMargin">
                       <number>0</number>
                      </property>
-                     <item>
-                      <widget class="MatplotlibWidget_special" name="grafico2" native="true">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="minimumSize">
-                        <size>
-                         <width>0</width>
-                         <height>300</height>
-                        </size>
-                       </property>
-                       <property name="styleSheet">
-                        <string notr="true">background-color: rgb(255, 255, 255);</string>
-                       </property>
-                      </widget>
-                     </item>
                     </layout>
                    </widget>
                   </item>
@@ -2767,7 +2780,7 @@ border-color: rgb(1, 34, 102);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1098</width>
+     <width>1114</width>
      <height>22</height>
     </rect>
    </property>
@@ -2884,14 +2897,6 @@ border-color: rgb(1, 34, 102);</string>
    </property>
   </action>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>MatplotlibWidget_special</class>
-   <extends>QWidget</extends>
-   <header location="global">isp/seismogramInspector/clases_mpl_pyqt</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources>
   <include location="../resources.qrc"/>
  </resources>

@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QGridLayout, QMa
 
 from isp import ROOT_DIR
 from isp.Gui.Frames import FilesView, BaseFrame
+from isp.Gui.Frames.qt_components import Pagination
 
 
 class MyMainWindow(QMainWindow):
@@ -31,6 +32,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     root = os.path.join(ROOT_DIR, "260", "RAW")
     main = MyMainWindow()
-    w = FilesView(root, main.form_widget)
+    # w = FilesView(root, main.form_widget)
+    w = Pagination(main.form_widget, 6)
     main.show()
     sys.exit(app.exec_())
