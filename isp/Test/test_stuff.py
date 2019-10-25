@@ -33,6 +33,9 @@ if __name__ == '__main__':
     root = os.path.join(ROOT_DIR, "260", "RAW")
     main = MyMainWindow()
     # w = FilesView(root, main.form_widget)
-    w = Pagination(main.form_widget, 6)
+    p = Pagination(main.form_widget, 6)
+    p.bind_onItemPerPageChange_callback(lambda v: print("Item per page changed to {}".format(v)))
+    p.bind_onPage_changed(lambda v: print("Page changed to {}".format(v)))
+
     main.show()
     sys.exit(app.exec_())
