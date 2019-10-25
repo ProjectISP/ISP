@@ -132,7 +132,7 @@ class Pagination(pw.QWidget, UiPaginationWidget):
 
     @property
     def number_of_pages(self):
-        return math.floor(self.__total_items / self.__items_per_page)
+        return math.ceil(self.__total_items / self.__items_per_page)
 
     @property
     def __current_page_roll(self):
