@@ -3,8 +3,7 @@ import os
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QGridLayout, QMainWindow, QPushButton
 
 from isp import ROOT_DIR
-from isp.Gui.Frames import FilesView, BaseFrame
-from isp.Gui.Frames.qt_components import Pagination
+from isp.Gui.Frames import FilesView, BaseFrame, Pagination, MessageDialog
 
 
 class MyMainWindow(QMainWindow):
@@ -33,9 +32,11 @@ if __name__ == '__main__':
     root = os.path.join(ROOT_DIR, "260", "RAW")
     main = MyMainWindow()
     # w = FilesView(root, main.form_widget)
-    p = Pagination(main.form_widget, 10)
-    p.bind_onItemPerPageChange_callback(lambda v: print("Item per page changed to {}".format(v)))
-    p.bind_onPage_changed(lambda v: print("Page changed to {}".format(v)))
-
+    # p = Pagination(main.form_widget, 50)
+    # p.bind_onItemPerPageChange_callback(lambda v: print("Item per page changed to {}".format(v)))
+    # p.bind_onPage_changed(lambda v: print("Page changed to {}".format(v)))
     main.show()
+    db = MessageDialog(main)
+    db.set_info_message("Hello")
+
     sys.exit(app.exec_())

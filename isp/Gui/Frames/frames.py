@@ -13,7 +13,7 @@ from scipy.signal import hilbert
 
 from isp import ROOT_DIR
 from isp.Gui import pw, pyc
-from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiSeismogramFrame, FilesView
+from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiSeismogramFrame, FilesView, MessageDialog
 from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
 from isp.Gui.Utils import on_double_click_matplot, embed_matplot_canvas
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
@@ -41,10 +41,16 @@ class Filters(Enum):
     HighPass = "highpass"
 
     def __eq__(self, other):
-        return self.value == other
+        if type(other) is str:
+            return self.value == other
+        else:
+            return self.value == other.value
 
     def __ne__(self, other):
-        return self.value != other
+        if type(other) is str:
+            return self.value != other
+        else:
+            return self.value != other.value
 
     @classmethod
     def get_filters(cls):
@@ -272,7 +278,9 @@ class SeismogramFrame(BaseFrame, UiSeismogramFrame):
         if MseedUtil.is_valid_mseed(self.file_selector.file_path):
             self.plot_seismogram(canvas)
         else:
-            print("No valid file to plot")
+            md = MessageDialog(self)
+            md.set_warning_message("The file {} is not a valid mseed. Please, choose a valid format".
+                                   format(self.file_selector.file_name))
 
     def onClick_select_directory(self):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value)

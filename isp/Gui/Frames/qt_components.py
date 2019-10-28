@@ -28,6 +28,7 @@ class FilesView(pw.QTreeView):
         super().__init__(parent)
 
         self.__file_path = None
+        self.__file_name = None
         self.__model = pw.QFileSystemModel()
         self.__model.setReadOnly(True)
 
@@ -53,18 +54,29 @@ class FilesView(pw.QTreeView):
     @property
     def file_path(self):
         """
-        Gets the full file path
+        Gets the full file path.
 
-        :return: A string containing the full path for the file
+        :return: A string containing the full path of the file
         """
         return self.__file_path
 
+    @property
+    def file_name(self):
+        """
+        Gets the file's name.
+
+        :return: A string containing the name of the file.
+        """
+        return self.__file_name
+
     def __onClick_file(self, index):
         self.__file_path = self.__model.filePath(index)
+        self.__file_name = self.__model.fileName(index)
 
     def __directoryLoaded(self, path):
         index = self.__model.index(0, 0, self.__parent_index)
         self.__file_path = self.__model.filePath(index)
+        self.__file_name = self.__model.fileName(index)
 
     def __rootPathChanged(self, root_path):
         """
@@ -187,15 +199,61 @@ class Pagination(pw.QWidget, UiPaginationWidget):
                 self.__onItemPerPageChange_callback(value)
 
     def bind_onPage_changed(self, func):
-        print(func)
-        if isinstance(func, FunctionType):
-            self.__onPageChange_callback = lambda v: func(v)
-        else:
+        if not isinstance(func, FunctionType):
             raise AttributeError("The parameter func must be a function")
+
+        self.__onPageChange_callback = lambda v: func(v)
 
     def bind_onItemPerPageChange_callback(self, func):
-        if isinstance(func, FunctionType):
-            self.__onItemPerPageChange_callback = lambda v: func(v)
-        else:
+        if not isinstance(func, FunctionType):
             raise AttributeError("The parameter func must be a function")
+        self.__onItemPerPageChange_callback = lambda v: func(v)
 
+
+class MessageDialog(pw.QMessageBox):
+
+    def __init__(self, parent):
+        super(MessageDialog, self).__init__(parent)
+        self.setParent(parent)
+
+        self.setWindowTitle("Message")
+        self.setStyleSheet("QLabel#qt_msgbox_informativelabel {min-width:300px; font-size: 16px;}"
+                           "QLabel#qt_msgbox_label {min-width:300px; font: bold 18px;}"
+                           "QPushButton{ background-color: rgb(85, 87, 83); border-style: outset; font: 12px;"
+                           "border-width: 1px; border-radius: 10px; border-color:rgb(211, 215, 207); "
+                           "padding: 2px; color:white}"
+                           "QPushButton:hover:pressed "
+                           "{ background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, "
+                           "stop: 0 #dadbde, stop: 1 #f6f7fa);} "
+                           "QPushButton:hover{background-color:rgb(211, 215, 207); color: black;}")
+
+        self.setStandardButtons(pw.QMessageBox.Ok)
+
+        self.accepted.connect(self.on_accepted)
+        self.rejected.connect(self.on_reject)
+        self.finished.connect(self.on_finished)
+
+        self.show()
+
+    def on_accepted(self):
+        pass
+
+    def on_reject(self):
+        pass
+
+    def on_finished(self):
+        pass
+
+    def __set_message(self, message: str, additional_msg: str, msg_type):
+        self.setIcon(msg_type)
+        self.setText(message)
+        self.setInformativeText(additional_msg)
+
+    def set_info_message(self, message: str):
+        self.__set_message("Info", message, pw.QMessageBox.Information)
+
+    def set_warning_message(self, message: str):
+        self.__set_message("Warning", message, pw.QMessageBox.Warning)
+
+    def set_error_message(self, message):
+        self.__set_message("Error", message, pw.QMessageBox.Critical)
