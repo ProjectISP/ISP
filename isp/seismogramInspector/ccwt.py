@@ -25,7 +25,7 @@ def ccwt(data, srate,fmin, fmax, wmin, wmax,tt, nf):
     :Central frequency of the Morlet Wavelet
     :param fmin: minimum frequency (in Hz)
     :param fmax: maximum frequency (in Hz)
-    :param nf: number of logarithmically spaced frequencies between fmin and
+    :param nf: number of logarithmically spaced frequencies between f_min and
 
     :return: time frequency representation of st, type numpy.ndarray of complex values, shape = (nf, len(st)).
     """

@@ -36,7 +36,7 @@ class EarthquakeLocation:
         for file in list_files:
             tr = ObspyUtil.get_tracer_from_file(file)
             stats = TracerStats.from_dict(tr.stats)
-            # Obs: after doing tr.detrend it add processing key to stats
+            # Obs: after doing trace.detrend it add processing key to stats
             tr.detrend(type="demean")
 
             data=tr.data

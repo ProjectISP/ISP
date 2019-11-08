@@ -1,5 +1,5 @@
 # Singleton/SingletonDecorator.py
-from isp.Gui.Frames import MainFrame, SeismogramFrame, EarthquakeAnalysisFrame
+from isp.Gui.Frames import MainFrame, TimeFrequencyFrame, EarthquakeAnalysisFrame
 
 
 class Singleton:
@@ -17,7 +17,7 @@ class Singleton:
 class Controller:
     def __init__(self):
         self.main_frame = None
-        self.seismogram_frame = None
+        self.time_frequency_frame = None
         self.earthquake_analysis_frame = None
 
     def open_main_window(self):
@@ -32,9 +32,9 @@ class Controller:
 
     def open_seismogram_window(self):
         # Start the ui designer
-        if not self.seismogram_frame:
-            self.seismogram_frame = SeismogramFrame()
-        self.seismogram_frame.show()
+        if not self.time_frequency_frame:
+            self.time_frequency_frame = TimeFrequencyFrame()
+        self.time_frequency_frame.show()
 
     def open_earthquake_window(self):
         # Start the ui designer

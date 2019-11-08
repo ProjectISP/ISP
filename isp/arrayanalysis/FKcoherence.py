@@ -121,7 +121,7 @@ def FKCoherence(path,path_coords,start,linf,lsup,slim,win_len,sinc,method):
     #WW=np.transpose(WW)
     for i in range(nr):
         tr=st[i]
-        #m[:,i]=(tr.data-np.mean(tr.data))*WW
+        #m[:,i]=(trace.data-np.mean(trace.data))*WW
         m[:,i]=(tr.data-np.mean(tr.data))
     pdata= np.transpose(m)   
     #####Coherence######
@@ -220,11 +220,11 @@ def FKCoherence(path,path_coords,start,linf,lsup,slim,win_len,sinc,method):
 #
 #start=735858.63442909
 #win_len=24
-#fmin=0.1
+#f_min=0.1
 #fmax=0.15
 #slim=0.3
 #sinc = 0.005
 #
-#FKCoherence(path,path_coords,start,fmin,fmax,slim,win_len,sinc)
+#FKCoherence(path,path_coords,start,f_min,fmax,slim,win_len,sinc)
 
 

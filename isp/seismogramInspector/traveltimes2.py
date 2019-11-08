@@ -17,7 +17,7 @@ def arrivals2(latevent,lonevent,depth,sta):
     latsta=station.loc[sta].Lat
     lonsta=station.loc[sta].Lon
     
-    #coord=gps2dist_azimuth(latevent, lonevent, latsta, lonsta, a=6378137.0, f=0.0033528106647474805)
+    #coord=gps2dist_azimuth(event_lat, event_lon, latsta, lonsta, a=6378137.0, f=0.0033528106647474805)
     coord=gps2dist_azimuth(36.0, -5, latsta, lonsta, a=6378137.0, f=0.0033528106647474805)
     dist=coord[0]/111180
     model = TauPyModel(model="iasp91")

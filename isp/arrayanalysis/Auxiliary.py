@@ -75,7 +75,7 @@ def get_envelope(path,t1,t2,fmin,fmax):
         samprate=tr.stats.sampling_rate
         tr.detrend()
         tr.taper(max_percentage=0.05)
-        #tr.filter('highpass', freq=1, corners=3, zerophase=True)
+        #trace.filter('highpass', freq=1, corners=3, zerophase=True)
         tr.filter('bandpass', freqmin=fmin, freqmax=fmax, corners=4, zerophase=True)
         data_envelope = obspy.signal.filter.envelope(tr.data)
         data_envelope=np.array(data_envelope)    

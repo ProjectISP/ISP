@@ -54,8 +54,8 @@ def FK(path,path_coords,stime,DT,fmin,fmax,slim,sres,win_len,win_frac):
     fs=1/delta
     stime=UTCDateTime(stime)
     etime=stime+DT
-    #stime=tr.stats.starttime+20
-    #etime=tr.stats.starttime+(4*60-20)
+    #stime=trace.stats.starttime+20
+    #etime=trace.stats.starttime+(4*60-20)
     
     print("Computing FK")
     kwargs = dict(
@@ -84,7 +84,7 @@ def FK(path,path_coords,stime,DT,fmin,fmax,slim,sres,win_len,win_frac):
     st.plot() 
     return   relpower,AZ,Slowness,T
         
-#relpower,AZ,Slowness,T=FK(path,fmin,fmax,slim,sres,win_len,win_frac)        
+#relpower,AZ,Slowness,T=FK(path,f_min,fmax,slim,sres,win_len,win_frac)        
         
         
         

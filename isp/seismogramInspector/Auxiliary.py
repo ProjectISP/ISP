@@ -29,11 +29,11 @@ def singleplot(path):
     st=read(path)
     print(st)
     st.plot(soutfile="SingleTrace")
-    #tr = st[0]
+    #trace = st[0]
     #fig = plt.figure()
     #ax = fig.add_subplot(1, 1, 1)
-    #ax.plot(tr.data)
-    #ax.plot(tr.times("matplotlib"), tr.data)
+    #ax.plot(trace.data)
+    #ax.plot(trace.times("matplotlib"), trace.data)
     #ax.xaxis_date()
     #fig.autofmt_xdate()
     
@@ -120,7 +120,7 @@ def get_envelope(path,t1,t2,fmin,fmax):
         samprate=tr.stats.sampling_rate
         tr.detrend()
         tr.taper(max_percentage=0.05)
-        #tr.filter('highpass', freq=1, corners=3, zerophase=True)
+        #trace.filter('highpass', freq=1, corners=3, zerophase=True)
         tr.filter('bandpass', freqmin=fmin, freqmax=fmax, corners=4, zerophase=True)
         data_envelope = obspy.signal.filter.envelope(tr.data)
         data_envelope=np.array(data_envelope)    
@@ -278,7 +278,7 @@ def rotate(tr1,tr2,deg1,deg2,start,dt,output,save=True):
     if save:
         st2.rotate(method="NE->RT",back_azimuth=deg2)
         for tr in st: 
-            #tr.write(output+"/"+tr.id+'.M'+year+day, format="MSEED") 
+            #trace.write(output+"/"+trace.id+'.M'+year+day, format="MSEED")
             tr.write(output+"/"+tr.id, format="MSEED")
   
     #########

@@ -49,7 +49,7 @@ def AP(t1,dt,trz,trn,tre,fmin,fmax,tw):
     incident_angle=out["incidence"]
     Planarity=out["planarity"]
     rectilinearity=out["rectilinearity"]
-    #TT=tr.times("matplotlib")
+    #TT=trace.times("matplotlib")
     N=len(t)
     
     tt=range(0,N)

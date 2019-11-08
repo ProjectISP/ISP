@@ -5,6 +5,7 @@ from obspy import read
 
 from isp import ROOT_DIR
 from isp.Structures.structures import TracerStats
+from isp.seismogramInspector.readNLLevent import getNLLinfo
 
 
 class TestTracerStats(TestCase):
@@ -29,3 +30,7 @@ class TestTracerStats(TestCase):
                 self.assertEqual(stats.get(k), trace_stat.to_dict().get(safe_key))
 
 
+    def test_getNLLinfo(self):
+        path = os.path.join(ROOT_DIR, "260", "Locations", "2015-09-17.hyp")
+        time, latitude, longitude, depth = getNLLinfo(path)
+        print(time, latitude, longitude, depth)

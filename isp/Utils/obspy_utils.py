@@ -1,8 +1,11 @@
 import os
 
-from obspy import Stream, read
+from obspy import Stream, read, Trace
 # noinspection PyProtectedMember
 from obspy.io.mseed.core import _is_mseed
+
+from isp.DataProcessing import Filters
+from isp.Structures.structures import TracerStats
 
 
 class ObspyUtil:
@@ -14,9 +17,43 @@ class ObspyUtil:
         return None
 
     @staticmethod
-    def get_tracer_from_file(file_path):
+    def get_tracer_from_file(file_path) -> Trace:
         st = read(file_path)
         return st[0]
+
+    @staticmethod
+    def get_stats(file_path):
+        tr = ObspyUtil.get_tracer_from_file(file_path)
+        stats = TracerStats.from_dict(tr.stats)
+        return stats
+
+    @staticmethod
+    def filter_trace(trace, trace_filter, f_min, f_max):
+        """
+        Filter a obspy Trace or Stream.
+        :param trace: The trace or stream to be filter.
+        :param trace_filter: The filter name or Filter enum, ie. Filter.BandPass or "bandpass".
+        :param f_min: The lower frequency.
+        :param f_max: The higher frequency.
+        :return: False if bad frequency filter, True otherwise.
+        """
+        if trace_filter != Filters.Default:
+            if not (f_max - f_min) > 0:
+                print("Bad filter frequencies")
+                return False
+
+            trace.taper(max_percentage=0.05, type="blackman")
+
+            if trace_filter == Filters.BandPass or trace_filter == Filters.BandStop:
+                trace.filter(trace_filter, freqmin=f_min, freqmax=f_max, corners=4, zerophase=True)
+
+            elif trace_filter == Filters.HighPass:
+                trace.filter(trace_filter, freq=f_min, corners=4, zerophase=True)
+
+            elif trace_filter == Filters.LowPass:
+                trace.filter(trace_filter, freq=f_max, corners=4, zerophase=True)
+
+        return True
 
 
 class MseedUtil:

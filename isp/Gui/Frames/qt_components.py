@@ -24,11 +24,13 @@ class ParentWidget:
 
 class FilesView(pw.QTreeView):
 
-    def __init__(self, root_path, parent=None):
+    def __init__(self, root_path, parent=None, on_change_file_callback=None):
         super().__init__(parent)
 
         self.__file_path = None
         self.__file_name = None
+        self.__on_change_file_callback = on_change_file_callback
+
         self.__model = pw.QFileSystemModel()
         self.__model.setReadOnly(True)
 
@@ -70,6 +72,9 @@ class FilesView(pw.QTreeView):
         return self.__file_name
 
     def __onClick_file(self, index):
+        if self.__file_path != self.__model.filePath(index) and self.__on_change_file_callback:
+            self.__on_change_file_callback(self.__model.filePath(index))
+
         self.__file_path = self.__model.filePath(index)
         self.__file_name = self.__model.fileName(index)
 
@@ -77,6 +82,8 @@ class FilesView(pw.QTreeView):
         index = self.__model.index(0, 0, self.__parent_index)
         self.__file_path = self.__model.filePath(index)
         self.__file_name = self.__model.fileName(index)
+        if self.__on_change_file_callback:
+            self.__on_change_file_callback(self.__model.filePath(index))
 
     def __rootPathChanged(self, root_path):
         """
@@ -147,6 +154,14 @@ class Pagination(pw.QWidget, UiPaginationWidget):
         return math.ceil(self.__total_items / self.__items_per_page)
 
     @property
+    def items_per_page(self):
+        return self.__items_per_page
+
+    @property
+    def current_page(self):
+        return self.__current_page
+
+    @property
     def __current_page_roll(self):
         return math.floor((self.__current_page - 1) / self.__num_of_page_btn)
 
@@ -156,6 +171,7 @@ class Pagination(pw.QWidget, UiPaginationWidget):
     def set_total_items(self, total_items: int):
         self.__total_items = total_items
         self.__number_of_pages = self.number_of_pages
+        self.__update_buttons()
 
     def __update_buttons(self):
         self.__deselect_buttons()
@@ -200,13 +216,15 @@ class Pagination(pw.QWidget, UiPaginationWidget):
 
     def bind_onPage_changed(self, func):
         if not isinstance(func, FunctionType):
-            raise AttributeError("The parameter func must be a function")
+            pass
+            # raise AttributeError("The parameter func must be a function")
 
         self.__onPageChange_callback = lambda v: func(v)
 
     def bind_onItemPerPageChange_callback(self, func):
         if not isinstance(func, FunctionType):
-            raise AttributeError("The parameter func must be a function")
+            pass
+            # raise AttributeError("The parameter func must be a function")
         self.__onItemPerPageChange_callback = lambda v: func(v)
 
 
@@ -217,6 +235,7 @@ class MessageDialog(pw.QMessageBox):
         self.setParent(parent)
 
         self.setWindowTitle("Message")
+        # style
         self.setStyleSheet("QLabel#qt_msgbox_informativelabel {min-width:300px; font-size: 16px;}"
                            "QLabel#qt_msgbox_label {min-width:300px; font: bold 18px;}"
                            "QPushButton{ background-color: rgb(85, 87, 83); border-style: outset; font: 12px;"
@@ -227,7 +246,9 @@ class MessageDialog(pw.QMessageBox):
                            "stop: 0 #dadbde, stop: 1 #f6f7fa);} "
                            "QPushButton:hover{background-color:rgb(211, 215, 207); color: black;}")
 
-        self.setStandardButtons(pw.QMessageBox.Ok)
+        # self.setStandardButtons(pw.QMessageBox.Ok | pw.QMessageBox.Close) # Example with two buttons
+        # self.setStandardButtons(pw.QMessageBox.NoButton) # Example with no buttons
+        self.setStandardButtons(pw.QMessageBox.Close)
 
         self.accepted.connect(self.on_accepted)
         self.rejected.connect(self.on_reject)
@@ -250,10 +271,31 @@ class MessageDialog(pw.QMessageBox):
         self.setInformativeText(additional_msg)
 
     def set_info_message(self, message: str):
+        """
+        Set an info message to the message dialog.
+
+        :param message: The message to be display.
+
+        :return:
+        """
         self.__set_message("Info", message, pw.QMessageBox.Information)
 
     def set_warning_message(self, message: str):
+        """
+        Set a warning message to the message dialog.
+
+        :param message: The message to be display.
+
+        :return:
+        """
         self.__set_message("Warning", message, pw.QMessageBox.Warning)
 
     def set_error_message(self, message):
+        """
+        Set an error message to the message dialog.
+
+        :param message: The message to be display.
+
+        :return:
+        """
         self.__set_message("Error", message, pw.QMessageBox.Critical)

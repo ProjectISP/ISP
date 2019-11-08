@@ -17,7 +17,7 @@
    <widget class="QWidget" name="widget" native="true">
     <property name="geometry">
      <rect>
-      <x>360</x>
+      <x>320</x>
       <y>50</y>
       <width>461</width>
       <height>571</height>
@@ -38,6 +38,16 @@
     </property>
     <property name="text">
      <string>PushButton</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="pagination_widget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>320</x>
+      <y>620</y>
+      <width>461</width>
+      <height>71</height>
+     </rect>
     </property>
    </widget>
   </widget>
