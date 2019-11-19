@@ -10,17 +10,21 @@
 
 from __future__ import unicode_literals
 
-# Make sure that we are using QT5
 import numpy
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.backend_bases import MouseButton, MouseEvent
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.colorbar import Colorbar
 from obspy import Stream
 
 from isp.Gui import pw, pyc
 from isp.Gui.Frames import BaseFrame
-from isp.Utils import ObspyUtil
+from isp.Utils import ObspyUtil, AsycTime
+
+
+# Make sure that we are using QT5
 
 
 class MatplotlibWidget(pw.QWidget):
@@ -54,6 +58,7 @@ class MatplotlibCanvas(FigureCanvas):
         self.axes = None
         self.__callback_on_double_click = None
         self.__callback_on_click = None
+        self.__cbar = None
 
         if not obj:
             fig = self.__construct_subplot(**kwargs)
@@ -81,7 +86,7 @@ class MatplotlibCanvas(FigureCanvas):
                                    pw.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
-        self.register_on_click()
+        self.__register_on_click()
 
     def __del__(self):
         print("disconnect")
@@ -91,7 +96,7 @@ class MatplotlibCanvas(FigureCanvas):
         nrows = kwargs.get("nrows") if "nrows" in kwargs.keys() else 1
         ncols = kwargs.get("ncols") if "ncols" in kwargs.keys() else 1
 
-        fig, self.axes = plt.subplots(nrows=nrows, ncols=ncols, sharex='all')
+        fig, self.axes = plt.subplots(nrows=nrows, ncols=ncols, sharex='all', constrained_layout=True)
         # make sure axes are always a np.array
         if type(self.axes) is not numpy.ndarray:
             self.axes = numpy.array([self.axes])
@@ -99,19 +104,39 @@ class MatplotlibCanvas(FigureCanvas):
 
         return fig
 
-    def register_on_click(self):
+    def __register_on_click(self):
         if not self.button_connection:
-            self.button_connection = self.mpl_connect('button_press_event', self.__on_click)
+            self.button_connection = self.mpl_connect('button_press_event', self.__on_click_event)
 
     def disconnect_click(self):
         if self.button_connection:
             self.mpl_disconnect(self.button_connection)
 
-    def __on_click(self, event):
-        if event.dblclick and event.button == 1:
-            self.__callback_on_double_click(event, self)
+    def __on_click_event(self, event: MouseEvent):
+        self.is_dlb_click = False
+        if event.dblclick and event.button == MouseButton.LEFT:
+            # On double click with left button.
+            self.is_dlb_click = True
+            if self.__callback_on_double_click:
+                self.__callback_on_double_click(event, self)
+
+        elif not event.dblclick and event.button == MouseButton.LEFT:
+            self.__on_click(event)
+
+    @AsycTime.async_wait(0.5)
+    def __on_click(self, event: MouseEvent):
+        if not self.is_dlb_click and event.button == MouseButton.LEFT:
+            print("Click")
+            if self.__callback_on_click:
+                self.__callback_on_click(event, self)
 
     def get_axe(self, index) -> Axes:
+        """
+        Get a matplotlib Axes of a subplot.
+
+        :param index: The axe index.
+        :return: A matplotlib Axes.
+        """
         return self.axes.item(index)
 
     def set_new_subplot(self, nrows, ncols):
@@ -123,9 +148,21 @@ class MatplotlibCanvas(FigureCanvas):
             ax.set_xlabel(value)
 
     def on_double_click(self, func):
+        """
+        Register a callback when double click the matplotlib canvas.
+
+        :param func: The callback function. Expect an event and canvas parameters.
+        :return:
+        """
         self.__callback_on_double_click = func
 
-    def onclick(self, func):
+    def on_click(self, func):
+        """
+        Register a callback when click the matplotlib canvas.
+
+        :param func: The callback function. Expect an event and canvas parameters.
+        :return:
+        """
         self.__callback_on_click = func
 
     def __plot(self, x, y, ax, clear_plot=True, **kwargs):
@@ -143,28 +180,64 @@ class MatplotlibCanvas(FigureCanvas):
             return None
 
     def plot(self, x, y, axes_index, clear_plot=True, **kwargs):
+        """
+        Wrapper for matplotlib plot.
+
+        :param x: x-axis data.
+        :param y: y-axis data.
+        :param axes_index: The subplot axes index.
+        :param clear_plot: True to clean plot, False to plot over.
+        :param kwargs: Valid Matplotlib kwargs for plot.
+        :return:
+        """
         if self.axes is not None:
             ax = self.get_axe(axes_index)
             return self.__plot(x, y, ax, clear_plot=clear_plot, **kwargs)
 
-    def plot_contour(self, x, y, z, axes_index, clear_plot=True, **kwargs):
+    def plot_contour(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
+        """
+        Wrapper for matplotlib contourf.
+
+        :param x: x-axis data.
+        :param y: y-axis data.
+        :param z: z-axis data.
+        :param axes_index: The subplot axes index.
+        :param clear_plot: True to clean plot, False to plot over.
+        :param show_colorbar: True to show colorbar, false otherwise.
+        :param kwargs: Valid Matplotlib kwargs for contourf.
+        :return:
+        """
         if self.axes is not None:
             ax = self.get_axe(axes_index)
             cmap = kwargs.pop('cmap', plt.get_cmap('jet'))
+            levels = kwargs.pop('levels', 100)
+            vmin = kwargs.pop('vmin', numpy.amin(z))
+            vmax = kwargs.pop('vmax', numpy.amax(z))
+            clabel = kwargs.pop('clabel', '')
             x_label = ax.get_xlabel()
             if clear_plot:
                 ax.cla()
-            ax.contourf(x, y, z, 100, cmap=cmap, **kwargs)
+            cs = ax.contourf(x, y, z, levels=levels, cmap=cmap, vmin=vmin, vmax=vmax, **kwargs)
+            cs.set_clim(vmin, vmax)
+            self.clear_color_bar()
+            if show_colorbar:
+                self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, extend='both', pad=0.0)
+                self.__cbar.ax.set_ylabel(clabel)
             ax.set_xlim(*self.get_xlim_from_data(ax, 0))
-            ax.set_ylim(*ax.get_ylim())
+            ax.set_ylim(*self.get_ylim_from_data(ax, 0))
             if x_label is not None and len(x_label) != 0:
                 self.set_xlabel(1, x_label)
         self.draw()
 
+    def clear_color_bar(self):
+        if self.__cbar:
+            self.__cbar.remove()
+
     @staticmethod
     def get_xlim_from_data(ax: Axes, offset=5):
         """
-        Compute the limit of the x-axis from the data with a default offset of 5%
+        Compute the limit of the x-axis from the data with a default offset of 5%.
+
         :param ax: The matplotlib axes.
         :param offset: Add an offset to the limit in %.
         :return: A tuple of (x_min, x_max).
@@ -177,7 +250,8 @@ class MatplotlibCanvas(FigureCanvas):
     @staticmethod
     def get_ylim_from_data(ax: Axes, offset=5):
         """
-        Compute the limit of the y-axis from the data with a default offset of 5%
+        Compute the limit of the y-axis from the data with a default offset of 5%.
+
         :param ax: The matplotlib axes.
         :param offset: Add an offset to the limit in %.
         :return: A tuple of (y_min, y_max).
@@ -188,6 +262,16 @@ class MatplotlibCanvas(FigureCanvas):
         return y_min, y_max
 
     def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, **kwargs):
+        """
+        Draw an arrow over the a plot.
+
+        :param x_pos: The position of the arrow
+        :param axe_index: The subplot axes index.
+        :param arrow_label: The label at the arrow.
+        :param draw_arrow: True if you want an arrow, false to draw just a line.
+        :param kwargs: Valid Matplotlib kwargs for plot.
+        :return:
+        """
 
         marker = kwargs.pop("marker", '|')
         markersize = kwargs.pop("markersize", 1000)
@@ -263,9 +347,9 @@ class MatplotlibFrame(BaseFrame):
 
     def about(self):
         pw.QMessageBox.about(self, "About",
-                                    """
-Copyright 2005 Florent Rougon, 2006 Darren Dale, 2015 Jens H Nielsen
-
-This program is a Qt5 application embedding matplotlib
-canvases and Obspy stream.""")
+                             """ 
+                             Copyright 2005 Florent Rougon, 2006 Darren Dale, 2015 Jens H Nielsen 
+                             
+                             This program is a Qt5 application embedding matplotlib 
+                             canvases and Obspy stream.""")
 

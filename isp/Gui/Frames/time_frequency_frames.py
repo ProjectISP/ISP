@@ -336,7 +336,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         mtspectrogram = MTspectrogram(self.file_selector.file_path, win, tbp, ntapers, f_min, f_max)
         x, y, log_spectrogram = mtspectrogram.compute_spectrogram(start_time=ts, end_time=te,
                                                                   trace_filter=self.filter_pick_bind.value)
-        canvas.plot_contour(x, y, log_spectrogram, axes_index=1, cmap=plt.get_cmap("YlOrRd"))
+        canvas.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",  cmap=plt.get_cmap("YlOrRd"))
 
 
 # =============================================== Old code ========================================================
