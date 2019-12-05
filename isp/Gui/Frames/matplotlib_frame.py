@@ -10,6 +10,8 @@
 
 from __future__ import unicode_literals
 
+import time
+
 import numpy
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
@@ -17,6 +19,7 @@ from matplotlib.backend_bases import MouseButton, MouseEvent
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.colorbar import Colorbar
+from matplotlib.figure import Figure
 from obspy import Stream
 
 from isp.Gui import pw, pyc
@@ -97,12 +100,15 @@ class MatplotlibCanvas(FigureCanvas):
         ncols = kwargs.get("ncols") if "ncols" in kwargs.keys() else 1
 
         fig, self.axes = plt.subplots(nrows=nrows, ncols=ncols, sharex='all', constrained_layout=True)
+        self.__flat_axes()
+
+        return fig
+
+    def __flat_axes(self):
         # make sure axes are always a np.array
         if type(self.axes) is not numpy.ndarray:
             self.axes = numpy.array([self.axes])
         self.axes = self.axes.flatten()
-
-        return fig
 
     def __register_on_click(self):
         if not self.button_connection:
@@ -139,13 +145,29 @@ class MatplotlibCanvas(FigureCanvas):
         """
         return self.axes.item(index)
 
+    def clear(self):
+        for ax in self.axes:
+            ax.cla()
+            self.draw()
+
     def set_new_subplot(self, nrows, ncols):
-        self.figure = self.__construct_subplot(nrows=nrows, ncols=ncols)
+        self.figure.clf()
+        plt.close(self.figure)
+        self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex='all')
+        self.__flat_axes()
+        self.draw()
 
     def set_xlabel(self, axe_index, value):
         ax = self.get_axe(axe_index)
         if ax:
             ax.set_xlabel(value)
+            self.draw()  # force to update label
+
+    def set_ylabel(self, axe_index, value):
+        ax = self.get_axe(axe_index)
+        if ax:
+            ax.set_ylabel(value)
+            self.draw()  # force to update label
 
     def on_double_click(self, func):
         """
@@ -282,10 +304,11 @@ class MatplotlibCanvas(FigureCanvas):
         arrowprops = None
         if draw_arrow:
             arrowprops = dict(facecolor=color, shrink=0.05)
-        annotate = ax.annotate(arrow_label, xy=(x_pos, 0), xytext=(0, -50), bbox=bbox, xycoords='data',
+        annotate = ax.annotate(arrow_label, xy=(x_pos, 0), xytext=(0, -30), bbox=bbox, xycoords='data',
                                textcoords='offset points', annotation_clip=True, arrowprops=arrowprops)
 
-        artist = self.plot(x_pos, 0, 0, clear_plot=False, marker=marker, markersize=markersize, color=color, **kwargs)
+        artist = self.plot(x_pos, 0, axe_index, clear_plot=False, marker=marker, markersize=markersize, color=color,
+                           **kwargs)
         if artist is None:
             print("Error")
             if annotate:

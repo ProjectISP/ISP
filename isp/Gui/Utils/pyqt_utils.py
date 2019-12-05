@@ -60,18 +60,20 @@ class BindPyqtObject(pyc.QObject):
     @value.setter
     def value(self, value):
         if self.__value != value:
-            self.__value = value
             self.__set_value(value)
-            if self.__callback_val_changed:
-                self.__callback_val_changed(value)
 
     @pyc.pyqtSlot(float)
     @pyc.pyqtSlot(int)
     @pyc.pyqtSlot(str)
     def __valueChanged(self, value):
-        self.value = value
+        self.__value = value
+        if self.__callback_val_changed:
+            self.__callback_val_changed(value)
 
     def set_valueChanged_callback(self, func):
         if func is not None:
             self.__callback_val_changed = lambda v: func(v)
+
+    def unblind_valueChanged(self):
+        self.__callback_val_changed = None
 

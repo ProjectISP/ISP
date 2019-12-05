@@ -2,9 +2,11 @@ import os
 from unittest import TestCase
 
 from obspy import read
+from obspy.io.xseed import Parser
 
 from isp import ROOT_DIR
-from isp.Structures.structures import TracerStats
+from isp.Structures.structures import TracerStats, StationsStats
+from isp.Utils import MseedUtil
 from isp.seismogramInspector.readNLLevent import getNLLinfo
 
 
@@ -34,3 +36,13 @@ class TestTracerStats(TestCase):
         path = os.path.join(ROOT_DIR, "260", "Locations", "2015-09-17.hyp")
         time, latitude, longitude, depth = getNLLinfo(path)
         print(time, latitude, longitude, depth)
+
+    def test_dataless(self):
+        dir_path = os.path.join(ROOT_DIR, "260", "dataless", "datalessOBS01.dlsv")
+        parser = Parser()
+        parser.read(dir_path)
+        station_blk = parser.stations[0][0]
+        station_dict = {"Name": station_blk.station_call_letters, "Lon": station_blk.longitude,
+                        "Lat": station_blk.latitude, "Depth": station_blk.elevation}
+        station_stats = StationsStats.from_dataless(dir_path)
+        self.assertDictEqual(station_dict, station_stats.to_dict())

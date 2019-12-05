@@ -12,7 +12,7 @@ from obspy.core import UTCDateTime
 from scipy.signal import hilbert
 
 from isp import ROOT_DIR
-from isp.DataProcessing import SeismogramAnalysis, Filters
+from isp.DataProcessing import SeismogramAnalysis, SeismogramData
 from isp.Gui import pw
 from isp.Exceptions import InvalidFile
 from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiTimeFrequencyFrame, FilesView, MessageDialog
@@ -20,7 +20,7 @@ from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
 from isp.Gui.Utils import on_double_click_matplot
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Structures.structures import TracerStats
-from isp.Utils import MseedUtil, ObspyUtil
+from isp.Utils import MseedUtil, ObspyUtil, Filters
 from isp.arrayanalysis.diccionary import dictionary
 from isp.seismogramInspector import diccionary
 from isp.seismogramInspector.Auxiliary import scan1, singleplot, allplot, spectrumelement, classic_sta_lta_py, \
@@ -226,9 +226,12 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             md.set_info_message(msg)
             raise InvalidFile(msg)
 
+    def filter_error_message(self, msg):
+        md = MessageDialog(self)
+        md.set_info_message(msg)
+
     def get_data(self):
 
-        import numpy as np
         from obspy.core import UTCDateTime
 
         filter_value = self.filter_pick_bind.value
@@ -236,26 +239,16 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         f_min = self.Freq1p1.value()
         f_max = self.Freq2p1.value()
 
-        # t1 = self.Dateplot1.text()
         t1 = self.start_time_bind.value
         t2 = float(self.secplot1.text())
 
         t1 = UTCDateTime(t1)
         t2 = t1 + t2
 
-        tr = self.trace
-        # check times
-        tr.trim(starttime=t1, endtime=t2)
-        tr.detrend(type="demean")
+        sd = SeismogramData.from_tracer(self.trace)
+        return sd.get_waveform(filter_error_callback=self.filter_error_message,
+                               filter_value=filter_value, f_min=f_min, f_max=f_max, start_time=t1, end_time=t2)
 
-        if not ObspyUtil.filter_trace(tr, filter_value, f_min, f_max):
-            md = MessageDialog(self)
-            md.set_info_message("Lower frequency {} must be smaller than Upper frequency {}".format(f_min, f_max))
-
-        y = tr.data
-        sample_rate = tr.stats.sampling_rate
-        t1 = np.arange(0, len(tr.data) / sample_rate, 1. / sample_rate)
-        return t1, y
 
     def get_time_window(self):
         t1 = self.start_time_bind.value

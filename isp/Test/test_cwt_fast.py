@@ -10,14 +10,15 @@ from pstats import Stats
 
 import numpy as np
 import obspy
-from matplotlib import pyplot as plt
-# from dask import delayed
-from obspy import read, UTCDateTime
-from obspy.signal.filter import highpass, lowpass
+from matplotlib import pyplot as plt, dates
+from obspy import read, UTCDateTime, Trace
+from obspy.signal.filter import highpass, lowpass, bandpass
 from obspy.signal.trigger import classic_sta_lta
 
 from isp import ROOT_DIR
+from isp.DataProcessing import ConvolveWavelet
 from isp.Utils import time_method
+from isp.c_lib import ccwt_cy
 
 
 def compute_atoms(npts, srate,fmin, fmax, wmin, wmax,tt, nf):
@@ -37,71 +38,49 @@ def compute_atoms(npts, srate,fmin, fmax, wmin, wmax,tt, nf):
     :return: time frequency representation of st, type numpy.ndarray of complex values, shape = (nf, len(st)).
     """
 
-    ##Wavelet parameters
+    # Wavelet parameters
     dt = 1/srate
-
-    #time = (np.arange(0, npts-1, 1))/srate
     frex = np.logspace(np.log10(fmin), np.log10(fmax), nf, base=10)  # Logarithmically space central frequencies
-    # print("Frequncies = ", np.shape(frex))
-    # print("Frequncies = ", frex)
     wtime = np.arange(-tt, tt+dt, dt)  # Kernel of the Mother Morlet Wavelet
-    half_wave = (len(wtime)-1)/2
-    nCycles=np.logspace(np.log10(wmin), np.log10(wmax), nf)
+    half_wave = (len(wtime) - 1)/2
+    n_cycles = np.logspace(np.log10(wmin), np.log10(wmax), nf)
 
-    ###FFT parameters
-    nKern = len(wtime)
+    # FFT parameters
+    n_kern = len(wtime)
+    n_conv = npts + n_kern
+    n_conv = 2 ** math.ceil(math.log2(n_conv))
 
-
-
-
-
-    nConv = npts+nKern
-
-    nConv=2**math.ceil(math.log2(nConv))
-    diff1=nConv-nKern
-    diff2=nConv-npts
-    #####Proyect#####
-    if (nConv % 2) == 0:
-       nConv2 = nConv/2 + 1
-    else:
-       nConv2 = (nConv+1)/2
-
-    nConv2=int(nConv2)
-    # tf = np.zeros((len(frex), nConv2))
-    # tf = np.transpose(tf)
-
-    ##loop over frequencies
-    tf = []
-    for fi in range(len(frex)):
-        ##Create the morlet wavelet and get its fft
-        s = nCycles[fi]/(2*np.pi*frex[fi])
-        #Normalize Factor
-        A = 1/(np.pi*s**2)**0.25
-        #complexsine = np.multiply(1j*2*(np.pi)*frex[fi],wtime))
-        #Gaussian = np.exp(-1*np.divide(np.power(wtime,2),2*s**2))
-        cmw = np.multiply(np.exp(np.multiply(1j*2*(np.pi)*frex[fi],wtime)),np.exp(-1*np.divide(np.power(wtime,2),2*s**2)))
+    # loop over frequencies
+    ba = []
+    for ii, fi in enumerate(frex):
+        # Create the Morlet wavelet and get its fft
+        s = n_cycles[ii]/(2*np.pi*fi)
+        # Normalize Factor
+        normalization = 1/(np.pi*s**2)**0.25
+        # Complex sine = np.multiply(1j*2*(np.pi)*frex[fi],wtime))
+        # Gaussian = np.exp(-1*np.divide(np.power(wtime,2),2*s**2))
+        cmw = np.multiply(np.exp(np.multiply(1j*2*np.pi*fi, wtime)), np.exp(-1*np.divide(np.power(wtime, 2), 2*s**2)))
         cmw = cmw.conjugate()
-        #Normalizing.The square root term causes the wavelet to be normalized to have an energy (squared integral) of 1.
-        cmw = A*cmw
+        # Normalizing. The square root term causes the wavelet to be normalized to have an energy of 1.
+        cmw = normalization * cmw
         cmw = np.real(cmw)
-        #Calculate the fft of the "atom"
-        cmwX = np.fft.rfft(cmw, nConv)
+        # Calculate the fft of the "atom"
+        cmw_fft = np.fft.rfft(cmw, n_conv)
 
-        #Convolution
-        # tf[fi, :] = cmwX
-        tf.append(cmwX)
+        # Convolution
+        ba.append(cmw_fft)
 
-    tf = np.asarray(tf)
+    ba = np.asarray(ba)
 
-    return tf, nConv, frex, half_wave
+    return ba, n_conv, frex, half_wave
 
 
 def ccwt_ifft(data, n, half_wave, npts):
-    # t0 = time.time()
     cwt = np.fft.irfft(data, n=n)
+    cwt = cwt - np.mean(cwt)
     d = np.diff(np.log10(np.abs(cwt[int(half_wave + 1):npts + int(half_wave + 1)])))
-    # print("I took: ", time.time() - t0, " s to finish")
     return d
+
 
 def get_nproc():
     total_cpu = multiprocessing.cpu_count()
@@ -112,44 +91,28 @@ def get_nproc():
 
 def ccwt_ba_fast(data, param: tuple, parallel=False):
     ba, nConv, frex, half_wave = param
-    t0 = time.time()
     npts = len(data)
-    # print("Data size: ", npts)
-    # print("nConv: ", nConv)
 
-    ##FFT data
+    # FFT data
     data_fft = np.fft.rfft(data, n=nConv)
-
-    ba = np.real(ba)
-    data_fft = np.real(data_fft)
-    # Should u remove the mean value of FFT to remove 0 frequencies ?
-    # print(np.mean(data_fft))
-    # data_fft = data_fft - np.mean(data_fft)
+    data_fft = data_fft - np.mean(data_fft)
     m = np.multiply(ba, data_fft)
-    print("Before: ", time.time() - t0)
 
-    t0 = time.time()
     parallel = parallel if len(frex) > 1 else False
     if parallel:
         nproc = get_nproc()
         nproc = min(nproc, len(frex))
-        print("Process: ", nproc)
         pool = ThreadPool(processes=nproc)
-        # results = pool.map_async(partial(ccwt_ifft, n=nConv, half_wave=half_wave, npts=npts), [row for row in m])
         results = [pool.apply_async(ccwt_ifft, args=(row, nConv, half_wave, npts)) for row in m]
         tf = [p.get() for p in results]
         pool.close()
-        # pool.join()
     else:
         tf = []
         for row in m:
             tf.append(ccwt_ifft(row, nConv, half_wave, npts))
-    print("Ifft: ", time.time() - t0)
 
-    t0 = time.time()
     tf = np.asarray(tf)  # convert to array
-    sc = np.sum(tf, axis=0, dtype=np.float64)
-    print("After: ", time.time() - t0)
+    sc = np.mean(tf, axis=0, dtype=np.float64)
 
     return sc
 
@@ -170,7 +133,7 @@ def wrap_envelope(data, srate):
 
 def sta_lta(data,sampling_rate, sta, lta):
 
-    data=highpass(data, 0.5, 50, corners=3,zerophase=True)
+    data = highpass(data, 0.5, 50, corners=3,zerophase=True)
     cft = classic_sta_lta(data, int(1 * sampling_rate), int(40 * sampling_rate))
     return cft
 
@@ -181,23 +144,24 @@ def f(x):
 
 def get_pick_time(data, sampling_rate, start_time):
     max_index = np.argmax(data)
+    print(max_index)
     time_s = max_index / sampling_rate
     if type(start_time) == str:
         start_time = UTCDateTime(start_time)
-    time = start_time + time_s
-    return time
+    event_time = start_time + time_s + 6./(2.*2.*np.pi*2.)
+    return event_time
 
 
 def print_result(x):
     print(x)
 
 
-def get_data(hours, chop_data=True, nf=40):
-    wmin = 5
-    wmax = 5
-    tt = 2
-    fmin = 2
-    fmax = 12
+def get_data(hours, chop_data=True, nf=20):
+    wmin = 6.
+    wmax = 6.
+    tt = 2.
+    fmin = 2.
+    fmax = 12.
 
     file_path = os.path.join(ROOT_DIR, "260", "RAW", "WM.OBS01..SHZ.D.2015.260")
     st = read(file_path)
@@ -208,6 +172,7 @@ def get_data(hours, chop_data=True, nf=40):
         span = hours * 3600
         st = read(file_path, starttime=start_time, endtime=start_time + span)
         tr = st[0]
+        tr.detrend(type='demean')
         tr.taper(max_percentage=0.05)
         tr.filter('bandpass', freqmin=0.5, freqmax=14, corners=3, zerophase=True)
         data = tr.data
@@ -219,7 +184,7 @@ def get_data(hours, chop_data=True, nf=40):
     delta_t = .5
     n = int(hours / delta_t)
     npts = int(sampling_rate * delta_t * 3600)
-    atoms = compute_atoms(npts, sampling_rate, fmin, fmax, wmin, wmax, tt, nf)
+    atoms = ccwt_cy.compute_atoms(npts, sampling_rate, fmin, fmax, wmin, wmax, tt, nf)
 
     data_set = []
 
@@ -227,10 +192,13 @@ def get_data(hours, chop_data=True, nf=40):
         dt = h * 3600 * delta_t
         dt2 = (h + 1) * 3600 * delta_t
         st = read(file_path, starttime=start_time + dt, endtime=start_time + dt2)
-        tr = st[0]
-        tr.taper(max_percentage=0.05)
-        tr.filter('bandpass', freqmin=0.5, freqmax=14, corners=3, zerophase=True)
-        data_set.append(tr.data)
+        # print(npts, st[0].stats.npts)
+        if st:
+            tr = st[0]
+            tr.detrend(type='demean')
+            tr.taper(max_percentage=0.05)
+            # tr.filter('bandpass', freqmin=0.5, freqmax=14, corners=3, zerophase=True)
+            data_set.append(tr.data)
 
     return data_set, atoms
 
@@ -238,8 +206,8 @@ def get_data(hours, chop_data=True, nf=40):
 class TestCWUT(unittest.TestCase):
 
     def setUp(self):
-        self.hours = 22
-        self.data_set, self.atoms = get_data(self.hours, False)
+        self.hours = 26
+        self.data_set, self.atoms = get_data(self.hours, True)
         self.pr = cProfile.Profile()
         self.pr.enable()
 
@@ -250,17 +218,94 @@ class TestCWUT(unittest.TestCase):
         p.sort_stats('cumtime')
         p.print_stats()
 
+    def test_plot_picks(self):
+        file_path = os.path.join("/media/junqueira/DATA/Eva_geysir", "VI.G1..HHZ.2017.349.mseed")
+        cw = ConvolveWavelet(file_path, fmin=4., fmax=40., nf=50, chop_data=False)
+        sc = cw.ccwt_ba_fast()
+
+
+        file_path = os.path.join("/media/junqueira/DATA/Eva_geysir", "2017_12_15_eruption_picks.txt")
+        pick_times = []
+        with open(file_path, "r") as file:
+            lines = file.readlines()
+            for line in lines:
+                split_line = line.split()
+                time_str = "{} {}".format(split_line[0], split_line[1])
+                pick_times.append(UTCDateTime(time_str).matplotlib_date)
+
+        fig, ax = plt.subplots()
+        ax.plot_date(pick_times, np.ones(len(pick_times)))
+        for sig in [3., 4., 5.]:
+            auto_pick = cw.detect_picks_in_time(sc, sig)
+            auto_pick = [t.matplotlib_date for t in auto_pick]
+            ax.plot_date(auto_pick, sig * np.ones(len(auto_pick)))
+
+        fig.autofmt_xdate()
+        plt.show()
+
+
+
+
+    def test_cwt_class(self):
+        # file_path = os.path.join(ROOT_DIR, "260", "RAW", "WM.OBS01..SHZ.D.2015.260")
+        file_path = os.path.join("/media/junqueira/DATA/Eva_geysir", "VI.G1..HHZ.2017.349.mseed")
+        st = read(file_path)
+        tr = st[0]
+        tr.taper(max_percentage=0.01)
+        wf = tr.data
+        wf = bandpass(wf, freqmin=4, freqmax=12, df=200, corners=3, zerophase=True)
+        wf /= np.amax(wf)
+        cw = ConvolveWavelet(file_path, fmin=4., fmax=40., nf=50, chop_data=False)
+        print(cw)
+        t0 = time.time()
+        data = cw.ccwt_ba_fast()
+        print(time.time() - t0)
+        data /= np.amax(data)
+        n_0 = (15 * 3600 + 10 * 60) * 50
+        n_f = (15 * 3600 + 10 * 60 + 240) * 50
+        print("Max value at index: ", np.argmax(data[n_0:n_f]))
+        # print("Max value at time: ", get_pick_time(data, 50., "2015-09-17T00:00:27.840000Z"))
+        print("Max value at time: ", cw.detect_max_pick_in_time(data))
+        print("Max values at time: ", cw.detect_picks_in_time(data, sigmas=5))
+        sigma = np.sqrt(np.var(data))
+        s_p = np.zeros(shape=len(data))
+        s_p[:] = 5 * sigma
+        plt.plot(data)
+        plt.plot(wf)
+        plt.plot(s_p)
+        plt.plot(-1*s_p)
+        for indx in cw.detect_picks(data, 5):
+            plt.axvline(indx, color="green")
+        plt.show()
+
     # @time_method(loop=1)
     def test_treading_fft(self):
+        from scipy.signal import sosfilt, iirfilter
+
         t0 = time.time()
-        with ThreadPool() as pool:
-            ro = pool.map(partial(ccwt_ba_fast, param=self.atoms), self.data_set)
-        data = np.concatenate(ro)
+        with ThreadPool(10) as pool:
+            ro = pool.map(partial(ccwt_cy.ccwt_ba_fast, param=self.atoms), self.data_set)
+
+        data = np.array([])
+        for r in ro:
+            tr = Trace(r)
+            tr.taper(max_percentage=0.05)
+            data = np.concatenate((data, tr.data))
         print(time.time() - t0)
-        data = lowpass(data, 0.1, 50, corners=3, zerophase=True)
-        n_0 = (15*3600+10*60)*50
-        n_f = (15*3600+10*60 + 240)*50
+        sos = iirfilter(4, 0.1, btype='low', ftype='butter', fs=50, output='sos')
+        data3 = sosfilt(sos, data)
+        data2 = lowpass(data, 0.1, df=50, corners=3, zerophase=False)
+        data = lowpass(data, 0.1, df=50, corners=3, zerophase=True)
+        n_0 = (15 * 3600 + 10 * 60) * 50
+        n_f = (15 * 3600 + 10 * 60 + 240) * 50
+        # print("Max value at index: ", np.argmax(data2[n_0:n_f]))
+        print("Max value at index: ", np.argmax(data[n_0:n_f]))
+        # print("Max value at time: ", get_pick_time(data2, 50., "2015-09-17T00:00:27.840000Z"))
+        # print("Max value at time: ", get_pick_time(data3, 50., "2015-09-17T00:00:27.840000Z"))
+        print("Max value at time: ", get_pick_time(data, 50., "2015-09-17T00:00:27.840000Z"))
         plt.plot(data)
+        # plt.plot(data2)
+        # plt.plot(data3[n_0:n_f])
         plt.show()
 
     @time_method(loop=1)
@@ -298,16 +343,15 @@ class TestCWUT(unittest.TestCase):
         n_f = (15 * 3600 + 10 * 60 + 240) * 50
         print("Max value at index: ",  np.argmax(data[n_0:n_f]))
         print("Max value at time: ", get_pick_time(data, 50., "2015-09-17T00:00:27.840000Z"))
-        plt.plot(data[n_0:n_f])
+        plt.plot(data)
         plt.show()
-
 
     # @time_method(loop=1)
     def test_cwt2(self):
         output = []
         t0 = time.time()
         for data in self.data_set:
-            sc = ccwt_ba_fast(data, self.atoms, parallel=True)
+            sc = ccwt_ba_fast(data, self.atoms, parallel=False)
             output.append(sc)
 
         data = np.concatenate(output)
@@ -394,6 +438,31 @@ class TestCWUT(unittest.TestCase):
         plt.plot(range(1, len(max_index) + 1), max_index, 'o')
         plt.plot(range(1, len(max_index) + 1), max_index, '--')
         plt.show()
+
+    def test_scipy_cwt(self):
+        from scipy import signal
+
+        dt = 1. / 50.
+        frex = np.logspace(np.log10(2), np.log10(12), 20, base=10)  # Logarithmically space central frequencies
+        data, atoms = get_data(22, chop_data=False)
+        # cwtmatr = ccwt_ba_fast(data, atoms, parallel=True)
+        widths = np.arange(-2, 2 + dt, dt)  # Kernel of the Mother Morlet Wavelet
+        output = np.zeros([len(frex), len(data) - 1])
+        half_wave = (len(widths) - 1) / 2
+        length = len(widths)
+        for ii, f in enumerate(frex):
+            s = 5 / (2 * np.pi * f)
+            conv = signal.convolve(data, signal.morlet(length, 5, s, complete=False), mode='same')
+            d = np.diff(np.log10(np.abs(conv)))
+            output[ii, :] = d
+
+        cwtmatr = output
+        sc = np.mean(cwtmatr, axis=0, dtype=np.float64)
+        data = lowpass(sc, 0.1, df=50, corners=3, zerophase=True)
+        plt.plot(data)
+        # plt.imshow(cwtmatr, cmap='PRGn', aspect='auto', vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max())
+        plt.show()
+
 
 if __name__ == '__main__':
     cProfile.run('slow()')

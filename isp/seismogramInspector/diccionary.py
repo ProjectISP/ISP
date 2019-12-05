@@ -18,7 +18,7 @@ def dictionary(x1,y1,sta,P_phase):
     
     
     ##Leer plantilla
-    out=pd.read_csv("output.txt",sep=" ",index_col=None,nrows=None)
+    out=pd.read_csv("output.txt", sep=" ", index_col=None,nrows=None)
     try:
         out=out.drop(columns='Unnamed: 0')
     

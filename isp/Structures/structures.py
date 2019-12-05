@@ -2,6 +2,7 @@ import traceback
 from typing import NamedTuple
 
 from obspy import UTCDateTime
+from obspy.io.xseed import Parser
 
 from isp import app_logger
 
@@ -86,4 +87,45 @@ class TracerStats(NamedTuple):
             print(error)
             app_logger.error(traceback.format_exc())
             raise Exception
+
+
+class StationsStats(NamedTuple):
+    """
+    Class that holds a structure of mseed metadata.
+    Fields:
+        * Name = (string) Station name.
+        * Lon = (string) Longitude of station.
+        * Lat = (string) Latitude of station.
+        * Depth = (float) Depth of station.
+    """
+    Name: str = None
+    Lon: float = None
+    Lat: float = None
+    Depth: float = None
+
+    def to_dict(self):
+        return self._asdict()
+
+    # noinspection PyTypeChecker
+    @classmethod
+    def from_dict(cls, dictionary):
+        try:
+            from isp.Structures.obspy_stats_keys import ObspyStatsKeys
+            new_d = validate_dictionary(cls, dictionary)
+            return cls(**new_d)
+
+        except Exception as error:
+            print(error)
+            app_logger.error(traceback.format_exc())
+            raise Exception
+
+    @classmethod
+    def from_dataless(cls, file_path):
+        parser = Parser()
+        parser.read(file_path)
+        # inventory = parser.get_inventory()
+        station_blk = parser.stations[0][0]
+        station_dict = {"Name": station_blk.station_call_letters, "Lon": station_blk.longitude,
+                        "Lat": station_blk.latitude, "Depth": station_blk.elevation}
+        return cls(**station_dict)
 

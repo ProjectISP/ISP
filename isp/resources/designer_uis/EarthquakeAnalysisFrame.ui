@@ -6,57 +6,677 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>865</width>
-    <height>789</height>
+    <width>1069</width>
+    <height>904</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="widget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>320</x>
-      <y>50</y>
-      <width>461</width>
-      <height>571</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgb(255, 255, 255);</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="test1Button">
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>100</y>
-      <width>113</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>PushButton</string>
-    </property>
-   </widget>
-   <widget class="QWidget" name="pagination_widget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>320</x>
-      <y>620</y>
-      <width>461</width>
-      <height>71</height>
-     </rect>
-    </property>
-   </widget>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Pick event</string>
+       </attribute>
+       <widget class="QWidget" name="plotMatWidget" native="true">
+        <property name="geometry">
+         <rect>
+          <x>30</x>
+          <y>240</y>
+          <width>1011</width>
+          <height>491</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QWidget{
+	background-color: rgb(255, 255, 255);
+}</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_5"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="pagination_widget" native="true">
+        <property name="geometry">
+         <rect>
+          <x>590</x>
+          <y>740</y>
+          <width>451</width>
+          <height>71</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QWidget{
+	background-color: rgb(255, 255, 255);
+}</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_3"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QLineEdit" name="rootPathForm">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>20</y>
+          <width>281</width>
+          <height>25</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="sortBtn">
+        <property name="geometry">
+         <rect>
+          <x>130</x>
+          <y>90</y>
+          <width>89</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Sort</string>
+        </property>
+       </widget>
+       <widget class="QGroupBox" name="groupBox">
+        <property name="geometry">
+         <rect>
+          <x>700</x>
+          <y>20</y>
+          <width>331</width>
+          <height>191</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Event info</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="5" column="0" colspan="2">
+          <widget class="QDateTimeEdit" name="dateTimeEdit">
+           <property name="currentSection">
+            <enum>QDateTimeEdit::YearSection</enum>
+           </property>
+           <property name="displayFormat">
+            <string>yyyy/M/d h:mm:ss UTC</string>
+           </property>
+           <property name="calendarPopup">
+            <bool>true</bool>
+           </property>
+           <property name="timeSpec">
+            <enum>Qt::LocalTime</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Latitude</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Depth</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QLineEdit" name="lineEdit_3"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLineEdit" name="lineEdit"/>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="lineEdit_2"/>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Longitude</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="checkBox">
+           <property name="text">
+            <string>Use event</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Origin time</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QDateTimeEdit" name="dateTimeEdit_2">
+        <property name="geometry">
+         <rect>
+          <x>40</x>
+          <y>130</y>
+          <width>203</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <property name="currentSection">
+         <enum>QDateTimeEdit::YearSection</enum>
+        </property>
+        <property name="displayFormat">
+         <string>yyyy/M/d h:mm:ss UTC</string>
+        </property>
+        <property name="calendarPopup">
+         <bool>true</bool>
+        </property>
+        <property name="timeSpec">
+         <enum>Qt::LocalTime</enum>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_4">
+        <property name="geometry">
+         <rect>
+          <x>150</x>
+          <y>180</y>
+          <width>89</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Map</string>
+        </property>
+       </widget>
+       <widget class="QGroupBox" name="groupBox_2">
+        <property name="geometry">
+         <rect>
+          <x>460</x>
+          <y>20</y>
+          <width>241</width>
+          <height>191</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Filter</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="3" column="1">
+          <widget class="QDoubleSpinBox" name="Freq2p1">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="decimals">
+            <number>3</number>
+           </property>
+           <property name="minimum">
+            <double>0.001000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>10000.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>12.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Lower Freq</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QComboBox" name="comboBox_2">
+           <item>
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Bandpass</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Lowpass</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>N Poles</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Upper Freq</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QDoubleSpinBox" name="Freq1p1">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="decimals">
+            <number>3</number>
+           </property>
+           <property name="minimum">
+            <double>0.001000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>10000.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.500000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="checkBox_2">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Zero Phase</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+           <property name="tristate">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="spinBox">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>6</number>
+           </property>
+           <property name="value">
+            <number>3</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPushButton" name="pushButton_3">
+        <property name="geometry">
+         <rect>
+          <x>40</x>
+          <y>180</y>
+          <width>89</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Locate</string>
+        </property>
+       </widget>
+       <widget class="QDateTimeEdit" name="dateTimeEdit_3">
+        <property name="geometry">
+         <rect>
+          <x>250</x>
+          <y>130</y>
+          <width>203</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <property name="currentSection">
+         <enum>QDateTimeEdit::YearSection</enum>
+        </property>
+        <property name="displayFormat">
+         <string>yyyy/M/d h:mm:ss UTC</string>
+        </property>
+        <property name="calendarPopup">
+         <bool>true</bool>
+        </property>
+        <property name="timeSpec">
+         <enum>Qt::LocalTime</enum>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="comboBox">
+        <property name="geometry">
+         <rect>
+          <x>40</x>
+          <y>90</y>
+          <width>86</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <item>
+         <property name="text">
+          <string>Distance</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Back Azimuth</string>
+         </property>
+        </item>
+       </widget>
+       <widget class="QPushButton" name="selectDirBtn">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>20</y>
+          <width>89</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Load path</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="selectDatalessDirBtn">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>60</y>
+          <width>89</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Load path</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="datalessPathForm">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>60</y>
+          <width>281</width>
+          <height>25</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>3C Analysis</string>
+       </attribute>
+       <widget class="QPushButton" name="pushButton_5">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>89</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Load files</string>
+        </property>
+       </widget>
+       <widget class="QGroupBox" name="groupBox_3">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>50</y>
+          <width>231</width>
+          <height>181</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Filter</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="3" column="1">
+          <widget class="QDoubleSpinBox" name="Freq2p1_2">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="decimals">
+            <number>3</number>
+           </property>
+           <property name="minimum">
+            <double>0.001000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>10000.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>12.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Lower Freq</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QComboBox" name="comboBox_3">
+           <item>
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Bandpass</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Lowpass</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>N Poles</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>Upper Freq</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QDoubleSpinBox" name="Freq1p1_2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 255, 255);</string>
+           </property>
+           <property name="decimals">
+            <number>3</number>
+           </property>
+           <property name="minimum">
+            <double>0.001000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>10000.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.500000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="checkBox_3">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Zero Phase</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+           <property name="tristate">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="spinBox_2">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>6</number>
+           </property>
+           <property name="value">
+            <number>3</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="widget_3" native="true">
+        <property name="geometry">
+         <rect>
+          <x>250</x>
+          <y>60</y>
+          <width>761</width>
+          <height>721</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QWidget{
+	background-color: rgb(255, 255, 255);
+}</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_5">
+        <property name="geometry">
+         <rect>
+          <x>110</x>
+          <y>10</y>
+          <width>431</width>
+          <height>25</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_6">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>260</y>
+          <width>89</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Rotate</string>
+        </property>
+       </widget>
+       <widget class="QDoubleSpinBox" name="doubleSpinBox">
+        <property name="geometry">
+         <rect>
+          <x>110</x>
+          <y>260</y>
+          <width>69</width>
+          <height>26</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QDateTimeEdit" name="dateTimeEdit_4">
+        <property name="geometry">
+         <rect>
+          <x>790</x>
+          <y>10</y>
+          <width>203</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <property name="currentSection">
+         <enum>QDateTimeEdit::YearSection</enum>
+        </property>
+        <property name="displayFormat">
+         <string>yyyy/M/d h:mm:ss UTC</string>
+        </property>
+        <property name="calendarPopup">
+         <bool>true</bool>
+        </property>
+        <property name="timeSpec">
+         <enum>Qt::LocalTime</enum>
+        </property>
+       </widget>
+       <widget class="QDateTimeEdit" name="dateTimeEdit_5">
+        <property name="geometry">
+         <rect>
+          <x>560</x>
+          <y>10</y>
+          <width>203</width>
+          <height>26</height>
+         </rect>
+        </property>
+        <property name="currentSection">
+         <enum>QDateTimeEdit::YearSection</enum>
+        </property>
+        <property name="displayFormat">
+         <string>yyyy/M/d h:mm:ss UTC</string>
+        </property>
+        <property name="calendarPopup">
+         <bool>true</bool>
+        </property>
+        <property name="timeSpec">
+         <enum>Qt::LocalTime</enum>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>865</width>
+     <width>1069</width>
      <height>22</height>
     </rect>
    </property>
