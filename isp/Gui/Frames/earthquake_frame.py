@@ -1,15 +1,12 @@
-import os
-
 from obspy.geodetics import gps2dist_azimuth
 
-from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramData, DatalessManager
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog
 from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
-from isp.Structures.structures import StationsStats
-from isp.Utils import MseedUtil
+from isp.Utils import MseedUtil, ObspyUtil
+from isp.earthquakeAnalisysis import PickerManager
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
@@ -41,6 +38,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.sortBtn.clicked.connect(self.on_click_sort)
 
+        self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
+
     @property
     def dataless_manager(self):
         if not self.__dataless_manager:
@@ -62,6 +61,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         n_0 = (self.pagination.current_page - 1) * self.pagination.items_per_page
         n_f = n_0 + self.pagination.items_per_page
         return self.files[n_0:n_f]
+
+    def get_file_at_index(self, index):
+        files_at_page = self.get_files_at_page()
+        return files_at_page[index]
 
     def onChange_page(self, page):
         self.plot_seismogram()
@@ -129,5 +132,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             click_at_index = event.inaxes.rowNum
             x1, y1 = event.xdata, event.ydata
             canvas.draw_arrow(x1, click_at_index, phase)
+            stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
+            t = stats.StartTime + x1
+            self.pm.add_data(t, 0, stats.Station, phase)
+            self.pm.save()
 
 

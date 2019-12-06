@@ -7,19 +7,18 @@ import pandas as pd
 from PyQt5.QtCore import pyqtSlot
 from matplotlib.colorbar import ColorbarBase
 from matplotlib.colors import Normalize
-from obspy import read, Stream, Trace
+from obspy import read
 from obspy.core import UTCDateTime
 from scipy.signal import hilbert
 
 from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramAnalysis, SeismogramData
-from isp.Gui import pw
 from isp.Exceptions import InvalidFile
+from isp.Gui import pw
 from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiTimeFrequencyFrame, FilesView, MessageDialog
 from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
 from isp.Gui.Utils import on_double_click_matplot
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
-from isp.Structures.structures import TracerStats
 from isp.Utils import MseedUtil, ObspyUtil, Filters
 from isp.arrayanalysis.diccionary import dictionary
 from isp.seismogramInspector import diccionary
@@ -165,26 +164,6 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         # Add file selector to the widget
         self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget,
                                        on_change_file_callback=lambda file_path: self.onChange_file(file_path))
-
-        try:
-            os.remove("output.txt")
-        except (FileNotFoundError, PermissionError):
-            pass
-
-        lst = {'Station_name': ["Sta"], 'Instrument': ["Instr"], 'Component': ["Comp"], 'P_phase_onset': ["Pho"],
-
-               'P_phase_descriptor': ["P_phase"], 'First_Motion': ["First_Motion"], 'Date': ["Date"],
-               'Hour_min': ["Hour"], 'Seconds': ["Seconds"],
-               'Err': ["Err"], 'Coda_duration': ["Coda"], 'Amplitude': ["Ampl"], 'Period': ["Period"],
-               'PriorWt': ["PriorWt"]}
-
-        df = pd.DataFrame(lst,
-                          columns=['Station_name', 'Instrument', 'Component', 'P_phase_onset', 'P_phase_descriptor',
-                                   'First_Motion', 'Date', 'Hour_min'
-                                                           'Seconds', 'Err', 'Coda_duration', 'Amplitude', 'Period',
-                                   'PriorWt'])
-
-        df.to_csv('output.txt', sep=" ", index=True)
 
     @pyqtSlot(float)
     @pyqtSlot(str)

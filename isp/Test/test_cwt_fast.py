@@ -220,7 +220,7 @@ class TestCWUT(unittest.TestCase):
 
     def test_plot_picks(self):
         file_path = os.path.join("/media/junqueira/DATA/Eva_geysir", "VI.G1..HHZ.2017.349.mseed")
-        cw = ConvolveWavelet(file_path, fmin=4., fmax=40., nf=50, chop_data=False)
+        cw = ConvolveWavelet(file_path, fmin=4., fmax=40., nf=40, chop_data=False)
         sc = cw.ccwt_ba_fast()
 
 
@@ -232,12 +232,17 @@ class TestCWUT(unittest.TestCase):
                 split_line = line.split()
                 time_str = "{} {}".format(split_line[0], split_line[1])
                 pick_times.append(UTCDateTime(time_str).matplotlib_date)
-
+        print(pick_times)
+        print("Picks: ", len(pick_times))
         fig, ax = plt.subplots()
         ax.plot_date(pick_times, np.ones(len(pick_times)))
-        for sig in [3., 4., 5.]:
+        for sig in [2.5, 2.6, 2.7, 2.8, 2.9, 3., 4., 5.]:
             auto_pick = cw.detect_picks_in_time(sc, sig)
             auto_pick = [t.matplotlib_date for t in auto_pick]
+            if math.isclose(sig, 3.):
+                print(auto_pick)
+
+            print("Picks {} sigmas: {}".format(sig, len(auto_pick)))
             ax.plot_date(auto_pick, sig * np.ones(len(auto_pick)))
 
         fig.autofmt_xdate()

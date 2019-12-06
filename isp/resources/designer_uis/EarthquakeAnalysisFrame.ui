@@ -65,6 +65,9 @@
         </layout>
        </widget>
        <widget class="QLineEdit" name="rootPathForm">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="geometry">
          <rect>
           <x>140</x>
@@ -73,12 +76,15 @@
           <height>25</height>
          </rect>
         </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
        </widget>
        <widget class="QPushButton" name="sortBtn">
         <property name="geometry">
          <rect>
-          <x>130</x>
-          <y>90</y>
+          <x>360</x>
+          <y>180</y>
           <width>89</width>
           <height>25</height>
          </rect>
@@ -369,8 +375,8 @@
        <widget class="QComboBox" name="comboBox">
         <property name="geometry">
          <rect>
-          <x>40</x>
-          <y>90</y>
+          <x>260</x>
+          <y>180</y>
           <width>86</width>
           <height>25</height>
          </rect>
@@ -396,7 +402,7 @@
          </rect>
         </property>
         <property name="text">
-         <string>Load path</string>
+         <string>file</string>
         </property>
        </widget>
        <widget class="QPushButton" name="selectDatalessDirBtn">
@@ -409,7 +415,7 @@
          </rect>
         </property>
         <property name="text">
-         <string>Load path</string>
+         <string>dataless</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="datalessPathForm">
@@ -420,6 +426,9 @@
           <width>281</width>
           <height>25</height>
          </rect>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
         </property>
        </widget>
       </widget>

@@ -1,1 +1,1 @@
-from isp.earthquakeAnalisysis.locate import EarthquakeLocation
+from isp.earthquakeAnalisysis.picker_manager import PickerManager
