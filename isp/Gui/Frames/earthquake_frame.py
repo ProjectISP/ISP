@@ -1,3 +1,5 @@
+import math
+
 from obspy.geodetics import gps2dist_azimuth
 
 from isp.DataProcessing import SeismogramData, DatalessManager
@@ -133,8 +135,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             x1, y1 = event.xdata, event.ydata
             canvas.draw_arrow(x1, click_at_index, phase)
             stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
+            # Get amplitude from index
+            x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
+            amplitude = canvas.get_ydata(click_at_index).item(x_index)  # get y-data from index.
+            canvas.plot(x1, amplitude, click_at_index, clear_plot=False, marker='o', color="steelblue")
             t = stats.StartTime + x1
-            self.pm.add_data(t, 0, stats.Station, phase)
-            self.pm.save()
+            self.pm.add_data(t, amplitude, stats.Station, phase)
+            self.pm.save()  # maybe we can move this to when you press locate.
 
 

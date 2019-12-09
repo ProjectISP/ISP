@@ -169,6 +169,26 @@ class MatplotlibCanvas(FigureCanvas):
             ax.set_ylabel(value)
             self.draw()  # force to update label
 
+    def get_ydata(self, ax_index):
+        """
+        Get y-data at the axe index.
+
+        :param ax_index: The ax index to gte the data from.
+        :return: The array or y-data.
+        """
+        ax = self.get_axe(ax_index)
+        return ax.lines[0].get_ydata()
+
+    def get_xdata(self, ax_index):
+        """
+        Get x-data at the axe index.
+
+        :param ax_index: The ax index to gte the data from.
+        :return: The array or x-data.
+        """
+        ax = self.get_axe(ax_index)
+        return ax.lines[0].get_xdata()
+
     def on_double_click(self, func):
         """
         Register a callback when double click the matplotlib canvas.
@@ -194,7 +214,7 @@ class MatplotlibCanvas(FigureCanvas):
         ax.set_xlim(ax.get_xlim())
         ax.set_ylim(ax.get_ylim())
         try:
-            # Draw can raise draw error
+            # Draw can raise ValueError
             self.draw()
             return artist
         except ValueError:

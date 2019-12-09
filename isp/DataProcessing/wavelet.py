@@ -322,6 +322,8 @@ class ConvolveWavelet:
 
         :param data: The data from ccwt_ba_fast method.
 
+        :param sigmas: The detection limit in sigmas.
+
         :return: Return the indexes of the local maximums over the detection limit.
         """
         limit = self.get_detection_limit(data, sigmas=sigmas)
