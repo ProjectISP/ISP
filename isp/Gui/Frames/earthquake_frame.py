@@ -20,8 +20,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.files = []
         self.total_items = 0
         self.items_per_page = 1
+        # dict to keep track of picks: key = str(Line2D from canvas.draw_arrow()), value = (time, station)
+        self.picked_at = {}
         self.__dataless_manager = None
-        self.dataless_not_found = set() # a set of mseed files that the dataless wasn't found.
+        self.dataless_not_found = set()  # a set of mseed files that the dataless wasn't found.
 
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
@@ -31,6 +33,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=self.items_per_page)
         self.canvas.set_xlabel(0, "Time (s)")
         self.canvas.on_double_click(self.on_click_matplotlib)
+        self.canvas.on_pick(self.on_pick)
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
@@ -133,14 +136,25 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             phase = "Phase"
             click_at_index = event.inaxes.rowNum
             x1, y1 = event.xdata, event.ydata
-            canvas.draw_arrow(x1, click_at_index, phase)
             stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
             # Get amplitude from index
             x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
             amplitude = canvas.get_ydata(click_at_index).item(x_index)  # get y-data from index.
-            canvas.plot(x1, amplitude, click_at_index, clear_plot=False, marker='o', color="steelblue")
+            line = canvas.draw_arrow(x1, click_at_index, phase, amplitude=amplitude, picker=True)
+
             t = stats.StartTime + x1
+            self.picked_at[str(line)] = t, stats.Station
+            # Add pick data to file.
             self.pm.add_data(t, amplitude, stats.Station, phase)
             self.pm.save()  # maybe we can move this to when you press locate.
+
+    def on_pick(self, event):
+        line = event.artist
+        self.canvas.remove_arrow(line)
+        t, station = self.picked_at.pop(str(line))
+        self.pm.remove_data(t, station)
+
+
+
 
 

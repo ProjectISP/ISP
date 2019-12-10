@@ -21,11 +21,13 @@ class PickerManager:
     Period = "Period"
     PriorWt = "PriorWt"
 
-    def __init__(self, output_path=None):
+    def __init__(self, output_path=None, overwrite=True):
         """
         Manager to save pick data in a csv file.
 
         :param output_path: The full location for the output file. If None a default location will be used.
+        :param overwrite: If True it will overwrite the output file, otherwise will keep it and new data
+            will be appended.
 
         Example:
 
@@ -38,7 +40,6 @@ class PickerManager:
         >>> pm.save()
         """
         self.file_separator = " "
-        self.__buffer_data = []
         self.__output_file_name = "output.txt"
         if output_path:
             self.__output_path = output_path
@@ -49,19 +50,23 @@ class PickerManager:
                         self.FirstMotion, self.Date, self.HourMin, self.Seconds, self.Err, self.CodaDuration,
                         self.Amplitude, self.Period, self.PriorWt]
 
-        self.__setup_file()
+        if overwrite:
+            self.df = self.__setup_file()
+        else:
+            self.df = self.__load()
 
     @property
     def output_path(self):
         return self.__output_path
 
-    @property
-    def buffer_data(self):
-        return self.__buffer_data
-
-    def __setup_file(self):
+    def __setup_file(self) -> pd.DataFrame:
         df = pd.DataFrame(columns=self.columns)
         df.to_csv(self.output_path, sep=self.file_separator, columns=self.columns, index=False)
+        return df
+
+    def __load(self) -> pd.DataFrame:
+        out = self.read()
+        return out
 
     def __validate_kwargs(self, v: dict):
         for key in v.keys():
@@ -74,6 +79,19 @@ class PickerManager:
             raise FileNotFoundError("The dir {} doesn't exist.".format(root))
 
         return os.path.join(root, self.__output_file_name)
+
+    @staticmethod
+    def __from_utctime_to_datetime(time: UTCDateTime):
+        """
+        Convert UTCDateTime to date format of the locate file.
+
+        :param time: The UTCDateTime
+        :return: A tuple containing date, hour_min, seconds.
+        """
+        date = "{year:04d}{month:02d}{day:02d}".format(year=time.date.year, month=time.date.month, day=time.date.day)
+        hour_min = "{:02d}{:02d}".format(time.hour, time.minute)
+        seconds = "{:02d}".format(time.second)
+        return date, hour_min, seconds
 
     def add_data(self, time, amplitude: float, station: str, p_phase: str, **kwargs):
         """
@@ -100,9 +118,7 @@ class PickerManager:
         if not isinstance(time, UTCDateTime):
             time = UTCDateTime(time)
 
-        date = "{year:04d}{month:02d}{day:02d}".format(year=time.date.year, month=time.date.month, day=time.date.day)
-        hour_min = "{:02d}{:02d}".format(time.hour, time.minute)
-        seconds = "{:02d}".format(time.second)
+        date, hour_min, seconds = self.__from_utctime_to_datetime(time)
         amplitude = "{0:.2f}".format(amplitude)
 
         self.__add_data(Date=date, Hour_min=hour_min, Seconds=seconds, Station_name=station, Amplitude=amplitude,
@@ -134,26 +150,54 @@ class PickerManager:
         """
         self.__validate_kwargs(kwargs)
         data = {key:  kwargs.get(key, "?") for key in self.columns}
-        self.__buffer_data.append(data)
+        df = pd.DataFrame(data, columns=self.columns, index=[0])
+        self.df: pd.DataFrame = self.df.append(df, ignore_index=True)
+
+    def read(self):
+        return pd.read_csv(self.output_path, sep=self.file_separator, index_col=None, nrows=None)
 
     def save(self):
         """
-        Save all data in buffer_data. After call this method buffer data will be clear.
+        Save all data in data frame.
 
         :return:
         """
-        out = pd.read_csv(self.output_path, sep=self.file_separator, index_col=None, nrows=None)
-        for data in self.__buffer_data:
-            out = out.append(data, ignore_index=True)
+        self.df.to_csv(self.output_path, sep=self.file_separator, index=False)
 
-        out.to_csv(self.output_path, sep=self.file_separator, index=False)
-        self.__buffer_data.clear()
+    def select_data(self, pick_time: UTCDateTime, station: str) -> pd.DataFrame:
+        """
+        Select a row in data frame where station and time match.
+
+        :param pick_time: The UTCDateTime to match.
+        :param station: The Station name to match.
+        :return: The matched data frame.
+        """
+        date, h_m, s = self.__from_utctime_to_datetime(pick_time)
+        df: pd.DataFrame = self.df.loc[(self.df[PickerManager.Date] == date) &
+                                       (self.df[PickerManager.HourMin] == h_m) &
+                                       (self.df[PickerManager.Seconds] == s) &
+                                       (self.df[PickerManager.StationName] == station)]
+        return df
+
+    def remove_data(self, pick_time: UTCDateTime, station: str, save=True):
+        """
+        Remove the data at pick_time and station from data frame. If save=True it will also save the new data frame
+        to the file.
+
+        :param pick_time: The UTCDateTime to be removed.
+        :param station: The station to be removed.
+        :param save: True if you want to save in file, false otherwise.
+        :return:
+        """
+        selected = self.select_data(pick_time, station)
+        self.df = self.df.drop(selected.index).reset_index(drop=True)
+        if save:
+            self.save()
 
     def clear(self):
         """
-        Clear file and buffer data.
+        Clear file and data frame.
 
         :return:
         """
-        self.__setup_file()
-        self.__buffer_data.clear()
+        self.df = self.__setup_file()

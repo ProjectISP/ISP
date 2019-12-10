@@ -10,16 +10,14 @@
 
 from __future__ import unicode_literals
 
-import time
-
 import numpy
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
-from matplotlib.backend_bases import MouseButton, MouseEvent
+from matplotlib.backend_bases import MouseButton, MouseEvent, PickEvent
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.colorbar import Colorbar
-from matplotlib.figure import Figure
+from matplotlib.lines import Line2D
 from obspy import Stream
 
 from isp.Gui import pw, pyc
@@ -58,10 +56,13 @@ class MatplotlibCanvas(FigureCanvas):
             valid kwargs are "nrows" and "ncols" for the subplots.
         """
         self.button_connection = None
+        self.pick_connect = None
         self.axes = None
         self.__callback_on_double_click = None
         self.__callback_on_click = None
+        self.__callback_on_pick = None
         self.__cbar = None
+        self.pickers = {}
 
         if not obj:
             fig = self.__construct_subplot(**kwargs)
@@ -89,11 +90,13 @@ class MatplotlibCanvas(FigureCanvas):
                                    pw.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
-        self.__register_on_click()
+        self.register_on_click()  # Register the click event for the canvas
+        self.register_on_pick()   # Register the pick events for the draws.
 
     def __del__(self):
         print("disconnect")
         self.disconnect_click()
+        self.disconnect_pick()
 
     def __construct_subplot(self, **kwargs):
         nrows = kwargs.get("nrows") if "nrows" in kwargs.keys() else 1
@@ -110,13 +113,25 @@ class MatplotlibCanvas(FigureCanvas):
             self.axes = numpy.array([self.axes])
         self.axes = self.axes.flatten()
 
-    def __register_on_click(self):
+    def register_on_click(self):
         if not self.button_connection:
             self.button_connection = self.mpl_connect('button_press_event', self.__on_click_event)
+
+    def register_on_pick(self):
+        if not self.pick_connect:
+            self.pick_connect = self.mpl_connect('pick_event', self.__on_pick_event)
 
     def disconnect_click(self):
         if self.button_connection:
             self.mpl_disconnect(self.button_connection)
+
+    def disconnect_pick(self):
+        if self.pick_connect:
+            self.mpl_disconnect(self.pick_connect)
+
+    def __on_pick_event(self, event: PickEvent):
+        if self.__callback_on_pick:
+            self.__callback_on_pick(event)
 
     def __on_click_event(self, event: MouseEvent):
         self.is_dlb_click = False
@@ -132,7 +147,6 @@ class MatplotlibCanvas(FigureCanvas):
     @AsycTime.async_wait(0.5)
     def __on_click(self, event: MouseEvent):
         if not self.is_dlb_click and event.button == MouseButton.LEFT:
-            print("Click")
             if self.__callback_on_click:
                 self.__callback_on_click(event, self)
 
@@ -206,6 +220,15 @@ class MatplotlibCanvas(FigureCanvas):
         :return:
         """
         self.__callback_on_click = func
+
+    def on_pick(self, func):
+        """
+         Register a callback when pick an artist.
+
+        :param func: The callback function. Expect an event and attached (attached ia a dict of tuple) parameters.
+        :return:
+        """
+        self.__callback_on_pick = func
 
     def __plot(self, x, y, ax, clear_plot=True, **kwargs):
         if clear_plot:
@@ -303,41 +326,60 @@ class MatplotlibCanvas(FigureCanvas):
         y_max += y_max * offset * 0.01
         return y_min, y_max
 
-    def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, **kwargs):
+    def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, amplitude=None, **kwargs):
         """
-        Draw an arrow over the a plot.
+        Draw an arrow over the a plot. This plot will add a pick event to the line.
 
         :param x_pos: The position of the arrow
         :param axe_index: The subplot axes index.
         :param arrow_label: The label at the arrow.
         :param draw_arrow: True if you want an arrow, false to draw just a line.
+        :param amplitude: (float) The waveform amplitude. If amplitude is given it will plot a dot at the
+            x = x_pos, y = amplitude
         :param kwargs: Valid Matplotlib kwargs for plot.
-        :return:
+        :return: A line.
         """
-
-        marker = kwargs.pop("marker", '|')
-        markersize = kwargs.pop("markersize", 1000)
+        # marker = kwargs.pop("marker", '|')
+        # markersize = kwargs.pop("markersize", 1000)
         color = kwargs.pop("color", 'red')
+        picker = kwargs.pop("picker", True)
 
         bbox = dict(boxstyle="round", fc="white")
-        ax = self.axes.item(axe_index)
+        ax = self.get_axe(axe_index)
         arrowprops = None
         if draw_arrow:
             arrowprops = dict(facecolor=color, shrink=0.05)
         annotate = ax.annotate(arrow_label, xy=(x_pos, 0), xytext=(0, -30), bbox=bbox, xycoords='data',
                                textcoords='offset points', annotation_clip=True, arrowprops=arrowprops)
 
-        artist = self.plot(x_pos, 0, axe_index, clear_plot=False, marker=marker, markersize=markersize, color=color,
-                           **kwargs)
-        if artist is None:
-            print("Error")
-            if annotate:
-                annotate.remove()
-            x_pos += x_pos*0.0001
-            self.draw_arrow(x_pos, axe_index=axe_index, arrow_label=arrow_label, marker=marker,
+        # artist = self.plot(x_pos, 0, axe_index, clear_plot=False, marker=marker, markersize=markersize, color=color,
+        #                    **kwargs)
+        ymin, ymax = self.get_ylim_from_data(ax, offset=10)
+        line = ax.vlines(x_pos, ymin, ymax, color=color, picker=picker, **kwargs)
 
+        point = ax.plot(x_pos, amplitude, marker='o', color="steelblue") if amplitude else [None]
 
-                            markersize=markersize, color=color, **kwargs)
+        # Add annotate and point in a dict with a key equal to line signature.
+        self.pickers[str(line)] = annotate, point[0]
+        self.draw()
+
+        return line
+
+    def remove_arrow(self, line: Line2D):
+        """
+        Remove arrow line and attached components.
+
+        :param line: The ref of a Line2D.
+        :return:
+        """
+        if line:
+            line.remove()
+        attached = self.pickers.pop(str(line))  # get the picker
+        if attached:
+            for item in attached:
+                if item:
+                    item.remove()
+        self.draw()
 
 
 class MatplotlibFrame(BaseFrame):
