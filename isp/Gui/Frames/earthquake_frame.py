@@ -4,16 +4,13 @@ from isp.DataProcessing import SeismogramData, DatalessManager
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog
 from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
-from isp.Gui.Utils import Key
+from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
-
-    POSITIVE_POLARITY_KEYS = [Key.Plus, Key.Shift]
-    NEGATIVE_POLARITY_KEYS = [Key.Minus, Key.Ctr]
 
     def __init__(self, ):
         super(EarthquakeAnalysisFrame, self).__init__()
@@ -135,16 +132,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def on_click_matplotlib(self, event, canvas):
         # print(event.key)
-        polarity = "?"
-        color = "red"
-        if event.key in self.POSITIVE_POLARITY_KEYS:
-            polarity = "+"
-            color = "green"
-        elif event.key in self.NEGATIVE_POLARITY_KEYS:
-            polarity = "-"
-            color = "blue"
-        print(polarity)
         if isinstance(canvas, MatplotlibCanvas):
+            polarity, color = map_polarity_from_pressed_key(event.key)
             phase = "Phase"
             click_at_index = event.inaxes.rowNum
             x1, y1 = event.xdata, event.ydata
