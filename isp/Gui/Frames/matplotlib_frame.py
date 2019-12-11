@@ -20,7 +20,7 @@ from matplotlib.colorbar import Colorbar
 from matplotlib.lines import Line2D
 from obspy import Stream
 
-from isp.Gui import pw, pyc
+from isp.Gui import pw, pyc, qt
 from isp.Gui.Frames import BaseFrame
 from isp.Utils import ObspyUtil, AsycTime
 
@@ -56,6 +56,8 @@ class MatplotlibCanvas(FigureCanvas):
             valid kwargs are "nrows" and "ncols" for the subplots.
         """
         self.button_connection = None
+        self.cdi_enter = None
+        self.cdi_leave = None
         self.pick_connect = None
         self.axes = None
         self.__callback_on_double_click = None
@@ -117,6 +119,31 @@ class MatplotlibCanvas(FigureCanvas):
         if not self.button_connection:
             self.button_connection = self.mpl_connect('button_press_event', self.__on_click_event)
 
+        if not self.cdi_enter:
+            self.cdi_enter = self.mpl_connect('figure_enter_event', self.__figure_enter_event)
+
+        if not self.cdi_leave:
+            self.cdi_leave = self.mpl_connect('figure_leave_event', self.__figure_leave_event)
+
+    def __figure_leave_event(self, event):
+        """
+        Called when mouse leave this figure.
+        
+        :param event: 
+        :return: 
+        """""
+        self.clearFocus()
+
+    def __figure_enter_event(self, event):
+        """
+        Called when mouse enter the figure.
+
+        :param event:
+        :return:
+        """
+        self.setFocusPolicy(qt.ClickFocus)
+        self.setFocus()
+
     def register_on_pick(self):
         if not self.pick_connect:
             self.pick_connect = self.mpl_connect('pick_event', self.__on_pick_event)
@@ -124,6 +151,12 @@ class MatplotlibCanvas(FigureCanvas):
     def disconnect_click(self):
         if self.button_connection:
             self.mpl_disconnect(self.button_connection)
+
+        if self.cdi_enter:
+            self.mpl_disconnect(self.cdi_enter)
+
+        if self.cdi_leave:
+            self.mpl_disconnect(self.cdi_leave)
 
     def disconnect_pick(self):
         if self.pick_connect:

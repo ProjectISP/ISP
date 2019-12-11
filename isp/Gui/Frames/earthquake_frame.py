@@ -1,17 +1,19 @@
-import math
-
 from obspy.geodetics import gps2dist_azimuth
 
 from isp.DataProcessing import SeismogramData, DatalessManager
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog
 from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
+from isp.Gui.Utils import Key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
+
+    POSITIVE_POLARITY_KEYS = [Key.Plus, Key.Shift]
+    NEGATIVE_POLARITY_KEYS = [Key.Minus, Key.Ctr]
 
     def __init__(self, ):
         super(EarthquakeAnalysisFrame, self).__init__()
@@ -132,6 +134,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.set_xlabel(last_index, "Time (s)")
 
     def on_click_matplotlib(self, event, canvas):
+        # print(event.key)
+        polarity = "?"
+        color = "red"
+        if event.key in self.POSITIVE_POLARITY_KEYS:
+            polarity = "+"
+            color = "green"
+        elif event.key in self.NEGATIVE_POLARITY_KEYS:
+            polarity = "-"
+            color = "blue"
+        print(polarity)
         if isinstance(canvas, MatplotlibCanvas):
             phase = "Phase"
             click_at_index = event.inaxes.rowNum
@@ -140,12 +152,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             # Get amplitude from index
             x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
             amplitude = canvas.get_ydata(click_at_index).item(x_index)  # get y-data from index.
-            line = canvas.draw_arrow(x1, click_at_index, phase, amplitude=amplitude, picker=True)
+            label = "{} {}".format(phase, polarity)
+            line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
 
             t = stats.StartTime + x1
             self.picked_at[str(line)] = t, stats.Station
             # Add pick data to file.
-            self.pm.add_data(t, amplitude, stats.Station, phase)
+            self.pm.add_data(t, amplitude, stats.Station, phase, P_phase_descriptor=polarity)
             self.pm.save()  # maybe we can move this to when you press locate.
 
     def on_pick(self, event):
@@ -153,8 +166,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.remove_arrow(line)
         t, station = self.picked_at.pop(str(line))
         self.pm.remove_data(t, station)
-
-
 
 
 
