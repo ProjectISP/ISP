@@ -1,12 +1,13 @@
 import math
 import os
+from datetime import datetime
 from types import FunctionType
 
 from obspy import UTCDateTime
 
 from isp.Gui import pw
 from isp.Gui.Frames import UiPaginationWidget, UiFilterGroupBox, UiEventInfoGroupBox
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save, load_preferences, add_load
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save, add_load
 from isp.Utils import Filters
 
 
@@ -424,6 +425,20 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
         md = MessageDialog(self)
         md.set_info_message(msg)
 
-    def save_values(self):
-        print("save")
+    def set_time(self, time):
+        """
+        Set the event time.
+
+        :param time: A str or obspy.UTCDateTime.
+
+        :return:
+        """
+        if type(time) is str:
+            time = UTCDateTime(time)
+        elif isinstance(time, UTCDateTime):
+            time = time.datetime
+        elif not isinstance(time, datetime):
+            raise ValueError("time must by either str, UTCDatetime or datetime")
+
+        self.originDateTimeEdit.setDateTime(time)
 

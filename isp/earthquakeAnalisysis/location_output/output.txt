@@ -1,1 +1,2 @@
 Station_name Instrument Component P_phase_onset P_phase_descriptor First_Motion Date Hour_min Seconds Err Coda_duration Amplitude Period PriorWt
+OBS01 ? ? Phase ? ? 20150917 0811 41 ? ? -4138.97 ? ?

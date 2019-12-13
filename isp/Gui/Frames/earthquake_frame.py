@@ -5,7 +5,7 @@ from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox
 from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
 from isp.Gui.Utils import map_polarity_from_pressed_key
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, save_preferences, load_preferences
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager
 
@@ -25,6 +25,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.dataless_not_found = set()  # a set of mseed files that the dataless wasn't found.
 
         self.filter = FilterBox(self.filterWidget)  # add filter box component.
+        self.filter_3ca = FilterBox(self.filter3CAWidget)  # add filter box component.
         self.event_info = EventInfoBox(self.eventInfoWidget)
 
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
@@ -164,16 +165,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.remove_arrow(line)
         t, station = self.picked_at.pop(str(line))
         self.pm.remove_data(t, station)
-
-    # def closeEvent(self, ce):
-    #     super().closeEvent(ce)
-    #     # save_preferences(self.event_info)  # save event_info
-    #     # save_preferences(self.filter)  # save event_info
-    #
-    # def __load__(self):
-    #     super().__load__()
-    #     load_preferences(self.event_info)  # save event_info
-    #     load_preferences(self.filter)  # save event_info
 
 
 
