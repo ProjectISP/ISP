@@ -1,5 +1,6 @@
 from isp.Gui import pw, qt, user_preferences, pyc, pqg
 from isp.Gui.Frames import UiMainFrame
+from isp.Gui.Utils.pyqt_utils import save_preferences, load_preferences
 
 
 class SettingsLoader(type(pyc.QObject), type):
@@ -32,38 +33,19 @@ class BaseFrame(pw.QMainWindow, metaclass=SettingsLoader):
 
     def save(self):
         """
-        Save fields QDoubleSpinBox, QLineEdit into a file.
+        Save fields QDoubleSpinBox, QSpinBox, QLineEdit into a file.
 
         :return:
         """
-        ui_name = type(self).__name__
-        user_preferences.beginGroup(ui_name)
-        for key, item in self.__dict__.items():
-            if isinstance(item, pw.QDoubleSpinBox) or isinstance(item, pw.QSpinBox):
-                user_preferences.setValue(key, item.value())
-            elif isinstance(item, pw.QLineEdit):
-                user_preferences.setValue(key, item.text())
-
-        user_preferences.endGroup()
+        save_preferences(self)
 
     def load(self):
         """
-        Load data from user_pref to fields QDoubleSpinBox, QLineEdit
+        Load data from user_pref to fields QDoubleSpinBox, QSpinBox, QLineEdit
 
         :return:
         """
-        ui_name = type(self).__name__
-        user_preferences.beginGroup(ui_name)
-        for key, item in self.__dict__.items():
-            value = user_preferences.value(key)
-            if value and not "":
-                if isinstance(item, pw.QDoubleSpinBox):
-                    item.setValue(float(value))
-                elif isinstance(item, pw.QSpinBox):
-                    item.setValue(int(value))
-                elif isinstance(item, pw.QLineEdit):
-                    item.setText(value)
-        user_preferences.endGroup()
+        load_preferences(self)
 
     def apply_shadow(self):
         for child in self.findChildren((pw.QPushButton, pw.QCheckBox, pw.QLineEdit)):

@@ -2,9 +2,12 @@ import math
 import os
 from types import FunctionType
 
+from obspy import UTCDateTime
+
 from isp.Gui import pw
-from isp.Gui.Frames import UiPaginationWidget
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject
+from isp.Gui.Frames import UiPaginationWidget, UiFilterGroupBox, UiEventInfoGroupBox
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save, load_preferences, add_load
+from isp.Utils import Filters
 
 
 class ParentWidget:
@@ -301,3 +304,126 @@ class MessageDialog(pw.QMessageBox):
         :return:
         """
         self.__set_message("Error", message, pw.QMessageBox.Critical)
+
+
+@add_save()
+@add_load()
+class FilterBox(pw.QGroupBox, UiFilterGroupBox):
+
+    def __init__(self, parent: pw.QWidget):
+        super(FilterBox, self).__init__(parent)
+        self.setupUi(self)
+        self.__parent_name = parent.objectName()  # used to save values in a group.
+
+        # set the parent properly
+        ParentWidget.set_parent(parent, self)
+        # force parent to have the same maximumSize and minimumSize of FileBox
+        parent.setMaximumSize(self.maximumSize())
+        parent.setMinimumSize(self.minimumSize())
+
+        # Clean and add options to combo box.
+        self.fiterComboBox.clear()
+        self.fiterComboBox.addItems(Filters.get_filters())
+
+        # bind widgets from filter box.
+        self.__filter_pick_bind = BindPyqtObject(self.fiterComboBox)
+        self.__poles_bind = BindPyqtObject(self.nPolesSb)
+        self.__min_freq_bind = BindPyqtObject(self.lowFreqDsb)
+        self.__max_freq_bind = BindPyqtObject(self.upperFreqDsb)
+
+    @property
+    def parent_name(self):
+        return self.__parent_name
+
+    @property
+    def min_freq(self) -> float:
+        return self.__min_freq_bind.value
+
+    @property
+    def max_freq(self) -> float:
+        return self.__max_freq_bind.value
+
+    @property
+    def filter_value(self) -> str:
+        return self.__filter_pick_bind.value
+
+    @property
+    def poles(self) -> int:
+        return self.__poles_bind.value
+
+    @property
+    def is_zero_phase(self) -> bool:
+        return self.zeroPhaseCheckBox.isChecked()
+
+
+@add_save()
+@add_load()
+class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
+
+    def __init__(self, parent: pw.QWidget):
+        super(EventInfoBox, self).__init__(parent)
+        self.setupUi(self)
+        self.__parent_name = parent.objectName()  # used to save values in a group.
+
+        # set the parent properly
+        ParentWidget.set_parent(parent, self)
+        # force parent to have the same maximumSize and minimumSize of FileBox
+        parent.setMaximumSize(self.maximumSize())
+        parent.setMinimumSize(self.minimumSize())
+
+        # bind widgets from EventInfo box.
+        self.__latitude_bind = BindPyqtObject(self.latitudeLineEdit)
+        self.__longitude_bind = BindPyqtObject(self.longitudeLineEdit)
+        self.__depth_bind = BindPyqtObject(self.depthLineEdit)
+
+    @property
+    def parent_name(self):
+        return self.__parent_name
+
+    @property
+    def latitude(self) -> float:
+        try:
+            latitude = float(self.__latitude_bind.value)
+        except ValueError:
+            latitude = None
+            self.message("Latitude must be a float.")
+
+        return latitude
+
+    @property
+    def longitude(self) -> float:
+        try:
+            longitude = float(self.__longitude_bind.value)
+        except ValueError:
+            self.message("Longitude must be a float.")
+            longitude = None
+
+        return longitude
+
+    @property
+    def event_depth(self) -> float:
+        try:
+            depth = float(self.__depth_bind.value)
+        except ValueError:
+            self.message("Depth must be a float.")
+            depth = None
+
+        return depth
+
+    @property
+    def use_event(self) -> bool:
+        return self.useEventcheckBox.isChecked()
+
+    @property
+    def event_time(self):
+        py_time = self.originDateTimeEdit.dateTime().toPyDateTime()
+        utc_time = UTCDateTime(py_time)
+        return utc_time
+
+    def message(self, msg):
+        md = MessageDialog(self)
+        md.set_info_message(msg)
+
+    def save_values(self):
+        print("save")
+

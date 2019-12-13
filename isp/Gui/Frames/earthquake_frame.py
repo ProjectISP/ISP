@@ -2,10 +2,10 @@ from obspy.geodetics import gps2dist_azimuth
 
 from isp.DataProcessing import SeismogramData, DatalessManager
 from isp.Gui import pw
-from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog
+from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox
 from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
 from isp.Gui.Utils import map_polarity_from_pressed_key
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, save_preferences, load_preferences
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager
 
@@ -23,6 +23,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.picked_at = {}
         self.__dataless_manager = None
         self.dataless_not_found = set()  # a set of mseed files that the dataless wasn't found.
+
+        self.filter = FilterBox(self.filterWidget)  # add filter box component.
+        self.event_info = EventInfoBox(self.eventInfoWidget)
 
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
@@ -77,6 +80,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.items_per_page = items_per_page
         self.plot_seismogram()
 
+    def filter_error_message(self, msg):
+        md = MessageDialog(self)
+        md.set_info_message(msg)
+
     def onChange_root_path(self, value):
         """
         Fired every time the root_path is changed
@@ -123,7 +130,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         last_index = 0
         for index, file_path in enumerate(files_at_page):
             sd = SeismogramData(file_path)
-            t, s = sd.get_waveform()
+            t, s = sd.get_waveform(filter_error_callback=self.filter_error_message,
+                                   filter_value=self.filter.filter_value,
+                                   f_min=self.filter.min_freq, f_max=self.filter.max_freq)
             self.canvas.plot(t, s, index, color="black")
             last_index = index
 
@@ -155,6 +164,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.remove_arrow(line)
         t, station = self.picked_at.pop(str(line))
         self.pm.remove_data(t, station)
+
+    # def closeEvent(self, ce):
+    #     super().closeEvent(ce)
+    #     # save_preferences(self.event_info)  # save event_info
+    #     # save_preferences(self.filter)  # save event_info
+    #
+    # def __load__(self):
+    #     super().__load__()
+    #     load_preferences(self.event_info)  # save event_info
+    #     load_preferences(self.filter)  # save event_info
+
 
 
 

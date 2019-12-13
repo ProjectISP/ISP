@@ -6,5 +6,8 @@ UiMainFrame = load_ui_designers("MainFrame.ui")
 UiTimeFrequencyFrame = load_ui_designers("TimeFrequencyFrame.ui")
 UiEarthquakeAnalysisFrame = load_ui_designers("EarthquakeAnalysisFrame.ui")
 UiPaginationWidget = load_ui_designers("PaginationWidget.ui")
+UiFilterGroupBox = load_ui_designers("FilterGroupBox.ui")
+UiEventInfoGroupBox = load_ui_designers("EventInfoGroupBox.ui")
+
 
 
