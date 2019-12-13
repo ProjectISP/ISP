@@ -1,5 +1,5 @@
 import os
-from cmath import isinf
+from contextlib import suppress
 
 from PyQt5 import uic
 
@@ -8,7 +8,6 @@ from isp.Gui import pyc, pw, user_preferences
 
 
 def load_ui_designers(ui_file):
-
     ui_path = os.path.join(UIS_PATH, ui_file)
     if not os.path.isfile(ui_path):
         raise FileNotFoundError("The file {} can't be found at the location {}".
@@ -50,16 +49,19 @@ def load_preferences(pyqt_object, ui_name=None):
     ui_name = type(pyqt_object).__name__ if ui_name is None else ui_name
     user_preferences.beginGroup(ui_name)
     for key, item in pyqt_object.__dict__.items():
-        value = user_preferences.value(key)
-        if value and not "":
-            if isinstance(item, pw.QDoubleSpinBox):
-                item.setValue(float(value))
-            elif isinstance(item, pw.QSpinBox):
-                item.setValue(int(value))
-            elif isinstance(item, pw.QLineEdit):
-                item.setText(value)
-        elif hasattr(item, "load_values"):
+        if hasattr(item, "load_values"):
             item.load_values()
+        else:
+            value = user_preferences.value(key)
+            if value is not None and value.strip() is not "":
+                with suppress(TypeError):
+                    str(value, "utf-8")
+                if isinstance(item, pw.QDoubleSpinBox):
+                    item.setValue(float(value))
+                elif isinstance(item, pw.QSpinBox):
+                    item.setValue(int(value))
+                elif isinstance(item, pw.QLineEdit):
+                    item.setText(value)
 
     user_preferences.endGroup()
 
@@ -78,19 +80,20 @@ def load_values(self):
         load_preferences(self)
 
 
-def add_save():
+def add_save_load():
+    """
+    Class decorator to add save_values and load_values methods. Using this decorator will make this class
+    to save and load its pyqt widgets values.
+
+    :return:
+    """
     def wrapper(cls):
         name = save_values.__name__
         setattr(cls, name, eval(name))
-        return cls
-    return wrapper
-
-
-def add_load():
-    def wrapper(cls):
         name = load_values.__name__
         setattr(cls, name, eval(name))
         return cls
+
     return wrapper
 
 
@@ -154,5 +157,3 @@ class BindPyqtObject(pyc.QObject):
 
     def unblind_valueChanged(self):
         self.__callback_val_changed = None
-
-

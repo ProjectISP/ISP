@@ -7,7 +7,7 @@ from obspy import UTCDateTime
 
 from isp.Gui import pw
 from isp.Gui.Frames import UiPaginationWidget, UiFilterGroupBox, UiEventInfoGroupBox
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save, add_load
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load
 from isp.Utils import Filters
 
 
@@ -307,8 +307,7 @@ class MessageDialog(pw.QMessageBox):
         self.__set_message("Error", message, pw.QMessageBox.Critical)
 
 
-@add_save()
-@add_load()
+@add_save_load()
 class FilterBox(pw.QGroupBox, UiFilterGroupBox):
 
     def __init__(self, parent: pw.QWidget):
@@ -357,8 +356,7 @@ class FilterBox(pw.QGroupBox, UiFilterGroupBox):
         return self.zeroPhaseCheckBox.isChecked()
 
 
-@add_save()
-@add_load()
+@add_save_load()
 class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
 
     def __init__(self, parent: pw.QWidget):
