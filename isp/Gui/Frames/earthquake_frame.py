@@ -134,17 +134,21 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             t, s = sd.get_waveform(filter_error_callback=self.filter_error_message,
                                    filter_value=self.filter.filter_value,
                                    f_min=self.filter.min_freq, f_max=self.filter.max_freq)
-            self.canvas.plot(t, s, index, color="black")
+
+            self.canvas.plot(t, s, index, color="black",linewidth=0.5)
             last_index = index
 
         # set x-label at the last axes.
         self.canvas.set_xlabel(last_index, "Time (s)")
 
+
+
     def on_click_matplotlib(self, event, canvas):
         # print(event.key)
         if isinstance(canvas, MatplotlibCanvas):
             polarity, color = map_polarity_from_pressed_key(event.key)
-            phase = "Phase"
+            #phase = "Phase"
+            phase = self.comboBox_phases.currentText()
             click_at_index = event.inaxes.rowNum
             x1, y1 = event.xdata, event.ydata
             stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
@@ -157,7 +161,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             t = stats.StartTime + x1
             self.picked_at[str(line)] = t, stats.Station
             # Add pick data to file.
-            self.pm.add_data(t, amplitude, stats.Station, phase, P_phase_descriptor=polarity)
+            self.pm.add_data(t, amplitude, stats.Station, phase, First_Motion=polarity)
             self.pm.save()  # maybe we can move this to when you press locate.
 
     def on_pick(self, event):

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1201</width>
-    <height>708</height>
+    <width>1680</width>
+    <height>954</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -55,13 +55,6 @@
               </sizepolicy>
              </property>
              <layout class="QGridLayout" name="gridLayout_4">
-              <item row="0" column="0">
-               <widget class="QPushButton" name="selectDirBtn">
-                <property name="text">
-                 <string>files</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="1" colspan="3">
                <widget class="QLineEdit" name="rootPathForm">
                 <property name="enabled">
@@ -83,6 +76,20 @@
                <widget class="QLineEdit" name="datalessPathForm">
                 <property name="readOnly">
                  <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QPushButton" name="pushButton_4">
+                <property name="text">
+                 <string>Map</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QPushButton" name="selectDirBtn">
+                <property name="text">
+                 <string>files</string>
                 </property>
                </widget>
               </item>
@@ -151,15 +158,8 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="1">
-               <widget class="QPushButton" name="pushButton_4">
-                <property name="text">
-                 <string>Map</string>
-                </property>
-               </widget>
-              </item>
               <item row="4" column="2">
-               <widget class="QComboBox" name="comboBox">
+               <widget class="QComboBox" name="comboBox_sort">
                 <item>
                  <property name="text">
                   <string>Distance</string>
@@ -177,6 +177,50 @@
                 <property name="text">
                  <string>Sort</string>
                 </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QComboBox" name="comboBox_phases">
+                <item>
+                 <property name="text">
+                  <string>Phase</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>P</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Pg</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Pn</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>S</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Sg</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Sn</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Lg</string>
+                 </property>
+                </item>
                </widget>
               </item>
              </layout>
@@ -375,8 +419,8 @@
         <property name="geometry">
          <rect>
           <x>250</x>
-          <y>60</y>
-          <width>761</width>
+          <y>120</y>
+          <width>1371</width>
           <height>721</height>
          </rect>
         </property>
@@ -498,6 +542,264 @@
         </layout>
        </widget>
       </widget>
+      <widget class="QWidget" name="tab_3">
+       <attribute name="title">
+        <string>Page</string>
+       </attribute>
+       <widget class="QWidget" name="gridLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>10</y>
+          <width>301</width>
+          <height>161</height>
+         </rect>
+        </property>
+        <layout class="QFormLayout" name="formLayout">
+         <item row="0" column="0" colspan="2">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>                              Grid Refrence</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QSpinBox" name="spinBox"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QSpinBox" name="spinBox_2"/>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Longitude</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QSpinBox" name="spinBox_3"/>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Depth</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QComboBox" name="comboBox_2">
+           <item>
+            <property name="text">
+             <string>SIMPLE</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>GLOBAL</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Trans</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>Latitude</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>200</y>
+          <width>301</width>
+          <height>120</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="1" column="2">
+          <widget class="QSpinBox" name="spinBox_7"/>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>y</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QSpinBox" name="spinBox_5"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QSpinBox" name="spinBox_4"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>x</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QSpinBox" name="spinBox_6"/>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>z</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>dx</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QSpinBox" name="spinBox_8"/>
+         </item>
+         <item row="2" column="3">
+          <widget class="QLabel" name="label_13">
+           <property name="text">
+            <string>dy</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QSpinBox" name="spinBox_9"/>
+         </item>
+         <item row="3" column="3">
+          <widget class="QLabel" name="label_14">
+           <property name="text">
+            <string>dz</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" colspan="4" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Grid Size (km)</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_3">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>330</y>
+          <width>301</width>
+          <height>109</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="3" column="0">
+          <widget class="QComboBox" name="comboBox_4">
+           <item>
+            <property name="text">
+             <string>GAU_ANALYTIC</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EDT</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EDT_OT_WT</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EDT_OTWT_ML</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="label_17">
+           <property name="text">
+            <string>Method</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_15">
+           <property name="text">
+            <string>Location Parameters</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="label_16">
+           <property name="text">
+            <string>Search</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QComboBox" name="comboBox_3">
+           <item>
+            <property name="text">
+             <string>OCT-TREE</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="horizontalLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>780</x>
+          <y>10</y>
+          <width>691</width>
+          <height>471</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <widget class="QWidget" name="widget_4" native="true">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 255, 255);</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="horizontalLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>780</x>
+          <y>490</y>
+          <width>691</width>
+          <height>471</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <item>
+          <widget class="QWidget" name="widget_5" native="true">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 255, 255);</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -507,7 +809,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1201</width>
+     <width>1680</width>
      <height>22</height>
     </rect>
    </property>

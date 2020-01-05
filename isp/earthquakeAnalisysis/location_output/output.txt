@@ -1,1 +1,5 @@
-Station_name Instrument Component P_phase_onset P_phase_descriptor First_Motion Date Hour_min Seconds Err Coda_duration Amplitude Period PriorWt
+Station_name Instrument Component P_phase_onset P_phase_descriptor First_Motion Date Hour_min Seconds Err ErrMag Coda_duration Amplitude Period
+IFR ? ? ? P ? 20150917 1512 22 GAU 0.0 0.0 51.22 0.0
+IFR ? ? ? S ? 20150917 1512 52 GAU 0.0 0.0 10.81 0.0
+CHAS ? ? ? S ? 20150917 1513 18 GAU 0.0 0.0 560.03 0.0
+CHAS ? ? ? S + 20150917 1513 22 GAU 0.0 0.0 -528.05 0.0

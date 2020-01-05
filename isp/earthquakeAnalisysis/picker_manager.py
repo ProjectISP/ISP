@@ -5,6 +5,9 @@ from obspy import UTCDateTime
 
 
 class PickerManager:
+    # IFR ? ? P ? 20150917 1512 22 ? ? 267.67 ? ?
+    # IFR ? HHZ ? P ? 20150917 1512 22.787 GAU 0.0 0.0 1352.301 0.0
+    #OBS01 ? ? ? P ? 20150917 1512 23 GAU 0 0 0.00 0 0
 
     StationName = "Station_name"
     Instrument = "Instrument"
@@ -16,10 +19,10 @@ class PickerManager:
     HourMin = "Hour_min"
     Seconds = "Seconds"
     Err = "Err"
+    ErrMag = "ErrMag"
     CodaDuration = "Coda_duration"
     Amplitude = "Amplitude"
     Period = "Period"
-    PriorWt = "PriorWt"
 
     def __init__(self, output_path=None, overwrite=True):
         """
@@ -46,9 +49,9 @@ class PickerManager:
         else:
             self.__output_path = self.__get_default_output_path()
 
-        self.columns = [self.StationName, self.Instrument, self.Component,self.PPhaseOnset,self.PPhaseDescriptor,
-                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, self.Err, self.CodaDuration,
-                        self.Amplitude, self.Period, self.PriorWt]
+        self.columns = [self.StationName, self.Instrument, self.Component, self.PPhaseOnset, self.PPhaseDescriptor,
+                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, self.Err,self.ErrMag, self.CodaDuration,
+                        self.Amplitude, self.Period]
 
         if overwrite:
             self.df = self.__setup_file()
@@ -109,9 +112,9 @@ class PickerManager:
         :keyword P_phase_descriptor:
         :keyword First_Motion:
         :keyword Err:
+        :keyword ErrMag:
         :keyword Coda_duration:
         :keyword Period:
-        :keyword PriorWt:
         :return:
         """
 
@@ -122,7 +125,7 @@ class PickerManager:
         amplitude = "{0:.2f}".format(amplitude)
 
         self.__add_data(Date=date, Hour_min=hour_min, Seconds=seconds, Station_name=station, Amplitude=amplitude,
-                        P_phase_onset=p_phase, **kwargs)
+                        P_phase_descriptor=p_phase, **kwargs)
 
     def __add_data(self, **kwargs):
         """
@@ -141,15 +144,25 @@ class PickerManager:
         :keyword Hour_min:
         :keyword Seconds:
         :keyword Err:
+        :keyword ErrMag:
         :keyword Coda_duration:
         :keyword Amplitude:
         :keyword Period:
-        :keyword PriorWt:
 
         :return:
         """
         self.__validate_kwargs(kwargs)
-        data = {key:  kwargs.get(key, "?") for key in self.columns}
+        #for key in self.columns:
+        #    data = {key: kwargs.get(key, "?")}
+        #   if {key: kwargs.get(key)} == 'Err':
+        #        data = 'GAU'
+
+        #data = {key:  kwargs.get(key, "?") for key in self.columns}
+        data = {key: kwargs.get(key, "?") for key in self.columns if key!="Err"}
+        data["Err"] = "GAU"
+        data["ErrMag"] = "0.0"
+        data["Coda_duration"] = "0.0"
+        data["Period"] = "0.0"
         df = pd.DataFrame(data, columns=self.columns, index=[0])
         self.df: pd.DataFrame = self.df.append(df, ignore_index=True)
 
