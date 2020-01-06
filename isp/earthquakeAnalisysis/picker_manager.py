@@ -7,7 +7,7 @@ from obspy import UTCDateTime
 class PickerManager:
     # IFR ? ? P ? 20150917 1512 22 ? ? 267.67 ? ?
     # IFR ? HHZ ? P ? 20150917 1512 22.787 GAU 0.0 0.0 1352.301 0.0
-    #OBS01 ? ? ? P ? 20150917 1512 23 GAU 0 0 0.00 0 0
+    # OBS01 ? ? ? P ? 20150917 1512 23 GAU 0 0 0.00 0 0
 
     StationName = "Station_name"
     Instrument = "Instrument"
@@ -50,8 +50,8 @@ class PickerManager:
             self.__output_path = self.__get_default_output_path()
 
         self.columns = [self.StationName, self.Instrument, self.Component, self.PPhaseOnset, self.PPhaseDescriptor,
-                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, self.Err,self.ErrMag, self.CodaDuration,
-                        self.Amplitude, self.Period]
+                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, self.Err, self.ErrMag,
+                        self.CodaDuration, self.Amplitude, self.Period]
 
         if overwrite:
             self.df = self.__setup_file()
@@ -109,8 +109,7 @@ class PickerManager:
 
         :keyword Instrument: The instrument.
         :keyword Component:
-        :keyword P_phase_descriptor:
-        :keyword First_Motion:
+        :keyword First_Motion: The polarization, either "+" or "-"
         :keyword Err:
         :keyword ErrMag:
         :keyword Coda_duration:
@@ -152,17 +151,14 @@ class PickerManager:
         :return:
         """
         self.__validate_kwargs(kwargs)
-        #for key in self.columns:
-        #    data = {key: kwargs.get(key, "?")}
-        #   if {key: kwargs.get(key)} == 'Err':
-        #        data = 'GAU'
+        data = {key: kwargs.get(key, "?") for key in self.columns}  # start a dict with default values equal "?"
 
-        #data = {key:  kwargs.get(key, "?") for key in self.columns}
-        data = {key: kwargs.get(key, "?") for key in self.columns if key!="Err"}
-        data["Err"] = "GAU"
-        data["ErrMag"] = "0.0"
-        data["Coda_duration"] = "0.0"
-        data["Period"] = "0.0"
+        # Override defaults values for some keys
+        data[self.Err] = "GAU" if data[self.Err] == "?" else data[self.Err]
+        data[self.ErrMag] = "{:.1f}".format(0) if data[self.ErrMag] == "?" else data[self.ErrMag]
+        data[self.CodaDuration] = "{:.1f}".format(0) if data[self.CodaDuration] == "?" else data[self.CodaDuration]
+        data[self.Period] = "{:.1f}".format(0) if data[self.Period] == "?" else data[self.Period]
+
         df = pd.DataFrame(data, columns=self.columns, index=[0])
         self.df: pd.DataFrame = self.df.append(df, ignore_index=True)
 
