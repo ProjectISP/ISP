@@ -1,1 +1,2 @@
 from isp.earthquakeAnalisysis.picker_manager import PickerManager
+from isp.earthquakeAnalisysis.run_nll import NllManager

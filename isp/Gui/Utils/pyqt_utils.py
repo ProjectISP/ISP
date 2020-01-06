@@ -53,15 +53,17 @@ def load_preferences(pyqt_object, ui_name=None):
             item.load_values()
         else:
             value = user_preferences.value(key)
-            if value is not None and value.strip() is not "":
+            if value is not None:
                 with suppress(TypeError):
                     str(value, "utf-8")
-                if isinstance(item, pw.QDoubleSpinBox):
-                    item.setValue(float(value))
-                elif isinstance(item, pw.QSpinBox):
-                    item.setValue(int(value))
-                elif isinstance(item, pw.QLineEdit):
-                    item.setText(value)
+                value = value.strip() if type(value) == str else value
+                if value is not "" or type(value) is not str:
+                    if isinstance(item, pw.QDoubleSpinBox):
+                        item.setValue(float(value))
+                    elif isinstance(item, pw.QSpinBox):
+                        item.setValue(int(value))
+                    elif isinstance(item, pw.QLineEdit):
+                        item.setText(value)
 
     user_preferences.endGroup()
 

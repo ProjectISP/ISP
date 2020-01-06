@@ -564,10 +564,10 @@
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QSpinBox" name="spinBox"/>
+          <widget class="QSpinBox" name="gridlatSB"/>
          </item>
          <item row="3" column="0">
-          <widget class="QSpinBox" name="spinBox_2"/>
+          <widget class="QSpinBox" name="gridlonSB"/>
          </item>
          <item row="3" column="1">
           <widget class="QLabel" name="label_3">
@@ -577,7 +577,7 @@
           </widget>
          </item>
          <item row="4" column="0">
-          <widget class="QSpinBox" name="spinBox_3"/>
+          <widget class="QSpinBox" name="griddepthSB"/>
          </item>
          <item row="4" column="1">
           <widget class="QLabel" name="label_4">
@@ -615,7 +615,7 @@
           </widget>
          </item>
          <item row="7" column="1">
-          <widget class="QPushButton" name="GenVelBtn">
+          <widget class="QPushButton" name="genvelBtn">
            <property name="text">
             <string>Generate Velocity Grid</string>
            </property>

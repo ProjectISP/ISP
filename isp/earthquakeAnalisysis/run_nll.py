@@ -10,47 +10,35 @@ import os
 import pandas as pd
 import subprocess as sb
 
-class NLL:
+class NllManager:
     def __init__(self):
-        ##relative path
-        self.path = self.__get_default_output_path()
+        pass
 
-        ##First read the Vel2Grid template
-
-
-    ##Function to get the full standard location path
-    def __get_default_output_path(self):
-        run_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "location_output")
-        if not os.path.isdir(run_path):
-            raise FileNotFoundError("The dir {} doesn't exist.".format(run_path))
-
-        return run_path
-
-    @staticmethod
-    def get_template_file_path():
+    @property
+    def root_path(self):
         root_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "location_output")
         if not os.path.isdir(root_path):
             raise FileNotFoundError("The dir {} doesn't exist.".format(root_path))
-        file_path = os.path.join(root_path,"run","template")
+        return root_path
+
+    def get_template_file_path(self):
+        file_path = os.path.join(self.root_path,"run","template")
         if not os.path.isfile(file_path):
             raise FileNotFoundError("The file {} doesn't exist.".format(file_path))
+        return file_path
 
+    def vel_to_grid(self,latitude, longitude,depth=0):
+        # Example of modification
 
-    ###Necessary add the info the user wants to modify
+        file_path=self.get_template_file_path()
 
-    def Vel2Grid_mod(self):
-         #Example of modification
-         #df.iloc[1, 0]='TRANS SIMPLE 33 -10 0.0'
-         file = self.path + "/" + "run" + "/template"
-         output = self.path + "/" + "temp" + "/input.txt"
-         data = pd.read_csv(file)
-
-         df = pd.DataFrame(data)
-
-         ##Copy the data frame
-         df2 = df
-         df2.to_csv(output, index = False, header=True,encoding='utf-8')
-         print(df2)
+        output = os.path.join(self.root_path,"temp","input.txt")
+        data = pd.read_csv(file_path)
+        df = pd.DataFrame(data)
+        df.iloc[1, 0] = 'TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}'.format(lat=latitude,lon=longitude, depth=depth)
+        # Copy the data frame
+        df.to_csv(output, index = False, header=True,encoding='utf-8')
+        print(df)
     #
     #
          #command="cat ./model/modelP >> ./temp/input.txt"

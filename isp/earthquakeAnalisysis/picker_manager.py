@@ -5,9 +5,6 @@ from obspy import UTCDateTime
 
 
 class PickerManager:
-    # IFR ? ? P ? 20150917 1512 22 ? ? 267.67 ? ?
-    # IFR ? HHZ ? P ? 20150917 1512 22.787 GAU 0.0 0.0 1352.301 0.0
-    # OBS01 ? ? ? P ? 20150917 1512 23 GAU 0 0 0.00 0 0
 
     StationName = "Station_name"
     Instrument = "Instrument"

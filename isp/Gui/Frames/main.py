@@ -19,7 +19,7 @@ class BaseFrame(pw.QMainWindow, metaclass=SettingsLoader):
 
     def __load__(self):
         """ Method called after __init__"""
-        # self.load()  # TODO FIXED LOAD FOR MAC
+        self.load()
         self.apply_shadow()
 
     # Press esc key event

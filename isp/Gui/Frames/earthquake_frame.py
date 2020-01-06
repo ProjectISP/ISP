@@ -7,9 +7,7 @@ from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
 from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Utils import MseedUtil, ObspyUtil
-from isp.earthquakeAnalisysis import PickerManager
-from isp.earthquakeAnalisysis import run_nll
-from pathlib import Path
+from isp.earthquakeAnalisysis import PickerManager, NllManager
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
@@ -42,15 +40,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
+        self.grid_latitude_bind = BindPyqtObject(self.gridlatSB)
 
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.sortBtn.clicked.connect(self.on_click_sort)
+        self.genvelBtn.clicked.connect(self.on_click_run_vel_to_grid)
 
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
         # Buttons for Earthquake analysis
-        self.GenVelBtn.clicked.connect(self.runVel2Grd)
+
 
     @property
     def dataless_manager(self):
@@ -174,9 +174,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     ######New function incorporated by Roberto
 
-    def runVel2Grd(self):
+    def on_click_run_vel_to_grid(self):
+        nll_manager = NllManager()
+        nll_manager.vel_to_grid(self.grid_latitude_bind.value)
+        print(self.grid_latitude_bind.value)
 
-        #path = str(Path(__file__).resolve().parent)
-        #path=self.root_path_bind.value
-        #velmod = runNLL.NLL()
-        run_nll.NLL.Vel2Grid_mod(self)
