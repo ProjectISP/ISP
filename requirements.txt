@@ -7,3 +7,4 @@ pandas
 PyQt5
 mtspec
 nitime
+Cartopy

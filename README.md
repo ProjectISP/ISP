@@ -23,3 +23,21 @@ Make sure you have the right python venv activated:
 Then just go to the project folder and run: 
 
     python setup.py build_ext --inplace
+    
+* Cartopy installation guide:
+    
+    Before pip install Cartopy you must satisfy some system requirements:
+
+    Ubuntu:
+    
+        sudo apt-get install libproj-dev proj-data proj-bin  
+        sudo apt-get install libgeos-dev
+        
+     Mac: 
+     
+        brew install geos
+        brew install proj
+     
+    After installing the requirements above you can install cartopy:
+    
+        pip install Cartopy
