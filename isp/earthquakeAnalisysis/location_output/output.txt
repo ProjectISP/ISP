@@ -1,1 +1,7 @@
 Station_name Instrument Component P_phase_onset P_phase_descriptor First_Motion Date Hour_min Seconds Err ErrMag Coda_duration Amplitude Period
+<<<<<<< HEAD
+=======
+OBS01 ? ? ? P - 20150917 0406 46 GAU 0.0 0.0 1656.03 0.0
+OBS01 ? ? ? P + 20150917 0458 48 GAU 0.0 0.0 -24842.97 0.0
+OBS01 ? ? ? P ? 20150917 0629 20 GAU 0.0 0.0 7863.03 0.0
+>>>>>>> 12242a5861457e7b624fbe47787227419f5ac7f7
