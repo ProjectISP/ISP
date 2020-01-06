@@ -8,6 +8,8 @@ from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager
+from isp.earthquakeAnalisysis import run_nll
+from pathlib import Path
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
@@ -47,6 +49,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.sortBtn.clicked.connect(self.on_click_sort)
 
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
+        # Buttons for Earthquake analysis
+        self.GenVelBtn.clicked.connect(self.runVel2Grd)
 
     @property
     def dataless_manager(self):
@@ -135,19 +139,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                    filter_value=self.filter.filter_value,
                                    f_min=self.filter.min_freq, f_max=self.filter.max_freq)
 
-            self.canvas.plot(t, s, index, color="black",linewidth=0.5)
+            self.canvas.plot(t, s, index, color="black", linewidth=0.5)
             last_index = index
 
         # set x-label at the last axes.
         self.canvas.set_xlabel(last_index, "Time (s)")
 
-
-
     def on_click_matplotlib(self, event, canvas):
         # print(event.key)
         if isinstance(canvas, MatplotlibCanvas):
             polarity, color = map_polarity_from_pressed_key(event.key)
-            #phase = "Phase"
+            # phase = "Phase"
             phase = self.comboBox_phases.currentText()
             click_at_index = event.inaxes.rowNum
             x1, y1 = event.xdata, event.ydata
@@ -170,6 +172,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         t, station = self.picked_at.pop(str(line))
         self.pm.remove_data(t, station)
 
+    ######New function incorporated by Roberto
 
+    def runVel2Grd(self):
 
-
+        #path = str(Path(__file__).resolve().parent)
+        #path=self.root_path_bind.value
+        #velmod = runNLL.NLL()
+        run_nll.NLL.Vel2Grid_mod(self)

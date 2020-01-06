@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -551,8 +551,8 @@
          <rect>
           <x>50</x>
           <y>10</y>
-          <width>301</width>
-          <height>161</height>
+          <width>321</width>
+          <height>231</height>
          </rect>
         </property>
         <layout class="QFormLayout" name="formLayout">
@@ -563,30 +563,30 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
+         <item row="2" column="0">
           <widget class="QSpinBox" name="spinBox"/>
          </item>
-         <item row="2" column="0">
+         <item row="3" column="0">
           <widget class="QSpinBox" name="spinBox_2"/>
          </item>
-         <item row="2" column="1">
+         <item row="3" column="1">
           <widget class="QLabel" name="label_3">
            <property name="text">
             <string>Longitude</string>
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
+         <item row="4" column="0">
           <widget class="QSpinBox" name="spinBox_3"/>
          </item>
-         <item row="3" column="1">
+         <item row="4" column="1">
           <widget class="QLabel" name="label_4">
            <property name="text">
             <string>Depth</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
+         <item row="6" column="0">
           <widget class="QComboBox" name="comboBox_2">
            <item>
             <property name="text">
@@ -600,17 +600,24 @@
            </item>
           </widget>
          </item>
-         <item row="4" column="1">
+         <item row="6" column="1">
           <widget class="QLabel" name="label_2">
            <property name="text">
             <string>Trans</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item row="2" column="1">
           <widget class="QLabel" name="label_9">
            <property name="text">
             <string>Latitude</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QPushButton" name="GenVelBtn">
+           <property name="text">
+            <string>Generate Velocity Grid</string>
            </property>
           </widget>
          </item>
@@ -620,7 +627,7 @@
         <property name="geometry">
          <rect>
           <x>50</x>
-          <y>200</y>
+          <y>250</y>
           <width>301</width>
           <height>120</height>
          </rect>
@@ -698,8 +705,8 @@
        <widget class="QWidget" name="gridLayoutWidget_3">
         <property name="geometry">
          <rect>
-          <x>50</x>
-          <y>330</y>
+          <x>40</x>
+          <y>410</y>
           <width>301</width>
           <height>109</height>
          </rect>
