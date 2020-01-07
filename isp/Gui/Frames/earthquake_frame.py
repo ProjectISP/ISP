@@ -6,6 +6,7 @@ from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, Mes
 from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
 from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
+from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager, NllManager
 
@@ -19,10 +20,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.files = []
         self.total_items = 0
         self.items_per_page = 1
-        # dict to keep track of picks: key = str(Line2D from canvas.draw_arrow()), value = (time, station)
+        # dict to keep track of picks-> dict(key: PickerStructure) as key we use the drawn line.
         self.picked_at = {}
         self.__dataless_manager = None
-        self.dataless_not_found = set()  # a set of mseed files that the dataless wasn't found.
+        self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
 
         self.filter = FilterBox(self.filterWidget)  # add filter box component.
         self.filter_3ca = FilterBox(self.filter3CAWidget)  # add filter box component.
@@ -154,19 +155,31 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                    f_min=self.filter.min_freq, f_max=self.filter.max_freq)
 
             self.canvas.plot(t, s, index, color="black", linewidth=0.5)
+            self.redraw_pickers(file_path, index)
             last_index = index
 
         # set x-label at the last axes.
         self.canvas.set_xlabel(last_index, "Time (s)")
 
+    def redraw_pickers(self, file_name, axe_index):
+
+        picked_at = {key: values for key, values in self.picked_at.items()}  # copy the dictionary.
+        for key, value in picked_at.items():
+            ps: PickerStructure = value
+            if file_name == ps.FileName:
+                new_line = self.canvas.draw_arrow(ps.XPosition, axe_index, ps.Label,
+                                                  amplitude=ps.Amplitude, color=ps.Color, picker=True)
+                self.picked_at.pop(key)
+                self.picked_at[str(new_line)] = ps
+
     def on_click_matplotlib(self, event, canvas):
-        # print(event.key)
         if isinstance(canvas, MatplotlibCanvas):
             polarity, color = map_polarity_from_pressed_key(event.key)
             phase = self.comboBox_phases.currentText()
             click_at_index = event.inaxes.rowNum
             x1, y1 = event.xdata, event.ydata
             stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
+
             # Get amplitude from index
             x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
             amplitude = canvas.get_ydata(click_at_index).item(x_index)  # get y-data from index.
@@ -174,7 +187,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
 
             t = stats.StartTime + x1
-            self.picked_at[str(line)] = t, stats.Station
+            self.picked_at[str(line)] = PickerStructure(t, stats.Station, x1, amplitude, color, label,
+                                                        self.get_file_at_index(click_at_index))
             # Add pick data to file.
             self.pm.add_data(t, amplitude, stats.Station, phase, First_Motion=polarity)
             self.pm.save()  # maybe we can move this to when you press locate.
@@ -182,14 +196,18 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def on_pick(self, event):
         line = event.artist
         self.canvas.remove_arrow(line)
-        t, station = self.picked_at.pop(str(line))
-        self.pm.remove_data(t, station)
-
-    ######New function incorporated by Roberto
+        picker_structure: PickerStructure = self.picked_at.pop(str(line))
+        self.pm.remove_data(picker_structure.Time, picker_structure.Station)
 
     def on_click_run_vel_to_grid(self):
         nll_manager = NllManager()
+<<<<<<< HEAD
         nll_manager.vel_to_grid(self.grid_latitude_bind.value,self.grid_longitude_bind.value,
                                self.grid_depth_bind.value,self.grid_xnode_bind.value,self.grid_ynode_bind.value,
                                self.grid_znode_bind.value,self.grid_dxsize_bind.value,self.grid_dysize_bind.value,
                                self.grid_dzsize_bind.value,self.comboBox_gridtype.currentText(),self.comboBox_wavetype.currentText())
+=======
+        nll_manager.vel_to_grid(self.grid_latitude_bind.value, 0)
+        print(self.grid_latitude_bind.value)
+
+>>>>>>> 85dcdebc0cb3e9c7f95e4cb95ec56f5dd304644c

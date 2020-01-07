@@ -10,7 +10,8 @@ from isp import app_logger
 def validate_dictionary(cls: NamedTuple, dic: dict):
     """
      Force the dictionary to have the same type of the parameter's declaration.
-    :param cls: Expect a NamedTuple derived class.
+
+    :param cls: Expect a NamedTuple child class.
     :param dic: The dictionary to be validate.
     :return: A new dictionary that try to keeps the same data type from this class parameters.
     """
@@ -42,6 +43,7 @@ def validate_dictionary(cls: NamedTuple, dic: dict):
 class TracerStats(NamedTuple):
     """
     Class that holds a structure of mseed metadata.
+
     Fields:
         * Network = (string) network name.
         * Station = (string) station name.
@@ -91,11 +93,12 @@ class TracerStats(NamedTuple):
 
 class StationsStats(NamedTuple):
     """
-    Class that holds a structure of mseed metadata.
+    Class that holds a structure of station metadata.
+
     Fields:
         * Name = (string) Station name.
-        * Lon = (string) Longitude of station.
-        * Lat = (string) Latitude of station.
+        * Lon = (float) Longitude of station.
+        * Lat = (float) Latitude of station.
         * Depth = (float) Depth of station.
     """
     Name: str = None
@@ -128,4 +131,42 @@ class StationsStats(NamedTuple):
         station_dict = {"Name": station_blk.station_call_letters, "Lon": station_blk.longitude,
                         "Lat": station_blk.latitude, "Depth": station_blk.elevation}
         return cls(**station_dict)
+
+
+class PickerStructure(NamedTuple):
+    """
+    Class that holds a structure for the picker. This is used for re-plot the pickers keeping all
+    necessary information in memory.
+
+    Fields:
+        * Time = (UTCDateTime) The time of the picker.
+        * Station = (string) The station name.
+        * XPosition = (float) The x position of the plot.
+        * Amplitude = (float) The amplitude of the pick.
+        * Color = (str) The color for the annotate box.
+        * Label = (str) The abel for the annotate box.
+        * FileName = (str) The file name (mseed file) that the picker was used.
+    """
+    Time: UTCDateTime
+    Station: str
+    XPosition: float
+    Amplitude: float
+    Color: str
+    Label: str
+    FileName: str
+
+    def to_dict(self):
+        return self._asdict()
+
+    # noinspection PyTypeChecker
+    @classmethod
+    def from_dict(cls, dictionary):
+        try:
+            new_d = validate_dictionary(cls, dictionary)
+            return cls(**new_d)
+
+        except Exception as error:
+            print(error)
+            app_logger.error(traceback.format_exc())
+            raise Exception
 
