@@ -3,7 +3,7 @@ CONTROL 1 54321
 TRANS SIMPLE 33.00 -10.00 0.00
 VGGRID 2 245 115 0.0 0.0 -1.0  5.00 5.00 5.00 SLOW_LEN
 VGOUT /Users/robertocabieces/Documents/ISPshare/isp/earthquakeAnalisysis/location_output/model/layer
-VGTYPE P
+VGTYPE S
 LAYER   0.0  6.1 0.0    3.49  0.0  2.7 0.0
 LAYER  11.0  6.4 0.0    3.66  0.0  2.7 0.0
 LAYER  24.0  6.9 0.0    3.94  0.0  2.7 0.0

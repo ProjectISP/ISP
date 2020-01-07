@@ -1,1 +1,0 @@
-Station_name Instrument Component P_phase_onset P_phase_descriptor First_Motion Date Hour_min Seconds Err ErrMag Coda_duration Amplitude Period

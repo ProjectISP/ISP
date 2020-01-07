@@ -51,18 +51,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.grid_dysize_bind = BindPyqtObject(self.dysizeSB)
         self.grid_dzsize_bind = BindPyqtObject(self.dzsizeSB)
 
-
-
-
-
-
-
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.sortBtn.clicked.connect(self.on_click_sort)
         self.genvelBtn.clicked.connect(self.on_click_run_vel_to_grid)
-
+        self.grdtimeBtn.clicked.connect(self.on_click_run_grid_to_time)
+        self.runlocBtn.clicked.connect(self.on_click_run_loc)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
         # Buttons for Earthquake analysis
 
@@ -201,13 +196,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def on_click_run_vel_to_grid(self):
         nll_manager = NllManager()
-<<<<<<< HEAD
         nll_manager.vel_to_grid(self.grid_latitude_bind.value,self.grid_longitude_bind.value,
                                self.grid_depth_bind.value,self.grid_xnode_bind.value,self.grid_ynode_bind.value,
                                self.grid_znode_bind.value,self.grid_dxsize_bind.value,self.grid_dysize_bind.value,
                                self.grid_dzsize_bind.value,self.comboBox_gridtype.currentText(),self.comboBox_wavetype.currentText())
-=======
-        nll_manager.vel_to_grid(self.grid_latitude_bind.value, 0)
-        print(self.grid_latitude_bind.value)
 
->>>>>>> 85dcdebc0cb3e9c7f95e4cb95ec56f5dd304644c
+    def on_click_run_grid_to_time(self):
+        nll_manager = NllManager()
+        nll_manager.grid_to_time(self.grid_latitude_bind.value,self.grid_longitude_bind.value,
+                               self.grid_depth_bind.value,self.comboBox_grid.currentText(),self.comboBox_angles.currentText(),self.comboBox_ttwave.currentText())
+
+    def on_click_run_loc(self):
+        nll_manager = NllManager()
+        nll_manager.NLLoc(self.grid_latitude_bind.value,self.grid_longitude_bind.value,
+                               self.grid_depth_bind.value)
+
+
