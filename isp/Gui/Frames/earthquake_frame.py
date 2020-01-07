@@ -41,6 +41,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
         self.grid_latitude_bind = BindPyqtObject(self.gridlatSB)
+        self.grid_longitude_bind = BindPyqtObject(self.gridlonSB)
+        self.grid_depth_bind = BindPyqtObject(self.griddepthSB)
+        self.grid_xnode_bind = BindPyqtObject(self.xnodeSB)
+        self.grid_ynode_bind = BindPyqtObject(self.ynodeSB)
+        self.grid_znode_bind = BindPyqtObject(self.znodeSB)
+        self.grid_dxsize_bind = BindPyqtObject(self.dxsizeSB)
+        self.grid_dysize_bind = BindPyqtObject(self.dysizeSB)
+        self.grid_dzsize_bind = BindPyqtObject(self.dzsizeSB)
+
+
+
+
+
+
 
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
@@ -149,7 +163,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # print(event.key)
         if isinstance(canvas, MatplotlibCanvas):
             polarity, color = map_polarity_from_pressed_key(event.key)
-            # phase = "Phase"
             phase = self.comboBox_phases.currentText()
             click_at_index = event.inaxes.rowNum
             x1, y1 = event.xdata, event.ydata
@@ -176,6 +189,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def on_click_run_vel_to_grid(self):
         nll_manager = NllManager()
-        nll_manager.vel_to_grid(self.grid_latitude_bind.value)
-        print(self.grid_latitude_bind.value)
-
+        nll_manager.vel_to_grid(self.grid_latitude_bind.value,self.grid_longitude_bind.value,
+                               self.grid_depth_bind.value,self.grid_xnode_bind.value,self.grid_ynode_bind.value,
+                               self.grid_znode_bind.value,self.grid_dxsize_bind.value,self.grid_dysize_bind.value,
+                               self.grid_dzsize_bind.value,self.comboBox_gridtype.currentText(),self.comboBox_wavetype.currentText())

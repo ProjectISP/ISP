@@ -549,9 +549,9 @@
        <widget class="QWidget" name="gridLayoutWidget">
         <property name="geometry">
          <rect>
-          <x>50</x>
+          <x>160</x>
           <y>10</y>
-          <width>321</width>
+          <width>291</width>
           <height>231</height>
          </rect>
         </property>
@@ -559,15 +559,33 @@
          <item row="0" column="0" colspan="2">
           <widget class="QLabel" name="label_8">
            <property name="text">
-            <string>                              Grid Refrence</string>
+            <string>                              Grid Reference</string>
            </property>
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QSpinBox" name="gridlatSB"/>
+          <widget class="QSpinBox" name="gridlatSB">
+           <property name="maximum">
+            <number>90</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>Latitude</string>
+           </property>
+          </widget>
          </item>
          <item row="3" column="0">
-          <widget class="QSpinBox" name="gridlonSB"/>
+          <widget class="QSpinBox" name="gridlonSB">
+           <property name="minimum">
+            <number>-180</number>
+           </property>
+           <property name="maximum">
+            <number>180</number>
+           </property>
+          </widget>
          </item>
          <item row="3" column="1">
           <widget class="QLabel" name="label_3">
@@ -577,7 +595,14 @@
           </widget>
          </item>
          <item row="4" column="0">
-          <widget class="QSpinBox" name="griddepthSB"/>
+          <widget class="QSpinBox" name="griddepthSB">
+           <property name="minimum">
+            <number>-5</number>
+           </property>
+           <property name="maximum">
+            <number>800</number>
+           </property>
+          </widget>
          </item>
          <item row="4" column="1">
           <widget class="QLabel" name="label_4">
@@ -587,7 +612,7 @@
           </widget>
          </item>
          <item row="6" column="0">
-          <widget class="QComboBox" name="comboBox_2">
+          <widget class="QComboBox" name="transCB">
            <item>
             <property name="text">
              <string>SIMPLE</string>
@@ -603,21 +628,7 @@
          <item row="6" column="1">
           <widget class="QLabel" name="label_2">
            <property name="text">
-            <string>Trans</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLabel" name="label_9">
-           <property name="text">
-            <string>Latitude</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="1">
-          <widget class="QPushButton" name="genvelBtn">
-           <property name="text">
-            <string>Generate Velocity Grid</string>
+            <string>Geographic Transformation</string>
            </property>
           </widget>
          </item>
@@ -628,36 +639,52 @@
          <rect>
           <x>50</x>
           <y>250</y>
-          <width>301</width>
-          <height>120</height>
+          <width>510</width>
+          <height>191</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="1" column="2">
-          <widget class="QSpinBox" name="spinBox_7"/>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLabel" name="label_6">
+         <item row="0" column="0" colspan="5" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_5">
            <property name="text">
-            <string>y</string>
+            <string>Grid Size (km)</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QSpinBox" name="spinBox_5"/>
-         </item>
-         <item row="1" column="0">
-          <widget class="QSpinBox" name="spinBox_4"/>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLabel" name="label">
+         <item row="3" column="4">
+          <widget class="QLabel" name="label_14">
            <property name="text">
-            <string>x</string>
+            <string>dz</string>
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="QSpinBox" name="spinBox_6"/>
+         <item row="3" column="3">
+          <widget class="QSpinBox" name="dzsizeSB">
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="4">
+          <widget class="QLabel" name="label_13">
+           <property name="text">
+            <string>dy</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="3">
+          <widget class="QSpinBox" name="dysizeSB">
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="4">
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>dx</string>
+           </property>
+          </widget>
          </item>
          <item row="3" column="1">
           <widget class="QLabel" name="label_7">
@@ -666,37 +693,114 @@
            </property>
           </widget>
          </item>
+         <item row="3" column="0">
+          <widget class="QSpinBox" name="znodeSB">
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>x</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QSpinBox" name="xnodeSB">
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QSpinBox" name="ynodeSB">
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>y</string>
+           </property>
+          </widget>
+         </item>
          <item row="1" column="3">
-          <widget class="QLabel" name="label_10">
-           <property name="text">
-            <string>dx</string>
+          <widget class="QSpinBox" name="dxsizeSB">
+           <property name="maximum">
+            <number>10000</number>
            </property>
           </widget>
          </item>
-         <item row="2" column="2">
-          <widget class="QSpinBox" name="spinBox_8"/>
+         <item row="4" column="0">
+          <widget class="QComboBox" name="comboBox_gridtype">
+           <item>
+            <property name="text">
+             <string>VELOCITY_METERS</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SLOWNESS</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>VEL2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SLOW2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SLOW_2_METERS</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SLOW_LEN</string>
+            </property>
+           </item>
+          </widget>
          </item>
-         <item row="2" column="3">
-          <widget class="QLabel" name="label_13">
+         <item row="4" column="1">
+          <widget class="QLabel" name="label_18">
            <property name="text">
-            <string>dy</string>
+            <string>Grid Type</string>
            </property>
           </widget>
          </item>
-         <item row="3" column="2">
-          <widget class="QSpinBox" name="spinBox_9"/>
-         </item>
-         <item row="3" column="3">
-          <widget class="QLabel" name="label_14">
+         <item row="4" column="4">
+          <widget class="QLabel" name="label_19">
            <property name="text">
-            <string>dz</string>
+            <string>Wave</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="0" colspan="4" alignment="Qt::AlignHCenter">
-          <widget class="QLabel" name="label_5">
+         <item row="4" column="3">
+          <widget class="QComboBox" name="comboBox_wavetype">
+           <item>
+            <property name="text">
+             <string>P</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>S</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="4" column="2">
+          <widget class="QPushButton" name="genvelBtn">
            <property name="text">
-            <string>Grid Size (km)</string>
+            <string>Generate Velocity Grid</string>
            </property>
           </widget>
          </item>
@@ -705,14 +809,44 @@
        <widget class="QWidget" name="gridLayoutWidget_3">
         <property name="geometry">
          <rect>
-          <x>40</x>
-          <y>410</y>
-          <width>301</width>
-          <height>109</height>
+          <x>50</x>
+          <y>500</y>
+          <width>511</width>
+          <height>141</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
-         <item row="3" column="0">
+         <item row="9" column="0">
+          <widget class="QComboBox" name="comboBox_3">
+           <item>
+            <property name="text">
+             <string>OCT-TREE</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="9" column="1">
+          <widget class="QLabel" name="label_16">
+           <property name="text">
+            <string>Search</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_15">
+           <property name="text">
+            <string>Location Parameters</string>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="1">
+          <widget class="QLabel" name="label_17">
+           <property name="text">
+            <string>Method</string>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="0">
           <widget class="QComboBox" name="comboBox_4">
            <item>
             <property name="text">
@@ -736,34 +870,11 @@
            </item>
           </widget>
          </item>
-         <item row="3" column="1">
-          <widget class="QLabel" name="label_17">
+         <item row="3" column="0" colspan="2">
+          <widget class="QPushButton" name="pushButton_2">
            <property name="text">
-            <string>Method</string>
+            <string>Run Location</string>
            </property>
-          </widget>
-         </item>
-         <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
-          <widget class="QLabel" name="label_15">
-           <property name="text">
-            <string>Location Parameters</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLabel" name="label_16">
-           <property name="text">
-            <string>Search</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QComboBox" name="comboBox_3">
-           <item>
-            <property name="text">
-             <string>OCT-TREE</string>
-            </property>
-           </item>
           </widget>
          </item>
         </layout>
@@ -783,6 +894,7 @@
            <property name="styleSheet">
             <string notr="true">background-color: rgb(255, 255, 255);</string>
            </property>
+           <zorder>widget_5</zorder>
           </widget>
          </item>
         </layout>
@@ -803,6 +915,28 @@
             <string notr="true">background-color: rgb(255, 255, 255);</string>
            </property>
           </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="horizontalLayoutWidget_3">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>700</y>
+          <width>511</width>
+          <height>80</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <widget class="QPushButton" name="pushButton">
+           <property name="text">
+            <string>Path Model</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="lineEdit"/>
          </item>
         </layout>
        </widget>
