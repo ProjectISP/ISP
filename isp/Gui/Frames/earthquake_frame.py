@@ -58,9 +58,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.genvelBtn.clicked.connect(self.on_click_run_vel_to_grid)
         self.grdtimeBtn.clicked.connect(self.on_click_run_grid_to_time)
         self.runlocBtn.clicked.connect(self.on_click_run_loc)
-        self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
-        # Buttons for Earthquake analysis
 
+        self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
     @property
     def dataless_manager(self):
@@ -195,20 +194,21 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.pm.remove_data(picker_structure.Time, picker_structure.Station)
 
     def on_click_run_vel_to_grid(self):
-        nll_manager = NllManager()
-        nll_manager.vel_to_grid(self.grid_latitude_bind.value,self.grid_longitude_bind.value,
-                               self.grid_depth_bind.value,self.grid_xnode_bind.value,self.grid_ynode_bind.value,
-                               self.grid_znode_bind.value,self.grid_dxsize_bind.value,self.grid_dysize_bind.value,
-                               self.grid_dzsize_bind.value,self.comboBox_gridtype.currentText(),self.comboBox_wavetype.currentText())
+        nll_manager = NllManager(self.pm.output_path)
+        nll_manager.vel_to_grid(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                                self.grid_depth_bind.value, self.grid_xnode_bind.value,
+                                self.grid_ynode_bind.value, self.grid_znode_bind.value,
+                                self.grid_dxsize_bind.value, self.grid_dysize_bind.value,
+                                self.grid_dzsize_bind.value, self.comboBox_gridtype.currentText(),
+                                self.comboBox_wavetype.currentText())
 
     def on_click_run_grid_to_time(self):
-        nll_manager = NllManager()
-        nll_manager.grid_to_time(self.grid_latitude_bind.value,self.grid_longitude_bind.value,
-                               self.grid_depth_bind.value,self.comboBox_grid.currentText(),self.comboBox_angles.currentText(),self.comboBox_ttwave.currentText())
+        nll_manager = NllManager(self.pm.output_path)
+        nll_manager.grid_to_time(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                                 self.grid_depth_bind.value, self.comboBox_grid.currentText(),
+                                 self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText())
 
     def on_click_run_loc(self):
-        nll_manager = NllManager()
-        nll_manager.NLLoc(self.grid_latitude_bind.value,self.grid_longitude_bind.value,
-                               self.grid_depth_bind.value)
-
-
+        nll_manager = NllManager(self.pm.output_path)
+        nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                              self.grid_depth_bind.value)
