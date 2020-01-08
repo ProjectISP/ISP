@@ -1,2 +1,0 @@
-Station_name Instrument Component P_phase_onset P_phase_descriptor First_Motion Date Hour_min Seconds Err ErrMag Coda_duration Amplitude Period
-OBS01 ? ? ? Phase ? 20150917 0605 23 GAU 0.0 0.0 3102.03 0.0
