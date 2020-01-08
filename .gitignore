@@ -104,5 +104,11 @@ venv.bak/
 .mypy_cache/
 .idea
 
-# remove this file from git
-/isp/earthquakeAnalisysis/location_output/output.txt
+# remove this dir or file from git
+/isp/earthquakeAnalisysis/location_output/obs/
+/isp/earthquakeAnalisysis/location_output/model/
+/isp/earthquakeAnalisysis/location_output/temp/
+/isp/earthquakeAnalisysis/location_output/stations/
+/isp/earthquakeAnalisysis/location_output/time/
+*.hdr
+*.buf

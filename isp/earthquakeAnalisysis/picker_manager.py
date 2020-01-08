@@ -74,9 +74,9 @@ class PickerManager:
                 raise ValueError("The key {} must by in {}".format(key, self.columns))
 
     def __get_default_output_path(self):
-        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "location_output","obs")
+        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "location_output", "obs")
         if not os.path.isdir(root):
-            raise FileNotFoundError("The dir {} doesn't exist.".format(root))
+            os.mkdir(root)
 
         return os.path.join(root, self.__output_file_name)
 

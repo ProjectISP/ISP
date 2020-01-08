@@ -1,11 +1,1 @@
 Station_name Instrument Component P_phase_onset P_phase_descriptor First_Motion Date Hour_min Seconds Err ErrMag Coda_duration Amplitude Period
-OBS01 ? ? ? P ? 20150917 1512 24 GAU 0.0 0.0 -0.00 0.0
-OBS02 ? ? ? P ? 20150917 1512 25 GAU 0.0 0.0 0.00 0.0
-OBS02 ? ? ? S ? 20150917 1512 57 GAU 0.0 0.0 -0.00 0.0
-OBS01 ? ? ? S ? 20150917 1512 58 GAU 0.0 0.0 -0.00 0.0
-OBS03 ? ? ? P ? 20150917 1512 30 GAU 0.0 0.0 -0.00 0.0
-OBS05 ? ? ? P ? 20150917 1512 31 GAU 0.0 0.0 0.00 0.0
-OBS03 ? ? ? S ? 20150917 1513 04 GAU 0.0 0.0 0.00 0.0
-OBS05 ? ? ? S ? 20150917 1513 07 GAU 0.0 0.0 -0.00 0.0
-OBS06 ? ? ? Pg ? 20150917 1512 26 GAU 0.0 0.0 0.00 0.0
-OBS06 ? ? ? S ? 20150917 1513 00 GAU 0.0 0.0 -0.00 0.0
