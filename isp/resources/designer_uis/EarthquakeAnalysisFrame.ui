@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -402,62 +402,24 @@
        <attribute name="title">
         <string>3C Analysis</string>
        </attribute>
-       <widget class="QPushButton" name="pushButton_5">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>89</width>
-          <height>25</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Load files</string>
-        </property>
-       </widget>
-       <widget class="QWidget" name="widget_3" native="true">
-        <property name="geometry">
-         <rect>
-          <x>250</x>
-          <y>120</y>
-          <width>1371</width>
-          <height>721</height>
-         </rect>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QWidget{
-	background-color: rgb(255, 255, 255);
-}</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lineEdit_5">
-        <property name="geometry">
-         <rect>
-          <x>110</x>
-          <y>10</y>
-          <width>431</width>
-          <height>25</height>
-         </rect>
-        </property>
-       </widget>
        <widget class="QPushButton" name="pushButton_6">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>260</y>
-          <width>89</width>
+          <x>490</x>
+          <y>10</y>
+          <width>111</width>
           <height>25</height>
          </rect>
         </property>
         <property name="text">
-         <string>Rotate</string>
+         <string>Rotate &amp; Plot</string>
         </property>
        </widget>
        <widget class="QDoubleSpinBox" name="doubleSpinBox">
         <property name="geometry">
          <rect>
-          <x>110</x>
-          <y>260</y>
+          <x>610</x>
+          <y>10</y>
           <width>69</width>
           <height>26</height>
          </rect>
@@ -466,8 +428,8 @@
        <widget class="QDateTimeEdit" name="dateTimeEdit_4">
         <property name="geometry">
          <rect>
-          <x>790</x>
-          <y>10</y>
+          <x>950</x>
+          <y>60</y>
           <width>203</width>
           <height>26</height>
          </rect>
@@ -488,8 +450,8 @@
        <widget class="QDateTimeEdit" name="dateTimeEdit_5">
         <property name="geometry">
          <rect>
-          <x>560</x>
-          <y>10</y>
+          <x>730</x>
+          <y>60</y>
           <width>203</width>
           <height>26</height>
          </rect>
@@ -507,37 +469,157 @@
          <enum>Qt::LocalTime</enum>
         </property>
        </widget>
-       <widget class="QWidget" name="filter3CAWidget" native="true">
+       <widget class="QWidget" name="verticalLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>249</x>
+          <y>509</y>
+          <width>1361</width>
+          <height>341</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_10">
+         <item>
+          <widget class="QWidget" name="widget_6" native="true">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 255, 255);</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="">
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>60</y>
-          <width>221</width>
-          <height>191</height>
+          <y>130</y>
+          <width>219</width>
+          <height>189</height>
          </rect>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_8">
+        <layout class="QVBoxLayout" name="verticalLayout_7">
          <property name="spacing">
-          <number>1</number>
-         </property>
-         <property name="leftMargin">
-          <number>1</number>
-         </property>
-         <property name="topMargin">
-          <number>1</number>
-         </property>
-         <property name="rightMargin">
-          <number>1</number>
-         </property>
-         <property name="bottomMargin">
-          <number>1</number>
+          <number>0</number>
          </property>
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_7">
-           <property name="spacing">
-            <number>0</number>
+          <widget class="QWidget" name="filter3CAWidget" native="true">
+           <layout class="QVBoxLayout" name="verticalLayout_8">
+            <property name="spacing">
+             <number>1</number>
+            </property>
+            <property name="leftMargin">
+             <number>1</number>
+            </property>
+            <property name="topMargin">
+             <number>1</number>
+            </property>
+            <property name="rightMargin">
+             <number>1</number>
+            </property>
+            <property name="bottomMargin">
+             <number>1</number>
+            </property>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="gridLayoutWidget_5">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>10</y>
+          <width>461</width>
+          <height>103</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_5">
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="lineEdit_3"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QPushButton" name="pushButton_8">
+           <property name="text">
+            <string>N</string>
            </property>
-          </layout>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QPushButton" name="pushButton_5">
+           <property name="text">
+            <string>Z</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="lineEdit_2"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QPushButton" name="pushButton_7">
+           <property name="text">
+            <string>E</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="lineEdit_4"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QLabel" name="label_23">
+        <property name="geometry">
+         <rect>
+          <x>790</x>
+          <y>30</y>
+          <width>61</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Start time</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_24">
+        <property name="geometry">
+         <rect>
+          <x>1020</x>
+          <y>30</y>
+          <width>61</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>End time</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="verticalLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>249</x>
+          <y>130</y>
+          <width>1361</width>
+          <height>371</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_9">
+         <item>
+          <widget class="QWidget" name="widget_3" native="true">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(255, 255, 255);</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>

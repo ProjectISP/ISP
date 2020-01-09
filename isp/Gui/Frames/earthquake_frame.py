@@ -194,7 +194,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.pm.remove_data(picker_structure.Time, picker_structure.Station)
 
     def on_click_run_vel_to_grid(self):
-        nll_manager = NllManager(self.pm.output_path)
+        nll_manager = NllManager(self.pm.output_path,self.dataless_path_bind.value)
         nll_manager.vel_to_grid(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
                                 self.grid_depth_bind.value, self.grid_xnode_bind.value,
                                 self.grid_ynode_bind.value, self.grid_znode_bind.value,
@@ -203,12 +203,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                 self.comboBox_wavetype.currentText())
 
     def on_click_run_grid_to_time(self):
-        nll_manager = NllManager(self.pm.output_path)
+        nll_manager = NllManager(self.pm.output_path,self.dataless_path_bind.value)
         nll_manager.grid_to_time(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
                                  self.grid_depth_bind.value, self.comboBox_grid.currentText(),
                                  self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText())
 
     def on_click_run_loc(self):
-        nll_manager = NllManager(self.pm.output_path)
+        nll_manager = NllManager(self.pm.output_path,self.dataless_path_bind.value)
         nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
                               self.grid_depth_bind.value)

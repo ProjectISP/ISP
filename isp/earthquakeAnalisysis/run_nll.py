@@ -9,10 +9,13 @@ Created on Tue Dec 17 20:26:28 2019
 import os
 import pandas as pd
 import subprocess as sb
+from obspy.io.xseed import Parser
+from os.path import isfile, join
+from os import listdir
 
 
 class NllManager:
-    def __init__(self, obs_file_path):
+    def __init__(self, obs_file_path,dataless_path):
         """
         Manage nll files for run nll program.
 
@@ -20,9 +23,10 @@ class NllManager:
 
         :param obs_file_path: The file path of pick observations.
         """
+        self.__data_less_path = dataless_path
         self.__obs_file_path = obs_file_path
         self.__create_dirs()
-
+        self.stations_to_NLL()
     @property
     def root_path(self):
         root_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "location_output")
@@ -210,3 +214,30 @@ class NllManager:
         command = "NLLoc " + output
         sb.call(command, shell=True)
         print("Location Completed")
+
+    def stations_to_NLL(self):
+        pathdataless = self.__data_less_path
+        outstations_path = os.path.join(self.root_path,"stations")
+        dataless = [f for f in listdir(pathdataless) if isfile(join(pathdataless, f))]
+        dataless.sort()
+        stacall=[]
+        stalon0=[]
+        stalat0=[]
+        staelev=[]
+        for f in dataless:
+            file= os.path.join(pathdataless,f)
+            parser = Parser(file)
+            blk = parser.blockettes
+            try:
+                print(f)
+                stacall.append(blk[50][0].station_call_letters)
+                stalat0.append(blk[50][0].latitude)
+                stalon0.append(blk[50][0].longitude)
+                staelev.append((blk[50][0].elevation) / 1000)
+            except:
+                pass
+
+        df = pd.DataFrame(
+            {'Code': 'GTSRCE', 'Name': stacall, 'Type': 'LATLON', 'Lon': stalon0, 'Lat': stalat0, 'Z': '0.000',
+             'Depth': staelev}, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
+        df.to_csv(outstations_path + '/stations.txt', sep=' ', header=False, index=False)
