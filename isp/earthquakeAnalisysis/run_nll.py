@@ -13,6 +13,8 @@ from obspy.io.xseed import Parser
 from os.path import isfile, join
 from os import listdir
 
+from isp.DataProcessing import DatalessManager
+
 
 class NllManager:
     def __init__(self, obs_file_path,dataless_path):
@@ -216,28 +218,22 @@ class NllManager:
         print("Location Completed")
 
     def stations_to_NLL(self):
-        pathdataless = self.__data_less_path
+        dataless_directory= self.__data_less_path
         outstations_path = os.path.join(self.root_path,"stations")
-        dataless = [f for f in listdir(pathdataless) if isfile(join(pathdataless, f))]
-        dataless.sort()
-        stacall=[]
-        stalon0=[]
-        stalat0=[]
-        staelev=[]
-        for f in dataless:
-            file= os.path.join(pathdataless,f)
-            parser = Parser(file)
-            blk = parser.blockettes
-            try:
-                print(f)
-                stacall.append(blk[50][0].station_call_letters)
-                stalat0.append(blk[50][0].latitude)
-                stalon0.append(blk[50][0].longitude)
-                staelev.append((blk[50][0].elevation) / 1000)
-            except:
-                pass
+        dm = DatalessManager(dataless_directory)
+        station_names = []
+        station_latitudes = []
+        station_longitudes = []
+        station_depths = []
+        for st in dm.stations_stats:
+            station_names.append(st.Name)
+            station_latitudes.append(st.Lat)
+            station_longitudes.append(st.Lon)
+            station_depths.append(st.Depth/1000)
 
-        df = pd.DataFrame(
-            {'Code': 'GTSRCE', 'Name': stacall, 'Type': 'LATLON', 'Lon': stalon0, 'Lat': stalat0, 'Z': '0.000',
-             'Depth': staelev}, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
+        data={'Code': 'GTSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lon': station_longitudes,
+              'Lat': station_latitudes, 'Z': '0.000', 'Depth': station_depths}
+
+        df = pd.DataFrame(data, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
+
         df.to_csv(outstations_path + '/stations.txt', sep=' ', header=False, index=False)

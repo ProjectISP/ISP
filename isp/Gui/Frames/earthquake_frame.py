@@ -38,6 +38,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.set_xlabel(0, "Time (s)")
         self.canvas.on_double_click(self.on_click_matplotlib)
         self.canvas.on_pick(self.on_pick)
+        ##Testing map
+        #self.cartopy_canvas = CartopyCanvas(self.widget_map)
+
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
@@ -58,8 +61,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.genvelBtn.clicked.connect(self.on_click_run_vel_to_grid)
         self.grdtimeBtn.clicked.connect(self.on_click_run_grid_to_time)
         self.runlocBtn.clicked.connect(self.on_click_run_loc)
-
+        self.plotmapBtn.clicked.connect(self.on_click_plot_map)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
+
+
 
     @property
     def dataless_manager(self):
@@ -212,3 +217,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         nll_manager = NllManager(self.pm.output_path,self.dataless_path_bind.value)
         nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
                               self.grid_depth_bind.value)
+
+    def on_click_plot_map(self):
+        print("Plotting Map")
+    #     self.cartopy_canvas.plot(0,0,0)

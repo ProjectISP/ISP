@@ -23,7 +23,7 @@ from obspy import Stream
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Frames import BaseFrame
 from isp.Utils import ObspyUtil, AsycTime
-
+import cartopy.crs as ccrs
 
 # Make sure that we are using QT5
 
@@ -101,6 +101,7 @@ class MatplotlibCanvas(FigureCanvas):
         self.disconnect_pick()
 
     def __construct_subplot(self, **kwargs):
+
         nrows = kwargs.get("nrows") if "nrows" in kwargs.keys() else 1
         ncols = kwargs.get("ncols") if "ncols" in kwargs.keys() else 1
 
@@ -471,3 +472,23 @@ class MatplotlibFrame(BaseFrame):
                              This program is a Qt5 application embedding matplotlib 
                              canvases and Obspy stream.""")
 
+# class CartopyCanvas(MatplotlibCanvas):
+#
+#     def __init__(self, parent, obj=None, **kwargs):
+#         super().__init__(parent,obj, **kwargs)
+#
+#     def __construct_subplot(self, **kwargs):
+#         print("contructing")
+#         nrows = kwargs.get("nrows") if "nrows" in kwargs.keys() else 1
+#         ncols = kwargs.get("ncols") if "ncols" in kwargs.keys() else 1
+#
+#         fig, self.axes = plt.subplots(nrows=nrows, ncols=ncols,
+#                                       projection=ccrs.PlateCarree())
+#         self.__flat_axes()
+#
+#         return fig
+#
+#     def plot(self, x, y, ax, clear_plot=True, **kwargs):
+#         print("Plotting")
+#         ax.stock_img()
+#         self.draw()
