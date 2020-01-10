@@ -1,15 +1,6 @@
-# embedding_in_qt5.py --- Simple Qt5 application embedding matplotlib canvases
-#
-# Copyright (C) 2005 Florent Rougon
-#               2006 Darren Dale
-#               2015 Jens H Nielsen
-#
-# This file is an example program for matplotlib. It may be used and
-# modified with no restriction; raw copies as well as modified versions
-# may be distributed without limitation.
-
 from __future__ import unicode_literals
 
+import cartopy.crs as ccrs
 import numpy
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
@@ -23,7 +14,7 @@ from obspy import Stream
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Frames import BaseFrame
 from isp.Utils import ObspyUtil, AsycTime
-import cartopy.crs as ccrs
+
 
 # Make sure that we are using QT5
 
@@ -40,20 +31,29 @@ class MatplotlibWidget(pw.QWidget):
         self.setLayout(self.vbl)
 
 
-class MatplotlibCanvas(FigureCanvas):
-    """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
+class BasePltPyqtCanvas(FigureCanvas):
 
     def __init__(self, parent, obj=None, **kwargs):
         """
         Create an embed matplotlib canvas into pyqt.
+
+            Important!! This class is not meant to be used directly only as a parent.
+            Instead use  :class:`MatplotlibCanvas` or any of its child classes.
 
         :param parent: A QWidget to be parent of this canvas.
 
         :param obj: Expected to be an obspy Stream or a matplotlib figure. Leave as None if you want
             to construct your own matplotlib figure.
 
-        :param kwargs: If obj is an obspy.Stream you can use valid kwargs for Stream objects. Otherwise, the
-            valid kwargs are "nrows" and "ncols" for the subplots.
+        :keyword kwargs: Any valid Matplotlib kwargs for subplots.
+
+        :keyword nrows: default = 1
+
+        :keyword ncols: default = 1
+
+        :keyword sharex: default = all
+
+        :keyword constrained_layout: default = True
         """
         self.button_connection = None
         self.cdi_enter = None
@@ -93,19 +93,22 @@ class MatplotlibCanvas(FigureCanvas):
         FigureCanvas.updateGeometry(self)
 
         self.register_on_click()  # Register the click event for the canvas
-        self.register_on_pick()   # Register the pick events for the draws.
+        self.register_on_pick()  # Register the pick events for the draws.
 
     def __del__(self):
         print("disconnect")
         self.disconnect_click()
         self.disconnect_pick()
+        plt.close(self.figure)
 
     def __construct_subplot(self, **kwargs):
 
-        nrows = kwargs.get("nrows") if "nrows" in kwargs.keys() else 1
-        ncols = kwargs.get("ncols") if "ncols" in kwargs.keys() else 1
+        nrows = kwargs.pop("nrows", 1)
+        ncols = kwargs.pop("ncols", 1)
+        sharex = kwargs.pop("sharex", "all")
+        c_layout = kwargs.pop("constrained_layout", True)
 
-        fig, self.axes = plt.subplots(nrows=nrows, ncols=ncols, sharex='all', constrained_layout=True)
+        fig, self.axes = plt.subplots(nrows=nrows, ncols=ncols, sharex=sharex, constrained_layout=c_layout, **kwargs)
         self.__flat_axes()
 
         return fig
@@ -129,7 +132,7 @@ class MatplotlibCanvas(FigureCanvas):
     def __figure_leave_event(self, event):
         """
         Called when mouse leave this figure.
-        
+
         :param event: 
         :return: 
         """""
@@ -194,14 +197,20 @@ class MatplotlibCanvas(FigureCanvas):
         return self.axes.item(index)
 
     def clear(self):
+        """
+        Clear all axes for this object.
+
+        :return:
+        """
         for ax in self.axes:
             ax.cla()
             self.draw()
 
-    def set_new_subplot(self, nrows, ncols):
+    def set_new_subplot(self, nrows, ncols, **kwargs):
+        sharex = kwargs.pop("sharex", "all")
         self.figure.clf()
         plt.close(self.figure)
-        self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex='all')
+        self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex=sharex, **kwargs)
         self.__flat_axes()
         self.draw()
 
@@ -263,6 +272,71 @@ class MatplotlibCanvas(FigureCanvas):
         :return:
         """
         self.__callback_on_pick = func
+
+    def plot(self, x, y, axes_index, **kwargs):
+        """
+        Implement your own plot.
+
+        :param x: x-axis data
+        :param y: y-axis data
+        :param axes_index: the index of the axes to plot
+        :param kwargs: Any valid matplotlib kwargs for plot.
+
+        :return:
+        """
+        pass
+
+    @staticmethod
+    def get_xlim_from_data(ax: Axes, offset=5):
+        """
+        Compute the limit of the x-axis from the data with a default offset of 5%.
+
+        :param ax: The matplotlib axes.
+        :param offset: Add an offset to the limit in %.
+        :return: A tuple of (x_min, x_max).
+        """
+        x_max = ax.dataLim.xmax
+        x_min = ax.dataLim.xmin - x_max * offset * 0.01
+        x_max += x_max * offset * 0.01
+        return x_min, x_max
+
+    @staticmethod
+    def get_ylim_from_data(ax: Axes, offset=5):
+        """
+        Compute the limit of the y-axis from the data with a default offset of 5%.
+
+        :param ax: The matplotlib axes.
+        :param offset: Add an offset to the limit in %.
+        :return: A tuple of (y_min, y_max).
+        """
+        y_max = ax.dataLim.ymax
+        y_min = ax.dataLim.ymin - y_max * offset * 0.01
+        y_max += y_max * offset * 0.01
+        return y_min, y_max
+
+
+class MatplotlibCanvas(BasePltPyqtCanvas):
+
+    def __init__(self, parent, obj=None, **kwargs):
+        """
+        Create an embed matplotlib canvas into pyqt.
+
+        :param parent: A QWidget to be parent of this canvas.
+
+        :param obj: Expected to be an obspy Stream or a matplotlib figure. Leave as None if you want
+            to construct your own matplotlib figure.
+
+        :keyword kwargs: Any valid Matplotlib kwargs for subplots.
+
+        :keyword nrows: default = 1
+
+        :keyword ncols: default = 1
+
+        :keyword sharex: default = all
+
+        :keyword constrained_layout: default = True
+        """
+        super().__init__(parent, obj, **kwargs)
 
     def __plot(self, x, y, ax, clear_plot=True, **kwargs):
         if clear_plot:
@@ -331,34 +405,6 @@ class MatplotlibCanvas(FigureCanvas):
     def clear_color_bar(self):
         if self.__cbar:
             self.__cbar.remove()
-
-    @staticmethod
-    def get_xlim_from_data(ax: Axes, offset=5):
-        """
-        Compute the limit of the x-axis from the data with a default offset of 5%.
-
-        :param ax: The matplotlib axes.
-        :param offset: Add an offset to the limit in %.
-        :return: A tuple of (x_min, x_max).
-        """
-        x_max = ax.dataLim.xmax
-        x_min = ax.dataLim.xmin - x_max * offset * 0.01
-        x_max += x_max * offset * 0.01
-        return x_min, x_max
-
-    @staticmethod
-    def get_ylim_from_data(ax: Axes, offset=5):
-        """
-        Compute the limit of the y-axis from the data with a default offset of 5%.
-
-        :param ax: The matplotlib axes.
-        :param offset: Add an offset to the limit in %.
-        :return: A tuple of (y_min, y_max).
-        """
-        y_max = ax.dataLim.ymax
-        y_min = ax.dataLim.ymin - y_max * offset * 0.01
-        y_max += y_max * offset * 0.01
-        return y_min, y_max
 
     def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, amplitude=None, **kwargs):
         """
@@ -472,23 +518,43 @@ class MatplotlibFrame(BaseFrame):
                              This program is a Qt5 application embedding matplotlib 
                              canvases and Obspy stream.""")
 
-# class CartopyCanvas(MatplotlibCanvas):
-#
-#     def __init__(self, parent, obj=None, **kwargs):
-#         super().__init__(parent,obj, **kwargs)
-#
-#     def __construct_subplot(self, **kwargs):
-#         print("contructing")
-#         nrows = kwargs.get("nrows") if "nrows" in kwargs.keys() else 1
-#         ncols = kwargs.get("ncols") if "ncols" in kwargs.keys() else 1
-#
-#         fig, self.axes = plt.subplots(nrows=nrows, ncols=ncols,
-#                                       projection=ccrs.PlateCarree())
-#         self.__flat_axes()
-#
-#         return fig
-#
-#     def plot(self, x, y, ax, clear_plot=True, **kwargs):
-#         print("Plotting")
-#         ax.stock_img()
-#         self.draw()
+
+class CartopyCanvas(BasePltPyqtCanvas):
+
+    def __init__(self, parent, **kwargs):
+        """
+        Create an embed cartopy canvas into pyqt.
+
+        :param parent: A QWidget to be parent of this canvas.
+
+        :keyword kwargs: Any valid Matplotlib kwargs for subplots or Cartopy.
+
+        :keyword nrows: default = 1
+
+        :keyword ncols: default = 1
+
+        :keyword sharex: default = all
+
+        :keyword constrained_layout: default = True
+
+        :keyword projection: default =  ccrs.PlateCarree()
+        """
+        proj = kwargs.pop("projection", ccrs.PlateCarree())
+        super().__init__(parent, subplot_kw=dict(projection=proj), **kwargs)
+
+    def plot(self, x, y, axes_index, clear_plot=True, **kwargs):
+        """
+        Cartopy plot.
+
+        :param x:
+        :param y:
+        :param axes_index:
+        :param clear_plot:
+        :param kwargs:
+        :return:
+        """
+        # TODO implement a useful plot for cartopy this is just a test.
+        self.clear()
+        ax = self.get_axe(axes_index)
+        ax.stock_img()
+        self.draw()

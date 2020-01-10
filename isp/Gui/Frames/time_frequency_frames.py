@@ -15,8 +15,7 @@ from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramAnalysis, SeismogramData
 from isp.Exceptions import InvalidFile
 from isp.Gui import pw
-from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiTimeFrequencyFrame, FilesView, MessageDialog
-from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
+from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiTimeFrequencyFrame, FilesView, MessageDialog, MatplotlibCanvas
 from isp.Gui.Utils import on_double_click_matplot
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Utils import MseedUtil, ObspyUtil, Filters

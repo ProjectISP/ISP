@@ -2,8 +2,8 @@ from obspy.geodetics import gps2dist_azimuth
 
 from isp.DataProcessing import SeismogramData, DatalessManager
 from isp.Gui import pw
-from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox
-from isp.Gui.Frames.matplotlib_frame import MatplotlibCanvas
+from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox, \
+    MatplotlibCanvas, CartopyCanvas
 from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Structures.structures import PickerStructure
@@ -13,7 +13,7 @@ from isp.earthquakeAnalisysis import PickerManager, NllManager
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
-    def __init__(self, ):
+    def __init__(self):
         super(EarthquakeAnalysisFrame, self).__init__()
         self.setupUi(self)
 
@@ -39,7 +39,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.on_double_click(self.on_click_matplotlib)
         self.canvas.on_pick(self.on_pick)
         ##Testing map
-        #self.cartopy_canvas = CartopyCanvas(self.widget_map)
+        self.cartopy_canvas = CartopyCanvas(self.widget_map)
 
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
@@ -63,8 +63,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.runlocBtn.clicked.connect(self.on_click_run_loc)
         self.plotmapBtn.clicked.connect(self.on_click_plot_map)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
-
-
 
     @property
     def dataless_manager(self):
@@ -199,7 +197,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.pm.remove_data(picker_structure.Time, picker_structure.Station)
 
     def on_click_run_vel_to_grid(self):
-        nll_manager = NllManager(self.pm.output_path,self.dataless_path_bind.value)
+        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
         nll_manager.vel_to_grid(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
                                 self.grid_depth_bind.value, self.grid_xnode_bind.value,
                                 self.grid_ynode_bind.value, self.grid_znode_bind.value,
@@ -208,16 +206,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                 self.comboBox_wavetype.currentText())
 
     def on_click_run_grid_to_time(self):
-        nll_manager = NllManager(self.pm.output_path,self.dataless_path_bind.value)
+        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
         nll_manager.grid_to_time(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
                                  self.grid_depth_bind.value, self.comboBox_grid.currentText(),
                                  self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText())
 
     def on_click_run_loc(self):
-        nll_manager = NllManager(self.pm.output_path,self.dataless_path_bind.value)
+        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
         nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
                               self.grid_depth_bind.value)
 
     def on_click_plot_map(self):
         print("Plotting Map")
-    #     self.cartopy_canvas.plot(0,0,0)
+        self.cartopy_canvas.plot(0, 0, 0)
