@@ -12,9 +12,9 @@ import subprocess as sb
 from obspy.io.xseed import Parser
 from os.path import isfile, join
 from os import listdir
-
+from obspy import read_events
 from isp.DataProcessing import DatalessManager
-
+from obspy.io.nlloc.util import read_nlloc_scatter
 
 class NllManager:
     def __init__(self, obs_file_path,dataless_path):
@@ -237,3 +237,43 @@ class NllManager:
         df = pd.DataFrame(data, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
 
         df.to_csv(outstations_path + '/stations.txt', sep=' ', header=False, index=False)
+
+    def get_NLL_info(self):
+
+        location_file = os.path.join(self.root_path, "loc", "last.hyp")
+        cat = read_events(location_file)
+        event = cat[0]
+        origin = event.origins[0]
+        latitude = origin.latitude
+        longitude = origin.longitude
+
+        return latitude,longitude
+
+    def get_NLL_scatter(self,latOrig,lonOrig):
+
+        import math as mt
+        import numpy as np
+
+        location_file = os.path.join(self.root_path, "loc", "last.scat")
+        data = read_nlloc_scatter(location_file)
+        L = len(data)
+        x = []
+        y = []
+        z = []
+        pdf = []
+
+        for i in range(L):
+            x.append(data[i][0])
+            y.append(data[i][1])
+            z.append(data[i][2])
+            pdf.append(data[i][3])
+        x = np.array(x)
+        y = np.array(y)
+
+        conv = 111.111 * mt.cos(latOrig * 180 / mt.pi)
+        x = (x / conv) + lonOrig
+        y = (y / 111.111) + latOrig
+        pdf = np.array(pdf) / np.max(pdf)
+
+        return x,y,pdf
+

@@ -218,4 +218,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def on_click_plot_map(self):
         print("Plotting Map")
-        self.cartopy_canvas.plot(0, 0, 0)
+        nll_manager= NllManager(self.pm.output_path, self.dataless_path_bind.value)
+        lat,lon=nll_manager.get_NLL_info()
+        scatter_x, scatter_y, scatter_z=nll_manager.get_NLL_scatter(lat,lon)
+        self.cartopy_canvas.plot(lon,lat,scatter_x,scatter_y,scatter_z,0)

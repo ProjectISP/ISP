@@ -14,8 +14,10 @@ from obspy import Stream
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Frames import BaseFrame
 from isp.Utils import ObspyUtil, AsycTime
-
-
+import matplotlib.ticker as mticker
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+import cartopy
+from owslib.wms import WebMapService
 # Make sure that we are using QT5
 
 
@@ -106,7 +108,8 @@ class BasePltPyqtCanvas(FigureCanvas):
         nrows = kwargs.pop("nrows", 1)
         ncols = kwargs.pop("ncols", 1)
         sharex = kwargs.pop("sharex", "all")
-        c_layout = kwargs.pop("constrained_layout", True)
+        #constrained_layout modified to False
+        c_layout = kwargs.pop("constrained_layout", False)
 
         fig, self.axes = plt.subplots(nrows=nrows, ncols=ncols, sharex=sharex, constrained_layout=c_layout, **kwargs)
         self.__flat_axes()
@@ -542,7 +545,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         proj = kwargs.pop("projection", ccrs.PlateCarree())
         super().__init__(parent, subplot_kw=dict(projection=proj), **kwargs)
 
-    def plot(self, x, y, axes_index, clear_plot=True, **kwargs):
+    def plot(self, x, y,scatter_x,scatter_y,scatter_z, axes_index, clear_plot=True, **kwargs):
         """
         Cartopy plot.
 
@@ -553,8 +556,42 @@ class CartopyCanvas(BasePltPyqtCanvas):
         :param kwargs:
         :return:
         """
+
         # TODO implement a useful plot for cartopy this is just a test.
         self.clear()
         ax = self.get_axe(axes_index)
-        ax.stock_img()
+        url = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
+        wms = WebMapService(url)
+
+        layer = 'GEBCO_08 Hillshade'
+        xmin=int(x-20)
+        xmax=int(x+20)
+        ymin=int(y-20)
+        ymax=int(y+20)
+        extent=[xmin,xmax,ymin,ymax]
+
+        ax.set_extent(extent, crs=ccrs.PlateCarree())
+
+
+
+        COASTLINE_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
+                                        edgecolor='k', alpha=0.6,linewidth=0.5,
+                                        facecolor=cartopy.feature.COLORS['land'])
+        ax.add_feature(COASTLINE_10m)
+
+        #ax.stock_img()
+        ax.add_wms(wms, layer)
+        
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                          linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
+        gl.xlabels_top = False
+        gl.ylabels_left = False
+        gl.xlines = False
+        gl.ylines = False
+
+        gl.xformatter = LONGITUDE_FORMATTER
+        gl.yformatter = LATITUDE_FORMATTER
+
+        ax.plot(x ,y, color='red', marker='o',markersize=5)
+        ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10,marker=".",cmap=plt.cm.jet)
         self.draw()
