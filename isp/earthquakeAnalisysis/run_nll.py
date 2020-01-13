@@ -73,8 +73,8 @@ class NllManager:
 
     @property
     def get_models_files_path(self):
-        model_path_p = os.path.join(self.get_global_models_dir, "modelP")
-        model_path_s = os.path.join(self.get_global_models_dir, "modelS")
+        model_path_p = os.path.join(self.get_local_models_dir, "modelP")
+        model_path_s = os.path.join(self.get_local_models_dir, "modelS")
         self.__validate_file(model_path_s)
         self.__validate_file(model_path_p)
 
@@ -105,8 +105,8 @@ class NllManager:
         return model_dir
 
     @property
-    def get_global_models_dir(self):
-        models_dir = os.path.join(self.root_path, "global_models")
+    def get_local_models_dir(self):
+        models_dir = os.path.join(self.root_path, "local_models")
         self.__validate_dir(models_dir)
         return models_dir
 
