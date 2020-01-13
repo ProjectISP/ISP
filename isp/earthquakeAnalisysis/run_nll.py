@@ -44,8 +44,7 @@ class NllManager:
     @property
     def root_path(self):
         root_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "location_output")
-        if not os.path.isdir(root_path):
-            raise FileNotFoundError("The dir {} doesn't exist.".format(root_path))
+        self.__validate_dir(root_path)
         return root_path
 
     @property
@@ -74,8 +73,8 @@ class NllManager:
 
     @property
     def get_models_files_path(self):
-        model_path_p = os.path.join(self.get_model_dir, "modelP")
-        model_path_s = os.path.join(self.get_model_dir, "modelS")
+        model_path_p = os.path.join(self.get_global_models_dir, "modelP")
+        model_path_s = os.path.join(self.get_global_models_dir, "modelS")
         self.__validate_file(model_path_s)
         self.__validate_file(model_path_p)
 
@@ -104,6 +103,12 @@ class NllManager:
         model_dir = os.path.join(self.root_path, "model")
         self.__validate_dir(model_dir)
         return model_dir
+
+    @property
+    def get_global_models_dir(self):
+        models_dir = os.path.join(self.root_path, "global_models")
+        self.__validate_dir(models_dir)
+        return models_dir
 
     @property
     def get_time_dir(self):
