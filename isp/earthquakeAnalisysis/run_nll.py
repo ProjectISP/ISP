@@ -7,17 +7,19 @@ Created on Tue Dec 17 20:26:28 2019
 """
 
 import os
-import pandas as pd
 import subprocess as sb
-from obspy.io.xseed import Parser
-from os.path import isfile, join
-from os import listdir
+
+import pandas as pd
 from obspy import read_events
-from isp.DataProcessing import DatalessManager
 from obspy.io.nlloc.util import read_nlloc_scatter
 
+from isp import ROOT_DIR
+from isp.DataProcessing import DatalessManager
+
+
 class NllManager:
-    def __init__(self, obs_file_path,dataless_path):
+
+    def __init__(self, obs_file_path, dataless_path):
         """
         Manage nll files for run nll program.
 
@@ -29,6 +31,16 @@ class NllManager:
         self.__obs_file_path = obs_file_path
         self.__create_dirs()
         self.stations_to_NLL()
+
+    @property
+    def nll_bin_path(self):
+        bin_path = os.path.join(ROOT_DIR, "NLL7", "bin")
+        if not os.path.isdir(bin_path):
+            raise FileNotFoundError("The dir {} doesn't exist. Please make sure to run: "
+                                    "python setup.py build_ext --inplace. These should create a bin folder fo nll."
+                                    .format(bin_path))
+        return bin_path
+
     @property
     def root_path(self):
         root_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "location_output")
@@ -192,6 +204,15 @@ class NllManager:
         df.to_csv(output, index=False, header=True, encoding='utf-8')
         return output
 
+    def get_bin_file(self, file_name):
+        bin_file = os.path.join(self.nll_bin_path, file_name)
+        if not os.path.isfile(bin_file):
+            raise FileNotFoundError("The file {} doesn't exist. Check typos in file_name or make sure to run: "
+                                    "python setup.py build_ext --inplace. These should create a bin folder fo nll with "
+                                    "the binary files."
+                                    .format(bin_file))
+        return bin_file
+
     def vel_to_grid(self, latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz, grid_type, wave_type):
 
         output = self.set_vel2grid_template(latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz,
@@ -199,7 +220,7 @@ class NllManager:
         model_path_p, model_path_s = self.get_models_files_path
         command = "cat " + model_path_p + " >> " + output
         sb.Popen(command, shell=True)
-        command = "Vel2Grid " + output
+        command = "{} {}".format(self.get_bin_file("Vel2Grid"), output)
         sb.Popen(command, shell=True)
         print("Velocity Grid Generated")
 
@@ -208,18 +229,18 @@ class NllManager:
         output = self.set_grid2time_template(latitude, longitude, depth, dimension, option, wave)
         command = "cat " + self.get_stations_template_file_path + " >> " + output
         sb.Popen(command, shell=True)
-        command = "Grid2Time " + output
+        command = "{} {}".format(self.get_bin_file("Grid2Time"), output)
         sb.Popen(command, shell=True)
 
     def run_nlloc(self, latitude, longitude, depth):
         output = self.set_run_template(latitude, longitude, depth)
-        command = "NLLoc " + output
+        command = "{} {}".format(self.get_bin_file("NLLoc"), output)
         sb.call(command, shell=True)
         print("Location Completed")
 
     def stations_to_NLL(self):
-        dataless_directory= self.__data_less_path
-        outstations_path = os.path.join(self.root_path,"stations")
+        dataless_directory = self.__data_less_path
+        outstations_path = os.path.join(self.get_stations_dir)
         dm = DatalessManager(dataless_directory)
         station_names = []
         station_latitudes = []
@@ -231,8 +252,8 @@ class NllManager:
             station_longitudes.append(st.Lon)
             station_depths.append(st.Depth/1000)
 
-        data={'Code': 'GTSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lon': station_longitudes,
-              'Lat': station_latitudes, 'Z': '0.000', 'Depth': station_depths}
+        data = {'Code': 'GTSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lon': station_longitudes,
+                'Lat': station_latitudes, 'Z': '0.000', 'Depth': station_depths}
 
         df = pd.DataFrame(data, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
 
@@ -247,22 +268,22 @@ class NllManager:
         latitude = origin.latitude
         longitude = origin.longitude
 
-        return latitude,longitude
+        return latitude, longitude
 
-    def get_NLL_scatter(self,latOrig,lonOrig):
+    def get_NLL_scatter(self, lat_orig, lon_orig):
 
         import math as mt
         import numpy as np
 
         location_file = os.path.join(self.root_path, "loc", "last.scat")
         data = read_nlloc_scatter(location_file)
-        L = len(data)
+        data_size = len(data)
         x = []
         y = []
         z = []
         pdf = []
 
-        for i in range(L):
+        for i in range(data_size):
             x.append(data[i][0])
             y.append(data[i][1])
             z.append(data[i][2])
@@ -270,10 +291,9 @@ class NllManager:
         x = np.array(x)
         y = np.array(y)
 
-        conv = 111.111 * mt.cos(latOrig * 180 / mt.pi)
-        x = (x / conv) + lonOrig
-        y = (y / 111.111) + latOrig
+        conv = 111.111 * mt.cos(lat_orig * 180 / mt.pi)
+        x = (x / conv) + lon_orig
+        y = (y / 111.111) + lat_orig
         pdf = np.array(pdf) / np.max(pdf)
 
-        return x,y,pdf
-
+        return x, y, pdf

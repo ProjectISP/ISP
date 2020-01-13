@@ -249,8 +249,6 @@ class TestCWUT(unittest.TestCase):
         plt.show()
 
 
-
-
     def test_cwt_class(self):
         # file_path = os.path.join(ROOT_DIR, "260", "RAW", "WM.OBS01..SHZ.D.2015.260")
         file_path = os.path.join("/media/junqueira/DATA/Eva_geysir", "VI.G1..HHZ.2017.349.mseed")
