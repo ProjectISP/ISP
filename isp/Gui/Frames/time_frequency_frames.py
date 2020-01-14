@@ -292,9 +292,10 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         eventdepth = self.DEPTH.value()
         sma = SeismogramAnalysis(self.station_lat_bind.value, self.station_lon_bind.value)
         phases, times = sma.get_phases_and_arrivals(eventlat, eventlon, eventdepth)
-        canvas.draw_arrow(delta_time, 0, "Event time", color="red", markersize=100, linestyle='dashed')
+        canvas.draw_arrow(delta_time, 0, "Event time", color="red", linestyle='dashed')
         for phase, time in zip(phases, times):
-            canvas.draw_arrow(time + delta_time, 0, phase, color="green", markersize=100, linestyle='dashed')
+            print(time, delta_time)
+            canvas.draw_arrow(time + delta_time, 0, phase, color="green", linestyle='dashed')
 
     def plot_mt_spectrogram(self, canvas: MatplotlibCanvas):
         win = int((self.winLenghtSpecDsb.value()) * self.station_stats.Sampling_rate)

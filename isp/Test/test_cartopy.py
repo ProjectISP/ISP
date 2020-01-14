@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+from cartopy.io.img_tiles import GoogleTiles
 from matplotlib.offsetbox import AnchoredText
 
 
@@ -38,5 +39,29 @@ def main():
     plt.show()
 
 
+def plot_google_maps():
+    fig = plt.figure(figsize=(10, 10))
+
+    tiler = GoogleTiles(style="satellite")
+    mercator = tiler.crs
+    ax = plt.axes(projection=mercator)
+
+    ax.set_extent((153, 153.2, -26.6, -26.4))
+
+    zoom = 12
+    ax.add_image(tiler, zoom)
+
+    # even 1:10m are too coarse for .2 degree square
+    #ax.coastlines('10m')
+
+    home_lat, home_lon = -26.5258277, 153.0912987
+    # Add a marker for home
+    plt.plot(home_lon, home_lat, marker='o', color='red', markersize=5,
+             alpha=0.7, transform=ccrs.Geodetic())
+
+    plt.show()
+
+
 if __name__ == '__main__':
-    main()
+    # main()
+    plot_google_maps()

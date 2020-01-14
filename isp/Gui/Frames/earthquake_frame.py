@@ -1,6 +1,8 @@
+from obspy import UTCDateTime
 from obspy.geodetics import gps2dist_azimuth
 
 from isp.DataProcessing import SeismogramData, DatalessManager
+from isp.DataProcessing import SeismogramData, DatalessManager, SeismogramAnalysis
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox, \
     MatplotlibCanvas, CartopyCanvas, FilesView
@@ -45,7 +47,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         #self.canvas_3C.set_xlabel(2, "Time (s)")
         ##Map##
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
+        self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
+        self.event_info.register_plot_arrivals_click(self.on_click_plot_arrivals)
 
+        # Testing map
+        self.cartopy_canvas = CartopyCanvas(self.widget_map)
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)

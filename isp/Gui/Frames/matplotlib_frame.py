@@ -1,7 +1,9 @@
 from __future__ import unicode_literals
 
+import cartopy
 import cartopy.crs as ccrs
 import numpy
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.backend_bases import MouseButton, MouseEvent, PickEvent
@@ -10,6 +12,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from matplotlib.colorbar import Colorbar
 from matplotlib.lines import Line2D
 from obspy import Stream
+from owslib.wms import WebMapService
 
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Frames import BaseFrame
@@ -65,7 +68,6 @@ class BasePltPyqtCanvas(FigureCanvas):
         self.__callback_on_double_click = None
         self.__callback_on_click = None
         self.__callback_on_pick = None
-        self.__cbar = None
         self.pickers = {}
 
         if not obj:
@@ -352,6 +354,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         :keyword constrained_layout: default = True
         """
         super().__init__(parent, obj, **kwargs)
+        self.__cbar = None
 
     def __plot(self, x, y, ax, clear_plot=True, **kwargs):
         if clear_plot:
@@ -421,7 +424,8 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         if self.__cbar:
             self.__cbar.remove()
 
-    def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, amplitude=None, **kwargs):
+    def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, amplitude=None,
+                   draw=True, **kwargs):
         """
         Draw an arrow over the a plot. This plot will add a pick event to the line.
 
@@ -430,7 +434,9 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         :param arrow_label: The label at the arrow.
         :param draw_arrow: True if you want an arrow, false to draw just a line.
         :param amplitude: (float) The waveform amplitude. If amplitude is given it will plot a dot at the
-            x = x_pos, y = amplitude
+            x = x_pos, y = amplitude.
+        :param draw: Either it should call draw or not. Default = True. Use draw=False if you are using it
+            in a loop, it increase performance, therefore remember to call the draw method after the loop.
         :param kwargs: Valid Matplotlib kwargs for plot.
         :return: A line.
         """
@@ -455,25 +461,42 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         point = ax.plot(x_pos, amplitude, marker='o', color="steelblue") if amplitude else [None]
 
         # Add annotate and point in a dict with a key equal to line signature.
-        self.pickers[str(line)] = annotate, point[0]
-        self.draw()
+        if picker:
+            self.pickers[str(line)] = annotate, point[0]
+        if draw:
+            self.draw()
 
         return line
 
-    def remove_arrow(self, line: Line2D):
+    def remove_arrow(self, line: Line2D, draw=True):
         """
         Remove arrow line and attached components.
 
         :param line: The ref of a Line2D.
+
+        :param draw: Either it should call draw or not. Default = True. Use draw=False if you are using it
+            in a loop, it increase performance, therefore remember to call the draw method after the loop.
+
         :return:
         """
         if line:
-            line.remove()
-        attached = self.pickers.pop(str(line))  # get the picker
+            try:
+                line.remove()
+            except ValueError as error:
+                print(error)
+        attached = self.pickers.pop(str(line), None)  # get the picker
         if attached:
             for item in attached:
                 if item:
                     item.remove()
+        if draw:
+            self.draw()
+            self.blit()
+
+    def remove_arrows(self, lines: [Line2D]):
+        for line in lines:
+            self.remove_arrow(line, draw=False)
+
         self.draw()
 
 
@@ -550,12 +573,16 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         :keyword sharex: default = all
 
-        :keyword constrained_layout: default = True
+        :keyword constrained_layout: default = False
 
         :keyword projection: default =  ccrs.PlateCarree()
         """
         proj = kwargs.pop("projection", ccrs.PlateCarree())
+
         super().__init__(parent, subplot_kw=dict(projection=proj),constrained_layout=False, **kwargs)
+
+        c_layout = kwargs.pop("constrained_layout", False)
+        super().__init__(parent, subplot_kw=dict(projection=proj), constrained_layout=c_layout, **kwargs)
 
     def plot(self, x, y, scatter_x, scatter_y, scatter_z, axes_index, clear_plot=True, **kwargs):
         """

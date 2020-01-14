@@ -105,5 +105,6 @@ venv.bak/
 .idea
 
 # remove this dir or file from git
+/isp/NLL7/
 *.hdr
 *.buf
