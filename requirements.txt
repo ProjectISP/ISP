@@ -1,3 +1,4 @@
+owslib
 Cython
 deprecated
 matplotlib

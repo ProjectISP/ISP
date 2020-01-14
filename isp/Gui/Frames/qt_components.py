@@ -3,11 +3,14 @@ import os
 from datetime import datetime
 from types import FunctionType
 
+from matplotlib.lines import Line2D
 from obspy import UTCDateTime
 
+from isp.DataProcessing import SeismogramAnalysis
 from isp.Gui import pw
 from isp.Gui.Frames import UiPaginationWidget, UiFilterGroupBox, UiEventInfoGroupBox
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load
+from isp.Structures.structures import StationsStats
 from isp.Utils import Filters
 
 
@@ -359,10 +362,15 @@ class FilterBox(pw.QGroupBox, UiFilterGroupBox):
 @add_save_load()
 class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
 
-    def __init__(self, parent: pw.QWidget):
+    def __init__(self, parent: pw.QWidget, canvas):
         super(EventInfoBox, self).__init__(parent)
         self.setupUi(self)
         self.__parent_name = parent.objectName()  # used to save values in a group.
+        self.__canvas = None
+        self.__on_click_plot_arrivals_callback = None
+        self.__arrivals_lines = []
+
+        self.set_canvas(canvas)
 
         # set the parent properly
         ParentWidget.set_parent(parent, self)
@@ -375,6 +383,10 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
         self.__longitude_bind = BindPyqtObject(self.longitudeLineEdit)
         self.__depth_bind = BindPyqtObject(self.depthLineEdit)
 
+        # button bind
+        self.plotArrivalsBtn.clicked.connect(self.__on_click_plot_arrivals)
+        self.clearArrivalsBtn.clicked.connect(self.__on_click_clear_arrivals)
+
     @property
     def parent_name(self):
         return self.__parent_name
@@ -385,7 +397,7 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
             latitude = float(self.__latitude_bind.value)
         except ValueError:
             latitude = None
-            self.message("Latitude must be a float.")
+            self.message("Latitude must be provided.")
 
         return latitude
 
@@ -394,7 +406,7 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
         try:
             longitude = float(self.__longitude_bind.value)
         except ValueError:
-            self.message("Longitude must be a float.")
+            self.message("Longitude must be provided.")
             longitude = None
 
         return longitude
@@ -404,20 +416,26 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
         try:
             depth = float(self.__depth_bind.value)
         except ValueError:
-            self.message("Depth must be a float.")
+            self.message("Depth must be provided.")
             depth = None
 
         return depth
-
-    @property
-    def use_event(self) -> bool:
-        return self.useEventcheckBox.isChecked()
 
     @property
     def event_time(self):
         py_time = self.originDateTimeEdit.dateTime().toPyDateTime()
         utc_time = UTCDateTime(py_time)
         return utc_time
+
+    def set_canvas(self, canvas):
+        from isp.Gui.Frames import MatplotlibCanvas
+        if isinstance(canvas, MatplotlibCanvas):
+            self.__canvas = canvas
+        else:
+            raise AttributeError("canvas is not an instance of MatplotlibCanvas")
+
+    def register_plot_arrivals_click(self, func):
+        self.__on_click_plot_arrivals_callback = lambda time, lat, long, depth: func(time, lat, long, depth)
 
     def message(self, msg):
         md = MessageDialog(self)
@@ -439,4 +457,36 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
             raise ValueError("time must by either str, UTCDatetime or datetime")
 
         self.originDateTimeEdit.setDateTime(time)
+
+    def add_arrivals_line(self, line: Line2D):
+        self.__arrivals_lines.append(line)
+
+    def clear_arrivals(self):
+        self.__canvas.remove_arrows(self.__arrivals_lines)
+        self.__arrivals_lines = []
+
+    def __on_click_plot_arrivals(self):
+        if self.__on_click_plot_arrivals_callback:
+            self.__on_click_plot_arrivals_callback(self.event_time, self.latitude, self.longitude, self.event_depth)
+
+    def __on_click_clear_arrivals(self):
+        self.clear_arrivals()
+
+    def plot_arrivals(self, axe_index, start_time: UTCDateTime, station_stats: StationsStats):
+        delta_time = self.event_time - start_time
+        self.clear_arrivals()
+        line = self.__canvas.draw_arrow(delta_time, axe_index, "Event time", color="red", linestyle='dashed',
+                                        draw=False)
+
+        sma = SeismogramAnalysis(station_stats.Lat, station_stats.Lon)
+        phases, times = sma.get_phases_and_arrivals(self.latitude, self.longitude, self.event_depth)
+        print("Finished to compute arrivals")
+        self.add_arrivals_line(line)
+        for phase, time in zip(phases, times):
+            line = self.__canvas.draw_arrow(time + delta_time, axe_index, phase, color="green",
+                                            linestyle='dashed', draw=False)
+            self.add_arrivals_line(line)
+        print("Finished to plot arrivals")
+        self.__canvas.draw()
+        print("Finished to draw arrivals")
 

@@ -1,6 +1,7 @@
+from obspy import UTCDateTime
 from obspy.geodetics import gps2dist_azimuth
 
-from isp.DataProcessing import SeismogramData, DatalessManager
+from isp.DataProcessing import SeismogramData, DatalessManager, SeismogramAnalysis
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox, \
     MatplotlibCanvas, CartopyCanvas
@@ -27,7 +28,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.filter = FilterBox(self.filterWidget)  # add filter box component.
         self.filter_3ca = FilterBox(self.filter3CAWidget)  # add filter box component.
-        self.event_info = EventInfoBox(self.eventInfoWidget)
 
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
@@ -38,9 +38,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.set_xlabel(0, "Time (s)")
         self.canvas.on_double_click(self.on_click_matplotlib)
         self.canvas.on_pick(self.on_pick)
-        ##Testing map
-        self.cartopy_canvas = CartopyCanvas(self.widget_map)
 
+        self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
+        self.event_info.register_plot_arrivals_click(self.on_click_plot_arrivals)
+
+        # Testing map
+        self.cartopy_canvas = CartopyCanvas(self.widget_map)
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
@@ -193,8 +196,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def on_pick(self, event):
         line = event.artist
         self.canvas.remove_arrow(line)
-        picker_structure: PickerStructure = self.picked_at.pop(str(line))
-        self.pm.remove_data(picker_structure.Time, picker_structure.Station)
+        picker_structure: PickerStructure = self.picked_at.pop(str(line), None)
+        if picker_structure:
+            self.pm.remove_data(picker_structure.Time, picker_structure.Station)
+
+    def on_click_plot_arrivals(self, event_time: UTCDateTime, lat: float, long: float, depth: float):
+        for index, file_path in enumerate(self.get_files_at_page()):
+            st_stats = self.dataless_manager.get_station_stats_by_mseed_file(file_path)
+            stats = ObspyUtil.get_stats(file_path)
+            # TODO remove stats.StartTime and use the picked one from UI.
+            self.event_info.plot_arrivals(index, stats.StartTime, st_stats)
 
     def on_click_run_vel_to_grid(self):
         nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
