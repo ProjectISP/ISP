@@ -3,12 +3,12 @@ from obspy.geodetics import gps2dist_azimuth
 from isp.DataProcessing import SeismogramData, DatalessManager
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox, \
-    MatplotlibCanvas, CartopyCanvas
+    MatplotlibCanvas, CartopyCanvas, FilesView
 from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil
-from isp.earthquakeAnalisysis import PickerManager, NllManager
+from isp.earthquakeAnalisysis import PickerManager, NllManager, rotate
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
@@ -38,12 +38,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.set_xlabel(0, "Time (s)")
         self.canvas.on_double_click(self.on_click_matplotlib)
         self.canvas.on_pick(self.on_pick)
-        ##Testing map
+
+        ##3C_Component
+
+        self.canvas_3C = MatplotlibCanvas(self.plotMatWidget_3C, nrows=1)
+        #self.canvas_3C.set_xlabel(2, "Time (s)")
+        ##Map##
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
 
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
+        #New Binding for 3C
+        self.root_path_bind_3C = BindPyqtObject(self.rootPathForm_3C, self.onChange_root_path_3C)
+        # Add file selector to the widget
+        self.file_selector = FilesView(self.root_path_bind_3C.value, parent=self.fileSelectorWidget,
+                                       on_change_file_callback=lambda file_path: self.onChange_file(file_path))
+
         self.grid_latitude_bind = BindPyqtObject(self.gridlatSB)
         self.grid_longitude_bind = BindPyqtObject(self.gridlonSB)
         self.grid_depth_bind = BindPyqtObject(self.griddepthSB)
@@ -53,8 +64,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.grid_dxsize_bind = BindPyqtObject(self.dxsizeSB)
         self.grid_dysize_bind = BindPyqtObject(self.dysizeSB)
         self.grid_dzsize_bind = BindPyqtObject(self.dzsizeSB)
-
+        self.degreeSB_bind = BindPyqtObject(self.degreeSB)
         # Bind buttons
+        self.selectDirBtn_3C.clicked.connect(self.on_click_select_directory_3C)
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.sortBtn.clicked.connect(self.on_click_sort)
@@ -62,6 +74,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.grdtimeBtn.clicked.connect(self.on_click_run_grid_to_time)
         self.runlocBtn.clicked.connect(self.on_click_run_loc)
         self.plotmapBtn.clicked.connect(self.on_click_plot_map)
+        self.selectVerticalBtn.clicked.connect(self.on_click_set_vertical_component)
+        self.selectNorthBtn.clicked.connect(self.on_click_set_north_component)
+        self.selectEastBtn.clicked.connect(self.on_click_set_east_component)
+        self.rotateplotBtn.clicked.connect(self.on_click_3C_components)
+        #self.degreeSB.valueChanged.connect(self.on_click_3C_components)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
     @property
@@ -113,6 +130,28 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.total_items = len(self.files)
         self.pagination.set_total_items(self.total_items)
         self.plot_seismogram()
+
+    ###Function added for 3C Components
+    def onChange_root_path_3C(self, value):
+        """
+        Fired every time the root_path is changed
+
+        :param value: The path of the new directory.
+
+        :return:
+        """
+        self.file_selector.set_new_rootPath(value)
+    ###Function added for 3C Components
+    def onChange_file(self, file_path):
+        # Called every time user select a different file
+        pass
+
+    ###Function added for 3C Components
+    def on_click_select_directory_3C(self):
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind_3C.value)
+
+        if dir_path:
+            self.root_path_bind_3C.value = dir_path
 
     def onChange_dataless_path(self, value):
         self.__dataless_manager = DatalessManager(value)
@@ -222,3 +261,36 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         lat,lon=nll_manager.get_NLL_info()
         scatter_x, scatter_y, scatter_z=nll_manager.get_NLL_scatter(lat,lon)
         self.cartopy_canvas.plot(lon,lat,scatter_x,scatter_y,scatter_z,0)
+
+    ###3C COMPONENT METHODS####
+    #RETRIEVING WAVEFORMS
+
+    def on_click_set_vertical_component(self):
+        self.root_path_Form_Vertical.setText(self.file_selector.file_path)
+
+    def on_click_set_north_component(self):
+        self.root_path_Form_North.setText(self.file_selector.file_path)
+
+    def on_click_set_east_component(self):
+        self.root_path_Form_East.setText(self.file_selector.file_path)
+
+    def on_click_3C_components(self):
+        self.canvas_3C.set_new_subplot(3, ncols=1)
+        timeini = self.dateTimeEdit_4.dateTime().toString("yyyy-MM-dd hh:mm:ss")
+        timefin = self.dateTimeEdit_5.dateTime().toString("yyyy-MM-dd hh:mm:ss")
+        time1 = timeini[0:10] + "T" + timeini[11:19]
+        time2 = timefin[0:10] + "T" + timefin[11:19]
+        self.canvas_3C.clear()
+        angle=self.degreeSB.value()
+        sd = rotate(self.root_path_Form_Vertical.text(),self.root_path_Form_North.text(),
+                    self.root_path_Form_East.text())
+
+        time,z,r,t = sd.rot(time1,time2, method="NE->RT", angle=angle, filter_error_callback=self.filter_error_message,
+                                    filter_value=self.filter_3ca.filter_value,
+                                    f_min=self.filter_3ca.min_freq, f_max=self.filter_3ca.max_freq)
+        rotated_seismograms=[z,r,t]
+
+        for j in range(len(rotated_seismograms)):
+            index=j
+            data=rotated_seismograms[j]
+            self.canvas_3C.plot(time, data, index, color="black", linewidth=0.5)

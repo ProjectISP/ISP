@@ -19,7 +19,7 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import cartopy
 from owslib.wms import WebMapService
 # Make sure that we are using QT5
-
+import matplotlib.font_manager as font_manager
 
 class MatplotlibWidget(pw.QWidget):
 
@@ -108,8 +108,7 @@ class BasePltPyqtCanvas(FigureCanvas):
         nrows = kwargs.pop("nrows", 1)
         ncols = kwargs.pop("ncols", 1)
         sharex = kwargs.pop("sharex", "all")
-        #constrained_layout modified to False
-        c_layout = kwargs.pop("constrained_layout", False)
+        c_layout = kwargs.pop("constrained_layout", True)
 
         fig, self.axes = plt.subplots(nrows=nrows, ncols=ncols, sharex=sharex, constrained_layout=c_layout, **kwargs)
         self.__flat_axes()
@@ -210,10 +209,23 @@ class BasePltPyqtCanvas(FigureCanvas):
             self.draw()
 
     def set_new_subplot(self, nrows, ncols, **kwargs):
+        SMALL_SIZE = 6
+        MEDIUM_SIZE = 8
+        BIGGER_SIZE = 12
         sharex = kwargs.pop("sharex", "all")
         self.figure.clf()
         plt.close(self.figure)
+        plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
+        plt.rc('axes', titlesize=SMALL_SIZE)  # fontsize of the axes title
+        plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
+        plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+        plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+        plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
+        plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+        self.axes = self.figure.subplots_adjust(left=0.065, bottom=0.1440, right=1.0, top=0.990, wspace=0.2, hspace=0.0)
         self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex=sharex, **kwargs)
+
+
         self.__flat_axes()
         self.draw()
 
@@ -543,9 +555,9 @@ class CartopyCanvas(BasePltPyqtCanvas):
         :keyword projection: default =  ccrs.PlateCarree()
         """
         proj = kwargs.pop("projection", ccrs.PlateCarree())
-        super().__init__(parent, subplot_kw=dict(projection=proj), **kwargs)
+        super().__init__(parent, subplot_kw=dict(projection=proj),constrained_layout=False, **kwargs)
 
-    def plot(self, x, y,scatter_x,scatter_y,scatter_z, axes_index, clear_plot=True, **kwargs):
+    def plot(self, x, y, scatter_x, scatter_y, scatter_z, axes_index, clear_plot=True, **kwargs):
         """
         Cartopy plot.
 
