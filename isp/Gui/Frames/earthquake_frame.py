@@ -1,7 +1,4 @@
-from obspy import UTCDateTime
 from obspy.geodetics import gps2dist_azimuth
-
-from isp.DataProcessing import SeismogramData, DatalessManager
 from isp.DataProcessing import SeismogramData, DatalessManager, SeismogramAnalysis
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox, \
@@ -29,8 +26,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.filter = FilterBox(self.filterWidget)  # add filter box component.
         self.filter_3ca = FilterBox(self.filter3CAWidget)  # add filter box component.
-#       self.event_info = EventInfoBox(self.eventInfoWidget)
 
+        #self.event_info = EventInfoBox(self.eventInfoWidget)
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
         self.pagination.bind_onPage_changed(self.onChange_page)
@@ -44,11 +41,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         ##3C_Component
 
         self.canvas_3C = MatplotlibCanvas(self.plotMatWidget_3C, nrows=1)
-        #self.canvas_3C.set_xlabel(2, "Time (s)")
+
+        ###Raise an strange error Thiago###
+        #self.canvas_pol = MatplotlibCanvas(self.Widget_polarization, nrows=1)
+
         ##Map##
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
         self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
-        self.event_info.register_plot_arrivals_click(self.on_click_plot_arrivals)
+        #self.event_info.register_plot_arrivals_click(self.on_click_plot_arrivals)
 
         # Testing map
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
@@ -84,6 +84,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.selectNorthBtn.clicked.connect(self.on_click_set_north_component)
         self.selectEastBtn.clicked.connect(self.on_click_set_east_component)
         self.rotateplotBtn.clicked.connect(self.on_click_3C_components)
+        self.polarizationBtn.clicked.connect(self.on_click_polarization)
         #self.degreeSB.valueChanged.connect(self.on_click_3C_components)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
@@ -291,7 +292,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         sd = rotate(self.root_path_Form_Vertical.text(),self.root_path_Form_North.text(),
                     self.root_path_Form_East.text())
 
-        time,z,r,t = sd.rot(time1,time2, method="NE->RT", angle=angle, filter_error_callback=self.filter_error_message,
+        time,z,r,t,st = sd.rot(time1,time2, method="NE->RT", angle=angle, filter_error_callback=self.filter_error_message,
                                     filter_value=self.filter_3ca.filter_value,
                                     f_min=self.filter_3ca.min_freq, f_max=self.filter_3ca.max_freq)
         rotated_seismograms=[z,r,t]
@@ -300,3 +301,25 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             index=j
             data=rotated_seismograms[j]
             self.canvas_3C.plot(time, data, index, color="black", linewidth=0.5)
+        self.canvas_3C.set_xlabel(2, "Time (s)")
+
+    def on_click_polarization(self):
+
+        timeini = self.dateTimeEdit_4.dateTime().toString("yyyy-MM-dd hh:mm:ss")
+        timefin = self.dateTimeEdit_5.dateTime().toString("yyyy-MM-dd hh:mm:ss")
+        time1 = timeini[0:10] + "T" + timeini[11:19]
+        time2 = timefin[0:10] + "T" + timefin[11:19]
+        angle = self.degreeSB.value()
+        sd = rotate(self.root_path_Form_Vertical.text(), self.root_path_Form_North.text(),
+                    self.root_path_Form_East.text())
+
+        time, z, r, t, st = sd.rot(time1, time2, method="NE->RT", angle=angle,
+                               filter_error_callback=self.filter_error_message,
+                               filter_value=self.filter_3ca.filter_value,
+                               f_min=self.filter_3ca.min_freq, f_max=self.filter_3ca.max_freq)
+
+        time, azimuth, incident_angle, Planarity, rectilinearity = sd.polarization(time1, time2,
+                        self.doubleSpinBox_winlen.value(), self.spinBox_winoverlap.value(),
+                        self.filter_3ca.min_freq, self.filter_3ca.max_freq,
+                        method=self.comboBox_methodpolarization.currentText())
+

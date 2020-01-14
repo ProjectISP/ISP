@@ -420,6 +420,41 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
                 self.set_xlabel(1, x_label)
         self.draw()
 
+    def scatter3d(self,x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
+        """
+                Wrapper for matplotlib contourf.
+
+                :param x: x-axis data.
+                :param y: y-axis data.
+                :param z: z-axis data.
+                :param axes_index: The subplot axes index.
+                :param clear_plot: True to clean plot, False to plot over.
+                :param show_colorbar: True to show colorbar, false otherwise.
+                :param kwargs: Valid Matplotlib kwargs for contourf.
+                :return:
+                """
+        if self.axes is not None:
+            ax = self.get_axe(axes_index)
+            cmap = kwargs.pop('cmap', plt.get_cmap('jet'))
+            vmin = kwargs.pop('vmin', numpy.amin(z))
+            vmax = kwargs.pop('vmax', numpy.amax(z))
+            clabel = kwargs.pop('clabel', '')
+            x_label = ax.get_xlabel()
+            if clear_plot:
+                ax.cla()
+            cs = ax.scatter(x, y, s=10, cmap=cmap, **kwargs)
+            cs.set_clim(vmin, vmax)
+            self.clear_color_bar()
+            if show_colorbar:
+                self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, extend='both', pad=0.0)
+                self.__cbar.ax.set_ylabel(clabel)
+            ax.set_xlim(*self.get_xlim_from_data(ax, 0))
+            ax.set_ylim(*self.get_ylim_from_data(ax, 0))
+            if x_label is not None and len(x_label) != 0:
+                self.set_xlabel(1, x_label)
+        self.draw()
+
+
     def clear_color_bar(self):
         if self.__cbar:
             self.__cbar.remove()
