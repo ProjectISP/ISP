@@ -440,7 +440,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             x_label = ax.get_xlabel()
             if clear_plot:
                 ax.cla()
-            cs = ax.scatter(x, y, s=10, cmap=cmap, **kwargs)
+            cs = ax.scatter(x, y, s=5, c=z, cmap=cmap, alpha=0.5, marker=".", **kwargs)
             cs.set_clim(vmin, vmax)
             self.clear_color_bar()
             if show_colorbar:

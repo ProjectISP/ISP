@@ -115,8 +115,11 @@ class rotate:
         time = out["timestamp"]
         azimuth = out["azimuth"] + 180
         incident_angle = out["incidence"]
-        Planarity = out["planarity"]
+        planarity = out["planarity"]
         rectilinearity = out["rectilinearity"]
+        #time=np.arange(0,len(azimuth))
+        variables = {'time': time, 'azimuth': azimuth, 'incident_angle': incident_angle, 'planarity': planarity,
+                     'rectilinearity': rectilinearity}
 
-        return time,azimuth,incident_angle,Planarity,rectilinearity
+        return variables
 

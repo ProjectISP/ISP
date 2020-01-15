@@ -617,7 +617,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>430</y>
+          <y>400</y>
           <width>241</width>
           <height>161</height>
          </rect>
@@ -663,47 +663,48 @@
        <widget class="QWidget" name="gridLayoutWidget_7">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>690</y>
-          <width>231</width>
-          <height>166</height>
+          <x>0</x>
+          <y>600</y>
+          <width>241</width>
+          <height>226</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_7">
-         <item row="3" column="1">
-          <widget class="QSpinBox" name="spinBox_2"/>
-         </item>
-         <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_winlen"/>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_26">
-           <property name="text">
-            <string>Method</string>
-           </property>
+         <item row="6" column="1">
+          <widget class="QComboBox" name="comboBox_polarity">
+           <item>
+            <property name="text">
+             <string>planarity</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>rectilinearity</string>
+            </property>
+           </item>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_28">
+         <item row="6" column="0">
+          <widget class="QLabel" name="label_31">
            <property name="text">
-            <string>Windows Overlap</string>
+            <string>value</string>
            </property>
           </widget>
          </item>
          <item row="2" column="1">
           <widget class="QSpinBox" name="spinBox_winoverlap"/>
          </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_29">
-           <property name="text">
-            <string>Noise Variance</string>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_27">
            <property name="text">
             <string>Windows Length</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_29">
+           <property name="text">
+            <string>Noise Variance</string>
            </property>
           </widget>
          </item>
@@ -726,7 +727,48 @@
            </item>
           </widget>
          </item>
-         <item row="4" column="0" colspan="2">
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_28">
+           <property name="text">
+            <string>Windows Overlap</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_winlen"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_26">
+           <property name="text">
+            <string>Method</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_30">
+           <property name="text">
+            <string>y-axis</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QSpinBox" name="spinBox_2"/>
+         </item>
+         <item row="5" column="1">
+          <widget class="QComboBox" name="comboBox_yaxis">
+           <item>
+            <property name="text">
+             <string>azimuth</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>incident_angle</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="7" column="0" colspan="2">
           <widget class="QPushButton" name="polarizationBtn">
            <property name="text">
             <string>Polarization Analysis</string>
@@ -739,9 +781,9 @@
         <property name="geometry">
          <rect>
           <x>249</x>
-          <y>589</y>
-          <width>1361</width>
-          <height>261</height>
+          <y>579</y>
+          <width>1401</width>
+          <height>281</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_10">

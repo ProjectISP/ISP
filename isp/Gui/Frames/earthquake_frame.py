@@ -45,8 +45,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # 3C_Component
 
         self.canvas_3C = MatplotlibCanvas(self.plotMatWidget_3C)
-
-        # Raise an strange error Thiago###
         self.canvas_pol = MatplotlibCanvas(self.Widget_polarization)
 
         # Map
@@ -316,7 +314,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas_3C.set_xlabel(2, "Time (s)")
 
     def on_click_polarization(self):
-
+        import matplotlib.pyplot as plt
         timeini = self.dateTimeEdit_4.dateTime().toString("yyyy-MM-dd hh:mm:ss")
         timefin = self.dateTimeEdit_5.dateTime().toString("yyyy-MM-dd hh:mm:ss")
         time1 = timeini[0:10] + "T" + timeini[11:19]
@@ -330,7 +328,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                    filter_value=self.filter_3ca.filter_value, f_min=self.filter_3ca.min_freq,
                                    f_max=self.filter_3ca.max_freq)
 
-        time, azimuth, incident_angle, planarity, rectilinearity = \
-            sd.polarization(time1, time2, self.doubleSpinBox_winlen.value(), self.spinBox_winoverlap.value(),
+
+        var = sd.polarization(time1, time2, self.doubleSpinBox_winlen.value(), self.spinBox_winoverlap.value(),
                             self.filter_3ca.min_freq, self.filter_3ca.max_freq,
                             method=self.comboBox_methodpolarization.currentText())
+
+        self.canvas_pol.plot(var['time'],var[self.comboBox_yaxis.currentText()],0, linewidth=0.5)
+        self.canvas_pol.plot(var['time'],var[self.comboBox_polarity.currentText()], 0, clear_plot=False, linewidth=0.5, color='sandybrown')
+        #self.canvas_pol.scatter3d(var['time'], var[self.comboBox_yaxis.currentText()], var[self.comboBox_polarity.currentText()],axes_index=0)
