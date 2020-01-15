@@ -206,7 +206,7 @@ class BasePltPyqtCanvas(FigureCanvas):
         """
         for ax in self.axes:
             ax.cla()
-            self.draw()
+            self.draw_idle()
 
     def set_new_subplot(self, nrows, ncols, **kwargs):
         # SMALL_SIZE = 6
@@ -222,10 +222,8 @@ class BasePltPyqtCanvas(FigureCanvas):
         # plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
         # plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
         # plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
-        self.axes = self.figure.subplots_adjust(left=0.065, bottom=0.1440, right=1.0, top=0.990, wspace=0.2, hspace=0.0)
-
         self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex=sharex, **kwargs)
-        self.figure.subplots_adjust(left=0.065, bottom=0.1440, right=1.0, top=0.990, wspace=0.2, hspace=0.0)
+        self.figure.subplots_adjust(left=0.065, bottom=0.1440, right=0.9, top=0.990, wspace=0.2, hspace=0.0)
         self.__flat_axes()
         self.draw()
 
@@ -362,7 +360,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         ax.set_ylim(ax.get_ylim())
         try:
             # Draw can raise ValueError
-            self.draw()
+            self.draw_idle()
             return artist
         except ValueError:
             artist.remove()
@@ -416,7 +414,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             ax.set_ylim(*self.get_ylim_from_data(ax, 0))
             if x_label is not None and len(x_label) != 0:
                 self.set_xlabel(1, x_label)
-        self.draw()
+        self.draw_idle()
 
     def scatter3d(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
@@ -450,14 +448,13 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             ax.set_ylim(*self.get_ylim_from_data(ax, 0))
             if x_label is not None and len(x_label) != 0:
                 self.set_xlabel(1, x_label)
-        self.draw()
+        self.draw_idle()
 
     def clear_color_bar(self):
         if self.__cbar:
             self.__cbar.remove()
 
-    def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, amplitude=None,
-                   draw=True, **kwargs):
+    def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, amplitude=None, **kwargs):
         """
         Draw an arrow over the a plot. This plot will add a pick event to the line.
 
@@ -467,8 +464,6 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         :param draw_arrow: True if you want an arrow, false to draw just a line.
         :param amplitude: (float) The waveform amplitude. If amplitude is given it will plot a dot at the
             x = x_pos, y = amplitude.
-        :param draw: Either it should call draw or not. Default = True. Use draw=False if you are using it
-            in a loop, it increase performance, therefore remember to call the draw method after the loop.
         :param kwargs: Valid Matplotlib kwargs for plot.
         :return: A line.
         """
@@ -488,47 +483,43 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         # artist = self.plot(x_pos, 0, axe_index, clear_plot=False, marker=marker, markersize=markersize, color=color,
         #                    **kwargs)
         ymin, ymax = self.get_ylim_from_data(ax, offset=10)
+
         line = ax.vlines(x_pos, ymin, ymax, color=color, picker=picker, **kwargs)
 
         point = ax.plot(x_pos, amplitude, marker='o', color="steelblue") if amplitude else [None]
-
         # Add annotate and point in a dict with a key equal to line signature.
-        if picker:
-            self.pickers[str(line)] = annotate, point[0]
-        if draw:
-            self.draw()
+
+        self.pickers[str(line)] = annotate, point[0]
+        self.draw_idle()
 
         return line
 
-    def remove_arrow(self, line: Line2D, draw=True):
+    def remove_arrow(self, line: Line2D):
         """
         Remove arrow line and attached components.
 
         :param line: The ref of a Line2D.
 
-        :param draw: Either it should call draw or not. Default = True. Use draw=False if you are using it
-            in a loop, it increase performance, therefore remember to call the draw method after the loop.
-
         :return:
         """
+
         if line:
             try:
                 line.remove()
             except ValueError as error:
                 print(error)
-        attached = self.pickers.pop(str(line), None)  # get the picker
-        if attached:
-            for item in attached:
-                if item:
-                    item.remove()
-        if draw:
-            self.draw()
+            attached = self.pickers.pop(str(line), None)  # get the picker
+            if attached:
+                for item in attached:
+                    if item:
+                        item.remove()
+                        del item
+            del line
+            self.draw_idle()
 
     def remove_arrows(self, lines: [Line2D]):
         for line in lines:
-            self.remove_arrow(line, draw=False)
-
-        self.draw()
+            self.remove_arrow(line)
 
 
 class MatplotlibFrame(BaseFrame):
