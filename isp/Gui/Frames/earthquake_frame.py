@@ -240,8 +240,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def on_pick(self, event):
         line = event.artist
         self.canvas.remove_arrow(line)
-        picker_structure: PickerStructure = self.picked_at.pop(str(line))
-        self.pm.remove_data(picker_structure.Time, picker_structure.Station)
+        picker_structure: PickerStructure = self.picked_at.pop(str(line), None)
+        if picker_structure:
+            self.pm.remove_data(picker_structure.Time, picker_structure.Station)
 
     def on_click_plot_arrivals(self, event_time: UTCDateTime, lat: float, long: float, depth: float):
         self.event_info.clear_arrivals()
