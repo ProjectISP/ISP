@@ -480,10 +480,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         annotate = ax.annotate(arrow_label, xy=(x_pos, 0), xytext=(0, -30), bbox=bbox, xycoords='data',
                                textcoords='offset points', annotation_clip=True, arrowprops=arrowprops)
 
-        # artist = self.plot(x_pos, 0, axe_index, clear_plot=False, marker=marker, markersize=markersize, color=color,
-        #                    **kwargs)
-        ymin, ymax = self.get_ylim_from_data(ax, offset=10)
-
+        ymin, ymax = ax.get_ybound()
         line = ax.vlines(x_pos, ymin, ymax, color=color, picker=picker, **kwargs)
 
         point = ax.plot(x_pos, amplitude, marker='o', color="steelblue") if amplitude else [None]

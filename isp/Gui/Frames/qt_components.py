@@ -474,12 +474,13 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
 
     def plot_arrivals(self, axe_index, start_time: UTCDateTime, station_stats: StationsStats):
         delta_time = self.event_time - start_time
-        line = self.__canvas.draw_arrow(delta_time, axe_index, "Event time", color="red", picker=False)
+        line = self.__canvas.draw_arrow(delta_time, axe_index, "Event time", color="red", linestyles='--',
+                                        picker=False)
 
         sma = SeismogramAnalysis(station_stats.Lat, station_stats.Lon)
         phases, times = sma.get_phases_and_arrivals(self.latitude, self.longitude, self.event_depth)
         self.add_arrivals_line(line)
         for phase, time in zip(phases, times):
-            # using linestyles='dashed' makes the cpu at 100% after few plots without clean. Very weird!!
-            line = self.__canvas.draw_arrow(time + delta_time, axe_index, phase, color="green", picker=False)
+            line = self.__canvas.draw_arrow(time + delta_time, axe_index, phase, color="green", linestyles='--',
+                                            picker=False)
             self.add_arrivals_line(line)
