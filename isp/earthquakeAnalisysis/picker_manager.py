@@ -106,7 +106,7 @@ class PickerManager:
 
         :keyword Instrument: The instrument.
         :keyword Component:
-        :keyword First_Motion: The polarization, either "+" or "-"
+        :keyword First_Motion: The polarization, either "U" or "D"
         :keyword Err:
         :keyword ErrMag:
         :keyword Coda_duration:
@@ -155,6 +155,11 @@ class PickerManager:
         data[self.ErrMag] = "{:.1f}".format(0) if data[self.ErrMag] == "?" else data[self.ErrMag]
         data[self.CodaDuration] = "{:.1f}".format(0) if data[self.CodaDuration] == "?" else data[self.CodaDuration]
         data[self.Period] = "{:.1f}".format(0) if data[self.Period] == "?" else data[self.Period]
+
+        if data[self.FirstMotion] == "+":
+            data[self.FirstMotion] = "U"
+        elif data[self.FirstMotion] == "-":
+            data[self.FirstMotion] = "D"
 
         df = pd.DataFrame(data, columns=self.columns, index=[0])
         self.df: pd.DataFrame = self.df.append(df, ignore_index=True)

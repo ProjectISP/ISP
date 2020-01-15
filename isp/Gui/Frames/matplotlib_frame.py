@@ -17,12 +17,10 @@ from owslib.wms import WebMapService
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Frames import BaseFrame
 from isp.Utils import ObspyUtil, AsycTime
-import matplotlib.ticker as mticker
-from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-import cartopy
-from owslib.wms import WebMapService
+
+
 # Make sure that we are using QT5
-import matplotlib.font_manager as font_manager
+
 
 class MatplotlibWidget(pw.QWidget):
 
@@ -211,23 +209,23 @@ class BasePltPyqtCanvas(FigureCanvas):
             self.draw()
 
     def set_new_subplot(self, nrows, ncols, **kwargs):
-        SMALL_SIZE = 6
-        MEDIUM_SIZE = 8
-        BIGGER_SIZE = 12
+        # SMALL_SIZE = 6
+        # MEDIUM_SIZE = 8
+        # BIGGER_SIZE = 12
         sharex = kwargs.pop("sharex", "all")
         self.figure.clf()
         plt.close(self.figure)
-        plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
-        plt.rc('axes', titlesize=SMALL_SIZE)  # fontsize of the axes title
-        plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
-        plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-        plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-        plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
-        plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+        # plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
+        # plt.rc('axes', titlesize=SMALL_SIZE)  # fontsize of the axes title
+        # plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
+        # plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+        # plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+        # plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
+        # plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
         self.axes = self.figure.subplots_adjust(left=0.065, bottom=0.1440, right=1.0, top=0.990, wspace=0.2, hspace=0.0)
+
         self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex=sharex, **kwargs)
-
-
+        self.figure.subplots_adjust(left=0.065, bottom=0.1440, right=1.0, top=0.990, wspace=0.2, hspace=0.0)
         self.__flat_axes()
         self.draw()
 
@@ -420,19 +418,19 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
                 self.set_xlabel(1, x_label)
         self.draw()
 
-    def scatter3d(self,x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
+    def scatter3d(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
-                Wrapper for matplotlib contourf.
+        Wrapper for matplotlib scatter3d.
 
-                :param x: x-axis data.
-                :param y: y-axis data.
-                :param z: z-axis data.
-                :param axes_index: The subplot axes index.
-                :param clear_plot: True to clean plot, False to plot over.
-                :param show_colorbar: True to show colorbar, false otherwise.
-                :param kwargs: Valid Matplotlib kwargs for contourf.
-                :return:
-                """
+        :param x: x-axis data.
+        :param y: y-axis data.
+        :param z: z-axis data.
+        :param axes_index: The subplot axes index.
+        :param clear_plot: True to clean plot, False to plot over.
+        :param show_colorbar: True to show colorbar, false otherwise.
+        :param kwargs: Valid Matplotlib kwargs for scatter.
+        :return:
+        """
         if self.axes is not None:
             ax = self.get_axe(axes_index)
             cmap = kwargs.pop('cmap', plt.get_cmap('jet'))
@@ -453,7 +451,6 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             if x_label is not None and len(x_label) != 0:
                 self.set_xlabel(1, x_label)
         self.draw()
-
 
     def clear_color_bar(self):
         if self.__cbar:
@@ -526,7 +523,6 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
                     item.remove()
         if draw:
             self.draw()
-            self.blit()
 
     def remove_arrows(self, lines: [Line2D]):
         for line in lines:
@@ -594,6 +590,8 @@ class MatplotlibFrame(BaseFrame):
 
 class CartopyCanvas(BasePltPyqtCanvas):
 
+    MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
+
     def __init__(self, parent, **kwargs):
         """
         Create an embed cartopy canvas into pyqt.
@@ -612,19 +610,20 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         :keyword projection: default =  ccrs.PlateCarree()
         """
+
         proj = kwargs.pop("projection", ccrs.PlateCarree())
-
-        super().__init__(parent, subplot_kw=dict(projection=proj),constrained_layout=False, **kwargs)
-
         c_layout = kwargs.pop("constrained_layout", False)
         super().__init__(parent, subplot_kw=dict(projection=proj), constrained_layout=c_layout, **kwargs)
 
-    def plot(self, x, y, scatter_x, scatter_y, scatter_z, axes_index, clear_plot=True, **kwargs):
+    def plot_map(self, x, y, scatter_x, scatter_y, scatter_z, axes_index, clear_plot=True, **kwargs):
         """
         Cartopy plot.
 
         :param x:
         :param y:
+        :param scatter_x:
+        :param scatter_y:
+        :param scatter_z:
         :param axes_index:
         :param clear_plot:
         :param kwargs:
@@ -634,28 +633,21 @@ class CartopyCanvas(BasePltPyqtCanvas):
         # TODO implement a useful plot for cartopy this is just a test.
         self.clear()
         ax = self.get_axe(axes_index)
-        url = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
-        wms = WebMapService(url)
+        wms = WebMapService(self.MAP_SERVICE_URL)
 
         layer = 'GEBCO_08 Hillshade'
         xmin=int(x-20)
         xmax=int(x+20)
         ymin=int(y-20)
         ymax=int(y+20)
-        extent=[xmin,xmax,ymin,ymax]
+        extent = [xmin, xmax, ymin, ymax]
 
         ax.set_extent(extent, crs=ccrs.PlateCarree())
-
-
-
-        COASTLINE_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
-                                        edgecolor='k', alpha=0.6,linewidth=0.5,
-                                        facecolor=cartopy.feature.COLORS['land'])
-        ax.add_feature(COASTLINE_10m)
-
-        #ax.stock_img()
+        coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
+                                                            edgecolor='k', alpha=0.6, linewidth=0.5,
+                                                            facecolor=cartopy.feature.COLORS['land'])
+        ax.add_feature(coastline_10m)
         ax.add_wms(wms, layer)
-        
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
         gl.xlabels_top = False
@@ -666,6 +658,6 @@ class CartopyCanvas(BasePltPyqtCanvas):
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
 
-        ax.plot(x ,y, color='red', marker='o',markersize=5)
-        ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10,marker=".",cmap=plt.cm.jet)
+        ax.plot(x, y, color='red', marker='o',markersize=5)
+        ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", cmap=plt.get_cmap('jet'))
         self.draw()

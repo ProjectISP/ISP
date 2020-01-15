@@ -474,7 +474,6 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
 
     def plot_arrivals(self, axe_index, start_time: UTCDateTime, station_stats: StationsStats):
         delta_time = self.event_time - start_time
-        self.clear_arrivals()
         line = self.__canvas.draw_arrow(delta_time, axe_index, "Event time", color="red", linestyle='dashed',
                                         draw=False)
 
