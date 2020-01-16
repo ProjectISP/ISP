@@ -327,6 +327,23 @@ class BasePltPyqtCanvas(FigureCanvas):
         y_max += y_max * offset * 0.01
         return y_min, y_max
 
+    @staticmethod
+    def set_yaxis_color(ax: Axes, color: str, is_left=False):
+        """
+        Set the color of the y-axis for the given axe.
+
+        :param ax: The matplotlib Axes
+        :param color: The color is should be, i.e: 'red', 'blue', 'green', etc..
+        :param is_left: If True it will change the left side of the y-axis, otherwise it will change the right side.
+        :return:
+        """
+        ax.yaxis.label.set_color(color)
+        ax.tick_params(axis='y', colors=color)
+        if is_left:
+            ax.spines.get('left').set_color(color)
+        else:
+            ax.spines.get('right').set_color(color)
+
 
 class MatplotlibCanvas(BasePltPyqtCanvas):
 
@@ -351,6 +368,25 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         """
         super().__init__(parent, obj, **kwargs)
         self.__cbar = None
+        self.__twinx_axes = {}
+
+    def __add_twinx_ax(self, ax_index):
+        ax = self.get_axe(ax_index)
+        tw_ax = self.get_twinx_ax(ax_index)
+        if not tw_ax:
+            tw_ax = ax.twinx()
+            tw_ax.spines.get('left').set_visible(False)
+            self.__twinx_axes[ax_index] = tw_ax
+        return tw_ax
+
+    def get_twinx_ax(self, ax_index) -> Axes:
+        return self.__twinx_axes.get(ax_index, None)
+
+    def set_ylabel_twinx(self, axe_index, value):
+        ax = self.get_twinx_ax(axe_index)
+        if ax:
+            ax.set_ylabel(value)
+            self.draw_idle()  # force to update label
 
     def __plot(self, x, y, ax, clear_plot=True, **kwargs):
         if clear_plot:
@@ -366,20 +402,74 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             artist.remove()
             return None
 
-    def plot(self, x, y, axes_index, clear_plot=True, **kwargs):
+    def __plot_3d(self, x, y, z, ax, plot_type, clear_plot=True, show_colorbar=True, **kwargs):
+        """
+        Wrapper for matplotlib 3d plots.
+
+        :param x: x-axis data.
+        :param y: y-axis data.
+        :param z: z-axis data.
+        :param ax: The subplot ax.
+        :param plot_type: The plot type, either contourf or scatter.
+        :param clear_plot: True to clean plot, False to plot over.
+        :param show_colorbar: True to show colorbar, false otherwise.
+        :param kwargs: Valid Matplotlib kwargs for plot_type.
+        :return:
+        """
+        if clear_plot:
+            ax.cla()
+
+        cmap = kwargs.pop('cmap', plt.get_cmap('jet'))
+        vmin = kwargs.pop('vmin', numpy.amin(z))
+        vmax = kwargs.pop('vmax', numpy.amax(z))
+        clabel = kwargs.pop('clabel', '')
+
+        x_label = ax.get_xlabel()
+
+        if plot_type == "contourf":
+            levels = kwargs.pop('levels', 100)
+            cs = ax.contourf(x, y, z, levels=levels, cmap=cmap, vmin=vmin, vmax=vmax, **kwargs)
+        elif plot_type == "scatter":
+            area = 10.*z**2  # points size from 0 to 5
+            cs = ax.scatter(x, y, s=area, c=z, cmap=cmap, alpha=0.5, vmin=vmin, vmax=vmax, marker=".", **kwargs)
+        else:
+            raise ValueError("Invalid value for plot_type it must be equal to either contourf or scatter.")
+
+        cs.set_clim(vmin, vmax)
+        self.clear_color_bar()
+        if show_colorbar:
+            self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, extend='both', pad=0.0)
+            self.__cbar.ax.set_ylabel(clabel)
+        ax.set_xlim(*self.get_xlim_from_data(ax, 0))
+        ax.set_ylim(*self.get_ylim_from_data(ax, 0))
+        if x_label is not None and len(x_label) != 0:
+            self.set_xlabel(1, x_label)
+        self.draw_idle()
+
+    def plot(self, x, y, axes_index, clear_plot=True, is_twinx=False, **kwargs):
         """
         Wrapper for matplotlib plot.
+
+        Import: If the kwarg is_twinx=True, the kwarg clear_plot has no effect and will be always set to True.
 
         :param x: x-axis data.
         :param y: y-axis data.
         :param axes_index: The subplot axes index.
-        :param clear_plot: True to clean plot, False to plot over.
+        :param clear_plot: True to clean plot, False to plot over. Default=True.
+        :param is_twinx: True if you want to add a new y-axis scale, False otherwise. Default=False.
         :param kwargs: Valid Matplotlib kwargs for plot.
-        :return:
+        :return: The artist plotted.
         """
         if self.axes is not None:
             ax = self.get_axe(axes_index)
-            return self.__plot(x, y, ax, clear_plot=clear_plot, **kwargs)
+            if is_twinx:
+                tw_ax = self.__add_twinx_ax(axes_index)
+                artist = self.__plot(x, y, tw_ax, clear_plot=True, **kwargs)
+                if artist:
+                    self.set_yaxis_color(tw_ax, artist.get_color())
+                return artist
+            else:
+                return self.__plot(x, y, ax, clear_plot=clear_plot, **kwargs)
 
     def plot_contour(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
@@ -396,25 +486,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         """
         if self.axes is not None:
             ax = self.get_axe(axes_index)
-            cmap = kwargs.pop('cmap', plt.get_cmap('jet'))
-            levels = kwargs.pop('levels', 100)
-            vmin = kwargs.pop('vmin', numpy.amin(z))
-            vmax = kwargs.pop('vmax', numpy.amax(z))
-            clabel = kwargs.pop('clabel', '')
-            x_label = ax.get_xlabel()
-            if clear_plot:
-                ax.cla()
-            cs = ax.contourf(x, y, z, levels=levels, cmap=cmap, vmin=vmin, vmax=vmax, **kwargs)
-            cs.set_clim(vmin, vmax)
-            self.clear_color_bar()
-            if show_colorbar:
-                self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, extend='both', pad=0.0)
-                self.__cbar.ax.set_ylabel(clabel)
-            ax.set_xlim(*self.get_xlim_from_data(ax, 0))
-            ax.set_ylim(*self.get_ylim_from_data(ax, 0))
-            if x_label is not None and len(x_label) != 0:
-                self.set_xlabel(1, x_label)
-        self.draw_idle()
+            self.__plot_3d(x, y, z, ax, "contourf", clear_plot=clear_plot, show_colorbar=show_colorbar, **kwargs)
 
     def scatter3d(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
@@ -431,24 +503,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         """
         if self.axes is not None:
             ax = self.get_axe(axes_index)
-            cmap = kwargs.pop('cmap', plt.get_cmap('jet'))
-            vmin = kwargs.pop('vmin', numpy.amin(z))
-            vmax = kwargs.pop('vmax', numpy.amax(z))
-            clabel = kwargs.pop('clabel', '')
-            x_label = ax.get_xlabel()
-            if clear_plot:
-                ax.cla()
-            cs = ax.scatter(x, y, s=5, c=z, cmap=cmap, alpha=0.5, marker=".", **kwargs)
-            cs.set_clim(vmin, vmax)
-            self.clear_color_bar()
-            if show_colorbar:
-                self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, extend='both', pad=0.0)
-                self.__cbar.ax.set_ylabel(clabel)
-            ax.set_xlim(*self.get_xlim_from_data(ax, 0))
-            ax.set_ylim(*self.get_ylim_from_data(ax, 0))
-            if x_label is not None and len(x_label) != 0:
-                self.set_xlabel(1, x_label)
-        self.draw_idle()
+            self.__plot_3d(x, y, z, ax, "scatter", clear_plot=clear_plot, show_colorbar=show_colorbar, **kwargs)
 
     def clear_color_bar(self):
         if self.__cbar:

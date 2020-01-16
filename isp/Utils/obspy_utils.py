@@ -62,7 +62,7 @@ class ObspyUtil:
         return stats
 
     @staticmethod
-    def filter_trace(trace, trace_filter, f_min, f_max):
+    def filter_trace(trace, trace_filter, f_min, f_max, **kwargs):
         """
         Filter a obspy Trace or Stream.
 
@@ -70,6 +70,11 @@ class ObspyUtil:
         :param trace_filter: The filter name or Filter enum, ie. Filter.BandPass or "bandpass".
         :param f_min: The lower frequency.
         :param f_max: The higher frequency.
+
+        :keyword kwargs:
+        :keyword corners: The number of poles, default = 4.
+        :keyword zerophase: True for keep the phase without shift, false otherwise, Default = True.
+
         :return: False if bad frequency filter, True otherwise.
         """
         if trace_filter != Filters.Default:
@@ -77,16 +82,19 @@ class ObspyUtil:
                 print("Bad filter frequencies")
                 return False
 
+            corners = kwargs.pop("corners", 4)
+            zerophase = kwargs.pop("zerophase", True)
+
             trace.taper(max_percentage=0.05, type="blackman")
 
             if trace_filter == Filters.BandPass or trace_filter == Filters.BandStop:
-                trace.filter(trace_filter, freqmin=f_min, freqmax=f_max, corners=4, zerophase=True)
+                trace.filter(trace_filter, freqmin=f_min, freqmax=f_max, corners=corners, zerophase=zerophase)
 
             elif trace_filter == Filters.HighPass:
-                trace.filter(trace_filter, freq=f_min, corners=4, zerophase=True)
+                trace.filter(trace_filter, freq=f_min, corners=corners, zerophase=zerophase)
 
             elif trace_filter == Filters.LowPass:
-                trace.filter(trace_filter, freq=f_max, corners=4, zerophase=True)
+                trace.filter(trace_filter, freq=f_max, corners=corners, zerophase=zerophase)
 
         return True
 

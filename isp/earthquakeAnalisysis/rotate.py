@@ -18,36 +18,9 @@ class rotate:
         self.path_n = path_n
         self.path_e = path_e
 
-    @staticmethod
-    def filter_stream(trace, trace_filter, f_min, f_max):
-        """
-        Filter a obspy Trace or Stream.
-
-        :param trace: The trace or stream to be filter.
-        :param trace_filter: The filter name or Filter enum, ie. Filter.BandPass or "bandpass".
-        :param f_min: The lower frequency.
-        :param f_max: The higher frequency.
-        :return: False if bad frequency filter, True otherwise.
-        """
-        if trace_filter != Filters.Default:
-            if not (f_max - f_min) > 0:
-                print("Bad filter frequencies")
-                return False
-
-            trace.taper(max_percentage=0.05, type="blackman")
-
-            if trace_filter == Filters.BandPass or trace_filter == Filters.BandStop:
-                trace.filter(trace_filter, freqmin=f_min, freqmax=f_max, corners=4, zerophase=True)
-
-            elif trace_filter == Filters.HighPass:
-                trace.filter(trace_filter, freq=f_min, corners=4, zerophase=True)
-
-            elif trace_filter == Filters.LowPass:
-                trace.filter(trace_filter, freq=f_max, corners=4, zerophase=True)
-
-        return trace
 
     def rot(self, t1, t2, method="NE->RT", angle=0, **kwargs):
+
          t1 = UTCDateTime(t1)
          t2 = UTCDateTime(t2)
          #read seismograms
@@ -62,7 +35,7 @@ class rotate:
          print(minend)
          st.trim(maxstart, minend)
 
-         if maxstart - t1 < 0 and minend - t2 > 0:
+         if maxstart - t1 < 0 < minend - t2:
             st.clear()
             st = read(self.path_z, starttime=t1, endtime=t2)
             st += read(self.path_n, starttime=t1, endtime=t2)
@@ -82,8 +55,8 @@ class rotate:
          for i in range(n):
 
              tr=st[i]
-             trace=self.filter_stream(tr, filter_value, f_min, f_max)
-             data.append(trace.data)
+             ObspyUtil.filter_trace(tr, filter_value, f_min, f_max)
+             data.append(tr.data)
 
          return time, data[0], data[1], data[2], st
 
