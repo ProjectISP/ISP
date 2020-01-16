@@ -621,6 +621,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         # TODO implement a useful plot for cartopy this is just a test.
         self.clear()
         ax = self.get_axe(axes_index)
+        #print(self.MAP_SERVICE_URL)
         wms = WebMapService(self.MAP_SERVICE_URL)
 
         layer = 'GEBCO_08 Hillshade'

@@ -336,4 +336,5 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.canvas_pol.plot(var['time'],var[self.comboBox_yaxis.currentText()],0, linewidth=0.5)
         self.canvas_pol.plot(var['time'],var[self.comboBox_polarity.currentText()], 0, clear_plot=False, linewidth=0.5, color='sandybrown')
+        self.canvas_pol.plot(var['time'], 0.5*var[self.comboBox_yaxis.currentText()], 0, clear_plot=False, linewidth=0.5)
         #self.canvas_pol.scatter3d(var['time'], var[self.comboBox_yaxis.currentText()], var[self.comboBox_polarity.currentText()],axes_index=0)
