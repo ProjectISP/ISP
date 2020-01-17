@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1680</width>
-    <height>954</height>
+    <height>953</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -567,7 +567,7 @@
          <rect>
           <x>249</x>
           <y>170</y>
-          <width>1361</width>
+          <width>1401</width>
           <height>401</height>
          </rect>
         </property>
@@ -618,7 +618,7 @@
          <rect>
           <x>0</x>
           <y>400</y>
-          <width>241</width>
+          <width>231</width>
           <height>161</height>
          </rect>
         </property>
@@ -665,7 +665,7 @@
          <rect>
           <x>0</x>
           <y>600</y>
-          <width>241</width>
+          <width>231</width>
           <height>226</height>
          </rect>
         </property>
@@ -1325,6 +1325,81 @@
         <property name="text">
          <string>Plot Location Map</string>
         </property>
+       </widget>
+       <widget class="QScrollArea" name="scrollArea">
+        <property name="geometry">
+         <rect>
+          <x>630</x>
+          <y>650</y>
+          <width>981</width>
+          <height>211</height>
+         </rect>
+        </property>
+        <property name="widgetResizable">
+         <bool>true</bool>
+        </property>
+        <widget class="QWidget" name="scrollAreaWidgetContents">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>979</width>
+           <height>209</height>
+          </rect>
+         </property>
+         <widget class="QTabWidget" name="tabWidget_2">
+          <property name="geometry">
+           <rect>
+            <x>-11</x>
+            <y>0</y>
+            <width>981</width>
+            <height>211</height>
+           </rect>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="tab_4">
+           <attribute name="title">
+            <string>Location Information</string>
+           </attribute>
+           <widget class="QPlainTextEdit" name="plainTextEdit">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>981</width>
+              <height>181</height>
+             </rect>
+            </property>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="tab_5">
+           <attribute name="title">
+            <string>Station Residuals</string>
+           </attribute>
+           <widget class="QWidget" name="verticalLayoutWidget_3">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>-1</y>
+              <width>961</width>
+              <height>181</height>
+             </rect>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_11">
+             <item>
+              <widget class="QWidget" name="widget_3" native="true">
+               <property name="styleSheet">
+                <string notr="true">background-color: rgb(255, 255, 255);</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </widget>
+        </widget>
        </widget>
       </widget>
      </widget>

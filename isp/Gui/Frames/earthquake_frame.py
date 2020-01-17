@@ -9,7 +9,7 @@ from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil
-from isp.earthquakeAnalisysis import PickerManager, NllManager, rotate
+from isp.earthquakeAnalisysis import PickerManager, NllManager, PolarizationAnalyis
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
@@ -299,10 +299,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         time2 = timefin[0:10] + "T" + timefin[11:19]
         self.canvas_3C.clear()
         angle = self.degreeSB.value()
-        sd = rotate(self.root_path_Form_Vertical.text(), self.root_path_Form_North.text(),
+        sd = PolarizationAnalyis(self.root_path_Form_Vertical.text(), self.root_path_Form_North.text(),
                     self.root_path_Form_East.text())
 
-        time, z, r, t, st = sd.rot(time1, time2, method="NE->RT", angle=angle,
+        time, z, r, t, st = sd.rotate(time1, time2, method="NE->RT", angle=angle,
                                    filter_error_callback=self.filter_error_message,
                                    filter_value=self.filter_3ca.filter_value,
                                    f_min=self.filter_3ca.min_freq, f_max=self.filter_3ca.max_freq)
@@ -315,35 +315,22 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas_3C.set_xlabel(2, "Time (s)")
 
     def on_click_polarization(self):
-        # timeini = self.dateTimeEdit_4.dateTime().toString("yyyy-MM-dd hh:mm:ss")
-        # timefin = self.dateTimeEdit_5.dateTime().toString("yyyy-MM-dd hh:mm:ss")
-        # time1 = timeini[0:10] + "T" + timeini[11:19]
-        # time2 = timefin[0:10] + "T" + timefin[11:19]
-        # angle = self.degreeSB.value()
-        # sd = rotate(self.root_path_Form_Vertical.text(), self.root_path_Form_North.text(),
-        #             self.root_path_Form_East.text())
-        #
-        # time, z, r, t, st = sd.rot(time1, time2, method="NE->RT", angle=angle,
-        #                            filter_error_callback=self.filter_error_message,
-        #                            filter_value=self.filter_3ca.filter_value, f_min=self.filter_3ca.min_freq,
-        #                            f_max=self.filter_3ca.max_freq)
-        #
-        #
-        # var = sd.polarization(time1, time2, self.doubleSpinBox_winlen.value(), self.spinBox_winoverlap.value(),
-        #                     self.filter_3ca.min_freq, self.filter_3ca.max_freq,
-        #                     method=self.comboBox_methodpolarization.currentText())
+        timeini = self.dateTimeEdit_4.dateTime().toString("yyyy-MM-dd hh:mm:ss")
+        timefin = self.dateTimeEdit_5.dateTime().toString("yyyy-MM-dd hh:mm:ss")
+        time1 = timeini[0:10] + "T" + timeini[11:19]
+        time2 = timefin[0:10] + "T" + timefin[11:19]
+        sd = PolarizationAnalyis(self.root_path_Form_Vertical.text(), self.root_path_Form_North.text(),
+                 self.root_path_Form_East.text())
 
-        # self.canvas_pol.plot(var['time'],var[self.comboBox_yaxis.currentText()],0, linewidth=0.5)
-        # self.canvas_pol.plot(var['time'],var[self.comboBox_polarity.currentText()], 0, clear_plot=False, linewidth=0.5, color='sandybrown')
-        # self.canvas_pol.plot(var['time'], 0.5*var[self.comboBox_yaxis.currentText()], 0, clear_plot=False, linewidth=0.5)
+        var = sd.polarize(time1, time2, self.doubleSpinBox_winlen.value(), self.spinBox_winoverlap.value(),
+                             self.filter_3ca.min_freq, self.filter_3ca.max_freq,
+                             method=self.comboBox_methodpolarization.currentText())
 
-        # Example of how to use twinx
-        # normal plot
-        artist = self.canvas_pol.plot([0, 1, 2], [0, 1, 2], 0, clear_plot=True)
-        self.canvas_pol.set_ylabel(0, "Density")  # set a label
-        # set color of left y-axis.
+        artist = self.canvas_pol.plot(var['time'], var[self.comboBox_yaxis.currentText()], 0, clear_plot=True,linewidth=0.5)
+        self.canvas_pol.set_ylabel(0, self.comboBox_yaxis.currentText())
         self.canvas_pol.set_yaxis_color(self.canvas_pol.get_axe(0), artist.get_color(), is_left=True)
+        self.canvas_pol.plot(var['time'], var[self.comboBox_polarity.currentText()], 0, is_twinx=True, color="red",linewidth=0.5)
+        self.canvas_pol.set_ylabel_twinx(0, self.comboBox_polarity.currentText())
 
-        # plot a twinx color of y-axis in the twins axis is applied automatically.
-        self.canvas_pol.plot([0, 1, 2], [0, 15, 0], 0, is_twinx=True, color="red")
-        self.canvas_pol.set_ylabel_twinx(0, "Temperature")  # set a label
+
+

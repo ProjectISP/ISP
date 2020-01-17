@@ -4,7 +4,7 @@ import numpy as np
 from isp.Utils import ObspyUtil, Filters
 from obspy.signal.polarization import polarization_analysis
 
-class rotate:
+class PolarizationAnalyis:
 
     def __init__(self, path_z, path_n, path_e):
         """
@@ -19,7 +19,7 @@ class rotate:
         self.path_e = path_e
 
 
-    def rot(self, t1, t2, method="NE->RT", angle=0, **kwargs):
+    def rotate(self, t1, t2, method="NE->RT", angle=0, **kwargs):
 
          t1 = UTCDateTime(t1)
          t2 = UTCDateTime(t2)
@@ -60,7 +60,7 @@ class rotate:
 
          return time, data[0], data[1], data[2], st
 
-    def polarization(self,t1,t2, win_len, win_frac, frqlow, frqhigh, method='flinn'):
+    def polarize(self,t1,t2, win_len, win_frac, frqlow, frqhigh, method='flinn'):
 
         win_frac=int(win_len*win_frac/100)
         t1 = UTCDateTime(t1)
@@ -73,10 +73,7 @@ class rotate:
         maxstart = np.max([tr.stats.starttime for tr in st])
         minend = np.min([tr.stats.endtime for tr in st])
 
-        print(maxstart)
-        print(minend)
         st.trim(maxstart, minend)
-
         if maxstart - t1 < 0 and minend - t2 > 0:
             st.clear()
             st = read(self.path_z, starttime=t1, endtime=t2)
