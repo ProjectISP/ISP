@@ -1,8 +1,9 @@
-from obspy import read
+from obspy import read, Stream
 from obspy import UTCDateTime
 import numpy as np
 from isp.Utils import ObspyUtil, Filters
 from obspy.signal.polarization import polarization_analysis
+
 
 class PolarizationAnalyis:
 
@@ -18,28 +19,15 @@ class PolarizationAnalyis:
         self.path_n = path_n
         self.path_e = path_e
 
+    def __get_stream(self, start_time: UTCDateTime, end_time: UTCDateTime) -> Stream:
 
-    def rotate(self, t1, t2, method="NE->RT", angle=0, **kwargs):
+        st = ObspyUtil.merge_files_to_stream([self.path_z, self.path_n, self.path_e])
+        ObspyUtil.trim_stream(st, start_time, end_time)
+        return st
 
-         t1 = UTCDateTime(t1)
-         t2 = UTCDateTime(t2)
+    def rotate(self, t1: UTCDateTime, t2: UTCDateTime, method="NE->RT", angle=0, **kwargs):
          #read seismograms
-         st = read(self.path_z)
-         st += read(self.path_n)
-         st += read(self.path_e)
-         # trim
-         maxstart = np.max([tr.stats.starttime for tr in st])
-         minend = np.min([tr.stats.endtime for tr in st])
-
-         print(maxstart)
-         print(minend)
-         st.trim(maxstart, minend)
-
-         if maxstart - t1 < 0 < minend - t2:
-            st.clear()
-            st = read(self.path_z, starttime=t1, endtime=t2)
-            st += read(self.path_n, starttime=t1, endtime=t2)
-            st += read(self.path_e, starttime=t1, endtime=t2)
+         st = self.__get_stream(t1, t2)
          sampling_rate=st[0].stats.sampling_rate
          time = np.arange(0, len(st[0].data) / sampling_rate, 1. / sampling_rate)
 
@@ -60,27 +48,13 @@ class PolarizationAnalyis:
 
          return time, data[0], data[1], data[2], st
 
-    def polarize(self,t1,t2, win_len, win_frac, frqlow, frqhigh, method='flinn'):
+    def polarize(self, t1: UTCDateTime, t2: UTCDateTime, win_len, win_frac, frqlow, frqhigh, method='flinn'):
 
         win_frac=int(win_len*win_frac/100)
-        t1 = UTCDateTime(t1)
-        t2 = UTCDateTime(t2)
-        # read seismograms
-        st = read(self.path_z)
-        st += read(self.path_n)
-        st += read(self.path_e)
-        # trim
-        maxstart = np.max([tr.stats.starttime for tr in st])
-        minend = np.min([tr.stats.endtime for tr in st])
+        st = self.__get_stream(t1, t2)
 
-        st.trim(maxstart, minend)
-        if maxstart - t1 < 0 and minend - t2 > 0:
-            st.clear()
-            st = read(self.path_z, starttime=t1, endtime=t2)
-            st += read(self.path_n, starttime=t1, endtime=t2)
-            st += read(self.path_e, starttime=t1, endtime=t2)
-
-        out = polarization_analysis(st, win_len, win_frac, frqlow, frqhigh, st[0].stats.starttime, st[0].stats.endtime, verbose=False, method=method, var_noise=0.0)
+        out = polarization_analysis(st, win_len, win_frac, frqlow, frqhigh, st[0].stats.starttime,
+                                    st[0].stats.endtime, verbose=False, method=method, var_noise=0.0)
 
         time = out["timestamp"]
         azimuth = out["azimuth"] + 180

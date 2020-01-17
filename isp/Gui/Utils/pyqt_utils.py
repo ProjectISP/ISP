@@ -2,6 +2,7 @@ import os
 from contextlib import suppress
 
 from PyQt5 import uic
+from obspy import UTCDateTime
 
 from isp import UIS_PATH
 from isp.Gui import pyc, pw, user_preferences
@@ -99,6 +100,17 @@ def add_save_load():
     return wrapper
 
 
+def convert_qdatetime_utcdatetime(q_datetime_edit: pw.QDateTimeEdit):
+    """
+    Convert the datetime from QDateTimeEdit widget to a obspy.UTCDatetime
+
+    :param q_datetime_edit: The QDateTimeEdit widget
+    :return: The obspy.UTCDatetime
+    """
+    py_time = q_datetime_edit.dateTime().toPyDateTime()
+    return UTCDateTime(py_time)
+
+
 class BindPyqtObject(pyc.QObject):
     """
     Bind a pyqt object to this class
@@ -159,3 +171,4 @@ class BindPyqtObject(pyc.QObject):
 
     def unblind_valueChanged(self):
         self.__callback_val_changed = None
+

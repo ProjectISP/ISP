@@ -208,6 +208,17 @@ class BasePltPyqtCanvas(FigureCanvas):
             ax.cla()
             self.draw_idle()
 
+    def update_bounds(self):
+        """
+        Update the bounds of all axes
+
+        :return:
+        """
+        for ax in self.axes:
+            ax.set_xlim(ax.get_xlim())
+            ax.set_ylim(ax.get_ylim())
+        self.draw_idle()
+
     def set_new_subplot(self, nrows, ncols, **kwargs):
         # SMALL_SIZE = 6
         # MEDIUM_SIZE = 8
@@ -392,8 +403,6 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         if clear_plot:
             ax.cla()
         artist, = ax.plot(x, y, **kwargs)
-        ax.set_xlim(ax.get_xlim())
-        ax.set_ylim(ax.get_ylim())
         try:
             # Draw can raise ValueError
             self.draw_idle()

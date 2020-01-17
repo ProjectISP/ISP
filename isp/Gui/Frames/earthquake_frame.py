@@ -6,7 +6,7 @@ from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox, \
     MatplotlibCanvas, CartopyCanvas, FilesView
 from isp.Gui.Utils import map_polarity_from_pressed_key
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager, NllManager, PolarizationAnalyis
@@ -45,6 +45,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # 3C_Component
 
         self.canvas_3C = MatplotlibCanvas(self.plotMatWidget_3C)
+        self.canvas_3C.set_new_subplot(3, ncols=1)
         self.canvas_pol = MatplotlibCanvas(self.Widget_polarization)
 
         # Map
@@ -83,7 +84,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.selectVerticalBtn.clicked.connect(self.on_click_set_vertical_component)
         self.selectNorthBtn.clicked.connect(self.on_click_set_north_component)
         self.selectEastBtn.clicked.connect(self.on_click_set_east_component)
-        self.rotateplotBtn.clicked.connect(self.on_click_3C_components)
+        self.rotateplotBtn.clicked.connect(lambda: self.on_click_3C_components(self.canvas_3C))
         self.polarizationBtn.clicked.connect(self.on_click_polarization)
         # self.degreeSB.valueChanged.connect(self.on_click_3C_components)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
@@ -291,13 +292,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def on_click_set_east_component(self):
         self.root_path_Form_East.setText(self.file_selector.file_path)
 
-    def on_click_3C_components(self):
-        self.canvas_3C.set_new_subplot(3, ncols=1)
-        timeini = self.dateTimeEdit_4.dateTime().toString("yyyy-MM-dd hh:mm:ss")
-        timefin = self.dateTimeEdit_5.dateTime().toString("yyyy-MM-dd hh:mm:ss")
-        time1 = timeini[0:10] + "T" + timeini[11:19]
-        time2 = timefin[0:10] + "T" + timefin[11:19]
-        self.canvas_3C.clear()
+    def on_click_3C_components(self, canvas):
+        time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
+        time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
         angle = self.degreeSB.value()
         sd = PolarizationAnalyis(self.root_path_Form_Vertical.text(), self.root_path_Form_North.text(),
                     self.root_path_Form_East.text())
@@ -307,18 +304,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                    filter_value=self.filter_3ca.filter_value,
                                    f_min=self.filter_3ca.min_freq, f_max=self.filter_3ca.max_freq)
         rotated_seismograms = [z, r, t]
-
-        for j in range(len(rotated_seismograms)):
-            index = j
-            data = rotated_seismograms[j]
-            self.canvas_3C.plot(time, data, index, color="black", linewidth=0.5)
-        self.canvas_3C.set_xlabel(2, "Time (s)")
+        for index, data in enumerate(rotated_seismograms):
+            canvas.plot(time, data, index, color="black", linewidth=0.5)
+        canvas.set_xlabel(2, "Time (s)")
 
     def on_click_polarization(self):
-        timeini = self.dateTimeEdit_4.dateTime().toString("yyyy-MM-dd hh:mm:ss")
-        timefin = self.dateTimeEdit_5.dateTime().toString("yyyy-MM-dd hh:mm:ss")
-        time1 = timeini[0:10] + "T" + timeini[11:19]
-        time2 = timefin[0:10] + "T" + timefin[11:19]
+        time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
+        time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
         sd = PolarizationAnalyis(self.root_path_Form_Vertical.text(), self.root_path_Form_North.text(),
                  self.root_path_Form_East.text())
 
