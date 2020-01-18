@@ -319,6 +319,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                              method=self.comboBox_methodpolarization.currentText())
 
         artist = self.canvas_pol.plot(var['time'], var[self.comboBox_yaxis.currentText()], 0, clear_plot=True,linewidth=0.5)
+        self.canvas_pol.set_ylabel(0, "Time [s]")
         self.canvas_pol.set_ylabel(0, self.comboBox_yaxis.currentText())
         self.canvas_pol.set_yaxis_color(self.canvas_pol.get_axe(0), artist.get_color(), is_left=True)
         self.canvas_pol.plot(var['time'], var[self.comboBox_polarity.currentText()], 0, is_twinx=True, color="red",linewidth=0.5)
