@@ -689,10 +689,10 @@ class CartopyCanvas(BasePltPyqtCanvas):
         wms = WebMapService(self.MAP_SERVICE_URL)
 
         layer = 'GEBCO_08 Hillshade'
-        xmin=int(x-20)
-        xmax=int(x+20)
-        ymin=int(y-20)
-        ymax=int(y+20)
+        xmin=int(x-5)
+        xmax=int(x+5)
+        ymin=int(y-5)
+        ymax=int(y+5)
         extent = [xmin, xmax, ymin, ymax]
 
         ax.set_extent(extent, crs=ccrs.PlateCarree())

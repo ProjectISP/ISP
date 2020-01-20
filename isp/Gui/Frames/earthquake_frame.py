@@ -47,12 +47,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas_3C = MatplotlibCanvas(self.plotMatWidget_3C)
         self.canvas_3C.set_new_subplot(3, ncols=1)
         self.canvas_pol = MatplotlibCanvas(self.Widget_polarization)
-
         # Map
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
 
-        # Testing map
-        self.cartopy_canvas = CartopyCanvas(self.widget_map)
+        # Canvas for Earthquake Location Results
+        self.canvas_resuduals = MatplotlibCanvas(self.plotMatWidget_residuals)
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
@@ -276,9 +275,37 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def on_click_plot_map(self):
         print("Plotting Map")
         nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
-        lat, lon = nll_manager.get_NLL_info()
+        origin = nll_manager.get_NLL_info()
+        lat=origin.latitude
+        lon=origin.longitude
         scatter_x, scatter_y, scatter_z = nll_manager.get_NLL_scatter(lat, lon)
         self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0)
+
+        # Writting Location information
+        self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     " +str(origin.time)+"     "+
+                                              str('{:.2f}'.format(origin.quality.standard_error)))
+        self.EarthquakeInfoText.appendPlainText("  Hypocenter Geographic Coordinates:     Latitude " +
+                                             str(origin.latitude) +"     Longitude "+ str(origin.longitude)+
+                                             "     Depth " + str(origin.depth/1000)+"      Uncertainity "+
+                                                str(origin.depth_errors['uncertainty']/10000))
+        self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err " +
+                                                str(origin.origin_uncertainty.max_horizontal_uncertainty/1000) +
+         "     Max Horizontal Err " + str(origin.origin_uncertainty.min_horizontal_uncertainty/1000) +
+         "     Azimuth " + str(origin.origin_uncertainty.azimuth_max_horizontal_uncertainty))
+
+        self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases" +
+        str(origin.quality.used_phase_count) + "     " +"Azimuthal GAP" +str(origin.quality.azimuthal_gap)+"     "+
+        "Minimum Distance "+str(origin.quality.minimum_distance)+"     "+
+        "Maximum Distance "+str(origin.quality.maximum_distance))
+
+
+        xp, yp, xs, ys = nll_manager.ger_NLL_residuals()
+        artist = self.canvas_resuduals.plot(xp, yp, axes_index=0,linewidth=0.5)
+        self.canvas_pol.set_xlabel(0, "Station Name")
+        self.canvas_pol.set_ylabel(0, "P wave Residuals")
+        self.canvas_pol.set_yaxis_color(self.canvas_resuduals.get_axe(0), artist.get_color(), is_left=True)
+        self.canvas_pol.plot(xs, ys, 0, is_twinx=True, color="red", linewidth=0.5)
+        self.canvas_pol.set_ylabel_twinx(0, "S wave Residuals")
 
     # 3C COMPONENT METHODS####
     # RETRIEVING WAVEFORMS
@@ -319,7 +346,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                              method=self.comboBox_methodpolarization.currentText())
 
         artist = self.canvas_pol.plot(var['time'], var[self.comboBox_yaxis.currentText()], 0, clear_plot=True,linewidth=0.5)
-        self.canvas_pol.set_ylabel(0, "Time [s]")
+        self.canvas_pol.set_xlabel(0, "Time [s]")
         self.canvas_pol.set_ylabel(0, self.comboBox_yaxis.currentText())
         self.canvas_pol.set_yaxis_color(self.canvas_pol.get_axe(0), artist.get_color(), is_left=True)
         self.canvas_pol.plot(var['time'], var[self.comboBox_polarity.currentText()], 0, is_twinx=True, color="red",linewidth=0.5)

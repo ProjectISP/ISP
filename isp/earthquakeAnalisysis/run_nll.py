@@ -8,14 +8,13 @@ Created on Tue Dec 17 20:26:28 2019
 
 import os
 import subprocess as sb
-
 import pandas as pd
 from obspy import read_events
 from obspy.io.nlloc.util import read_nlloc_scatter
-
 from isp import ROOT_DIR
 from isp.DataProcessing import DatalessManager
-
+import math as mt
+import numpy as np
 
 class NllManager:
 
@@ -270,15 +269,9 @@ class NllManager:
         cat = read_events(location_file)
         event = cat[0]
         origin = event.origins[0]
-        latitude = origin.latitude
-        longitude = origin.longitude
-
-        return latitude, longitude
+        return origin
 
     def get_NLL_scatter(self, lat_orig, lon_orig):
-
-        import math as mt
-        import numpy as np
 
         location_file = os.path.join(self.root_path, "loc", "last.scat")
         data = read_nlloc_scatter(location_file)
@@ -302,3 +295,24 @@ class NllManager:
         pdf = np.array(pdf) / np.max(pdf)
 
         return x, y, pdf
+
+    def ger_NLL_residuals(self):
+        location_file = os.path.join(self.root_path, "loc", "last.hyp")
+        df = pd.read_csv(location_file, delim_whitespace=True, skiprows=16)
+        xp = []; yp = []; xs = []; ys = []
+        for i in range(len(df)):
+            phase = df.iloc[i].On
+
+            if df.iloc[i].Weight > 0.01 and phase[0].upper() == "P":
+                yp.append(df.iloc[i].Res)
+                xp.append(df.iloc[i].PHASE)
+
+        for i in range(len(df)):
+            phase = df.iloc[i].On
+
+            if df.iloc[i].Weight > 0.01 and phase[0].upper() == "S":
+                ys.append(df.iloc[i].Res)
+                xs.append(df.iloc[i].PHASE)
+
+        return xp,yp,xs,ys
+

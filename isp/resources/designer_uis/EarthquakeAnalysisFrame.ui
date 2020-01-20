@@ -1363,7 +1363,7 @@
            <attribute name="title">
             <string>Location Information</string>
            </attribute>
-           <widget class="QPlainTextEdit" name="plainTextEdit">
+           <widget class="QPlainTextEdit" name="EarthquakeInfoText">
             <property name="geometry">
              <rect>
               <x>0</x>
@@ -1373,11 +1373,6 @@
              </rect>
             </property>
            </widget>
-          </widget>
-          <widget class="QWidget" name="tab_6">
-           <attribute name="title">
-            <string>PDF</string>
-           </attribute>
           </widget>
           <widget class="QWidget" name="tab_5">
            <attribute name="title">
@@ -1394,7 +1389,7 @@
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_11">
              <item>
-              <widget class="QWidget" name="widget_3" native="true">
+              <widget class="QWidget" name="plotMatWidget_residuals" native="true">
                <property name="styleSheet">
                 <string notr="true">background-color: rgb(255, 255, 255);</string>
                </property>
