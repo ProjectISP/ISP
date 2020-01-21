@@ -541,10 +541,12 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         arrowprops = None
         if draw_arrow:
             arrowprops = dict(facecolor=color, shrink=0.05)
-        annotate = ax.annotate(arrow_label, xy=(x_pos, 0), xytext=(0, -30), bbox=bbox, xycoords='data',
-                               textcoords='offset points', annotation_clip=True, arrowprops=arrowprops)
+
         self.update_bounds()
         ymin, ymax = ax.get_ybound()
+        annotate = ax.annotate(arrow_label, xy=(x_pos, 0) ,xytext=(x_pos, ymin*0.5), bbox=bbox, xycoords='data',
+                               annotation_clip=True, arrowprops=arrowprops)
+
         line = ax.vlines(x_pos, ymin, ymax, color=color, picker=picker, **kwargs)
 
         point = ax.plot(x_pos, amplitude, marker='o', color="steelblue") if amplitude else [None]
@@ -689,10 +691,10 @@ class CartopyCanvas(BasePltPyqtCanvas):
         wms = WebMapService(self.MAP_SERVICE_URL)
 
         layer = 'GEBCO_08 Hillshade'
-        xmin=int(x-5)
-        xmax=int(x+5)
-        ymin=int(y-5)
-        ymax=int(y+5)
+        xmin = int(x-5)
+        xmax = int(x+5)
+        ymin = int(y-5)
+        ymax = int(y+5)
         extent = [xmin, xmax, ymin, ymax]
 
         ax.set_extent(extent, crs=ccrs.PlateCarree())
@@ -712,5 +714,5 @@ class CartopyCanvas(BasePltPyqtCanvas):
         gl.yformatter = LATITUDE_FORMATTER
 
         ax.plot(x, y, color='red', marker='o',markersize=5)
-        ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", cmap=plt.get_cmap('jet'))
+        ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", alpha=0.7,cmap=plt.get_cmap('jet'))
         self.draw()

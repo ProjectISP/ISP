@@ -276,27 +276,30 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         print("Plotting Map")
         nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
         origin = nll_manager.get_NLL_info()
+        ###Reference
+        lat=33
+        lon=-10
+        scatter_x, scatter_y, scatter_z = nll_manager.get_NLL_scatter(lat, lon)
         lat=origin.latitude
         lon=origin.longitude
-        scatter_x, scatter_y, scatter_z = nll_manager.get_NLL_scatter(lat, lon)
         self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0)
 
         # Writting Location information
         self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     " +str(origin.time)+"     "+
-                                              str('{:.2f}'.format(origin.quality.standard_error)))
+                                              str('{:.3f}'.format(origin.quality.standard_error)))
         self.EarthquakeInfoText.appendPlainText("  Hypocenter Geographic Coordinates:     Latitude " +
-                                             str(origin.latitude) +"     Longitude "+ str(origin.longitude)+
-                                             "     Depth " + str(origin.depth/1000)+"      Uncertainity "+
-                                                str(origin.depth_errors['uncertainty']/10000))
+                                             str('{:.3f}'.format(origin.latitude)) +"     Longitude "+ str('{:.3f}'.format(origin.longitude))
+                                                + "     Depth " + str('{:.3f}'.format(origin.depth/1000))+"      Uncertainity "+
+                                                str('{:.3f}'.format(origin.depth_errors['uncertainty']/10000)))
         self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err " +
-                                                str(origin.origin_uncertainty.max_horizontal_uncertainty/1000) +
-         "     Max Horizontal Err " + str(origin.origin_uncertainty.min_horizontal_uncertainty/1000) +
-         "     Azimuth " + str(origin.origin_uncertainty.azimuth_max_horizontal_uncertainty))
+                                                str('{:.3f}'.format(origin.origin_uncertainty.max_horizontal_uncertainty/1000)) +
+         "     Max Horizontal Err " + str('{:.3f}'.format(origin.origin_uncertainty.min_horizontal_uncertainty/1000)) +
+         "     Azimuth " + str('{:.3f}'.format(origin.origin_uncertainty.azimuth_max_horizontal_uncertainty)))
 
-        self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases" +
-        str(origin.quality.used_phase_count) + "     " +"Azimuthal GAP" +str(origin.quality.azimuthal_gap)+"     "+
-        "Minimum Distance "+str(origin.quality.minimum_distance)+"     "+
-        "Maximum Distance "+str(origin.quality.maximum_distance))
+        self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases " +
+        str('{:.3f}'.format(origin.quality.used_phase_count)) + "     " +"Azimuthal GAP " +str('{:.3f}'.format(origin.quality.azimuthal_gap))
+                                                +"     "+"Minimum Distance "+str('{:.3f}'.format(origin.quality.minimum_distance))+"     "+
+        "Maximum Distance "+str('{:.3f}'.format(origin.quality.maximum_distance)))
 
 
         xp, yp, xs, ys = nll_manager.ger_NLL_residuals()
@@ -351,6 +354,3 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas_pol.set_yaxis_color(self.canvas_pol.get_axe(0), artist.get_color(), is_left=True)
         self.canvas_pol.plot(var['time'], var[self.comboBox_polarity.currentText()], 0, is_twinx=True, color="red",linewidth=0.5)
         self.canvas_pol.set_ylabel_twinx(0, self.comboBox_polarity.currentText())
-
-
-
