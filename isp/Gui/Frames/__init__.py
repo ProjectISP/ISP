@@ -1,5 +1,5 @@
 from isp.Gui.Frames.uis_frames import UiMainFrame, UiTimeFrequencyFrame, UiEarthquakeAnalysisFrame, \
-    UiPaginationWidget, UiFilterGroupBox, UiEventInfoGroupBox
+    UiPaginationWidget, UiFilterGroupBox, UiEventInfoGroupBox, UiEarthquake3CFrame, UiEarthquakeLocationFrame
 from isp.Gui.Frames.qt_components import FilesView, Pagination, MessageDialog, FilterBox, EventInfoBox
 from isp.Gui.Frames.main import BaseFrame, MainFrame
 from isp.Gui.Frames.matplotlib_frame import MatplotlibFrame, MatplotlibCanvas, CartopyCanvas

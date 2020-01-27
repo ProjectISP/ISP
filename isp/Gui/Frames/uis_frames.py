@@ -5,8 +5,10 @@ from isp.Gui.Utils.pyqt_utils import load_ui_designers
 UiMainFrame = load_ui_designers("MainFrame.ui")
 UiTimeFrequencyFrame = load_ui_designers("TimeFrequencyFrame.ui")
 UiEarthquakeAnalysisFrame = load_ui_designers("EarthquakeAnalysisFrame.ui")
+UiEarthquake3CFrame = load_ui_designers("Earthquake3CFrame.ui")
+UiEarthquakeLocationFrame = load_ui_designers("EarthquakeLocationFrame.ui")
 UiPaginationWidget = load_ui_designers("PaginationWidget.ui")
-UiFilterGroupBox = load_ui_designers("FilterGroupBox.ui")
+UiFilterGroupBox = load_ui_designers("FilterDockWidget.ui")
 UiEventInfoGroupBox = load_ui_designers("EventInfoGroupBox.ui")
 
 

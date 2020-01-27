@@ -4,12 +4,13 @@ from obspy.geodetics import gps2dist_azimuth
 from isp.DataProcessing import SeismogramData, DatalessManager
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox, \
-    MatplotlibCanvas, CartopyCanvas, FilesView
+    MatplotlibCanvas
+from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
 from isp.Gui.Utils import map_polarity_from_pressed_key
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil
-from isp.earthquakeAnalisysis import PickerManager, NllManager, PolarizationAnalyis
+from isp.earthquakeAnalisysis import PickerManager
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
@@ -27,7 +28,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
 
         self.filter = FilterBox(self.filterWidget)  # add filter box component.
-        self.filter_3ca = FilterBox(self.filter3CAWidget)  # add filter box component.
 
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
@@ -42,50 +42,18 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
         self.event_info.register_plot_arrivals_click(self.on_click_plot_arrivals)
 
-        # 3C_Component
-
-        self.canvas_3C = MatplotlibCanvas(self.plotMatWidget_3C)
-        self.canvas_3C.set_new_subplot(3, ncols=1)
-        self.canvas_pol = MatplotlibCanvas(self.Widget_polarization)
-        # Map
-        self.cartopy_canvas = CartopyCanvas(self.widget_map)
-
-        # Canvas for Earthquake Location Results
-        self.canvas_resuduals = MatplotlibCanvas(self.plotMatWidget_residuals)
+        self.earthquake_3c_frame = Earthquake3CFrame(self.parentWidget3C)
+        self.earthquake_location_frame = EarthquakeLocationFrame(self.parentWidgetLocation)
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
-        # New Binding for 3C
-        self.root_path_bind_3C = BindPyqtObject(self.rootPathForm_3C, self.onChange_root_path_3C)
-        # Add file selector to the widget
-        self.file_selector = FilesView(self.root_path_bind_3C.value, parent=self.fileSelectorWidget,
-                                       on_change_file_callback=lambda file_path: self.onChange_file(file_path))
 
-        self.grid_latitude_bind = BindPyqtObject(self.gridlatSB)
-        self.grid_longitude_bind = BindPyqtObject(self.gridlonSB)
-        self.grid_depth_bind = BindPyqtObject(self.griddepthSB)
-        self.grid_xnode_bind = BindPyqtObject(self.xnodeSB)
-        self.grid_ynode_bind = BindPyqtObject(self.ynodeSB)
-        self.grid_znode_bind = BindPyqtObject(self.znodeSB)
-        self.grid_dxsize_bind = BindPyqtObject(self.dxsizeSB)
-        self.grid_dysize_bind = BindPyqtObject(self.dysizeSB)
-        self.grid_dzsize_bind = BindPyqtObject(self.dzsizeSB)
-        self.degreeSB_bind = BindPyqtObject(self.degreeSB)
+
         # Bind buttons
-        self.selectDirBtn_3C.clicked.connect(self.on_click_select_directory_3C)
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.sortBtn.clicked.connect(self.on_click_sort)
-        self.genvelBtn.clicked.connect(self.on_click_run_vel_to_grid)
-        self.grdtimeBtn.clicked.connect(self.on_click_run_grid_to_time)
-        self.runlocBtn.clicked.connect(self.on_click_run_loc)
-        self.plotmapBtn.clicked.connect(self.on_click_plot_map)
-        self.selectVerticalBtn.clicked.connect(self.on_click_set_vertical_component)
-        self.selectNorthBtn.clicked.connect(self.on_click_set_north_component)
-        self.selectEastBtn.clicked.connect(self.on_click_set_east_component)
-        self.rotateplotBtn.clicked.connect(lambda: self.on_click_3C_components(self.canvas_3C))
-        self.polarizationBtn.clicked.connect(self.on_click_polarization)
-        # self.degreeSB.valueChanged.connect(self.on_click_3C_components)
+
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
     @property
@@ -137,29 +105,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.total_items = len(self.files)
         self.pagination.set_total_items(self.total_items)
         self.plot_seismogram()
-
-    # Function added for 3C Components
-    def onChange_root_path_3C(self, value):
-        """
-        Fired every time the root_path is changed
-
-        :param value: The path of the new directory.
-
-        :return:
-        """
-        self.file_selector.set_new_rootPath(value)
-
-    # Function added for 3C Components
-    def onChange_file(self, file_path):
-        # Called every time user select a different file
-        pass
-
-    # Function added for 3C Components
-    def on_click_select_directory_3C(self):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind_3C.value)
-
-        if dir_path:
-            self.root_path_bind_3C.value = dir_path
 
     def onChange_dataless_path(self, value):
         self.__dataless_manager = DatalessManager(value)
@@ -223,7 +168,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             click_at_index = event.inaxes.rowNum
             x1, y1 = event.xdata, event.ydata
             stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
-
             # Get amplitude from index
             x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
             amplitude = canvas.get_ydata(click_at_index).item(x_index)  # get y-data from index.
@@ -251,106 +195,3 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             stats = ObspyUtil.get_stats(file_path)
             # TODO remove stats.StartTime and use the picked one from UI.
             self.event_info.plot_arrivals(index, stats.StartTime, st_stats)
-
-    def on_click_run_vel_to_grid(self):
-        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
-        nll_manager.vel_to_grid(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
-                                self.grid_depth_bind.value, self.grid_xnode_bind.value,
-                                self.grid_ynode_bind.value, self.grid_znode_bind.value,
-                                self.grid_dxsize_bind.value, self.grid_dysize_bind.value,
-                                self.grid_dzsize_bind.value, self.comboBox_gridtype.currentText(),
-                                self.comboBox_wavetype.currentText())
-
-    def on_click_run_grid_to_time(self):
-        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
-        nll_manager.grid_to_time(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
-                                 self.grid_depth_bind.value, self.comboBox_grid.currentText(),
-                                 self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText())
-
-    def on_click_run_loc(self):
-        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
-        nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
-                              self.grid_depth_bind.value)
-
-    def on_click_plot_map(self):
-        print("Plotting Map")
-        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
-        origin = nll_manager.get_NLL_info()
-        ###Reference
-        lat=33
-        lon=-10
-        scatter_x, scatter_y, scatter_z = nll_manager.get_NLL_scatter(lat, lon)
-        lat=origin.latitude
-        lon=origin.longitude
-        self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0)
-
-        # Writting Location information
-        self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     " +str(origin.time)+"     "+
-                                              str('{:.3f}'.format(origin.quality.standard_error)))
-        self.EarthquakeInfoText.appendPlainText("  Hypocenter Geographic Coordinates:     Latitude " +
-                                             str('{:.3f}'.format(origin.latitude)) +"     Longitude "+ str('{:.3f}'.format(origin.longitude))
-                                                + "     Depth " + str('{:.3f}'.format(origin.depth/1000))+"      Uncertainity "+
-                                                str('{:.3f}'.format(origin.depth_errors['uncertainty']/10000)))
-        self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err " +
-                                                str('{:.3f}'.format(origin.origin_uncertainty.max_horizontal_uncertainty/1000)) +
-         "     Max Horizontal Err " + str('{:.3f}'.format(origin.origin_uncertainty.min_horizontal_uncertainty/1000)) +
-         "     Azimuth " + str('{:.3f}'.format(origin.origin_uncertainty.azimuth_max_horizontal_uncertainty)))
-
-        self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases " +
-        str('{:.3f}'.format(origin.quality.used_phase_count)) + "     " +"Azimuthal GAP " +str('{:.3f}'.format(origin.quality.azimuthal_gap))
-                                                +"     "+"Minimum Distance "+str('{:.3f}'.format(origin.quality.minimum_distance))+"     "+
-        "Maximum Distance "+str('{:.3f}'.format(origin.quality.maximum_distance)))
-
-
-        xp, yp, xs, ys = nll_manager.ger_NLL_residuals()
-        artist = self.canvas_resuduals.plot(xp, yp, axes_index=0,linewidth=0.5)
-        self.canvas_pol.set_xlabel(0, "Station Name")
-        self.canvas_pol.set_ylabel(0, "P wave Residuals")
-        self.canvas_pol.set_yaxis_color(self.canvas_resuduals.get_axe(0), artist.get_color(), is_left=True)
-        self.canvas_pol.plot(xs, ys, 0, is_twinx=True, color="red", linewidth=0.5)
-        self.canvas_pol.set_ylabel_twinx(0, "S wave Residuals")
-
-    # 3C COMPONENT METHODS####
-    # RETRIEVING WAVEFORMS
-
-    def on_click_set_vertical_component(self):
-        self.root_path_Form_Vertical.setText(self.file_selector.file_path)
-
-    def on_click_set_north_component(self):
-        self.root_path_Form_North.setText(self.file_selector.file_path)
-
-    def on_click_set_east_component(self):
-        self.root_path_Form_East.setText(self.file_selector.file_path)
-
-    def on_click_3C_components(self, canvas):
-        time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
-        time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
-        angle = self.degreeSB.value()
-        sd = PolarizationAnalyis(self.root_path_Form_Vertical.text(), self.root_path_Form_North.text(),
-                    self.root_path_Form_East.text())
-
-        time, z, r, t, st = sd.rotate(time1, time2, method="NE->RT", angle=angle,
-                                   filter_error_callback=self.filter_error_message,
-                                   filter_value=self.filter_3ca.filter_value,
-                                   f_min=self.filter_3ca.min_freq, f_max=self.filter_3ca.max_freq)
-        rotated_seismograms = [z, r, t]
-        for index, data in enumerate(rotated_seismograms):
-            canvas.plot(time, data, index, color="black", linewidth=0.5)
-        canvas.set_xlabel(2, "Time (s)")
-
-    def on_click_polarization(self):
-        time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
-        time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
-        sd = PolarizationAnalyis(self.root_path_Form_Vertical.text(), self.root_path_Form_North.text(),
-                 self.root_path_Form_East.text())
-
-        var = sd.polarize(time1, time2, self.doubleSpinBox_winlen.value(), self.spinBox_winoverlap.value(),
-                             self.filter_3ca.min_freq, self.filter_3ca.max_freq,
-                             method=self.comboBox_methodpolarization.currentText())
-
-        artist = self.canvas_pol.plot(var['time'], var[self.comboBox_yaxis.currentText()], 0, clear_plot=True,linewidth=0.5)
-        self.canvas_pol.set_xlabel(0, "Time [s]")
-        self.canvas_pol.set_ylabel(0, self.comboBox_yaxis.currentText())
-        self.canvas_pol.set_yaxis_color(self.canvas_pol.get_axe(0), artist.get_color(), is_left=True)
-        self.canvas_pol.plot(var['time'], var[self.comboBox_polarity.currentText()], 0, is_twinx=True, color="red",linewidth=0.5)
-        self.canvas_pol.set_ylabel_twinx(0, self.comboBox_polarity.currentText())

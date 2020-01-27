@@ -17,7 +17,7 @@ from isp.Utils import Filters
 class ParentWidget:
 
     @staticmethod
-    def set_parent(parent, obj):
+    def set_parent(parent, obj, current_index=-1):
         if parent and (isinstance(parent, pw.QWidget) or isinstance(parent, pw.QFrame)):
             if parent.layout() is not None:
                 layout = parent.layout()
@@ -27,7 +27,7 @@ class ParentWidget:
                 parent.setLayout(pw.QVBoxLayout())
                 layout = parent.layout()
 
-            layout.addWidget(obj)
+            layout.insertWidget(current_index, obj)
 
 
 class FilesView(pw.QTreeView):
@@ -118,6 +118,9 @@ class FilesView(pw.QTreeView):
         """
         if self.is_valid_dir(root_path):
             self.__model.setRootPath(root_path)
+
+    def dragMoveEvent(self, event):
+        print(event)
 
 
 class Pagination(pw.QWidget, UiPaginationWidget):
@@ -311,15 +314,15 @@ class MessageDialog(pw.QMessageBox):
 
 
 @add_save_load()
-class FilterBox(pw.QGroupBox, UiFilterGroupBox):
+class FilterBox(pw.QDockWidget, UiFilterGroupBox):
 
-    def __init__(self, parent: pw.QWidget):
+    def __init__(self, parent: pw.QWidget, current_index=-1):
         super(FilterBox, self).__init__(parent)
         self.setupUi(self)
         self.__parent_name = parent.objectName()  # used to save values in a group.
 
         # set the parent properly
-        ParentWidget.set_parent(parent, self)
+        ParentWidget.set_parent(parent, self, current_index)
         # force parent to have the same maximumSize and minimumSize of FileBox
         parent.setMaximumSize(self.maximumSize())
         parent.setMinimumSize(self.minimumSize())

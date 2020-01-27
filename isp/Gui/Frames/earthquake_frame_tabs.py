@@ -1,0 +1,218 @@
+import os
+
+from isp.Exceptions import InvalidFile
+from isp.Gui import pw
+from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas
+from isp.Gui.Frames.qt_components import ParentWidget, FilterBox, FilesView, MessageDialog
+from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
+from isp.earthquakeAnalisysis import PolarizationAnalyis, NllManager
+
+
+@add_save_load()
+class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
+
+    def __init__(self, parent: pw.QWidget):
+
+        super(Earthquake3CFrame, self).__init__(parent)
+
+        self.setupUi(self)
+        ParentWidget.set_parent(parent, self)
+
+        self.filter_3ca = FilterBox(self.toolQFrame, 1)  # add filter box component.
+
+        # 3C_Component
+        self.canvas = MatplotlibCanvas(self.plotMatWidget_3C)
+        self.canvas.set_new_subplot(3, ncols=1)
+        self.canvas_pol = MatplotlibCanvas(self.Widget_polarization)
+
+        # binds
+        self.root_path_bind_3C = BindPyqtObject(self.rootPathForm_3C, self.onChange_root_path_3C)
+        self.degreeSB_bind = BindPyqtObject(self.degreeSB)
+        self.vertical_form_bind = BindPyqtObject(self.verticalQLineEdit)
+        self.north_form_bind = BindPyqtObject(self.northQLineEdit)
+        self.east_form_bind = BindPyqtObject(self.eastQLineEdit)
+
+        self.verticalQLineEdit.setAcceptDrops(True)
+
+        # Add file selector to the widget
+        self.file_selector = FilesView(self.root_path_bind_3C.value, parent=self.fileSelectorWidget)
+        self.file_selector.setDragEnabled(True)
+        self.file_selector.setAcceptDrops(True)
+
+        self.selectDirBtn_3C.clicked.connect(self.on_click_select_directory_3C)
+        self.selectVerticalBtn.clicked.connect(lambda: self.on_click_set_component(self.vertical_form_bind))
+        self.selectNorthBtn.clicked.connect(lambda: self.on_click_set_component(self.north_form_bind))
+        self.selectEastBtn.clicked.connect(lambda: self.on_click_set_component(self.east_form_bind))
+        self.rotateplotBtn.clicked.connect(lambda: self.on_click_rotate(self.canvas))
+        self.polarizationBtn.clicked.connect(self.on_click_polarization)
+
+    def info_message(self, msg):
+        md = MessageDialog(self)
+        md.set_info_message(msg)
+
+    @property
+    def north_component_file(self):
+        return os.path.join(self.root_path_bind_3C.value, self.north_form_bind.value)
+
+    @property
+    def vertical_component_file(self):
+        return os.path.join(self.root_path_bind_3C.value, self.vertical_form_bind.value)
+
+    @property
+    def east_component_file(self):
+        return os.path.join(self.root_path_bind_3C.value, self.east_form_bind.value)
+
+    def onChange_root_path_3C(self, value):
+        """
+        Fired every time the root_path is changed
+
+        :param value: The path of the new directory.
+
+        :return:
+        """
+        self.file_selector.set_new_rootPath(value)
+
+    # Function added for 3C Components
+    def on_click_select_directory_3C(self):
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind_3C.value)
+
+        if dir_path:
+            self.root_path_bind_3C.value = dir_path
+
+    def on_click_set_component(self, bind_object: BindPyqtObject):
+        bind_object.value = self.file_selector.file_name
+
+    def on_click_rotate(self, canvas):
+        time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
+        time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
+        angle = self.degreeSB.value()
+        try:
+            sd = PolarizationAnalyis(self.vertical_component_file, self.north_component_file,
+                                     self.east_component_file)
+
+            time, z, r, t, st = sd.rotate(time1, time2, method="NE->RT", angle=angle,
+                                          filter_error_callback=self.info_message,
+                                          filter_value=self.filter_3ca.filter_value,
+                                          f_min=self.filter_3ca.min_freq, f_max=self.filter_3ca.max_freq)
+            rotated_seismograms = [z, r, t]
+            for index, data in enumerate(rotated_seismograms):
+                canvas.plot(time, data, index, color="black", linewidth=0.5)
+            canvas.set_xlabel(2, "Time (s)")
+
+        except InvalidFile:
+            self.info_message("Invalid mseed files. Please, make sure to select all the three components (Z, N, E) "
+                              "for rotate.")
+        except ValueError as error:
+            self.info_message(str(error))
+
+    def on_click_polarization(self):
+        time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
+        time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
+        sd = PolarizationAnalyis(self.vertical_component_file, self.north_component_file,
+                                 self.east_component_file)
+        try:
+            var = sd.polarize(time1, time2, self.doubleSpinBox_winlen.value(), self.spinBox_winoverlap.value(),
+                              self.filter_3ca.min_freq, self.filter_3ca.max_freq,
+                              method=self.comboBox_methodpolarization.currentText())
+
+            artist = self.canvas_pol.plot(var['time'], var[self.comboBox_yaxis.currentText()], 0, clear_plot=True,
+                                          linewidth=0.5)
+            self.canvas_pol.set_xlabel(0, "Time [s]")
+            self.canvas_pol.set_ylabel(0, self.comboBox_yaxis.currentText())
+            self.canvas_pol.set_yaxis_color(self.canvas_pol.get_axe(0), artist.get_color(), is_left=True)
+            self.canvas_pol.plot(var['time'], var[self.comboBox_polarity.currentText()], 0, is_twinx=True, color="red",
+                                 linewidth=0.5)
+            self.canvas_pol.set_ylabel_twinx(0, self.comboBox_polarity.currentText())
+        except InvalidFile:
+            self.info_message("Invalid mseed files. Please, make sure to select all the three components (Z, N, E) "
+                              "for polarization.")
+        except ValueError as error:
+            self.info_message(str(error))
+
+
+
+@add_save_load()
+class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
+
+    def __init__(self, parent: pw.QWidget):
+        super(EarthquakeLocationFrame, self).__init__(parent)
+
+        self.setupUi(self)
+        ParentWidget.set_parent(parent, self)
+
+        # Map
+        self.cartopy_canvas = CartopyCanvas(self.widget_map)
+        # Canvas for Earthquake Location Results
+        self.canvas_resuduals = MatplotlibCanvas(self.plotMatWidget_residuals)
+
+        self.grid_latitude_bind = BindPyqtObject(self.gridlatSB)
+        self.grid_longitude_bind = BindPyqtObject(self.gridlonSB)
+        self.grid_depth_bind = BindPyqtObject(self.griddepthSB)
+        self.grid_xnode_bind = BindPyqtObject(self.xnodeSB)
+        self.grid_ynode_bind = BindPyqtObject(self.ynodeSB)
+        self.grid_znode_bind = BindPyqtObject(self.znodeSB)
+        self.grid_dxsize_bind = BindPyqtObject(self.dxsizeSB)
+        self.grid_dysize_bind = BindPyqtObject(self.dysizeSB)
+        self.grid_dzsize_bind = BindPyqtObject(self.dzsizeSB)
+
+        self.genvelBtn.clicked.connect(self.on_click_run_vel_to_grid)
+        self.grdtimeBtn.clicked.connect(self.on_click_run_grid_to_time)
+        self.runlocBtn.clicked.connect(self.on_click_run_loc)
+        self.plotmapBtn.clicked.connect(self.on_click_plot_map)
+
+    def on_click_run_vel_to_grid(self):
+        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
+        nll_manager.vel_to_grid(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                                self.grid_depth_bind.value, self.grid_xnode_bind.value,
+                                self.grid_ynode_bind.value, self.grid_znode_bind.value,
+                                self.grid_dxsize_bind.value, self.grid_dysize_bind.value,
+                                self.grid_dzsize_bind.value, self.comboBox_gridtype.currentText(),
+                                self.comboBox_wavetype.currentText())
+
+    def on_click_run_grid_to_time(self):
+        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
+        nll_manager.grid_to_time(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                                 self.grid_depth_bind.value, self.comboBox_grid.currentText(),
+                                 self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText())
+
+    def on_click_run_loc(self):
+        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
+        nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                              self.grid_depth_bind.value)
+
+    def on_click_plot_map(self):
+        print("Plotting Map")
+        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
+        origin = nll_manager.get_NLL_info()
+        ###Reference
+        lat=33
+        lon=-10
+        scatter_x, scatter_y, scatter_z = nll_manager.get_NLL_scatter(lat, lon)
+        lat=origin.latitude
+        lon=origin.longitude
+        self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0)
+
+        # Writting Location information
+        self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     " +str(origin.time)+"     "+
+                                              str('{:.3f}'.format(origin.quality.standard_error)))
+        self.EarthquakeInfoText.appendPlainText("  Hypocenter Geographic Coordinates:     Latitude " +
+                                             str('{:.3f}'.format(origin.latitude)) +"     Longitude "+ str('{:.3f}'.format(origin.longitude))
+                                                + "     Depth " + str('{:.3f}'.format(origin.depth/1000))+"      Uncertainity "+
+                                                str('{:.3f}'.format(origin.depth_errors['uncertainty']/10000)))
+        self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err " +
+                                                str('{:.3f}'.format(origin.origin_uncertainty.max_horizontal_uncertainty/1000)) +
+         "     Max Horizontal Err " + str('{:.3f}'.format(origin.origin_uncertainty.min_horizontal_uncertainty/1000)) +
+         "     Azimuth " + str('{:.3f}'.format(origin.origin_uncertainty.azimuth_max_horizontal_uncertainty)))
+
+        self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases " +
+        str('{:.3f}'.format(origin.quality.used_phase_count)) + "     " +"Azimuthal GAP " +str('{:.3f}'.format(origin.quality.azimuthal_gap))
+                                                +"     "+"Minimum Distance "+str('{:.3f}'.format(origin.quality.minimum_distance))+"     "+
+        "Maximum Distance "+str('{:.3f}'.format(origin.quality.maximum_distance)))
+
+        xp, yp, xs, ys = nll_manager.ger_NLL_residuals()
+        artist = self.canvas_resuduals.plot(xp, yp, axes_index=0,linewidth=0.5)
+        self.canvas_pol.set_xlabel(0, "Station Name")
+        self.canvas_pol.set_ylabel(0, "P wave Residuals")
+        self.canvas_pol.set_yaxis_color(self.canvas_resuduals.get_axe(0), artist.get_color(), is_left=True)
+        self.canvas_pol.plot(xs, ys, 0, is_twinx=True, color="red", linewidth=0.5)
+        self.canvas_pol.set_ylabel_twinx(0, "S wave Residuals")

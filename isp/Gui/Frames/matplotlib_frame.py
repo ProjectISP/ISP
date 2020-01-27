@@ -544,8 +544,8 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
 
         self.update_bounds()
         ymin, ymax = ax.get_ybound()
-        annotate = ax.annotate(arrow_label, xy=(x_pos, 0) ,xytext=(x_pos, ymin*0.5), bbox=bbox, xycoords='data',
-                               annotation_clip=True, arrowprops=arrowprops)
+        annotate = ax.annotate(arrow_label, xy=(x_pos, 0), xytext=(0, -30), bbox=bbox, xycoords='data',
+                               textcoords='offset points',annotation_clip=True, arrowprops=arrowprops)
 
         line = ax.vlines(x_pos, ymin, ymax, color=color, picker=picker, **kwargs)
 
