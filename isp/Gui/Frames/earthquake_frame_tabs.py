@@ -1,11 +1,13 @@
 import os
 
+from obspy.core.event import Origin
+
 from isp.Exceptions import InvalidFile
-from isp.Gui import pw
+from isp.Gui import pw, pqg
 from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas
 from isp.Gui.Frames.qt_components import ParentWidget, FilterBox, FilesView, MessageDialog
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
-from isp.earthquakeAnalisysis import PolarizationAnalyis, NllManager
+from isp.earthquakeAnalisysis import PolarizationAnalyis, NllManager, PickerManager
 
 
 @add_save_load()
@@ -32,23 +34,28 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         self.north_form_bind = BindPyqtObject(self.northQLineEdit)
         self.east_form_bind = BindPyqtObject(self.eastQLineEdit)
 
-        self.verticalQLineEdit.setAcceptDrops(True)
+        # accept drops
+        self.vertical_form_bind.accept_dragFile(drop_event_callback=self.drop_event)
+        self.north_form_bind.accept_dragFile(drop_event_callback=self.drop_event)
+        self.east_form_bind.accept_dragFile(drop_event_callback=self.drop_event)
 
         # Add file selector to the widget
         self.file_selector = FilesView(self.root_path_bind_3C.value, parent=self.fileSelectorWidget)
         self.file_selector.setDragEnabled(True)
-        self.file_selector.setAcceptDrops(True)
 
         self.selectDirBtn_3C.clicked.connect(self.on_click_select_directory_3C)
-        self.selectVerticalBtn.clicked.connect(lambda: self.on_click_set_component(self.vertical_form_bind))
-        self.selectNorthBtn.clicked.connect(lambda: self.on_click_set_component(self.north_form_bind))
-        self.selectEastBtn.clicked.connect(lambda: self.on_click_set_component(self.east_form_bind))
         self.rotateplotBtn.clicked.connect(lambda: self.on_click_rotate(self.canvas))
         self.polarizationBtn.clicked.connect(self.on_click_polarization)
 
     def info_message(self, msg):
         md = MessageDialog(self)
         md.set_info_message(msg)
+
+    @staticmethod
+    def drop_event(event: pqg.QDropEvent, bind_object: BindPyqtObject):
+        data = event.mimeData()
+        url = data.urls()[0]
+        bind_object.value = url.fileName()
 
     @property
     def north_component_file(self):
@@ -78,9 +85,6 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
 
         if dir_path:
             self.root_path_bind_3C.value = dir_path
-
-    def on_click_set_component(self, bind_object: BindPyqtObject):
-        bind_object.value = self.file_selector.file_name
 
     def on_click_rotate(self, canvas):
         time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
@@ -130,7 +134,6 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
             self.info_message(str(error))
 
 
-
 @add_save_load()
 class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
 
@@ -139,11 +142,14 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
 
         self.setupUi(self)
         ParentWidget.set_parent(parent, self)
+        self.__pick_output_path = PickerManager.get_default_output_path()
+        self.__dataless_dir = None
+        self.__nll_manager = None
 
         # Map
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
         # Canvas for Earthquake Location Results
-        self.canvas_resuduals = MatplotlibCanvas(self.plotMatWidget_residuals)
+        self.residuals_canvas = MatplotlibCanvas(self.plotMatWidget_residuals)
 
         self.grid_latitude_bind = BindPyqtObject(self.gridlatSB)
         self.grid_longitude_bind = BindPyqtObject(self.gridlonSB)
@@ -160,59 +166,100 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.runlocBtn.clicked.connect(self.on_click_run_loc)
         self.plotmapBtn.clicked.connect(self.on_click_plot_map)
 
+    @property
+    def nll_manager(self):
+        if not self.__nll_manager:
+            self.__nll_manager = NllManager(self.__pick_output_path, self.__dataless_dir)
+        return self.__nll_manager
+
+    def set_dataless_dir(self, dir_path):
+        self.__dataless_dir = dir_path
+        self.nll_manager.set_dataless_dir(dir_path)
+
+    def set_pick_output_path(self, file_path):
+        self.__pick_output_path = file_path
+        self.nll_manager.set_observation_file(file_path)
+
+    def info_message(self, msg):
+        md = MessageDialog(self)
+        md.set_info_message(msg)
+
     def on_click_run_vel_to_grid(self):
-        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
-        nll_manager.vel_to_grid(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
-                                self.grid_depth_bind.value, self.grid_xnode_bind.value,
-                                self.grid_ynode_bind.value, self.grid_znode_bind.value,
-                                self.grid_dxsize_bind.value, self.grid_dysize_bind.value,
-                                self.grid_dzsize_bind.value, self.comboBox_gridtype.currentText(),
-                                self.comboBox_wavetype.currentText())
+
+        self.nll_manager.vel_to_grid(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                                     self.grid_depth_bind.value, self.grid_xnode_bind.value,
+                                     self.grid_ynode_bind.value, self.grid_znode_bind.value,
+                                     self.grid_dxsize_bind.value, self.grid_dysize_bind.value,
+                                     self.grid_dzsize_bind.value, self.comboBox_gridtype.currentText(),
+                                     self.comboBox_wavetype.currentText())
 
     def on_click_run_grid_to_time(self):
-        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
-        nll_manager.grid_to_time(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
-                                 self.grid_depth_bind.value, self.comboBox_grid.currentText(),
-                                 self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText())
+        try:
+            self.nll_manager.grid_to_time(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                                          self.grid_depth_bind.value, self.comboBox_grid.currentText(),
+                                          self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText())
+        except (FileNotFoundError, AttributeError) as error:
+            self.info_message(str(error))
+        except RuntimeError as e:
+            self.info_message("Error when trying to run grid to time. Error: {}".format(e))
 
     def on_click_run_loc(self):
-        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
-        nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
-                              self.grid_depth_bind.value)
+        try:
+            self.nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                                       self.grid_depth_bind.value)
+        except FileNotFoundError as error:
+            self.info_message(str(error))
 
     def on_click_plot_map(self):
-        print("Plotting Map")
-        nll_manager = NllManager(self.pm.output_path, self.dataless_path_bind.value)
-        origin = nll_manager.get_NLL_info()
-        ###Reference
-        lat=33
-        lon=-10
-        scatter_x, scatter_y, scatter_z = nll_manager.get_NLL_scatter(lat, lon)
-        lat=origin.latitude
-        lon=origin.longitude
-        self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0)
+        try:
+            origin = self.nll_manager.get_NLL_info()
+            lat = 33
+            lon = -10
+            scatter_x, scatter_y, scatter_z = self.nll_manager.get_NLL_scatter(lat, lon)
+            lat = origin.latitude
+            lon = origin.longitude
+            self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0)
 
-        # Writting Location information
-        self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     " +str(origin.time)+"     "+
-                                              str('{:.3f}'.format(origin.quality.standard_error)))
-        self.EarthquakeInfoText.appendPlainText("  Hypocenter Geographic Coordinates:     Latitude " +
-                                             str('{:.3f}'.format(origin.latitude)) +"     Longitude "+ str('{:.3f}'.format(origin.longitude))
-                                                + "     Depth " + str('{:.3f}'.format(origin.depth/1000))+"      Uncertainity "+
-                                                str('{:.3f}'.format(origin.depth_errors['uncertainty']/10000)))
-        self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err " +
-                                                str('{:.3f}'.format(origin.origin_uncertainty.max_horizontal_uncertainty/1000)) +
-         "     Max Horizontal Err " + str('{:.3f}'.format(origin.origin_uncertainty.min_horizontal_uncertainty/1000)) +
-         "     Azimuth " + str('{:.3f}'.format(origin.origin_uncertainty.azimuth_max_horizontal_uncertainty)))
+            # Writing Location information
+            self.add_earthquake_info(origin)
 
-        self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases " +
-        str('{:.3f}'.format(origin.quality.used_phase_count)) + "     " +"Azimuthal GAP " +str('{:.3f}'.format(origin.quality.azimuthal_gap))
-                                                +"     "+"Minimum Distance "+str('{:.3f}'.format(origin.quality.minimum_distance))+"     "+
-        "Maximum Distance "+str('{:.3f}'.format(origin.quality.maximum_distance)))
+            xp, yp, xs, ys = self.nll_manager.ger_NLL_residuals()
+            self.plot_residuals(xp, yp, xs, ys)
+        except (FileNotFoundError, AttributeError) as error:
+            self.info_message(str(error))
 
-        xp, yp, xs, ys = nll_manager.ger_NLL_residuals()
-        artist = self.canvas_resuduals.plot(xp, yp, axes_index=0,linewidth=0.5)
+    def plot_residuals(self, xp, yp, xs, ys):
+
+        artist = self.residuals_canvas.plot(xp, yp, axes_index=0, linewidth=0.5)
         self.canvas_pol.set_xlabel(0, "Station Name")
         self.canvas_pol.set_ylabel(0, "P wave Residuals")
-        self.canvas_pol.set_yaxis_color(self.canvas_resuduals.get_axe(0), artist.get_color(), is_left=True)
+        self.canvas_pol.set_yaxis_color(self.residuals_canvas.get_axe(0), artist.get_color(), is_left=True)
         self.canvas_pol.plot(xs, ys, 0, is_twinx=True, color="red", linewidth=0.5)
         self.canvas_pol.set_ylabel_twinx(0, "S wave Residuals")
+
+    def add_earthquake_info(self, origin: Origin):
+
+        self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     {origin_time}     {standard_error:.3f}".
+                                             format(origin_time=origin.time,
+                                                    standard_error=origin.quality.standard_error))
+        self.EarthquakeInfoText.appendPlainText("  Hypocenter Geographic Coordinates:     "
+                                                "Latitude {lat:.3f} "
+                                                "Longitude {long:.3f}     Depth {depth:.3f}     "
+                                                "Uncertainty {unc:.3f}".
+                                                format(lat=origin.latitude, long=origin.longitude,
+                                                       depth=origin.depth / 1000,
+                                                       unc=origin.depth_errors['uncertainty'] / 10000))
+        self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err {:.3f}     "
+                                                "Min Horizontal Err {:.3f}     "
+                                                "Azimuth {:.3f}"
+                                                .format(origin.origin_uncertainty.max_horizontal_uncertainty / 1000,
+                                                        origin.origin_uncertainty.min_horizontal_uncertainty / 1000,
+                                                        origin.origin_uncertainty.azimuth_max_horizontal_uncertainty))
+
+        self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases {:.3f}     "
+                                                "Azimuthal GAP {:.3f}     Minimum Distance {:.3f}     "
+                                                "Maximum Distance {:.3f}"
+                                                .format(origin.quality.used_phase_count,
+                                                        origin.quality.azimuthal_gap,
+                                                        origin.quality.minimum_distance,
+                                                        origin.quality.maximum_distance))

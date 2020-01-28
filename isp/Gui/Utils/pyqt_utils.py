@@ -5,7 +5,7 @@ from PyQt5 import uic
 from obspy import UTCDateTime
 
 from isp import UIS_PATH
-from isp.Gui import pyc, pw, user_preferences
+from isp.Gui import pyc, pw, user_preferences, pqg
 
 
 def load_ui_designers(ui_file):
@@ -147,6 +147,7 @@ class BindPyqtObject(pyc.QObject):
         self.__value = value
         self.__callback_val_changed = callback
         self.set_valueChanged_callback(callback)
+        self.pyqt_obj = pyqt_obj
 
     @property
     def value(self):
@@ -172,3 +173,36 @@ class BindPyqtObject(pyc.QObject):
     def unblind_valueChanged(self):
         self.__callback_val_changed = None
 
+    @staticmethod
+    def __validate_event(event: pqg.QDropEvent):
+        data = event.mimeData()
+        urls = data.urls()
+        accept = True
+        for url in urls:
+            if not url.isLocalFile():
+                accept = False
+
+        if accept:
+            event.acceptProposedAction()
+
+    def __drop_event(self, event: pqg.QDropEvent, func):
+        if func:
+            func(event, self)
+
+    def accept_dragFile(self, drop_event_callback=None):
+        """
+        Makes this object accept drops.
+
+        :param drop_event_callback: A callback function that is called when the object is drop. The callback must
+            have the parameters event and a BindPyqtObject object.
+
+        :return:
+        """
+        if hasattr(self.pyqt_obj, "setDragEnabled"):
+            self.pyqt_obj.setDragEnabled(True)
+            self.pyqt_obj.dragEnterEvent = self.__validate_event
+            self.pyqt_obj.dragMoveEvent = self.__validate_event
+            self.pyqt_obj.dropEvent = lambda event: self.__drop_event(event, drop_event_callback)
+        else:
+            raise AttributeError("The object {} doesn't have the method setDragEnabled".
+                                 format(self.pyqt_obj.objectName()))

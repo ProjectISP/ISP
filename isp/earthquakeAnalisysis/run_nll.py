@@ -6,15 +6,19 @@ Created on Tue Dec 17 20:26:28 2019
 @author: robertocabieces
 """
 
+import math as mt
 import os
 import subprocess as sb
+
+import numpy as np
 import pandas as pd
 from obspy import read_events
+from obspy.core.event import Origin
 from obspy.io.nlloc.util import read_nlloc_scatter
+
 from isp import ROOT_DIR
 from isp.DataProcessing import DatalessManager
-import math as mt
-import numpy as np
+
 
 class NllManager:
 
@@ -26,10 +30,9 @@ class NllManager:
 
         :param obs_file_path: The file path of pick observations.
         """
-        self.__data_less_path = dataless_path
+        self.__dataless_dir = dataless_path
         self.__obs_file_path = obs_file_path
         self.__create_dirs()
-        self.stations_to_NLL()
 
     @property
     def nll_bin_path(self):
@@ -164,6 +167,12 @@ class NllManager:
         # loc dir.
         self.__create_dir("loc")
 
+    def set_dataless_dir(self, dir_path):
+        self.__dataless_dir = dir_path
+
+    def set_observation_file(self, file_path):
+        self.__obs_file_path = file_path
+
     def set_run_template(self, latitude, longitude, depth):
         run_path = self.get_run_template_file_path
         data = pd.read_csv(run_path)
@@ -229,12 +238,17 @@ class NllManager:
         print("Velocity Grid Generated")
 
     def grid_to_time(self, latitude, longitude, depth, dimension, option, wave):
-
+        self.stations_to_nll()
         output = self.set_grid2time_template(latitude, longitude, depth, dimension, option, wave)
+        print(self.get_stations_template_file_path, output)
         command = "cat " + self.get_stations_template_file_path + " >> " + output
-        sb.Popen(command, shell=True)
+        sb.Popen(command, shell=True, stderr=sb.PIPE)
         command = "{} {}".format(self.get_bin_file("Grid2Time"), output)
-        sb.Popen(command, shell=True)
+        p = sb.Popen(command, shell=True, stdout=sb.PIPE, stderr=sb.PIPE)
+        stdout, stderr = p.communicate()
+        if stderr:
+            error_msg = (str(stderr, encoding="utf-8"))
+            raise RuntimeError(error_msg)
 
     def run_nlloc(self, latitude, longitude, depth):
         output = self.set_run_template(latitude, longitude, depth)
@@ -242,10 +256,10 @@ class NllManager:
         sb.call(command, shell=True)
         print("Location Completed")
 
-    def stations_to_NLL(self):
-        dataless_directory = self.__data_less_path
-        outstations_path = os.path.join(self.get_stations_dir)
-        dm = DatalessManager(dataless_directory)
+    def stations_to_nll(self):
+        dm = DatalessManager(self.__dataless_dir)
+        if len(dm.stations_stats) == 0:
+            raise FileNotFoundError("No dataless found at location {}.".format(self.__dataless_dir))
         station_names = []
         station_latitudes = []
         station_longitudes = []
@@ -261,58 +275,71 @@ class NllManager:
 
         df = pd.DataFrame(data, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
 
-        df.to_csv(outstations_path + '/stations.txt', sep=' ', header=False, index=False)
+        outstations_path = os.path.join(self.get_stations_dir, "stations.txt")
+        df.to_csv(outstations_path, sep=' ', header=False, index=False)
+        return outstations_path
 
-    def get_NLL_info(self):
-
-        location_file = os.path.join(self.root_path, "loc", "last.hyp")
-        cat = read_events(location_file)
-        event = cat[0]
-        origin = event.origins[0]
-        return origin
+    def get_NLL_info(self) -> Origin:
+        location_file = os.path.join(self.get_loc_dir, "last.hyp")
+        if os.path.isfile(location_file):
+            cat = read_events(location_file)
+            event = cat[0]
+            origin = event.origins[0]
+            return origin
+        else:
+            raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
 
     def get_NLL_scatter(self, lat_orig, lon_orig):
 
-        location_file = os.path.join(self.root_path, "loc", "last.scat")
-        data = read_nlloc_scatter(location_file)
-        data_size = len(data)
-        x = []
-        y = []
-        z = []
-        pdf = []
+        location_file = os.path.join(self.get_loc_dir, "last.scat")
+        if os.path.isfile(location_file):
+            data = read_nlloc_scatter(location_file)
+            data_size = len(data)
+            x = []
+            y = []
+            z = []
+            pdf = []
 
-        for i in range(data_size):
-            x.append(data[i][0])
-            y.append(data[i][1])
-            z.append(data[i][2])
-            pdf.append(data[i][3])
-        x = np.array(x)
-        y = np.array(y)
+            for i in range(data_size):
+                x.append(data[i][0])
+                y.append(data[i][1])
+                z.append(data[i][2])
+                pdf.append(data[i][3])
+            x = np.array(x)
+            y = np.array(y)
 
-        conv = 111.111 * mt.cos(lat_orig * 180 / mt.pi)
-        x = (x / conv) + lon_orig
-        y = (y / 111.111) + lat_orig
-        pdf = np.array(pdf) / np.max(pdf)
+            conv = 111.111 * mt.cos(lat_orig * 180 / mt.pi)
+            x = (x / conv) + lon_orig
+            y = (y / 111.111) + lat_orig
+            pdf = np.array(pdf) / np.max(pdf)
 
-        return x, y, pdf
+            return x, y, pdf
+        else:
+            raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
 
     def ger_NLL_residuals(self):
-        location_file = os.path.join(self.root_path, "loc", "last.hyp")
-        df = pd.read_csv(location_file, delim_whitespace=True, skiprows=16)
-        xp = []; yp = []; xs = []; ys = []
-        for i in range(len(df)):
-            phase = df.iloc[i].On
+        location_file = os.path.join(self.get_loc_dir, "last.hyp")
+        if os.path.isfile(location_file):
+            df = pd.read_csv(location_file, delim_whitespace=True, skiprows=16)
+            xp = []
+            yp = []
+            xs = []
+            ys = []
+            for i in range(len(df)):
+                phase = df.iloc[i].On
 
-            if df.iloc[i].Weight > 0.01 and phase[0].upper() == "P":
-                yp.append(df.iloc[i].Res)
-                xp.append(df.iloc[i].PHASE)
+                if df.iloc[i].Weight > 0.01 and phase[0].upper() == "P":
+                    yp.append(df.iloc[i].Res)
+                    xp.append(df.iloc[i].PHASE)
 
-        for i in range(len(df)):
-            phase = df.iloc[i].On
+            for i in range(len(df)):
+                phase = df.iloc[i].On
 
-            if df.iloc[i].Weight > 0.01 and phase[0].upper() == "S":
-                ys.append(df.iloc[i].Res)
-                xs.append(df.iloc[i].PHASE)
+                if df.iloc[i].Weight > 0.01 and phase[0].upper() == "S":
+                    ys.append(df.iloc[i].Res)
+                    xs.append(df.iloc[i].PHASE)
 
-        return xp,yp,xs,ys
+            return xp, yp, xs, ys
+        else:
+            raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
 

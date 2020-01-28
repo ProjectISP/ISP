@@ -40,11 +40,10 @@ class PickerManager:
         >>> pm.save()
         """
         self.file_separator = " "
-        self.__output_file_name = "output.txt"
         if output_path:
             self.__output_path = output_path
         else:
-            self.__output_path = self.__get_default_output_path()
+            self.__output_path = self.get_default_output_path()
 
         self.columns = [self.StationName, self.Instrument, self.Component, self.PPhaseOnset, self.PPhaseDescriptor,
                         self.FirstMotion, self.Date, self.HourMin, self.Seconds, self.Err, self.ErrMag,
@@ -73,12 +72,13 @@ class PickerManager:
             if key not in self.columns:
                 raise ValueError("The key {} must by in {}".format(key, self.columns))
 
-    def __get_default_output_path(self):
+    @staticmethod
+    def get_default_output_path():
         root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "location_output", "obs")
         if not os.path.isdir(root):
             os.mkdir(root)
 
-        return os.path.join(root, self.__output_file_name)
+        return os.path.join(root, "output.txt")
 
     @staticmethod
     def __from_utctime_to_datetime(time: UTCDateTime):

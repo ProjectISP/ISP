@@ -48,7 +48,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
 
-
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
@@ -108,6 +107,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def onChange_dataless_path(self, value):
         self.__dataless_manager = DatalessManager(value)
+        self.earthquake_location_frame.set_dataless_dir(value)
 
     def sort_by_distance(self, file):
         st_stats = self.dataless_manager.get_station_stats_by_mseed_file(file)
