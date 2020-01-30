@@ -234,7 +234,7 @@ class BasePltPyqtCanvas(FigureCanvas):
         # plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
         # plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
         self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex=sharex, **kwargs)
-        self.figure.subplots_adjust(left=0.065, bottom=0.1440, right=0.9, top=0.990, wspace=0.2, hspace=0.0)
+        # self.figure.subplots_adjust(left=0.065, bottom=0.1440, right=0.9, top=0.990, wspace=0.2, hspace=0.0)
         self.__flat_axes()
         self.draw()
 

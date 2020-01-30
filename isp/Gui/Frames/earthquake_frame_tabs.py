@@ -2,7 +2,7 @@ import os
 
 from obspy.core.event import Origin
 
-from isp.Exceptions import InvalidFile
+from isp.Exceptions import InvalidFile, parse_excepts
 from isp.Gui import pw, pqg
 from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas
 from isp.Gui.Frames.qt_components import ParentWidget, FilterBox, FilesView, MessageDialog
@@ -161,9 +161,9 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.grid_dysize_bind = BindPyqtObject(self.dysizeSB)
         self.grid_dzsize_bind = BindPyqtObject(self.dzsizeSB)
 
-        self.genvelBtn.clicked.connect(self.on_click_run_vel_to_grid)
-        self.grdtimeBtn.clicked.connect(self.on_click_run_grid_to_time)
-        self.runlocBtn.clicked.connect(self.on_click_run_loc)
+        self.genvelBtn.clicked.connect(lambda: self.on_click_run_vel_to_grid())
+        self.grdtimeBtn.clicked.connect(lambda: self.on_click_run_grid_to_time())
+        self.runlocBtn.clicked.connect(lambda: self.on_click_run_loc())
         self.plotmapBtn.clicked.connect(self.on_click_plot_map)
 
     @property
@@ -184,8 +184,18 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         md = MessageDialog(self)
         md.set_info_message(msg)
 
-    def on_click_run_vel_to_grid(self):
+    def subprocess_feedback(self, msg: str):
+        md = MessageDialog(self)
+        if msg:
+            if "Error code" in msg:
+                md.set_error_message("Click in show details detail for more info.", msg)
+            else:
+                md.set_warning_message("Click in show details for more info.", msg)
+        else:
+            md.set_info_message("Completed Successfully")
 
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
+    def on_click_run_vel_to_grid(self):
         self.nll_manager.vel_to_grid(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
                                      self.grid_depth_bind.value, self.grid_xnode_bind.value,
                                      self.grid_ynode_bind.value, self.grid_znode_bind.value,
@@ -193,22 +203,16 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
                                      self.grid_dzsize_bind.value, self.comboBox_gridtype.currentText(),
                                      self.comboBox_wavetype.currentText())
 
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def on_click_run_grid_to_time(self):
-        try:
-            self.nll_manager.grid_to_time(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
-                                          self.grid_depth_bind.value, self.comboBox_grid.currentText(),
-                                          self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText())
-        except (FileNotFoundError, AttributeError) as error:
-            self.info_message(str(error))
-        except RuntimeError as e:
-            self.info_message("Error when trying to run grid to time. Error: {}".format(e))
+        self.nll_manager.grid_to_time(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                                      self.grid_depth_bind.value, self.comboBox_grid.currentText(),
+                                      self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText())
 
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def on_click_run_loc(self):
-        try:
-            self.nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
-                                       self.grid_depth_bind.value)
-        except FileNotFoundError as error:
-            self.info_message(str(error))
+        self.nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                                   self.grid_depth_bind.value)
 
     def on_click_plot_map(self):
         try:
