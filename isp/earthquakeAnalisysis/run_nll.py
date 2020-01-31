@@ -8,7 +8,7 @@ Created on Tue Dec 17 20:26:28 2019
 
 import math as mt
 import os
-import subprocess as sb
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -18,6 +18,7 @@ from obspy.io.nlloc.util import read_nlloc_scatter
 
 from isp import ROOT_DIR
 from isp.DataProcessing import DatalessManager
+from isp.Utils.subprocess_utils import exc_cmd
 
 
 class NllManager:
@@ -73,14 +74,24 @@ class NllManager:
         self.__validate_file(stations_file_path)
         return stations_file_path
 
-    @property
-    def get_models_files_path(self):
-        model_path_p = os.path.join(self.get_local_models_dir, "modelP")
-        model_path_s = os.path.join(self.get_local_models_dir, "modelS")
-        self.__validate_file(model_path_s)
-        self.__validate_file(model_path_p)
+    def get_model_file_path(self, wave_type: str):
+        """
+        Gets the model path for S or P wave.
 
-        return model_path_p, model_path_s
+        :param wave_type: Either S or P wave.
+        :return: The path for the model S or P.
+        """
+        if wave_type.upper() == "P":
+            model_path_p = os.path.join(self.get_local_models_dir, "modelP")
+            self.__validate_file(model_path_p)
+            return model_path_p
+
+        elif wave_type.upper() == "S":
+            model_path_s = os.path.join(self.get_local_models_dir, "modelS")
+            self.__validate_file(model_path_s)
+            return model_path_s
+        else:
+            raise AttributeError("Wrong wave type. The wave type {} is not valid".format(wave_type))
 
     @property
     def get_run_dir(self):
@@ -187,7 +198,8 @@ class NllManager:
         df.to_csv(output, index=False, header=True, encoding='utf-8')
         return output
 
-    def set_vel2grid_template(self, latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz, grid_type, wave_type):
+    def set_vel2grid_template(self, latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz,
+                              grid_type, wave_type):
         file_path = self.get_vel_template_file_path
         data = pd.read_csv(file_path)
         df = pd.DataFrame(data)
@@ -226,35 +238,34 @@ class NllManager:
                                     .format(bin_file))
         return bin_file
 
+    @staticmethod
+    def __append_files(file_path_to_cat: str, file_path_to_append: str):
+        command = "cat {}".format(file_path_to_cat)
+        exc_cmd(command, stdout=open(file_path_to_append, 'a'), close_fds=True)
+
     def vel_to_grid(self, latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz, grid_type, wave_type):
 
         output = self.set_vel2grid_template(latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz,
                                             grid_type, wave_type)
-        model_path_p, model_path_s = self.get_models_files_path
-        command = "cat " + model_path_p + " >> " + output
-        sb.Popen(command, shell=True)
-        command = "{} {}".format(self.get_bin_file("Vel2Grid"), output)
-        sb.Popen(command, shell=True)
-        print("Velocity Grid Generated")
+        model_path = self.get_model_file_path(wave_type)
+        self.__append_files(model_path, output)
+        output_path = Path(output)
+        command = "{} {}".format(self.get_bin_file("Vel2Grid"), output_path.name)
+        exc_cmd(command, cwd=output_path.parent)
 
     def grid_to_time(self, latitude, longitude, depth, dimension, option, wave):
         self.stations_to_nll()
         output = self.set_grid2time_template(latitude, longitude, depth, dimension, option, wave)
-        print(self.get_stations_template_file_path, output)
-        command = "cat " + self.get_stations_template_file_path + " >> " + output
-        sb.Popen(command, shell=True, stderr=sb.PIPE)
-        command = "{} {}".format(self.get_bin_file("Grid2Time"), output)
-        p = sb.Popen(command, shell=True, stdout=sb.PIPE, stderr=sb.PIPE)
-        stdout, stderr = p.communicate()
-        if stderr:
-            error_msg = (str(stderr, encoding="utf-8"))
-            raise RuntimeError(error_msg)
+        self.__append_files(self.get_stations_template_file_path, output)
+        output_path = Path(output)
+        command = "{} {}".format(self.get_bin_file("Grid2Time"), output_path.name)
+        exc_cmd(command, cwd=output_path.parent)
 
     def run_nlloc(self, latitude, longitude, depth):
         output = self.set_run_template(latitude, longitude, depth)
-        command = "{} {}".format(self.get_bin_file("NLLoc"), output)
-        sb.call(command, shell=True)
-        print("Location Completed")
+        output_path = Path(output)
+        command = "{} {}".format(self.get_bin_file("NLLoc"), output_path.name)
+        exc_cmd(command, cwd=output_path.parent)
 
     def stations_to_nll(self):
         dm = DatalessManager(self.__dataless_dir)
@@ -334,4 +345,3 @@ class NllManager:
             return xp, yp, xs, ys
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
-

@@ -277,40 +277,48 @@ class MessageDialog(pw.QMessageBox):
     def on_finished(self):
         pass
 
-    def __set_message(self, message: str, additional_msg: str, msg_type):
+    def __set_message(self, header: str, msg: str, msg_type, detailed_message=None):
         self.setIcon(msg_type)
-        self.setText(message)
-        self.setInformativeText(additional_msg)
+        self.setText(header)
+        self.setInformativeText(msg)
+        if detailed_message:
+            self.setDetailedText(detailed_message)
 
-    def set_info_message(self, message: str):
+    def set_info_message(self, message: str, detailed_message=None):
         """
         Set an info message to the message dialog.
 
         :param message: The message to be display.
 
+        :param detailed_message: Default=None. Useful for long texts, because it adds a scroll bar.
+
         :return:
         """
-        self.__set_message("Info", message, pw.QMessageBox.Information)
+        self.__set_message("Info", message, pw.QMessageBox.Information, detailed_message=detailed_message)
 
-    def set_warning_message(self, message: str):
+    def set_warning_message(self, message: str, detailed_message=None):
         """
         Set a warning message to the message dialog.
 
         :param message: The message to be display.
 
+        :param detailed_message: Default=None. Useful for long texts, because it adds a scroll bar.
+
         :return:
         """
-        self.__set_message("Warning", message, pw.QMessageBox.Warning)
+        self.__set_message("Warning", message, pw.QMessageBox.Warning, detailed_message=detailed_message)
 
-    def set_error_message(self, message):
+    def set_error_message(self, message, detailed_message=None):
         """
         Set an error message to the message dialog.
 
         :param message: The message to be display.
 
+        :param detailed_message: Default=None. Useful for long texts, because it adds a scroll bar.
+
         :return:
         """
-        self.__set_message("Error", message, pw.QMessageBox.Critical)
+        self.__set_message("Error", message, pw.QMessageBox.Critical, detailed_message=detailed_message)
 
 
 @add_save_load()

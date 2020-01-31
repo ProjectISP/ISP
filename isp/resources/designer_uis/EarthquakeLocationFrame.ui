@@ -165,6 +165,11 @@
           <widget class="QComboBox" name="comboBox_gridtype">
            <item>
             <property name="text">
+             <string>SLOW_LEN</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
              <string>VELOCITY_METERS</string>
             </property>
            </item>
@@ -186,11 +191,6 @@
            <item>
             <property name="text">
              <string>SLOW_2_METERS</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>SLOW_LEN</string>
             </property>
            </item>
           </widget>
