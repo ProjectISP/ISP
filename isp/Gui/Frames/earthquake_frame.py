@@ -151,6 +151,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.redraw_pickers(file_path, index)
             last_index = index
 
+            st_stats = ObspyUtil.get_stats(file_path)
+            if st_stats:
+                info = "{}-{}-{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
+                self.canvas.set_plot_label(index, info)
+
         # set x-label at the last axes.
         self.canvas.set_xlabel(last_index, "Time (s)")
 

@@ -11,10 +11,10 @@ def parse_excepts(msg_callback):
 
     Example::
 
-        @parse_excepts(lambda self, msg: self.func(msg))
+        @parse_excepts(lambda self, err_msg: self.func(err_msg))
         def run_subprocess(self):
 
-    :param msg_callback: A callback to print the exception messages. Method must have a msg parameter.
+    :param msg_callback: A callback to print the exception messages. Method must have a err_msg parameter.
     :return:
     """
     def wrapper(func):
@@ -24,10 +24,10 @@ def parse_excepts(msg_callback):
             try:
                 func(self, *args, **kwargs)
             except (FileNotFoundError, AttributeError) as e:
-                msg = "{}".format(e)
+                msg = "Error code {c}: \n\n{e}".format(c=type(e).__name__, e=e)
             except CalledProcessError as e:
                 # bad error
-                msg = "Error code {} when trying to run subprocess. {}".format(e.returncode, e)
+                msg = "Error code {} when trying to run subprocess. \n\n{}".format(e.returncode, e)
             except SubprocessError as e:
                 msg = "{}".format(e)
             finally:

@@ -220,19 +220,10 @@ class BasePltPyqtCanvas(FigureCanvas):
         self.draw_idle()
 
     def set_new_subplot(self, nrows, ncols, **kwargs):
-        SMALL_SIZE = 6
-        MEDIUM_SIZE = 8
-        BIGGER_SIZE = 12
         sharex = kwargs.pop("sharex", "all")
         self.figure.clf()
         plt.close(self.figure)
-        plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
-        plt.rc('axes', titlesize=SMALL_SIZE)  # fontsize of the axes title
-        plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
-        plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-        plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-        plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
-        plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
         self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex=sharex, **kwargs)
         self.__flat_axes()
         self.draw()
@@ -248,6 +239,20 @@ class BasePltPyqtCanvas(FigureCanvas):
         if ax:
             ax.set_ylabel(value)
             self.draw()  # force to update label
+
+    def set_plot_label(self, ax: Axes or int, text: str):
+        """
+        Sets an label box at the upper right corner of the axes.
+
+        :param ax: The axes or axes_index to add the annotation.
+        :param text: The text
+        :return:
+        """
+        if type(ax) == int:
+            ax = self.get_axe(ax)
+        bbox = dict(boxstyle="round", fc="white")
+        return ax.annotate(text, xy=(1, 1), xycoords='axes fraction', xytext=(-20, -20), textcoords='offset points',
+                           ha="right", va="top", bbox=bbox)
 
     def get_ydata(self, ax_index):
         """
@@ -544,7 +549,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         self.update_bounds()
         ymin, ymax = ax.get_ybound()
         annotate = ax.annotate(arrow_label, xy=(x_pos, 0), xytext=(0, -30), bbox=bbox, xycoords='data',
-                               textcoords='offset points',annotation_clip=True, arrowprops=arrowprops)
+                               textcoords='offset points', annotation_clip=True, arrowprops=arrowprops)
 
         line = ax.vlines(x_pos, ymin, ymax, color=color, picker=picker, **kwargs)
 

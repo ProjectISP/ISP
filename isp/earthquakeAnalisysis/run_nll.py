@@ -6,7 +6,6 @@ Created on Tue Dec 17 20:26:28 2019
 @author: robertocabieces
 """
 
-import math as mt
 import os
 from pathlib import Path
 
@@ -14,8 +13,7 @@ import numpy as np
 import pandas as pd
 from obspy import read_events
 from obspy.core.event import Origin
-from obspy.io.nlloc.util import read_nlloc_scatter
-import subprocess as sb
+
 from isp import ROOT_DIR
 from isp.DataProcessing import DatalessManager
 from isp.Utils.subprocess_utils import exc_cmd
@@ -265,7 +263,7 @@ class NllManager:
         output = self.set_run_template(latitude, longitude, depth)
         output_path = Path(output)
         command = "{} {}".format(self.get_bin_file("NLLoc"), output_path.name)
-        exc_cmd(command, cwd=output_path.parent)
+        return exc_cmd(command, cwd=output_path.parent)
 
     def stations_to_nll(self):
         dm = DatalessManager(self.__dataless_dir)
@@ -303,15 +301,12 @@ class NllManager:
     def get_NLL_scatter(self):
 
         location_file = os.path.join(self.get_loc_dir, "last")
-        location_file_check = os.path.join(self.get_loc_dir, "last.hyp")
-        filexyz=location_file_check+".scat.xyz"
-        # TO DO (RUN scat2latlon as if you have the program in your system path//problems
-        # with too long paths
-        command = "{} {} {} {}".format("scat2latlon","1", self.get_loc_dir,location_file)
-        sb.Popen(command, shell=True)
+        command = "{} {} {} {}".format(self.get_bin_file("scat2latlon"), 1, self.get_loc_dir, location_file)
+        exc_cmd(command)
 
+        location_file_check = os.path.join(self.get_loc_dir, "last.hyp.scat.xyz")
         if os.path.isfile(location_file_check):
-            my_array = np.genfromtxt(filexyz, skip_header=3)
+            my_array = np.genfromtxt(location_file_check, skip_header=3)
             y = my_array[:, 0]
             print(y)
             x = my_array[:, 1]
@@ -325,7 +320,6 @@ class NllManager:
             return x, y, z, pdf
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
-
 
     def ger_NLL_residuals(self):
         location_file = os.path.join(self.get_loc_dir, "last.hyp")

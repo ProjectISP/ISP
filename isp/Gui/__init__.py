@@ -27,11 +27,15 @@ def get_settings_file():
 
 if __name__ == '__main__':
     import sys
+    from isp.Gui.StyleLib import set_isp_mpl_style_file
     from isp import app_logger
 
     # print(user_preferences.fileName())
     app = QtWidgets.QApplication(sys.argv)
     controller().open_main_window()
+    # sets the matplolib style from file isp.mplstyle.
+    set_isp_mpl_style_file()
+
     app_logger.info("ISP GUI Started")
     app_logger.info("User preferences is at: {}".format(get_settings_file()))
     sys.exit(app.exec_())

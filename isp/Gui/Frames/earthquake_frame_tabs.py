@@ -164,7 +164,7 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.genvelBtn.clicked.connect(lambda: self.on_click_run_vel_to_grid())
         self.grdtimeBtn.clicked.connect(lambda: self.on_click_run_grid_to_time())
         self.runlocBtn.clicked.connect(lambda: self.on_click_run_loc())
-        self.plotmapBtn.clicked.connect(self.on_click_plot_map)
+        self.plotmapBtn.clicked.connect(lambda: self.on_click_plot_map())
 
     @property
     def nll_manager(self):
@@ -180,19 +180,29 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.__pick_output_path = file_path
         self.nll_manager.set_observation_file(file_path)
 
-    def info_message(self, msg):
+    def info_message(self, msg, detailed_message=None):
         md = MessageDialog(self)
-        md.set_info_message(msg)
+        md.set_info_message(msg, detailed_message)
 
-    def subprocess_feedback(self, msg: str):
-        md = MessageDialog(self)
-        if msg:
-            if "Error code" in msg:
-                md.set_error_message("Click in show details detail for more info.", msg)
+    def subprocess_feedback(self, err_msg: str, set_default_complete=True):
+        """
+        This method is used as a subprocess feedback. It runs when a raise expect is detected.
+
+        :param err_msg: The error message from the except.
+        :param set_default_complete: If True it will set a completed successfully message. Otherwise nothing will
+            be displayed.
+        :return:
+        """
+        if err_msg:
+            md = MessageDialog(self)
+            if "Error code" in err_msg:
+                md.set_error_message("Click in show details detail for more info.", err_msg)
             else:
-                md.set_warning_message("Click in show details for more info.", msg)
+                md.set_warning_message("Click in show details for more info.", err_msg)
         else:
-            md.set_info_message("Completed Successfully")
+            if set_default_complete:
+                md = MessageDialog(self)
+                md.set_info_message("Completed Successfully.")
 
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def on_click_run_vel_to_grid(self):
@@ -209,33 +219,32 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
                                       self.grid_depth_bind.value, self.comboBox_grid.currentText(),
                                       self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText())
 
-    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg, set_default_complete=False))
     def on_click_run_loc(self):
-        self.nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
-                                   self.grid_depth_bind.value)
+        std_out = self.nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
+                                             self.grid_depth_bind.value)
+        self.info_message("Location complete. Check details.", std_out)
 
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def on_click_plot_map(self):
-        try:
-            origin = self.nll_manager.get_NLL_info()
-            scatter_x, scatter_y, scatter_z, pdf = self.nll_manager.get_NLL_scatter()
-            lat = origin.latitude
-            lon = origin.longitude
-            self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0)
-            # Writing Location information
-            self.add_earthquake_info(origin)
-            xp, yp, xs, ys = self.nll_manager.ger_NLL_residuals()
-            self.plot_residuals(xp, yp, xs, ys)
-        except (FileNotFoundError, AttributeError) as error:
-            self.info_message(str(error))
+        origin = self.nll_manager.get_NLL_info()
+        scatter_x, scatter_y, scatter_z, pdf = self.nll_manager.get_NLL_scatter()
+        lat = origin.latitude
+        lon = origin.longitude
+        self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0)
+        # Writing Location information
+        self.add_earthquake_info(origin)
+        xp, yp, xs, ys = self.nll_manager.ger_NLL_residuals()
+        self.plot_residuals(xp, yp, xs, ys)
 
     def plot_residuals(self, xp, yp, xs, ys):
 
         artist = self.residuals_canvas.plot(xp, yp, axes_index=0, linewidth=0.5)
-        self.canvas_pol.set_xlabel(0, "Station Name")
-        self.canvas_pol.set_ylabel(0, "P wave Residuals")
-        self.canvas_pol.set_yaxis_color(self.residuals_canvas.get_axe(0), artist.get_color(), is_left=True)
-        self.canvas_pol.plot(xs, ys, 0, is_twinx=True, color="red", linewidth=0.5)
-        self.canvas_pol.set_ylabel_twinx(0, "S wave Residuals")
+        self.residuals_canvas.set_xlabel(0, "Station Name")
+        self.residuals_canvas.set_ylabel(0, "P wave Residuals")
+        self.residuals_canvas.set_yaxis_color(self.residuals_canvas.get_axe(0), artist.get_color(), is_left=True)
+        self.residuals_canvas.plot(xs, ys, 0, is_twinx=True, color="red", linewidth=0.5)
+        self.residuals_canvas.set_ylabel_twinx(0, "S wave Residuals")
 
     def add_earthquake_info(self, origin: Origin):
 
