@@ -15,7 +15,7 @@ import pandas as pd
 from obspy import read_events
 from obspy.core.event import Origin
 from obspy.io.nlloc.util import read_nlloc_scatter
-
+import subprocess as sb
 from isp import ROOT_DIR
 from isp.DataProcessing import DatalessManager
 from isp.Utils.subprocess_utils import exc_cmd
@@ -305,14 +305,21 @@ class NllManager:
         location_file = os.path.join(self.get_loc_dir, "last")
         location_file_check = os.path.join(self.get_loc_dir, "last.hyp")
         filexyz=location_file_check+".scat.xyz"
+        # TO DO (RUN scat2latlon as if you have the program in your system path//problems
+        # with too long paths
         command = "{} {} {} {}".format("scat2latlon","1", self.get_loc_dir,location_file)
         sb.Popen(command, shell=True)
+
         if os.path.isfile(location_file_check):
             my_array = np.genfromtxt(filexyz, skip_header=3)
-            z = my_array[:, 2]
-            x = my_array[:, 1]
             y = my_array[:, 0]
+            print(y)
+            x = my_array[:, 1]
+            print(x)
+            z = my_array[:, 2]
+            print(z)
             pdf = my_array[:, 4]
+
             pdf = np.array(pdf) / np.max(pdf)
 
             return x, y, z, pdf
