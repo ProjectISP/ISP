@@ -220,21 +220,20 @@ class BasePltPyqtCanvas(FigureCanvas):
         self.draw_idle()
 
     def set_new_subplot(self, nrows, ncols, **kwargs):
-        # SMALL_SIZE = 6
-        # MEDIUM_SIZE = 8
-        # BIGGER_SIZE = 12
+        SMALL_SIZE = 6
+        MEDIUM_SIZE = 8
+        BIGGER_SIZE = 12
         sharex = kwargs.pop("sharex", "all")
         self.figure.clf()
         plt.close(self.figure)
-        # plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
-        # plt.rc('axes', titlesize=SMALL_SIZE)  # fontsize of the axes title
-        # plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
-        # plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-        # plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-        # plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
-        # plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+        plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
+        plt.rc('axes', titlesize=SMALL_SIZE)  # fontsize of the axes title
+        plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
+        plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+        plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+        plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
+        plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
         self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex=sharex, **kwargs)
-        self.figure.subplots_adjust(left=0.065, bottom=0.1440, right=0.9, top=0.990, wspace=0.2, hspace=0.0)
         self.__flat_axes()
         self.draw()
 
@@ -713,6 +712,6 @@ class CartopyCanvas(BasePltPyqtCanvas):
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
 
-        ax.plot(x, y, color='red', marker='o',markersize=5)
-        ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", alpha=0.7,cmap=plt.get_cmap('jet'))
+        ax.plot(x, y, color='red', marker='*',markersize=3)
+        ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", alpha=0.3,cmap=plt.get_cmap('YlOrBr'))
         self.draw()

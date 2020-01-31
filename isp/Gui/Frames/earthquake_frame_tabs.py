@@ -213,16 +213,12 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
     def on_click_plot_map(self):
         try:
             origin = self.nll_manager.get_NLL_info()
-            lat = 33
-            lon = -10
-            scatter_x, scatter_y, scatter_z = self.nll_manager.get_NLL_scatter(lat, lon)
+            scatter_x, scatter_y, scatter_z, pdf = self.nll_manager.get_NLL_scatter()
             lat = origin.latitude
             lon = origin.longitude
             self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0)
-
             # Writing Location information
             self.add_earthquake_info(origin)
-
             xp, yp, xs, ys = self.nll_manager.ger_NLL_residuals()
             self.plot_residuals(xp, yp, xs, ys)
         except (FileNotFoundError, AttributeError) as error:

@@ -36,6 +36,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=self.items_per_page)
         self.canvas.set_xlabel(0, "Time (s)")
+        ## Customize ##
+        self.canvas.figure.subplots_adjust(left=0.065, bottom=0.1440, right=0.980, top=0.990, wspace=0.2, hspace=0.0)
+        ###
         self.canvas.on_double_click(self.on_click_matplotlib)
         self.canvas.on_pick(self.on_pick)
 

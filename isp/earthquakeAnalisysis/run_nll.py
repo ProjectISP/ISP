@@ -289,33 +289,25 @@ class NllManager:
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
 
-    def get_NLL_scatter(self, lat_orig, lon_orig):
+    def get_NLL_scatter(self):
 
-        location_file = os.path.join(self.get_loc_dir, "last.scat")
-        if os.path.isfile(location_file):
-            data = read_nlloc_scatter(location_file)
-            data_size = len(data)
-            x = []
-            y = []
-            z = []
-            pdf = []
-
-            for i in range(data_size):
-                x.append(data[i][0])
-                y.append(data[i][1])
-                z.append(data[i][2])
-                pdf.append(data[i][3])
-            x = np.array(x)
-            y = np.array(y)
-
-            conv = 111.111 * mt.cos(lat_orig * 180 / mt.pi)
-            x = (x / conv) + lon_orig
-            y = (y / 111.111) + lat_orig
+        location_file = os.path.join(self.get_loc_dir, "last")
+        location_file_check = os.path.join(self.get_loc_dir, "last.hyp")
+        filexyz=location_file_check+".scat.xyz"
+        command = "{} {} {} {}".format("scat2latlon","1", self.get_loc_dir,location_file)
+        sb.Popen(command, shell=True)
+        if os.path.isfile(location_file_check):
+            my_array = np.genfromtxt(filexyz, skip_header=3)
+            z = my_array[:, 2]
+            x = my_array[:, 1]
+            y = my_array[:, 0]
+            pdf = my_array[:, 4]
             pdf = np.array(pdf) / np.max(pdf)
 
-            return x, y, pdf
+            return x, y, z, pdf
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
+
 
     def ger_NLL_residuals(self):
         location_file = os.path.join(self.get_loc_dir, "last.hyp")
