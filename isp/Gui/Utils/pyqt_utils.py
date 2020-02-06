@@ -1,5 +1,7 @@
 import os
 from contextlib import suppress
+from datetime import datetime
+
 
 from PyQt5 import uic
 from obspy import UTCDateTime
@@ -33,6 +35,8 @@ def save_preferences(pyqt_object, ui_name=None):
             user_preferences.setValue(key, item.value())
         elif isinstance(item, pw.QLineEdit):
             user_preferences.setValue(key, item.text())
+        elif isinstance(item, pw.QDateTimeEdit):
+            user_preferences.setValue(key, item.dateTime().toPyDateTime())
         elif hasattr(item, "save_values"):
             item.save_values()
 
@@ -65,6 +69,8 @@ def load_preferences(pyqt_object, ui_name=None):
                         item.setValue(int(value))
                     elif isinstance(item, pw.QLineEdit):
                         item.setText(value)
+                    elif isinstance(item, pw.QDateTimeEdit):
+                        set_qdatetime(value, item)
 
     user_preferences.endGroup()
 
@@ -98,6 +104,26 @@ def add_save_load():
         return cls
 
     return wrapper
+
+
+def set_qdatetime(time, pyqt_time_object: pw.QDateTimeEdit):
+    """
+    Set the datetime to an edit time qt object.
+
+    :param time: A str or obspy.UTCDateTime.
+
+    :param pyqt_time_object: A QDateTimeEdit pyqt object to set the time.
+
+    :return:
+    """
+    if type(time) is str:
+        time = UTCDateTime(time)
+    elif isinstance(time, UTCDateTime):
+        time = time.datetime
+    elif not isinstance(time, datetime):
+        raise ValueError("Time must by either str, UTCDatetime or datetime")
+
+    pyqt_time_object.setDateTime(time)
 
 
 def convert_qdatetime_utcdatetime(q_datetime_edit: pw.QDateTimeEdit):

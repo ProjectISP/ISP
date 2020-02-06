@@ -1,6 +1,8 @@
 from isp.Gui.Frames.uis_frames import UiMainFrame, UiTimeFrequencyFrame, UiEarthquakeAnalysisFrame, \
-    UiPaginationWidget, UiFilterGroupBox, UiEventInfoGroupBox, UiEarthquake3CFrame, UiEarthquakeLocationFrame
-from isp.Gui.Frames.qt_components import FilesView, Pagination, MessageDialog, FilterBox, EventInfoBox
+    UiPaginationWidget, UiFilterDockWidget, UiTimeSelectorDockWidget, UiEventInfoGroupBox, UiEarthquake3CFrame, \
+    UiEarthquakeLocationFrame, UiSpectrumDockWidget, UiTimeAnalysisWidget, UiStationInfoDockWidget
+from isp.Gui.Frames.qt_components import FilesView, Pagination, MessageDialog, FilterBox, TimeSelectorBox, \
+    EventInfoBox, SpectrumBox, StationInfoBox
 from isp.Gui.Frames.main import BaseFrame, MainFrame
 from isp.Gui.Frames.matplotlib_frame import MatplotlibFrame, MatplotlibCanvas, CartopyCanvas
 from isp.Gui.Frames.time_frequency_frames import TimeFrequencyFrame

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -26,13 +26,25 @@
    <bool>true</bool>
   </property>
   <property name="features">
-   <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   <set>QDockWidget::DockWidgetMovable</set>
   </property>
   <property name="windowTitle">
    <string>Filter</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>2</number>
+    </property>
+    <property name="topMargin">
+     <number>2</number>
+    </property>
+    <property name="rightMargin">
+     <number>2</number>
+    </property>
+    <property name="bottomMargin">
+     <number>2</number>
+    </property>
     <item row="1" column="0">
      <widget class="QComboBox" name="fiterComboBox">
       <item>

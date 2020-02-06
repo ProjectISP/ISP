@@ -7,9 +7,11 @@ from matplotlib.lines import Line2D
 from obspy import UTCDateTime
 
 from isp.DataProcessing import SeismogramAnalysis
+from isp.Exceptions import parse_excepts
 from isp.Gui import pw
-from isp.Gui.Frames import UiPaginationWidget, UiFilterGroupBox, UiEventInfoGroupBox
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load
+from isp.Gui.Frames import UiPaginationWidget, UiFilterDockWidget, UiEventInfoGroupBox, UiTimeSelectorDockWidget, \
+    UiSpectrumDockWidget, UiStationInfoDockWidget
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, set_qdatetime, convert_qdatetime_utcdatetime
 from isp.Structures.structures import StationsStats
 from isp.Utils import Filters
 
@@ -322,7 +324,7 @@ class MessageDialog(pw.QMessageBox):
 
 
 @add_save_load()
-class FilterBox(pw.QDockWidget, UiFilterGroupBox):
+class FilterBox(pw.QDockWidget, UiFilterDockWidget):
 
     def __init__(self, parent: pw.QWidget, current_index=-1):
         super(FilterBox, self).__init__(parent)
@@ -332,8 +334,8 @@ class FilterBox(pw.QDockWidget, UiFilterGroupBox):
         # set the parent properly
         ParentWidget.set_parent(parent, self, current_index)
         # force parent to have the same maximumSize and minimumSize of FileBox
-        parent.setMaximumSize(self.maximumSize())
-        parent.setMinimumSize(self.minimumSize())
+        # parent.setMaximumSize(self.maximumSize())
+        # parent.setMinimumSize(self.minimumSize())
 
         # Clean and add options to combo box.
         self.fiterComboBox.clear()
@@ -434,9 +436,7 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
 
     @property
     def event_time(self):
-        py_time = self.originDateTimeEdit.dateTime().toPyDateTime()
-        utc_time = UTCDateTime(py_time)
-        return utc_time
+        return convert_qdatetime_utcdatetime(self.originDateTimeEdit)
 
     def set_canvas(self, canvas):
         from isp.Gui.Frames import MatplotlibCanvas
@@ -460,14 +460,7 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
 
         :return:
         """
-        if type(time) is str:
-            time = UTCDateTime(time)
-        elif isinstance(time, UTCDateTime):
-            time = time.datetime
-        elif not isinstance(time, datetime):
-            raise ValueError("time must by either str, UTCDatetime or datetime")
-
-        self.originDateTimeEdit.setDateTime(time)
+        set_qdatetime(time, self.originDateTimeEdit)
 
     def add_arrivals_line(self, line: Line2D):
         self.__arrivals_lines.append(line)
@@ -495,3 +488,120 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
             line = self.__canvas.draw_arrow(time + delta_time, axe_index, phase, color="green", linestyles='--',
                                             picker=False)
             self.add_arrivals_line(line)
+
+
+@add_save_load()
+class TimeSelectorBox(pw.QDockWidget, UiTimeSelectorDockWidget):
+
+    def __init__(self, parent: pw.QWidget, current_index=-1):
+        super(TimeSelectorBox, self).__init__(parent)
+        self.setupUi(self)
+        self.__parent_name = parent.objectName()  # used to save values in a group.
+
+        # set the parent properly
+        ParentWidget.set_parent(parent, self, current_index)
+
+    @property
+    def start_time(self):
+        return convert_qdatetime_utcdatetime(self.startDateTimeEdit)
+
+    @property
+    def end_time(self):
+        return convert_qdatetime_utcdatetime(self.endDateTimeEdit)
+
+    def set_start_time(self, time):
+        """
+        Set the start time.
+
+        :param time: A str or obspy.UTCDateTime.
+
+        :return:
+        """
+        set_qdatetime(time, self.startDateTimeEdit)
+
+
+@add_save_load()
+class SpectrumBox(pw.QDockWidget, UiSpectrumDockWidget):
+
+    def __init__(self, parent: pw.QWidget, current_index=-1):
+        super(SpectrumBox, self).__init__(parent)
+        self.setupUi(self)
+        self.__parent_name = parent.objectName()  # used to save values in a group.
+
+        # set the parent properly
+        ParentWidget.set_parent(parent, self, current_index)
+
+        self.__mtp_click_callback = None
+        self.__cwt_click_callback = None
+
+        # button bind
+        self.plotMTPBtn.clicked.connect(lambda: self.__on_click_plot_mtp())
+        self.plotCWTBtn.clicked.connect(lambda: self.__on_click_plot_cwt())
+
+        # binds
+        self.win_bind = BindPyqtObject(self.winLenghtSpecSb)
+        self.ntapers_bind = BindPyqtObject(self.ntapersSb)
+        self.tw_bind = BindPyqtObject(self.twDsb)
+        self.w1_bind = BindPyqtObject(self.win1Dsb)
+        self.w2_bind = BindPyqtObject(self.win2Dsb)
+
+    def register_plot_mtp(self, func):
+        self.__mtp_click_callback = lambda *args, **kwargs: func(*args, **kwargs)
+
+    def register_plot_cwt(self, func):
+        self.__cwt_click_callback = lambda *args, **kwargs: func(*args, **kwargs)
+
+    def __validate_parameters_mtp(self):
+        name = None
+        if self.win_bind.value <= 0:
+            name = "W.Len"
+        elif self.ntapers_bind.value <= 0:
+            name = "NTAPERS"
+        elif self.tw_bind.value <= 0:
+            name = "TW"
+
+        if name:
+            msg = "Invalid {} value. It should be bigger than zero".format(name)
+            raise AttributeError(msg)
+
+    def __validate_parameters_cwt(self):
+        name = None
+        if self.win_bind.value <= 0:
+            name = "W.Len"
+        elif self.w1_bind.value <= 0:
+            name = "W1"
+        elif self.w2_bind.value <= 0:
+            name = "W2"
+
+        if name:
+            msg = "Invalid {} value. It should be bigger than zero".format(name)
+            raise AttributeError(msg)
+
+    def print_msg(self, msg):
+        if msg:
+            md = MessageDialog(self)
+            md.set_info_message(msg)
+
+    @parse_excepts(lambda self, msg: self.print_msg(msg))
+    def __on_click_plot_mtp(self):
+        self.__validate_parameters_mtp()
+        if self.__mtp_click_callback:
+            self.__mtp_click_callback()
+
+    @parse_excepts(lambda self, msg: self.print_msg(msg))
+    def __on_click_plot_cwt(self):
+        self.__validate_parameters_cwt()
+        if self.__cwt_click_callback:
+            self.__cwt_click_callback()
+
+
+@add_save_load()
+class StationInfoBox(pw.QDockWidget, UiStationInfoDockWidget):
+
+    def __init__(self, parent: pw.QWidget, current_index=-1):
+        super(StationInfoBox, self).__init__(parent)
+        self.setupUi(self)
+        self.__parent_name = parent.objectName()  # used to save values in a group.
+
+        # set the parent properly
+        ParentWidget.set_parent(parent, self, current_index)
