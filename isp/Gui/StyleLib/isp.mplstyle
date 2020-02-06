@@ -3,5 +3,9 @@ axes.titlesize: 8
 axes.labelsize: 8
 xtick.labelsize: 8
 ytick.labelsize: 8
+xtick.labelsize: 6
+ytick.labelsize: 6
+xtick.direction: in
 legend.fontsize: 6
 figure.titlesize: 12
+figure.subplot.hspace: 0.

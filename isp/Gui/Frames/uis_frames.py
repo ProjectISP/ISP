@@ -4,12 +4,16 @@ from isp.Gui.Utils.pyqt_utils import load_ui_designers
 # Add the new UiFrame to the imports at Frames.__init__
 UiMainFrame = load_ui_designers("MainFrame.ui")
 UiTimeFrequencyFrame = load_ui_designers("TimeFrequencyFrame.ui")
+UiTimeAnalysisWidget = load_ui_designers("TimeAnalysisWidget.ui")
 UiEarthquakeAnalysisFrame = load_ui_designers("EarthquakeAnalysisFrame.ui")
 UiEarthquake3CFrame = load_ui_designers("Earthquake3CFrame.ui")
 UiEarthquakeLocationFrame = load_ui_designers("EarthquakeLocationFrame.ui")
 UiPaginationWidget = load_ui_designers("PaginationWidget.ui")
-UiFilterGroupBox = load_ui_designers("FilterDockWidget.ui")
+UiFilterDockWidget = load_ui_designers("FilterDockWidget.ui")
+UiTimeSelectorDockWidget = load_ui_designers("TimeSelectorDockWidget.ui")
+UiSpectrumDockWidget = load_ui_designers("SpectrumDockWidget.ui")
 UiEventInfoGroupBox = load_ui_designers("EventInfoGroupBox.ui")
+UiStationInfoDockWidget = load_ui_designers("StationInfoDockWidget.ui")
 
 
 
