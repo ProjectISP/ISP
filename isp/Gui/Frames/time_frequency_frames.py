@@ -125,7 +125,7 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
 
     def plot_seismogram(self, canvas):
         t, s1 = self.get_data()
-        canvas.plot(t, s1, 0, color="black")
+        canvas.plot(t, s1, 0,linewidth=0.5, color="black")
 
         if self.is_envelop_checked:
             analytic_sygnal = hilbert(s1)
@@ -151,7 +151,6 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
         ts, te = self.get_time_window()
         tr.trim(starttime=ts, endtime=te)
         tr.detrend(type="demean")
-
         f_min = 1. / self.spectrum_box.win_bind.value if self.filter.min_freq == 0 else self.filter.min_freq
         f_max = self.filter.max_freq
         ObspyUtil.filter_trace(tr, self.filter.filter_value, f_min, f_max)
@@ -161,6 +160,7 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
         wmax = self.spectrum_box.w2_bind.value
         npts = len(tr.data)
         scalogram = ccwt(tr.data, self.station_stats.Sampling_rate, f_min, f_max, wmin, wmax, tt, nf)
+        #scalogram = ccwt(tr.data, tr.stats.sampling_rate, 2, 8, 6, 10, 500, 40)
         scalogram = np.abs(scalogram) ** 2
 
         t = np.linspace(0, self.station_stats.Delta * npts, npts - 1)
@@ -171,7 +171,7 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
         min_cwt = np.min(scalogram2)
         norm = Normalize(vmin=min_cwt, vmax=max_cwt)
         canvas.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]", levels=100,
-                            cmap=plt.get_cmap("YlOrRd"), norm=norm)
+                            cmap=plt.get_cmap("jet"), norm=norm)
         canvas.set_xlabel(1, "Time (s)")
 
     def on_click_plot_seismogram(self, canvas):
