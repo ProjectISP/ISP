@@ -1,6 +1,5 @@
 import math
 import os
-from datetime import datetime
 from types import FunctionType
 
 from matplotlib.lines import Line2D
@@ -9,10 +8,10 @@ from obspy import UTCDateTime
 from isp.DataProcessing import SeismogramAnalysis
 from isp.Exceptions import parse_excepts
 from isp.Gui import pw
-from isp.Gui.Frames import UiPaginationWidget, UiFilterDockWidget, UiEventInfoGroupBox, UiTimeSelectorDockWidget, \
+from isp.Gui.Frames import UiPaginationWidget, UiFilterDockWidget, UiEventInfoDockWidget, UiTimeSelectorDockWidget, \
     UiSpectrumDockWidget, UiStationInfoDockWidget
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, set_qdatetime, convert_qdatetime_utcdatetime
-from isp.Structures.structures import StationsStats
+from isp.Structures.structures import StationsStats, TracerStats
 from isp.Utils import Filters
 
 
@@ -373,9 +372,9 @@ class FilterBox(pw.QDockWidget, UiFilterDockWidget):
 
 
 @add_save_load()
-class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
+class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
 
-    def __init__(self, parent: pw.QWidget, canvas):
+    def __init__(self, parent: pw.QWidget, canvas, current_index=-1):
         super(EventInfoBox, self).__init__(parent)
         self.setupUi(self)
         self.__parent_name = parent.objectName()  # used to save values in a group.
@@ -383,17 +382,18 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
         self.__on_click_plot_arrivals_callback = None
         self.__arrivals_lines = []
 
-        self.set_canvas(canvas)
+        if canvas:
+            self.set_canvas(canvas)
 
         # set the parent properly
-        ParentWidget.set_parent(parent, self)
+        ParentWidget.set_parent(parent, self, current_index)
         # force parent to have the same maximumSize and minimumSize of FileBox
         parent.setMaximumSize(self.maximumSize())
         parent.setMinimumSize(self.minimumSize())
 
         # bind widgets from EventInfo box.
-        self.__latitude_bind = BindPyqtObject(self.latitudeLineEdit)
-        self.__longitude_bind = BindPyqtObject(self.longitudeLineEdit)
+        self.__latitude_bind = BindPyqtObject(self.latitudeDsb)
+        self.__longitude_bind = BindPyqtObject(self.longitudeDsb)
         self.__depth_bind = BindPyqtObject(self.depthLineEdit)
 
         # button bind
@@ -476,7 +476,7 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
     def __on_click_clear_arrivals(self):
         self.clear_arrivals()
 
-    def plot_arrivals(self, axe_index, start_time: UTCDateTime, station_stats: StationsStats):
+    def plot_arrivals(self, axe_index: int, start_time: UTCDateTime, station_stats: StationsStats):
         delta_time = self.event_time - start_time
         line = self.__canvas.draw_arrow(delta_time, axe_index, "Event time", color="red", linestyles='--',
                                         picker=False)
@@ -488,6 +488,16 @@ class EventInfoBox(pw.QGroupBox, UiEventInfoGroupBox):
             line = self.__canvas.draw_arrow(time + delta_time, axe_index, phase, color="green", linestyles='--',
                                             picker=False)
             self.add_arrivals_line(line)
+
+    def set_buttons_visibility(self, is_visible: bool):
+        """
+        Set visibility of the buttons on or off.
+
+        :param is_visible: Either it should be visible or not.
+        :return:
+        """
+        self.plotArrivalsBtn.setVisible(is_visible)
+        self.clearArrivalsBtn.setVisible(is_visible)
 
 
 @add_save_load()
@@ -595,7 +605,6 @@ class SpectrumBox(pw.QDockWidget, UiSpectrumDockWidget):
             self.__cwt_click_callback()
 
 
-@add_save_load()
 class StationInfoBox(pw.QDockWidget, UiStationInfoDockWidget):
 
     def __init__(self, parent: pw.QWidget, current_index=-1):
@@ -605,3 +614,33 @@ class StationInfoBox(pw.QDockWidget, UiStationInfoDockWidget):
 
         # set the parent properly
         ParentWidget.set_parent(parent, self, current_index)
+
+        # binds
+        self.latitude_bind = BindPyqtObject(self.latitudeDsb)
+        self.longitude_bind = BindPyqtObject(self.longitudeDsb)
+        self.network_station_bind = BindPyqtObject(self.networkStationQline)
+        self.channel_bind = BindPyqtObject(self.channelQline)
+        self.start_time_bind = BindPyqtObject(self.startTimeQline)
+        self.end_time_bind = BindPyqtObject(self.endTimeQline)
+
+        self.__basic_info_fields = [self.network_station_bind, self.channel_bind,
+                                    self.start_time_bind, self.end_time_bind]
+
+    @property
+    def latitude(self):
+        return self.latitude_bind.value
+
+    @property
+    def longitude(self):
+        return self.longitude_bind.value
+
+    def set_basic_info(self, trace_stats: TracerStats):
+        self.network_station_bind.value = "{}-{}".format(trace_stats.Network, trace_stats.Station)
+        self.channel_bind.value = trace_stats.Channel
+        self.start_time_bind.value = "{} UTC".format(trace_stats.StartTime.strftime("%Y/%m/%d %H:%M:%S"))
+        self.end_time_bind.value = "{} UTC".format(trace_stats.EndTime.strftime("%Y/%m/%d %H:%M:%S"))
+
+    def clear_basic_info(self):
+        for bind in self.__basic_info_fields:
+            bind.pyqt_obj.clear()
+

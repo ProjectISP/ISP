@@ -1,5 +1,5 @@
 from isp.Gui.Frames.uis_frames import UiMainFrame, UiTimeFrequencyFrame, UiEarthquakeAnalysisFrame, \
-    UiPaginationWidget, UiFilterDockWidget, UiTimeSelectorDockWidget, UiEventInfoGroupBox, UiEarthquake3CFrame, \
+    UiPaginationWidget, UiFilterDockWidget, UiTimeSelectorDockWidget, UiEventInfoDockWidget, UiEarthquake3CFrame, \
     UiEarthquakeLocationFrame, UiSpectrumDockWidget, UiTimeAnalysisWidget, UiStationInfoDockWidget
 from isp.Gui.Frames.qt_components import FilesView, Pagination, MessageDialog, FilterBox, TimeSelectorBox, \
     EventInfoBox, SpectrumBox, StationInfoBox

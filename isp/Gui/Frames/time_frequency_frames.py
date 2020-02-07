@@ -4,16 +4,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import Normalize
 from obspy import read
-from obspy.core import UTCDateTime
 from scipy.signal import hilbert
 
-from isp.DataProcessing import SeismogramAnalysis, SeismogramData
+from isp.DataProcessing import SeismogramData
 from isp.Exceptions import InvalidFile
 from isp.Gui import pw
 from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiTimeFrequencyFrame, FilesView, MessageDialog, \
     MatplotlibCanvas, TimeSelectorBox, FilterBox, SpectrumBox, UiTimeAnalysisWidget
-from isp.Gui.Frames.qt_components import ParentWidget, StationInfoBox
+from isp.Gui.Frames.qt_components import ParentWidget, StationInfoBox, EventInfoBox
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load
+from isp.Structures.structures import StationsStats
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.seismogramInspector.MTspectrogram import MTspectrogram
 from isp.seismogramInspector.ccwt import ccwt
@@ -66,21 +66,30 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
 
         # bind buttons
         self.plotSeismogramBtn.clicked.connect(lambda: self.on_click_plot_seismogram(self.canvas))
+        self.plotArrivalsBtn.clicked.connect(lambda: self.on_click_plot_arrivals(self.canvas))
         self.spectrum_box.register_plot_mtp(lambda: self.on_click_mtp(self.canvas))
         self.spectrum_box.register_plot_cwt(lambda: self.on_click_cwt(self.canvas))
 
         self.__file_selector = None
+        self.__event_info = None
         self.is_envelop_checked = False
 
     def register_file_selector(self, file_selector: FilesView):
         self.__file_selector = file_selector
+
+    def set_event_info(self, event_into: EventInfoBox):
+        self.__event_info = event_into
 
     @property
     def file_selector(self) -> FilesView:
         return self.__file_selector
 
     @property
-    def station_stats(self):
+    def event_info(self) -> EventInfoBox:
+        return self.__event_info
+
+    @property
+    def tracer_stats(self):
         return ObspyUtil.get_stats(self.file_selector.file_path)
 
     @property
@@ -125,7 +134,7 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
 
     def plot_seismogram(self, canvas):
         t, s1 = self.get_data()
-        canvas.plot(t, s1, 0,linewidth=0.5, color="black")
+        canvas.plot(t, s1, 0, color="black")
 
         if self.is_envelop_checked:
             analytic_sygnal = hilbert(s1)
@@ -133,7 +142,7 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
             canvas.plot(t, envelope, 0, clear_plot=False, linewidth=0.5, color='sandybrown')
 
     def plot_mt_spectrogram(self, canvas: MatplotlibCanvas):
-        win = int(self.spectrum_box.win_bind.value * self.station_stats.Sampling_rate)
+        win = int(self.spectrum_box.win_bind.value * self.tracer_stats.Sampling_rate)
         tbp = self.spectrum_box.tw_bind.value
         ntapers = self.spectrum_box.ntapers_bind.value
         f_min = self.filter.min_freq
@@ -151,19 +160,19 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
         ts, te = self.get_time_window()
         tr.trim(starttime=ts, endtime=te)
         tr.detrend(type="demean")
+
         f_min = 1. / self.spectrum_box.win_bind.value if self.filter.min_freq == 0 else self.filter.min_freq
         f_max = self.filter.max_freq
         ObspyUtil.filter_trace(tr, self.filter.filter_value, f_min, f_max)
         nf = 40
-        tt = int(self.spectrum_box.win_bind.value * self.station_stats.Sampling_rate)
+        tt = int(self.spectrum_box.win_bind.value * self.tracer_stats.Sampling_rate)
         wmin = self.spectrum_box.w1_bind.value
         wmax = self.spectrum_box.w2_bind.value
         npts = len(tr.data)
-        scalogram = ccwt(tr.data, self.station_stats.Sampling_rate, f_min, f_max, wmin, wmax, tt, nf)
-        #scalogram = ccwt(tr.data, tr.stats.sampling_rate, 2, 8, 6, 10, 500, 40)
+        scalogram = ccwt(tr.data, self.tracer_stats.Sampling_rate, f_min, f_max, wmin, wmax, tt, nf)
         scalogram = np.abs(scalogram) ** 2
 
-        t = np.linspace(0, self.station_stats.Delta * npts, npts - 1)
+        t = np.linspace(0, self.tracer_stats.Delta * npts, npts - 1)
         scalogram2 = 10 * (np.log10(scalogram / np.max(scalogram)))
         x, y = np.meshgrid(t, np.linspace(f_min, f_max, scalogram2.shape[0]))
 
@@ -171,12 +180,13 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
         min_cwt = np.min(scalogram2)
         norm = Normalize(vmin=min_cwt, vmax=max_cwt)
         canvas.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]", levels=100,
-                            cmap=plt.get_cmap("jet"), norm=norm)
+                            cmap=plt.get_cmap("YlOrRd"), norm=norm)
         canvas.set_xlabel(1, "Time (s)")
 
     def on_click_plot_seismogram(self, canvas):
         try:
             self.validate_file()
+            self.update_station_info()
             self.plot_seismogram(canvas)
         except InvalidFile:
             pass
@@ -184,6 +194,7 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
     def on_click_mtp(self, canvas):
         try:
             self.validate_file()
+            self.update_station_info()
             self.plot_mt_spectrogram(canvas)
         except InvalidFile:
             pass
@@ -191,12 +202,26 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
     def on_click_cwt(self, canvas):
         try:
             self.validate_file()
+            self.update_station_info()
             self.plot_cwt_spectrogram(canvas)
         except InvalidFile:
             pass
 
     def on_double_click_matplotlib(self, event, canvas):
         pass
+
+    def on_click_plot_arrivals(self, canvas):
+        self.update_station_info()
+        self.plot_arrivals(canvas)
+
+    def update_station_info(self):
+        self.station_info.set_basic_info(self.tracer_stats)
+
+    def plot_arrivals(self, canvas):
+        self.event_info.set_canvas(canvas)
+        station_stats = StationsStats(self.tracer_stats.Station,
+                                      self.station_info.latitude, self.station_info.longitude, 0.)
+        self.event_info.plot_arrivals(0, self.time_selector.start_time, station_stats)
 
 
 class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
@@ -210,10 +235,12 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         # Bind buttons
         self.selectDirBtn.clicked.connect(self.on_click_select_directory)
         self.dayPlotBtn.clicked.connect(self.on_click_dayplot)
-#        self.arrivalTimesBtn.clicked.connect(lambda: self.on_click_arrival_times(self.canvas))
 
         # Bind qt objects
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
+
+        self.event_info = EventInfoBox(self.mainToolsWidget, None)
+        self.event_info.set_buttons_visibility(False)
 
         # Add file selector to the widget
         self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget,
@@ -225,6 +252,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.time_analysis_windows = [self.time_analysis_widget,  self.time_analysis_widget2]
         for taw in self.time_analysis_windows:
             taw.register_file_selector(self.file_selector)
+            taw.set_event_info(self.event_info)
 
         self.actionPlotEnvelope.toggled.connect(self.on_envelop_toggle)
 
@@ -270,22 +298,6 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             self.plot_day_view()
         except InvalidFile:
             pass
-
-    def on_click_arrival_times(self, canvas):
-        self.plot_arrival_times(canvas)
-
-    def plot_arrival_times(self, canvas):
-        delta_time = UTCDateTime(self.eventtime.text()) - UTCDateTime(self.start_time_bind.value)
-        delta_time = float(delta_time)
-        eventlat = self.LAT.value()
-        eventlon = self.LON.value()
-        eventdepth = self.DEPTH.value()
-        sma = SeismogramAnalysis(self.station_lat_bind.value, self.station_lon_bind.value)
-        phases, times = sma.get_phases_and_arrivals(eventlat, eventlon, eventdepth)
-        canvas.draw_arrow(delta_time, 0, "Event time", color="red", linestyle='dashed')
-        for phase, time in zip(phases, times):
-            print(time, delta_time)
-            canvas.draw_arrow(time + delta_time, 0, phase, color="green", linestyle='dashed')
 
 
 # =============================================== Old code ========================================================

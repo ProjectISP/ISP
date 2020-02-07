@@ -18,12 +18,9 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>173</width>
+    <width>207</width>
     <height>206</height>
    </size>
-  </property>
-  <property name="toolTip">
-   <string>Get latitude and longitude from dataless</string>
   </property>
   <property name="features">
    <set>QDockWidget::DockWidgetMovable</set>
@@ -36,7 +33,7 @@
     <item row="0" column="0">
      <widget class="QLabel" name="label_62">
       <property name="text">
-       <string>Net-Station</string>
+       <string>Network-Station</string>
       </property>
      </widget>
     </item>
@@ -48,22 +45,28 @@
      </widget>
     </item>
     <item row="1" column="0">
-     <widget class="QLineEdit" name="Net2">
+     <widget class="QLineEdit" name="networkStationQline">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
      </widget>
     </item>
     <item row="1" column="1">
-     <widget class="QLineEdit" name="Channel2">
+     <widget class="QLineEdit" name="channelQline">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -82,14 +85,14 @@
      </widget>
     </item>
     <item row="3" column="0">
-     <widget class="QLineEdit" name="lineEdit">
+     <widget class="QLineEdit" name="startTimeQline">
       <property name="readOnly">
        <bool>true</bool>
       </property>
      </widget>
     </item>
     <item row="3" column="1">
-     <widget class="QLineEdit" name="lineEdit_2">
+     <widget class="QLineEdit" name="endTimeQline">
       <property name="readOnly">
        <bool>true</bool>
       </property>
@@ -110,7 +113,7 @@
      </widget>
     </item>
     <item row="5" column="0">
-     <widget class="QDoubleSpinBox" name="doubleSpinBox">
+     <widget class="QDoubleSpinBox" name="latitudeDsb">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
         <horstretch>1</horstretch>
@@ -120,7 +123,7 @@
      </widget>
     </item>
     <item row="5" column="1">
-     <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+     <widget class="QDoubleSpinBox" name="longitudeDsb">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
         <horstretch>1</horstretch>

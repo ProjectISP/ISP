@@ -219,6 +219,19 @@ class BasePltPyqtCanvas(FigureCanvas):
             ax.set_ylim(ax.get_ylim())
         self.draw_idle()
 
+    def is_within_xlim(self, x: float, ax_index: int):
+        """
+        Check whether or not the value x is within the bounds of x_min and x_max of the axe.
+
+        :param x: The value at x-axis.
+        :param ax_index: The index of the axe to test the bounds.
+        :return: True if within the x-bounds, False otherwise.
+        """
+
+        ax = self.get_axe(ax_index)
+        x_min, x_max = ax.get_xbound()
+        return x_min <= x <= x_max
+
     def set_new_subplot(self, nrows, ncols, **kwargs):
         sharex = kwargs.pop("sharex", "all")
         self.figure.clf()
@@ -548,18 +561,20 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
 
         self.update_bounds()
         ymin, ymax = ax.get_ybound()
-        annotate = ax.annotate(arrow_label, xy=(x_pos, 0), xytext=(0, -30), bbox=bbox, xycoords='data',
-                               textcoords='offset points', annotation_clip=True, arrowprops=arrowprops)
+        # plot arrows only if x_pos is within the x bounds. Avoid warnings from matplotlib.
+        if self.is_within_xlim(x_pos, axe_index):
+            annotate = ax.annotate(arrow_label, xy=(x_pos, 0), xytext=(0, -30), bbox=bbox, xycoords='data',
+                                   textcoords='offset points', annotation_clip=True, arrowprops=arrowprops)
 
-        line = ax.vlines(x_pos, ymin, ymax, color=color, picker=picker, **kwargs)
+            line = ax.vlines(x_pos, ymin, ymax, color=color, picker=picker, **kwargs)
 
-        point = ax.plot(x_pos, amplitude, marker='o', color="steelblue") if amplitude else [None]
-        # Add annotate and point in a dict with a key equal to line signature.
+            point = ax.plot(x_pos, amplitude, marker='o', color="steelblue") if amplitude else [None]
+            # Add annotate and point in a dict with a key equal to line signature.
 
-        self.pickers[str(line)] = annotate, point[0]
-        self.draw_idle()
+            self.pickers[str(line)] = annotate, point[0]
+            self.draw_idle()
 
-        return line
+            return line
 
     def remove_arrow(self, line: Line2D):
         """

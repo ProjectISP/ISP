@@ -232,3 +232,12 @@ class BindPyqtObject(pyc.QObject):
         else:
             raise AttributeError("The object {} doesn't have the method setDragEnabled".
                                  format(self.pyqt_obj.objectName()))
+
+    def set_visible(self, is_visible: bool):
+        """
+        Set visibility of the pyqt object.
+
+        :param is_visible: Either it should be visible or not.
+        :return:
+        """
+        self.pyqt_obj.setVisible(is_visible)

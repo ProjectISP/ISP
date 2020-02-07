@@ -12,7 +12,7 @@ UiPaginationWidget = load_ui_designers("PaginationWidget.ui")
 UiFilterDockWidget = load_ui_designers("FilterDockWidget.ui")
 UiTimeSelectorDockWidget = load_ui_designers("TimeSelectorDockWidget.ui")
 UiSpectrumDockWidget = load_ui_designers("SpectrumDockWidget.ui")
-UiEventInfoGroupBox = load_ui_designers("EventInfoGroupBox.ui")
+UiEventInfoDockWidget = load_ui_designers("EventInfoDockWidget.ui")
 UiStationInfoDockWidget = load_ui_designers("StationInfoDockWidget.ui")
 
 
