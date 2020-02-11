@@ -14,6 +14,7 @@ UiTimeSelectorDockWidget = load_ui_designers("TimeSelectorDockWidget.ui")
 UiSpectrumDockWidget = load_ui_designers("SpectrumDockWidget.ui")
 UiEventInfoDockWidget = load_ui_designers("EventInfoDockWidget.ui")
 UiStationInfoDockWidget = load_ui_designers("StationInfoDockWidget.ui")
+UiArrayAnalysisFrame = load_ui_designers("ArrayAnalysisFrame.ui")
 
 
 

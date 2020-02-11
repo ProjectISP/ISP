@@ -134,7 +134,7 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
 
     def plot_seismogram(self, canvas):
         t, s1 = self.get_data()
-        canvas.plot(t, s1, 0, color="black")
+        canvas.plot(t, s1, 0, color="black",linewidth=0.5)
 
         if self.is_envelop_checked:
             analytic_sygnal = hilbert(s1)
@@ -152,7 +152,7 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
         mtspectrogram = MTspectrogram(self.file_selector.file_path, win, tbp, ntapers, f_min, f_max)
         x, y, log_spectrogram = mtspectrogram.compute_spectrogram(start_time=ts, end_time=te,
                                                                   trace_filter=self.filter.filter_value)
-        canvas.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",  cmap=plt.get_cmap("YlOrRd"))
+        canvas.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",  cmap=plt.get_cmap("jet"))
         canvas.set_xlabel(1, "Time (s)")
 
     def plot_cwt_spectrogram(self, canvas: MatplotlibCanvas):
@@ -180,7 +180,7 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
         min_cwt = np.min(scalogram2)
         norm = Normalize(vmin=min_cwt, vmax=max_cwt)
         canvas.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]", levels=100,
-                            cmap=plt.get_cmap("YlOrRd"), norm=norm)
+                            cmap=plt.get_cmap("jet"), norm=norm)
         canvas.set_xlabel(1, "Time (s)")
 
     def on_click_plot_seismogram(self, canvas):
