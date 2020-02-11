@@ -170,6 +170,7 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
         wmax = self.spectrum_box.w2_bind.value
         npts = len(tr.data)
         scalogram = ccwt(tr.data, self.tracer_stats.Sampling_rate, f_min, f_max, wmin, wmax, tt, nf)
+      
         scalogram = np.abs(scalogram) ** 2
 
         t = np.linspace(0, self.tracer_stats.Delta * npts, npts - 1)

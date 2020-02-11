@@ -19,7 +19,8 @@ def find_nearest(array, value):
     idx,val = min(enumerate(array), key=lambda x: abs(x[1]-value))
     return idx,val
 
-def MTspectrum(data,win,dt,tbp,ntapers,linf,lsup):           
+def MTspectrum(data,win,dt,tbp,ntapers,linf,lsup):
+
     if (win % 2) == 0:
        nfft = win/2 + 1
     else:
@@ -27,14 +28,17 @@ def MTspectrum(data,win,dt,tbp,ntapers,linf,lsup):
     
     
     lim=len(data)-win
-    S=np.zeros([int(nfft),int(lim)])   
-      
+    S=np.zeros([int(nfft),int(lim)])
+    data2 = np.zeros(2 ** math.ceil(math.log2(win)))
+
     for n in range(lim):
         data1=data[n:win+n]
         data1=data1-np.mean(data1)
-        #spec,freq = mtspec(data1,delta=dt ,time_bandwidth=3.5,number_of_tapers=4)
-        spec,freq = mtspec(data1,delta=dt ,time_bandwidth=tbp,number_of_tapers=ntapers)
-        S[:,n]=spec    
+        data2[0:win]=data1
+        spec,freq = mtspec(data2,delta=dt ,time_bandwidth=tbp,number_of_tapers=ntapers)
+        spec=spec[0:int(nfft)]
+        S[:,n]=spec
+
     value1,freq1=find_nearest(freq,linf)
     value2,freq2=find_nearest(freq,lsup)
     S=S[value1:value2]
