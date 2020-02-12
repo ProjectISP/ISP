@@ -17,7 +17,8 @@ from isp.Structures.structures import StationsStats
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.seismogramInspector.MTspectrogram import MTspectrogram
 from isp.seismogramInspector.ccwt import ccwt
-
+from isp.seismogramInspector.ba_fast import ccwt_ba_fast
+from isp.seismogramInspector.CWT_fast import cwt_fast
 
 @unique
 class Phases(Enum):
@@ -169,11 +170,13 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
         wmin = self.spectrum_box.w1_bind.value
         wmax = self.spectrum_box.w2_bind.value
         npts = len(tr.data)
-        scalogram = ccwt(tr.data, self.tracer_stats.Sampling_rate, f_min, f_max, wmin, wmax, tt, nf)
+        [ba, nConv, frex, half_wave] = ccwt_ba_fast(npts, self.tracer_stats.Sampling_rate, f_min, f_max, wmin, wmax, tt, nf)
+        cf, sc, scalogram = cwt_fast(tr.data, ba, nConv, frex, half_wave)
+        #scalogram = ccwt(tr.data, self.tracer_stats.Sampling_rate, f_min, f_max, wmin, wmax, tt, nf)
       
         scalogram = np.abs(scalogram) ** 2
 
-        t = np.linspace(0, self.tracer_stats.Delta * npts, npts - 1)
+        t = np.linspace(0, self.tracer_stats.Delta * npts, npts)
         scalogram2 = 10 * (np.log10(scalogram / np.max(scalogram)))
         x, y = np.meshgrid(t, np.linspace(f_min, f_max, scalogram2.shape[0]))
 
