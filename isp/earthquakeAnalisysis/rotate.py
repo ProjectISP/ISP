@@ -50,8 +50,10 @@ class PolarizationAnalyis:
 
     def polarize(self, t1: UTCDateTime, t2: UTCDateTime, win_len, win_frac, frqlow, frqhigh, method='flinn'):
 
-        win_frac=int(win_len*win_frac/100)
+       # win_frac=int(win_len*win_frac/100)
         st = self.__get_stream(t1, t2)
+        fs=st[0].stats.sampling_rate
+        win_frac=1/(fs*win_len)
 
         out = polarization_analysis(st, win_len, win_frac, frqlow, frqhigh, st[0].stats.starttime,
                                     st[0].stats.endtime, verbose=False, method=method, var_noise=0.0)

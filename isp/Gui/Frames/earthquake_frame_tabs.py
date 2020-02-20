@@ -4,10 +4,10 @@ from obspy.core.event import Origin
 
 from isp.Exceptions import InvalidFile, parse_excepts
 from isp.Gui import pw, pqg
-from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas
+from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas, FocCanvas
 from isp.Gui.Frames.qt_components import ParentWidget, FilterBox, FilesView, MessageDialog
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
-from isp.earthquakeAnalisysis import PolarizationAnalyis, NllManager, PickerManager
+from isp.earthquakeAnalisysis import PolarizationAnalyis, NllManager, PickerManager, FirstPolarity
 
 
 @add_save_load()
@@ -46,6 +46,7 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         self.selectDirBtn_3C.clicked.connect(self.on_click_select_directory_3C)
         self.rotateplotBtn.clicked.connect(lambda: self.on_click_rotate(self.canvas))
         self.polarizationBtn.clicked.connect(self.on_click_polarization)
+
 
     def info_message(self, msg):
         md = MessageDialog(self)
@@ -145,11 +146,14 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.__pick_output_path = PickerManager.get_default_output_path()
         self.__dataless_dir = None
         self.__nll_manager = None
+        self.__first_polarity = None
 
         # Map
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
         # Canvas for Earthquake Location Results
         self.residuals_canvas = MatplotlibCanvas(self.plotMatWidget_residuals)
+        # Canvas for FOCMEC  Results
+        self.focmec_canvas = FocCanvas(self.widget_focmec)
 
         self.grid_latitude_bind = BindPyqtObject(self.gridlatSB)
         self.grid_longitude_bind = BindPyqtObject(self.gridlonSB)
@@ -165,12 +169,19 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.grdtimeBtn.clicked.connect(lambda: self.on_click_run_grid_to_time())
         self.runlocBtn.clicked.connect(lambda: self.on_click_run_loc())
         self.plotmapBtn.clicked.connect(lambda: self.on_click_plot_map())
+        self.firstpolarityBtn.clicked.connect(self.first_polarity)
 
     @property
     def nll_manager(self):
         if not self.__nll_manager:
             self.__nll_manager = NllManager(self.__pick_output_path, self.__dataless_dir)
         return self.__nll_manager
+
+    @property
+    def firstpolarity_manager(self):
+        if not self.__first_polarity:
+            self.__first_polarity = FirstPolarity()
+        return self.__first_polarity
 
     def set_dataless_dir(self, dir_path):
         self.__dataless_dir = dir_path
@@ -272,3 +283,12 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
                                                         origin.quality.azimuthal_gap,
                                                         origin.quality.minimum_distance,
                                                         origin.quality.maximum_distance))
+    def first_polarity(self):
+        self.firstpolarity_manager.create_input()
+        Station, Az, Dip, Motion = self.firstpolarity_manager.get_dataframe()
+        cat,Plane_A=self.firstpolarity_manager.extract_focmec_info()
+        print(cat[0].focal_mechanisms[0])
+        strike_A = Plane_A.strike
+        dip_A = Plane_A.dip
+        rake_A = Plane_A.rake
+        self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion,0)

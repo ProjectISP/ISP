@@ -1,3 +1,4 @@
 from isp.earthquakeAnalisysis.picker_manager import PickerManager
 from isp.earthquakeAnalisysis.run_nll import NllManager
 from isp.earthquakeAnalisysis.rotate import PolarizationAnalyis
+from isp.earthquakeAnalisysis.first_polarity import FirstPolarity

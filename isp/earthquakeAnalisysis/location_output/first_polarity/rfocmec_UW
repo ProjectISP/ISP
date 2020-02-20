@@ -1,0 +1,28 @@
+#!/bin/csh -f
+echo Running FOCMEC
+cp ../earthquakeAnalisysis/location_output/first_polarity/test.inp ./
+if (-f log.txt) \rm log.txt
+../FOCMEC/bin/focmec << EOT > log.txt
+mechanism.out
+No comments
+\* Comment is previous line: Input file for focmec is next
+test.inp
+	correct file  [y]
+n     Include emergent arrivals?...[Y]
+1	relative weighting..[n]
+1	allowed P polarity erors..[0]
+500	exit after this many acceptable solutions...[100]
+	minimum B trend  [0]
+	B increment  [5]
+	maximum B trend  [355]
+	min B plunge..[0]
+	increment  [5]
+	maximum..[90]
+	minimum Angle..[0]
+	increment  [5]
+	maximum  [175]
+EOT
+
+mv mechanism.out ../earthquakeAnalisysis/location_output/first_polarity
+mv log.txt ../earthquakeAnalisysis/location_output/first_polarity
+mv focmec.lst ../earthquakeAnalisysis/location_output/first_polarity

@@ -6,25 +6,14 @@ Created on Thu Nov  2 06:37:45 2017
 @author: robertocabieces
 """
 
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from matplotlib.colorbar import ColorbarBase
-from matplotlib.colors import Normalize
-import obspy
-from obspy.core import UTCDateTime
 import numpy as np
 from obspy.core import read
 from obspy.core import UTCDateTime
 from obspy.core.util import AttribDict
-from obspy.signal.invsim import corn_freq_2_paz
 from obspy.signal.array_analysis import array_processing
-#from obspy.geodetics.base import gps2dist_azimuth
-#from scipy.signal import argrelextrema as pks
-from obspy.signal.array_analysis import get_geometry
 import pandas as pd
 import os
 
-#import matplotlib.dates as mdates
 
 def FK(path,path_coords,stime,DT,fmin,fmax,slim,sres,win_len,win_frac):
     path=path+"/*.*"
@@ -71,20 +60,22 @@ def FK(path,path_coords,stime,DT,fmin,fmax,slim,sres,win_len,win_frac):
 
     nsamp = int(win_len * fs)
     nstep = int(nsamp * win_frac)
-    out = array_processing(st, **kwargs)    
-         
-    xlocator = mdates.AutoDateLocator()
+
+    out = array_processing(st, **kwargs)
     
     T = out[:,0]
+
+    Time = T
+    Time = Time - int(Time)
+    H = Time * 24
+    minutes = (H - int(H)) * 60
+    seconds = (minutes - int(minutes)) * 60
     relpower =  out[:,1]
     AZ=out[:,3]
     AZ[AZ < 0.0] += 360
     Slowness=out[:,4]
-    #st.plot(outfile="FKseismigram_Analysis") 
-    st.plot() 
-    return   relpower,AZ,Slowness,T
-        
-#relpower,AZ,Slowness,T=FK(path,f_min,fmax,slim,sres,win_len,win_frac)        
+    return   relpower,AZ,Slowness, seconds
+
         
         
         

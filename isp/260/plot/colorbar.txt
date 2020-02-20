@@ -1,8 +1,0 @@
-
-
-
-gmt makecpt -Cpanoply -T-150/0/10 -Z > cont.cpt
-
-gmt pscoast -JM18c -R-70/-60/6/15 -Ba1 -BWSne -Dh -Wthinnest -G192/192/192 -X4.5 -Y2.5 -K > map.ps
-gmt psscale -Ccont.cpt -Dx3.5i/-0.45i+w5i/0.15i+h+jTC+mc -R -J -Bxa50 -By+ldB -O >> map.ps
-GMT psconvert -Tf map.ps

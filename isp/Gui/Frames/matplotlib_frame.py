@@ -735,3 +735,110 @@ class CartopyCanvas(BasePltPyqtCanvas):
         ax.plot(x, y, color='red', marker='*',markersize=3)
         ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", alpha=0.3,cmap=plt.get_cmap('YlOrBr'))
         self.draw()
+
+    def plot_stations(self, x, y, depth, axes_index, show_colorbar=True, clear_plot=True, **kwargs):
+        self.clear()
+        ax = self.get_axe(axes_index)
+        # print(self.MAP_SERVICE_URL)
+        wms = WebMapService(self.MAP_SERVICE_URL)
+        layer = 'GEBCO_08 Hillshade'
+        xmin = int(min(x) - 5)
+        xmax = int(max(x) + 5)
+        ymin = int(min(y) - 5)
+        ymax = int(max(y) + 5)
+        extent = [xmin, xmax, ymin, ymax]
+
+        ax.set_extent(extent, crs=ccrs.PlateCarree())
+        coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
+                                                            edgecolor='k', alpha=0.6, linewidth=0.5,
+                                                            facecolor=cartopy.feature.COLORS['land'])
+        ax.add_feature(coastline_10m)
+        ax.add_wms(wms, layer)
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                          linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
+        gl.xlabels_top = False
+        gl.ylabels_left = False
+        gl.xlines = False
+        gl.ylines = False
+        gl.xformatter = LONGITUDE_FORMATTER
+        gl.yformatter = LATITUDE_FORMATTER
+        cmap = kwargs.pop('cmap', plt.get_cmap('jet'))
+        vmin = kwargs.pop('vmin', numpy.amin(depth))
+        vmax = kwargs.pop('vmax', numpy.amax(depth))
+
+        cs = ax.scatter(x, y, s=10, c=depth / 10, marker="^", cmap=plt.get_cmap('YlOrBr'))
+        cs.set_clim(vmin, vmax)
+        if show_colorbar:
+            self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, orientation='horizontal', fraction=0.05,
+                                                         extend='both', pad=0.15)
+            self.__cbar.ax.set_ylabel("Depth [m]")
+        self.draw()
+
+class FocCanvas(BasePltPyqtCanvas):
+
+    def __init__(self, parent, **kwargs):
+        """
+        Create an embed cartopy canvas into pyqt.
+
+        :param parent: A QWidget to be parent of this canvas.
+
+        :keyword kwargs: Any valid Matplotlib kwargs for subplots or Cartopy.
+
+        :keyword nrows: default = 1
+
+        :keyword ncols: default = 1
+
+        :keyword sharex: default = all
+
+        :keyword constrained_layout: default = False
+
+        :keyword projection: default =  ccrs.PlateCarree()
+        """
+
+        c_layout = kwargs.pop("constrained_layout", False)
+        super().__init__(parent,constrained_layout=c_layout, **kwargs)
+
+    def drawFocMec(self, strike, dip, rake, sta, az, inc,pol, axes_index):
+        from obspy.imaging.beachball import beach
+        import numpy as np
+        azims = []
+        incis = []
+        polarities = []
+        bbox = dict(boxstyle="round,pad=0.2", fc="w", ec="k", lw=1.5, alpha=0.7)
+        self.clear()
+        ax = self.get_axe(axes_index)
+        beach2 = beach([strike, dip, rake], facecolor='r', linewidth=1., alpha=0.3, width=2)
+        ax.add_collection(beach2)
+        ax.set_ylim(-1, 1)
+        ax.set_xlim(-1, 1)
+        N= len(sta)
+        for j in range(N):
+            station = sta[j]
+            azim = az[j]
+            inci = inc[j]
+            polarity = str(pol[j])
+            polarity = polarity[0]
+            if inci > 90:
+                inci = 180. - inci
+                azim = -180. + azim
+            plotazim = (np.pi / 2.) - ((azim / 180.) * np.pi)
+            azims.append(plotazim)
+            incis.append(inci)
+            x = (inci * np.cos(plotazim))/90
+            y = (inci * np.sin(plotazim))/90
+            polarities.append(polarity)
+            ax.text(x, y, "  " + station, va="top", bbox=bbox, zorder=2)
+
+
+        azims = np.array(azims)
+        incis = np.array(incis)
+        incis=incis/90
+
+        x=incis*np.cos(azims)
+        y=incis*np.sin(azims)
+        polarities = np.array(polarities, dtype=bool)
+        ax.scatter(x, y, marker="o", lw=1, facecolor="w", edgecolor="k", s=50, zorder=3)
+        #mask = (polarities == True)
+        ax.set_title("Focal Mechanism")
+        ax.set_axis_off()
+        self.draw()
