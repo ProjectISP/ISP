@@ -179,6 +179,13 @@
          </sizepolicy>
         </property>
         <layout class="QGridLayout" name="gridLayout_7">
+         <item row="6" column="0">
+          <widget class="QLabel" name="label_31">
+           <property name="text">
+            <string>value</string>
+           </property>
+          </widget>
+         </item>
          <item row="6" column="1">
           <widget class="QComboBox" name="comboBox_polarity">
            <item>
@@ -193,29 +200,25 @@
            </item>
           </widget>
          </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="label_31">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_26">
            <property name="text">
-            <string>value</string>
+            <string>Method</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_winlen"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_28">
+           <property name="text">
+            <string>Windows Overlap</string>
            </property>
           </widget>
          </item>
          <item row="2" column="1">
           <widget class="QSpinBox" name="spinBox_winoverlap"/>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_27">
-           <property name="text">
-            <string>Windows Length</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_29">
-           <property name="text">
-            <string>Noise Variance</string>
-           </property>
-          </widget>
          </item>
          <item row="0" column="1">
           <widget class="QComboBox" name="comboBox_methodpolarization">
@@ -236,23 +239,6 @@
            </item>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_28">
-           <property name="text">
-            <string>Windows Overlap</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_winlen"/>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_26">
-           <property name="text">
-            <string>Method</string>
-           </property>
-          </widget>
-         </item>
          <item row="5" column="0">
           <widget class="QLabel" name="label_30">
            <property name="text">
@@ -260,8 +246,26 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="1">
-          <widget class="QSpinBox" name="spinBox_2"/>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_27">
+           <property name="text">
+            <string>Windows Length</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_29">
+           <property name="text">
+            <string>Noise Variance</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0" colspan="2">
+          <widget class="QPushButton" name="polarizationBtn">
+           <property name="text">
+            <string>Polarization Analysis</string>
+           </property>
+          </widget>
          </item>
          <item row="5" column="1">
           <widget class="QComboBox" name="comboBox_yaxis">
@@ -277,10 +281,13 @@
            </item>
           </widget>
          </item>
-         <item row="7" column="0" colspan="2">
-          <widget class="QPushButton" name="polarizationBtn">
+         <item row="3" column="1">
+          <widget class="QSpinBox" name="spinBox_2"/>
+         </item>
+         <item row="8" column="0" colspan="2">
+          <widget class="QPushButton" name="plotpolBtn">
            <property name="text">
-            <string>Polarization Analysis</string>
+            <string>Plot Polarization</string>
            </property>
           </widget>
          </item>

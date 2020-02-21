@@ -16,6 +16,8 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         super(ArrayAnalysisFrame, self).__init__()
         self.setupUi(self)
         self.__stations_dir = None
+
+        #self.splitter_2.setStretchFactor(1, 1)
         self.canvas = MatplotlibCanvas(self.responseMatWidget)
         self.canvas_fk = MatplotlibCanvas(self.widget_fk,nrows=4)
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
@@ -58,6 +60,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         #Action Buttons
         self.arfBtn.clicked.connect(lambda: self.arf())
         self.runFKBtn.clicked.connect(lambda: self.FK_plot())
+        self.plotBtn.clicked.connect(lambda: self.plot_seismograms())
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
@@ -67,7 +70,8 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
     def arf(self):
 
         coords_path = os.path.join(self.root_path_bind.value, "coords.txt")
-        arf,coords = array_analysis.array.arf(coords_path, self.fmin_bind.value, self.fmax_bind.value, self.smax_bind.value)
+        wavenumber = array_analysis.array()
+        arf,coords = wavenumber.arf(coords_path, self.fmin_bind.value, self.fmax_bind.value, self.smax_bind.value)
 
         slim = self.smax_bind.value
         sstep = slim / len(arf)
@@ -92,7 +96,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         relpower,abspower, AZ, Slowness, T = wavenumber.FK(self.root_pathFK_bind.value, self.stationsCoords_bind.value, starttime, endtime,
         self.fminFK_bind.value, self.fmaxFK_bind.value, self.smaxFK_bind.value, self.slow_grid_bind.value,
         self.timewindow_bind.value, self.overlap_bind.value)
-        self.canvas_fk.scatter3d(T,relpower,relpower, axes_index=0, clabel="Power [dB]")
+        self.canvas_fk.scatter3d(T, relpower,relpower, axes_index=0, clabel="Power [dB]")
         self.canvas_fk.scatter3d(T, abspower, relpower, axes_index=1, clabel="Power [dB]")
         self.canvas_fk.scatter3d(T, AZ, relpower, axes_index=2, clabel="Power [dB]")
         self.canvas_fk.scatter3d(T, Slowness, relpower, axes_index=3, clabel="Power [dB]")
@@ -101,9 +105,8 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_fk.set_ylabel(2, " Back Azimuth ")
         self.canvas_fk.set_ylabel(3, " Slowness ")
         self.canvas_fk.set_xlabel(3, "Time [s]")
-        #self.canvas_fk.set_major_locator(3,xlocator)
-        #self.canvas_fk.set_major_formatter(3, mdates.AutoDateFormatter(xlocator))
-
+        #ax = self.canvas_fk.get_axe(3)
+        #ax.set_major_locator(mdates.AutoDateFormatter(xlocator))
 
     def on_click_matplotlib(self, event, canvas):
         if isinstance(canvas, MatplotlibCanvas):
@@ -111,7 +114,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             starttime = convert_qdatetime_utcdatetime(self.starttime_date)
             x1, y1 = event.xdata, event.ydata
             DT = x1
-            X, Y, Z = wavenumber.FKCoherence(self.root_pathFK_bind.value, self.stationsCoords_bind.value,
+            X, Y, Z, Sxpow, Sypow, coord = wavenumber.FKCoherence(self.root_pathFK_bind.value, self.stationsCoords_bind.value,
             starttime, DT , self.fminFK_bind.value, self.fmaxFK_bind.value, self.smaxFK_bind.value, self.timewindow_bind.value,
                                    self.slow_grid_bind.value, self.methodSB.currentText())
             if self.methodSB.currentText() == "FK":
@@ -120,9 +123,9 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                 clabel = "Magnitude Coherence"
             self.canvas_slow_map.plot_contour(X, Y, Z, axes_index=0, clabel=clabel, cmap=plt.get_cmap("jet"))
             self.canvas_slow_map.set_xlabel(0, "Sx [s/km]")
-            self.canvas_slow_map.set_Ylabel(0, "Sy [s/km]")
-
-
-
-
+            self.canvas_slow_map.set_ylabel(0, "Sy [s/km]")
+            ##Call Stack and Plot###
+    def plot_seismograms(self):
+        wavenumber = array_analysis.array()
+        wavenumber.plot_seismograms(self.root_pathFK_bind.value)
 

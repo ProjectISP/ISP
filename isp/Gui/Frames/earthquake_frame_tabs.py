@@ -4,10 +4,14 @@ from obspy.core.event import Origin
 
 from isp.Exceptions import InvalidFile, parse_excepts
 from isp.Gui import pw, pqg
-from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas, FocCanvas
+from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas, FocCanvas, \
+    MatplotlibFrame
 from isp.Gui.Frames.qt_components import ParentWidget, FilterBox, FilesView, MessageDialog
+from isp.Gui.Frames.plot_polarization import PlotPolarization
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.earthquakeAnalisysis import PolarizationAnalyis, NllManager, PickerManager, FirstPolarity
+import matplotlib.pyplot as plt
+
 
 
 @add_save_load()
@@ -19,6 +23,11 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
 
         self.setupUi(self)
         ParentWidget.set_parent(parent, self)
+        #Initialize parametrs for plot rotation
+        self._z = {}
+        self._r = {}
+        self._t = {}
+        self._st = {}
 
         self.filter_3ca = FilterBox(self.toolQFrame, 1)  # add filter box component.
 
@@ -46,6 +55,9 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         self.selectDirBtn_3C.clicked.connect(self.on_click_select_directory_3C)
         self.rotateplotBtn.clicked.connect(lambda: self.on_click_rotate(self.canvas))
         self.polarizationBtn.clicked.connect(self.on_click_polarization)
+        ###
+        self.plotpolBtn.clicked.connect(self.plot_particle_motion)
+        ###
 
 
     def info_message(self, msg):
@@ -99,6 +111,10 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
                                           filter_error_callback=self.info_message,
                                           filter_value=self.filter_3ca.filter_value,
                                           f_min=self.filter_3ca.min_freq, f_max=self.filter_3ca.max_freq)
+            self._z = z
+            self._r = r
+            self._t = t
+            self._st = st
             rotated_seismograms = [z, r, t]
             for index, data in enumerate(rotated_seismograms):
                 canvas.plot(time, data, index, color="black", linewidth=0.5)
@@ -134,6 +150,23 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         except ValueError as error:
             self.info_message(str(error))
 
+    #############
+    #def runtest(self):
+    #    self._plot_polarization=PlotPolarization(self._z, self._r, self._t)
+    #    self._plot_polarization.show()
+
+    def plot_particle_motion(self):
+         fig = plt.figure(figsize=(8,8))
+         ax = fig.gca(projection='3d')
+         end=len(self._z)-1
+         ax.plot(self._z, self._r, self._t)
+         ax.text(self._z[0],self._r[0], self._t[0],"start")
+         ax.text(self._z[end], self._r[end], self._t[end], "end")
+         self.mpf = MatplotlibFrame(fig)
+         self.mpf.show()
+
+    ##########
+
 
 @add_save_load()
 class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
@@ -152,6 +185,9 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
         # Canvas for Earthquake Location Results
         self.residuals_canvas = MatplotlibCanvas(self.plotMatWidget_residuals)
+        self.residuals_canvas.figure.subplots_adjust(left = 0.03, bottom = 0.36, right=0.97, top=0.95, wspace=0.2,
+                                                   hspace=0.0)
+
         # Canvas for FOCMEC  Results
         self.focmec_canvas = FocCanvas(self.widget_focmec)
 
@@ -251,11 +287,11 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
     def plot_residuals(self, xp, yp, xs, ys):
 
         artist = self.residuals_canvas.plot(xp, yp, axes_index=0, linewidth=0.5)
-        self.residuals_canvas.set_xlabel(0, "Station Name")
-        self.residuals_canvas.set_ylabel(0, "P wave Residuals")
+        self.residuals_canvas.set_xlabel(0, "Station")
+        self.residuals_canvas.set_ylabel(0, "P wave Res")
         self.residuals_canvas.set_yaxis_color(self.residuals_canvas.get_axe(0), artist.get_color(), is_left=True)
         self.residuals_canvas.plot(xs, ys, 0, is_twinx=True, color="red", linewidth=0.5)
-        self.residuals_canvas.set_ylabel_twinx(0, "S wave Residuals")
+        self.residuals_canvas.set_ylabel_twinx(0, "S wave Res")
 
     def add_earthquake_info(self, origin: Origin):
 
@@ -291,4 +327,4 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         strike_A = Plane_A.strike
         dip_A = Plane_A.dip
         rake_A = Plane_A.rake
-        self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion,0)
+        self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, 0)

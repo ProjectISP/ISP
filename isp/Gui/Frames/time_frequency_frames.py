@@ -956,6 +956,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
     #         S = get_info2(Path)
     #         # st.plot()
     #         print("Plot")
+
     #         self.aw = MatplotlibFrame(st)
     #         self.aw.show()
     #         self.resultados.setText(S)

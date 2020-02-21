@@ -14,27 +14,25 @@ import pandas as pd
 import os
 from obspy.signal.array_analysis import array_transff_freqslowness
 import nitime.algorithms as alg
-import matplotlib.pyplot as plt
 from obspy.signal.array_analysis import get_geometry
 import math
 from scipy import fftpack
 from nitime import utils
 from datetime import date
 
+from isp.Gui.Frames import MatplotlibFrame
+
+
 class array:
 
     def __init__(self):
         """
-                Manage nll files for run nll program.
+                FK and Multitaper Coherence program.
 
-                Important: The  obs_file_path is provide by the class :class:`PickerManager`.
 
-                :param obs_file_path: The file path of pick observations.
+
+                :param No params requirede to initialize the class
         """
-        # self.__dataless_dir = dataless_path
-        # self.__obs_file_path = obs_file_path
-        # self.__create_dirs()
-
 
     def arf(self,path,fmin,flim,slim):
 
@@ -50,12 +48,21 @@ class array:
 
         return transff,coords
 
+    def azimuth2mathangle(self, azimuth):
+        if azimuth <= 90:
+            mathangle = 90 - azimuth
+        elif 90 < azimuth <= 180:
+            mathangle = 270 + (180 - azimuth)
+        elif 180 < azimuth <= 270:
+            mathangle = 180 + (270 - azimuth)
+        else:
+            mathangle = 90 + (360 - azimuth)
+        return mathangle
+
     def FK(self, path, path_coords, stime, etime, fmin, fmax, slim, sres, win_len, win_frac):
 
-        diff=etime-stime
         path = path+"/*.*"
         path_coords = os.path.join(path_coords,"coords.txt")
-
         st = read(path)
         maxstart = np.max([tr.stats.starttime for tr in st])
         minend = np.min([tr.stats.endtime for tr in st])
@@ -68,14 +75,7 @@ class array:
         for i in range(n):
             st[i].stats.coordinates = AttribDict(
                 {'latitude': df.loc[i].Lat, 'elevation': 0.0, 'longitude': df.loc[i].Lon})
-        # coord =get_geometry(st, coordsys='lonlat', return_center=True, verbose=True)
-        #tr = st[0]
-        #delta = tr.stats.delta
-        fs = st[0].stats.sampling_rate
-        #stime = UTCDateTime(stime)
-        #etime = stime + DT
-        DT = etime-stime
-        print("Computing FK")
+
         kwargs = dict(
             # slowness grid: X min, X max, Y min, Y max, Slow Step
             sll_x=-1 * slim, slm_x=slim, sll_y=-1 * slim, slm_y=slim, sl_s=sres,
@@ -87,13 +87,9 @@ class array:
             semb_thres=-1e9, vel_thres=-1e9, timestamp='mlabday',
             stime=stime, etime=etime)
 
-        #nsamp = int(win_len * fs)
-        #nstep = int(nsamp * win_frac)
-        print(stime)
-        print(etime)
         out = array_processing(st, **kwargs)
         print("Finished")
-        #xlocator = mdates.AutoDateLocator()
+
         T = out[:, 0]
         relpower = out[:, 1]
         abspower = out[:, 2]
@@ -104,9 +100,7 @@ class array:
         return relpower, abspower, AZ, Slowness, T
 
     def FKCoherence(self, path, path_coords, start, DT, linf, lsup, slim, win_len, sinc, method):
-        #print(start)
-        print(DT)
-        #print(win_len)
+
         def find_nearest(array, value):
 
             idx, val = min(enumerate(array), key=lambda x: abs(x[1] - value))
@@ -116,48 +110,33 @@ class array:
         path_coords = path_coords + "/" + "coords.txt"
         sides = 'onesided'
         pi = math.pi
-        rad = 180 / pi
 
         smax = slim
         smin = -1 * smax
-
         Sx = np.arange(smin, smax, sinc)[np.newaxis]
         Sy = np.arange(smin, smax, sinc)[np.newaxis]
-
         nx = ny = len(Sx[0])
         Sy = np.fliplr(Sy)
 
-
         #####Convert start from Greogorian to actual date###############
-
-        # Time = d.timetuple()
         Time = DT
-
         Time = Time - int(Time)
         d = date.fromordinal(int(DT))
         date1 = d.isoformat()
-
         H = (Time * 24)
         H1 = int(H)  # Horas
         minutes = (H - int(H)) * 60
         minutes1 = int(minutes)
         seconds = (minutes - int(minutes)) * 60
-
         H1 = str(H1).zfill(2)
         minutes1 = str(minutes1).zfill(2)
         seconds = "%.2f" % seconds
         seconds = str(seconds).zfill(2)
-
-        ##
-        # time.struct_time(tm_year=2002, tm_mon=3, tm_mday=11, tm_hour=0, tm_min=0, tm_sec=0, tm_wday=0, tm_yday=70, tm_isdst=-1)
-        ##Build the initial date
-
         DATE = date1 + "T" + str(H1) + minutes1 + seconds
         print(DATE)
         t1 = UTCDateTime(DATE)
+        ########End conversion###############################
 
-
-        #st = read(path, starttime=start+DT, endtime=start+DT+win_len)
         st = read(path, starttime=t1, endtime=t1 + win_len)
         print(st)
         st.sort()
@@ -169,7 +148,7 @@ class array:
                 {'latitude': df.loc[i].Lat, 'elevation': 0.0, 'longitude': df.loc[i].Lon})
 
         coord = get_geometry(st, coordsys='lonlat', return_center=True)
-        # =============================
+
         tr = st[0]
         win = len(tr.data)
         if (win % 2) == 0:
@@ -197,12 +176,12 @@ class array:
             else:
                 m[:, i] = (tr.data - np.mean(tr.data))
         pdata = np.transpose(m)
+
         #####Coherence######
         NW = 2  # the time-bandwidth product##Buena seleccion de 2-3
         K = 2 * NW - 1
         tapers, eigs = alg.dpss_windows(win, NW, K)
-        tdata = tapers[None, :, :] * pdata[:, None, :]  # filas estaciones,
-        # columnas por tapers, profundiadad data
+        tdata = tapers[None, :, :] * pdata[:, None, :]
         tspectra = fftpack.fft(tdata)
 
         w = np.empty((nr, int(K), int(nfft)))
@@ -233,15 +212,18 @@ class array:
                 for j in range(nr):
                     A = np.fft.rfft(m[:, i])
                     B = np.fft.rfft(m[:, j])
-                    out = A * np.conjugate(B)
+                    #Power
+                    #out = A * np.conjugate(B)
+
+                    #Relative Power
+                    den=np.absolute(A)*np.absolute(np.conjugate(B))
+                    out = (A * np.conjugate(B))/den
 
                     cxcohe = out[value1:value2]
                     Cx[i, j, :] = cxcohe
 
         r = np.zeros((nr, 2))
-        A = np.zeros((nr, 1), dtype=np.complex128)
         S = np.zeros((1, 2))
-        K = np.zeros((1, 5))
         Pow = np.zeros((len(Sx[0]), len(Sy[0])))
         for n in range(nr):
             r[n, :] = coord[n][0:2]
@@ -265,21 +247,32 @@ class array:
 
         Pow = Pow / len(freq)
         Pow = np.fliplr(Pow)
-        # Plotting part
-
-        # Pow = np.flipud(Pow)
-        #
-        # fig, ax = plt.subplots()
         x = y = np.linspace(smin, smax, nx)
         X, Y = np.meshgrid(x, y)
-        # plt.contourf(X, Y, Pow, 50, cmap=plt.cm.jet)
-        # cs = ax.contourf(X, Y, Pow, 50, cmap=plt.cm.jet)
-        # plt.ylabel('Sy [s/km]')
-        # plt.xlabel('Sx [s/km]')
-        # cbar = fig.colorbar(cs)
-        # plt.show()
+        nn=len(x)
+        #Pow1 = np.flipud(Pow)
+        maximum_power=np.where(Pow == np.amax(Pow))
+        print(Pow[maximum_power[0],maximum_power[1]])
+        print(maximum_power)
+        print(sinc)
+        Sxpow=(maximum_power[1]-nn/2)*sinc
+        Sypow = (maximum_power[0]-nn/2)*sinc
 
-        return X , Y, Pow
+
+        return X , Y, Pow, Sxpow, Sypow, coord
+
+
+
+    def stack(self,Sxpow, Sypow, coord):
+        pass
+
+    def plot_seismograms(self, path):
+         #print(path)
+         st = read(path + "/" + "*.*")
+         print(st)
+         st.plot()
+         #self.aw = MatplotlibFrame(st)
+         #self.aw.show()
 
 
 

@@ -15,6 +15,7 @@ UiSpectrumDockWidget = load_ui_designers("SpectrumDockWidget.ui")
 UiEventInfoDockWidget = load_ui_designers("EventInfoDockWidget.ui")
 UiStationInfoDockWidget = load_ui_designers("StationInfoDockWidget.ui")
 UiArrayAnalysisFrame = load_ui_designers("ArrayAnalysisFrame.ui")
+UitestFrame = load_ui_designers("test.ui")
 
 
 
