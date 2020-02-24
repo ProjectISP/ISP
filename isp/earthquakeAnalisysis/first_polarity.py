@@ -8,8 +8,8 @@ Created on Tue Dec 17 20:26:28 2019
 
 import pandas as pd
 import os
-from obspy import read_events
-from isp.earthquakeAnalisysis.focmecobspy import _read_focmec
+from obspy import read_events, Catalog
+from isp.earthquakeAnalisysis import focmecobspy
 from isp.Utils.subprocess_utils import exc_cmd
 
 class FirstPolarity:
@@ -53,7 +53,6 @@ class FirstPolarity:
         Station = []
         Az = []
         Dip = []
-        Phase = []
         Motion = []
         location_file = os.path.join(self.get_loc_dir, "last.hyp")
         df = pd.read_csv(location_file, delim_whitespace=True, skiprows=16)
@@ -87,29 +86,23 @@ class FirstPolarity:
 
     def create_input(self):
 
-        Station,Az,Dip,Motion= self.get_dataframe()
+        Station, Az, Dip, Motion= self.get_dataframe()
         N = len(Station)
-        fmt = "%4s  %6.2f  %6.2f%1s\n"
-        #
+
         with open(os.path.join(self.get_foc_dir,'test.inp'), 'wt') as f:
-            f.write("\n")  # first line is ignored!
+            f.write("\n")  # first line should be skipped!
             for j in range(N):
-                f.write(fmt % (Station[j], Az[j], Dip[j], Motion[j]))
+                f.write("{:4s}  {:6.2f}  {:6.2f}{:1s}\n".format(Station[j], Az[j], Dip[j], Motion[j]))
 
     def run_focmec(self):
         command=os.path.join(self.get_foc_dir,'rfocmec_UW')
         exc_cmd(command)
 
     def extract_focmec_info(self):
-        cat = _read_focmec(os.path.join(self.get_foc_dir,'focmec.lst'))
-        Plane_A = cat[0].focal_mechanisms[0].nodal_planes.nodal_plane_1
-        strike_A = Plane_A.strike
-        dip_A = Plane_A.dip
-        rake_A = Plane_A.rake
-        Plane_B = cat[0].focal_mechanisms[0].nodal_planes.nodal_plane_1
-        strike_B = Plane_B.strike
-        dip_B = Plane_B.dip
-        rake_B = Plane_B.rake
-        return cat,Plane_A
+        catalog: Catalog = focmecobspy._read_focmec(os.path.join(self.get_foc_dir,'focmec.lst'))
+        # TODO Change to read_events in new version of ObsPy >= 1.2.0
+        #catalog = read_events(os.path.join(self.get_foc_dir, 'focmec.lst'),format="FOCMEC")
+        plane_a = catalog[0].focal_mechanisms[0].nodal_planes.nodal_plane_1
+        return catalog,plane_a
 
 
