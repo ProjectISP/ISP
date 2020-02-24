@@ -55,7 +55,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.sortBtn.clicked.connect(self.on_click_sort)
-
+        self.updateBtn.clicked.connect(self.plot_seismogram)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
     @property

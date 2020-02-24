@@ -11,14 +11,6 @@ import os
 from obspy import read_events
 from isp.earthquakeAnalisysis.focmecobspy import _read_focmec
 from isp.Utils.subprocess_utils import exc_cmd
-import shutil
-#from test_plot_focmec import drawFocMec
-from isp import ROOT_DIR
-from isp import ROOT_DIR
-import matplotlib.pyplot as plt
-#import obspy.io.focmec.core
-import obspy
-
 
 class FirstPolarity:
 

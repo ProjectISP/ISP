@@ -24,8 +24,8 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_fk.on_double_click(self.on_click_matplotlib)
         self.canvas_stack = MatplotlibCanvas(self.widget_stack)
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
-        self.cartopy_canvas.figure.subplots_adjust(left=0.065, bottom=0.1440, right=0.9, top=0.990, wspace=0.2, hspace=0.0)
-        self.cartopy_canvas.figure.tight_layout()
+        #self.cartopy_canvas.figure.subplots_adjust(left=0.065, bottom=0.1440, right=0.9, top=0.990, wspace=0.2, hspace=0.0)
+        #self.cartopy_canvas.figure.tight_layout()
         self.canvas.set_new_subplot(1, ncols=1)
 
         #Binding
@@ -114,17 +114,30 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             starttime = convert_qdatetime_utcdatetime(self.starttime_date)
             x1, y1 = event.xdata, event.ydata
             DT = x1
-            X, Y, Z, Sxpow, Sypow, coord = wavenumber.FKCoherence(self.root_pathFK_bind.value, self.stationsCoords_bind.value,
+            Z, Sxpow, Sypow, coord = wavenumber.FKCoherence(self.root_pathFK_bind.value, self.stationsCoords_bind.value,
             starttime, DT , self.fminFK_bind.value, self.fmaxFK_bind.value, self.smaxFK_bind.value, self.timewindow_bind.value,
                                    self.slow_grid_bind.value, self.methodSB.currentText())
+
             if self.methodSB.currentText() == "FK":
                 clabel="Power"
             elif self.methodSB.currentText() == "MTP.COHERENCE":
                 clabel = "Magnitude Coherence"
+
+
+            ##Plot##
+            Sx = np.arange(-1*self.smaxFK_bind.value, self.smaxFK_bind.value, self.slow_grid_bind.value)[np.newaxis]
+            nx = len(Sx[0])
+            x = y = np.linspace(-1*self.smaxFK_bind.value, self.smaxFK_bind.value, nx)
+            X, Y = np.meshgrid(x, y)
             self.canvas_slow_map.plot_contour(X, Y, Z, axes_index=0, clabel=clabel, cmap=plt.get_cmap("jet"))
             self.canvas_slow_map.set_xlabel(0, "Sx [s/km]")
             self.canvas_slow_map.set_ylabel(0, "Sy [s/km]")
             ##Call Stack and Plot###
+            #wavenumber.stack_stream(self.root_pathFK_bind.value,Sxpow, Sypow, coord)
+
+
+
+
     def plot_seismograms(self):
         wavenumber = array_analysis.array()
         wavenumber.plot_seismograms(self.root_pathFK_bind.value)

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1142</width>
-    <height>810</height>
+    <height>828</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -248,9 +248,15 @@ QPushButton:hover {
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1124</width>
-            <height>581</height>
+            <width>1118</width>
+            <height>590</height>
            </rect>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <property name="leftMargin">
@@ -280,7 +286,7 @@ QPushButton:hover {
      <x>0</x>
      <y>0</y>
      <width>1142</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

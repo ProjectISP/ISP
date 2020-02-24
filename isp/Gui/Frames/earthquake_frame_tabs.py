@@ -151,19 +151,21 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
             self.info_message(str(error))
 
     #############
-    #def runtest(self):
-    #    self._plot_polarization=PlotPolarization(self._z, self._r, self._t)
-    #    self._plot_polarization.show()
-
     def plot_particle_motion(self):
-         fig = plt.figure(figsize=(8,8))
-         ax = fig.gca(projection='3d')
-         end=len(self._z)-1
-         ax.plot(self._z, self._r, self._t)
-         ax.text(self._z[0],self._r[0], self._t[0],"start")
-         ax.text(self._z[end], self._r[end], self._t[end], "end")
-         self.mpf = MatplotlibFrame(fig)
-         self.mpf.show()
+        self._plot_polarization=PlotPolarization(self._z, self._r, self._t)
+        #print(max(self._z))
+        print(self._plot_polarization.getSBvalue())
+        self._plot_polarization.show()
+
+    #def plot_particle_motion(self):
+    #     fig = plt.figure(figsize=(8,8))
+    #     ax = fig.gca(projection='3d')
+    #     end=len(self._z)-1
+    #     ax.plot(self._z, self._r, self._t)
+    #     ax.text(self._z[0],self._r[0], self._t[0],"start")
+    #     ax.text(self._z[end], self._r[end], self._t[end], "end")
+    #     self.mpf = MatplotlibFrame(fig)
+    #     self.mpf.show()
 
     ##########
 
@@ -185,8 +187,8 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
         # Canvas for Earthquake Location Results
         self.residuals_canvas = MatplotlibCanvas(self.plotMatWidget_residuals)
-        self.residuals_canvas.figure.subplots_adjust(left = 0.03, bottom = 0.36, right=0.97, top=0.95, wspace=0.2,
-                                                   hspace=0.0)
+        #self.residuals_canvas.figure.subplots_adjust(left = 0.03, bottom = 0.36, right=0.97, top=0.95, wspace=0.2,
+        #                                         hspace=0.0)
 
         # Canvas for FOCMEC  Results
         self.focmec_canvas = FocCanvas(self.widget_focmec)

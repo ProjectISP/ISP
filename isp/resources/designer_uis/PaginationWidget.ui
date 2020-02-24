@@ -153,6 +153,9 @@ QComboBox QAbstractItemView{
         <property name="text">
          <string>&lt;&lt;</string>
         </property>
+        <property name="shortcut">
+         <string>Shift+Left</string>
+        </property>
        </widget>
       </item>
       <item>
@@ -168,6 +171,9 @@ QComboBox QAbstractItemView{
         </property>
         <property name="text">
          <string>&lt;</string>
+        </property>
+        <property name="shortcut">
+         <string>Left</string>
         </property>
        </widget>
       </item>
@@ -259,6 +265,9 @@ QComboBox QAbstractItemView{
         <property name="text">
          <string>&gt;</string>
         </property>
+        <property name="shortcut">
+         <string>Right</string>
+        </property>
        </widget>
       </item>
       <item>
@@ -274,6 +283,9 @@ QComboBox QAbstractItemView{
         </property>
         <property name="text">
          <string>&gt;&gt;</string>
+        </property>
+        <property name="shortcut">
+         <string>Shift+Right</string>
         </property>
        </widget>
       </item>
