@@ -16,20 +16,15 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         super(ArrayAnalysisFrame, self).__init__()
         self.setupUi(self)
         self.__stations_dir = None
-
-        #self.splitter_2.setStretchFactor(1, 1)
         self.canvas = MatplotlibCanvas(self.responseMatWidget)
         self.canvas_fk = MatplotlibCanvas(self.widget_fk,nrows=4)
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
         self.canvas_fk.on_double_click(self.on_click_matplotlib)
         self.canvas_stack = MatplotlibCanvas(self.widget_stack)
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
-        #self.cartopy_canvas.figure.subplots_adjust(left=0.065, bottom=0.1440, right=0.9, top=0.990, wspace=0.2, hspace=0.0)
-        #self.cartopy_canvas.figure.tight_layout()
         self.canvas.set_new_subplot(1, ncols=1)
 
         #Binding
-
         self.root_path_bind = BindPyqtObject(self.rootPathForm)
         self.root_pathFK_bind = BindPyqtObject(self.rootPathFormFK)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
@@ -124,7 +119,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                 clabel = "Magnitude Coherence"
 
 
-            ##Plot##
             Sx = np.arange(-1*self.smaxFK_bind.value, self.smaxFK_bind.value, self.slow_grid_bind.value)[np.newaxis]
             nx = len(Sx[0])
             x = y = np.linspace(-1*self.smaxFK_bind.value, self.smaxFK_bind.value, nx)
@@ -133,9 +127,11 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             self.canvas_slow_map.set_xlabel(0, "Sx [s/km]")
             self.canvas_slow_map.set_ylabel(0, "Sy [s/km]")
             ##Call Stack and Plot###
-            #wavenumber.stack_stream(self.root_pathFK_bind.value,Sxpow, Sypow, coord)
-
-
+            stream_stack, time = wavenumber.stack_stream(self.root_pathFK_bind.value, Sxpow, Sypow, coord)
+            stack = wavenumber.stack(stream_stack)
+            self.canvas_stack.plot(time, stack, axes_index = 0)
+            self.canvas_stack.set_xlabel(0, " Time [s] ")
+            self.canvas_stack.set_ylabel(0, " Stack Amplitude ")
 
 
     def plot_seismograms(self):

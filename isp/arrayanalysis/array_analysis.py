@@ -19,6 +19,8 @@ import math
 from scipy import fftpack
 from nitime import utils
 from datetime import date
+from scipy.signal import hilbert
+from scipy.fftpack import next_fast_len
 
 from isp.Gui.Frames import MatplotlibFrame
 
@@ -64,11 +66,10 @@ class array:
         path = path+"/*.*"
         path_coords = os.path.join(path_coords,"coords.txt")
         st = read(path)
-        maxstart = np.max([tr.stats.starttime for tr in st])
-        minend = np.min([tr.stats.endtime for tr in st])
+        #maxstart = np.max([tr.stats.starttime for tr in st])
+        #minend = np.min([tr.stats.endtime for tr in st])
         #st.trim(maxstart, minend)
         #st.trim(stime, etime)
-        print(st)
         df = pd.read_csv(path_coords, sep='\t')
         n = df.Name.count()
 
@@ -138,7 +139,6 @@ class array:
         ########End conversion###############################
 
         st = read(path, starttime=t1, endtime=t1 + win_len)
-        print(st)
         st.sort()
         df = pd.read_csv(path_coords, sep='\t')
         n = df.Name.count()
@@ -248,31 +248,78 @@ class array:
         Pow = Pow / len(freq)
         Pow = np.fliplr(Pow)
         x = y = np.linspace(smin, smax, nx)
-        X, Y = np.meshgrid(x, y)
+
         nn=len(x)
-        #Pow1 = np.flipud(Pow)
         maximum_power=np.where(Pow == np.amax(Pow))
-        print(Pow[maximum_power[0],maximum_power[1]])
-        print(maximum_power)
-        print(sinc)
         Sxpow=(maximum_power[1]-nn/2)*sinc
         Sypow = (maximum_power[0]-nn/2)*sinc
 
-
-        return X , Y, Pow, Sxpow, Sypow, coord
-
+        return Pow, Sxpow, Sypow, coord
 
 
-    def stack(self,Sxpow, Sypow, coord):
-        pass
+
+    def stack_stream(self, path, sx, sy, coord):
+        sx = -1*sx
+        sy = -1*sy
+        s = np.array([sx, sy, 0])
+        st = read(path+ "/"+"*.*")
+        x = []
+        y = []
+        r = []
+        for i in range(len(coord) - 1):
+            r.append(coord[i])
+
+        for j in range(len(st)):
+            TAU = np.dot(r[j], s)
+            TAU= TAU[0]
+            st[j].stats.starttime = st[j].stats.starttime + TAU
+
+
+        maxstart = np.max([tr.stats.starttime for tr in st])
+        minend = np.min([tr.stats.endtime for tr in st])
+        st.trim(maxstart, minend)
+        fs=st[0].stats.sampling_rate
+        time = np.linspace(0, fs , num=len(st[0].data))
+        mat = np.zeros([len(st), len(st[0].data)])
+        N = len(st)
+        for i in range(N - 1):
+            mat[i, :] = st[i].data
+
+        return mat, time
+
+    def stack(self, data, stack_type = 'linear', order = 2):
+
+        """
+        Stack data by first axis.
+
+        :type stack_type: str or tuple
+        :param stack_type: Type of stack, one of the following:
+            ``'linear'``: average stack (default),
+            ``('pw', order)``: phase weighted stack of given order
+            (see [Schimmel1997]_, order 0 corresponds to linear stack),
+            ``('root', order)``: root stack of given order
+            (order 1 corresponds to linear stack).
+        """
+        if stack_type == 'linear':
+            stack = np.mean(data, axis=0)
+        elif stack_type == 'PWS':
+            npts = np.shape(data)[1]
+            nfft = next_fast_len(npts)
+            anal_sig = hilbert(data, N=nfft)[:, :npts]
+            phase_stack = np.abs(np.mean(anal_sig, axis=0)) ** order
+            stack = np.mean(data, axis=0) * phase_stack
+        elif stack_type == 'root':
+            r = np.mean(np.sign(data) * np.abs(data) ** (1 / order), axis=0)
+            stack = np.sign(r) * np.abs(r) ** order
+        else:
+            raise ValueError('stack type is not valid.')
+
+        return stack
 
     def plot_seismograms(self, path):
-         #print(path)
          st = read(path + "/" + "*.*")
-         print(st)
-         st.plot()
-         #self.aw = MatplotlibFrame(st)
-         #self.aw.show()
+         self.aw = MatplotlibFrame(st)
+         self.aw.show()
 
 
 
