@@ -280,10 +280,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
     def validate_file(self):
         if not MseedUtil.is_valid_mseed(self.file_selector.file_path):
-            msg = "The file {} is not a valid mseed. Please, choose a valid format".\
+            msg = "The file {} is not a valid mseed. Please, choose a valid format". \
                 format(self.file_selector.file_name)
-            md = MessageDialog(self)
-            md.set_info_message(msg)
             raise InvalidFile(msg)
 
     def on_click_select_directory(self):
@@ -293,15 +291,17 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             self.root_path_bind.value = dir_path
 
     def plot_day_view(self):
-        self.dayplot_frame = MatplotlibFrame(self.stream, type='dayplot')
+        st = read(self.file_selector.file_path)
+        self.dayplot_frame = MatplotlibFrame(st, type='dayplot')
         self.dayplot_frame.show()
 
     def on_click_dayplot(self):
         try:
             self.validate_file()
             self.plot_day_view()
-        except InvalidFile:
-            pass
+        except InvalidFile as e:
+            md = MessageDialog(self)
+            md.set_info_message(e.message)
 
 
 # =============================================== Old code ========================================================

@@ -235,7 +235,7 @@ class BasePltPyqtCanvas(FigureCanvas):
         sharex = kwargs.pop("sharex", "all")
         self.figure.clf()
         plt.close(self.figure)
-
+        nrows = max(nrows, 1)  # avoid zero rows.
         self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex=sharex, **kwargs)
         self.__flat_axes()
         self.draw()
@@ -603,7 +603,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             self.remove_arrow(line)
 
 
-class MatplotlibFrame(BaseFrame):
+class MatplotlibFrame(pw.QMainWindow):
     def __init__(self, obj, **kwargs):
         """
         Embed a figure from matplotlib into a pyqt canvas.
@@ -611,7 +611,7 @@ class MatplotlibFrame(BaseFrame):
         :param obj: Expected to be a obspy Stream or a matplotlib figure.
         """
         super().__init__()
-        self.setAttribute(pyc.Qt.WA_DeleteOnClose)
+        # self.setAttribute(pyc.Qt.WA_DeleteOnClose)
         self.setWindowTitle("Matplotlib Window")
 
         self.file_menu = pw.QMenu('&File', self)
@@ -629,24 +629,30 @@ class MatplotlibFrame(BaseFrame):
 
         self.layout = pw.QVBoxLayout(self.main_widget)
         self.mpc = MatplotlibCanvas(self.main_widget, obj, **kwargs)
-        self.mpw = MatplotlibWidget(self.main_widget, self.mpc)
-        self.layout.addWidget(self.mpw)
 
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
 
         self.statusBar().showMessage("Done!", 2000)
 
+        # used as a callback for closing event in this window.
+        self.__close_window_callback = None
+
+    def connect_close(self, func):
+        self.__close_window_callback = func
+
     def set_canvas(self, mpc: MatplotlibCanvas):
         self.mpc = mpc
         self.layout.removeWidget(self.mpw)
-        self.mpw = MatplotlibWidget(self.main_widget, self.mpc)
-        self.layout.addWidget(self.mpw)
 
     def fileQuit(self):
         self.close()
         self.mpc = None
-        self.mpw = None
+
+    def close(self) -> bool:
+        if self.__close_window_callback:
+            self.__close_window_callback()
+        return True
 
     def closeEvent(self, ce):
         self.fileQuit()
