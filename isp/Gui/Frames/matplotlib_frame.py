@@ -18,7 +18,6 @@ from isp.Gui import pw, pyc, qt
 from isp.Gui.Frames import BaseFrame
 from isp.Utils import ObspyUtil, AsycTime
 
-
 # Make sure that we are using QT5
 
 
