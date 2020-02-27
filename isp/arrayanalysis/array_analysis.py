@@ -22,7 +22,7 @@ from datetime import date
 from scipy.signal import hilbert
 from scipy.fftpack import next_fast_len
 
-from isp.Gui.Frames import MatplotlibFrame
+
 
 
 class array:
@@ -33,8 +33,9 @@ class array:
 
 
 
-                :param No params requirede to initialize the class
+                :param No params required to initialize the class
         """
+
 
     def arf(self,path,fmin,flim,slim):
 
@@ -315,11 +316,6 @@ class array:
             raise ValueError('stack type is not valid.')
 
         return stack
-
-    def plot_seismograms(self, path):
-         st = read(path + "/" + "*.*")
-         self.aw = MatplotlibFrame(st)
-         self.aw.show()
 
 
 

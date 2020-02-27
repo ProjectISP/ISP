@@ -5,6 +5,7 @@ from isp.Gui.Frames import  BaseFrame, \
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Gui import pw
 import os
+from isp.Gui.Frames import MatplotlibFrame
 import matplotlib.dates as mdates
 
 from isp.arrayanalysis import array_analysis
@@ -16,6 +17,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         super(ArrayAnalysisFrame, self).__init__()
         self.setupUi(self)
         self.__stations_dir = None
+        self.stream_frame = None
         self.canvas = MatplotlibCanvas(self.responseMatWidget)
         self.canvas_fk = MatplotlibCanvas(self.widget_fk,nrows=4)
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
@@ -135,6 +137,11 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
 
     def plot_seismograms(self):
-        wavenumber = array_analysis.array()
-        wavenumber.plot_seismograms(self.root_pathFK_bind.value)
-
+        from obspy import read
+        #wavenumber = array_analysis.array()
+        #wavenumber.plot_seismograms(self.root_pathFK_bind.value)
+        path = self.root_pathFK_bind.value
+        st = read(path + "/" + "*.*")
+        print(st)
+        self.stream_frame = MatplotlibFrame(st, type='normal')
+        self.stream_frame.show()
