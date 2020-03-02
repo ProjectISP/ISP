@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QFrame" name="frame">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QCheckBox" name="checkBox_waveforms">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Waveforms</string>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_station">
+           <property name="text">
+            <string>Station information</string>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_event">
+           <property name="text">
+            <string>Event information</string>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_model">
+           <property name="text">
+            <string>Earth model</string>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_mti">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>MT Inversion</string>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QWebEngineView" name="widget" native="true"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuInput">
+    <property name="title">
+     <string>Input</string>
+    </property>
+    <widget class="QMenu" name="menuEarth_models">
+     <property name="title">
+      <string>Earth models</string>
+     </property>
+     <addaction name="actionEarth_models_Read"/>
+     <addaction name="actionDelete"/>
+     <addaction name="actionCreate_new"/>
+     <addaction name="separator"/>
+     <addaction name="actionModel_1"/>
+    </widget>
+    <addaction name="actionWaveforms"/>
+    <addaction name="actionStation_information"/>
+    <addaction name="actionEvent_information"/>
+    <addaction name="menuEarth_models"/>
+    <addaction name="separator"/>
+    <addaction name="actionClear_input"/>
+   </widget>
+   <widget class="QMenu" name="menuMT_Inversion">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <widget class="QMenu" name="menuFilters">
+     <property name="title">
+      <string>Filters</string>
+     </property>
+     <addaction name="actionHigh_pass"/>
+     <addaction name="actionLow_pass"/>
+     <addaction name="actionBand_pass"/>
+    </widget>
+    <addaction name="actionConvert_MSEED_files_to_SAC_format"/>
+    <addaction name="menuFilters"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+   </widget>
+   <addaction name="menuInput"/>
+   <addaction name="menuMT_Inversion"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionWaveforms">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Waveforms</string>
+   </property>
+  </action>
+  <action name="actionInstrumental_responses">
+   <property name="text">
+    <string>Instrumental responses</string>
+   </property>
+  </action>
+  <action name="actionStation_information">
+   <property name="text">
+    <string>Station information</string>
+   </property>
+  </action>
+  <action name="actionEvent_information">
+   <property name="text">
+    <string>Event information</string>
+   </property>
+  </action>
+  <action name="actionConvert_MSEED_files_to_SAC_format">
+   <property name="text">
+    <string>Convert MSEED files to SAC format ...</string>
+   </property>
+  </action>
+  <action name="actionExtract_SAC_PZs_from_Station_XML">
+   <property name="text">
+    <string>Extract SAC PZs from Station XML ...</string>
+   </property>
+  </action>
+  <action name="actionExtract_SAC_PZs_from_dataless_SEED">
+   <property name="text">
+    <string>Extract SAC PZs from dataless SEED ...</string>
+   </property>
+  </action>
+  <action name="actionDisplacement">
+   <property name="text">
+    <string>Displacement</string>
+   </property>
+  </action>
+  <action name="actionVelocity">
+   <property name="text">
+    <string>Velocity</string>
+   </property>
+  </action>
+  <action name="actionAcceleration">
+   <property name="text">
+    <string>Acceleration</string>
+   </property>
+  </action>
+  <action name="actionHigh_pass">
+   <property name="text">
+    <string>High pass</string>
+   </property>
+  </action>
+  <action name="actionLow_pass">
+   <property name="text">
+    <string>Low pass</string>
+   </property>
+  </action>
+  <action name="actionBand_pass">
+   <property name="text">
+    <string>Band pass</string>
+   </property>
+  </action>
+  <action name="actionClear_input">
+   <property name="text">
+    <string>Clear input</string>
+   </property>
+  </action>
+  <action name="actionEarth_models_Read">
+   <property name="text">
+    <string>Read</string>
+   </property>
+  </action>
+  <action name="actionCreate_new">
+   <property name="text">
+    <string>Create new</string>
+   </property>
+  </action>
+  <action name="actionModel_1">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Model 1</string>
+   </property>
+  </action>
+  <action name="actionDelete">
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QWebEngineView</class>
+   <extends>QWidget</extends>
+   <header>PyQt5.QtWebEngineWidgets</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

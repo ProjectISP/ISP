@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from isp.Gui.Frames import  BaseFrame, \
     MatplotlibCanvas,  UiArrayAnalysisFrame, CartopyCanvas
+from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Gui import pw
 import os
@@ -58,6 +59,11 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.arfBtn.clicked.connect(lambda: self.arf())
         self.runFKBtn.clicked.connect(lambda: self.FK_plot())
         self.plotBtn.clicked.connect(lambda: self.plot_seismograms())
+        self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
+
+    def open_parameters_settings(self):
+        self.parameters = ParametersSettings()
+        self.parameters.show()
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)

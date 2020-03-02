@@ -16,6 +16,9 @@ UiEventInfoDockWidget = load_ui_designers("EventInfoDockWidget.ui")
 UiStationInfoDockWidget = load_ui_designers("StationInfoDockWidget.ui")
 UiArrayAnalysisFrame = load_ui_designers("ArrayAnalysisFrame.ui")
 UitestFrame = load_ui_designers("test.ui")
+UiParametersFrame = load_ui_designers("parameters.ui")
+UiAdditionalParameters = load_ui_designers("additionalParameters.ui")
+UiMomentTensor = load_ui_designers("MomentTensor.ui")
 
 
 

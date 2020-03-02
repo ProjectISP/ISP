@@ -1,5 +1,5 @@
 import PyQt5 as PyQt
-from PyQt5 import QtGui
+from PyQt5 import QtGui, QtWebEngineWidgets
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
@@ -11,7 +11,7 @@ pqg = QtGui
 pw = QtWidgets
 pyc = QtCore
 qt = Qt
-
+qteng = QtWebEngineWidgets
 # file to save ui fields
 user_preferences = pyc.QSettings(pyc.QSettings.NativeFormat, pyc.QSettings.UserScope, "isp", "user_pref")
 
