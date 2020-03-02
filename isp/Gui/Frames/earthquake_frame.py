@@ -7,9 +7,9 @@ from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, Mes
     MatplotlibCanvas
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
 from isp.Gui.Utils import map_polarity_from_pressed_key
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Structures.structures import PickerStructure
-from isp.Utils import MseedUtil, ObspyUtil
+from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.earthquakeAnalisysis import PickerManager
 
 
@@ -134,17 +134,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if dir_path:
             bind.value = dir_path
 
+
     def plot_seismogram(self):
         self.canvas.clear()
         files_at_page = self.get_files_at_page()
+        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         if len(self.canvas.axes) != len(files_at_page):
             self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
         last_index = 0
+        time_min = []
+        time_max = []
         for index, file_path in enumerate(files_at_page):
             sd = SeismogramData(file_path)
-            t, s = sd.get_waveform(filter_error_callback=self.filter_error_message,
+            t,t_sec, s = sd.get_waveform(filter_error_callback=self.filter_error_message,
                                    filter_value=self.filter.filter_value,
-                                   f_min=self.filter.min_freq, f_max=self.filter.max_freq)
+                                   f_min=self.filter.min_freq, f_max=self.filter.max_freq, start_time=start_time,
+                                   end_time=end_time)
 
             self.canvas.plot(t, s, index, color="black", linewidth=0.5)
             self.redraw_pickers(file_path, index)
@@ -155,8 +161,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 info = "{}-{}-{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
                 self.canvas.set_plot_label(index, info)
 
+            time_min.append(min(t))
+            time_max.append(max(t))
+
         # set x-label at the last axes.
-        self.canvas.set_xlabel(last_index, "Time (s)")
+        ax = self.canvas.get_axe(last_index)
+        ax.set_xlim(min(time_min), max(time_max))
+        self.canvas.set_xlabel(last_index, "Date")
+        self.canvas.figure.autofmt_xdate()
 
     def redraw_pickers(self, file_name, axe_index):
 

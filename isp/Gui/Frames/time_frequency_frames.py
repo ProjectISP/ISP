@@ -134,7 +134,7 @@ class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
         return t1, t2
 
     def plot_seismogram(self, canvas):
-        t, s1 = self.get_data()
+        t_date, t, s1 = self.get_data()
         canvas.plot(t, s1, 0, color="black",linewidth=0.5)
 
         if self.is_envelop_checked:

@@ -1,6 +1,6 @@
 from enum import Enum, unique
 
-from obspy import read
+from obspy import read, UTCDateTime
 from obspy.geodetics import locations2degrees
 from obspy.taup import TauPyModel
 
@@ -8,6 +8,7 @@ import numpy as np
 
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, Filters
+import matplotlib.dates as mdt
 
 
 @unique
@@ -69,7 +70,7 @@ class SeismogramData:
         end_time = kwargs.get("end_time", self.stats.EndTime)
 
         tr = self.tracer
-        tr.trim(starttime=start_time, endtime=end_time)
+
         tr.detrend(type="demean")
 
         try:
@@ -82,5 +83,19 @@ class SeismogramData:
             self.__send_filter_error_callback(filter_error_callback, str(e))
 
         sample_rate = self.stats.Sampling_rate
-        t = np.arange(0, len(tr.data) / sample_rate, 1. / sample_rate)
-        return t, tr.data
+        dt = 1/sample_rate
+
+        trace_start_time = tr.stats.starttime
+        trace_end_time = tr.stats.endtime
+
+        if trace_start_time - start_time >= 0:
+            start_time = trace_start_time
+
+        if end_time - trace_end_time >= 0:
+            end_time = trace_end_time
+
+
+        tr.trim(starttime=start_time, endtime=end_time)
+        t = [UTCDateTime(start_time + n * dt).matplotlib_date for n in range(0, len(tr.data))]
+        t_sec = np.arange(0, len(tr.data) / sample_rate, 1. / sample_rate)
+        return t, t_sec, tr.data
