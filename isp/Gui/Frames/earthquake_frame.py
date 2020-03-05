@@ -11,6 +11,7 @@ from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdateti
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.earthquakeAnalisysis import PickerManager
+import matplotlib.dates as mdt
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
@@ -143,14 +144,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if len(self.canvas.axes) != len(files_at_page):
             self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
         last_index = 0
-        time_min = []
-        time_max = []
+
         for index, file_path in enumerate(files_at_page):
             sd = SeismogramData(file_path)
             t,t_sec, s = sd.get_waveform(filter_error_callback=self.filter_error_message,
                                    filter_value=self.filter.filter_value,
-                                   f_min=self.filter.min_freq, f_max=self.filter.max_freq, start_time=start_time,
-                                   end_time=end_time)
+                                   f_min=self.filter.min_freq, f_max=self.filter.max_freq)
 
             self.canvas.plot(t, s, index, color="black", linewidth=0.5)
             self.redraw_pickers(file_path, index)
@@ -161,12 +160,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 info = "{}-{}-{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
                 self.canvas.set_plot_label(index, info)
 
-            time_min.append(min(t))
-            time_max.append(max(t))
-
         # set x-label at the last axes.
         ax = self.canvas.get_axe(last_index)
-        ax.set_xlim(min(time_min), max(time_max))
+        ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
         self.canvas.set_xlabel(last_index, "Date")
         self.canvas.figure.autofmt_xdate()
 
@@ -187,14 +183,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             phase = self.comboBox_phases.currentText()
             click_at_index = event.inaxes.rowNum
             x1, y1 = event.xdata, event.ydata
+            x2, y2 = event.x, event.y
             stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
             # Get amplitude from index
-            x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
-            amplitude = canvas.get_ydata(click_at_index).item(x_index)  # get y-data from index.
+            #x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
+            #amplitude = canvas.get_ydata(click_at_index).item(x_index)  # get y-data from index.
+            amplitude = y1
             label = "{} {}".format(phase, polarity)
             line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
-
-            t = stats.StartTime + x1
+            tt = UTCDateTime(mdt.num2date(x1))
+            diff = tt - stats.StartTime
+            t = stats.StartTime + diff
             self.picked_at[str(line)] = PickerStructure(t, stats.Station, x1, amplitude, color, label,
                                                         self.get_file_at_index(click_at_index))
             # Add pick data to file.
@@ -214,4 +213,4 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             st_stats = self.dataless_manager.get_station_stats_by_mseed_file(file_path)
             stats = ObspyUtil.get_stats(file_path)
             # TODO remove stats.StartTime and use the picked one from UI.
-            self.event_info.plot_arrivals(index, stats.StartTime, st_stats)
+            self.event_info.plot_arrivals2(index, stats.StartTime, st_stats)

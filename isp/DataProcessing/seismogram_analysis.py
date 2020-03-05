@@ -6,6 +6,7 @@ from obspy.taup import TauPyModel
 
 import numpy as np
 
+
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, Filters
 import matplotlib.dates as mdt
@@ -85,17 +86,11 @@ class SeismogramData:
         sample_rate = self.stats.Sampling_rate
         dt = 1/sample_rate
 
-        trace_start_time = tr.stats.starttime
-        trace_end_time = tr.stats.endtime
+        try:
+            tr.trim(starttime=start_time, endtime=end_time)
+        except:
+            print("Please Check Starttime and Endtime")
 
-        if trace_start_time - start_time >= 0:
-            start_time = trace_start_time
-
-        if end_time - trace_end_time >= 0:
-            end_time = trace_end_time
-
-
-        tr.trim(starttime=start_time, endtime=end_time)
         t = [UTCDateTime(start_time + n * dt).matplotlib_date for n in range(0, len(tr.data))]
         t_sec = np.arange(0, len(tr.data) / sample_rate, 1. / sample_rate)
         return t, t_sec, tr.data

@@ -18,6 +18,12 @@ class AdditionalParameters(pw.QDialog, UiAdditionalParameters):
         self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 1, dsb)
 
     def getData(self):
+        data = []
         for n in range(self.tableWidget.rowCount()):
-            print(pw.QSpinBox(self.tableWidget.cellWidget(n,0)).value())
+            file = self.tableWidget.cellWidget(n,0).value()
+            operand = self.tableWidget.cellWidget(n,1).value()
+            data.append([file, operand])
+
+        return data
+
 

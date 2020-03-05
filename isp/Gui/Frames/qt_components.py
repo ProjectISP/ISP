@@ -13,7 +13,7 @@ from isp.Gui.Frames import UiPaginationWidget, UiFilterDockWidget, UiEventInfoDo
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, set_qdatetime, convert_qdatetime_utcdatetime
 from isp.Structures.structures import StationsStats, TracerStats
 from isp.Utils import Filters
-
+import matplotlib.dates as mdt
 
 class ParentWidget:
 
@@ -488,6 +488,22 @@ class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
             line = self.__canvas.draw_arrow(time + delta_time, axe_index, phase, color="green", linestyles='--',
                                             picker=False)
             self.add_arrivals_line(line)
+
+    def plot_arrivals2(self, axe_index: int, start_time: UTCDateTime, station_stats: StationsStats):
+        delta_time = self.event_time.matplotlib_date
+        print(delta_time)
+        line = self.__canvas.draw_arrow(delta_time, axe_index, "Event time", color="red", linestyles='--',
+                                        picker=False)
+        sma = SeismogramAnalysis(station_stats.Lat, station_stats.Lon)
+        phases, times = sma.get_phases_and_arrivals(self.latitude, self.longitude, self.event_depth)
+        self.add_arrivals_line(line)
+        for phase, time in zip(phases, times):
+            time = self.event_time + time
+            time = time.matplotlib_date
+            line = self.__canvas.draw_arrow(time, axe_index, phase, color="green", linestyles='--',
+                                            picker=False)
+            self.add_arrivals_line(line)
+
 
     def set_buttons_visibility(self, is_visible: bool):
         """

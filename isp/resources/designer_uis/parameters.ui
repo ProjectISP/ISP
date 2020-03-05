@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>452</width>
+    <width>866</width>
     <height>415</height>
    </rect>
   </property>
@@ -21,17 +21,12 @@
      </attribute>
      <column>
       <property name="text">
-       <string>Do</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Check</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
        <string>Order</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Do</string>
       </property>
      </column>
      <column>
@@ -42,11 +37,82 @@
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="pushButton">
-     <property name="text">
-      <string>PushButton</string>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="topMargin">
+      <number>0</number>
      </property>
-    </widget>
+     <item>
+      <widget class="QComboBox" name="addCombo">
+       <item>
+        <property name="text">
+         <string>rmean</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>taper</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>normalize</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>filter</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>denoise</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>sum</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>multiply</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>derivate</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>integrate</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>add noise</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>whiten</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>time normalization</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="addBtn">
+       <property name="text">
+        <string>Add</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

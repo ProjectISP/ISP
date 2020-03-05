@@ -64,6 +64,8 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
     def open_parameters_settings(self):
         self.parameters = ParametersSettings()
         self.parameters.show()
+        self.parameters.exec()
+        print(self.parameters.getParameters())
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)

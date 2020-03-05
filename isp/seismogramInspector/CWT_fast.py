@@ -20,14 +20,15 @@ Created on Tue Nov 12 21:44:06 2019
 
 
 import numpy as np
+from obspy.signal.filter import lowpass
+import numpy as np
 
-
-def cwt_fast(data,ba,nConv,frex,half_wave):
+def cwt_fast(data,ba,nConv,frex,half_wave, fs):
     npts=len(data)
-     ##FFT data
-    cf=[]
-    tf=[]
-    dataX=np.fft.fft(data,nConv)
+    ##FFT data
+    cf = []
+    tf = []
+    dataX = np.fft.fft(data,nConv)
 ##loop over frequencies
     for fi in range(len(frex)):
             cmwX=ba[fi,:]
@@ -41,6 +42,12 @@ def cwt_fast(data,ba,nConv,frex,half_wave):
 
     tf=np.asarray(tf)
     sc=np.mean(tf, axis=0)
-
+    cf = np.mean(cf, axis = 0)
+    cf = cf - np.mean(cf)
+    n = len(cf)
+    window = np.hamming(n)
+    cf = window * cf
+    cf = lowpass(cf, 0.15, fs, corners=4, zerophase=True)
+    cf = window * cf
     return cf,sc,tf
    
