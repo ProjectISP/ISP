@@ -91,6 +91,54 @@ class SeismogramData:
         except:
             print("Please Check Starttime and Endtime")
 
-        t = [UTCDateTime(start_time + n * dt).matplotlib_date for n in range(0, len(tr.data))]
+        if start_time - tr.stats.starttime == 0:
+            t = [UTCDateTime(start_time + n * dt).matplotlib_date for n in range(0, len(tr.data))]
+        else:
+            t = [UTCDateTime(tr.stats.starttime + n * dt).matplotlib_date for n in range(0, len(tr.data))]
+
         t_sec = np.arange(0, len(tr.data) / sample_rate, 1. / sample_rate)
         return t, t_sec, tr.data
+
+class SeismogramDataAdvanced:
+
+    def __init__(self, file_path):
+        if file_path:
+            st = read(file_path)
+            self.__tracer = st[0]
+            self.stats = TracerStats.from_dict(self.tracer.stats)
+
+    @classmethod
+    def from_tracer(cls, tracer):
+        sd = cls(None)
+        sd.set_tracer(tracer)
+        return sd
+
+    @property
+    def tracer(self):
+        return self.__tracer
+
+    def set_tracer(self, tracer):
+        self.__tracer = tracer
+        self.stats = TracerStats.from_dict(self.__tracer.stats)
+
+    def __send_filter_error_callback(self, func, msg):
+        if func:
+            func(msg)
+
+    def get_waveform_advanced(self, parameters, filter_error_callback=None, **kwargs):
+
+        start_time = kwargs.get("start_time", self.stats.StartTime)
+        end_time = kwargs.get("end_time", self.stats.EndTime)
+        tr = self.tracer
+        tr.trim(starttime = start_time, endtime = end_time)
+
+        if parameters[0] == 'rmean':
+
+            tr.detrend(type=parameters[0][1])
+
+        if parameters[0] == 'taper':
+
+            tr.detrend(type=parameters[0][1])
+
+
+        return tr

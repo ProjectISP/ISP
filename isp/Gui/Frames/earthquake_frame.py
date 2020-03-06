@@ -141,17 +141,25 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         files_at_page = self.get_files_at_page()
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        diff = end_time - start_time
         if len(self.canvas.axes) != len(files_at_page):
             self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
         last_index = 0
-
+        min_starttime = []
+        max_endtime = []
         for index, file_path in enumerate(files_at_page):
             sd = SeismogramData(file_path)
-            t,t_sec, s = sd.get_waveform(filter_error_callback=self.filter_error_message,
-                                   filter_value=self.filter.filter_value,
-                                   f_min=self.filter.min_freq, f_max=self.filter.max_freq)
+            if self.trimCB.isChecked() and diff >= 0:
+                t,t_sec, s = sd.get_waveform(filter_error_callback=self.filter_error_message,
+                                       filter_value=self.filter.filter_value,
+                                       f_min=self.filter.min_freq, f_max=self.filter.max_freq, start_time = start_time,
+                                             end_time = end_time)
+            else:
 
-            self.canvas.plot(t, s, index, color="black", linewidth=0.5)
+                t, t_sec, s = sd.get_waveform(filter_error_callback=self.filter_error_message,
+                                              filter_value=self.filter.filter_value,
+                                              f_min=self.filter.min_freq, f_max=self.filter.max_freq)
+            self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
             self.redraw_pickers(file_path, index)
             last_index = index
 
@@ -159,12 +167,26 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             if st_stats:
                 info = "{}-{}-{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
                 self.canvas.set_plot_label(index, info)
+            try:
+                min_starttime.append(min(t))
+                max_endtime.append(max(t))
+            except:
+                print("Empty traces")
 
-        # set x-label at the last axes.
+        if min_starttime and max_endtime is not None:
+            auto_start = min(min_starttime)
+            auto_end = max(max_endtime)
+
         ax = self.canvas.get_axe(last_index)
-        ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+        if self.trimCB.isChecked():
+            ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+        else:
+            ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
+        formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+        ax.xaxis.set_major_formatter(formatter)
         self.canvas.set_xlabel(last_index, "Date")
-        self.canvas.figure.autofmt_xdate()
+        #self.canvas.figure.autofmt_xdate()
+
 
     def redraw_pickers(self, file_name, axe_index):
 

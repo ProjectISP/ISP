@@ -61,11 +61,13 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.plotBtn.clicked.connect(lambda: self.plot_seismograms())
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
 
-    def open_parameters_settings(self):
+        ##Parameters settings
+
         self.parameters = ParametersSettings()
+
+    def open_parameters_settings(self):
         self.parameters.show()
-        self.parameters.exec()
-        print(self.parameters.getParameters())
+        #print(self.parameters.getParameters())
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
@@ -146,10 +148,14 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
     def plot_seismograms(self):
         from obspy import read
-        #wavenumber = array_analysis.array()
-        #wavenumber.plot_seismograms(self.root_pathFK_bind.value)
-        path = self.root_pathFK_bind.value
-        st = read(path + "/" + "*.*")
-        print(st)
-        self.stream_frame = MatplotlibFrame(st, type='normal')
-        self.stream_frame.show()
+        #path = self.root_pathFK_bind.value
+        #st = read(path + "/" + "*.*")
+        #print(st)
+        #self.stream_frame = MatplotlibFrame(st, type='normal')
+        #self.stream_frame.show()
+        parameters = self.parameters.getParameters()
+        print(parameters[0][1])
+        ###llamar a la clase nueva que interpreta los parametros
+
+
+

@@ -426,7 +426,19 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         except ValueError:
             artist.remove()
             return None
-
+    ######
+    def __plot_date(self, x, y, ax, clear_plot=True, **kwargs):
+        if clear_plot:
+            ax.cla()
+        artist, = ax.plot_date(x, y, **kwargs)
+        try:
+            # Draw can raise ValueError
+            self.draw_idle()
+            return artist
+        except ValueError:
+            artist.remove()
+            return None
+    #######
     def __plot_3d(self, x, y, z, ax, plot_type, clear_plot=True, show_colorbar=True, **kwargs):
         """
         Wrapper for matplotlib 3d plots.
@@ -495,6 +507,33 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
                 return artist
             else:
                 return self.__plot(x, y, ax, clear_plot=clear_plot, **kwargs)
+
+    ############
+    def plot_date(self, x, y, axes_index, clear_plot=True, is_twinx=False, **kwargs):
+        """
+        Wrapper for matplotlib plot.
+
+        Import: If the kwarg is_twinx=True, the kwarg clear_plot has no effect and will be always set to True.
+
+        :param x: x-axis data.
+        :param y: y-axis data.
+        :param axes_index: The subplot axes index.
+        :param clear_plot: True to clean plot, False to plot over. Default=True.
+        :param is_twinx: True if you want to add a new y-axis scale, False otherwise. Default=False.
+        :param kwargs: Valid Matplotlib kwargs for plot.
+        :return: The artist plotted.
+        """
+        if self.axes is not None:
+            ax = self.get_axe(axes_index)
+            if is_twinx:
+                tw_ax = self.__add_twinx_ax(axes_index)
+                artist = self.__plot_date(x, y, tw_ax, clear_plot=True, **kwargs)
+                if artist:
+                    self.set_yaxis_color(tw_ax, artist.get_color())
+                return artist
+            else:
+                return self.__plot_date(x, y, ax, clear_plot=clear_plot, **kwargs)
+    ############
 
     def plot_contour(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
