@@ -4,8 +4,8 @@ from isp.Gui.Frames.uis_frames import UiParametersFrame
 import copy
 import enum
 
-
 class ActionEnum (enum.Enum):
+
     RMEAN = "rmean"
     TAPER = "taper"
     NORMALIZE = "normalize"
@@ -88,8 +88,14 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.NORMALIZE.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+            layout = pw.QHBoxLayout()
             spin_param = pw.QDoubleSpinBox()
-            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, spin_param)
+            spin_param.setSingleStep(0.01)
+            layout.addWidget(spin_param)
+            layout.setContentsMargins(0, 0, 0, 0)
+            widget = pw.QWidget()
+            widget.setLayout(layout)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2,  widget)
 
         elif self.addCombo.currentData() is ActionEnum.SHIFT:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
@@ -143,8 +149,9 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.DIFFERENTIATE.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
-            spin_param = pw.QDoubleSpinBox()
-            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, spin_param)
+            combo_param = pw.QComboBox()
+            combo_param.addItems(['gradient'])
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, combo_param)
 
         elif self.addCombo.currentData() is ActionEnum.INTEGRATE:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
@@ -161,65 +168,65 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
         self.tableWidget.removeRow(current_row)
         self.orderWidgetsList.pop(current_row)
 
-    def swapRows(self, up, order_widget):
-
-        current_row = self.orderWidgetsList.index(order_widget)
-
-
-        if current_row == ValueError :
-            return
-
-        if (current_row is 0 and up is True) :
-            return
-
-        if current_row is (self.tableWidget.rowCount() - 1) and up is False:
-            return
-
-        a = []
-        b = []
-
-        dest_row = (current_row - 1) if up else (current_row + 1)
-
-        current_row_action = self.tableWidget.takeItem(current_row, 1)
-        dest_row_action = self.tableWidget.takeItem(dest_row, 1)
-        self.tableWidget.setItem(current_row, 1, dest_row_action)
-        self.tableWidget.setItem(dest_row,1, current_row_action)
-
-        current_row_parameters = []
-        dest_row_parameters = []
-
-        print(self.tableWidget.cellWidget(current_row,2).layout().count())
-        print(self.tableWidget.cellWidget(dest_row,2).layout().count())
-        layout_item = self.tableWidget.cellWidget(current_row,2).layout().takeAt(0)
-        while layout_item:
-            current_row_parameters.append(layout_item)
-            layout_item = self.tableWidget.cellWidget(current_row, 2).layout().takeAt(0)
-
-        layout_item = self.tableWidget.cellWidget(dest_row, 2).layout().takeAt(0)
-        while layout_item:
-            dest_row_parameters.append(layout_item)
-            layout_item = self.tableWidget.cellWidget(dest_row, 2).layout().takeAt(0)
-
-        print(len(current_row_parameters))
-        print(len(dest_row_parameters))
-        print(self.tableWidget.cellWidget(current_row, 2).layout().count())
-        print(self.tableWidget.cellWidget(dest_row, 2).layout().count())
-        for item in current_row_parameters:
-            self.tableWidget.cellWidget(dest_row, 2).layout().addItem(item)
-
-        for item in dest_row_parameters:
-            self.tableWidget.cellWidget(current_row, 2).layout().addItem(item)
-
-        print(self.tableWidget.cellWidget(current_row, 2).layout().count())
-        print(self.tableWidget.cellWidget(dest_row, 2).layout().count())
-
-        widget = self.tableWidget.cellWidget(current_row, 2)
-        self.tableWidget.setCellWidget(current_row, 2, widget)
-        #self.tableWidget.cellWidget(current_row, 2).show()
-        #self.tableWidget.cellWidget(dest_row, 2).hide()
-        #self.tableWidget.cellWidget(dest_row, 2).setCellWidget(dest_row, 2)
-        widget = self.tableWidget.cellWidget(dest_row, 2)
-        self.tableWidget.setCellWidget(dest_row, 2, widget)
+    # def swapRows(self, up, order_widget):
+    #
+    #     current_row = self.orderWidgetsList.index(order_widget)
+    #
+    #
+    #     if current_row == ValueError :
+    #         return
+    #
+    #     if (current_row is 0 and up is True) :
+    #         return
+    #
+    #     if current_row is (self.tableWidget.rowCount() - 1) and up is False:
+    #         return
+    #
+    #     a = []
+    #     b = []
+    #
+    #     dest_row = (current_row - 1) if up else (current_row + 1)
+    #
+    #     current_row_action = self.tableWidget.takeItem(current_row, 1)
+    #     dest_row_action = self.tableWidget.takeItem(dest_row, 1)
+    #     self.tableWidget.setItem(current_row, 1, dest_row_action)
+    #     self.tableWidget.setItem(dest_row,1, current_row_action)
+    #
+    #     current_row_parameters = []
+    #     dest_row_parameters = []
+    #
+    #     print(self.tableWidget.cellWidget(current_row,2).layout().count())
+    #     print(self.tableWidget.cellWidget(dest_row,2).layout().count())
+    #     layout_item = self.tableWidget.cellWidget(current_row,2).layout().takeAt(0)
+    #     while layout_item:
+    #         current_row_parameters.append(layout_item)
+    #         layout_item = self.tableWidget.cellWidget(current_row, 2).layout().takeAt(0)
+    #
+    #     layout_item = self.tableWidget.cellWidget(dest_row, 2).layout().takeAt(0)
+    #     while layout_item:
+    #         dest_row_parameters.append(layout_item)
+    #         layout_item = self.tableWidget.cellWidget(dest_row, 2).layout().takeAt(0)
+    #
+    #     print(len(current_row_parameters))
+    #     print(len(dest_row_parameters))
+    #     print(self.tableWidget.cellWidget(current_row, 2).layout().count())
+    #     print(self.tableWidget.cellWidget(dest_row, 2).layout().count())
+    #     for item in current_row_parameters:
+    #         self.tableWidget.cellWidget(dest_row, 2).layout().addItem(item)
+    #
+    #     for item in dest_row_parameters:
+    #         self.tableWidget.cellWidget(current_row, 2).layout().addItem(item)
+    #
+    #     print(self.tableWidget.cellWidget(current_row, 2).layout().count())
+    #     print(self.tableWidget.cellWidget(dest_row, 2).layout().count())
+    #
+    #     widget = self.tableWidget.cellWidget(current_row, 2)
+    #     self.tableWidget.setCellWidget(current_row, 2, widget)
+    #     #self.tableWidget.cellWidget(current_row, 2).show()
+    #     #self.tableWidget.cellWidget(dest_row, 2).hide()
+    #     #self.tableWidget.cellWidget(dest_row, 2).setCellWidget(dest_row, 2)
+    #     widget = self.tableWidget.cellWidget(dest_row, 2)
+    #     self.tableWidget.setCellWidget(dest_row, 2, widget)
 
 
 
@@ -229,14 +236,34 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             action = self.tableWidget.item(i, 1).data(0)
 
             if (action == ActionEnum.RMEAN.value):
-                # TODO: pasar texto o enumerado en action y en parameters?
                 parameters.append([action, self.tableWidget.cellWidget(i, 2).currentText()])
+
             elif (action == ActionEnum.TAPER.value):
                 combo_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(0).widget().currentText()
                 spin_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
                 parameters.append([action, combo_value, spin_value])
 
+            elif (action == ActionEnum.NORMALIZE.value):
+                spin_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(0).widget().value()
+                parameters.append([action, spin_value])
+
             elif (action == ActionEnum.SHIFT.value and self.additionalParams is not None):
                 parameters.append([action, self.additionalParams.getData()])
+
+            elif (action == ActionEnum.FILTER.value):
+                combo_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(0).widget().currentText()
+                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(2).widget().value()
+                spin_value2 = self.tableWidget.cellWidget(i, 2).layout().itemAt(4).widget().value()
+                check_box = self.tableWidget.cellWidget(i, 2).layout().itemAt(5).widget().isChecked()
+                spin_value3 = self.tableWidget.cellWidget(i, 2).layout().itemAt(7).widget().value()
+                parameters.append([action, combo_value1, spin_value1, spin_value2, check_box, spin_value3])
+
+            elif (action == ActionEnum.DIFFERENTIATE.value):
+                combo_value = self.tableWidget.cellWidget(i, 2).currentText()
+                parameters.append([action, combo_value])
+
+            elif (action == ActionEnum.INTEGRATE.value):
+                combo_value = self.tableWidget.cellWidget(i, 2).currentText()
+                parameters.append([action, combo_value])
 
         return parameters

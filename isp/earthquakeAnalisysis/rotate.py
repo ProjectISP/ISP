@@ -48,7 +48,7 @@ class PolarizationAnalyis:
 
          return time, data[0], data[1], data[2], st
 
-    def polarize(self, t1: UTCDateTime, t2: UTCDateTime, win_len, win_frac, frqlow, frqhigh, method='flinn'):
+    def polarize(self, t1: UTCDateTime, t2: UTCDateTime, win_len, frqlow, frqhigh, method='flinn'):
 
        # win_frac=int(win_len*win_frac/100)
         st = self.__get_stream(t1, t2)

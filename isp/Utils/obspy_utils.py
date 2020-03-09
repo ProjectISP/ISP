@@ -215,3 +215,21 @@ class MseedUtil:
             files.sort()
             return files
         return []
+
+    @classmethod
+    def get_xml_files(cls, root_dir: str):
+        """
+        Get a list of valid dataless files inside the root_dir. If root_dir doesn't exists it returns a empty list.
+
+        :param root_dir: The full path of the dir or a file.
+
+        :return: A list of full path of dataless files.
+        """
+
+        if os.path.isfile(root_dir):
+            return [root_dir]
+        elif os.path.isdir(root_dir):
+            files = [os.path.join(root_dir, file) for file in os.listdir(root_dir)]
+            files.sort()
+            return files
+        return []

@@ -150,15 +150,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         for index, file_path in enumerate(files_at_page):
             sd = SeismogramData(file_path)
             if self.trimCB.isChecked() and diff >= 0:
-                t,t_sec, s = sd.get_waveform(filter_error_callback=self.filter_error_message,
+                tr = sd.get_waveform(filter_error_callback=self.filter_error_message,
                                        filter_value=self.filter.filter_value,
                                        f_min=self.filter.min_freq, f_max=self.filter.max_freq, start_time = start_time,
                                              end_time = end_time)
             else:
 
-                t, t_sec, s = sd.get_waveform(filter_error_callback=self.filter_error_message,
+                tr = sd.get_waveform(filter_error_callback=self.filter_error_message,
                                               filter_value=self.filter.filter_value,
                                               f_min=self.filter.min_freq, f_max=self.filter.max_freq)
+            t = tr.times("matplotlib")
+            s = tr.data
             self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
             self.redraw_pickers(file_path, index)
             last_index = index
@@ -185,7 +187,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
         ax.xaxis.set_major_formatter(formatter)
         self.canvas.set_xlabel(last_index, "Date")
-        #self.canvas.figure.autofmt_xdate()
 
 
     def redraw_pickers(self, file_name, axe_index):

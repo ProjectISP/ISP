@@ -1,5 +1,6 @@
 from isp.Structures.structures import StationsStats
 from isp.Utils import MseedUtil, ObspyUtil
+from obspy import read, read_inventory
 
 
 class DatalessManager:
@@ -19,6 +20,15 @@ class DatalessManager:
             self.__stations_stats = self.__get_stations_stats()
         return self.__stations_stats
 
+    def check_metadata(self, metadata_list, stats):
+        for metadata_file in metadata_list:
+            inv = read_inventory(metadata_file)
+            inv = inv.select(network=stats.Network, station=stats.Station, starttime=stats.StartTime, endtime=stats.EndTime)
+            if len(inv) > 0:
+                inv = inv
+        return inv
+
+
     def __get_stations_stats(self):
         self.__dataless_files = MseedUtil.get_dataless_files(self.__root_path)
         stations_stats = []
@@ -37,3 +47,11 @@ class DatalessManager:
     def get_station_stats_by_mseed_file(self, file_path: str):
         mseed_stats = ObspyUtil.get_stats(file_path)
         return self.get_station_stats_by_name(mseed_stats.Station)
+
+    def get_metadata(self, file_path):
+        self.__dataless_files = MseedUtil.get_dataless_files(self.__root_path)
+        #self.__metadata_files = MseedUtil.get_xml_files(self.__root_path)
+        mseed_stats = ObspyUtil.get_stats(file_path)
+        metadata = self.check_metadata(self.__metadata_files, mseed_stats)
+
+        return metadata

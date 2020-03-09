@@ -132,7 +132,7 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         sd = PolarizationAnalyis(self.vertical_component_file, self.north_component_file,
                                  self.east_component_file)
         try:
-            var = sd.polarize(time1, time2, self.doubleSpinBox_winlen.value(), self.spinBox_winoverlap.value(),
+            var = sd.polarize(time1, time2, self.doubleSpinBox_winlen.value(),
                               self.filter_3ca.min_freq, self.filter_3ca.max_freq,
                               method=self.comboBox_methodpolarization.currentText())
 

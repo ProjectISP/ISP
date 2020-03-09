@@ -83,21 +83,12 @@ class SeismogramData:
             print(e)
             self.__send_filter_error_callback(filter_error_callback, str(e))
 
-        sample_rate = self.stats.Sampling_rate
-        dt = 1/sample_rate
-
         try:
             tr.trim(starttime=start_time, endtime=end_time)
         except:
             print("Please Check Starttime and Endtime")
 
-        if start_time - tr.stats.starttime == 0:
-            t = [UTCDateTime(start_time + n * dt).matplotlib_date for n in range(0, len(tr.data))]
-        else:
-            t = [UTCDateTime(tr.stats.starttime + n * dt).matplotlib_date for n in range(0, len(tr.data))]
-
-        t_sec = np.arange(0, len(tr.data) / sample_rate, 1. / sample_rate)
-        return t, t_sec, tr.data
+        return tr
 
 class SeismogramDataAdvanced:
 
@@ -127,18 +118,46 @@ class SeismogramDataAdvanced:
 
     def get_waveform_advanced(self, parameters, filter_error_callback=None, **kwargs):
 
+
         start_time = kwargs.get("start_time", self.stats.StartTime)
         end_time = kwargs.get("end_time", self.stats.EndTime)
         tr = self.tracer
         tr.trim(starttime = start_time, endtime = end_time)
+        N = len(parameters)
 
-        if parameters[0] == 'rmean':
+        for j in range(N):
 
-            tr.detrend(type=parameters[0][1])
+            if parameters[j][0] == 'rmean':
 
-        if parameters[0] == 'taper':
+                tr.detrend(type=parameters[j][1])
 
-            tr.detrend(type=parameters[0][1])
+            if parameters[j][0] == 'taper':
+
+                tr.taper(max_percentage = parameters[j][0],type=parameters[j][1])
+
+            if parameters[j][0] == 'normalize':
+
+                if parameters[j][1] == 0:
+                    tr.normalize(norm = None)
+                else:
+                    tr.normalize(norm = parameters[j][1])
+
+            if parameters[j][0] == 'filter':
+                filter_value = parameters[j][1]
+                f_min = parameters[j][2]
+                f_max = parameters[j][3]
+                zero_phase = parameters[j][4]
+                poles = parameters[j][5]
+                try:
+                    if not ObspyUtil.filter_trace(tr, filter_value, f_min, f_max, corners = poles,
+                                                  zerophase = zero_phase):
+                        self.__send_filter_error_callback(filter_error_callback,
+                                                          "Lower frequency {} must be "
+                                                          "smaller than Upper frequency {}".format(f_min, f_max))
+                except ValueError as e:
+                    print(e)
+                    self.__send_filter_error_callback(filter_error_callback, str(e))
+
 
 
         return tr

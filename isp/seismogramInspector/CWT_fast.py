@@ -47,7 +47,7 @@ def cwt_fast(data,ba,nConv,frex,half_wave, fs):
     n = len(cf)
     window = np.hamming(n)
     cf = window * cf
-    cf = lowpass(cf, 0.15, fs, corners=4, zerophase=True)
+    cf = lowpass(cf, 0.2, fs, corners=4, zerophase=True)
     cf = window * cf
     return cf,sc,tf
    

@@ -1,14 +1,17 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from isp.Gui.Frames import  BaseFrame, \
-    MatplotlibCanvas,  UiArrayAnalysisFrame, CartopyCanvas
+from obspy import Stream
+
+from isp.DataProcessing import DatalessManager
+from isp.DataProcessing.seismogram_analysis import SeismogramDataAdvanced
+from isp.Gui.Frames import BaseFrame, \
+    MatplotlibCanvas, UiArrayAnalysisFrame, CartopyCanvas, MatplotlibFrame, MessageDialog
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Gui import pw
 import os
-from isp.Gui.Frames import MatplotlibFrame
-import matplotlib.dates as mdates
-
+import matplotlib.dates as mdt
+import pathlib
 from isp.arrayanalysis import array_analysis
 
 
@@ -24,6 +27,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
         self.canvas_fk.on_double_click(self.on_click_matplotlib)
         self.canvas_stack = MatplotlibCanvas(self.widget_stack)
+        self.canvas_stack.figure.subplots_adjust(left=0.080, bottom=0.374, right=0.970, top=0.990, wspace=0.2, hspace=0.0)
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
         self.canvas.set_new_subplot(1, ncols=1)
 
@@ -79,7 +83,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         coords_path = os.path.join(self.root_path_bind.value, "coords.txt")
         wavenumber = array_analysis.array()
         arf,coords = wavenumber.arf(coords_path, self.fmin_bind.value, self.fmax_bind.value, self.smax_bind.value)
-
         slim = self.smax_bind.value
         sstep = slim / len(arf)
         x = np.linspace(-1 * slim, slim, (slim - (-1 * slim) / sstep))
@@ -112,7 +115,11 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_fk.set_ylabel(2, " Back Azimuth ")
         self.canvas_fk.set_ylabel(3, " Slowness ")
         self.canvas_fk.set_xlabel(3, "Time [s]")
-        #ax = self.canvas_fk.get_axe(3)
+
+        ax = self.canvas_fk.get_axe(3)
+        formatter = mdt.DateFormatter('%H:%M:%S')
+        ax.xaxis.set_major_formatter(formatter)
+        ax.xaxis.set_tick_params(rotation = 30)
         #ax.set_major_locator(mdates.AutoDateFormatter(xlocator))
 
     def on_click_matplotlib(self, event, canvas):
@@ -143,19 +150,53 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             stack = wavenumber.stack(stream_stack)
             self.canvas_stack.plot(time, stack, axes_index = 0)
             self.canvas_stack.set_xlabel(0, " Time [s] ")
-            self.canvas_stack.set_ylabel(0, " Stack Amplitude ")
+            self.canvas_stack.set_ylabel(0, "Stack Amplitude")
 
+    def filter_error_message(self, msg):
+        md = MessageDialog(self)
+        md.set_info_message(msg)
 
     def plot_seismograms(self):
-        from obspy import read
-        #path = self.root_pathFK_bind.value
-        #st = read(path + "/" + "*.*")
-        #print(st)
-        #self.stream_frame = MatplotlibFrame(st, type='normal')
-        #self.stream_frame.show()
+        # st = read(path + "/" + "*.*")
+        # print(st)
+        # self.stream_frame = MatplotlibFrame(st, type='normal')
+        # self.stream_frame.show()
+
+        starttime = convert_qdatetime_utcdatetime(self.starttime_date)
+        endtime = convert_qdatetime_utcdatetime(self.endtime_date)
+        file_path = self.root_pathFK_bind.value
+
+        #obsfiles = [f for f in os.listdir(file_path) if isfile(join(file_path, f))]
+        obsfiles = []
+
+
+        for dirpath, _, filenames in os.walk(file_path):
+            for f in filenames:
+                 obsfiles.append(os.path.abspath(os.path.join(dirpath, f)))
+
+        obsfiles.sort()
+
+        metadata_manager = DatalessManager(self.dataless_path_bind.value)
+        for file_path in obsfiles:
+            inventory = metadata_manager.get_metadata(file_path)
+        ###
+
+
         parameters = self.parameters.getParameters()
-        print(parameters[0][1])
-        ###llamar a la clase nueva que interpreta los parametros
+
+        all_traces =[]
+
+        for file in obsfiles:
+            sd = SeismogramDataAdvanced(file)
+
+            tr = sd.get_waveform_advanced(parameters, filter_error_callback=self.filter_error_message, start_time=starttime,
+                                end_time=endtime)
+            all_traces.append(tr)
+
+
+        st = Stream(traces=all_traces)
+        self.stream_frame = MatplotlibFrame(st, type='normal')
+        self.stream_frame.show()
 
 
 
