@@ -1,17 +1,11 @@
 from enum import Enum, unique
-
-from obspy import read, UTCDateTime
+from obspy import read
 from obspy.geodetics import locations2degrees
 from obspy.taup import TauPyModel
-
-import numpy as np
-
-
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, Filters
-import matplotlib.dates as mdt
-
-
+import numpy as np
+from isp.DataProcessing.dataless_manager import DatalessManager
 @unique
 class ArrivalsModels(Enum):
     Iasp91 = "iasp91"
@@ -90,6 +84,9 @@ class SeismogramData:
 
         return tr
 
+
+
+
 class SeismogramDataAdvanced:
 
     def __init__(self, file_path):
@@ -116,7 +113,7 @@ class SeismogramDataAdvanced:
         if func:
             func(msg)
 
-    def get_waveform_advanced(self, parameters, filter_error_callback=None, **kwargs):
+    def get_waveform_advanced(self, parameters, inventory, filter_error_callback=None, **kwargs):
 
 
         start_time = kwargs.get("start_time", self.stats.StartTime)
@@ -133,7 +130,7 @@ class SeismogramDataAdvanced:
 
             if parameters[j][0] == 'taper':
 
-                tr.taper(max_percentage = parameters[j][0],type=parameters[j][1])
+                tr.taper(max_percentage = parameters[j][2],type=parameters[j][1])
 
             if parameters[j][0] == 'normalize':
 
@@ -155,9 +152,24 @@ class SeismogramDataAdvanced:
                                                           "Lower frequency {} must be "
                                                           "smaller than Upper frequency {}".format(f_min, f_max))
                 except ValueError as e:
-                    print(e)
                     self.__send_filter_error_callback(filter_error_callback, str(e))
 
+            if parameters[j][0] == 'remove response':
 
 
+                f1 = parameters[j][1]
+                f2 = parameters[j][2]
+                f3 = parameters[j][3]
+                f4 = parameters[j][4]
+                water_level = parameters[j][5]
+                units = parameters[j][6]
+                pre_filt = (f1, f2, f3, f4)
+
+                if inventory:
+                    print("Deconvolving")
+                    try:
+                        tr.remove_response(inventory=inventory, pre_filt=pre_filt, output=units, water_level=water_level)
+                    except:
+                        print("Coudn't deconvolve", tr.stats)
+                        tr.data = np.array([])
         return tr

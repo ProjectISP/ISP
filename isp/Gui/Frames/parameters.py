@@ -13,6 +13,7 @@ class ActionEnum (enum.Enum):
     DIFFERENTIATE = "differentiate"
     INTEGRATE = "integrate"
     SHIFT = "shift"
+    REMOVE_RESPONSE = "remove response"
 
     def __str__(self):
         return str(self.value)
@@ -32,26 +33,23 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
         self.addBtn.clicked.connect(self.on_add_action_pushed)
         self.additionalParams = None
 
-
-
     def execAdditionalParameters(self):
         if self.additionalParams is None:
             self.additionalParams = AdditionalParameters()
         self.additionalParams.exec()
 
-
     def on_add_action_pushed(self):
-        PB_up = pw.QPushButton("Up")
-        PB_down = pw.QPushButton("down")
+        #PB_up = pw.QPushButton("Up")
+        #PB_down = pw.QPushButton("down")
         PB_del = pw.QPushButton("-")
         layoutPB = pw.QHBoxLayout()
-        layoutPB.addWidget(PB_up)
-        layoutPB.addWidget(PB_down)
+        #layoutPB.addWidget(PB_up)
+        #layoutPB.addWidget(PB_down)
         layoutPB.addWidget(PB_del)
         order_widget = pw.QWidget()
         order_widget.setLayout(layoutPB)
-        PB_up.clicked.connect(lambda parent=order_widget: self.swapRows(True, order_widget))
-        PB_down.clicked.connect(lambda parent=order_widget: self.swapRows(False, order_widget))
+        #PB_up.clicked.connect(lambda parent=order_widget: self.swapRows(True, order_widget))
+        #PB_down.clicked.connect(lambda parent=order_widget: self.swapRows(False, order_widget))
         PB_del.clicked.connect(lambda parent=order_widget: self.removeRow(order_widget))
 
         self.orderWidgetsList.append(order_widget)
@@ -144,6 +142,56 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             widget.setLayout(layout)
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, widget)
 
+        elif self.addCombo.currentData() is ActionEnum.REMOVE_RESPONSE:
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.REMOVE_RESPONSE.value))
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+            layout = pw.QHBoxLayout()
+            label_freqmin = pw.QLabel("Corner Freq min")
+            label_freqmax = pw.QLabel("Corner Freq max (%Fn)")
+            label_water_level = pw.QLabel("Water level")
+            label_units = pw.QLabel("deconvolve to")
+            combo_param = pw.QComboBox()
+            combo_param.addItems(["DISP", "VEL", "ACC"])
+
+            freq_minDB1 = pw.QDoubleSpinBox()
+            freq_minDB1.setMinimum(0)
+            freq_minDB1.setSingleStep(0.01)
+
+            freq_minDB2 = pw.QDoubleSpinBox()
+            freq_minDB2.setMinimum(0)
+            freq_minDB2.setSingleStep(0.01)
+
+            freq_maxDB1 = pw.QDoubleSpinBox()
+            freq_maxDB1.setMinimum(0)
+            freq_maxDB1.setSingleStep(0.01)
+
+            freq_maxDB2 = pw.QDoubleSpinBox()
+            freq_maxDB2.setMinimum(0)
+            freq_maxDB2.setSingleStep(0.01)
+
+            water_levelDB = pw.QDoubleSpinBox()
+            water_levelDB.setMinimum(0)
+            water_levelDB.setMaximum(100)
+            water_levelDB.setSingleStep(1)
+
+            layout.addWidget(label_freqmin)
+            layout.addWidget(freq_minDB1)
+            layout.addWidget(freq_minDB2)
+            layout.addWidget(label_freqmax)
+            layout.addWidget(freq_maxDB1)
+            layout.addWidget(freq_maxDB2)
+            layout.addWidget(label_water_level)
+            layout.addWidget(water_levelDB)
+            layout.addWidget(label_units)
+            layout.addWidget(combo_param)
+
+            layout.setContentsMargins(0, 0, 0, 0)
+            widget = pw.QWidget()
+            widget.setLayout(layout)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, widget)
+
+
 
         elif self.addCombo.currentData() is ActionEnum.DIFFERENTIATE:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
@@ -159,6 +207,12 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             combo_param = pw.QComboBox()
             combo_param.addItems(['cumtrapz', 'spline'])
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, combo_param)
+
+        elif self.addCombo.currentData() is ActionEnum.Remove_Response:
+             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.Remove_Response.value))
+             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+
 
     def removeRow(self, order_widget):
         current_row = self.orderWidgetsList.index(order_widget)
@@ -258,6 +312,15 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
                 spin_value3 = self.tableWidget.cellWidget(i, 2).layout().itemAt(7).widget().value()
                 parameters.append([action, combo_value1, spin_value1, spin_value2, check_box, spin_value3])
 
+            elif (action == ActionEnum.REMOVE_RESPONSE.value):
+                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
+                spin_value2 = self.tableWidget.cellWidget(i, 2).layout().itemAt(2).widget().value()
+                spin_value3 = self.tableWidget.cellWidget(i, 2).layout().itemAt(4).widget().value()
+                spin_value4 = self.tableWidget.cellWidget(i, 2).layout().itemAt(5).widget().value()
+                spin_value5 = self.tableWidget.cellWidget(i, 2).layout().itemAt(7).widget().value()
+                combo_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(9).widget().currentText()
+                parameters.append([action, spin_value1, spin_value2, spin_value3, spin_value4, spin_value5,combo_value])
+
             elif (action == ActionEnum.DIFFERENTIATE.value):
                 combo_value = self.tableWidget.cellWidget(i, 2).currentText()
                 parameters.append([action, combo_value])
@@ -265,5 +328,6 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             elif (action == ActionEnum.INTEGRATE.value):
                 combo_value = self.tableWidget.cellWidget(i, 2).currentText()
                 parameters.append([action, combo_value])
+
 
         return parameters

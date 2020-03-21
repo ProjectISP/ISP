@@ -786,10 +786,14 @@ class CartopyCanvas(BasePltPyqtCanvas):
         # print(self.MAP_SERVICE_URL)
         wms = WebMapService(self.MAP_SERVICE_URL)
         layer = 'GEBCO_08 Hillshade'
-        xmin = int(min(x) - 5)
-        xmax = int(max(x) + 5)
-        ymin = int(min(y) - 5)
-        ymax = int(max(y) + 5)
+        #xmin = int(min(x) - 5)
+        #xmax = int(max(x) + 5)
+        #ymin = int(min(y) - 5)
+        #ymax = int(max(y) + 5)
+        xmin = -150
+        xmax = -140
+        ymin = 60
+        ymax = 70
         extent = [xmin, xmax, ymin, ymax]
 
         ax.set_extent(extent, crs=ccrs.PlateCarree())
@@ -809,7 +813,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         cmap = kwargs.pop('cmap', plt.get_cmap('jet'))
         vmin = kwargs.pop('vmin', numpy.amin(depth))
         vmax = kwargs.pop('vmax', numpy.amax(depth))
-
+        print(x)
+        print(y)
         cs = ax.scatter(x, y, s=10, c=depth / 10, marker="^", cmap=plt.get_cmap('YlOrBr'))
         cs.set_clim(vmin, vmax)
         if show_colorbar:

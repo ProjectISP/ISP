@@ -1,11 +1,13 @@
 from obspy import UTCDateTime
 from obspy.geodetics import gps2dist_azimuth
 
-from isp.DataProcessing import SeismogramData, DatalessManager
+from isp.DataProcessing import SeismogramData, DatalessManager, SeismogramDataAdvanced
+from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox, \
     MatplotlibCanvas
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
+from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Structures.structures import PickerStructure
@@ -19,13 +21,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def __init__(self):
         super(EarthquakeAnalysisFrame, self).__init__()
         self.setupUi(self)
-
+        self.inventory = {}
         self.files = []
         self.total_items = 0
         self.items_per_page = 1
         # dict to keep track of picks-> dict(key: PickerStructure) as key we use the drawn line.
         self.picked_at = {}
         self.__dataless_manager = None
+        self.__metadata_manager = None
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
 
         self.filter = FilterBox(self.filterWidget)  # add filter box component.
@@ -52,18 +55,33 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
 
+        self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
+
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.sortBtn.clicked.connect(self.on_click_sort)
+        self.sortBtn.clicked.connect(self.on_click_sort)
         self.updateBtn.clicked.connect(self.plot_seismogram)
+        #self.mapBtn.clicked.connect(self.plot_map_stations)
+        self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
+        self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
+
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
+
+        ##Parameters settings
+
+        self.parameters = ParametersSettings()
+
+    def open_parameters_settings(self):
+        self.parameters.show()
 
     @property
     def dataless_manager(self):
         if not self.__dataless_manager:
             self.__dataless_manager = DatalessManager(self.dataless_path_bind.value)
         return self.__dataless_manager
+
 
     def message_dataless_not_found(self):
         if len(self.dataless_not_found) > 1:
@@ -107,27 +125,37 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.files = MseedUtil.get_mseed_files(value)
         self.total_items = len(self.files)
         self.pagination.set_total_items(self.total_items)
-        self.plot_seismogram()
+    #    self.plot_seismogram()
 
     def onChange_dataless_path(self, value):
         self.__dataless_manager = DatalessManager(value)
         self.earthquake_location_frame.set_dataless_dir(value)
 
-    def sort_by_distance(self, file):
-        st_stats = self.dataless_manager.get_station_stats_by_mseed_file(file)
-        if st_stats:
-            dist, _, _ = gps2dist_azimuth(st_stats.Lat, st_stats.Lon, 0., 0.)
-            # print("File, dist: ", file, dist)
-            return dist
-        else:
-            self.dataless_not_found.add(file)
-            print("No dataless found for {} file.".format(file))
-            return 0.
+    # Recenly incorporated
+    def onChange_metadata_path(self, value):
+        try:
+            self.__metadata_manager = MetadataManager(value)
+            self.inventory = self.__metadata_manager.get_inventory()
+        except:
+            pass
+    ###
 
-    def on_click_sort(self):
-        self.files.sort(key=self.sort_by_distance)
-        self.message_dataless_not_found()
-        self.plot_seismogram()
+    # def sort_by_distance(self, file):
+    #     print(file)
+    #     st_stats = self.dataless_manager.get_station_stats_by_mseed_file(file)
+    #     if st_stats:
+    #         dist, _, _ = gps2dist_azimuth(st_stats.Lat, st_stats.Lon, 0., 0.)
+    #         # print("File, dist: ", file, dist)
+    #         return dist
+    #     else:
+    #         self.dataless_not_found.add(file)
+    #         print("No dataless found for {} file.".format(file))
+    #         return 0.
+    #
+    # def on_click_sort(self):
+    #     self.files.sort(key=self.sort_by_distance)
+    #     self.message_dataless_not_found()
+    #     self.plot_seismogram()
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
@@ -135,6 +163,45 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if dir_path:
             bind.value = dir_path
 
+
+    # Recent Incorporated
+    def sort_by_distance_advance(self, file):
+
+         st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
+         if st_stats:
+
+             dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
+                                           self.event_info.longitude)
+             # print("File, dist: ", file, dist)
+             return dist
+         else:
+             print("No dataless found for {} file.")
+             return 0.
+
+    def sort_by_baz_advance(self, file):
+
+         st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
+         if st_stats:
+
+             _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
+                                           self.event_info.longitude)
+             # print("File, dist: ", file, dist)
+             return az_from_epi
+         else:
+             print("No dataless found for {} file.")
+             return 0.
+
+    def on_click_sort(self):
+
+        if self.comboBox_sort.currentText() == "Distance":
+            self.files.sort(key=self.sort_by_distance_advance)
+            self.message_dataless_not_found()
+            self.plot_seismogram()
+
+        elif self.comboBox_sort.currentText() == "Back Azimuth":
+            self.files.sort(key=self.sort_by_baz_advance)
+            self.message_dataless_not_found()
+            self.plot_seismogram()
 
     def plot_seismogram(self):
         self.canvas.clear()
@@ -147,18 +214,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         last_index = 0
         min_starttime = []
         max_endtime = []
+        parameters = self.parameters.getParameters()
+
         for index, file_path in enumerate(files_at_page):
-            sd = SeismogramData(file_path)
+            sd = SeismogramDataAdvanced(file_path)
             if self.trimCB.isChecked() and diff >= 0:
-                tr = sd.get_waveform(filter_error_callback=self.filter_error_message,
-                                       filter_value=self.filter.filter_value,
-                                       f_min=self.filter.min_freq, f_max=self.filter.max_freq, start_time = start_time,
-                                             end_time = end_time)
+                tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                              filter_error_callback=self.filter_error_message,
+                                              start_time=start_time, end_time=end_time)
             else:
 
-                tr = sd.get_waveform(filter_error_callback=self.filter_error_message,
-                                              filter_value=self.filter.filter_value,
-                                              f_min=self.filter.min_freq, f_max=self.filter.max_freq)
+                tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                              filter_error_callback=self.filter_error_message)
+
             t = tr.times("matplotlib")
             s = tr.data
             self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
@@ -187,6 +255,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
         ax.xaxis.set_major_formatter(formatter)
         self.canvas.set_xlabel(last_index, "Date")
+
+
 
 
     def redraw_pickers(self, file_name, axe_index):
@@ -233,7 +303,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def on_click_plot_arrivals(self, event_time: UTCDateTime, lat: float, long: float, depth: float):
         self.event_info.clear_arrivals()
         for index, file_path in enumerate(self.get_files_at_page()):
-            st_stats = self.dataless_manager.get_station_stats_by_mseed_file(file_path)
-            stats = ObspyUtil.get_stats(file_path)
+            #st_stats = self.dataless_manager.get_station_stats_by_mseed_file(file_path)
+            st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file_path)
+            #stats = ObspyUtil.get_stats(file_path)
             # TODO remove stats.StartTime and use the picked one from UI.
-            self.event_info.plot_arrivals2(index, stats.StartTime, st_stats)
+            self.event_info.plot_arrivals2(index, st_stats)

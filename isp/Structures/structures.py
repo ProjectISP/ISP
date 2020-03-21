@@ -1,7 +1,7 @@
 import traceback
 from typing import NamedTuple
 
-from obspy import UTCDateTime
+from obspy import UTCDateTime, read_inventory
 from obspy.io.xseed import Parser
 
 from isp import app_logger
@@ -132,6 +132,14 @@ class StationsStats(NamedTuple):
                         "Lat": station_blk.latitude, "Depth": station_blk.elevation}
         return cls(**station_dict)
 
+    @classmethod
+    def from_metadata(cls, file_path):
+
+        inv = read_inventory(file_path)
+
+        return inv
+
+
 
 class PickerStructure(NamedTuple):
     """
@@ -170,3 +178,32 @@ class PickerStructure(NamedTuple):
             app_logger.error(traceback.format_exc())
             raise Exception
 
+class StationCoordinates(NamedTuple):
+    """
+        Class that holds a structure for the picker. This is used for re-plot the pickers keeping all
+        necessary information in memory.
+
+        Fields:
+            * Latitude = (float)
+
+        """
+
+    Latitude: float
+    Longitude: float
+    Elevation: float
+    Local_depth: float
+
+    def to_dict(self):
+        return self._asdict()
+
+    # noinspection PyTypeChecker
+    @classmethod
+    def from_dict(cls, dictionary):
+        try:
+            new_d = validate_dictionary(cls, dictionary)
+            return cls(**new_d)
+
+        except Exception as error:
+            print(error)
+            app_logger.error(traceback.format_exc())
+            raise Exception

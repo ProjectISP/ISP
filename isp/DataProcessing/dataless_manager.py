@@ -21,13 +21,11 @@ class DatalessManager:
         return self.__stations_stats
 
     def check_metadata(self, metadata_list, stats):
-        for metadata_file in metadata_list:
-            inv = read_inventory(metadata_file)
-            inv = inv.select(network=stats.Network, station=stats.Station, starttime=stats.StartTime, endtime=stats.EndTime)
-            if len(inv) > 0:
-                inv = inv
-        return inv
 
+        inv = read_inventory(metadata_list[0])
+        inv = inv.select(network=stats.Network, station=stats.Station, starttime=stats.StartTime, endtime=stats.EndTime)
+
+        return inv
 
     def __get_stations_stats(self):
         self.__dataless_files = MseedUtil.get_dataless_files(self.__root_path)
@@ -49,7 +47,7 @@ class DatalessManager:
         return self.get_station_stats_by_name(mseed_stats.Station)
 
     def get_metadata(self, file_path):
-        self.__dataless_files = MseedUtil.get_dataless_files(self.__root_path)
+        self.__metadata_files = MseedUtil.get_dataless_files(self.__root_path)
         #self.__metadata_files = MseedUtil.get_xml_files(self.__root_path)
         mseed_stats = ObspyUtil.get_stats(file_path)
         metadata = self.check_metadata(self.__metadata_files, mseed_stats)

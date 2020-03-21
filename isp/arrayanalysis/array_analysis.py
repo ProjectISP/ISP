@@ -37,13 +37,14 @@ class array:
         """
 
 
-    def arf(self,path,fmin,flim,slim):
+    def arf(self, path, fmin, flim, slim):
 
         data=np.loadtxt(path,skiprows=1,usecols = (1,2,3))
         n=len(data)
         coords=np.zeros([n,3])
         for i in range(n):
             coords[i]=data[i]
+        print(coords)
         sstep = slim / 50
         fstep= flim / 50
         fmax=flim
@@ -72,6 +73,7 @@ class array:
         #st.trim(maxstart, minend)
         #st.trim(stime, etime)
         df = pd.read_csv(path_coords, sep='\t')
+        print(df)
         n = df.Name.count()
 
         for i in range(n):

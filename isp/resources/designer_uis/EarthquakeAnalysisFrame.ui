@@ -56,7 +56,7 @@
              </property>
              <layout class="QGridLayout" name="gridLayout_4">
               <item row="4" column="0">
-               <widget class="QPushButton" name="pushButton_3">
+               <widget class="QPushButton" name="locateBtn">
                 <property name="text">
                  <string>Locate</string>
                 </property>
@@ -227,7 +227,7 @@
                </widget>
               </item>
               <item row="4" column="1">
-               <widget class="QPushButton" name="pushButton_4">
+               <widget class="QPushButton" name="mapBtn">
                 <property name="text">
                  <string>Map</string>
                 </property>
@@ -257,6 +257,13 @@
                <widget class="QCheckBox" name="trimCB">
                 <property name="text">
                  <string>Trim</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="2">
+               <widget class="QPushButton" name="updateBtn">
+                <property name="text">
+                 <string>Process &amp; Pot</string>
                 </property>
                </widget>
               </item>
@@ -328,13 +335,6 @@
                  </layout>
                 </item>
                </layout>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="updateBtn">
-               <property name="text">
-                <string>Update Filter</string>
-               </property>
               </widget>
              </item>
             </layout>
@@ -553,20 +553,23 @@
      <height>22</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuAction">
-    <property name="title">
-     <string>action</string>
-    </property>
-    <addaction name="actionWhatever"/>
-   </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>file</string>
+     <string>File</string>
     </property>
     <addaction name="actionWrithe_files"/>
+    <addaction name="separator"/>
+    <addaction name="actionWite_Files"/>
    </widget>
-   <addaction name="menuAction"/>
+   <widget class="QMenu" name="menuActions">
+    <property name="title">
+     <string>Actions</string>
+    </property>
+    <addaction name="actionGet_Stations_Info"/>
+    <addaction name="actionSet_Parameters"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuActions"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionWhatever">
@@ -576,7 +579,27 @@
   </action>
   <action name="actionWrithe_files">
    <property name="text">
-    <string>writhe files</string>
+    <string>New Location</string>
+   </property>
+  </action>
+  <action name="actionWite_Files">
+   <property name="text">
+    <string>Wite Files</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionGet_Stations_Info">
+   <property name="text">
+    <string>Get Stations Info</string>
+   </property>
+  </action>
+  <action name="actionSet_Parameters">
+   <property name="text">
+    <string>Set Parameters</string>
    </property>
   </action>
  </widget>

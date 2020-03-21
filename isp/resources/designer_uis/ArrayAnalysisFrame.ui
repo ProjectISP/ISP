@@ -390,6 +390,23 @@
             </item>
             <item>
              <layout class="QGridLayout" name="gridLayout_5">
+              <item row="3" column="0" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_16">
+                <property name="text">
+                 <string>Station</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QLineEdit" name="componentLE"/>
+              </item>
+              <item row="3" column="1" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_17">
+                <property name="text">
+                 <string>Component</string>
+                </property>
+               </widget>
+              </item>
               <item row="0" column="1" alignment="Qt::AlignHCenter">
                <widget class="QLabel" name="label_13">
                 <property name="text">
@@ -407,20 +424,6 @@
                 </property>
                 <property name="displayFormat">
                  <string>yyyy/MM/dd hh:mm:ss UTC</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QRadioButton" name="radioButton">
-                <property name="text">
-                 <string>Vertical</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QRadioButton" name="radioButton_2">
-                <property name="text">
-                 <string>Horizontal</string>
                 </property>
                </widget>
               </item>
@@ -444,7 +447,7 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="0" colspan="2">
+              <item row="5" column="0" colspan="2">
                <widget class="QPushButton" name="plotBtn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -457,52 +460,14 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="0">
-               <widget class="QComboBox" name="comboBox">
-                <item>
-                 <property name="text">
-                  <string>Z</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>H</string>
-                 </property>
-                </item>
-               </widget>
+              <item row="4" column="0">
+               <widget class="QLineEdit" name="stationLE"/>
               </item>
-              <item row="3" column="1">
-               <widget class="QComboBox" name="comboBox_2">
-                <item>
-                 <property name="text">
-                  <string>N</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>E</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>X</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Y</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>1</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>2</string>
-                 </property>
-                </item>
+              <item row="2" column="1">
+               <widget class="QCheckBox" name="trimCB">
+                <property name="text">
+                 <string>Trim</string>
+                </property>
                </widget>
               </item>
              </layout>

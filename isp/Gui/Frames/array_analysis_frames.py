@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from obspy import Stream
+from obspy import Stream, read_inventory
 
-from isp.DataProcessing import DatalessManager
+from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.seismogram_analysis import SeismogramDataAdvanced
 from isp.Gui.Frames import BaseFrame, \
     MatplotlibCanvas, UiArrayAnalysisFrame, CartopyCanvas, MatplotlibFrame, MessageDialog
@@ -11,7 +11,8 @@ from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdateti
 from isp.Gui import pw
 import os
 import matplotlib.dates as mdt
-import pathlib
+
+from isp.Utils import MseedUtil
 from isp.arrayanalysis import array_analysis
 
 
@@ -22,6 +23,9 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.setupUi(self)
         self.__stations_dir = None
         self.stream_frame = None
+        self.__metadata_manager = None
+        self.inventory = {}
+
         self.canvas = MatplotlibCanvas(self.responseMatWidget)
         self.canvas_fk = MatplotlibCanvas(self.widget_fk,nrows=4)
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
@@ -36,7 +40,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.root_pathFK_bind = BindPyqtObject(self.rootPathFormFK)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.stationsCoords_bind = BindPyqtObject(self.coordsPathForm)
-
+        self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
         self.fmin_bind = BindPyqtObject(self.fminSB)
         self.fmax_bind = BindPyqtObject(self.fmaxSB)
         self.grid_bind = BindPyqtObject(self.gridSB)
@@ -78,6 +82,16 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         if dir_path:
             bind.value = dir_path
 
+
+
+    def onChange_metadata_path(self, value):
+        try:
+            self.__metadata_manager = MetadataManager(value)
+            self.inventory = self.__metadata_manager.get_inventory()
+        except:
+            pass
+
+
     def arf(self):
 
         coords_path = os.path.join(self.root_path_bind.value, "coords.txt")
@@ -91,13 +105,12 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas.plot_contour(x, y, arf, axes_index=0, clabel="Power [dB]", cmap=plt.get_cmap("jet"))
         self.canvas.set_xlabel(0, "Sx (s/km)")
         self.canvas.set_ylabel(0, "Sy (s/km)")
-        lon=coords[:,0]
-        lat=coords[:,1]
+        lon=coords[:,1]
+        lat=coords[:,0]
         depth=coords[:,2]
-        self.cartopy_canvas.plot_stations(lon, lat,depth, 0)
+        self.cartopy_canvas.plot_stations(lon, lat, depth, 0)
 
     def FK_plot(self):
-        #xlocator = mdates.AutoDateLocator()
         starttime = convert_qdatetime_utcdatetime(self.starttime_date)
         endtime = convert_qdatetime_utcdatetime(self.endtime_date)
         print(starttime)
@@ -120,7 +133,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         formatter = mdt.DateFormatter('%H:%M:%S')
         ax.xaxis.set_major_formatter(formatter)
         ax.xaxis.set_tick_params(rotation = 30)
-        #ax.set_major_locator(mdates.AutoDateFormatter(xlocator))
 
     def on_click_matplotlib(self, event, canvas):
         if isinstance(canvas, MatplotlibCanvas):
@@ -157,42 +169,28 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         md.set_info_message(msg)
 
     def plot_seismograms(self):
-        # st = read(path + "/" + "*.*")
-        # print(st)
-        # self.stream_frame = MatplotlibFrame(st, type='normal')
-        # self.stream_frame.show()
 
         starttime = convert_qdatetime_utcdatetime(self.starttime_date)
         endtime = convert_qdatetime_utcdatetime(self.endtime_date)
+        diff = endtime - starttime
         file_path = self.root_pathFK_bind.value
-
-        #obsfiles = [f for f in os.listdir(file_path) if isfile(join(file_path, f))]
         obsfiles = []
-
 
         for dirpath, _, filenames in os.walk(file_path):
             for f in filenames:
-                 obsfiles.append(os.path.abspath(os.path.join(dirpath, f)))
-
+                 if f != ".DS_Store":
+                    obsfiles.append(os.path.abspath(os.path.join(dirpath, f)))
         obsfiles.sort()
-
-        metadata_manager = DatalessManager(self.dataless_path_bind.value)
-        for file_path in obsfiles:
-            inventory = metadata_manager.get_metadata(file_path)
-        ###
-
-
         parameters = self.parameters.getParameters()
-
         all_traces =[]
-
         for file in obsfiles:
             sd = SeismogramDataAdvanced(file)
-
-            tr = sd.get_waveform_advanced(parameters, filter_error_callback=self.filter_error_message, start_time=starttime,
-                                end_time=endtime)
+            if self.trimCB.isChecked() and diff >= 0:
+                tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
+                    start_time=starttime, end_time=endtime)
+            else:
+                tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message)
             all_traces.append(tr)
-
 
         st = Stream(traces=all_traces)
         self.stream_frame = MatplotlibFrame(st, type='normal')
