@@ -153,23 +153,31 @@ class MseedUtil:
 
     @classmethod
     def get_mseed_files(cls, root_dir: str):
-        """
-        Get a list of valid mseed files inside the root_dir. If root_dir doesn't exists it returns a empty list.
+         """
+         Get a list of valid mseed files inside the root_dir. If root_dir doesn't exists it returns a empty list.
+         :param root_dir: The full path of the dir or a file.
+         :return: A list of full path of mseed files.
+         """
 
-        :param root_dir: The full path of the dir or a file.
+         if cls.is_valid_mseed(root_dir):
+             return [root_dir]
+         elif os.path.isdir(root_dir):
+             files = [os.path.join(root_dir, file) for file in os.listdir(root_dir) if
+                      cls.is_valid_mseed(os.path.join(root_dir, file))]
+             files.sort()
+             return files
 
-        :return: A list of full path of mseed files.
-        """
+         return []
 
-        if cls.is_valid_mseed(root_dir):
-            return [root_dir]
-        elif os.path.isdir(root_dir):
-            files = [os.path.join(root_dir, file) for file in os.listdir(root_dir) if
-                     cls.is_valid_mseed(os.path.join(root_dir, file))]
-            files.sort()
-            return files
+    @classmethod
+    def get_selected_files(clscls,files, selection):
+        new_list = []
+        for file in files:
+            st = read(file, headonly=True)
+            if st.select(network = selection[0], station = selection[1], channel = selection[2]):
+                new_list.append(file)
+        return new_list
 
-        return []
 
     @staticmethod
     def is_valid_mseed(file_path):

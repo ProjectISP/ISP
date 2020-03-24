@@ -97,7 +97,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QWebEngineView" name="widget" native="true"/>
+     <widget class="QWebEngineView" name="widget"/>
     </item>
    </layout>
   </widget>
@@ -107,7 +107,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuInput">
@@ -130,6 +130,7 @@
     <addaction name="menuEarth_models"/>
     <addaction name="separator"/>
     <addaction name="actionClear_input"/>
+    <addaction name="actionSet_paths"/>
    </widget>
    <widget class="QMenu" name="menuMT_Inversion">
     <property name="title">
@@ -258,12 +259,17 @@
     <string>Delete</string>
    </property>
   </action>
+  <action name="actionSet_paths">
+   <property name="text">
+    <string>set paths</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
    <class>QWebEngineView</class>
    <extends>QWidget</extends>
-   <header>PyQt5.QtWebEngineWidgets</header>
+   <header location="global">QtWebEngineWidgets/QWebEngineView</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

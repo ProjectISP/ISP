@@ -183,6 +183,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         obsfiles.sort()
         parameters = self.parameters.getParameters()
         all_traces =[]
+
         for file in obsfiles:
             sd = SeismogramDataAdvanced(file)
             if self.trimCB.isChecked() and diff >= 0:

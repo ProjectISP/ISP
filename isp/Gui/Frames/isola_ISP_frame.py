@@ -14,7 +14,7 @@ from isp.Gui.Frames import BaseFrame
 from isp.mti import ISP_invert
 from isp.Gui import pw,qteng
 from isp.Gui.Frames.uis_frames import UiMomentTensor
-
+from isp import ROOT_DIR
 
 class MTIFrame(BaseFrame, UiMomentTensor):
     
@@ -24,21 +24,42 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         #uic.loadUi("MomentTensor.ui", self)
         #self.show()
 
-        self.ISOLA_input = os.path.join(os.getcwd(), "mti/input")
-        self.ISOLA_sac = os.path.join(os.getcwd(), "mti/invert/sac")
-        self.ISOLA_pzfiles = os.path.join(os.getcwd(), "mti/invert/pzfiles")
+        #self.ISOLA_input = os.path.join(os.getcwd(), "mti/input")
+        #self.ISOLA_sac = os.path.join(os.getcwd(), "mti/invert/sac")
+        #self.ISOLA_pzfiles = os.path.join(os.getcwd(), "mti/invert/pzfiles")
 
         self.connect_menu_actions()
         self.connect_buttons()
+
+    @property
+    def root_isola_path(self):
+        root_isola_path = os.path.join(ROOT_DIR, "mti")
+        if not os.path.isdir(root_isola_path):
+            raise FileNotFoundError("The dir {} doesn't exist"
+                                    .format(root_isola_path))
+        return root_isola_path
+
+
+
 
     def connect_menu_actions(self):
         self.actionWaveforms.triggered.connect(self.get_waveforms_dir)
         self.actionStation_information.triggered.connect(self.get_station_info_file)
         self.actionEvent_information.triggered.connect(self.get_event_information)
         self.actionEarth_models_Read.triggered.connect(self.get_earth_model)
+        self.actionSet_paths.triggered.connect(self.set_path)
 
     def connect_buttons(self):
         self.pushButton_mti.clicked.connect(self.mti)
+
+
+    def set_path(self):
+        root = self.root_isola_path
+
+        self.ISOLA_input = os.path.join(root, "input")
+        print(self.ISOLA_input)
+        self.ISOLA_sac = os.path.join(root, "invert/sac")
+        self.ISOLA_pzfiles = os.path.join(root, "invert/pzfiles")
 
     def get_waveforms_dir(self):
         self.waveform_dir = pw.QFileDialog.getExistingDirectory()

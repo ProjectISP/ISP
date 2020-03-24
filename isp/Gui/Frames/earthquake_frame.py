@@ -3,6 +3,7 @@ from obspy.geodetics import gps2dist_azimuth
 
 from isp.DataProcessing import SeismogramData, DatalessManager, SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
+from isp.Exceptions import parse_excepts
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox, \
     MatplotlibCanvas
@@ -14,6 +15,7 @@ from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.earthquakeAnalisysis import PickerManager
 import matplotlib.dates as mdt
+
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
@@ -31,7 +33,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.__metadata_manager = None
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
 
-        self.filter = FilterBox(self.filterWidget)  # add filter box component.
+        #self.filter = FilterBox(self.filterWidget)  # add filter box component.
 
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
@@ -86,11 +88,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def message_dataless_not_found(self):
         if len(self.dataless_not_found) > 1:
             md = MessageDialog(self)
-            md.set_info_message("Dataless not found.")
+            md.set_info_message("Metadata not found.")
         else:
             for file in self.dataless_not_found:
                 md = MessageDialog(self)
-                md.set_info_message("Dataless for {} not found.".format(file))
+                md.set_info_message("Metadata for {} not found.".format(file))
 
         self.dataless_not_found.clear()
 
@@ -98,6 +100,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         n_0 = (self.pagination.current_page - 1) * self.pagination.items_per_page
         n_f = n_0 + self.pagination.items_per_page
         return self.files[n_0:n_f]
+
+    def get_files_at_page_new(self):
+        n_0 = (self.pagination.current_page - 1) * self.pagination.items_per_page
+        n_f = n_0 + self.pagination.items_per_page
+        selection = [self.netForm.text(), self.stationForm.text(), self.channelForm.text()]
+        self.files_new = MseedUtil.get_selected_files(self.files, selection)
+        return self.files_new[n_0:n_f]
 
     def get_file_at_index(self, index):
         files_at_page = self.get_files_at_page()
@@ -125,19 +134,42 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.files = MseedUtil.get_mseed_files(value)
         self.total_items = len(self.files)
         self.pagination.set_total_items(self.total_items)
-    #    self.plot_seismogram()
+        # self.plot_seismogram()
 
     def onChange_dataless_path(self, value):
         self.__dataless_manager = DatalessManager(value)
         self.earthquake_location_frame.set_dataless_dir(value)
 
     # Recenly incorporated
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def onChange_metadata_path(self, value):
         try:
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
         except:
-            pass
+            raise FileNotFoundError("The metada is not valid")
+
+
+    def subprocess_feedback(self, err_msg: str, set_default_complete=True):
+        """
+        This method is used as a subprocess feedback. It runs when a raise expect is detected.
+
+        :param err_msg: The error message from the except.
+        :param set_default_complete: If True it will set a completed successfully message. Otherwise nothing will
+            be displayed.
+        :return:
+        """
+        if err_msg:
+            md = MessageDialog(self)
+            if "Error code" in err_msg:
+                md.set_error_message("Click in show details detail for more info.", err_msg)
+            else:
+                md.set_warning_message("Click in show details for more info.", err_msg)
+        else:
+            if set_default_complete:
+                md = MessageDialog(self)
+                md.set_info_message("Loaded Metadata Successfully.")
+
     ###
 
     # def sort_by_distance(self, file):
@@ -175,20 +207,22 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
              # print("File, dist: ", file, dist)
              return dist
          else:
-             print("No dataless found for {} file.")
+             self.dataless_not_found.add(file)
+             print("No Metadata found for {} file.".format(file))
              return 0.
 
     def sort_by_baz_advance(self, file):
 
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
+
          if st_stats:
 
              _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
-                                           self.event_info.longitude)
-             # print("File, dist: ", file, dist)
+                                          self.event_info.longitude)
              return az_from_epi
          else:
-             print("No dataless found for {} file.")
+             self.dataless_not_found.add(file)
+             print("No Metadata found for {} file.".format(file))
              return 0.
 
     def on_click_sort(self):
@@ -205,7 +239,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def plot_seismogram(self):
         self.canvas.clear()
-        files_at_page = self.get_files_at_page()
+        if  self.selectCB.isChecked():
+            files_at_page = self.get_files_at_page_new()
+        else:
+            files_at_page = self.get_files_at_page()
+        # TODO Impement selection method that change files at page --> self.files.
+
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         diff = end_time - start_time
@@ -215,9 +254,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         min_starttime = []
         max_endtime = []
         parameters = self.parameters.getParameters()
-
         for index, file_path in enumerate(files_at_page):
+
             sd = SeismogramDataAdvanced(file_path)
+
             if self.trimCB.isChecked() and diff >= 0:
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                               filter_error_callback=self.filter_error_message,
@@ -225,36 +265,41 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             else:
 
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                              filter_error_callback=self.filter_error_message)
+                                                   filter_error_callback=self.filter_error_message)
 
-            t = tr.times("matplotlib")
-            s = tr.data
-            self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
-            self.redraw_pickers(file_path, index)
-            last_index = index
 
-            st_stats = ObspyUtil.get_stats(file_path)
-            if st_stats:
-                info = "{}-{}-{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
-                self.canvas.set_plot_label(index, info)
-            try:
-                min_starttime.append(min(t))
-                max_endtime.append(max(t))
-            except:
-                print("Empty traces")
+            if len(tr) > 0:
+                t = tr.times("matplotlib")
+                s = tr.data
+                self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
+                self.redraw_pickers(file_path, index)
+                last_index = index
 
-        if min_starttime and max_endtime is not None:
-            auto_start = min(min_starttime)
-            auto_end = max(max_endtime)
+                st_stats = ObspyUtil.get_stats(file_path)
+                if st_stats:
+                    info = "{}-{}-{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
+                    self.canvas.set_plot_label(index, info)
+                try:
+                    min_starttime.append(min(t))
+                    max_endtime.append(max(t))
+                except:
+                    print("Empty traces")
+        try:
+            if min_starttime and max_endtime is not None:
+                auto_start = min(min_starttime)
+                auto_end = max(max_endtime)
 
-        ax = self.canvas.get_axe(last_index)
-        if self.trimCB.isChecked():
-            ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
-        else:
-            ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
-        formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
-        ax.xaxis.set_major_formatter(formatter)
-        self.canvas.set_xlabel(last_index, "Date")
+
+            ax = self.canvas.get_axe(last_index)
+            if self.trimCB.isChecked():
+                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+            else:
+                ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(last_index, "Date")
+        except:
+            pass
 
 
 

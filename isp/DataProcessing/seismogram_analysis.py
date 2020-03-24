@@ -115,10 +115,10 @@ class SeismogramDataAdvanced:
 
     def get_waveform_advanced(self, parameters, inventory, filter_error_callback=None, **kwargs):
 
-
         start_time = kwargs.get("start_time", self.stats.StartTime)
         end_time = kwargs.get("end_time", self.stats.EndTime)
         tr = self.tracer
+
         tr.trim(starttime = start_time, endtime = end_time)
         N = len(parameters)
 
@@ -139,6 +139,13 @@ class SeismogramDataAdvanced:
                 else:
                     tr.normalize(norm = parameters[j][1])
 
+            if parameters[j][0] == "differentiate":
+                tr.differentiate(method = parameters[j][1])
+
+            if parameters[j][0] == "integrate":
+                tr.integrate(method = parameters[j][1] )
+
+
             if parameters[j][0] == 'filter':
                 filter_value = parameters[j][1]
                 f_min = parameters[j][2]
@@ -156,7 +163,6 @@ class SeismogramDataAdvanced:
 
             if parameters[j][0] == 'remove response':
 
-
                 f1 = parameters[j][1]
                 f2 = parameters[j][2]
                 f3 = parameters[j][3]
@@ -172,4 +178,5 @@ class SeismogramDataAdvanced:
                     except:
                         print("Coudn't deconvolve", tr.stats)
                         tr.data = np.array([])
+
         return tr
