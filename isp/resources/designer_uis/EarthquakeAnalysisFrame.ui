@@ -62,13 +62,6 @@
                 </property>
                </widget>
               </item>
-              <item row="5" column="2">
-               <widget class="QPushButton" name="sortBtn">
-                <property name="text">
-                 <string>Sort</string>
-                </property>
-               </widget>
-              </item>
               <item row="2" column="1">
                <widget class="QLineEdit" name="rootPathForm">
                 <property name="enabled">
@@ -104,31 +97,11 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="2">
+              <item row="2" column="2" alignment="Qt::AlignHCenter">
                <widget class="QLabel" name="label">
                 <property name="text">
                  <string>Start Time</string>
                 </property>
-               </widget>
-              </item>
-              <item row="5" column="3">
-               <widget class="QComboBox" name="comboBox_sort">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>30</height>
-                 </size>
-                </property>
-                <item>
-                 <property name="text">
-                  <string>Distance</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Back Azimuth</string>
-                 </property>
-                </item>
                </widget>
               </item>
               <item row="2" column="4" alignment="Qt::AlignHCenter">
@@ -211,7 +184,7 @@
               <item row="3" column="6">
                <widget class="QLineEdit" name="channelForm"/>
               </item>
-              <item row="3" column="2">
+              <item row="3" column="2" alignment="Qt::AlignHCenter">
                <widget class="QLabel" name="label_2">
                 <property name="text">
                  <string>End Time</string>
@@ -230,7 +203,7 @@
                  <string>Select Files</string>
                 </property>
                 <property name="checked">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -241,7 +214,34 @@
                 </property>
                </widget>
               </item>
-              <item row="5" column="4">
+              <item row="5" column="6">
+               <widget class="QComboBox" name="comboBox_sort">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>Distance</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Back Azimuth</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="5" column="4" colspan="2">
+               <widget class="QPushButton" name="updateBtn">
+                <property name="text">
+                 <string>Process and Plot</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="3">
                <widget class="QComboBox" name="comboBox_phases">
                 <property name="minimumSize">
                  <size>
@@ -291,10 +291,17 @@
                 </item>
                </widget>
               </item>
-              <item row="5" column="5" colspan="2">
-               <widget class="QPushButton" name="updateBtn">
+              <item row="5" column="7">
+               <widget class="QCheckBox" name="sortCB">
                 <property name="text">
-                 <string>Process and Plot</string>
+                 <string>Sort  By</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="2">
+               <widget class="QPushButton" name="stations_infoBtn">
+                <property name="text">
+                 <string>Stations Info</string>
                 </property>
                </widget>
               </item>

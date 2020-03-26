@@ -9,6 +9,7 @@ from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, Mes
     MatplotlibCanvas
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
 from isp.Gui.Frames.parameters import ParametersSettings
+from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Structures.structures import PickerStructure
@@ -62,9 +63,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
-        self.sortBtn.clicked.connect(self.on_click_sort)
-        self.sortBtn.clicked.connect(self.on_click_sort)
         self.updateBtn.clicked.connect(self.plot_seismogram)
+        self.stations_infoBtn.clicked.connect(self.stationsInfo)
         #self.mapBtn.clicked.connect(self.plot_map_stations)
         self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
@@ -101,13 +101,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         n_f = n_0 + self.pagination.items_per_page
         return self.files[n_0:n_f]
 
-    def get_files_at_page_new(self):
-        n_0 = (self.pagination.current_page - 1) * self.pagination.items_per_page
-        n_f = n_0 + self.pagination.items_per_page
-        selection = [self.netForm.text(), self.stationForm.text(), self.channelForm.text()]
-        self.files_new = MseedUtil.get_selected_files(self.files, selection)
-        return self.files_new[n_0:n_f]
-
     def get_file_at_index(self, index):
         files_at_page = self.get_files_at_page()
         return files_at_page[index]
@@ -131,10 +124,26 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         :return:
         """
-        self.files = MseedUtil.get_mseed_files(value)
+        files_path = self.get_files(value)
+        self.set_pagination_files(files_path)
+
+        # self.plot_seismogram()
+
+    def set_pagination_files(self, files_path):
+        self.files = files_path
         self.total_items = len(self.files)
         self.pagination.set_total_items(self.total_items)
-        # self.plot_seismogram()
+
+    def get_files(self, dir_path):
+
+        files_path = MseedUtil.get_mseed_files(dir_path)
+
+        if self.selectCB.isChecked():
+            selection = [self.netForm.text(), self.stationForm.text(), self.channelForm.text()]
+            files_path = MseedUtil.get_selected_files(files_path, selection)
+
+        return files_path
+
 
     def onChange_dataless_path(self, value):
         self.__dataless_manager = DatalessManager(value)
@@ -200,6 +209,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def sort_by_distance_advance(self, file):
 
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
+
          if st_stats:
 
              dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
@@ -225,26 +235,24 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
              print("No Metadata found for {} file.".format(file))
              return 0.
 
-    def on_click_sort(self):
-
-        if self.comboBox_sort.currentText() == "Distance":
-            self.files.sort(key=self.sort_by_distance_advance)
-            self.message_dataless_not_found()
-            self.plot_seismogram()
-
-        elif self.comboBox_sort.currentText() == "Back Azimuth":
-            self.files.sort(key=self.sort_by_baz_advance)
-            self.message_dataless_not_found()
-            self.plot_seismogram()
 
     def plot_seismogram(self):
         self.canvas.clear()
-        if  self.selectCB.isChecked():
-            files_at_page = self.get_files_at_page_new()
-        else:
-            files_at_page = self.get_files_at_page()
-        # TODO Impement selection method that change files at page --> self.files.
+        ##
+        files_path = self.get_files(self.root_path_bind.value)
+        if self.sortCB.isChecked():
+            if self.comboBox_sort.currentText() == "Distance":
+                files_path.sort(key=self.sort_by_distance_advance)
+                self.message_dataless_not_found()
 
+        #
+            elif self.comboBox_sort.currentText() == "Back Azimuth":
+                files_path.sort(key=self.sort_by_baz_advance)
+                self.message_dataless_not_found()
+
+        self.set_pagination_files(files_path)
+        files_at_page = self.get_files_at_page()
+        ##
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         diff = end_time - start_time
@@ -266,8 +274,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                                    filter_error_callback=self.filter_error_message)
-
-
             if len(tr) > 0:
                 t = tr.times("matplotlib")
                 s = tr.data
@@ -276,9 +282,26 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 last_index = index
 
                 st_stats = ObspyUtil.get_stats(file_path)
-                if st_stats:
-                    info = "{}-{}-{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
+                if st_stats and self.sortCB.isChecked() == False:
+                    info = "{}.{}.{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
                     self.canvas.set_plot_label(index, info)
+
+                elif st_stats and self.sortCB.isChecked() and self.comboBox_sort.currentText() == "Distance":
+
+                    dist = self.sort_by_distance_advance(file_path)
+                    dist = "{:.1f}".format(dist/1000)
+                    info = "{}.{}.{} Distance {} km".format(st_stats.Network, st_stats.Station, st_stats.Channel,
+                                                         str(dist))
+                    self.canvas.set_plot_label(index, info)
+
+                elif st_stats and self.sortCB.isChecked() and self.comboBox_sort.currentText() == "Back Azimuth":
+
+                    back = self.sort_by_baz_advance(file_path)
+                    back = "{:.1f}".format(back)
+                    info = "{}.{}.{} Back Azimuth {}".format(st_stats.Network, st_stats.Station, st_stats.Channel,
+                                                             str(back))
+                    self.canvas.set_plot_label(index, info)
+
                 try:
                     min_starttime.append(min(t))
                     max_endtime.append(max(t))
@@ -353,3 +376,29 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             #stats = ObspyUtil.get_stats(file_path)
             # TODO remove stats.StartTime and use the picked one from UI.
             self.event_info.plot_arrivals2(index, st_stats)
+
+    def stationsInfo(self):
+        files_path = self.get_files(self.root_path_bind.value)
+        if self.sortCB.isChecked():
+            if self.comboBox_sort.currentText() == "Distance":
+                files_path.sort(key=self.sort_by_distance_advance)
+                self.message_dataless_not_found()
+
+            elif self.comboBox_sort.currentText() == "Back Azimuth":
+                files_path.sort(key=self.sort_by_baz_advance)
+                self.message_dataless_not_found()
+
+        files_at_page = self.get_files_at_page()
+        sd = []
+
+        for file in files_at_page:
+
+            st = SeismogramDataAdvanced(file)
+
+            station = [st.stats.Network,st.stats.Station,st.stats.Location,st.stats.Channel,st.stats.StartTime,
+                       st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
+
+            sd.append(station)
+
+        self._stations_info = StationsInfo(sd)
+        self._stations_info.show()

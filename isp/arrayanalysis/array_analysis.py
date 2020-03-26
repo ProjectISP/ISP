@@ -10,8 +10,6 @@ from obspy.core import read
 from obspy.core import UTCDateTime
 from obspy.core.util import AttribDict
 from obspy.signal.array_analysis import array_processing
-import pandas as pd
-import os
 from obspy.signal.array_analysis import array_transff_freqslowness
 import nitime.algorithms as alg
 from obspy.signal.array_analysis import get_geometry
@@ -63,22 +61,13 @@ class array:
             mathangle = 90 + (360 - azimuth)
         return mathangle
 
-    def FK(self, path, path_coords, stime, etime, fmin, fmax, slim, sres, win_len, win_frac):
+    def FK(self, st, inv, stime, etime, fmin, fmax, slim, sres, win_len, win_frac):
 
-        path = path+"/*.*"
-        path_coords = os.path.join(path_coords,"coords.txt")
-        st = read(path)
-        #maxstart = np.max([tr.stats.starttime for tr in st])
-        #minend = np.min([tr.stats.endtime for tr in st])
-        #st.trim(maxstart, minend)
-        #st.trim(stime, etime)
-        df = pd.read_csv(path_coords, sep='\t')
-        print(df)
-        n = df.Name.count()
-
+        n = len(st)
         for i in range(n):
+            coords = inv.get_coordinates(st[i].id)
             st[i].stats.coordinates = AttribDict(
-                {'latitude': df.loc[i].Lat, 'elevation': 0.0, 'longitude': df.loc[i].Lon})
+                {'latitude': coords['latitude'], 'elevation': coords['elevation'], 'longitude': coords['longitude']})
 
         kwargs = dict(
             # slowness grid: X min, X max, Y min, Y max, Slow Step
@@ -89,29 +78,37 @@ class array:
             frqlow=fmin, frqhigh=fmax, prewhiten=0,
             # restrict output
             semb_thres=-1e9, vel_thres=-1e9, timestamp='mlabday',
-            stime=stime, etime=etime)
+            stime=stime+0.1, etime=etime-0.1)
 
-        out = array_processing(st, **kwargs)
-        print("Finished")
+        try:
+            out = array_processing(st, **kwargs)
+            print("Finished")
 
-        T = out[:, 0]
-        relpower = out[:, 1]
-        abspower = out[:, 2]
-        AZ = out[:, 3]
-        AZ[AZ < 0.0] += 360
-        Slowness = out[:, 4]
-        #time = np.linspace(0, DT, num=len(T))
+            T = out[:, 0]
+            relpower = out[:, 1]
+            abspower = out[:, 2]
+            AZ = out[:, 3]
+            AZ[AZ < 0.0] += 360
+            Slowness = out[:, 4]
+
+        except:
+            print("Check Parameters and Starttime/Endtime")
+
+            relpower = []
+            abspower = []
+            AZ = []
+            Slowness = []
+            T = []
+
         return relpower, abspower, AZ, Slowness, T
 
-    def FKCoherence(self, path, path_coords, start, DT, linf, lsup, slim, win_len, sinc, method):
+    def FKCoherence(self, st, inv,  DT, linf, lsup, slim, win_len, sinc, method):
 
         def find_nearest(array, value):
 
             idx, val = min(enumerate(array), key=lambda x: abs(x[1] - value))
             return idx, val
 
-        path = path + "/" + "*.*"
-        path_coords = path_coords + "/" + "coords.txt"
         sides = 'onesided'
         pi = math.pi
 
@@ -141,14 +138,13 @@ class array:
         t1 = UTCDateTime(DATE)
         ########End conversion###############################
 
-        st = read(path, starttime=t1, endtime=t1 + win_len)
+        st.trim(starttime=t1, endtime=t1 + win_len)
         st.sort()
-        df = pd.read_csv(path_coords, sep='\t')
-        n = df.Name.count()
-
+        n = len(st)
         for i in range(n):
+            coords = inv.get_coordinates(st[i].id)
             st[i].stats.coordinates = AttribDict(
-                {'latitude': df.loc[i].Lat, 'elevation': 0.0, 'longitude': df.loc[i].Lon})
+                {'latitude': coords['latitude'], 'elevation': coords['elevation'], 'longitude': coords['longitude']})
 
         coord = get_geometry(st, coordsys='lonlat', return_center=True)
 
@@ -193,10 +189,10 @@ class array:
 
         nseq = nr
         L = int(nfft)
-        csd_mat = np.zeros((nseq, nseq, L), 'D')
-        psd_mat = np.zeros((2, nseq, nseq, L), 'd')
+        #csd_mat = np.zeros((nseq, nseq, L), 'D')
+        #psd_mat = np.zeros((2, nseq, nseq, L), 'd')
         coh_mat = np.zeros((nseq, nseq, L), 'd')
-        coh_var = np.zeros_like(coh_mat)
+        #coh_var = np.zeros_like(coh_mat)
         Cx = np.ones((nr, nr, df), dtype=np.complex128)
 
         if method == "MTP.COHERENCE":

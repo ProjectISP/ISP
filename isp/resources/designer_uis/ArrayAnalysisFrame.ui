@@ -363,54 +363,21 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="0">
-               <widget class="QPushButton" name="stationsCoordsBtn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Stations Coords</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QLineEdit" name="coordsPathForm">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-               </widget>
-              </item>
              </layout>
             </item>
             <item>
+             <widget class="QPushButton" name="stationsBtn">
+              <property name="text">
+               <string>Stations Info</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <layout class="QGridLayout" name="gridLayout_5">
-              <item row="3" column="0" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_16">
+              <item row="0" column="0" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_12">
                 <property name="text">
-                 <string>Station</string>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="1">
-               <widget class="QLineEdit" name="componentLE"/>
-              </item>
-              <item row="3" column="1" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_17">
-                <property name="text">
-                 <string>Component</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_13">
-                <property name="text">
-                 <string>           End Time    </string>
+                 <string>Start Time             </string>
                 </property>
                </widget>
               </item>
@@ -427,13 +394,6 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="0" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_12">
-                <property name="text">
-                 <string>Start Time             </string>
-                </property>
-               </widget>
-              </item>
               <item row="1" column="0">
                <widget class="QDateTimeEdit" name="starttime_date">
                 <property name="sizePolicy">
@@ -444,6 +404,16 @@
                 </property>
                 <property name="displayFormat">
                  <string>yyyy/MM/dd hh:mm:ss UTC</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLineEdit" name="stationLE"/>
+              </item>
+              <item row="2" column="1">
+               <widget class="QCheckBox" name="trimCB">
+                <property name="text">
+                 <string>Trim</string>
                 </property>
                </widget>
               </item>
@@ -460,13 +430,34 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="0">
-               <widget class="QLineEdit" name="stationLE"/>
+              <item row="4" column="1">
+               <widget class="QLineEdit" name="channelLE"/>
               </item>
-              <item row="2" column="1">
-               <widget class="QCheckBox" name="trimCB">
+              <item row="3" column="1" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_17">
                 <property name="text">
-                 <string>Trim</string>
+                 <string>Channel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_16">
+                <property name="text">
+                 <string>Station</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string>           End Time    </string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QCheckBox" name="selectCB">
+                <property name="text">
+                 <string>select</string>
                 </property>
                </widget>
               </item>
@@ -686,7 +677,6 @@
     </property>
     <addaction name="actionOpen_Project"/>
     <addaction name="actionCreatenewProject"/>
-    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuParameters">
     <property name="title">
@@ -718,14 +708,14 @@
     <string>Create a new Project</string>
    </property>
   </action>
-  <action name="actionExit">
+  <action name="actionStationsInfo">
    <property name="icon">
     <iconset>
      <normalon>:/Iconos/Imagenes/Balc¢n.png</normalon>
     </iconset>
    </property>
    <property name="text">
-    <string>Exit</string>
+    <string>Stations Info</string>
    </property>
   </action>
   <action name="actionSettings">

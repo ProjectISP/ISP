@@ -19,6 +19,7 @@ UitestFrame = load_ui_designers("test.ui")
 UiParametersFrame = load_ui_designers("parameters.ui")
 UiAdditionalParameters = load_ui_designers("additionalParameters.ui")
 UiMomentTensor = load_ui_designers("MomentTensor.ui")
+UiStationInfo  =  load_ui_designers("StationsInfo.ui")
 
 
 
