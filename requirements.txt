@@ -1,3 +1,4 @@
+sqlalchemy
 owslib
 Cython
 deprecated
