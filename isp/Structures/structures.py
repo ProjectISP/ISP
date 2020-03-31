@@ -207,3 +207,86 @@ class StationCoordinates(NamedTuple):
             print(error)
             app_logger.error(traceback.format_exc())
             raise Exception
+
+
+class Search(NamedTuple):
+    """
+    Class that holds a structure to perform search and paginate it. This structure can
+    be used by any :class:`BaseModel`, since SearchBy and OrderBy are valid column names.
+    Use the method from_dict to create an instance from a dictionary.
+
+    Fields:
+        SearchBy: A table's column's name to search. You can pass multiple values by using comma separation.
+            e.g: "username, name", it will perform a search in this to columns.
+
+        SearchValue: The value to search. You can pass multiple values by using comma separation.
+            e.g: "John, Sara", it will perform a search for this values for the given columns.
+
+        Page: The current page to return.
+
+        PerPage: Number of items per page.
+
+        OrderBy: A table's column's name to order.
+
+        OrderDesc: True if the order must be descendant.
+
+        MapColumnAndValue (default = False): If True it will consider a 1:1 mapping for SearchBy:SearchValue.
+            e.g: Column -> "username, name", Values -> "admin, Sara".
+
+            If True: This will search for username = like(%admin%) and name = like(%Sara%).
+
+            If False: This will search for username = like(%admin%, %Sara%) and name = like(%admin%, %Sara%).
+
+        Use_AND_Operator (default = False): Makes the search with AND instead of OR.
+
+        TextualQuery: Use a textual query, i.e: "id<1111"
+    """
+
+    SearchBy: str
+    SearchValue: str
+    Page: int
+    PerPage: int
+    OrderBy: str
+    OrderDesc: bool = False
+    MapColumnAndValue: bool = False
+    Use_AND_Operator: bool = False
+    TextualQuery: str = None
+
+    def to_dict(self):
+        return self._asdict()
+
+    # noinspection PyTypeChecker
+    @classmethod
+    def from_dict(cls, dictionary):
+        new_d = validate_dictionary(cls, dictionary)
+        return cls(**new_d)
+
+
+class SearchResult(NamedTuple):
+    """
+    Class that holds a structure to return a search result.
+
+    Fields:
+        result: Expect a list of entities. However, it can be any object list that implements the method to_dict().
+
+        total: The total number of entities found.
+    """
+
+    result: any
+    total: int
+
+    def to_dict(self) -> dict:
+        """
+        Map this object to a dictionary.
+
+        :return: The dictionary representation of this object.
+        """
+        search_result_asdict = self._asdict()
+        search_result_asdict["result"] = [entity.to_dict() for entity in self.result]
+        return search_result_asdict
+
+    # noinspection PyTypeChecker
+    @classmethod
+    def from_dict(cls, dictionary):
+        new_d = validate_dictionary(cls, dictionary)
+        return cls(**new_d)
