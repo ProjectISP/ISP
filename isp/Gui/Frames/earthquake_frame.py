@@ -5,7 +5,7 @@ from isp.DataProcessing import SeismogramData, DatalessManager, SeismogramDataAd
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
 from isp.Gui import pw
-from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, FilterBox, EventInfoBox, \
+from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, EventInfoBox, \
     MatplotlibCanvas
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -65,13 +65,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.updateBtn.clicked.connect(self.plot_seismogram)
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
-        #self.mapBtn.clicked.connect(self.plot_map_stations)
+        # self.mapBtn.clicked.connect(self.plot_map_stations)
         self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
 
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
-        ##Parameters settings
+        # Parameters settings
 
         self.parameters = ParametersSettings()
 
@@ -149,7 +149,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.__dataless_manager = DatalessManager(value)
         self.earthquake_location_frame.set_dataless_dir(value)
 
-    # Recenly incorporated
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def onChange_metadata_path(self, value):
         try:
@@ -179,24 +178,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 md = MessageDialog(self)
                 md.set_info_message("Loaded Metadata Successfully.")
 
-    ###
-
-    # def sort_by_distance(self, file):
-    #     print(file)
-    #     st_stats = self.dataless_manager.get_station_stats_by_mseed_file(file)
-    #     if st_stats:
-    #         dist, _, _ = gps2dist_azimuth(st_stats.Lat, st_stats.Lon, 0., 0.)
-    #         # print("File, dist: ", file, dist)
-    #         return dist
-    #     else:
-    #         self.dataless_not_found.add(file)
-    #         print("No dataless found for {} file.".format(file))
-    #         return 0.
-    #
-    # def on_click_sort(self):
-    #     self.files.sort(key=self.sort_by_distance)
-    #     self.message_dataless_not_found()
-    #     self.plot_seismogram()
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
@@ -204,8 +185,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if dir_path:
             bind.value = dir_path
 
-
-    # Recent Incorporated
     def sort_by_distance_advance(self, file):
 
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
@@ -231,6 +210,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                           self.event_info.longitude)
              return az_from_epi
          else:
+
              self.dataless_not_found.add(file)
              print("No Metadata found for {} file.".format(file))
              return 0.
@@ -378,6 +358,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.event_info.plot_arrivals2(index, st_stats)
 
     def stationsInfo(self):
+
         files_path = self.get_files(self.root_path_bind.value)
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":

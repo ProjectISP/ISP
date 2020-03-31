@@ -14,7 +14,7 @@ from obspy import Trace, read
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, MseedUtil
-from isp.seismogramInspector.Auxiliary2 import MTspectrum
+from isp.seismogramInspector.signal_processing_advanced import MTspectrum
 
 
 class MTspectrogram:
@@ -35,22 +35,39 @@ class MTspectrogram:
     def stats(self):
         return self.__stats
 
-    def __compute_spectrogram(self, trace_data):
-        npts = len(trace_data)
-        t = np.linspace(0, (self.stats.Delta * npts), npts - self.win)
-        mt_spectrum = MTspectrum(trace_data, self.win, self.stats.Delta, self.tbp, self.ntapers, self.f_min, self.f_max)
-        log_spectrogram = 10. * np.log(mt_spectrum / np.max(mt_spectrum))
-        x, y = np.meshgrid(t, np.linspace(self.f_min, self.f_max, log_spectrogram.shape[0]))
-        return x, y, log_spectrogram
+    # def __compute_spectrogram(self, trace_data):
+    #     npts = len(trace_data)
+    #     t = np.linspace(0, (self.stats.Delta * npts), npts - self.win)
+    #     mt_spectrum = MTspectrum(trace_data, self.win, self.stats.Delta, self.tbp, self.ntapers, self.f_min, self.f_max)
+    #     log_spectrogram = 10. * np.log(mt_spectrum / np.max(mt_spectrum))
+    #     x, y = np.meshgrid(t, np.linspace(self.f_min, self.f_max, log_spectrogram.shape[0]))
+    #     return x, y, log_spectrogram
 
-    def compute_spectrogram(self, start_time=None, end_time=None, trace_filter=None):
-        tr: Trace = ObspyUtil.get_tracer_from_file(self.file_path)
-        self.__stats = TracerStats.from_dict(tr.stats)
-        tr.trim(starttime=start_time, endtime=end_time)
-        tr.detrend(type="demean")
-        ObspyUtil.filter_trace(tr, trace_filter, self.f_min, self.f_max)
-        x, y, log_spectrogram = self.__compute_spectrogram(tr.data)
-        return x, y, log_spectrogram
+    # def compute_spectrogram(self, start_time=None, end_time=None, trace_filter=None):
+    #     tr: Trace = ObspyUtil.get_tracer_from_file(self.file_path)
+    #     self.__stats = TracerStats.from_dict(tr.stats)
+    #     tr.trim(starttime=start_time, endtime=end_time)
+    #     tr.detrend(type="demean")
+    #     ObspyUtil.filter_trace(tr, trace_filter, self.f_min, self.f_max)
+    #     x, y, log_spectrogram = self.__compute_spectrogram(tr.data)
+    #     return x, y, log_spectrogram
+
+    def __compute_spectrogram(self, tr):
+         npts = len(tr)
+         t = np.linspace(0, (tr.stats.delta * npts), npts - self.win)
+         mt_spectrum = MTspectrum(tr.data, self.win, tr.stats.delta, self.tbp, self.ntapers, self.f_min, self.f_max)
+         log_spectrogram = 10. * np.log(mt_spectrum / np.max(mt_spectrum))
+         x, y = np.meshgrid(t, np.linspace(self.f_min, self.f_max, log_spectrogram.shape[0]))
+         return x, y, log_spectrogram
+
+
+
+    def compute_spectrogram(self, tr, start_time=None, end_time=None):
+
+         tr.trim(starttime=start_time, endtime=end_time)
+
+         x, y, log_spectrogram = self.__compute_spectrogram(tr)
+         return x, y, log_spectrogram
 
     def plot_spectrogram(self, tr, fig=None, show=False):
         x, y, log_spectrogram = self.compute_spectrogram(tr)

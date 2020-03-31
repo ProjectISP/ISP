@@ -33,7 +33,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_3">
        <attribute name="title">
@@ -42,6 +42,46 @@
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <layout class="QGridLayout" name="gridLayout_2">
+          <item row="7" column="0" colspan="5">
+           <widget class="QPushButton" name="stations_coordsBtn">
+            <property name="text">
+             <string>Stations Coordinates</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="2">
+           <widget class="QPushButton" name="selectDirBtn">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Stations Directory</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0" colspan="2">
+           <widget class="QDoubleSpinBox" name="fminSB">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2" colspan="3">
+           <widget class="QLineEdit" name="rootPathForm">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
           <item row="4" column="2" colspan="3" alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_5">
             <property name="text">
@@ -52,61 +92,8 @@
             </property>
            </widget>
           </item>
-          <item row="6" column="0" colspan="5">
-           <widget class="QPushButton" name="arfBtn">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Array Response Function</string>
-            </property>
-           </widget>
-          </item>
           <item row="5" column="0" colspan="2">
            <widget class="QDoubleSpinBox" name="gridSB">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0" colspan="2" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Fmin</string>
-            </property>
-            <property name="buddy">
-             <cstring>label</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0" colspan="5" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_4">
-            <property name="text">
-             <string>Parameters</string>
-            </property>
-            <property name="buddy">
-             <cstring>rootPathForm</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2" colspan="3" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>Fmax</string>
-            </property>
-            <property name="buddy">
-             <cstring>fmaxSB</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0" colspan="2">
-           <widget class="QDoubleSpinBox" name="fminSB">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -125,6 +112,16 @@
             </property>
            </widget>
           </item>
+          <item row="2" column="0" colspan="2" alignment="Qt::AlignHCenter">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Fmin</string>
+            </property>
+            <property name="buddy">
+             <cstring>label</cstring>
+            </property>
+           </widget>
+          </item>
           <item row="3" column="2" colspan="3">
            <widget class="QDoubleSpinBox" name="fmaxSB">
             <property name="sizePolicy">
@@ -135,8 +132,18 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="0" colspan="2">
-           <widget class="QPushButton" name="selectDirBtn">
+          <item row="1" column="0" colspan="5" alignment="Qt::AlignHCenter">
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>Parameters</string>
+            </property>
+            <property name="buddy">
+             <cstring>rootPathForm</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0" colspan="5">
+           <widget class="QPushButton" name="arfBtn">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -144,17 +151,17 @@
              </sizepolicy>
             </property>
             <property name="text">
-             <string>Stations Directory</string>
+             <string>Array Response Function</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="2" colspan="3">
-           <widget class="QLineEdit" name="rootPathForm">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+          <item row="2" column="2" colspan="3" alignment="Qt::AlignHCenter">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Fmax</string>
+            </property>
+            <property name="buddy">
+             <cstring>fmaxSB</cstring>
             </property>
            </widget>
           </item>
@@ -168,7 +175,7 @@
             </property>
            </widget>
           </item>
-          <item row="7" column="0" colspan="5">
+          <item row="9" column="0" colspan="5">
            <spacer name="verticalSpacer">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
@@ -180,6 +187,13 @@
              </size>
             </property>
            </spacer>
+          </item>
+          <item row="8" column="0" colspan="5">
+           <widget class="QPushButton" name="pushButton_2">
+            <property name="text">
+             <string>Plot Stations Map</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -675,8 +689,7 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionOpen_Project"/>
-    <addaction name="actionCreatenewProject"/>
+    <addaction name="actionWrite"/>
    </widget>
    <widget class="QMenu" name="menuParameters">
     <property name="title">
@@ -688,14 +701,14 @@
    <addaction name="menuParameters"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionOpen_Project">
+  <action name="actionWrite">
    <property name="icon">
     <iconset>
      <normalon>:/Iconos/Imagenes/Compas.png</normalon>
     </iconset>
    </property>
    <property name="text">
-    <string>Open Project</string>
+    <string>Write Seismograms</string>
    </property>
   </action>
   <action name="actionCreatenewProject">

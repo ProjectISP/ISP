@@ -39,20 +39,25 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
         self.additionalParams.exec()
 
     def on_add_action_pushed(self):
-        #PB_up = pw.QPushButton("Up")
-        #PB_down = pw.QPushButton("down")
+        PB_up = pw.QPushButton("Up")
+        PB_down = pw.QPushButton("down")
         PB_del = pw.QPushButton("-")
         layoutPB = pw.QHBoxLayout()
-        #layoutPB.addWidget(PB_up)
-        #layoutPB.addWidget(PB_down)
+        layoutPB.addWidget(PB_up)
+        layoutPB.addWidget(PB_down)
         layoutPB.addWidget(PB_del)
         order_widget = pw.QWidget()
+        layoutPB.setContentsMargins(0, 0, 0, 0)
         order_widget.setLayout(layoutPB)
-        #PB_up.clicked.connect(lambda parent=order_widget: self.swapRows(True, order_widget))
-        #PB_down.clicked.connect(lambda parent=order_widget: self.swapRows(False, order_widget))
+        PB_up.clicked.connect(lambda parent=order_widget: self.swapRows(True, order_widget))
+        PB_down.clicked.connect(lambda parent=order_widget: self.swapRows(False, order_widget))
         PB_del.clicked.connect(lambda parent=order_widget: self.removeRow(order_widget))
 
         self.orderWidgetsList.append(order_widget)
+        param_widget = pw.QWidget()
+        param_layout = pw.QHBoxLayout()
+        param_layout.setContentsMargins(0,0,0,0)
+        param_widget.setLayout(param_layout)
 
         if self.addCombo.currentData() is ActionEnum.RMEAN:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
@@ -60,13 +65,13 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.RMEAN.value))
             combo_param = pw.QComboBox()
             combo_param.addItems(["simple", 'linear', 'demean', 'polynomial', 'spline'])
-            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, combo_param)
+            param_layout.addWidget(combo_param)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
         elif self.addCombo.currentData() is ActionEnum.TAPER:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.TAPER.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
-            layout = pw.QHBoxLayout()
             combo_param = pw.QComboBox()
             combo_param.addItems(["cosine", 'barthann', 'bartlett', 'blackman', 'blackmanharris', 'bohman', 'boxcar',
                                   'chebwin', 'flattop', 'gaussian', 'general_gaussian', 'hamming', 'hann','kaiser',
@@ -75,25 +80,18 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             spin_param.setMaximum(0.5)
             spin_param.setMinimum(0)
             spin_param.setSingleStep(0.01)
-            layout.addWidget(combo_param)
-            layout.addWidget(spin_param)
-            layout.setContentsMargins(0,0,0,0)
-            widget = pw.QWidget()
-            widget.setLayout(layout)
-            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, widget)
+            param_layout.addWidget(combo_param)
+            param_layout.addWidget(spin_param)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
         elif self.addCombo.currentData() is ActionEnum.NORMALIZE:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.NORMALIZE.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
-            layout = pw.QHBoxLayout()
             spin_param = pw.QDoubleSpinBox()
             spin_param.setSingleStep(0.01)
-            layout.addWidget(spin_param)
-            layout.setContentsMargins(0, 0, 0, 0)
-            widget = pw.QWidget()
-            widget.setLayout(layout)
-            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2,  widget)
+            param_layout.addWidget(spin_param)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2,  param_widget)
 
         elif self.addCombo.currentData() is ActionEnum.SHIFT:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
@@ -101,13 +99,13 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
             add_param = pw.QPushButton("Display")
             add_param.clicked.connect(self.execAdditionalParameters)
-            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, add_param)
+            param_layout.addWidget(add_param)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
         elif self.addCombo.currentData() is ActionEnum.FILTER:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.FILTER.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
-            layout = pw.QHBoxLayout()
             combo_param = pw.QComboBox()
             combo_param.addItems(["bandpass", 'bandstop', 'lowpass', 'highpass', 'lowpass_cheby_2'])
 
@@ -127,26 +125,22 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
 
             orderSB = pw.QSpinBox()
 
-            layout.addWidget(combo_param)
-            layout.addWidget(label_freqmin)
-            layout.addWidget(freq_minDB)
-            layout.addWidget(label_freqmax)
-            layout.addWidget(freq_maxDB)
-            layout.addWidget(zero_phaseCB)
-            layout.addWidget(label_number_poles)
-            layout.addWidget(orderSB)
+            param_layout.addWidget(combo_param)
+            param_layout.addWidget(label_freqmin)
+            param_layout.addWidget(freq_minDB)
+            param_layout.addWidget(label_freqmax)
+            param_layout.addWidget(freq_maxDB)
+            param_layout.addWidget(zero_phaseCB)
+            param_layout.addWidget(label_number_poles)
+            param_layout.addWidget(orderSB)
 
-
-            layout.setContentsMargins(0, 0, 0, 0)
-            widget = pw.QWidget()
-            widget.setLayout(layout)
-            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, widget)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
         elif self.addCombo.currentData() is ActionEnum.REMOVE_RESPONSE:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.REMOVE_RESPONSE.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
-            layout = pw.QHBoxLayout()
+
             label_freqmin = pw.QLabel("Corner Freq min")
             label_freqmax = pw.QLabel("Corner Freq max (%Fn)")
             label_water_level = pw.QLabel("Water level")
@@ -175,23 +169,18 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             water_levelDB.setMaximum(100)
             water_levelDB.setSingleStep(1)
 
-            layout.addWidget(label_freqmin)
-            layout.addWidget(freq_minDB1)
-            layout.addWidget(freq_minDB2)
-            layout.addWidget(label_freqmax)
-            layout.addWidget(freq_maxDB1)
-            layout.addWidget(freq_maxDB2)
-            layout.addWidget(label_water_level)
-            layout.addWidget(water_levelDB)
-            layout.addWidget(label_units)
-            layout.addWidget(combo_param)
+            param_layout.addWidget(label_freqmin)
+            param_layout.addWidget(freq_minDB1)
+            param_layout.addWidget(freq_minDB2)
+            param_layout.addWidget(label_freqmax)
+            param_layout.addWidget(freq_maxDB1)
+            param_layout.addWidget(freq_maxDB2)
+            param_layout.addWidget(label_water_level)
+            param_layout.addWidget(water_levelDB)
+            param_layout.addWidget(label_units)
+            param_layout.addWidget(combo_param)
 
-            layout.setContentsMargins(0, 0, 0, 0)
-            widget = pw.QWidget()
-            widget.setLayout(layout)
-            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, widget)
-
-
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
         elif self.addCombo.currentData() is ActionEnum.DIFFERENTIATE:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
@@ -199,14 +188,17 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
             combo_param = pw.QComboBox()
             combo_param.addItems(['gradient'])
-            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, combo_param)
+            param_layout.addWidget(combo_param)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
         elif self.addCombo.currentData() is ActionEnum.INTEGRATE:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.INTEGRATE.value))
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
             combo_param = pw.QComboBox()
             combo_param.addItems(['cumtrapz', 'spline'])
-            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, combo_param)
+            param_layout.addWidget(combo_param)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
         elif self.addCombo.currentData() is ActionEnum.Remove_Response:
              self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
@@ -222,66 +214,58 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
         self.tableWidget.removeRow(current_row)
         self.orderWidgetsList.pop(current_row)
 
-    # def swapRows(self, up, order_widget):
-    #
-    #     current_row = self.orderWidgetsList.index(order_widget)
-    #
-    #
-    #     if current_row == ValueError :
-    #         return
-    #
-    #     if (current_row is 0 and up is True) :
-    #         return
-    #
-    #     if current_row is (self.tableWidget.rowCount() - 1) and up is False:
-    #         return
-    #
-    #     a = []
-    #     b = []
-    #
-    #     dest_row = (current_row - 1) if up else (current_row + 1)
-    #
-    #     current_row_action = self.tableWidget.takeItem(current_row, 1)
-    #     dest_row_action = self.tableWidget.takeItem(dest_row, 1)
-    #     self.tableWidget.setItem(current_row, 1, dest_row_action)
-    #     self.tableWidget.setItem(dest_row,1, current_row_action)
-    #
-    #     current_row_parameters = []
-    #     dest_row_parameters = []
-    #
-    #     print(self.tableWidget.cellWidget(current_row,2).layout().count())
-    #     print(self.tableWidget.cellWidget(dest_row,2).layout().count())
-    #     layout_item = self.tableWidget.cellWidget(current_row,2).layout().takeAt(0)
-    #     while layout_item:
-    #         current_row_parameters.append(layout_item)
-    #         layout_item = self.tableWidget.cellWidget(current_row, 2).layout().takeAt(0)
-    #
-    #     layout_item = self.tableWidget.cellWidget(dest_row, 2).layout().takeAt(0)
-    #     while layout_item:
-    #         dest_row_parameters.append(layout_item)
-    #         layout_item = self.tableWidget.cellWidget(dest_row, 2).layout().takeAt(0)
-    #
-    #     print(len(current_row_parameters))
-    #     print(len(dest_row_parameters))
-    #     print(self.tableWidget.cellWidget(current_row, 2).layout().count())
-    #     print(self.tableWidget.cellWidget(dest_row, 2).layout().count())
-    #     for item in current_row_parameters:
-    #         self.tableWidget.cellWidget(dest_row, 2).layout().addItem(item)
-    #
-    #     for item in dest_row_parameters:
-    #         self.tableWidget.cellWidget(current_row, 2).layout().addItem(item)
-    #
-    #     print(self.tableWidget.cellWidget(current_row, 2).layout().count())
-    #     print(self.tableWidget.cellWidget(dest_row, 2).layout().count())
-    #
-    #     widget = self.tableWidget.cellWidget(current_row, 2)
-    #     self.tableWidget.setCellWidget(current_row, 2, widget)
-    #     #self.tableWidget.cellWidget(current_row, 2).show()
-    #     #self.tableWidget.cellWidget(dest_row, 2).hide()
-    #     #self.tableWidget.cellWidget(dest_row, 2).setCellWidget(dest_row, 2)
-    #     widget = self.tableWidget.cellWidget(dest_row, 2)
-    #     self.tableWidget.setCellWidget(dest_row, 2, widget)
+    def swapRows(self, up, order_widget):
+        current_row = self.orderWidgetsList.index(order_widget)
+    
+        if current_row == ValueError :
+            return
+    
+        if (current_row is 0 and up is True) :
+            return
+    
+        if current_row is (self.tableWidget.rowCount() - 1) and up is False:
+            return
+    
+        dest_row = (current_row - 1) if up else (current_row + 1)
+    
+        # Exchange actions
+        current_row_action = self.tableWidget.takeItem(current_row, 1)
+        dest_row_action = self.tableWidget.takeItem(dest_row, 1)
+        self.tableWidget.setItem(current_row, 1, dest_row_action)
+        self.tableWidget.setItem(dest_row,1, current_row_action)
 
+        # Exchange parameters 
+        current_row_params = []
+        current_row_layout = self.tableWidget.cellWidget(current_row, 2).layout()
+        dest_row_params = []
+        dest_row_layout = self.tableWidget.cellWidget(dest_row, 2).layout()
+
+        while current_row_layout.count() > 0:
+            current_row_params.append(current_row_layout.takeAt(0))
+
+        while dest_row_layout.count() > 0:
+            dest_row_params.append(dest_row_layout.takeAt(0))
+
+        new_current_layout = pw.QHBoxLayout()
+        new_current_widget = pw.QWidget()
+
+        for i in dest_row_params : 
+            new_current_layout.addItem(i)
+
+        new_current_layout.setContentsMargins(0,0,0,0)
+        new_current_widget.setLayout(new_current_layout)
+
+        new_dest_layout = pw.QHBoxLayout()
+        new_dest_widget = pw.QWidget()
+
+        for i in current_row_params : 
+            new_dest_layout.addItem(i)
+
+        new_dest_layout.setContentsMargins(0,0,0,0)        
+        new_dest_widget.setLayout(new_dest_layout)
+
+        self.tableWidget.setCellWidget(current_row,2,new_current_widget)
+        self.tableWidget.setCellWidget(dest_row,2, new_dest_widget)
 
 
     def getParameters(self):
@@ -290,7 +274,7 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             action = self.tableWidget.item(i, 1).data(0)
 
             if (action == ActionEnum.RMEAN.value):
-                parameters.append([action, self.tableWidget.cellWidget(i, 2).currentText()])
+                parameters.append([action, self.tableWidget.cellWidget(i, 2).layout().itemAt(0).widget().currentText()])
 
             elif (action == ActionEnum.TAPER.value):
                 combo_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(0).widget().currentText()
@@ -322,11 +306,11 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
                 parameters.append([action, spin_value1, spin_value2, spin_value3, spin_value4, spin_value5,combo_value])
 
             elif (action == ActionEnum.DIFFERENTIATE.value):
-                combo_value = self.tableWidget.cellWidget(i, 2).currentText()
+                combo_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(0).widget().currentText()
                 parameters.append([action, combo_value])
 
             elif (action == ActionEnum.INTEGRATE.value):
-                combo_value = self.tableWidget.cellWidget(i, 2).currentText()
+                combo_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(0).widget().currentText()
                 parameters.append([action, combo_value])
 
 

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>904</width>
+    <height>401</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTableWidget" name="parameters_table">
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>Order</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Depth (km)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Vp (km/s)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Vs (km/s)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Rho (g/cm**3)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Qp</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Qs</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="addBtn">
+     <property name="text">
+      <string>Add layer</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

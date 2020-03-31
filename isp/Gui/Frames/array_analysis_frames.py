@@ -6,6 +6,7 @@ from isp.DataProcessing.seismogram_analysis import SeismogramDataAdvanced
 from isp.Gui.Frames import BaseFrame, \
 MatplotlibCanvas, UiArrayAnalysisFrame, CartopyCanvas, MatplotlibFrame, MessageDialog
 from isp.Gui.Frames.parameters import ParametersSettings
+from isp.Gui.Frames.stations_coordinates import StationsCoords
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Gui import pw
@@ -24,6 +25,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.__metadata_manager = None
         self.inventory = {}
         self._stations_info = {}
+        self._stations_coords = {}
         self.canvas = MatplotlibCanvas(self.responseMatWidget)
         self.canvas_fk = MatplotlibCanvas(self.widget_fk,nrows=4)
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
@@ -61,14 +63,23 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.runFKBtn.clicked.connect(lambda: self.FK_plot())
         self.plotBtn.clicked.connect(lambda: self.plot_seismograms())
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
+        self.actionWrite.triggered.connect(self.write)
+
         self.stationsBtn.clicked.connect(self.stationsInfo)
+        self.stations_coordsBtn.clicked.connect(self.stations_coordinates)
 
         # Parameters settings
+        self.__parameters = ParametersSettings()
 
-        self.parameters = ParametersSettings()
+        # Stations Coordinates
+        self.__stations_coords = StationsCoords()
 
     def open_parameters_settings(self):
-        self.parameters.show()
+        self.__parameters.show()
+
+    def stations_coordinates(self):
+        self.__stations_coords.show()
+
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
@@ -83,6 +94,9 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             pass
 
     def arf(self):
+        # Test get coordinates#
+        coords = self.__stations_coords.getCoordinates()
+        print(coords)
 
         coords_path = os.path.join(self.root_path_bind.value, "coords.txt")
         wavenumber = array_analysis.array()
@@ -98,7 +112,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         lon=coords[:,1]
         lat=coords[:,0]
         depth=coords[:,2]
-        self.cartopy_canvas.plot_stations(lon, lat, depth, 0)
+        #self.cartopy_canvas.plot_stations(lon, lat, depth, 0)
 
     def FK_plot(self):
 
@@ -169,7 +183,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                  if f != ".DS_Store":
                     obsfiles.append(os.path.abspath(os.path.join(dirpath, f)))
         obsfiles.sort()
-        parameters = self.parameters.getParameters()
+        parameters = self.__parameters.getParameters()
         all_traces =[]
 
         for file in obsfiles:
@@ -212,3 +226,17 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
         self._stations_info = StationsInfo(sd)
         self._stations_info.show()
+
+    def write(self):
+
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        n=len(self.st)
+        for j in range(n):
+            tr=self.st[j]
+            print(tr.id, "Writing data processed")
+            path_output =  os.path.join(dir_path, tr.id)
+            tr.write(path_output, format="MSEED")
+
+
+

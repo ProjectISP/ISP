@@ -1,268 +1,80 @@
-from enum import Enum, unique
-
-import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.colors import Normalize
-from obspy import read
-from scipy.signal import hilbert
-
-from isp.DataProcessing import SeismogramData
+from isp.DataProcessing import SeismogramDataAdvanced
+from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
 from isp.Gui import pw
-from isp.Gui.Frames import MatplotlibFrame, BaseFrame, UiTimeFrequencyFrame, FilesView, MessageDialog, \
-    MatplotlibCanvas, TimeSelectorBox, FilterBox, SpectrumBox, UiTimeAnalysisWidget
-from isp.Gui.Frames.qt_components import ParentWidget, StationInfoBox, EventInfoBox
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load
-from isp.Structures.structures import StationsStats
+from isp.Gui.Frames import BaseFrame, UiTimeFrequencyFrame, FilesView, \
+    MatplotlibCanvas, MessageDialog
+from isp.Gui.Frames.parameters import ParametersSettings
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.seismogramInspector.MTspectrogram import MTspectrogram
-from isp.seismogramInspector.ccwt import ccwt
+import matplotlib.pyplot as plt
 from isp.seismogramInspector.ba_fast import ccwt_ba_fast
 from isp.seismogramInspector.CWT_fast import cwt_fast
-
-@unique
-class Phases(Enum):
-
-    Default = "Phase"
-    PPhase = "P"
-    PnPhase = "Pn"
-    PgPhase = "Pg"
-    SpPhase = "Sp"
-    SnPhase = "Sn"
-    SgPhase = "Sg"
-    LgPhase = "Lg"
-
-    def __eq__(self, other):
-        return self.value == other
-
-    def __ne__(self, other):
-        return self.value != other
-
-    @classmethod
-    def get_phases(cls):
-        return [item.value for item in cls.__members__.values()]
-
+import numpy as np
 
 @add_save_load()
-class TimeAnalysisWidget(pw.QFrame, UiTimeAnalysisWidget):
+class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
-    def __init__(self, parent, current_index=-1, parent_name=None):
+    def __init__(self):
 
-        super(TimeAnalysisWidget, self).__init__()
+        super(TimeFrequencyFrame, self).__init__()
         self.setupUi(self)
-        ParentWidget.set_parent(parent, self, current_index)
+        self.__stations_dir = None
+        self.__metadata_manager = None
+        self.inventory = {}
+        self._stations_info = {}
 
-        if parent_name:  # add parent name if given. Helps to make difference between the same widget
-            self.parent_name = parent_name
-
-        # embed matplotlib to qt widget
-        self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=2)
-        self.canvas.set_xlabel(1, "Time (s)")
-        self.canvas.on_double_click(self.on_double_click_matplotlib)
-
-        self.time_selector = TimeSelectorBox(self.PlotToolsWidget, 0)
-        self.filter = FilterBox(self.PlotToolsWidget, 1)
-        self.spectrum_box = SpectrumBox(self.PlotToolsWidget, 3)
-        self.station_info = StationInfoBox(self.PlotToolsWidget, 4)
-
-        # bind buttons
-        self.plotSeismogramBtn.clicked.connect(lambda: self.on_click_plot_seismogram(self.canvas))
-        self.plotArrivalsBtn.clicked.connect(lambda: self.on_click_plot_arrivals(self.canvas))
-        self.spectrum_box.register_plot_mtp(lambda: self.on_click_mtp(self.canvas))
-        self.spectrum_box.register_plot_cwt(lambda: self.on_click_cwt(self.canvas))
-
-        self.__file_selector = None
-        self.__event_info = None
-        self.is_envelop_checked = False
-
-    def register_file_selector(self, file_selector: FilesView):
-        self.__file_selector = file_selector
-
-    def set_event_info(self, event_into: EventInfoBox):
-        self.__event_info = event_into
-
-    @property
-    def file_selector(self) -> FilesView:
-        return self.__file_selector
-
-    @property
-    def event_info(self) -> EventInfoBox:
-        return self.__event_info
-
-    @property
-    def tracer_stats(self):
-        return ObspyUtil.get_stats(self.file_selector.file_path)
-
-    @property
-    def stream(self):
-        return read(self.file_selector.file_path)
-
-    @property
-    def trace(self):
-        return ObspyUtil.get_tracer_from_file(self.file_selector.file_path)
-
-    def validate_file(self):
-        if not MseedUtil.is_valid_mseed(self.file_selector.file_path):
-            msg = "The file {} is not a valid mseed. Please, choose a valid format".\
-                format(self.file_selector.file_name)
-            md = MessageDialog(self)
-            md.set_info_message(msg)
-            raise InvalidFile(msg)
+        self.canvas_plot1 = MatplotlibCanvas(self.widget_plot_up, nrows=2)
+        self.canvas_plot1.set_xlabel(1, "Time (s)")
+        self.canvas_plot1.set_ylabel(0, "Amplitude ")
+        self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
+        self.canvas_plot2 = MatplotlibCanvas(self.widget_plot_down, nrows=2)
+        self.canvas_plot2.set_xlabel(1, "Time (s)")
+        self.canvas_plot2.set_ylabel(0, "Amplitude ")
+        self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
+        # Binding
+        self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
+        self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
+        self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
+        # Add file selector to the widget
+        self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget,
+                                       on_change_file_callback=lambda file_path: self.onChange_file(file_path))
+        # Binds
+        self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
+        self.datalessBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+        # Action Buttons
+        self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
+        self.plotBtn.clicked.connect(self.plot_seismogram)
+        # Parameters settings
+        self.parameters = ParametersSettings()
 
     def filter_error_message(self, msg):
         md = MessageDialog(self)
         md.set_info_message(msg)
 
-    def get_data(self):
+    def message_dataless_not_found(self):
+        if len(self.dataless_not_found) > 1:
+            md = MessageDialog(self)
+            md.set_info_message("Metadata not found.")
+        else:
+            for file in self.dataless_not_found:
+                md = MessageDialog(self)
+                md.set_info_message("Metadata for {} not found.".format(file))
 
-        filter_value = self.filter.filter_value
-
-        f_min = self.filter.min_freq
-        f_max = self.filter.max_freq
-
-        t1 = self.time_selector.start_time
-        t2 = self.time_selector.end_time
-
-        sd = SeismogramData.from_tracer(self.trace)
-        return sd.get_waveform(filter_error_callback=self.filter_error_message,
-                               filter_value=filter_value, f_min=f_min, f_max=f_max, start_time=t1, end_time=t2)
-
-    def get_time_window(self):
-        t1 = self.time_selector.start_time
-        t2 = self.time_selector.end_time
-
-        return t1, t2
-
-    def plot_seismogram(self, canvas):
-        tr = self.get_data()
-        t = tr.times()
-        s1 = tr.data
-        canvas.plot(t, s1, 0, color="black",linewidth=0.5)
-
-        if self.is_envelop_checked:
-            analytic_sygnal = hilbert(s1)
-            envelope = np.abs(analytic_sygnal)
-            canvas.plot(t, envelope, 0, clear_plot=False, linewidth=0.5, color='sandybrown')
-
-    def plot_mt_spectrogram(self, canvas: MatplotlibCanvas):
-        win = int(self.spectrum_box.win_bind.value * self.tracer_stats.Sampling_rate)
-        tbp = self.spectrum_box.tw_bind.value
-        ntapers = self.spectrum_box.ntapers_bind.value
-        f_min = self.filter.min_freq
-        f_max = self.filter.max_freq
-        ts, te = self.get_time_window()
-
-        mtspectrogram = MTspectrogram(self.file_selector.file_path, win, tbp, ntapers, f_min, f_max)
-        x, y, log_spectrogram = mtspectrogram.compute_spectrogram(start_time=ts, end_time=te,
-                                                                  trace_filter=self.filter.filter_value)
-        canvas.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",  cmap=plt.get_cmap("jet"))
-        canvas.set_xlabel(1, "Time (s)")
-
-    def plot_cwt_spectrogram(self, canvas: MatplotlibCanvas):
-        tr = ObspyUtil.get_tracer_from_file(self.file_selector.file_path)
-        ts, te = self.get_time_window()
-        tr.trim(starttime=ts, endtime=te)
-        tr.detrend(type="demean")
-        fs = tr.stats.sampling_rate
-        f_min = 1. / self.spectrum_box.win_bind.value if self.filter.min_freq == 0 else self.filter.min_freq
-        f_max = self.filter.max_freq
-        ObspyUtil.filter_trace(tr, self.filter.filter_value, f_min, f_max)
-        nf = 40
-        tt = int(self.spectrum_box.win_bind.value * self.tracer_stats.Sampling_rate)
-        wmin = self.spectrum_box.w1_bind.value
-        wmax = self.spectrum_box.w2_bind.value
-        npts = len(tr.data)
-        [ba, nConv, frex, half_wave] = ccwt_ba_fast(npts, self.tracer_stats.Sampling_rate, f_min, f_max, wmin, wmax, tt, nf)
-        cf, sc, scalogram = cwt_fast(tr.data, ba, nConv, frex, half_wave, fs)
-        #scalogram = ccwt(tr.data, self.tracer_stats.Sampling_rate, f_min, f_max, wmin, wmax, tt, nf)
-      
-        scalogram = np.abs(scalogram) ** 2
-
-        t = np.linspace(0, self.tracer_stats.Delta * npts, npts)
-        scalogram2 = 10 * (np.log10(scalogram / np.max(scalogram)))
-        x, y = np.meshgrid(t, np.linspace(f_min, f_max, scalogram2.shape[0]))
-
-        max_cwt = np.max(scalogram2)
-        min_cwt = np.min(scalogram2)
-        canvas.plot(t[0:len(t)-1], cf, 0, clear_plot=False, is_twinx=True, color="red", linewidth=0.5)
-
-        norm = Normalize(vmin=min_cwt, vmax=max_cwt)
-        canvas.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]", levels=100,
-                            cmap=plt.get_cmap("jet"), norm=norm)
-        canvas.set_xlabel(1, "Time (s)")
-
-    def on_click_plot_seismogram(self, canvas):
-        try:
-            self.validate_file()
-            self.update_station_info()
-            self.plot_seismogram(canvas)
-        except InvalidFile:
-            pass
-
-    def on_click_mtp(self, canvas):
-        try:
-            self.validate_file()
-            self.update_station_info()
-            self.plot_mt_spectrogram(canvas)
-        except InvalidFile:
-            pass
-
-    def on_click_cwt(self, canvas):
-        try:
-            self.validate_file()
-            self.update_station_info()
-            self.plot_cwt_spectrogram(canvas)
-        except InvalidFile:
-            pass
-
-    def on_double_click_matplotlib(self, event, canvas):
-        pass
-
-    def on_click_plot_arrivals(self, canvas):
-        self.update_station_info()
-        self.plot_arrivals(canvas)
-
-    def update_station_info(self):
-        self.station_info.set_basic_info(self.tracer_stats)
-
-    def plot_arrivals(self, canvas):
-        self.event_info.set_canvas(canvas)
-        station_stats = StationsStats(self.tracer_stats.Station,
-                                      self.station_info.latitude, self.station_info.longitude, 0.)
-        self.event_info.plot_arrivals(0, self.time_selector.start_time, station_stats)
+        self.dataless_not_found.clear()
 
 
-class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
+    def open_parameters_settings(self):
+        self.parameters.show()
 
-    def __init__(self, ):
-        super(TimeFrequencyFrame, self).__init__()
-        self.setupUi(self)
+    def validate_file(self):
+        if not MseedUtil.is_valid_mseed(self.file_selector.file_path):
+            msg = "The file {} is not a valid mseed. Please, choose a valid format". \
+                format(self.file_selector.file_name)
+            raise InvalidFile(msg)
 
-        self.dayplot_frame = None
-
-        # Bind buttons
-        self.selectDirBtn.clicked.connect(self.on_click_select_directory)
-        self.dayPlotBtn.clicked.connect(self.on_click_dayplot)
-
-        # Bind qt objects
-        self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
-
-        self.event_info = EventInfoBox(self.mainToolsWidget, None)
-        self.event_info.set_buttons_visibility(False)
-
-        # Add file selector to the widget
-        self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget,
-                                       on_change_file_callback=lambda file_path: self.onChange_file(file_path))
-
-        self.time_analysis_widget = TimeAnalysisWidget(self.canvasWidget, parent_name="time_analysis_0")
-        self.time_analysis_widget2 = TimeAnalysisWidget(self.canvasWidget, parent_name="time_analysis_1")
-
-        self.time_analysis_windows = [self.time_analysis_widget,  self.time_analysis_widget2]
-        for taw in self.time_analysis_windows:
-            taw.register_file_selector(self.file_selector)
-            taw.set_event_info(self.event_info)
-
-        self.actionPlotEnvelope.toggled.connect(self.on_envelop_toggle)
 
     def onChange_root_path(self, value):
         """
@@ -278,31 +90,146 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         # Called every time user select a different file
         pass
 
-    def on_envelop_toggle(self, checked: bool):
-        for taw in self.time_analysis_windows:
-            taw.is_envelop_checked = checked
-
-    def validate_file(self):
-        if not MseedUtil.is_valid_mseed(self.file_selector.file_path):
-            msg = "The file {} is not a valid mseed. Please, choose a valid format". \
-                format(self.file_selector.file_name)
-            raise InvalidFile(msg)
-
-    def on_click_select_directory(self):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value)
-
+    def on_click_select_directory(self, bind: BindPyqtObject):
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
         if dir_path:
-            self.root_path_bind.value = dir_path
+            bind.value = dir_path
 
-    def plot_day_view(self):
-        st = read(self.file_selector.file_path)
-        self.dayplot_frame = MatplotlibFrame(st, type='dayplot')
-        self.dayplot_frame.show()
-
-    def on_click_dayplot(self):
+    def onChange_metadata_path(self, value):
         try:
-            self.validate_file()
-            self.plot_day_view()
-        except InvalidFile as e:
-            md = MessageDialog(self)
-            md.set_info_message(e.message)
+            self.__metadata_manager = MetadataManager(value)
+            self.inventory = self.__metadata_manager.get_inventory()
+        except:
+            pass
+
+    @property
+    def trace(self):
+        return ObspyUtil.get_tracer_from_file(self.file_selector.file_path)
+
+    def get_data(self):
+        file = self.file_selector.file_path
+        starttime = convert_qdatetime_utcdatetime(self.starttime_date)
+        endtime = convert_qdatetime_utcdatetime(self.endtime_date)
+        diff = endtime - starttime
+        parameters = self.parameters.getParameters()
+        sd = SeismogramDataAdvanced(file)
+
+        if self.trimCB.isChecked() and diff >= 0:
+            tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
+                                          start_time=starttime, end_time=endtime)
+        else:
+            tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message)
+
+        t = tr.times()
+        return tr, t
+
+    def get_time_window(self):
+
+        t1 = convert_qdatetime_utcdatetime(self.starttime_date)
+        t2 = convert_qdatetime_utcdatetime(self.endtime_date)
+
+        return t1, t2
+
+    def plot_seismogram(self):
+        selection = self.selectCB.currentText()
+
+        if selection == "Seismogram 1":
+            #self.validate_file()
+            [self.tr1, t] = self.get_data()
+            self.canvas_plot1.plot(t, self.tr1.data, 0, color="black", linewidth=0.5)
+            self.canvas_plot1.set_xlabel(1, "Time (s)")
+            self.canvas_plot1.set_ylabel(0, "Amplitude ")
+            self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
+            info = "{}.{}.{}".format(self.tr1.stats.network, self.tr1.stats.station, self.tr1.stats.channel)
+            self.canvas_plot1.set_plot_label(0, info)
+
+            if self.time_frequencyChB.isChecked():
+                self.time_frequency(self.tr1, selection)
+
+        if selection == "Seismogram 2":
+            #self.validate_file()
+            [self.tr2,t] = self.get_data()
+            self.canvas_plot2.plot(t, self.tr2.data, 0, color="black", linewidth=0.5)
+            self.canvas_plot2.set_xlabel(1, "Time (s)")
+            self.canvas_plot2.set_ylabel(0, "Amplitude ")
+            self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
+            info = "{}.{}.{}".format(self.tr2.stats.network, self.tr2.stats.station, self.tr2.stats.channel)
+            self.canvas_plot2.set_plot_label(0, info)
+
+            if self.time_frequencyChB.isChecked():
+                self.time_frequency(self.tr2,selection)
+
+    def time_frequency(self, tr, order):
+        selection = self.time_frequencyCB.currentText()
+        ts, te = self.get_time_window()
+        diff = te-ts
+        if selection == "Multitaper Spectrogram":
+
+            win = int(self.mt_window_lengthDB.value() * tr.stats.sampling_rate)
+            tbp = self.time_bandwidth_DB.value()
+            ntapers = self.number_tapers_mtSB.value()
+            f_min = self.freq_min_mtDB.value()
+            f_max = self.freq_max_mtDB.value()
+            mtspectrogram = MTspectrogram(self.file_selector.file_path, win, tbp, ntapers, f_min, f_max)
+
+            if self.trimCB.isChecked() and diff >= 0:
+                x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr, start_time=ts, end_time=te)
+            else:
+                x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr)
+
+            if order == "Seismogram 1":
+                self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
+                                         cmap=plt.get_cmap("jet"))
+                self.canvas_plot1.set_xlabel(1, "Time (s)")
+                self.canvas_plot1.set_ylabel(0, "Amplitude ")
+                self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
+
+            elif order == "Seismogram 2":
+
+                self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
+                                               cmap=plt.get_cmap("jet"))
+                self.canvas_plot2.set_xlabel(1, "Time (s)")
+                self.canvas_plot2.set_ylabel(0, "Amplitude ")
+                self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
+
+
+        elif selection == "Continuous Wavelet Transform":
+
+            fs = tr.stats.sampling_rate
+            nf = 40
+            f_min = self.freq_min_cwtDB.value()
+            f_max = self.freq_max_cwtDB.value()
+            wmin = self.wminSB.value()
+            wmax = self.wminSB.value()
+            tt = int( self.wavelet_lenghtDB.value()*fs)
+            npts = len(tr.data)
+            [ba, nConv, frex, half_wave] = ccwt_ba_fast(npts, fs, f_min, f_max, wmin, wmax,tt, nf)
+            cf, sc, scalogram = cwt_fast(tr.data, ba, nConv, frex, half_wave, fs)
+            scalogram = np.abs(scalogram) ** 2
+            t = np.linspace(0, tr.stats.delta * npts, npts)
+            scalogram2 = 10 * (np.log10(scalogram / np.max(scalogram)))
+            x, y = np.meshgrid(t, np.linspace(f_min, f_max, scalogram2.shape[0]))
+            max_cwt = np.max(scalogram2)
+            min_cwt = np.min(scalogram2)
+            norm = Normalize(vmin=min_cwt, vmax=max_cwt)
+
+            if order == "Seismogram 1":
+                self.canvas_plot1.plot(t[0:len(t) - 1], cf, 0, clear_plot=False, is_twinx=True, color="red",
+                                       linewidth=0.5)
+                self.canvas_plot1.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]",
+                                               cmap=plt.get_cmap("jet"), norm = norm)
+                self.canvas_plot1.set_xlabel(1, "Time (s)")
+                self.canvas_plot1.set_ylabel(0, "Amplitude ")
+                self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
+
+            if order == "Seismogram 2":
+                self.canvas_plot2.plot(t[0:len(t) - 1], cf, 0, clear_plot=False, is_twinx=True, color="red",
+                                       linewidth=0.5)
+                self.canvas_plot2.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]",
+                                           cmap=plt.get_cmap("jet"), norm = norm)
+                self.canvas_plot2.set_xlabel(1, "Time (s)")
+                self.canvas_plot2.set_ylabel(0, "Amplitude ")
+                self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
+
+        else:
+            pass

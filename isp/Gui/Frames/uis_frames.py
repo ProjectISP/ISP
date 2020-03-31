@@ -20,6 +20,8 @@ UiParametersFrame = load_ui_designers("parameters.ui")
 UiAdditionalParameters = load_ui_designers("additionalParameters.ui")
 UiMomentTensor = load_ui_designers("MomentTensor.ui")
 UiStationInfo  =  load_ui_designers("StationsInfo.ui")
+UiStationCoords = load_ui_designers("StationsCoordinates.ui")
+UiCrustalModelParametersFrame = load_ui_designers("CrustalModelParametersFrame.ui")
 
 
 
