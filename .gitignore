@@ -110,3 +110,6 @@ venv.bak/
 *.hdr
 *.buf
 
+# remove the db file
+*.db
+

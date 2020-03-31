@@ -1,1 +1,1 @@
-from isp.Exceptions.exceptions import InvalidFile, parse_excepts
+from isp.Exceptions.exceptions import InvalidFile, parse_excepts, EntityNotFound, QueryException

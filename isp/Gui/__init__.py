@@ -11,7 +11,7 @@ pqg = QtGui
 pw = QtWidgets
 pyc = QtCore
 qt = Qt
-qteng = QtWebEngineWidgets
+qteng = QtWebEngineWidgets  # TODO Why use this? We should remove if not necessary.
 # file to save ui fields
 user_preferences = pyc.QSettings(pyc.QSettings.NativeFormat, pyc.QSettings.UserScope, "isp", "user_pref")
 
