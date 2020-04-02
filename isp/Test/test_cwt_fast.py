@@ -202,7 +202,7 @@ def get_data(hours, chop_data=True, nf=20):
 
     return data_set, atoms
 
-
+# TODO Clean and update this test for the new CWT classes. This tests may fail since  ConvolveWavelet has been modified.
 class TestCWUT(unittest.TestCase):
 
     def setUp(self):
