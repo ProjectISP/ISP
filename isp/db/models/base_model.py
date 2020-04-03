@@ -320,30 +320,3 @@ class BaseModel:
         if entity_list:
             return len(entity_list)
         return 0
-
-
-# just for test implementation
-
-from sqlalchemy import Column, Integer, String
-
-
-class User(db.Model, BaseModel):
-    __tablename__ = 'users'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    fullname = Column(String)
-    nickname = Column(String)
-
-    def __repr__(self):
-        return "User(name={}, fullname={}, nickname={})".format(self.name, self.fullname, self.nickname)
-
-
-class Dog(db.Model, BaseModel):
-    __tablename__ = 'dogs'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-
-    def __repr__(self):
-        return "Dog(name={})".format(self.name)
