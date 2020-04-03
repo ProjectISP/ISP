@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>904</width>
-    <height>401</height>
+    <width>724</width>
+    <height>416</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -60,6 +60,13 @@
     <widget class="QPushButton" name="addBtn">
      <property name="text">
       <string>Add layer</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="saveBtn">
+     <property name="text">
+      <string>Save model</string>
      </property>
     </widget>
    </item>

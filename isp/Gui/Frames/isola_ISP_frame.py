@@ -1,8 +1,8 @@
-from obspy import Stream
+from obspy import Stream, UTCDateTime
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
-from isp.Gui import pw
+from isp.Gui import pw, pyc
 from isp.Gui.Frames import BaseFrame, MatplotlibCanvas, MessageDialog, UiMomentTensor, MatplotlibFrame
 from isp.Gui.Frames.crustal_model_parameters_frame import CrustalModelParametersFrame
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -10,8 +10,9 @@ from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime
 from isp.Utils import MseedUtil
 import os
-#import matplotlib.pyplot as plt
-#import numpy as np
+from isp.mti.mti_utilities import MTIManager
+from isp.mti.class_isola_new import *
+import pandas as pd
 
 @add_save_load()
 class MTIFrame(BaseFrame, UiMomentTensor):
@@ -36,7 +37,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         # Binds
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.datalessBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
-        self.earthmodelBtn.clicked.connect(lambda: self.on_click_select_directory(self.earth_path_bind))
+        self.earthmodelBtn.clicked.connect(lambda: self.on_click_select_file(self.earth_path_bind))
 
         # Action Buttons
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
@@ -44,8 +45,10 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
         self.actionWrite.triggered.connect(self.write)
         self.actionEarth_Model.triggered.connect(lambda: self.open_earth_model())
+        self.actionFrom_File.triggered.connect(lambda: self.load_event_from_isolapath())
         self.stationsBtn.clicked.connect(self.stationsInfo)
-        self.earthmodelBtn.clicked.connect(self.read_earth_model)
+        self.run_inversionBtn.clicked.connect(lambda: self.run_inversion())
+        #self.earthmodelBtn.clicked.connect(self.read_earth_model)
         # Parameters settings
         self.parameters = ParametersSettings()
         self.earth_model = CrustalModelParametersFrame()
@@ -80,6 +83,13 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         if dir_path:
             bind.value = dir_path
 
+    def on_click_select_file(self, bind: BindPyqtObject):
+        file_path = pw.QFileDialog.getOpenFileName(self, 'Select Directory', bind.value)
+        file_path = file_path[0]
+
+        if file_path:
+            bind.value = file_path
+
     def onChange_metadata_path(self, value):
         try:
             self.__metadata_manager = MetadataManager(value)
@@ -87,25 +97,20 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         except:
             pass
 
-    def read_earth_model(self):
-        model = self.earth_model.getParametersWithFormat()
-        print(model)
+    # def read_earth_model(self):
+    #     model = self.earth_model.getParametersWithFormat()
+    #     print(model)
 
     def plot_seismograms(self):
 
         starttime = convert_qdatetime_utcdatetime(self.starttime_date)
         endtime = convert_qdatetime_utcdatetime(self.endtime_date)
         diff = endtime - starttime
-        file_path = self.root_path_bind.value
-        obsfiles = []
 
-        for dirpath, _, filenames in os.walk(file_path):
-            for f in filenames:
-                if f != ".DS_Store":
-                    obsfiles.append(os.path.abspath(os.path.join(dirpath, f)))
-        obsfiles.sort()
         parameters = self.parameters.getParameters()
         all_traces = []
+        obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
+        obsfiles.sort()
 
         for file in obsfiles:
             sd = SeismogramDataAdvanced(file)
@@ -122,6 +127,11 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.st = Stream(traces=all_traces)
         self.stream_frame = MatplotlibFrame(self.st, type='normal')
         self.stream_frame.show()
+
+        if self.st:
+           mt =  MTIManager(self.st, self.inventory)
+           [self.stream, self.deltas, self.stations_isola_path] = mt.get_stations_index()
+
 
     def stationsInfo(self):
 
@@ -148,8 +158,8 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self._stations_info.show()
 
 
-    def write(self):
 
+    def write(self):
         root_path = os.path.dirname(os.path.abspath(__file__))
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         n=len(self.st)
@@ -158,3 +168,121 @@ class MTIFrame(BaseFrame, UiMomentTensor):
             print(tr.id, "Writing data processed")
             path_output =  os.path.join(dir_path, tr.id)
             tr.write(path_output, format="MSEED")
+
+    ##In progress##
+    def load_event_from_isolapath(self):
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        file_path = pw.QFileDialog.getOpenFileName(self, 'Select Directory', root_path)
+        file =file_path[0]
+        frame = pd.read_csv(file, sep='\s+', header=None)
+        time = frame.iloc[3][0]
+        year = time[0:4]
+        mm = time[4:6]
+        dd = time[6:8]
+        hour = frame.iloc[4][0]
+        minute = frame.iloc[5][0]
+        sec = frame.iloc[6][0]
+        sec = float(sec)
+        dec = sec - int(sec)
+        dec = int(sec)
+
+        time = UTCDateTime(int(year), int(mm), int(dd), int(hour), int(minute), int(sec), dec)
+        event = {'lat': frame.iloc[0][0], 'lon': frame.iloc[0][1], 'depth': frame.iloc[1][0],
+                 'mag': frame.iloc[2][0], 'time': time, 'istitution': frame.iloc[7][0]}
+
+        return event
+
+
+    def run_inversion(self):
+        parameters = self.get_inversion_parameters()
+        isola = ISOLA(self.stream, self.deltas, location_unc = parameters['location_unc'], depth_unc = parameters['depth_unc'],
+                      time_unc = parameters['time_unc'], deviatoric =  parameters['deviatoric'], threads = 8,
+                      circle_shape = parameters['circle_shape'], use_precalculated_Green = parameters['GFs'])
+
+        isola.set_event_info(parameters['latitude'], parameters['longitude'], parameters['depth'],
+                             parameters['magnitude'],parameters['origin_time'])
+
+        print(isola.event)
+
+        if self.stations_isola_path:
+            isola.read_network_coordinates(self.stations_isola_path)
+            isola.read_crust(self.earth_path_bind.value)
+            isola.set_parameters(parameters['freq_max'], parameters['freq_min'])
+            print("Calculate GFs")
+            if not isola.calculate_or_verify_Green():
+                exit()
+            print("Filtered and trim ")
+            isola.trim_filter_data()
+            try:
+
+                if parameters['covariance']:
+                    print("Calculating Covariance Matrix")
+                    isola.covariance_matrix(crosscovariance=True, save_non_inverted=True)
+            except:
+                print("No Possible calculate covariance matrix, please try increasing the noise time window")
+        #
+            print("decimate and shift")
+            isola.decimate_shift()
+            print("Run inversion")
+            isola.run_inversion()
+            print("Finished Inversion")
+            isola.find_best_grid_point()
+            isola.print_solution()
+            isola.print_fault_planes()
+            print("Plotting Solutions")
+            if len(isola.grid) > len(isola.depths):
+                isola.plot_maps()
+            if len(isola.depths) > 1:
+               isola.plot_slices()
+            if len(isola.grid) > len(isola.depths) and len(isola.depths) > 1:
+                isola.plot_maps_sum()
+
+            try:
+                isola.plot_MT()
+                isola.plot_uncertainty(n=400)
+                isola.plot_seismo('seismo.png')
+                isola.plot_seismo('seismo_sharey.png', sharey=True)
+                isola.plot_seismo('seismo_cova.png', cholesky=True)
+                isola.plot_noise()
+                isola.plot_spectra()
+                isola.plot_stations()
+                isola.plot_covariance_matrix()
+                isola.html_log(h1='ISP Moment Tensor inversion',
+                plot_MT='centroid.png', plot_uncertainty='uncertainty.png', plot_stations='stations.png',
+                plot_seismo_cova='seismo_cova.png', plot_seismo_sharey='seismo_sharey.png',
+                plot_spectra='spectra.png', plot_noise='noise.png',
+                plot_covariance_matrix='covariance_matrix.png', plot_maps='map.png', plot_slices='slice.png',
+                plot_maps_sum='map_sum.png')
+
+            except:
+
+                print("Couldn't Plot")
+
+
+            path = '/Users/robertocabieces/Documents/ISPshare/isp/mti/output/index.html'
+
+            url = pyc.QUrl.fromLocalFile(path)
+            self.widget.load(url)
+
+
+    def get_inversion_parameters(self):
+        parameters = {'latitude': self.latDB.value(), 'longitude':self.lonDB.value(), 'depth':self.depthDB.value(),
+                      'origin_time':convert_qdatetime_utcdatetime(self.origin_time),
+                      'location_unc':self.location_uncDB.value(),'time_unc':self.timeDB.value(),
+                      'magnitude':self.magnitudeDB.value(),
+                      'depth_unc':self.depth_uncDB.value(),'freq_min':self.freq_min_DB.value(),
+                      'freq_max':self.freq_max_DB.value(),'deviatoric': self.deviatoricCB.isChecked(),
+                      'circle_shape':self.circle_shapeCB.isChecked(),'GFs':self.gfCB.isChecked(),
+                      'covariance':self.covarianceCB.isChecked()}
+        return parameters
+
+
+
+
+
+
+
+
+
+
+

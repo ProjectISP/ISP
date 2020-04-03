@@ -1,3 +1,5 @@
+import os
+
 from isp.Gui import pw
 from isp.Gui.Frames.uis_frames import UiCrustalModelParametersFrame
 
@@ -9,6 +11,7 @@ class CrustalModelParametersFrame(pw.QDialog, UiCrustalModelParametersFrame):
 
         self._orderWidgetsList = []
         self.addBtn.clicked.connect(self.on_add_action_pushed)
+        self.saveBtn.clicked.connect(self.save_model)
 
     def on_add_action_pushed(self):
         PB_del = pw.QPushButton("-")
@@ -59,8 +62,23 @@ class CrustalModelParametersFrame(pw.QDialog, UiCrustalModelParametersFrame):
         
         for i in range(self.parameters_table.rowCount()) :
             for j in range(1, self.parameters_table.columnCount()):
-                parameters += (str(self.parameters_table.item(i, j).data(0)) + ' ')
+                if j <= 4:
+                    parameters += ('    ' + str(self.parameters_table.item(i, j).data(0)) + '    ')
+                elif j > 4:
+                    Q = int(self.parameters_table.item(i, j).data(0))
+                    parameters += ('    ' + str(Q) + '    ')
             parameters += '\n'
 
         parameters += '*******************************************************************\n'
         return parameters
+
+    def save_model(self):
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        print("Writing data Model ", dir_path)
+        model = self.getParametersWithFormat()
+        print(model)
+        completeName = os.path.join(dir_path, "Crust_model" + ".txt")
+        file = open(completeName, "w")
+        file.write(model)
+        file.close()
