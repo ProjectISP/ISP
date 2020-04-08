@@ -1,9 +1,10 @@
 # just for test implementation
-
+from obspy import UTCDateTime
+from obspy.core.event import Origin
 from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey
 from sqlalchemy.orm import relationship
 
-from isp.db import db
+from isp.db import db, generate_id
 from isp.db.models import RelationShip
 from isp.db.models.base_model import BaseModel
 
@@ -124,8 +125,27 @@ class EventLocationModel(db.Model, BaseModel):
                                 cascade="save-update, merge, delete", lazy=True)
 
     def __repr__(self):
-        return "EventLocationModel(id={}, origin_time={}, latitude={}, longitude={})".\
-            format(self.id, self.origin_time, self.latitude, self.longitude)
+        return "EventLocationModel({})".format(self.to_dict())
+
+    @classmethod
+    def create_from_origin(cls, origin: Origin):
+        if cls.find_by(latitude=origin.latitude, longitude=origin.longitude,depth=  origin.depth,
+                       origin_time=origin.time.datetime):
+            raise AttributeError("Object already exist in the database.")
+
+        # TODO Find transformation and ellipse_azimuth at origin.
+        event_dict = {"id": generate_id(16), "origin_time": origin.time.datetime, "transformation": "SIMPLE",
+                      "rms": origin.quality.standard_error, "latitude": origin.latitude,
+                      "longitude": origin.longitude, "depth": origin.depth,
+                      "uncertainty": origin.depth_errors["uncertainty"],
+                      "max_horizontal_error": origin.origin_uncertainty.max_horizontal_uncertainty,
+                      "min_horizontal_error": origin.origin_uncertainty.min_horizontal_uncertainty,
+                      "ellipse_azimuth": "0.", "number_of_phases": origin.quality.used_phase_count,
+                      "azimuthal_gap": origin.quality.azimuthal_gap,
+                      "max_distance": origin.quality.maximum_distance,
+                      "min_distance": origin.quality.minimum_distance}
+
+        return cls(**event_dict)
 
     @property
     def get_arrays(self):

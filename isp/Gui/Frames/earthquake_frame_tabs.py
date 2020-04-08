@@ -4,14 +4,11 @@ from obspy.core.event import Origin
 
 from isp.Exceptions import InvalidFile, parse_excepts
 from isp.Gui import pw, pqg
-from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas, FocCanvas, \
-    MatplotlibFrame
-from isp.Gui.Frames.qt_components import ParentWidget, FilterBox, FilesView, MessageDialog
+from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas, FocCanvas
 from isp.Gui.Frames.plot_polarization import PlotPolarization
+from isp.Gui.Frames.qt_components import ParentWidget, FilterBox, FilesView, MessageDialog
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
-from isp.earthquakeAnalisysis import PolarizationAnalyis, NllManager, PickerManager, FirstPolarity
-import matplotlib.pyplot as plt
-
+from isp.earthquakeAnalisysis import NllManager, PolarizationAnalyis, PickerManager, FirstPolarity
 
 
 @add_save_load()

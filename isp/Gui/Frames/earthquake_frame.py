@@ -1,7 +1,8 @@
+import matplotlib.dates as mdt
 from obspy import UTCDateTime
 from obspy.geodetics import gps2dist_azimuth
 
-from isp.DataProcessing import SeismogramData, DatalessManager, SeismogramDataAdvanced
+from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
 from isp.Gui import pw
@@ -13,10 +14,8 @@ from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Structures.structures import PickerStructure
-from isp.Utils import MseedUtil, ObspyUtil, AsycTime
+from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager
-import matplotlib.dates as mdt
-
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):

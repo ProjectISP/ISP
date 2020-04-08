@@ -1,8 +1,9 @@
-from obspy import read, Stream
-from obspy import UTCDateTime
 import numpy as np
-from isp.Utils import ObspyUtil, Filters
+from obspy import Stream
+from obspy import UTCDateTime
 from obspy.signal.polarization import polarization_analysis
+
+from isp.Utils import ObspyUtil, Filters
 
 
 class PolarizationAnalyis:

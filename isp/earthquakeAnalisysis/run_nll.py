@@ -9,16 +9,17 @@ Created on Tue Dec 17 20:26:28 2019
 import os
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from obspy import read_events
 from obspy.core.event import Origin
+
 from isp import ROOT_DIR
 from isp.DataProcessing import DatalessManager
-from isp.Gui.Frames import MatplotlibFrame
+from isp.Utils import ObspyUtil
 from isp.Utils.subprocess_utils import exc_cmd
-from obspy.io.nlloc.util import read_nlloc_scatter
-import matplotlib.pyplot as plt
+
 
 class NllManager:
 
@@ -291,13 +292,7 @@ class NllManager:
 
     def get_NLL_info(self) -> Origin:
         location_file = os.path.join(self.get_loc_dir, "last.hyp")
-        if os.path.isfile(location_file):
-            cat = read_events(location_file)
-            event = cat[0]
-            origin = event.origins[0]
-            return origin
-        else:
-            raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
+        return ObspyUtil.reads_hyp_to_origin(location_file)
 
     def get_NLL_scatter(self):
 
@@ -348,14 +343,16 @@ class NllManager:
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
 
-
+    # TODO Move this to some frame, don't call Gui stuff on backend.
     def plot_scatter(self):
+
+        from isp.Gui.Frames import MatplotlibFrame
 
         [x,y,z,pdf] = self.get_NLL_scatter()
         pdf = np.array(pdf) / np.max(pdf)
         f = 111.111 * np.cos(38.5 * np.pi / 180)
         x = (x / f) - 9
-        y = (y / (111.111)) + 38.5
+        y = (y / 111.111) + 38.5
         left, width = 0.06, 0.65
         bottom, height = 0.1, 0.65
         spacing = 0.02
