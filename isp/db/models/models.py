@@ -81,7 +81,7 @@ class EventArrayModel(db.Model, BaseModel):
 
     # The table columns.
     event_info_id = Column(String(16), ForeignKey("event_locations.id"), primary_key=True)
-    array_analysis_id = Column(String(16), ForeignKey("array_analysis.id"), primary_key=True)
+    array_analysis_id = Column(String(16), ForeignKey("array_analysis.id"), primary_key=True, unique=True)
 
     def __repr__(self):
         return "EventArrayModel(event_info_id={}, array_analysis_id={})".format(self.event_info_id,
@@ -133,6 +133,18 @@ class EventLocationModel(db.Model, BaseModel):
         return [ArrayAnalysisModel.find_by_id(event_array.array_analysis_id)
                 for event_array in self.event_arrays if event_array]
 
+    def add_array(self, array_analysis_id: str):
+        """
+        Link an ArrayAnalysisModel to this event_location.
+
+        Important: This will not be added to the database until this entity is saved.
+
+        :param array_analysis_id: The current id of the array_analysis.
+        """
+
+        event_arrays = EventArrayModel(event_info_id=self.id, array_analysis_id=array_analysis_id)
+        self.event_arrays.append(event_arrays)
+
 
 class ArrayAnalysisModel(db.Model, BaseModel):
     __tablename__ = 'array_analysis'
@@ -145,6 +157,13 @@ class ArrayAnalysisModel(db.Model, BaseModel):
     back_azimuth = Column(Float, nullable=True)
     back_azimuth_err = Column(Float, nullable=True)
     rel_power = Column(Float, nullable=True)
+    event_array = relationship(RelationShip.EVENT_ARRAY, backref="array_analysis",
+                               cascade="save-update, merge, delete", lazy=True)
 
     def __repr__(self):
         return "ArrayAnalysisModel({})".format(self.to_dict())
+
+    @property
+    def get_event_location(self):
+        """ Get a list of ArrayAnalysisModel for this event_location."""
+        return ArrayAnalysisModel.find_by_id(self.event_array.array_analysis_id)

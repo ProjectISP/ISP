@@ -40,4 +40,3 @@ def create_tables(force=False):
 
 # will create tables if sqlite file don't exist. If force is True is create anyway.
 create_tables()
-
