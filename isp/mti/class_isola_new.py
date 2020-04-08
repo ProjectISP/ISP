@@ -9,26 +9,29 @@ import subprocess
 import fractions
 import os
 import re
+import warnings
 import obspy
+from mpl_toolkits.mplot3d import Axes3D
 from obspy.core import read, AttribDict
 from obspy import Stream, UTCDateTime, Trace
 from obspy.geodetics.base import gps2dist_azimuth
 import math
 import scipy.interpolate
 from pyproj import Geod  # transformation of geodetic coordinates
-from math import sin, cos, radians, degrees
 import shutil
 from scipy.io import FortranFile
-from isp.mti.MouseTrap import *
+#from isp.mti.MouseTrap import *
 import numpy as np
 import multiprocessing as mp
-from obspy.imaging.beachball import beach, beachball
+from obspy.imaging.beachball import beach
 from obspy.imaging.mopad_wrapper import beach as beach2
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.patches as mpatches
+from matplotlib import animation
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 def align_yaxis(ax1, ax2, v1=0, v2=0):
@@ -582,17 +585,6 @@ class ISOLA:
         del self.LT3
         del self.Cf
 
-
-    # def temp_write(self):
-    #     n = len(self.data_raw)
-    #     temp_folder = os.path.join(self.root_path,'temp_files')
-    #     for j in range(n):
-    #         tr = self.data_raw[j]
-    #         print(tr.id, "Writing data processed")
-    #         path_output = os.path.join(temp_folder, tr.id)
-    #         tr.write(path_output, format="MSEED")
-
-
     def lcmm(self, b, *args):
         """
         Returns generelized least common multiple.
@@ -659,102 +651,6 @@ class ISOLA:
         self.log(
             '\nHypocenter location:\n  Agency: {agency:s}\n  Origin time: {t:s}\n  Lat {lat:8.3f}   Lon {lon:8.3f}   Depth{d:4.1f} km'.format(
                 t=t.strftime('%Y-%m-%d %H:%M:%S'), lat=float(lat), lon=float(lon), d=float(depth), agency=agency))
-
-    def add_SAC(self, filename, filename2=None, filename3=None):
-        """
-        Reads data from SAC. Can read either one SAC file, or three SAC files simultaneously to produce three component stream.
-        Append the stream to ``self.data_raw``.
-        If its sampling is not contained in ``self.data_deltas``, add it there.
-        """
-        if filename3:
-            st1 = read(filename);
-            st2 = read(filename2);
-            st3 = read(filename3)
-            st = Stream(traces=[st1[0], st2[0], st3[0]])
-            # set flag "use in inversion" for all components
-            stn = self.stations_index['_'.join(
-                [st1[0].stats.network, st1[0].stats.station, st1[0].stats.location, st1[0].stats.channel[0:2]])]
-            stn['useN'] = stn['useE'] = stn['useZ'] = True
-        elif filename2:
-            raise ValueError('Read either three files (Z, N, E components) or only one file (Z)')
-        # st1 = read(filename); st2 = read(filename2)
-        # st = Stream(traces=[st1[0], st2[0]])
-        else:
-            st1 = read(filename)
-            st = Stream(traces=[st1[0]])
-            self.stations_index[
-                '_'.join([st1.stats.network, st1.stats.station, st1.stats.location, st1.stats.channel])]['useZ'] = True
-        self.data_raw.append(st)
-        self.data_are_corrected = False
-        if not st1[0].stats.delta in self.data_deltas:
-            self.data_deltas.append(st1[0].stats.delta)
-
-    def load_files(self, dir='.', prefix='', suffix='.sac', separator='.', pz_dir='.', pz_prefix='', pz_suffix='',
-                   pz_separator='.'):
-        self.logtext['data'] = s = '\nLoading data from files.\n\tdata dir: {0:s}\n\tp&z dir:  {1:s}'.format(dir,
-                                                                                                             pz_dir)
-        self.log('\n' + s)
-        loaded = len(self.data) + len(self.data_raw)
-        # for i in range(self.nr):
-        i = 0
-        while i < len(self.stations):
-            if i < loaded:  # the data for the station already loaded from another source, it will be probably used rarely
-                i += 1
-                continue
-            # if i >= self.nr: # some station removed inside the cycle
-            # break
-            sta = self.stations[i]['code']
-            net = self.stations[i]['network']
-            loc = self.stations[i]['location']
-            ch = self.stations[i]['channelcode']
-            # load data
-            files = []
-            for comp in ['Z', 'N', 'E']:
-                names = [prefix + separator.join([sta, net, loc, ch + comp]) + suffix,
-                         prefix + separator.join([net, sta, loc, ch + comp]) + suffix,
-                         prefix + separator.join([sta, net, ch + comp]) + suffix,
-                         prefix + separator.join([net, sta, ch + comp]) + suffix,
-                         prefix + separator.join([sta, ch + comp]) + suffix,
-                         prefix + separator.join([sta, ch + comp, net]) + suffix]
-                for name in names:
-                    # print(os.path.join(dir, name)) # DEBUG
-                    if os.path.isfile(os.path.join(dir, name)):
-                        files.append(os.path.join(dir, name))
-                        break
-            if len(files) == 3:
-                self.add_SAC(files[0], files[1], files[2])
-            else:
-                self.stations.pop(i)
-                self.create_station_index()
-                self.log(
-                    'Cannot find data file(s) for station {0:s}:{1:s}. Removing station from further processing.'.format(
-                        net, sta), printcopy=True)
-                self.log('\tExpected file location: ' + os.path.join(dir, names[1]), printcopy=True)
-                continue
-            # load poles and zeros - ISOLA format
-            for tr in self.data_raw[-1]:
-                comp = tr.stats.channel[2]
-                names = [pz_prefix + pz_separator.join([net, sta, loc, ch + comp]) + pz_suffix,
-                         pz_prefix + pz_separator.join([sta, net, loc, ch + comp]) + pz_suffix,
-                         pz_prefix + pz_separator.join([sta, net, ch + comp]) + pz_suffix,
-                         pz_prefix + pz_separator.join([sta, ch + comp]) + pz_suffix]
-                for name in names:
-                    if os.path.isfile(os.path.join(pz_dir, name)):
-                        self.attach_ISOLA_paz(tr, os.path.join(pz_dir, name))
-                        break
-                else:  # poles&zeros file not found
-                    self.stations.pop(i)
-                    self.data_raw.pop()
-                    self.create_station_index()
-                    self.log(
-                        'Cannot find poles and zeros file(s) for station {0:s}:{1:s}.  Removing station from further processing.'.format(
-                            net, sta), printcopy=True)
-                    self.log('\tExpected file location: ' + os.path.join(pz_dir, names[0]), printcopy=True)
-                    break
-            else:
-                i += 1  # station not removed
-            self.check_a_station_present()
-        return self.data_raw
 
     def check_a_station_present(self):
         """
@@ -929,6 +825,27 @@ class ISOLA:
             self.stations_index[
                 '_'.join([stats[i]['network'], stats[i]['code'], stats[i]['location'], stats[i]['channelcode']])] = \
                 stats[i]
+
+    def set_use_components(self, map):
+
+        for i in map:
+            station_name = i[0]
+            channel = i[1]
+            ch = channel[2]
+            checked = i[2]
+            for j in range(len(self.stations)):
+                if self.stations[j]['code'] == station_name:
+                    if ch == 'E':
+                        self.stations[j]['useE'] = checked
+
+                    elif  ch == 'N':
+                        self.stations[j]['useN'] = checked
+
+                    elif ch == 'Z':
+                        self.stations[j]['useZ'] = checked
+
+
+
 
     def write_stations(self):
         """
@@ -2368,7 +2285,7 @@ class ISOLA:
         :param fontsize: fontsize for histogram annotations
         :type fontsize: scalar, optional
         """
-        outfile = os.path.join(self.root_path,'output/uncertainty.png')
+        outfile = os.path.join(self.root_path, 'output/uncertainty.png')
         # Generate mechanisms
         shift = [];
         depth = [];
@@ -2496,6 +2413,99 @@ class ISOLA:
             ax.add_collection(dc)
         if outfile:
             plt.savefig(s1 + 'MT_DC' + s2, bbox_inches='tight', pad_inches=0)
+        else:
+            plt.show()
+        plt.clf()
+        plt.close()
+
+        # Plot histograms
+        histogram(dc_perc, s1 + 'comp-1-DC' + s2, bins=(10, 100), range=(0, 100), xlabel='DC %',
+                  reference=ref['dc_perc'], reference2=(None, c['dc_perc'])[best], fontsize=fontsize)
+        histogram(clvd_perc, s1 + 'comp-2-CLVD' + s2, bins=(20, 200), range=(-100, 100), xlabel='CLVD %',
+                  reference=ref['clvd_perc'], reference2=(None, c['clvd_perc'])[best], fontsize=fontsize)
+        if not self.deviatoric:
+            histogram(iso_perc, s1 + 'comp-3-ISO' + s2, bins=(20, 200), range=(-100, 100), xlabel='ISO %',
+                      reference=ref['iso_perc'], reference2=(None, c['iso_perc'])[best], fontsize=fontsize)
+        # histogram(moment,    s1+'mech-0-moment'+s2, bins=20, range=(self.mt_decomp['mom']*0.7,self.mt_decomp['mom']*1.4), xlabel='scalar seismic moment [Nm]', reference=ref['mom'], fontsize=fontsize)
+        histogram(moment, s1 + 'mech-0-moment' + s2, bins=20,
+                  range=(self.mt_decomp['mom'] * 0.7 / 2, self.mt_decomp['mom'] * 1.4 * 2),
+                  xlabel='scalar seismic moment [Nm]', reference=ref['mom'], fontsize=fontsize)
+        # histogram(Mw,        s1+'mech-0-Mw'+s2,     bins=20, range=(self.mt_decomp['Mw']-0.1,self.mt_decomp['Mw']+0.1), xlabel='moment magnitude $M_W$', reference=ref['Mw'], fontsize=fontsize)
+        histogram(Mw, s1 + 'mech-0-Mw' + s2, bins=20,
+                  range=(self.mt_decomp['Mw'] - 0.1 * 3, self.mt_decomp['Mw'] + 0.1 * 3),
+                  xlabel='moment magnitude $M_W$', reference=ref['Mw'], reference2=(None, c['Mw'])[best],
+                  fontsize=fontsize)
+        histogram(strike, s1 + 'mech-1-strike' + s2, bins=72, range=(0, 360), xlabel=u'strike [°]', multiply=2,
+                  reference=((ref['s1'], ref['s2']), None)[reference == None],
+                  reference2=(None, (c['s1'], c['s2']))[best], fontsize=fontsize)
+        histogram(dip, s1 + 'mech-2-dip' + s2, bins=18, range=(0, 90), xlabel=u'dip [°]', multiply=2,
+                  reference=((ref['d1'], ref['d2']), None)[reference == None],
+                  reference2=(None, (c['d1'], c['d2']))[best], fontsize=fontsize)
+        histogram(rake, s1 + 'mech-3-rake' + s2, bins=72, range=(-180, 180), xlabel=u'rake [°]', multiply=2,
+                  reference=((ref['r1'], ref['r2']), None)[reference == None],
+                  reference2=(None, (c['r1'], c['r2']))[best], fontsize=fontsize)
+        if len(self.shifts) > 1:
+            shift_step = self.SHIFT_step / self.max_samprate
+            histogram(shift, s1 + 'time-shift' + s2, bins=len(self.shifts),
+                      range=(self.shifts[0] - shift_step / 2., self.shifts[-1] + shift_step / 2.),
+                      xlabel='time shift [s]', reference=[0., None][reference == None],
+                      reference2=(None, c['shift'])[best], fontsize=fontsize)
+        if len(self.depths) > 1:
+            min_depth = (self.depths[0] - self.step_z / 2.) / 1e3
+            max_depth = (self.depths[-1] + self.step_z / 2.) / 1e3
+            histogram(depth, s1 + 'place-depth' + s2, bins=len(self.depths), range=(min_depth, max_depth),
+                      xlabel='centroid depth [km]', reference=[self.event['depth'] / 1e3, None][reference == None],
+                      reference2=(None, c['z'] / 1e3)[best], fontsize=fontsize)
+        if len(self.grid) > len(self.depths):
+            x_lim = (self.steps_x[-1] + self.step_x / 2.) / 1e3
+            histogram(NS, s1 + 'place-NS' + s2, bins=len(self.steps_x), range=(-x_lim, x_lim),
+                      xlabel=u'← to south : centroid place [km] : to north →', reference=[0., None][reference == None],
+                      reference2=(None, c['x'] / 1e3)[best], fontsize=fontsize)
+            histogram(EW, s1 + 'place-EW' + s2, bins=len(self.steps_x), range=(-x_lim, x_lim),
+                      xlabel=u'← to west : centroid place [km] : to east →', reference=[0., None][reference == None],
+                      reference2=(None, c['y'] / 1e3)[best], fontsize=fontsize)
+
+        self.log('\nUncertainty evaluation: plotted {0:d} mechanism of {1:d} requested.'.format(n_sum, n))
+        self.log(
+            'Standard deviation :: dc: {dc:4.2f}, clvd: {clvd:4.2f}, iso: {iso:4.2f}, Mw: {Mw:4.2f}, t: {t:4.2f}, x: {x:4.2f}, y: {y:4.2f}, z: {z:4.2f}'.format(
+                **stdev))
+        return stdev
+
+    def plot_MT_uncertainty_centroid(self, n=100):
+        """
+        Similar as :func:`plot_uncertainty`, but only the best point of the space-time grid is taken into account, so the uncertainties should be Gaussian.
+        """
+
+        outfile = os.path.join(self.root_path, 'output/MT_uncertainty_centroid.png')
+        a = self.centroid['a']
+        if self.deviatoric:
+            a = a[:5]
+        cov = self.centroid['GtGinv']
+        A = np.random.multivariate_normal(a.T[0], cov, n)
+
+        fig = plt.figure(figsize=(5, 5))
+        ax = plt.axes()
+        plt.axis('off')
+        ax.axes.get_xaxis().set_visible(False)
+        ax.axes.get_yaxis().set_visible(False)
+        lw = 0.5
+        plt.xlim(-100 - lw / 2, 100 + lw / 2)
+        plt.ylim(-100 - lw / 2, 100 + lw / 2)
+
+        for a in A:
+            a = a[np.newaxis].T
+            if self.deviatoric:
+                a = np.append(a, [[0.]], axis=0)
+            mt2 = a2mt(a, system='USE')
+            # full = beach(mt2, linewidth=lw, nofill=True, edgecolor='black')
+            try:
+                full = beach2(mt2, linewidth=lw, nofill=True, edgecolor='black')
+            except:
+                print(a)
+                print(mt2)
+            ax.add_collection(full)
+        if outfile:
+            plt.savefig(outfile, bbox_inches='tight', pad_inches=0)
         else:
             plt.show()
         plt.clf()
@@ -3043,51 +3053,64 @@ class ISOLA:
         plt.clf()
         plt.close('all')
 
-
-    def html_log(self, reference=None, h1='ISOLA-ObsPy automated solution', backlink=False,
-                 plot_MT=None, plot_uncertainty=None, plot_stations=None, plot_seismo_cova=None,
-                 plot_seismo_sharey=None, mouse_figures=None, plot_spectra=None, plot_noise=None,
-                 plot_covariance_function=None, plot_covariance_matrix=None, plot_maps=None, plot_slices=None,
-                 plot_maps_sum=None):
+    def plot_3D(self):
         """
-        Generates an HTML page containing informations about the calculation and the result together with figures
+        Creates an animation with the grid of solutios. The grid points are labeled according to their variance reduction.
 
-        :param outfile: filename of the created HTML file
-        :type outfile: string, optional
-        :param reference: reference solution which is shown for comparison
-        :type reference: dict or none, optional
-        :param h1: main header of the html page
-        :type h1: string, optional
-        :param backlink: show a link to an list of events located as `index.html` in the parent directory
-        :type backlink: bool, optional
-        :param plot_MT: path to figure of moment tensor (product of :func:`plot_MT`)
-        :type plot_MT: string, optional
-        :param plot_uncertainty: path to figures of uncertainty plotted by :func:`plot_uncertainty` (the common part of filename)
-        :type plot_uncertainty: string, optional
-        :param plot_stations: path to map of inverted stations (product of :func:`plot_stations`)
-        :type plot_stations: string, optional
-        :param plot_seismo_cova: path to figure of waveform match shown as standardized seismograms (product of :func:`plot_seismo`)
-        :type plot_seismo_cova: string, optional
-        :param plot_seismo_sharey: path to figure of waveform match shown as original (non-standardized) seismograms  (product of :func:`plot_seismo`)
-        :type plot_seismo_sharey: string, optional
-        :param mouse_figures: path to figure of detected mouse disturbances (product of :func:`detect_mouse`)
-        :type mouse_figures: string, optional
-        :param plot_spectra: path to figure of spectra (product of :func:`plot_spectra`)
-        :type plot_spectra: string, optional
-        :param plot_noise: path to figure of noise (product of :func:`plot_noise`)
-        :type plot_noise: string, optional
-        :param plot_covariance_function: path to figure of the covariance function (product of :func:`plot_covariance_function`)
-        :type plot_covariance_function: string, optional
-        :param plot_covariance_matrix: path to figure of the data covariance matrix (product of :func:`plot_covariance_matrix`)
-        :type plot_covariance_matrix: string, optional
-        :param plot_maps: path to figures of solutions across the grid (top view) plotted by :func:`plot_maps` (the common part of filename)
-        :type plot_maps: string, optional
-        :param plot_slices: path to figures of solutions across the grid (side view) plotted by :func:`plot_slices` (the common part of filename)
-        :type plot_slices: string, optional
-        :param plot_maps_sum: path to figures of solutions across the grid plotted by :func:`plot_maps_sum` (the common part of filename)
-        :type plot_maps_sum: string, optional
+        :param outfile: path to file for saving animation
+        :type outfile: string
         """
-        outfile = os.path.join(self.root_path,'output/index.html')
+        outfile = os.path.join(self.root_path, 'output/animation.mp4')
+        n = len(self.grid)
+        x = np.zeros(n);
+        y = np.zeros(n);
+        z = np.zeros(n);
+        VR = np.zeros(n)
+        c = np.zeros((n, 3))
+        for i in range(len(self.grid)):
+            gp = self.grid[i]
+            if gp['err']:
+                continue
+            x[i] = gp['y'] / 1e3
+            y[i] = gp['x'] / 1e3  # NS is x coordinate, so switch it with y to be vertical
+            z[i] = gp['z'] / 1e3
+            vr = max(gp['VR'], 0)
+            VR[i] = np.pi * (15 * vr) ** 2
+            c[i] = np.array([vr, 0, 1 - vr])
+        # if self.decompose:
+        # dc = float(gp['dc_perc'])/100
+        # c[i,:] = np.array([dc, 0, 1-dc])
+        # else:
+        # c[i,:] = np.array([0, 0, 0])
+        # Create a figure and a 3D Axes
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        ax.set_xlabel('west - east [km]')
+        ax.set_ylabel('south - north [km]')
+        ax.set_zlabel('depth [km]')
+
+        # Create an init function and the animate functions.
+        # Both are explained in the tutorial. Since we are changing
+        # the the elevation and azimuth and no objects are really
+        # changed on the plot we don't have to return anything from
+        # the init and animate function. (return value is explained
+        # in the tutorial).
+        def init():
+            ax.scatter(x, y, z, marker='o', s=VR, c=c, alpha=1.)
+
+        def animate(i):
+            ax.view_init(elev=10., azim=i)
+
+        anim = animation.FuncAnimation(fig, animate, init_func=init, frames=360, interval=20, blit=True)  # Animate
+        anim.save(outfile, writer=self.movie_writer, fps=30)  # Save
+
+
+    def html_log(self, reference=None, h1='ISOLA-ObsPy automated solution', backlink=False, plot_MT=None,
+                 plot_uncertainty=None, plot_stations=None, plot_seismo_cova=None, plot_seismo_sharey=None,
+                 mouse_figures=None, plot_spectra=None, plot_noise=None, plot_covariance_function=None,
+                 plot_covariance_matrix=None, plot_maps=None, plot_slices=None, plot_maps_sum=None):
+
+        outfile = os.path.join(self.root_path, 'output/index.html')
         out = open(outfile, 'w')
         e = self.event
         C = self.centroid
@@ -3103,18 +3126,17 @@ class ISOLA:
 </head>
 <body>
 """)
-        out.write('<h1>' + h1 + '</h1>\n')
+        out.write('<h1>'+h1+'</h1>\n')
         if backlink:
             out.write('<p><a href="../index.html">back to event list</a></p>\n')
         out.write('<dl>  <dt>Method</dt>\n  <dd>Waveform inversion for <strong>' +
-                  {1: 'deviatoric part of', 0: 'full'}[self.deviatoric] +
-                  '</strong> moment tensor (' +
-                  {1: '5', 0: '6'}[self.deviatoric] +
-                  ' components)<br />\n    ' +
-                  {1: 'with the <strong>data covariance matrix</strong> based on real noise',
-                   0: 'without the covariance matrix'}[bool(self.Cd_inv)] +
-                  {1: '<br />\n    with <strong>crosscovariance</strong> between components', 0: ''}[bool(self.LT3)] +
-                  '.</dd>\n  <dt>Reference</dt>\n  <dd>Vackář, Gallovič, Burjánek, Zahradník, and Clinton. Bayesian ISOLA: new tool for automated centroid moment tensor inversion, <em>in preparation</em>, <a href="http://geo.mff.cuni.cz/~vackar/papers/isola-obspy.pdf">PDF</a></dd>\n</dl>\n\n')
+			{1:'deviatoric part of', 0:'full'}[self.deviatoric] + 
+			'</strong> moment tensor (' + 
+			{1:'5', 0:'6'}[self.deviatoric] + 
+			' components)<br />\n    ' + 
+			{1:'with the <strong>data covariance matrix</strong> based on real noise', 0:'without the covariance matrix'}[bool(self.Cd_inv)] + 
+			{1:'<br />\n    with <strong>crosscovariance</strong> between components', 0:''}[bool(self.LT3)] + 
+			'.</dd>\n  <dt>Reference</dt>\n  <dd>Vackář, Gallovič, Burjánek, Zahradník, and Clinton. Bayesian ISOLA: new tool for automated centroid moment tensor inversion, <em>in preparation</em>, <a href="http://geo.mff.cuni.cz/~vackar/papers/isola-obspy.pdf">PDF</a></dd>\n</dl>\n\n')
         out.write('''
 <h2>Hypocenter location</h2>
 
@@ -3132,8 +3154,7 @@ class ISOLA:
 <dt>Magnitude</dt>
 <dd>{m:3.1f}</dd>
 </dl>
-'''.format(t=e['t'].strftime('%Y-%m-%d %H:%M:%S'), lat=float(e['lat']), lon=float(e['lon']), d=e['depth'] / 1e3,
-           agency=e['agency'], m=e['mag']))
+'''.format(t=e['t'].strftime('%Y-%m-%d %H:%M:%S'), lat=float(e['lat']), lon=float(e['lon']), d=e['depth']/1e3, agency=e['agency'], m=e['mag']))
         out.write('\n\n<h2>Results</h2>\n\n')
         if plot_MT:
             out.write('''
@@ -3148,8 +3169,7 @@ class ISOLA:
 '''.format(plot_MT))
         if plot_uncertainty:
             k = plot_uncertainty.rfind(".")
-            s1 = plot_uncertainty[:k] + '_';
-            s2 = plot_uncertainty[k:]
+            s1 = plot_uncertainty[:k]+'_'; s2 = plot_uncertainty[k:]
             out.write('''
 <div class="thumb tright">
   <a href="{MT_full:s}" data-lightbox="MT" data-title="moment tensor uncertainty">
@@ -3168,7 +3188,7 @@ class ISOLA:
     DC-part uncertainty
   </div>
 </div>
-'''.format(MT_full=s1 + 'MT' + s2, MT_DC=s1 + 'MT_DC' + s2))
+'''.format(MT_full=s1+'MT'+s2, MT_DC=s1+'MT_DC'+s2))
         t = self.event['t'] + C['shift']
         out.write('''
 <h3>Centroid location</h3>
@@ -3202,21 +3222,21 @@ class ISOLA:
 </table>
 
 '''.format(
-            t= t.strftime('%Y-%m-%d %H:%M:%S'),
-            lat = 	abs(C['lat']),
-            sgn_lat = {1 :'N', 0 :'', -1 :'S'}[int(np.sign(C['lat']))],
-            lon = 	abs(C['lon']),
-            sgn_lon = {1 :'E', 0 :'', -1 :'W'}[int(np.sign(C['lon']))],
-            d = 	C['z' ] /1e3,
-            x = 	abs(C['x']),
-            dir_x = 	{1 :'north', 0 :'', -1 :'south'}[int(np.sign(C['x']))],
-            y = 	abs(C['y']),
-            dir_y = 	{1 :'east', 0 :'', -1 :'west'}[int(np.sign(C['y']))],
-            shift = 	abs(C['shift']),
-            sgn_shift={1 :'after', 0 :'after', -1 :'before'}[int(np.sign(C['shift']))],
-            dd = 	abs(C['z' ] -self.event['depth'] ) /1e3,
-            sgn_dd = 	{1 :'deeper', 0 :'deeper', -1 :'shallower'}[int(np.sign(C['z' ] -self.event['depth']))]
-        ))
+    t = 	t.strftime('%Y-%m-%d %H:%M:%S'),
+    lat = 	abs(C['lat']),
+    sgn_lat = {1:'N', 0:'', -1:'S'}[int(np.sign(C['lat']))],
+    lon = 	abs(C['lon']),
+    sgn_lon = {1:'E', 0:'', -1:'W'}[int(np.sign(C['lon']))],
+    d = 	C['z']/1e3,
+    x = 	abs(C['x']),
+    dir_x = 	{1:'north', 0:'', -1:'south'}[int(np.sign(C['x']))],
+    y = 	abs(C['y']),
+    dir_y = 	{1:'east', 0:'', -1:'west'}[int(np.sign(C['y']))],
+    shift = 	abs(C['shift']),
+    sgn_shift={1:'after', 0:'after', -1:'before'}[int(np.sign(C['shift']))],
+    dd = 	abs(C['z']-self.event['depth'])/1e3,
+    sgn_dd = 	{1:'deeper', 0:'deeper', -1:'shallower'}[int(np.sign(C['z']-self.event['depth']))]
+))
         if C['edge']:
             out.write('<p class="warning">Warning: the solution lies on the edge of the grid!</p>')
         if C['shift'] in (self.shifts[0], self.shifts[-1]):
@@ -3224,7 +3244,7 @@ class ISOLA:
 
         mt2 = a2mt(C['a'], system='USE')
         c = max(abs(min(mt2)), max(mt2))
-        c = 10*np.floor(np.log10(c))
+        c = 10**np.floor(np.log10(c))
         MT2 = mt2 / c
 
         out.write('\n\n<h3>Moment tensor and its quality</h3>\n\n')
@@ -3248,7 +3268,7 @@ class ISOLA:
   <tr><th colspan="3" class="center">Moment tensor decomposition</th></tr>
   <tr><th>DC component</th>	<td>{dc_perc:3.0f} %</td>	<td>{ref_dc_perc:3.0f} %</td></tr>
   <tr><th>CLVD component</th>	<td>{clvd_perc:3.0f} %</td>	<td>{ref_clvd_perc:3.0f} %</td></tr>
-'''.format(c, *mt2, depth=C['z' ] /1e3, **decomp))
+'''.format(c, *mt2, depth=C['z']/1e3, **decomp))
             if not self.deviatoric:
                 out.write('''
   <tr><th>isotropic component</th>	<td>{iso_perc:3.0f} %</td>	<td>{ref_iso_perc:3.0f} %</td></tr>
@@ -3260,7 +3280,7 @@ class ISOLA:
   <tr><th colspan="3" class="center">Result quality</th></tr>
   <tr><th>condition number</th>	<td>{CN:2.0f}</td>	<td></td></tr>
   <tr><th>variance reduction</th>	<td>{VR:2.0f} %</td>	<td></td></tr>
-'''.format(VR=C['VR' ] *100, CN=C['CN'], **decomp))
+'''.format(VR=C['VR']*100, CN=C['CN'], **decomp))
         elif self.mt_decomp:
             out.write('''
 <table>
@@ -3279,7 +3299,7 @@ class ISOLA:
   <tr><th colspan="2" class="center">Moment tensor decomposition</th></tr>
   <tr><th>DC</th>	<td>{dc_perc:3.0f} %</td></tr>
   <tr><th>CLVD</th>	<td>{clvd_perc:3.0f} %</td></tr>
-'''.format(c, *mt2, depth=C['z' ] /1e3, **decomp))
+'''.format(c, *mt2, depth=C['z']/1e3, **decomp))
             if not self.deviatoric:
                 out.write('''
   <tr><th>ISO</th>	<td>{iso_perc:3.0f} %</td></tr>
@@ -3291,7 +3311,7 @@ class ISOLA:
   <tr><th colspan="2" class="center">Quality measures</th></tr>
   <tr><th>condition number</th>	<td>{CN:2.0f}</td></tr>
   <tr><th>variance reduction</th>	<td>{VR:2.0f} %</td></tr>
-'''.format(VR=C['VR' ] *100, CN=C['CN'], **decomp))
+'''.format(VR=C['VR']*100, CN=C['CN'], **decomp))
         else:
             out.write('''
 <table>
@@ -3307,15 +3327,13 @@ class ISOLA:
   <tr><th colspan="2" class="center">Result quality</th></tr>
   <tr><th>condition number</th>	<td>{CN:2.0f}</td></tr>
   <tr><th>variance reduction</th>	<td>{VR:2.0f} %</td></tr>
-'''.format(c, *mt2, depth=C['z' ] /1e3, VR=C['VR' ] *100, CN=C['CN']))
+'''.format(c, *mt2, depth=C['z']/1e3, VR=C['VR']*100, CN=C['CN']))
         if self.max_VR:
-            out.write('  <tr><th>VR ({2:d} closest components)</th>	<td>{1:2.0f} %</td>{0:s}</tr>'.format
-                (('', '<td></td>')[bool(reference)], self.max_VR[0 ] *100, self.max_VR[1]))
+            out.write('  <tr><th>VR ({2:d} closest components)</th>	<td>{1:2.0f} %</td>{0:s}</tr>'.format(('', '<td></td>')[bool(reference)], self.max_VR[0]*100, self.max_VR[1]))
         if reference and 'kagan' in reference:
-            out.write('<tr><th>Kagan angle</th>	<td colspan="2" class="center">{0:3.1f}°</td></tr>\n'.format
-                (reference['kagan']))
+            out.write('<tr><th>Kagan angle</th>	<td colspan="2" class="center">{0:3.1f}°</td></tr>\n'.format(reference['kagan']))
         out.write('</table>\n\n')
-
+			
         if plot_uncertainty:
             out.write('''
 <h3>Histograms&mdash;uncertainty of MT parameters</h3>
@@ -3337,7 +3355,7 @@ class ISOLA:
     CLVD-part
   </div>
 </div>
-'''.format(DC=s1 +'comp-1-DC ' +s2, CLVD=s1 +'comp-2-CLVD ' +s2))
+'''.format(DC=s1+'comp-1-DC'+s2, CLVD=s1+'comp-2-CLVD'+s2))
             if not self.deviatoric:
                 out.write('''
 <div class="thumb tleft">
@@ -3348,7 +3366,7 @@ class ISOLA:
     CLVD-part
   </div>
 </div>
-'''.format(ISO=s1 +'comp-3-ISO ' +s2))
+'''.format(ISO=s1+'comp-3-ISO'+s2))
             out.write('''
 <div class="thumb tleft">
   <a href="{Mw:s}" data-lightbox="histogram" data-title="moment magnitude uncertainty">
@@ -3359,7 +3377,7 @@ class ISOLA:
   </div>
 </div>
 
-'''.format(Mw=s1 +'mech-0-Mw ' +s2, depth=s1 +'place-depth ' +s2, EW=s1 +'place-EW ' +s2, NS=s1 +'place-NS ' +s2, time=s1 +'time-shift ' +s2))
+'''.format(Mw=s1+'mech-0-Mw'+s2, depth=s1+'place-depth'+s2, EW=s1+'place-EW'+s2, NS=s1+'place-NS'+s2, time=s1+'time-shift'+s2))
             if len(self.shifts) > 1 or len(self.grid) > 1:
                 out.write('\n\n<h3>Histograms&mdash;uncertainty of centroid position and time</h3>\n\n')
             if len (self.depths) > 1:
@@ -3373,7 +3391,7 @@ class ISOLA:
   </div>
 </div>
 
-'''.format(Mw=s1 +'mech-0-Mw ' +s2, depth=s1 +'place-depth ' +s2, EW=s1 +'place-EW.png ' +s2, NS=s1 +'place-NS.png ' +s2, time=s1 +'time-shift ' +s2))
+'''.format(Mw=s1+'mech-0-Mw'+s2, depth=s1+'place-depth'+s2, EW=s1+'place-EW.png'+s2, NS=s1+'place-NS.png'+s2, time=s1+'time-shift'+s2))
             if len(self.grid) > len(self.depths):
                 out.write('''
 <div class="thumb tleft">
@@ -3394,7 +3412,7 @@ class ISOLA:
   </div>
 </div>
 
-'''.format(Mw=s1 +'mech-0-Mw ' +s2, depth=s1 +'place-depth ' +s2, EW=s1 +'place-EW ' +s2, NS=s1 +'place-NS ' +s2, time=s1 +'time-shift ' +s2))
+'''.format(Mw=s1+'mech-0-Mw'+s2, depth=s1+'place-depth'+s2, EW=s1+'place-EW'+s2, NS=s1+'place-NS'+s2, time=s1+'time-shift'+s2))
             if len(self.shifts) > 1:
                 out.write('''
 <div class="thumb tleft">
@@ -3405,7 +3423,7 @@ class ISOLA:
     centroid time
   </div>
 </div>
-'''.format(Mw=s1 +'mech-0-Mw ' +s2, depth=s1 +'place-depth ' +s2, EW=s1 +'place-EW ' +s2, NS=s1 +'place-NS ' +s2, time=s1 +'time-shift ' +s2))
+'''.format(Mw=s1+'mech-0-Mw'+s2, depth=s1+'place-depth'+s2, EW=s1+'place-EW'+s2, NS=s1+'place-NS'+s2, time=s1+'time-shift'+s2))
         out.write('\n\n<h2>Data used</h2>\n\n')
         if plot_stations:
             out.write('''
@@ -3421,9 +3439,8 @@ class ISOLA:
         if 'components' in self.logtext:
             s = self.logtext['components']
             i = s.find('(Hz)\t(Hz)\n')
-            s = s[ i +10:]
-            out.write \
-                ('\n\n<h3>Components used in inversion and their weights</h3>\n\n<table>\n  <tr><th colspan="2">station</th>	<th colspan="3">component</th>		<th><abbr title="epicentral distance">distance *</abbr></th>	<th>azimuth</th>	<th>fmin</th>	<th>fmax</th></tr>\n  <tr><th>code</th>	<th>channel</th>	<th>Z</th>	<th>N</th>	<th>E</th>	<th>(km)</th>	<th>(deg)</th>	<th>(Hz)</th>	<th>(Hz)</th></tr>\n')
+            s = s[i+10:]
+            out.write('\n\n<h3>Components used in inversion and their weights</h3>\n\n<table>\n  <tr><th colspan="2">station</th>	<th colspan="3">component</th>		<th><abbr title="epicentral distance">distance *</abbr></th>	<th>azimuth</th>	<th>fmin</th>	<th>fmax</th></tr>\n  <tr><th>code</th>	<th>channel</th>	<th>Z</th>	<th>N</th>	<th>E</th>	<th>(km)</th>	<th>(deg)</th>	<th>(Hz)</th>	<th>(Hz)</th></tr>\n')
             s = s.replace('\t', '</td>\t<td>').replace('\n', '</td></tr>\n<tr><td>')[:-8]
             s = '<tr><td>' + s + '</table>\n\n'
             out.write(s)
@@ -3437,9 +3454,8 @@ class ISOLA:
                 if mouse_figures:
                     m = p.match(line)
                     if m:
-                        line = '  <a href="{fig:s}mouse_YES_{0:s}{comp:s}.png" data-lightbox="mouse">\n    {0:s} {1:s}{2:s}</a>: {3:s}'.format \
-                            (*m.groups(), fig=mouse_figures, comp={'Z' :'0', 'N' :'1', 'E' :'2'}[m.groups()[2]])
-                out.write(line +'<br />\n')
+                        line = '  <a href="{fig:s}mouse_YES_{0:s}{comp:s}.png" data-lightbox="mouse">\n    {0:s} {1:s}{2:s}</a>: {3:s}'.format(*m.groups(), fig=mouse_figures, comp={'Z':'0', 'N':'1', 'E':'2'}[m.groups()[2]])
+                out.write(line+'<br />\n')
         out.write('<h3>Data source</h3>\n<p>\n')
         if 'network' in self.logtext:
             out.write(self.logtext['network'] + '<br />\n')
@@ -3546,15 +3562,13 @@ class ISOLA:
     PPD: west-east view
   </div>
 </div>
-'''.format(top=s1 +'top ' +s2, NS=s1 +'N-S ' +s2, WE=s1 +'W-E ' +s2))
+'''.format(top=s1+'top'+s2, NS=s1+'N-S'+s2, WE=s1+'W-E'+s2))
         if plot_maps:
             out.write('\n\n<h3>Stability in space (top view)</h3>\n\n<div class="thumb tleft">\n')
             k = plot_maps.rfind(".")
             for z in self.depths:
                 filename = plot_maps[:k] + "_{0:0>5.0f}".format(z) + plot_maps[k:]
-                out.write \
-                    ('  <a href="{0:s}" data-lightbox="map">\n    <img alt="" src="{0:s}" height="100" class="thumbimage" />\n  </a>\n'.format
-                        (filename))
+                out.write('  <a href="{0:s}" data-lightbox="map">\n    <img alt="" src="{0:s}" height="100" class="thumbimage" />\n  </a>\n'.format(filename))
             out.write('  <div class="thumbcaption">\n    click to compare different depths\n  </div>\n</div>\n')
         if plot_slices:
             k = plot_slices.rfind(".")
@@ -3562,10 +3576,8 @@ class ISOLA:
             s2 = plot_slices[k:]
             out.write('\n\n<h3>Stability in space (side view)</h3>\n\n<div class="thumb tleft">\n')
             for slice in ('N-S', 'W-E', 'NW-SE', 'SW-NE'):
-                out.write \
-                    ('  <a href="{0:s}" data-lightbox="slice">\n    <img alt="" src="{0:s}" height="150" class="thumbimage" />\n  </a>\n'.format
-                        (s1 +slice +s2))
-            out.write('  <div class="thumbcaption">\n    click to compare different points of view\n  </div>\n</div>\n')
+                out.write('  <a href="{0:s}" data-lightbox="slice">\n    <img alt="" src="{0:s}" height="150" class="thumbimage" />\n  </a>\n'.format(s1+slice+s2))
+        out.write('  <div class="thumbcaption">\n    click to compare different points of view\n  </div>\n</div>\n')
         out.write('''
 
 <h2>Calculation parameters</h2>
@@ -3622,27 +3634,28 @@ class ISOLA:
   <dd>{samprate:5.1f} Hz</dd>
 </dl>
 '''.format(
-            points = len(self.grid),
-            x = self.step_x,
-            z = self.step_z,
-            radius = self.radius /1e3,
-            dmin = self.depth_min /1e3,
-            dmax = self.depth_max /1e3,
-            sn = self.shift_min,
-            Sn = self.SHIFT_min,
-            sx = self.shift_max,
-            Sx = self.SHIFT_max,
-            step = self.shift_step,
-            STEP = self.SHIFT_step,
-            npts_elemse = self.npts_elemse,
-            tl = self.tl,
-            freq = self.freq,
-            npts_slice = self.npts_slice,
-            samplings = self.logtext['samplings'],
-            decimate = self.max_samprate / self.samprate,
-            samprate = self.samprate,
-            SAMPRATE = self.max_samprate,
-            crust = self.logtext['crust']))
+    points = len(self.grid),
+    x = self.step_x,
+    z = self.step_z,
+    radius = self.radius/1e3,
+    dmin = self.depth_min/1e3,
+    dmax = self.depth_max/1e3,
+    sn = self.shift_min,
+    Sn = self.SHIFT_min,
+    sx = self.shift_max,
+    Sx = self.SHIFT_max,
+    step = self.shift_step,
+    STEP = self.SHIFT_step,
+    npts_elemse = self.npts_elemse,
+    tl = self.tl,
+    freq = self.freq,
+    npts_slice = self.npts_slice,
+    samplings = self.logtext['samplings'],
+    decimate = self.max_samprate / self.samprate,
+    samprate = self.samprate,
+    SAMPRATE = self.max_samprate,
+    crust = self.logtext['crust']
+))
 
 
         out.write("""

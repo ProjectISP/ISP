@@ -13,11 +13,12 @@ import numpy as np
 import pandas as pd
 from obspy import read_events
 from obspy.core.event import Origin
-
 from isp import ROOT_DIR
 from isp.DataProcessing import DatalessManager
+from isp.Gui.Frames import MatplotlibFrame
 from isp.Utils.subprocess_utils import exc_cmd
-
+from obspy.io.nlloc.util import read_nlloc_scatter
+import matplotlib.pyplot as plt
 
 class NllManager:
 
@@ -346,3 +347,46 @@ class NllManager:
             return xp, yp, xs, ys
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
+
+
+    def plot_scatter(self):
+
+        [x,y,z,pdf] = self.get_NLL_scatter()
+        pdf = np.array(pdf) / np.max(pdf)
+        f = 111.111 * np.cos(38.5 * np.pi / 180)
+        x = (x / f) - 9
+        y = (y / (111.111)) + 38.5
+        left, width = 0.06, 0.65
+        bottom, height = 0.1, 0.65
+        spacing = 0.02
+        rect_scatter = [left, bottom, width, height]
+        rect_scatterlon = [left, bottom + height + spacing, width, 0.2]
+        rect_scatterlat = [left + width + spacing, bottom, 0.2, height]
+
+
+        fig = plt.figure(figsize=(10, 8))
+        self.mpf = MatplotlibFrame(fig)
+        ax_scatter = plt.axes(rect_scatter)
+        ax_scatter.tick_params(direction='in', top=True, right=True, labelsize=10)
+        plt.scatter(x, y, s=10, c=pdf, alpha=0.5, marker=".", cmap=plt.cm.jet)
+        plt.xlabel("Longitude", fontsize=10)
+        plt.ylabel("Latitude", fontsize=10)
+        ax_scatx = plt.axes(rect_scatterlon)
+        ax_scatx.tick_params(direction='in', labelbottom=False, labelsize=10)
+        plt.scatter(x, z, s=10, c=pdf, alpha=0.5, marker=".", cmap=plt.cm.jet)
+        plt.ylabel("Depth (km)", fontsize=10)
+        plt.gca().invert_yaxis()
+        ax_scatx = plt.axes(rect_scatterlat)
+        ax_scatx.tick_params(direction='in', labelleft=False, labelsize=10)
+        ax_scaty = plt.axes(rect_scatterlat)
+        ax_scaty.tick_params(direction='in')
+        ax_scaty.tick_params(which='major', labelsize=10)
+        plt.scatter(z, y, s=10, c=pdf, alpha=0.5, marker=".", cmap=plt.cm.jet)
+        ax_scaty = plt.axes(rect_scatterlat)
+        ax_scaty.tick_params(direction='in', labelsize=10)
+        plt.xlabel("Depth (km)", fontsize=10)
+        cax = plt.axes([0.95, 0.1, 0.02, 0.8])
+        plt.colorbar(cax=cax)
+        #plt.show()
+        self.mpf.show()
+

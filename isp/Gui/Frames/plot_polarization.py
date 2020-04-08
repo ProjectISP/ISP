@@ -10,9 +10,13 @@ class PlotPolarization(pw.QFrame, UitestFrame):
     def __init__(self, z, r, t):
         super(PlotPolarization, self).__init__()
         self.setupUi(self)
-        self._z = z/max(z)
-        self._r = r/max(r)
-        self._t = t/max(t)
+        self._z = z
+        self._r = r
+        self._t = t
+        self.canvas = MatplotlibCanvas(self.plotMatWidget_polarization)
+        self.canvas.figure.gca(projection='3d')
+
+        self.plotBtn.clicked.connect(lambda: self.plot_particle())
     ##
     @property
     def get_z(self):
@@ -24,12 +28,8 @@ class PlotPolarization(pw.QFrame, UitestFrame):
         return self.projSB.currentText()
 
 
-        #self.canvas = MatplotlibCanvas(self.plotMatWidget_polarization)
-        #ax = self.canvas.get_axe(0)
-        #self.canvas.figure.add_subplot(111, projection='3d')
-        #self.plotBtn.clicked.connect(self.plot)
-
-        #self.canvas.figure.subplots_adjust(111, projection='3d')
+    def plot_particle(self):
+        self.canvas.plot_projection(self._r,self._t,self._z,axes_index=0)
 
 
     #def plot(self):

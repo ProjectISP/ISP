@@ -462,10 +462,17 @@ background-color: rgb(233, 233, 233);</string>
       <item>
        <widget class="QWidget" name="widget_3" native="true">
         <layout class="QGridLayout" name="gridLayout_5">
-         <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
-          <widget class="QLabel" name="label_15">
+         <item row="3" column="0" colspan="2">
+          <widget class="QPushButton" name="runlocBtn">
            <property name="text">
-            <string>Location Parameters</string>
+            <string>Run Location</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="label_16">
+           <property name="text">
+            <string>Search</string>
            </property>
           </widget>
          </item>
@@ -478,10 +485,10 @@ background-color: rgb(233, 233, 233);</string>
            </item>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="QLabel" name="label_16">
+         <item row="2" column="1">
+          <widget class="QLabel" name="label_17">
            <property name="text">
-            <string>Search</string>
+            <string>Method</string>
            </property>
           </widget>
          </item>
@@ -509,35 +516,38 @@ background-color: rgb(233, 233, 233);</string>
            </item>
           </widget>
          </item>
-         <item row="2" column="1">
-          <widget class="QLabel" name="label_17">
+         <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_15">
            <property name="text">
-            <string>Method</string>
+            <string>Location Parameters</string>
            </property>
           </widget>
          </item>
-         <item row="3" column="0" colspan="2">
-          <widget class="QPushButton" name="runlocBtn">
+         <item row="4" column="0">
+          <widget class="QPushButton" name="plotmapBtn">
            <property name="text">
-            <string>Run Location</string>
+            <string>Plot Location Map</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QPushButton" name="firstpolarityBtn">
+           <property name="text">
+            <string>First Polarity</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QCheckBox" name="pdfCB">
+           <property name="text">
+            <string>PDF plot</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
         </layout>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="plotmapBtn">
-        <property name="text">
-         <string>Plot Location Map</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="firstpolarityBtn">
-        <property name="text">
-         <string>First Polarity</string>
-        </property>
        </widget>
       </item>
       <item>

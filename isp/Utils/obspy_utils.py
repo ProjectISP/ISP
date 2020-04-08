@@ -170,7 +170,7 @@ class MseedUtil:
          return []
 
     @classmethod
-    def get_selected_files(cls,files, selection):
+    def get_selected_files(cls, files, selection):
         new_list = []
         for file in files:
             st = read(file, headonly=True)

@@ -150,24 +150,12 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         except ValueError as error:
             self.info_message(str(error))
 
-    #############
     def plot_particle_motion(self):
-        self._plot_polarization=PlotPolarization(self._z, self._r, self._t)
-        #print(max(self._z))
-        print(self._plot_polarization.getSBvalue())
+        self._plot_polarization = PlotPolarization(self._z, self._r, self._t)
         self._plot_polarization.show()
-
-    #def plot_particle_motion(self):
-    #     fig = plt.figure(figsize=(8,8))
-    #     ax = fig.gca(projection='3d')
-    #     end=len(self._z)-1
-    #     ax.plot(self._z, self._r, self._t)
-    #     ax.text(self._z[0],self._r[0], self._t[0],"start")
-    #     ax.text(self._z[end], self._r[end], self._t[end], "end")
-    #     self.mpf = MatplotlibFrame(fig)
-    #     self.mpf.show()
-
-    ##########
+        #
+        #print(max(self._z))
+        #print(self._plot_polarization.getSBvalue())
 
 
 @add_save_load()
@@ -280,11 +268,13 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         scatter_x, scatter_y, scatter_z, pdf = self.nll_manager.get_NLL_scatter()
         lat = origin.latitude
         lon = origin.longitude
-        self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0)
+        self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0, resolution = "high")
         # Writing Location information
         self.add_earthquake_info(origin)
         xp, yp, xs, ys = self.nll_manager.ger_NLL_residuals()
         self.plot_residuals(xp, yp, xs, ys)
+        if self.pdfCB.isChecked:
+            self.nll_manager.plot_scatter()
 
     def plot_residuals(self, xp, yp, xs, ys):
 

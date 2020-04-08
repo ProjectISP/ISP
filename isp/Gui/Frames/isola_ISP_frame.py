@@ -136,12 +136,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
     def stationsInfo(self):
 
         file_path = self.root_path_bind.value
-        obsfiles = []
-
-        for dirpath, _, filenames in os.walk(file_path):
-            for f in filenames:
-                if f != ".DS_Store":
-                    obsfiles.append(os.path.abspath(os.path.join(dirpath, f)))
+        obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
         obsfiles.sort()
         sd = []
 
@@ -154,7 +149,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
             sd.append(station)
 
-        self._stations_info = StationsInfo(sd)
+        self._stations_info = StationsInfo(sd, check = True)
         self._stations_info.show()
 
 
@@ -193,8 +188,11 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         return event
 
 
+
     def run_inversion(self):
         parameters = self.get_inversion_parameters()
+        stations_map = self._stations_info.get_stations_map()
+
         isola = ISOLA(self.stream, self.deltas, location_unc = parameters['location_unc'], depth_unc = parameters['depth_unc'],
                       time_unc = parameters['time_unc'], deviatoric =  parameters['deviatoric'], threads = 8,
                       circle_shape = parameters['circle_shape'], use_precalculated_Green = parameters['GFs'])
@@ -204,9 +202,12 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
         print(isola.event)
 
+
         if self.stations_isola_path:
             isola.read_network_coordinates(self.stations_isola_path)
+            isola.set_use_components(stations_map)
             isola.read_crust(self.earth_path_bind.value)
+
             isola.set_parameters(parameters['freq_max'], parameters['freq_min'])
             print("Calculate GFs")
             if not isola.calculate_or_verify_Green():
@@ -238,8 +239,11 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                 isola.plot_maps_sum()
 
             try:
+
                 isola.plot_MT()
                 isola.plot_uncertainty(n=400)
+                #second option
+                #plot_MT_uncertainty_centroid()
                 isola.plot_seismo('seismo.png')
                 isola.plot_seismo('seismo_sharey.png', sharey=True)
                 isola.plot_seismo('seismo_cova.png', cholesky=True)
@@ -247,15 +251,15 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                 isola.plot_spectra()
                 isola.plot_stations()
                 isola.plot_covariance_matrix()
-                isola.html_log(h1='ISP Moment Tensor inversion',
-                plot_MT='centroid.png', plot_uncertainty='uncertainty.png', plot_stations='stations.png',
-                plot_seismo_cova='seismo_cova.png', plot_seismo_sharey='seismo_sharey.png',
-                plot_spectra='spectra.png', plot_noise='noise.png',
+                isola.plot_3D()
+                isola.html_log(h1='ISP Moment Tensor inversion',plot_MT='centroid.png',
+                plot_uncertainty='uncertainty.png', plot_stations='stations.png',plot_seismo_cova='seismo_cova.png',
+                plot_seismo_sharey='seismo_sharey.png', plot_spectra='spectra.png', plot_noise='noise.png',
                 plot_covariance_matrix='covariance_matrix.png', plot_maps='map.png', plot_slices='slice.png',
                 plot_maps_sum='map_sum.png')
 
-            except:
 
+            except:
                 print("Couldn't Plot")
 
 

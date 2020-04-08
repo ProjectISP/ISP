@@ -11,14 +11,15 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.colorbar import Colorbar
 from matplotlib.lines import Line2D
+from matplotlib.patheffects import Stroke
 from obspy import Stream
 from owslib.wms import WebMapService
-
+import cartopy.feature as cfeature
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Frames import BaseFrame
 from isp.Utils import ObspyUtil, AsycTime
-
-# Make sure that we are using QT5
+from mpl_toolkits.mplot3d import Axes3D
+import shapely.geometry as sgeom
 
 
 class MatplotlibWidget(pw.QWidget):
@@ -469,10 +470,12 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         elif plot_type == "scatter":
             area = 10.*z**2  # points size from 0 to 5
             cs = ax.scatter(x, y, s=area, c=z, cmap=cmap, alpha=0.5, vmin=vmin, vmax=vmax, marker=".", **kwargs)
+
         else:
             raise ValueError("Invalid value for plot_type it must be equal to either contourf or scatter.")
 
         cs.set_clim(vmin, vmax)
+
         self.clear_color_bar()
         if show_colorbar:
             self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, extend='both', pad=0.0)
@@ -551,6 +554,32 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         if self.axes is not None:
             ax = self.get_axe(axes_index)
             self.__plot_3d(x, y, z, ax, "contourf", clear_plot=clear_plot, show_colorbar=show_colorbar, **kwargs)
+
+
+    def plot_projection(self, x, y, z, axes_index, clear_plot=True, **kwargs):
+        """
+        Wrapper for matplotlib scatter3d.
+
+        :param x: x-axis data.
+        :param y: y-axis data.
+        :param z: z-axis data.
+        :param axes_index: The subplot axes index.
+        :param clear_plot: True to clean plot, False to plot over.
+        :param show_colorbar: True to show colorbar, false otherwise.
+        :param kwargs: Valid Matplotlib kwargs for scatter.
+        :return:
+        """
+
+        if self.axes is not None:
+           ax = self.get_axe(axes_index)
+           if clear_plot:
+                ax.cla()
+
+           ax = self.figure.gca(projection='3d')
+           ax.plot(x, y, z, **kwargs)
+
+
+
 
     def scatter3d(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
@@ -707,8 +736,9 @@ class MatplotlibFrame(pw.QMainWindow):
 
 class CartopyCanvas(BasePltPyqtCanvas):
 
-    MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
-
+    #MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
+    MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
+    #MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/etopo1/MapServer/WMSServer'
     def __init__(self, parent, **kwargs):
         """
         Create an embed cartopy canvas into pyqt.
@@ -732,7 +762,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         c_layout = kwargs.pop("constrained_layout", False)
         super().__init__(parent, subplot_kw=dict(projection=proj), constrained_layout=c_layout, **kwargs)
 
-    def plot_map(self, x, y, scatter_x, scatter_y, scatter_z, axes_index, clear_plot=True, **kwargs):
+    def plot_map(self, x, y, scatter_x, scatter_y, scatter_z, axes_index, clear_plot=True, resolution = "low", **kwargs):
         """
         Cartopy plot.
 
@@ -750,24 +780,36 @@ class CartopyCanvas(BasePltPyqtCanvas):
         # TODO implement a useful plot for cartopy this is just a test.
         self.clear()
         ax = self.get_axe(axes_index)
-        #print(self.MAP_SERVICE_URL)
+        fig = ax.get_figure()
         wms = WebMapService(self.MAP_SERVICE_URL)
-
-        layer = 'GEBCO_08 Hillshade'
-        xmin = int(x-5)
-        xmax = int(x+5)
-        ymin = int(y-5)
-        ymax = int(y+5)
+        geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
+        #layer = 'GEBCO_08 Hillshade'
+        layer ='GEBCO_2019_Grid'
+        #layer = 'shaded_relief'
+        xmin = int(x-8)
+        xmax = int(x+8)
+        ymin = int(y-8)
+        ymax = int(y+8)
         extent = [xmin, xmax, ymin, ymax]
 
         ax.set_extent(extent, crs=ccrs.PlateCarree())
-        coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
-                                                            edgecolor='k', alpha=0.6, linewidth=0.5,
-                                                            facecolor=cartopy.feature.COLORS['land'])
-        ax.add_feature(coastline_10m)
-        ax.add_wms(wms, layer)
+
+
+
+        if resolution is "high":
+
+            ax.add_wms(wms, layer)
+
+        else:
+
+            coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
+                edgecolor='k', alpha=0.6, linewidth=0.5, facecolor=cartopy.feature.COLORS['land'])
+            ax.stock_img()
+            ax.add_feature(coastline_10m)
+
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
+
         gl.xlabels_top = False
         gl.ylabels_left = False
         gl.xlines = False
@@ -778,6 +820,23 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         ax.plot(x, y, color='red', marker='*',markersize=3)
         ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", alpha=0.3,cmap=plt.get_cmap('YlOrBr'))
+
+        # Create an inset GeoAxes showing the Global location
+        sub_ax = fig.add_axes([0.70, 0.75, 0.28, 0.28],
+                              projection=ccrs.PlateCarree())
+        sub_ax.set_extent([-180, 180, -90, 90], geodetic)
+
+        # Make a nice border around the inset axes.
+        effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
+        sub_ax.outline_patch.set_path_effects([effect])
+
+        # Add the land, coastlines and the extent of the Solomon Islands.
+        sub_ax.add_feature(cfeature.LAND)
+        sub_ax.coastlines()
+        extent_box = sgeom.box(extent[0], extent[2], extent[1], extent[3])
+        sub_ax.add_geometries([extent_box], ccrs.PlateCarree(), facecolor='none',
+                              edgecolor='blue', linewidth=1.0)
+
         self.draw()
 
     def plot_stations(self, x, y, depth, axes_index, show_colorbar=True, clear_plot=True, **kwargs):
