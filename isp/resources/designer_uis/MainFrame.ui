@@ -141,7 +141,7 @@
             <number>100</number>
            </property>
            <item>
-            <widget class="QPushButton" name="manageProjectButton">
+            <widget class="QPushButton" name="receiverFunctionsButton">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -167,12 +167,11 @@
               </font>
              </property>
              <property name="text">
-              <string>  Manage Project</string>
+              <string>Receiver Functions</string>
              </property>
              <property name="icon">
               <iconset>
-               <normalon>:/icons/manage-icon.png</normalon>
-              </iconset>
+               <normaloff>../images/rf.png</normaloff>../images/rf.png</iconset>
              </property>
              <property name="iconSize">
               <size>

@@ -22,6 +22,8 @@ UiMomentTensor = load_ui_designers("MomentTensor.ui")
 UiStationInfo  =  load_ui_designers("StationsInfo.ui")
 UiStationCoords = load_ui_designers("StationsCoordinates.ui")
 UiCrustalModelParametersFrame = load_ui_designers("CrustalModelParametersFrame.ui")
+UiReceiverFunctions = load_ui_designers("ReceiverFunctionsFrame.ui")
+UiReceiverFunctionsCut = load_ui_designers("RfDialogsCutEqs.ui")
 
 
 

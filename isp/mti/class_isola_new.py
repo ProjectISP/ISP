@@ -867,10 +867,10 @@ class ISOLA:
             for s in self.stations:
                 if s['model'] != model:
                     continue
-                az = radians(s['az'])
+                az = math.radians(s['az'])
                 dist = s['dist'] / 1000  # from meter to kilometer
-                outp.write('{N:10.4f} {E:10.4f} {z:10.4f} {az:10.4f} {d:10.4f} {code:4s} ?\n'.format(N=cos(az) * dist,
-                                                                                                     E=sin(az) * dist,
+                outp.write('{N:10.4f} {E:10.4f} {z:10.4f} {az:10.4f} {d:10.4f} {code:4s} ?\n'.format(N=math.cos(az) * dist,
+                                                                                                     E=math.sin(az) * dist,
                                                                                                      z=0, az=s['az'],
                                                                                                      d=dist,
                                                                                                      code=s['code']))
