@@ -2,6 +2,7 @@ import os
 import unittest
 
 from isp.db import db
+from isp.earthquakeAnalisysis import PickerManager
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 db.set_db_url("sqlite:///{}/isp_test.db".format(dir_path))
@@ -32,7 +33,13 @@ class MyTestCase(unittest.TestCase):
         print(EventArrayModel.get_all())
         print(PhaseInfoModel.get_all())
 
-
+    def test_event_location_insert(self):
+        from isp.earthquakeAnalisysis import  NllManager
+        nll_manager=NllManager(PickerManager.get_default_output_path(), None)
+        origin = nll_manager.get_NLL_info()
+        print(origin)
 
 if __name__ == '__main__':
     unittest.main()
+
+
