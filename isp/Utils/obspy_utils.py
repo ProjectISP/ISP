@@ -3,8 +3,9 @@ from enum import unique, Enum
 from typing import List
 
 import numpy as np
-from obspy import Stream, read, Trace, UTCDateTime
+from obspy import Stream, read, Trace, UTCDateTime, read_events
 # noinspection PyProtectedMember
+from obspy.core.event import Origin
 from obspy.io.mseed.core import _is_mseed
 from obspy.io.xseed.parser import Parser
 
@@ -147,6 +148,24 @@ class ObspyUtil:
                 st.trim(starttime=start_time)
             elif min_end_time - end_time > 0:  # trim only end time.
                 st.trim(endtime=end_time)
+
+    @staticmethod
+    def reads_hyp_to_origin(hyp_file_path: str) -> Origin:
+        """
+        Reads an hyp file and returns the Obspy Origin.
+
+        :param hyp_file_path: The file path to the .hyp file
+
+        :return: An Obspy Origin
+        """
+
+        if os.path.isfile(hyp_file_path):
+            cat = read_events(hyp_file_path)
+            event = cat[0]
+            origin = event.origins[0]
+            return origin
+        else:
+            raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(hyp_file_path))
 
 
 class MseedUtil:

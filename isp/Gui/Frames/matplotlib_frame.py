@@ -2,7 +2,9 @@ from __future__ import unicode_literals
 
 import cartopy
 import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 import numpy
+import shapely.geometry as sgeom
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
@@ -14,12 +16,9 @@ from matplotlib.lines import Line2D
 from matplotlib.patheffects import Stroke
 from obspy import Stream
 from owslib.wms import WebMapService
-import cartopy.feature as cfeature
+
 from isp.Gui import pw, pyc, qt
-from isp.Gui.Frames import BaseFrame
 from isp.Utils import ObspyUtil, AsycTime
-from mpl_toolkits.mplot3d import Axes3D
-import shapely.geometry as sgeom
 
 
 class MatplotlibWidget(pw.QWidget):
