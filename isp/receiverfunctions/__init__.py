@@ -1,3 +1,3 @@
-import isp.receiverfunctions.main_window_utils as utils
+from isp.receiverfunctions import main_window_utils as utils
 
 
