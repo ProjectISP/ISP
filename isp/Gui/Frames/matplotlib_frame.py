@@ -14,6 +14,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from matplotlib.colorbar import Colorbar
 from matplotlib.lines import Line2D
 from matplotlib.patheffects import Stroke
+from matplotlib.widgets import SpanSelector
 from obspy import Stream
 from owslib.wms import WebMapService
 
@@ -60,11 +61,13 @@ class BasePltPyqtCanvas(FigureCanvas):
         self.button_connection = None
         self.cdi_enter = None
         self.cdi_leave = None
+        self.cdi_enter_axes = None
         self.pick_connect = None
         self.axes = None
         self.__callback_on_double_click = None
         self.__callback_on_click = None
         self.__callback_on_pick = None
+        self.__selector = None
         self.pickers = {}
 
         if not obj:
@@ -98,8 +101,7 @@ class BasePltPyqtCanvas(FigureCanvas):
 
     def __del__(self):
         print("disconnect")
-        self.disconnect_click()
-        self.disconnect_pick()
+        self.disconnect_events()
         plt.close(self.figure)
 
     def __construct_subplot(self, **kwargs):
@@ -130,6 +132,55 @@ class BasePltPyqtCanvas(FigureCanvas):
         if not self.cdi_leave:
             self.cdi_leave = self.mpl_connect('figure_leave_event', self.__figure_leave_event)
 
+    def register_on_select(self, func, **kwargs):
+        """
+        Register on_select callback using SpanSelector.
+
+        :param func: A callback method for on_select, func(min, max), min/max are floats.
+
+        :keyword kwargs:
+
+        :keyword direction: "horizontal" or "vertical". Default = "horizontal".
+
+        :keyword minspan: float, default is 1E-6. If selection is less than minspan, do not
+            call on_select callback.
+
+        :keyword useblit: bool, default is True. If True, use the backend-dependent blitting
+            features for faster canvas updates.
+
+        :keyword rectprops: dict, default is dict(alpha=0.5, facecolor='red').
+            Dictionary of matplotlib.patches.Patch properties.
+
+        :keyword onmove_callback: func(min, max), min/max are floats, default is None.
+            Called on mouse move while the span is being selected.
+
+        :keyword span_stays: bool, default is False. If True, the span stays visible after the
+            mouse is released.
+
+        :keyword button: int or list of ints. Determines which mouse buttons activate the
+            span selector. Default is MouseButton.LEFT. Use MouseButton.RIGHT, MouseButton.CENTER
+            or MouseButton.LEFT.
+
+        :return:
+        """
+        if not self.cdi_enter_axes:
+            self.cdi_enter_axes = self.mpl_connect("axes_enter_event", self.__on_enter_axes)
+
+        direction = kwargs.pop("direction", "horizontal")
+        useblit = kwargs.pop("useblit", True)
+        minspan = kwargs.pop("minspan", 1.E-6)
+        rectprops = kwargs.pop("rectprops", dict(alpha=0.5, facecolor='red'))
+        button = kwargs.pop("button", MouseButton.LEFT)
+
+        self.__selector = SpanSelector(self.get_axe(0), func, direction=direction, useblit=useblit,
+                                       minspan=minspan, rectprops=rectprops, button=button, **kwargs)
+
+    def __on_enter_axes(self, event):
+        if self.__selector and isinstance(self.__selector, SpanSelector):
+            self.__selector.new_axes(event.inaxes)
+            self.__selector.update_background(event)
+            print("New axe:", event.inaxes)
+
     def __figure_leave_event(self, event):
         """
         Called when mouse leave this figure.
@@ -153,7 +204,7 @@ class BasePltPyqtCanvas(FigureCanvas):
         if not self.pick_connect:
             self.pick_connect = self.mpl_connect('pick_event', self.__on_pick_event)
 
-    def disconnect_click(self):
+    def disconnect_events(self):
         if self.button_connection:
             self.mpl_disconnect(self.button_connection)
 
@@ -163,7 +214,9 @@ class BasePltPyqtCanvas(FigureCanvas):
         if self.cdi_leave:
             self.mpl_disconnect(self.cdi_leave)
 
-    def disconnect_pick(self):
+        if self.cdi_enter_axes:
+            self.mpl_disconnect(self.cdi_enter_axes)
+
         if self.pick_connect:
             self.mpl_disconnect(self.pick_connect)
 
@@ -426,7 +479,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         except ValueError:
             artist.remove()
             return None
-    ######
+
     def __plot_date(self, x, y, ax, clear_plot=True, **kwargs):
         if clear_plot:
             ax.cla()
@@ -438,7 +491,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         except ValueError:
             artist.remove()
             return None
-    #######
+
     def __plot_3d(self, x, y, z, ax, plot_type, clear_plot=True, show_colorbar=True, **kwargs):
         """
         Wrapper for matplotlib 3d plots.
@@ -510,7 +563,6 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             else:
                 return self.__plot(x, y, ax, clear_plot=clear_plot, **kwargs)
 
-    ############
     def plot_date(self, x, y, axes_index, clear_plot=True, is_twinx=False, **kwargs):
         """
         Wrapper for matplotlib plot.
@@ -535,7 +587,6 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
                 return artist
             else:
                 return self.__plot_date(x, y, ax, clear_plot=clear_plot, **kwargs)
-    ############
 
     def plot_contour(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
@@ -554,7 +605,6 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             ax = self.get_axe(axes_index)
             self.__plot_3d(x, y, z, ax, "contourf", clear_plot=clear_plot, show_colorbar=show_colorbar, **kwargs)
 
-
     def plot_projection(self, x, y, z, axes_index, clear_plot=True, **kwargs):
         """
         Wrapper for matplotlib scatter3d.
@@ -570,15 +620,12 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         """
 
         if self.axes is not None:
-           ax = self.get_axe(axes_index)
-           if clear_plot:
+            ax = self.get_axe(axes_index)
+            if clear_plot:
                 ax.cla()
 
-           ax = self.figure.gca(projection='3d')
-           ax.plot(x, y, z, **kwargs)
-
-
-
+            ax = self.figure.gca(projection='3d')
+            ax.plot(x, y, z, **kwargs)
 
     def scatter3d(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
@@ -695,7 +742,7 @@ class MatplotlibFrame(pw.QMainWindow):
         self.main_widget = pw.QWidget(self)
 
         self.layout = pw.QVBoxLayout(self.main_widget)
-        self.mpc = MatplotlibCanvas(self.main_widget, obj, **kwargs)
+        self.canvas = MatplotlibCanvas(self.main_widget, obj, **kwargs)
 
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
@@ -709,12 +756,12 @@ class MatplotlibFrame(pw.QMainWindow):
         self.__close_window_callback = func
 
     def set_canvas(self, mpc: MatplotlibCanvas):
-        self.mpc = mpc
+        self.canvas = mpc
         self.layout.removeWidget(self.mpw)
 
     def fileQuit(self):
         self.close()
-        self.mpc = None
+        self.canvas = None
 
     def close(self) -> bool:
         if self.__close_window_callback:
