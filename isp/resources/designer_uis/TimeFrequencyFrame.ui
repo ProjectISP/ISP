@@ -200,6 +200,11 @@
             </item>
             <item>
              <property name="text">
+              <string>Wigner Spectrogram</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>Continuous Wavelet Transform</string>
              </property>
             </item>
@@ -239,7 +244,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -419,8 +424,15 @@
     </property>
     <addaction name="actionSettings"/>
    </widget>
+   <widget class="QMenu" name="menuActions">
+    <property name="title">
+     <string>Actions</string>
+    </property>
+    <addaction name="actionOpen_Spectral_Analysis"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuParameters"/>
+   <addaction name="menuActions"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionWrite">
@@ -466,6 +478,11 @@
   <action name="actionWrite_Time_Frequency">
    <property name="text">
     <string>Write Time-Frequency</string>
+   </property>
+  </action>
+  <action name="actionOpen_Spectral_Analysis">
+   <property name="text">
+    <string>Open Spectral Analysis</string>
    </property>
   </action>
  </widget>

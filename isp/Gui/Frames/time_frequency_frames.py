@@ -8,7 +8,7 @@ from isp.Gui.Frames import BaseFrame, UiTimeFrequencyFrame, FilesView, \
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime
 from isp.Utils import MseedUtil, ObspyUtil
-from isp.seismogramInspector.MTspectrogram import MTspectrogram
+from isp.seismogramInspector.MTspectrogram import MTspectrogram, WignerVille
 import matplotlib.pyplot as plt
 from isp.seismogramInspector.ba_fast import ccwt_ba_fast
 from isp.seismogramInspector.CWT_fast import cwt_fast
@@ -191,6 +191,36 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 self.canvas_plot2.set_xlabel(1, "Time (s)")
                 self.canvas_plot2.set_ylabel(0, "Amplitude ")
                 self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
+
+        elif selection == "Wigner Spectrogram":
+
+            win = int(self.mt_window_lengthDB.value() * tr.stats.sampling_rate)
+            tbp = self.time_bandwidth_DB.value()
+            ntapers = self.number_tapers_mtSB.value()
+            f_min = self.freq_min_mtDB.value()
+            f_max = self.freq_max_mtDB.value()
+            wignerspec = WignerVille(self.file_selector.file_path, win, tbp, ntapers, f_min, f_max)
+
+            if self.trimCB.isChecked() and diff >= 0:
+                x, y, log_spectrogram = wignerspec.compute_wigner_spectrogram(tr, start_time=ts, end_time=te)
+            else:
+                x, y, log_spectrogram = wignerspec.compute_spectrogram(tr)
+
+            if order == "Seismogram 1":
+                self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Rel Power ",
+                                         cmap=plt.get_cmap("jet"))
+                self.canvas_plot1.set_xlabel(1, "Time (s)")
+                self.canvas_plot1.set_ylabel(0, "Amplitude ")
+                self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
+
+            elif order == "Seismogram 2":
+
+                self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
+                                               cmap=plt.get_cmap("jet"))
+                self.canvas_plot2.set_xlabel(1, "Time (s)")
+                self.canvas_plot2.set_ylabel(0, "Amplitude ")
+                self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
+
 
 
         elif selection == "Continuous Wavelet Transform":

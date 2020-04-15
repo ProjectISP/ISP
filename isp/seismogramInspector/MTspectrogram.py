@@ -15,7 +15,8 @@ from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, MseedUtil
 from isp.seismogramInspector.signal_processing_advanced import MTspectrum
-
+from mtspec import wigner_ville_spectrum, mtspec
+import math
 
 class MTspectrogram:
 
@@ -99,6 +100,64 @@ class MTspectrogram:
             plt.plot()
         else:
             return fig
+
+
+class  WignerVille:
+
+    def __init__(self, file_path, win, tbp, ntapers, f_min, f_max):
+
+        self.f_min = f_min
+        self.f_max = f_max
+        self.win = win
+        self.tbp = tbp
+        self.ntapers = ntapers
+
+        self.file_path = file_path
+        self.__stats = TracerStats()
+        if not MseedUtil.is_valid_mseed(file_path):
+            raise InvalidFile
+
+    def find_nearest(self, array, value):
+        idx, val = min(enumerate(array), key=lambda x: abs(x[1] - value))
+        return idx, val
+
+
+    def mt_wigner_wille_spectrum(self, data1, win, dt, tbp, ntapers, linf, lsup):
+
+
+        #data2 = np.zeros(2 ** math.ceil(math.log2(win)))
+        data1 = data1 - np.mean(data1)
+        #data2[0:win] = data1
+        spec, freq = mtspec(data1, dt, 3.5)
+        wv = wigner_ville_spectrum(data1, dt, tbp, ntapers, smoothing_filter='gauss')
+
+        value1, freq1 = self.find_nearest(freq, linf)
+        value2, freq2 = self.find_nearest(freq, lsup)
+
+        wv = wv[value1:value2]
+
+        return wv
+
+
+    def __compute_spectrogram(self, tr):
+        npts = len(tr)
+        t = np.linspace(0, (tr.stats.delta * npts), npts)
+        mt_wigner_spectrum = self.mt_wigner_wille_spectrum(tr.data, self.win, tr.stats.delta, self.tbp, self.ntapers, self.f_min, self.f_max)
+        mt_wigner_spectrum = np.flipud(mt_wigner_spectrum)
+        mt_wigner_spectrum =np.sqrt(abs(mt_wigner_spectrum))
+        #log_spectrogram = 10. * np.log(mt_wigner_spectrum / np.max(mt_wigner_spectrum))
+        mt_wigner_spectrum = mt_wigner_spectrum / np.max(mt_wigner_spectrum)
+        x, y = np.meshgrid(t, np.linspace(self.f_min, self.f_max, mt_wigner_spectrum.shape[0]))
+        return x, y, mt_wigner_spectrum
+
+
+    def compute_wigner_spectrogram(self, tr, start_time=None, end_time=None):
+        tr.trim(starttime=start_time, endtime=end_time)
+        x, y, log_spectrogram = self.__compute_spectrogram(tr)
+        return x, y, log_spectrogram
+
+
+
 
 
 
