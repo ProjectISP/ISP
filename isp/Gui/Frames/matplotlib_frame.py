@@ -66,6 +66,8 @@ class BasePltPyqtCanvas(FigureCanvas):
         self.axes = None
         self.__callback_on_double_click = None
         self.__callback_on_click = None
+        self.__callback_on_select = None
+        self.__selected_axe_index = None
         self.__callback_on_pick = None
         self.__selector = None
         self.pickers = {}
@@ -136,7 +138,8 @@ class BasePltPyqtCanvas(FigureCanvas):
         """
         Register on_select callback using SpanSelector.
 
-        :param func: A callback method for on_select, func(min, max), min/max are floats.
+        :param func: A callback method for on_select, func(ax_index, min, max), ax_index is the
+            index of the current Matplotlib.Axes and min/max are floats.
 
         :keyword kwargs:
 
@@ -172,14 +175,23 @@ class BasePltPyqtCanvas(FigureCanvas):
         rectprops = kwargs.pop("rectprops", dict(alpha=0.5, facecolor='red'))
         button = kwargs.pop("button", MouseButton.LEFT)
 
-        self.__selector = SpanSelector(self.get_axe(0), func, direction=direction, useblit=useblit,
-                                       minspan=minspan, rectprops=rectprops, button=button, **kwargs)
+        # register callback.
+        self.__callback_on_select = func
+        self.__selector = SpanSelector(self.get_axe(0), self.__on_select, direction=direction,
+                                       useblit=useblit, minspan=minspan, rectprops=rectprops,
+                                       button=button, **kwargs)
+
+    def __on_select(self, xmin, xmax):
+        if self.__callback_on_select:
+            self.__callback_on_select(self.__selected_axe_index, xmin, xmax)
 
     def __on_enter_axes(self, event):
         if self.__selector and isinstance(self.__selector, SpanSelector):
+            # new way to get axes index from event.
+            # event.inaxes.get_subplotspec().rowspan.start
+            self.__selected_axe_index = self.get_axe_index(event.inaxes)
             self.__selector.new_axes(event.inaxes)
             self.__selector.update_background(event)
-            print("New axe:", event.inaxes)
 
     def __figure_leave_event(self, event):
         """
@@ -249,6 +261,16 @@ class BasePltPyqtCanvas(FigureCanvas):
         :return: A matplotlib Axes.
         """
         return self.axes.item(index)
+
+    def get_axe_index(self, ax) -> int:
+        """
+        Get the index of an axe.
+
+        :param ax: The Matplotlib.Axes
+
+        :return: The axe index.
+        """
+        return numpy.where(self.axes == ax)[0][0]
 
     def clear(self):
         """
