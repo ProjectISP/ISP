@@ -2,6 +2,7 @@ import os
 import sys
 
 import matplotlib
+import numpy as np
 
 from isp.Gui.Frames import MatplotlibFrame
 
@@ -15,8 +16,9 @@ progversion = "0.1"
 qApp = QtWidgets.QApplication(sys.argv)
 
 
-def on_select(xmin, xmax):
-    print(xmin, xmax)
+def on_select(ax_index, xmin, xmax):
+    mpf.canvas.plot(xmax, 2, ax_index, clear_plot=False, marker="o")
+    mpf.canvas.draw()
 
 
 def on_click(event, canvas):
