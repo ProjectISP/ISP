@@ -1,5 +1,5 @@
 import matplotlib.dates as mdt
-from obspy import UTCDateTime
+from obspy import UTCDateTime, Stream
 from obspy.geodetics import gps2dist_azimuth
 
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced
@@ -16,7 +16,7 @@ from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdateti
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager
-
+import numpy as np
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
@@ -31,6 +31,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.picked_at = {}
         self.__dataless_manager = None
         self.__metadata_manager = None
+        self.st = None
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
 
         #self.filter = FilterBox(self.filterWidget)  # add filter box component.
@@ -47,6 +48,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.canvas.on_double_click(self.on_click_matplotlib)
         self.canvas.on_pick(self.on_pick)
+        self.canvas.register_on_select(self.on_select)
 
         self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
         self.event_info.register_plot_arrivals_click(self.on_click_plot_arrivals)
@@ -216,8 +218,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def plot_seismogram(self):
+        if self.st:
+            del self.st
+
         self.canvas.clear()
         ##
+        all_traces = []
         files_path = self.get_files(self.root_path_bind.value)
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":
@@ -286,6 +292,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     max_endtime.append(max(t))
                 except:
                     print("Empty traces")
+
+            all_traces.append(tr)
+
+        self.st = Stream(traces=all_traces)
+
         try:
             if min_starttime and max_endtime is not None:
                 auto_start = min(min_starttime)
@@ -382,3 +393,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self._stations_info = StationsInfo(sd)
         self._stations_info.show()
+
+    def on_select(self,ax_index, xmin, xmax):
+        #print("selection", ax_index, xmin, xmax)
+        t = self.st[ax_index].times("matplotlib")
+        y = self.st[ax_index].data
+        xmin_index = np.max(np.where(t <= xmin))
+        xmax_index = np.min(np.where(t >= xmax))
+        t = t[xmin_index:xmax_index]
+        s = y[xmin_index:xmax_index]
+        self.canvas.plot_date(t, s, ax_index, clear_plot=False, color="red", fmt='-', linewidth=0.5)
+        #ax = self.canvas.get_axe(ax_index)
+        #ax.fill_between(t, 0, y, where=(t >= xmin) & (t < xmax), color="red", edgecolor="red", alpha=0.3)
+
+
