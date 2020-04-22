@@ -9,17 +9,16 @@ import sys
 from PyQt5 import uic, QtGui, QtCore, QtWidgets
 import obspy
 import pickle
-
 from functools import partial
+import isp.receiverfunctions.dialogs_utils as utils
+from isp.Gui.Frames import UiReceiverFunctionsCut, BaseFrame
 
-import dialogs_utils as utils
 
-class CutEarthquakesDialog(QtWidgets.QDialog):
+class CutEarthquakesDialog(BaseFrame, UiReceiverFunctionsCut):
     def __init__(self):
         super(CutEarthquakesDialog, self).__init__()
-        uic.loadUi('dialogs_cut_eqs.ui', self)
-    
-        # connections
+        self.setupUi(self)
+        # connectionsx
         self.pushButton_2.clicked.connect(partial(self.get_path, 2))
         self.pushButton_3.clicked.connect(partial(self.get_path, 3))
         self.pushButton_4.clicked.connect(partial(self.get_path, 4))

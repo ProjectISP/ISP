@@ -84,15 +84,15 @@ def compute_rfs(stnm, data_map, arrivals, srfs={}, dcmpn="Q", scmpn="L",
 
         # Get time shift for P onset from the event metadata
         otime = arrivals['events'][event_id]['event_info']['origin_time']
-        atime = otime + arrivals['events'][event_id]['stations'][stnm]['arrival_time']
+        atime = otime + arrivals['events'][event_id]['arrivals'][stnm]['arrival_time']
         stime = -round(atime - st[0].stats.starttime)
         etime = round(st[0].stats.endtime - atime)
         t = np.linspace(stime, etime, len(dcmp))
         
         # Rf metadata
-        baz = arrivals['events'][event_id]['stations'][stnm]['azimuth'] # Esto está mal porque en el cut_earthquakes lo has puesto al reves (hay q. seguir la convencion de iris)
-        ray_param = arrivals['events'][event_id]['stations'][stnm]['ray_parameter']/EARTH_RADIUS
-        distance = arrivals['events'][event_id]['stations'][stnm]['distance']
+        baz = arrivals['events'][event_id]['arrivals'][stnm]['azimuth'] # Esto está mal porque en el cut_earthquakes lo has puesto al reves (hay q. seguir la convencion de iris)
+        ray_param = arrivals['events'][event_id]['arrivals'][stnm]['ray_parameter']/EARTH_RADIUS
+        distance = arrivals['events'][event_id]['arrivals'][stnm]['distance']
         
         # Pad data and perform deconvolution
         max_len = np.maximum(len(dcmp), len(scmp))
@@ -259,7 +259,9 @@ def save_rfs(stnm, a, c, rfs, outdir="rf/"):
         rfs_dict = {"station": stnm,
                     "deconvolution_parameters": {"a":a, "c":c},
                     "receiver_functions": rfs}
-        
+        # Temporaly Change #
+        outdir = '/Users/robertocabieces/Documents/ISPshare/isp/receiverfunctions/output_RFs'
+        #                  #
         pickle.dump(rfs_dict, open(outdir+"{}.pickle".format(stnm), "wb"))
 
 def map_rfs(rfs_dir="rf"):
@@ -285,7 +287,8 @@ def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx=0.01, dy=0.01,
     counts = np.ones((len(x), len(y), len(z)))
     
     # Read earth model:
-    with open("earth_models/{}.csv".format(model), 'r') as f:
+    path_model='/Users/robertocabieces/Documents/ISPshare/isp/receiverfunctions/earth_models'
+    with open(path_model+"/{}.csv".format(model), 'r') as f:
         model_lines = f.readlines()
     
     depth_arr = []
@@ -317,7 +320,7 @@ def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx=0.01, dy=0.01,
             t = rf_arr[1]
             rf = rf_arr[0]
             intp_rf = scint.interp1d(t, rf)
-            baz = evdata["events"][eq_id]['stations'][stnm]["azimuth"] # esto esta "MAL" PQ NO SIGUE EL CONVENIO DE IRIS, DEBE USARSE EL BACK AZIMUTH MEDIDO DESDE EL EVENTO, QUE ES EL AZIMUTH MEDIDO DESDE LA ESTACION
+            baz = evdata["events"][eq_id]['arrivals'][stnm]["azimuth"] # esto esta "MAL" PQ NO SIGUE EL CONVENIO DE IRIS, DEBE USARSE EL BACK AZIMUTH MEDIDO DESDE EL EVENTO, QUE ES EL AZIMUTH MEDIDO DESDE LA ESTACION
 
             r_earth = 6371
             H = 0

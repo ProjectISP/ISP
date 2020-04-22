@@ -18,7 +18,8 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import math
 from functools import partial
-
+import isp.receiverfunctions.dialogs as dialogs
+import isp.receiverfunctions.main_window_utils as utils
 
 
 class RecfFrame(BaseFrame, UiReceiverFunctions):
@@ -436,7 +437,8 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
     def cut_earthquakes_dialog(self):
         dialog = dialogs.CutEarthquakesDialog()
-        dialog.exec_()
+        dialog.show()
+        #dialog.exec_()
 
 #if __name__ == "__main__":
 #    app = pw.QApplication([])
