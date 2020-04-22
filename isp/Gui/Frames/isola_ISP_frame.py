@@ -102,7 +102,9 @@ class MTIFrame(BaseFrame, UiMomentTensor):
     #     print(model)
 
     def plot_seismograms(self):
-
+        parameters = self.get_inversion_parameters()
+        lat = float(parameters['latitude'])
+        lon = float(parameters['longitude'])
         starttime = convert_qdatetime_utcdatetime(self.starttime_date)
         endtime = convert_qdatetime_utcdatetime(self.endtime_date)
         diff = endtime - starttime
@@ -129,7 +131,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.stream_frame.show()
 
         if self.st:
-           mt =  MTIManager(self.st, self.inventory)
+           mt =  MTIManager(self.st, self.inventory, lat, lon)
            [self.stream, self.deltas, self.stations_isola_path] = mt.get_stations_index()
 
 
@@ -206,6 +208,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         if self.stations_isola_path:
             isola.read_network_coordinates(self.stations_isola_path)
             isola.set_use_components(stations_map)
+            print(isola.stations)
             isola.read_crust(self.earth_path_bind.value)
 
             isola.set_parameters(parameters['freq_max'], parameters['freq_min'])

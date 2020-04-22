@@ -271,19 +271,7 @@ def cohe(tr1,tr2,fs,nfft):
 
 ###
 def spectrumelement(data,delta,sta):
-    spec, freq, jackknife_errors, _, _ = mtspec(data,delta=delta , time_bandwidth=3.5, statistics=True)
+    spec, freq, jackknife_errors, _, _ = mtspec(data, delta=delta , time_bandwidth=3.5, statistics=True)
     spec = np.sqrt(spec) #mtspec Amplitude spectrum
     jackknife_errors = np.sqrt(jackknife_errors)
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
-    ax1.loglog(freq, spec, '0.1', linewidth=1.0,color='steelblue',label=sta)
-    ax1.frequencies = freq
-    ax1.spectrum = spec
-    ax1.fill_between(freq, jackknife_errors[:, 0], jackknife_errors[:, 1], facecolor="0.75", alpha=0.5, edgecolor="0.5")
-    ax1.set_ylim(spec.min() / 10.0, spec.max() * 100.0)
-    #ax1.set_xlim(freq[0], 1/(2*delta))
-    plt.ylabel('Amplitude [m]')
-    plt.xlabel('Frequency [Hz]')
-    plt.grid(True, which="both", ls="-", color='grey')
-    plt.legend()
-    plt.show()
+    return spec, freq, jackknife_errors

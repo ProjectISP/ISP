@@ -1,9 +1,9 @@
 import matplotlib.dates as mdt
 from obspy import UTCDateTime, Stream
 from obspy.geodetics import gps2dist_azimuth
-
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
+from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Exceptions import parse_excepts
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, EventInfoBox, \
@@ -17,6 +17,10 @@ from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager
 import numpy as np
+import matplotlib.pyplot as plt
+
+from isp.seismogramInspector.signal_processing_advanced import spectrumelement
+
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
@@ -32,10 +36,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.__dataless_manager = None
         self.__metadata_manager = None
         self.st = None
+        self.chop = {}
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
-
-        #self.filter = FilterBox(self.filterWidget)  # add filter box component.
-
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
         self.pagination.bind_onPage_changed(self.onChange_page)
@@ -48,7 +50,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.canvas.on_double_click(self.on_click_matplotlib)
         self.canvas.on_pick(self.on_pick)
-        self.canvas.register_on_select(self.on_select)
+        self.canvas.register_on_select(self.on_select, rectprops = dict(alpha=0.2, facecolor='red'))
+        self.canvas.mpl_connect('key_press_event', self.key_pressed)
+        self.canvas.mpl_connect('axes_enter_event', self.enter_axes)
 
         self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
         self.event_info.register_plot_arrivals_click(self.on_click_plot_arrivals)
@@ -66,7 +70,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.updateBtn.clicked.connect(self.plot_seismogram)
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
-        # self.mapBtn.clicked.connect(self.plot_map_stations)
+        #self.mapBtn.clicked.connect(self.plot_map_stations)
         self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
 
@@ -264,6 +268,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 s = tr.data
                 self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
                 self.redraw_pickers(file_path, index)
+                #redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
+                self.redraw_chop(tr, s, index)
                 last_index = index
 
                 st_stats = ObspyUtil.get_stats(file_path)
@@ -296,7 +302,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             all_traces.append(tr)
 
         self.st = Stream(traces=all_traces)
-
         try:
             if min_starttime and max_endtime is not None:
                 auto_start = min(min_starttime)
@@ -315,8 +320,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             pass
 
 
-
-
     def redraw_pickers(self, file_name, axe_index):
 
         picked_at = {key: values for key, values in self.picked_at.items()}  # copy the dictionary.
@@ -327,6 +330,22 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                                   amplitude=ps.Amplitude, color=ps.Color, picker=True)
                 self.picked_at.pop(key)
                 self.picked_at[str(new_line)] = ps
+
+
+    def redraw_chop(self, tr, s, ax_index):
+        #chop = {key: values for key, values in self.chop.items()}
+        new_id = tr.id
+        for key, value in self.chop.items():
+            if  key == new_id:
+                t = self.chop[tr.id][1]
+                xmin_index = self.chop[tr.id][3]
+                xmax_index = self.chop[tr.id][4]
+                data =s[xmin_index:xmax_index]
+                self.chop[tr.id][2] = data
+                self.canvas.plot_date(t, data, ax_index, clear_plot=False, color='orangered', fmt='-', linewidth=0.5)
+
+
+
 
     def on_click_matplotlib(self, event, canvas):
         if isinstance(canvas, MatplotlibCanvas):
@@ -394,16 +413,116 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self._stations_info = StationsInfo(sd)
         self._stations_info.show()
 
-    def on_select(self,ax_index, xmin, xmax):
-        #print("selection", ax_index, xmin, xmax)
+    def on_select(self, ax_index, xmin, xmax):
+        files_at_page = self.get_files_at_page()
+        file = files_at_page[ax_index]
+        st = SeismogramDataAdvanced(file)
+        metadata = [st.stats.Network, st.stats.Station, st.stats.Location, st.stats.Channel, st.stats.StartTime,
+                   st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
+
+        tr = self.st[ax_index]
         t = self.st[ax_index].times("matplotlib")
         y = self.st[ax_index].data
+        #identify metadata with ax
+        id = tr.id
+
+        self.canvas.plot_date(t, y, ax_index, clear_plot=False, color="black", fmt='-', linewidth=0.5)
         xmin_index = np.max(np.where(t <= xmin))
         xmax_index = np.min(np.where(t >= xmax))
         t = t[xmin_index:xmax_index]
         s = y[xmin_index:xmax_index]
-        self.canvas.plot_date(t, s, ax_index, clear_plot=False, color="red", fmt='-', linewidth=0.5)
-        #ax = self.canvas.get_axe(ax_index)
+        self.canvas.plot_date(t, s, ax_index, clear_plot=False, color = 'orangered', fmt='-', linewidth=0.5)
         #ax.fill_between(t, 0, y, where=(t >= xmin) & (t < xmax), color="red", edgecolor="red", alpha=0.3)
+        self.chop[id] = [metadata, t, s, xmin_index, xmax_index]
+
+
+
+    def enter_axes(self, event):
+         self.ax_num = self.canvas.figure.axes.index(event.inaxes)
+
+
+    def find_chop_by_ax(self, ax):
+        files_at_page = self.get_files_at_page()
+        file = files_at_page[ax]
+        st_stats = ObspyUtil.get_stats(file)
+        id = st_stats.Network+"."+st_stats.Station+"."+st_stats.Location+"."+st_stats.Channel
+        for key, value in self.chop.items():
+            if key == id:
+                identified_chop = self.chop[id]
+            else:
+                pass
+        return identified_chop, id
+
+
+    def key_pressed(self, event):
+        if event.key == 'a':
+
+            [identified_chop, id]= self.find_chop_by_ax(self.ax_num)
+            data = identified_chop[2]
+            delta = 1 / identified_chop[0][6]
+            [spec, freq, jackknife_errors] = spectrumelement(data, delta, id)
+            self.spectrum = PlotToolsManager(id)
+            self.spectrum.plot_spectrum(freq, spec, jackknife_errors)
+
+        if event.key == 'z':
+            start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+            end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+            [identified_chop, id] = self.find_chop_by_ax(self.ax_num)
+            tini = identified_chop[3]
+            tend = identified_chop[4]
+            data = identified_chop[2]
+            t = identified_chop[1]
+            npts = len(data)
+            fs = identified_chop[0][6]
+            delta = 1 /fs
+            win = int(3*fs)
+            tbp = 3
+            ntapers = 3
+            f_min = 0
+            f_max = 25
+
+            self.spectrogram = PlotToolsManager(id)
+            [x,y,z] = self.spectrogram.compute_spectrogram_plot(data, win, delta, tbp, ntapers, f_min, f_max, t)
+            ax = self.canvas.get_axe(self.ax_num)
+
+            ax2 = ax.twinx()
+            cs = ax2.contourf(x, y, z, levels=100, cmap=plt.get_cmap("jet"), alpha = 0.2)
+            fig = ax2.get_figure()
+            #fig.tight_layout()
+            ax2.set_ylim(0, 25)
+            t = t[0:len(x)]
+            ax2.set_xlim(t[0],t[-1])
+            ax.set_ylabel('Frequency [ Hz]')
+            #ax2.yaxis.tick_right()
+            vmin = np.amin(z)
+            vmax = np.amax(z)
+            cs.set_clim(vmin, vmax)
+            axs = []
+            for j in range(self.items_per_page):
+                axs.append(self.canvas.get_axe(j))
+
+            try:
+                self.cbar.ax.remove()
+
+            except:
+                pass
+
+            self.cbar = fig.colorbar(cs, ax= axs[j], extend='both', orientation='horizontal', pad=0.15)
+            self.cbar.ax.set_ylabel("Power [dB]")
+            tr=self.st[self.ax_num]
+            tt = tr.times("matplotlib")
+            data = tr.data
+            self.canvas.plot_date(tt, data, self.ax_num, clear_plot=False, color='black', fmt='-', linewidth=0.5)
+            auto_start = min(tt)
+            auto_end = max(tt)
+
+            if self.trimCB.isChecked():
+                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+            else:
+                ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
+
+            ax.set_ylim(min(data),max(data))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            ax.xaxis.set_major_formatter(formatter)
 
 

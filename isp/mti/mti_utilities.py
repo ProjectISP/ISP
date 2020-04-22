@@ -1,26 +1,20 @@
 import os
-from pathlib import Path
-
-import numpy as np
 import pandas as pd
-from obspy import read_events
-from obspy.core.event import Origin
-
-from isp import ROOT_DIR
-from isp.DataProcessing import DatalessManager
-from isp.Gui import pw
-from isp.Utils.subprocess_utils import exc_cmd
+from obspy.geodetics.base import gps2dist_azimuth
 
 
 class MTIManager:
 
-    def __init__(self, st, inv):
+    def __init__(self, st, inv, lat0, lon0):
         """
         Manage MTI files for run isola class program.
-
+        st: stream of seismograms
+        in: inventory
         """
         self.__st = st
         self.__inv = inv
+        self.lat = lat0
+        self.lon = lon0
 
     @staticmethod
     def __validate_file(file_path):
@@ -46,8 +40,10 @@ class MTIManager:
 
 
     def get_stations_index(self):
+
         ind = []
         file_list = []
+        dist1 = []
         for tr in self.__st:
             net = tr.stats.network
             station = tr.stats.station
@@ -58,14 +54,21 @@ class MTIManager:
             if ind.count(station):
                 pass
             else:
+                [dist, az1, az1] = gps2dist_azimuth(self.lat, self.lon, lat, lon, a=6378137.0, f=0.0033528106647474805)
                 ind.append(station)
                 item = '{net}:{station}::{channel}    {lat}    {lon}'.format(net=net,
                         station=station, channel=channel[0:2],lat=lat,lon=lon)
 
+
                 file_list.append(item)
+                dist1.append(dist)
+                keydict = dict(zip(file_list, dist1))
+                file_list.sort(key=keydict.get)
 
         self.stations_index = ind
-        self.stream = self.sort_stream()
+        self.stream = self.sort_stream(dist1)
+
+
         deltas = self.get_deltas()
 
         data = {'item': file_list}
@@ -78,14 +81,22 @@ class MTIManager:
         return self.stream , deltas, outstations_path
 
 
-    def sort_stream(self):
+    def sort_stream(self, dist1):
         stream = []
+        stream_sorted_order = []
 
         for station in self.stations_index:
             st2 = self.__st.select(station=station)
             stream.append(st2)
 
-        return stream
+        # Sort by Distance
+
+        stream_sorted = [x for _, x in sorted(zip(dist1, stream))]
+        # reverse from E N Z --> Z N E
+        for stream_sort in stream_sorted:
+            stream_sorted_order.append(stream_sort.reverse())
+
+        return stream_sorted_order
 
     def get_deltas(self):
         deltas = []

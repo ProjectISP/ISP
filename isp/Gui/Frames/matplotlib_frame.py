@@ -849,6 +849,14 @@ class CartopyCanvas(BasePltPyqtCanvas):
         self.clear()
         ax = self.get_axe(axes_index)
         fig = ax.get_figure()
+
+
+        im = plt.imread('/Users/robertocabieces/Documents/ISPshare/isp/resources/images/05.png')
+        newax = fig.add_axes([0.3, 0.3, 0.1, 0.1])
+        newax.imshow(im, aspect ='auto')
+
+
+
         wms = WebMapService(self.MAP_SERVICE_URL)
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
         #layer = 'GEBCO_08 Hillshade'
