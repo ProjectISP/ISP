@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>ISP - Receiver function analysis</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_41">
@@ -1515,7 +1515,7 @@
      <x>0</x>
      <y>0</y>
      <width>1410</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuInput">
@@ -1617,7 +1617,7 @@
   <customwidget>
    <class>MatplotlibWidget</class>
    <extends>QWidget</extends>
-   <header>isp.receiverfunctions.matplotlibwidget</header>
+   <header>isp.receiverfunctions.rf_matplotlibwidget</header>
   </customwidget>
  </customwidgets>
  <resources/>
