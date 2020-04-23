@@ -21,6 +21,7 @@ import cartopy
 import cartopy.crs as ccrs
 import numpy as np
 from functools import partial
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
@@ -217,10 +218,11 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         """Save the current receiver functions to disk
         
         """
+        outdir = pw.QFileDialog.getExistingDirectory()
         stnm = self.comboBox.currentText()
         a = self.doubleSpinBox.value()
         c = self.doubleSpinBox_2.value()
-        mwu.save_rfs(stnm, a, c, self.rfs)
+        mwu.save_rfs(stnm, a, c, self.rfs, outdir=outdir)
 
     def setup_rf_stack_axes(self):
         """Prepare receiver function axes for plotting
@@ -458,7 +460,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget_5.figure.axes[0].set_extent([min(lons) - 0.5,
                                                     max(lons) + 0.5,
                                                     min(lats) - 0.5,
-                                                    min(lats) + 0.5], ccrs.PlateCarree())
+                                                    max(lats) + 0.5], ccrs.PlateCarree())
 
         self.mplwidget_5.figure.canvas.draw()
 
@@ -489,21 +491,21 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         start = (self.doubleSpinBox_18.value(), self.doubleSpinBox_17.value())
         end = (self.doubleSpinBox_20.value(), self.doubleSpinBox_19.value())
         newlats, newlons = mwu.compute_intermediate_points(start, end, 100)
-        
+
         matrix = []
-        for lat, lon in zip(newlats, newlons):
-            column = []
-            for i, stack in enumerate(self.istack):
-                cs_val = stack(lon, lat)
-                column.append(cs_val)
-            matrix.append(column)
+        for i, stack in enumerate(self.istack):
+            row = []
+            for lat, lon in zip(newlats, newlons):
+                row.append(stack(lat, lon)[0])
+            matrix.append(row)
         
         matrix = np.array(matrix)
         
+        matplotlib.use('QT5Agg')
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        print(matrix.size)
         ax.pcolormesh(matrix)
+        fig.show()
         
     def cut_earthquakes_dialog(self):
         """Display the Cut earthquakes from local data dialog

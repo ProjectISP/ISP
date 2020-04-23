@@ -65,12 +65,16 @@ def compute_rfs(stnm, data_map, arrivals, srfs={}, dcmpn="Q", scmpn="L",
         # Read data
         st = obspy.read(data_map[stnm][event_id], format="MSEED")
         
+        # Check for errors in mseed file
+        if len(st) < 3:
+            continue
+        
         if filter_:
             dcmp = st.select(component=dcmpn).filter('bandpass', freqmin=min(corner_freqs),
                                                      freqmax=max(corner_freqs))
             dcmp = - dcmp[0].data
         else:
-            dcmp = st.select(component=dcmpn)[0].data
+            dcmp = - st.select(component=dcmpn)[0].data
         
         if srfs != {}:
             scmp = srfs[event_id]
@@ -259,10 +263,8 @@ def save_rfs(stnm, a, c, rfs, outdir="rf/"):
         rfs_dict = {"station": stnm,
                     "deconvolution_parameters": {"a":a, "c":c},
                     "receiver_functions": rfs}
-        # Temporaly Change #
-        outdir = '/Users/robertocabieces/Documents/ISPshare/isp/receiverfunctions/output_RFs'
-        #                  #
-        pickle.dump(rfs_dict, open(outdir+"{}.pickle".format(stnm), "wb"))
+
+        pickle.dump(rfs_dict, open(os.path.join(outdir, "{}.pickle".format(stnm)), "wb"))
 
 def map_rfs(rfs_dir="rf"):
     rfs_map = {}
@@ -273,7 +275,7 @@ def map_rfs(rfs_dir="rf"):
                 rfs = pickle.load(open(path, "rb"))
                 stnm = rfs['station']
                 rfs_map[stnm] = path
-    
+
     return rfs_map
 
 def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx=0.01, dy=0.01,
@@ -287,7 +289,7 @@ def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx=0.01, dy=0.01,
     counts = np.ones((len(x), len(y), len(z)))
     
     # Read earth model:
-    path_model='/Users/robertocabieces/Documents/ISPshare/isp/receiverfunctions/earth_models'
+    path_model=os.path.join(os.path.dirname(os.path.abspath(__file__)), "earth_models")
     with open(path_model+"/{}.csv".format(model), 'r') as f:
         model_lines = f.readlines()
     
@@ -382,10 +384,10 @@ def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx=0.01, dy=0.01,
     return stack
 
 def compute_intermediate_points(start, end, npts):
-    A_lats = start[1]
-    A_lons = start[0]
-    B_lats = end[1]
-    B_lons = end[0]
+    A_lats = np.radians(start[1])
+    A_lons = np.radians(start[0])
+    B_lats = np.radians(end[1])
+    B_lons = np.radians(end[0])
 
     fs = np.linspace(0, 1, npts)
     
@@ -443,7 +445,7 @@ def interpolate_ccp_stack(x, y, stack):
     
     interps = []
     for i in range(stack.shape[-1]):
-        interps.append(scint.interp2d(x, y, stack[:,:,i], bounds_error=False,
+        interps.append(scint.interp2d(y, x, stack[:,:,i], bounds_error=False,
                                       fill_value=np.NaN))
     
     return interps
@@ -452,13 +454,13 @@ def ccp_cross_section(x, y, z, stack, coords):
     pass
         
         
-if __name__ == "__main__":
+"""if __name__ == "__main__":
     eqs = map_earthquakes()
     rfs = compute_rfs("SC01", eqs, pickle.load(open("event_metadata", 'rb')))
     save_rfs("SC01", 2.5, 0.01, rfs)
     rfs_map = map_rfs()
     stack = ccp_stack(rfs_map, pickle.load(open("event_metadata", 'rb')),
-                      -4.5, -4.0, 43.17, 43.57)
+                      -4.5, -4.0, 43.17, 43.57)"""
     
     
     

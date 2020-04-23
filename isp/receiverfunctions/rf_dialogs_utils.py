@@ -16,10 +16,27 @@ import obspy.taup
 import obspy.clients.fdsn
 import obspy.geodetics.base
 
-def map_data(path):
-    # not implemented
-    pass
+def map_data(path, quick=True):
     
+    data_map = {}
+    
+    for top_dir, sub_dir, files in os.walk(path):
+        for file in files:
+            full_path_to_file = os.path.join(top_dir, file)
+            
+            if quick:
+                stnm = file.split('.')[0]
+                chnm = file.split('.')[3]
+                year = int(file.split('.')[5])
+                jday = int(file.split('.')[6])
+
+            data_map.setdefault(stnm, {})
+            data_map[stnm].setdefault(year, {})
+            data_map[stnm][year].setdefault(jday, {})
+            data_map[stnm][year][jday].setdefault(chnm, full_path_to_file)
+            
+    return data_map
+
 def get_catalog(starttime, endtime, client="IRIS", min_magnitude=5):
 
     client = obspy.clients.fdsn.client.Client("IRIS")
@@ -67,8 +84,8 @@ def taup_arrival_times(catalog, stationxml, phase="P", earth_model="iasp91",
             stev = stations[stnm]['elevation']
             
             # Distance, azimuth and back_azimuth for event:
-            m_dist, az, back_az = obspy.geodetics.base.gps2dist_azimuth(stla, stlo,
-                                                                        evla, evlo) # MAL SEGUN IRIS, hay que ponerlo al revés
+            m_dist, az, back_az = obspy.geodetics.base.gps2dist_azimuth(evla, evlo,
+                                                                        stla, stlo)
             deg_dist = math.degrees(m_dist/EARTH_RADIUS)
             arrivals["stations"][stnm] = {"lon":stlo, "lat":stla, "elev":stev}
             
@@ -92,96 +109,81 @@ def taup_arrival_times(catalog, stationxml, phase="P", earth_model="iasp91",
 
     return arrivals
 
-def cut_earthquakes(data_map, arrivals, inventory, time_before=10,
-                    time_after=90, min_snr=2.5, noise_window_length=300,
-                    output_dir="earthquakes"):
+def cut_earthquakes(data_map, arrivals, time_before, time_after, min_snr,
+                    stationxml, output_dir, noise_wlen=300,
+                    remove_response=True, pre_filt=[1/200, 1/100, 45, 50],
+                    rotation='LQT'):
+
+    inv = obspy.core.inventory.read_inventory(stationxml)
     
-    inv = obspy.core.inventory.read_inventory(inventory)
-    
-    for eq in arrivals.keys():
+    for eq in arrivals["events"].keys():
         otime = arrivals["events"][eq]['event_info']['origin_time']
         year = otime.year
-        jday = otime.julday
-
-        for stnm in arrivals["events"][eq]['arrivals'].keys():
-        # Check data availability:
-            try:
-                channels = data_map[stnm][year][jday]
-            except KeyError:
-                print("Warning: no data available for station {}. Event ".format(stnm) +
-                      "origin time {}".format(otime))
+        
+        for stnm in data_map.keys():#arrivals["events"][eq]['arrivals'].keys():
+            
+            if not stnm in arrivals["events"][eq]['arrivals'].keys():
                 continue
+            
             atime = otime + arrivals["events"][eq]['arrivals'][stnm]['arrival_time']
             inc = arrivals["events"][eq]['arrivals'][stnm]['incident_angle']
-            az = arrivals["events"][eq]['arrivals'][stnm]['azimuth']
+            baz = arrivals["events"][eq]['arrivals'][stnm]['back_azimuth']  
+
             # Determine start and end times for trimming
-            cut_stime = atime - time_before
-            cut_etime = atime + time_after
-            # We will cut a segment of noise to estimate SNR
-            noise_stime = cut_stime - noise_window_length
-            noise_etime = cut_stime
-            # Read the data for all channels
-            stream = obspy.core.stream.Stream()
-            for chnm in channels.keys():
-                stream += obspy.read(channels[chnm], format="MSEED")
-                stream_stime = stream[0].stats.starttime
-                stream_etime = stream[-1].stats.endtime
-
-                try:
-                    if cut_stime < stream_stime:
-                            stream2 = obspy.read(data_map[stnm][year][jday-1][chnm])
-                            stream = stream2 + stream                     
-                    elif cut_etime > stream_etime:
-                        stream3 = obspy.read(data_map[stnm][year][jday+1][chnm])
-                        stream = stream + stream3
-                except KeyError:
-                    print("Warning: data only partially available for station {}. Event ".format(stnm) +
-                          "origin time {}".format(otime))
-                    continue
+            stime = atime - time_before
+            etime = atime + time_after            
             
-            # Trim earthquake and ambient noise
-            earthquake = stream.copy().trim(starttime=cut_stime, endtime=cut_etime)
-            noise = stream.copy().trim(starttime=noise_stime, endtime=noise_etime)
-            earthquake.merge(fill_value=0)
-            earthquake.detrend(type='demean')
-            earthquake.detrend(type='linear')
-            noise.merge(fill_value=0)
-            noise.detrend(type='demean')
-            noise.detrend(type='linear')
+            # Attempt to retrieve data
+            stime_jday = stime.julday
+            etime_jday = etime.julday
             
-            # Compute noise and earthquake variances
-            try:
-                var_eq = np.var(earthquake.select(component="Z")[0].data)
-                var_noise = np.var(noise.select(component="Z")[0].data)
-            except IndexError:
-                    print("Warning: no Z channel data available for station {}. Event ".format(stnm) +
-                          "origin time {}".format(otime))     
-                    continue
-
-            try:
-                snr = (var_eq - var_noise)/var_noise
-            except FloatingPointError:
+            if not stime_jday in data_map[stnm][year].keys() or not etime_jday in data_map[stnm][year].keys():
                 continue
             
-            if snr > min_snr:
-                pre_filt = [1/200, 1/100, 45, 50]
-                try:
-                    earthquake.remove_response(inventory=inv, pre_filt=pre_filt, output="DISP")
-                except ValueError:
-                    print("No matching response information found for station {}, event origin time {}".format(
-                        stnm, otime))
-                    continue
-                try:
-                    earthquake.rotate(method='ZNE->LQT', back_azimuth=az, inclination=inc) # COMO ESTAMOS AL REVÉS SEGÚN IRIS, HAY QUE ARREGLARLO Y PONER BAZ
-                except ValueError:
-                    print("Components of station {} have different time spans after trimming, event".format(stnm)+
-                          " origin time {}".format(otime))
-                    continue
-                stn_output_dir = os.path.join(output_dir, stnm)
-                pathlib.Path(stn_output_dir).mkdir(parents=True, exist_ok=True)
-                if len(earthquake) == 3:
-                    earthquake.write(os.path.join(stn_output_dir,"EQ{}_{}.mseed".format(eq, stnm)), format="MSEED")
+            stream = obspy.core.stream.Stream()
+            if stime_jday == etime_jday:
+                channels = data_map[stnm][year][stime_jday]
+                for chn in channels.keys():
+                    stream += obspy.read(channels[chn])
             else:
-                print("Station {} does not fullfill SNR criterium for event with origin time {}".format(
-                    stnm, otime))
+                channels1 = data_map[stnm][year][stime_jday]
+                channels2 = data_map[stnm][year][etime_jday]
+                for chn in channels1.keys():
+                    stream += obspy.read(channels1[chn])
+                for chn in channels2.keys():
+                    stream += obspy.read(channels2[chn])
+            
+            stream.merge(fill_value=0)
+            noise = stream.copy()
+            
+            # Trim data and a noise window
+            if stime < stream[0].stats.starttime or etime > stream[0].stats.endtime:
+                continue
+            
+            noise.trim(starttime=stime - noise_wlen, endtime=stime)
+            noise.detrend(type="demean")
+            noise.detrend(type="linear")           
+            stream.trim(starttime=stime, endtime=etime)
+            stream.detrend(type="demean")
+            stream.detrend(type="linear")
+            
+            # Compute variance and check if the SNR criterium is fulfilled
+            noise_var = np.var(noise.select(component="Z")[0].data)
+            signal_var = np.var(stream.select(component="Z")[0].data)
+            snr = (signal_var - noise_var)/noise_var
+            
+            if snr < min_snr:
+                continue
+            
+            # Remove response and rotate
+            if remove_response:
+                stream.remove_response(inventory=inv, pre_filt=pre_filt, output="DISP")
+
+            stream.rotate('->ZNE', inventory=inv)
+            stream.rotate('ZNE->{}'.format(rotation), back_azimuth=baz, inclination=inc)
+            
+            # Write file to disk
+            stn_output_dir = os.path.join(output_dir, stnm)
+            pathlib.Path(stn_output_dir).mkdir(parents=True, exist_ok=True)
+            stream.write(os.path.join(stn_output_dir,"EQ{}_{}.mseed".format(eq, stnm)), format="MSEED")
 

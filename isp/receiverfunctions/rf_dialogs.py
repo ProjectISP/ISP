@@ -59,11 +59,12 @@ class CutEarthquakesDialog(QtWidgets.QDialog, UiReceiverFunctionsCut):
                                             min_distance_degrees=min_dist,
                                             max_distance_degrees=max_dist)
         pickle.dump(arrivals, open(event_metadata_output_path, "wb"))
+        data_map = du.map_data(data_path)
         
-        """catalog = du.get_catalog(starttime, endtime, client=client, min_magnitude=min_mag)
-        #data_map = du.data_map(data_path) <- sin implementar
-        arrivals = du.taup_arrival_times(catalog, station_metadata_path, earth_model=model,
-                                            min_distance_degrees=min_dist,
-                                            max_distance_degrees=max_dist)
-        pickle.dump(arrivals, open(event_metadata_output_path, "wb"))
-        du.cut_earthquakes(data_map, arrivals, station_metadata_path)"""
+        time_before = self.doubleSpinBox_5.value()
+        time_after = self.doubleSpinBox_6.value()
+        rotation = self.comboBox_3.currentText()
+        remove_instrumental_responses = self.checkBox_2.isChecked()
+
+        du.cut_earthquakes(data_map, arrivals, time_before, time_after, min_snr,
+                    station_metadata_path, earthquake_output_path)
