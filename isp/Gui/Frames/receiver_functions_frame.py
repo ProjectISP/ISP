@@ -19,7 +19,7 @@ import matplotlib.gridspec as gridspec
 import math
 from functools import partial
 import isp.receiverfunctions.dialogs as dialogs
-import isp.receiverfunctions.main_window_utils as utils
+import isp.receiverfunctions.main_window_utils as mwu
 
 
 class RecfFrame(BaseFrame, UiReceiverFunctions):
@@ -91,7 +91,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
     def read_waveforms(self):
         # Map the mseed files inside the given directory, return a dict
         dir_ = pw.QFileDialog.getExistingDirectory()
-        self.data_map = utils.map_earthquakes(eq_dir=dir_)
+        self.data_map = mwu.map_earthquakes(eq_dir=dir_)
         
         # Populate the station combobox
         for stnm in sorted(list(self.data_map.keys())):
@@ -102,14 +102,14 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.arrivals = pickle.load(open(dir_, 'rb'))
     
     def compute_srcfs(self):
-        self.srcfs = utils.compute_source_functions(self.data_map)
+        self.srcfs = mwu.compute_source_functions(self.data_map)
     
     def compute_rfs(self):
         self.rf_current_page = 1
         stnm = self.comboBox.currentText()
         a = self.doubleSpinBox.value()
         c = self.doubleSpinBox_2.value()
-        self.rfs = utils.compute_rfs(stnm, self.data_map, self.arrivals,
+        self.rfs = mwu.compute_rfs(stnm, self.data_map, self.arrivals,
                                      srfs=self.srcfs, a=a, c=c)
         self.rf_pages = int(math.ceil(len(self.rfs)/7))
         self.label_14.setText("{}/{}".format(self.rf_current_page, self.rf_pages))
@@ -190,7 +190,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         stnm = self.comboBox.currentText()
         a = self.doubleSpinBox.value()
         c = self.doubleSpinBox_2.value()
-        utils.save_rfs(stnm, a, c, self.rfs)
+        mwu.save_rfs(stnm, a, c, self.rfs)
 
     def setup_rf_stack_axes(self):
         if self.first_rf_stack_plot:
@@ -206,7 +206,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget_2.figure.axes[1].set_xlabel("Time in seconds")
 
     def plot_rf_stack(self):
-        stack, bin_stacks, bins, ymin, ymax = utils.compute_stack(self.rfs, bin_size=self.spinBox.value(),
+        stack, bin_stacks, bins, ymin, ymax = mwu.compute_stack(self.rfs, bin_size=self.spinBox.value(),
                                                                   overlap=self.spinBox_2.value(),
                                                                   stack_by=self.comboBox_2.currentText(),
                                                                   moveout_correction=self.comboBox_4.currentText())
@@ -262,7 +262,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         maxk = max(self.doubleSpinBox_3.value(), self.doubleSpinBox_4.value())
         kvalues = self.spinBox_4.value()
         
-        H_arr, k_arr, matrix = utils.compute_hk_stack(self.rfs, H_range=(minH, maxH), H_values=Hvalues,
+        H_arr, k_arr, matrix = mwu.compute_hk_stack(self.rfs, H_range=(minH, maxH), H_values=Hvalues,
                                         k_range=(mink, maxk), k_values=kvalues)
 
         self.setup_hk_stack_axes()        
@@ -380,7 +380,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
     def ccp_stack_read_rfs(self):
         self.plot_ccp_stack_map()
         dir_ = pw.QFileDialog.getExistingDirectory()
-        self.rfs_dicts = utils.map_rfs(rfs_dir=dir_)
+        self.rfs_dicts = mwu.map_rfs(rfs_dir=dir_)
         lats, lons = [], []
         for stnm in self.rfs_dicts.keys():
             stla = self.arrivals['stations'][stnm]["lat"]
@@ -399,7 +399,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget_5.figure.canvas.draw()
 
     def compute_ccp_stack(self):
-        self.stack = utils.ccp_stack(self.rfs_dicts, self.arrivals,
+        self.stack = mwu.ccp_stack(self.rfs_dicts, self.arrivals,
                                      min(self.ccp_grid['x0'], self.ccp_grid['x1']),
                                      max(self.ccp_grid['x0'], self.ccp_grid['x1']),
                                      min(self.ccp_grid['y0'], self.ccp_grid['y1']),
@@ -414,11 +414,11 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
     
     def cross_section(self):
         if self.istack == None:
-            self.istack = utils.interpolate_ccp_stack(self.stack_x, self.stack_y, self.stack)
+            self.istack = mwu.interpolate_ccp_stack(self.stack_x, self.stack_y, self.stack)
         
         start = (self.doubleSpinBox_18.value(), self.doubleSpinBox_17.value())
         end = (self.doubleSpinBox_20.value(), self.doubleSpinBox_19.value())
-        newlats, newlons = utils.compute_intermediate_points(start, end, 100)
+        newlats, newlons = mwu.compute_intermediate_points(start, end, 100)
         
         matrix = []
         for lat, lon in zip(newlats, newlons):
