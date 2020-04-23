@@ -245,7 +245,6 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
                 isola.plot_MT()
                 isola.plot_uncertainty(n=400)
-                #second option
                 #plot_MT_uncertainty_centroid()
                 isola.plot_seismo('seismo.png')
                 isola.plot_seismo('seismo_sharey.png', sharey=True)
@@ -253,18 +252,25 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                 isola.plot_noise()
                 isola.plot_spectra()
                 isola.plot_stations()
-                isola.plot_covariance_matrix()
-                isola.plot_3D()
-                isola.html_log(h1='ISP Moment Tensor inversion',plot_MT='centroid.png',
-                plot_uncertainty='uncertainty.png', plot_stations='stations.png',plot_seismo_cova='seismo_cova.png',
-                plot_seismo_sharey='seismo_sharey.png', plot_spectra='spectra.png', plot_noise='noise.png',
-                plot_covariance_matrix='covariance_matrix.png', plot_maps='map.png', plot_slices='slice.png',
-                plot_maps_sum='map_sum.png')
-
-
             except:
                 print("Couldn't Plot")
+                isola.plot_covariance_matrix(colorbar=True)
+                #isola.plot_3D()
 
+
+
+            try:
+                isola.html_log(h1='ISP Moment Tensor inversion', plot_MT='centroid.png',
+                               plot_uncertainty='uncertainty.png', plot_stations='stations.png',
+                               plot_seismo_cova='seismo_cova.png',
+                               plot_seismo_sharey='seismo_sharey.png', plot_spectra='spectra.png',
+                               plot_noise='noise.png',
+                               plot_covariance_matrix='covariance_matrix.png', plot_maps='map.png',
+                               plot_slices='slice.png',
+                               plot_maps_sum='map_sum.png')
+            except:
+
+                print("Couldn't load url")
 
             path = '/Users/robertocabieces/Documents/ISPshare/isp/mti/output/index.html'
 

@@ -227,6 +227,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.canvas.clear()
         ##
+        self.nums_clicks = 0
         all_traces = []
         files_path = self.get_files(self.root_path_bind.value)
         if self.sortCB.isChecked():
@@ -475,11 +476,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             npts = len(data)
             fs = identified_chop[0][6]
             delta = 1 /fs
+            fn = fs/2
             win = int(3*fs)
             tbp = 3
             ntapers = 3
             f_min = 0
-            f_max = 25
+            f_max = fn
 
             self.spectrogram = PlotToolsManager(id)
             [x,y,z] = self.spectrogram.compute_spectrogram_plot(data, win, delta, tbp, ntapers, f_min, f_max, t)
@@ -488,11 +490,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax2 = ax.twinx()
             cs = ax2.contourf(x, y, z, levels=100, cmap=plt.get_cmap("jet"), alpha = 0.2)
             fig = ax2.get_figure()
+
             #fig.tight_layout()
             ax2.set_ylim(0, 25)
             t = t[0:len(x)]
             ax2.set_xlim(t[0],t[-1])
-            ax.set_ylabel('Frequency [ Hz]')
+            ax2.set_ylabel('Frequency [ Hz]')
             #ax2.yaxis.tick_right()
             vmin = np.amin(z)
             vmax = np.amax(z)
@@ -501,14 +504,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             for j in range(self.items_per_page):
                 axs.append(self.canvas.get_axe(j))
 
-            try:
-                self.cbar.ax.remove()
-
-            except:
+            if self.nums_clicks > 0:
                 pass
+            else:
+                print("Plotting Colorbar")
+                print(self.nums_clicks)
+                self.cbar = fig.colorbar(cs, ax=axs[j], extend='both', orientation='horizontal', pad=0.2)
+                self.cbar.ax.set_ylabel("Power [dB]")
 
-            self.cbar = fig.colorbar(cs, ax= axs[j], extend='both', orientation='horizontal', pad=0.15)
-            self.cbar.ax.set_ylabel("Power [dB]")
             tr=self.st[self.ax_num]
             tt = tr.times("matplotlib")
             data = tr.data
@@ -524,5 +527,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax.set_ylim(min(data),max(data))
             formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
             ax.xaxis.set_major_formatter(formatter)
+            self.nums_clicks = self.nums_clicks+1
 
 
