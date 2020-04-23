@@ -4,22 +4,26 @@ Created on Fri Apr  3 14:45:54 2020
 
 @author: olivar
 """
+
+# isp imports
 from isp.Gui.Frames import BaseFrame
-from isp.Gui.Frames.uis_frames import UiReceiverFunctions
 from isp.Gui import pyqt, pqg, pw, pyc, qt
-import matplotlib.gridspec as gridspec
+import isp.receiverfunctions.rf_dialogs as dialogs
+import isp.receiverfunctions.rf_main_window_utils as mwu
+from isp.Gui.Frames.uis_frames import UiReceiverFunctions
+
+# other imports
+import os
+import math
+import pickle
+import pathlib
 import cartopy
 import cartopy.crs as ccrs
 import numpy as np
-import pickle
-import os
-import pathlib
+from functools import partial
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import math
-from functools import partial
-import isp.receiverfunctions.dialogs as dialogs
-import isp.receiverfunctions.main_window_utils as mwu
+
 
 
 class RecfFrame(BaseFrame, UiReceiverFunctions):
@@ -28,7 +32,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         super(RecfFrame, self).__init__()
         self.setupUi(self)
         
-        # Global variables ############ RF ANALYSIS ##########################
+        # RF analysis-related attributes
         self.data_map = {}
         self.arrivals = {}
         self.srcfs = {}
@@ -40,7 +44,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.first_hk_stack_plot = True
         self.first_map_plot = True
         
-        # Global variables ############ CCP STACKING #########################
+        # CCP stacking-related attributes
         self.ccp_grid = {'x0':None, 'y0':None, 'x1':None, 'y1':None}
         self.ccp_cross_section = {'x0':None, 'y0':None, 'x1':None, 'y1':None}
         self.ccp_stack_map_plot_mode = None
@@ -51,45 +55,46 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.stack = None
         self.istack = None
         
-        # Connect GUI elements to functions ############ RF ANALYSIS
-        
+        # Connect GUI elements
+        self.connect_rf_analysis_gui_elements()
+        self.connect_ccp_stack_gui_elements()
+    
+    def connect_rf_analysis_gui_elements(self):
         # Menu actions
         self.actionRead_waveforms.triggered.connect(self.read_waveforms)
         self.actionRead_metadata.triggered.connect(self.read_metadata)
         self.actionCompute_source_functions.triggered.connect(self.compute_srcfs)
         self.actionCut_earthquakes_from_raw_data.triggered.connect(self.cut_earthquakes_dialog)
-        
         # Pushbuttons
         self.pushButton.clicked.connect(self.compute_rfs)
         self.pushButton_2.clicked.connect(self.save_rfs)
-        
         self.pushButton_7.clicked.connect(self.previous_rfs_page)
         self.pushButton_8.clicked.connect(self.next_rfs_page)
         self.pushButton_3.clicked.connect(self.plot_rf_stack)
         self.pushButton_5.clicked.connect(self.plot_hk_stack)
         self.pushButton_9.clicked.connect(self.plot_map)
         self.pushButton_26.clicked.connect(self.cross_section)
-        
         # Combobox changes
         self.comboBox_3.currentTextChanged.connect(self.plot_rfs)
-        
         # mplwidgets
         self.mplwidget.figure.canvas.mpl_connect('button_press_event', self.recf_plot_clicked)
         
-        # Connect GUI elements to functions ############ CCP STACKING
+    def connect_ccp_stack_gui_elements(self):
+        # Menu actions
         self.actionRead_RFs.triggered.connect(self.ccp_stack_read_rfs)
-        
-        
+        # mplwidget
         self.mplwidget_5.figure.canvas.mpl_connect('button_press_event', self.ccp_stack_map_event_handler)
         self.mplwidget_5.figure.canvas.mpl_connect('button_release_event', self.ccp_stack_map_event_handler)
         self.mplwidget_5.figure.canvas.mpl_connect('motion_notify_event', self.ccp_stack_map_event_handler)
-        
+        # Pushbuttons
         self.pushButton_11.clicked.connect(partial(self.ccp_stack_map_toggle_plot_mode, "grid"))
         self.pushButton_25.clicked.connect(partial(self.ccp_stack_map_toggle_plot_mode, "cross_section"))
         self.pushButton_12.clicked.connect(self.compute_ccp_stack)
     
     def read_waveforms(self):
-        # Map the mseed files inside the given directory, return a dict
+        """Map the mseed files inside the given directory, return a dict
+        
+        """
         dir_ = pw.QFileDialog.getExistingDirectory()
         self.data_map = mwu.map_earthquakes(eq_dir=dir_)
         
@@ -98,13 +103,23 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             self.comboBox.addItem(stnm)
     
     def read_metadata(self):
+        """Read the event data file
+        
+        """
         dir_ = pw.QFileDialog.getOpenFileName()[0]
         self.arrivals = pickle.load(open(dir_, 'rb'))
     
     def compute_srcfs(self):
+        """Compute source functions by averaging the L (or Z) component of all
+        stations in the array
+        
+        """
         self.srcfs = mwu.compute_source_functions(self.data_map)
     
     def compute_rfs(self):
+        """Compute and plot selected receiver functions
+        
+        """
         self.rf_current_page = 1
         stnm = self.comboBox.currentText()
         a = self.doubleSpinBox.value()
@@ -116,6 +131,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.plot_rfs()
     
     def setup_rf_axes(self):
+        """Prepare receiver function axes for plotting
+        
+        """
         if self.first_rf_plot:
             gs = gridspec.GridSpec(7, 1)
             gs.update(left=0.10, right=0.95, top=0.95, bottom=0.075, hspace=0.35)
@@ -130,15 +148,15 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             self.mplwidget.figure.axes[i].set_xticklabels([])
             self.mplwidget.figure.axes[6].set_xlabel("Time in seconds")
             self.mplwidget.figure.suptitle("Receiver functions", y=0.985)
-            
-    
+
     def plot_rfs(self):
+        """ Sort and plot receiver functions according to user selection
+        
+        """
         if self.comboBox_3.currentText() == "Back az.":
             sort_index = 2
         elif self.comboBox_3.currentText() == "Distance":
             sort_index = 3
-        elif self.comboBox_3.currentText() == "Slowness":
-            sort_index = 4
         
         self.rfs = sorted(self.rfs, key=lambda x: x[sort_index])
         
@@ -166,18 +184,27 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget.figure.canvas.draw()
     
     def next_rfs_page(self):
+        """Show the next page in the receiver function panel
+        
+        """
         if self.rf_current_page < self.rf_pages:
             self.rf_current_page += 1
             self.label_14.setText("{}/{}".format(self.rf_current_page, self.rf_pages))
             self.plot_rfs()
     
     def previous_rfs_page(self):
+        """Show the previous page in the receiver function panel
+        
+        """
         if self.rf_current_page > 1:
             self.rf_current_page -= 1
             self.label_14.setText("{}/{}".format(self.rf_current_page, self.rf_pages))
             self.plot_rfs()
     
     def recf_plot_clicked(self, event):
+        """Register click events in the receiver function panel
+        
+        """
         axind = self.mplwidget.figure.axes.index(event.inaxes)
         rf_index = (self.rf_current_page - 1)*7 + axind
         if self.rfs[rf_index][5]:
@@ -187,12 +214,18 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.plot_rfs()
     
     def save_rfs(self):
+        """Save the current receiver functions to disk
+        
+        """
         stnm = self.comboBox.currentText()
         a = self.doubleSpinBox.value()
         c = self.doubleSpinBox_2.value()
         mwu.save_rfs(stnm, a, c, self.rfs)
 
     def setup_rf_stack_axes(self):
+        """Prepare receiver function axes for plotting
+        
+        """
         if self.first_rf_stack_plot:
             gs = gridspec.GridSpec(2, 1, height_ratios=[1, 7])
             gs.update(left=0.125, right=0.95, top=0.98, bottom=0.075, hspace=0.1)
@@ -206,6 +239,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget_2.figure.axes[1].set_xlabel("Time in seconds")
 
     def plot_rf_stack(self):
+        """Plot RF stack according to user preferences
+        
+        """
         stack, bin_stacks, bins, ymin, ymax = mwu.compute_stack(self.rfs, bin_size=self.spinBox.value(),
                                                                   overlap=self.spinBox_2.value(),
                                                                   stack_by=self.comboBox_2.currentText(),
@@ -242,6 +278,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget_2.figure.canvas.draw()
     
     def setup_hk_stack_axes(self):
+        """Prepare H-k stack axes for plotting
+        
+        """
         if self.first_hk_stack_plot:
             gs = gridspec.GridSpec(1, 1)
             gs.update(left=0.175, right=0.95, top=0.95, bottom=0.15)
@@ -254,6 +293,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget_3.figure.axes[0].set_ylabel("k")
     
     def plot_hk_stack(self):
+        """Plot RF stack according to user preferences
+        
+        """
         minH = min(self.doubleSpinBox_5.value(), self.doubleSpinBox_6.value())
         maxH = max(self.doubleSpinBox_5.value(), self.doubleSpinBox_6.value())
         Hvalues = self.spinBox_3.value()
@@ -272,6 +314,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget_3.figure.canvas.draw()
     
     def setup_map_axes(self):
+        """Prepare map axes for plotting
+        
+        """
         if self.first_map_plot:
             gs = gridspec.GridSpec(1, 1)
             gs.update(left=0.05, right=0.95, top=0.95, bottom=0.05)
@@ -284,6 +329,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget_4.figure.axes[0].gridlines()
     
     def plot_map(self):
+        """Plot event map
+        
+        """
         
         self.setup_map_axes()
         self.mplwidget_4.figure.canvas.draw()
@@ -300,17 +348,26 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
         self.mplwidget_4.figure.canvas.draw()
     
-    def plot_ccp_stack_map(self):
+    def setup_ccp_map_axes(self):
+        """Prepare ccp map axes for plotting
+        
+        """
         self.mplwidget_5.figure.add_subplot(111, projection=ccrs.PlateCarree())
     
     def ccp_stack_map_toggle_plot_mode(self, mode):
+        """Enable or disable user ability to manually plot the grid limits or
+        a cross-section
         
+        """        
         if mode == "grid":
             self.pushButton_25.setChecked(False)
         elif mode == "cross_section":
             self.pushButton_11.setChecked(False)
     
     def ccp_stack_map_event_handler(self, event):
+        """Pick event handler for the CCP stack map
+        
+        """
 
         if self.pushButton_11.isChecked():
             mode = "grid"
@@ -364,6 +421,10 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
                 self.ccp_stack_set_comboboxes()
     
     def ccp_stack_set_comboboxes(self):
+        """Update the comboboxes in the CCP stack options with the correct grid
+        and cross-section coordinates
+        
+        """
         if self.pushButton_11.isChecked():
             self.doubleSpinBox_9.setValue(self.ccp_grid['y0'])
             self.doubleSpinBox_10.setValue(self.ccp_grid['y1'])
@@ -378,7 +439,10 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             self.doubleSpinBox_20.setValue(end[1])
     
     def ccp_stack_read_rfs(self):
-        self.plot_ccp_stack_map()
+        """Read receiver functions and plot stations on the map
+        
+        """
+        self.setup_ccp_map_axes()
         dir_ = pw.QFileDialog.getExistingDirectory()
         self.rfs_dicts = mwu.map_rfs(rfs_dir=dir_)
         lats, lons = [], []
@@ -399,6 +463,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget_5.figure.canvas.draw()
 
     def compute_ccp_stack(self):
+        """Compute and draw CCP stack
+        
+        """
         self.stack = mwu.ccp_stack(self.rfs_dicts, self.arrivals,
                                      min(self.ccp_grid['x0'], self.ccp_grid['x1']),
                                      max(self.ccp_grid['x0'], self.ccp_grid['x1']),
@@ -413,6 +480,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget_5.figure.canvas.draw()
     
     def cross_section(self):
+        """Extract a cross-section from the CCP stack
+        
+        """
         if self.istack == None:
             self.istack = mwu.interpolate_ccp_stack(self.stack_x, self.stack_y, self.stack)
         
@@ -436,11 +506,8 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         ax.pcolormesh(matrix)
         
     def cut_earthquakes_dialog(self):
+        """Display the Cut earthquakes from local data dialog
+        
+        """
         dialog = dialogs.CutEarthquakesDialog()
         dialog.show()
-        #dialog.exec_()
-
-#if __name__ == "__main__":
-#    app = pw.QApplication([])
-#    window = RecfFrame()
-#    app.exec_()
