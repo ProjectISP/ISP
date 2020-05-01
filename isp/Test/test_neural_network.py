@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from obspy import read
+from obspy import read, UTCDateTime
 import numpy as np
 
 from isp.DataProcessing.NeuralNetwork.picking_cnn_s_p_waves import CNNPicker
@@ -74,12 +74,17 @@ class TestCNNPicker(unittest.TestCase):
 
     def test_cnn(self):
         cnn = CNNPicker()
-        st = read(self.wave_form_file_n)
-        st += read(self.wave_form_file_e)
+        st = read(self.wave_form_file_e)
+        st += read(self.wave_form_file_n)
         st += read(self.wave_form_file_z)
 
-        ts = cnn.predict(st)
-        print(ts)
+        cnn.setup_stream(st)
+        cnn.predict()
+        arrivals = cnn.get_arrivals()
+
+        print(arrivals)
+        self.assertEqual(arrivals["p"][0], UTCDateTime("2016-10-20T15:11:51.100000"))
+        self.assertEqual(arrivals["s"][0], UTCDateTime("2016-10-20T15:12:52.500000"))
 
     def test_sliding(self):
         a = np.array([1, 2, 3, 4, 5])
