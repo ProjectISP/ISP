@@ -4,7 +4,7 @@ import unittest
 from obspy import read, UTCDateTime
 import numpy as np
 
-from isp.DataProcessing.NeuralNetwork.picking_cnn_s_p_waves import CNNPicker
+from isp.DataProcessing.NeuralNetwork import CNNPicker
 
 
 def sliding_window(data, size, step_size=1, axis=-1, zero_pad=True):
@@ -73,12 +73,12 @@ class TestCNNPicker(unittest.TestCase):
         cls.wave_form_file_e = os.path.join(dir_path, "test_data", "red_example.HHE.SAC")
 
     def test_cnn(self):
-        cnn = CNNPicker()
         st = read(self.wave_form_file_e)
         st += read(self.wave_form_file_n)
         st += read(self.wave_form_file_z)
 
-        cnn.setup_stream(st)
+        cnn = CNNPicker()
+        cnn.setup_stream(st)  # set stream to use in prediction.
         cnn.predict()
         arrivals = cnn.get_arrivals()
 
