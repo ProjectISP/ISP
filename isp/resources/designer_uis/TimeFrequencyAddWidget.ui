@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1176</width>
+    <width>1375</width>
     <height>732</height>
    </rect>
   </property>
@@ -24,18 +24,15 @@
     <rect>
      <x>20</x>
      <y>7</y>
-     <width>1151</width>
+     <width>1331</width>
      <height>721</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="0">
-     <layout class="QGridLayout" name="gridLayout_3"/>
-    </item>
     <item row="1" column="2">
-     <widget class="QTabWidget" name="tabWidget">
+     <widget class="QTabWidget" name="specialWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -57,8 +54,8 @@
          <rect>
           <x>0</x>
           <y>-1</y>
-          <width>1001</width>
-          <height>651</height>
+          <width>1121</width>
+          <height>701</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -76,13 +73,13 @@
        <attribute name="title">
         <string>Coherence</string>
        </attribute>
-       <widget class="QWidget" name="widget" native="true">
+       <widget class="QWidget" name="coherenceWidget" native="true">
         <property name="geometry">
          <rect>
           <x>-1</x>
           <y>-1</y>
-          <width>1001</width>
-          <height>651</height>
+          <width>1101</width>
+          <height>701</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -94,13 +91,13 @@
        <attribute name="title">
         <string>Cross Correlation</string>
        </attribute>
-       <widget class="QWidget" name="widget_2" native="true">
+       <widget class="QWidget" name="cross_correlationWidget" native="true">
         <property name="geometry">
          <rect>
           <x>-1</x>
           <y>-1</y>
-          <width>1001</width>
-          <height>651</height>
+          <width>1101</width>
+          <height>691</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -112,12 +109,12 @@
        <attribute name="title">
         <string>Cross Spectrum and Wavelet</string>
        </attribute>
-       <widget class="QWidget" name="widget_3" native="true">
+       <widget class="QWidget" name="cross_spectrumWidget" native="true">
         <property name="geometry">
          <rect>
           <x>0</x>
           <y>-1</y>
-          <width>1011</width>
+          <width>1101</width>
           <height>651</height>
          </rect>
         </property>
@@ -128,19 +125,102 @@
       </widget>
      </widget>
     </item>
-    <item row="2" column="2">
-     <widget class="QPushButton" name="pushButton">
-      <property name="text">
-       <string>PushButton</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1">
-     <widget class="QPushButton" name="pushButton_2">
-      <property name="text">
-       <string>Run Analysis</string>
-      </property>
-     </widget>
+    <item row="1" column="0">
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="9" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Overlap (%)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QPushButton" name="coherenceBtn">
+        <property name="text">
+         <string>Coherence</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QSpinBox" name="cohe_overlapSB"/>
+      </item>
+      <item row="10" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Time Window</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QSpinBox" name="time_window_coheSB">
+        <property name="maximum">
+         <number>3600</number>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Overlap (%)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="labeltime">
+        <property name="text">
+         <string>Time Window (s)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0" colspan="2">
+       <widget class="QPushButton" name="cross_correlationsBtn">
+        <property name="text">
+         <string>Cross Correlation</string>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="1">
+       <widget class="QSpinBox" name="spinBox_4"/>
+      </item>
+      <item row="5" column="0" colspan="2">
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0" colspan="2">
+       <widget class="QPushButton" name="Cross_spectrumBtn">
+        <property name="text">
+         <string>Cross Spectrum</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QSpinBox" name="spinBox_3"/>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="Line" name="line_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <widget class="QPushButton" name="plot_spectrumBtn">
+        <property name="text">
+         <string>Plot Spectrum</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0" colspan="2">
+       <widget class="Line" name="line_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>

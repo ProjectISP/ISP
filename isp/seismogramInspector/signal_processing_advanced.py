@@ -249,28 +249,35 @@ def correlate_template(data, template, mode='valid', demean=True,
             raise ValueError(msg)
     return cc
 
-def cohe(tr1,tr2,fs,nfft):
-    
-    noverlap=int(nfft*0.5)
-    
+def cohe(tr1, tr2, fs, nfft, overlap):
+    """
+    Estimate Coherence throug Welch method
+
+    """
+
+    nfft = 2 ** math.ceil(math.log2(nfft)) # counts
+    overlap = overlap / 100
+    noverlap = int(nfft * overlap)
     Phh=scipy.signal.welch(tr1, fs=fs, window='hamming', nperseg=nfft, noverlap=noverlap, nfft=None, detrend=False, return_onesided=True, scaling='density', axis=-1)
-    Pzz=scipy.signal.welch(tr1, fs=fs, window='hamming', nperseg=nfft, noverlap=noverlap, nfft=None, detrend=False, return_onesided=True, scaling='density', axis=-1)
+    Pzz=scipy.signal.welch(tr2, fs=fs, window='hamming', nperseg=nfft, noverlap=noverlap, nfft=None, detrend=False, return_onesided=True, scaling='density', axis=-1)
     #Pzh=scipy.signal.csd(tr2, tr1, fs=fs, open_main_window='hamming', nperseg=nfft, noverlap=noverlap, nfft=None, detrend=False, return_onesided=True, scaling='density', axis=-1)
     Phz=scipy.signal.csd(tr1, tr2, fs=fs, window='hamming', nperseg=nfft, noverlap=noverlap, nfft=None, detrend=False, return_onesided=True, scaling='density', axis=-1)
     f=Pzz[0]
     num=Phz[1]
     den=np.sqrt((Phh[1])*(Pzz[1]))
     cohe=num/den
+    phase = np.angle(cohe*180/np.pi)
     A=(np.abs(np.array(cohe[:])))
-    fig = plt.figure(figsize=(8,8))
-    #ax1=fig.add_subplot(211)
-    plt.loglog(f,A)
-    plt.xlabel('frequency [Hz]')
-    plt.ylabel('Coherence')
-    plt.show()
+    return A, f, phase
 
 ###
 def spectrumelement(data,delta,sta):
+    """
+
+    Return the amplitude spectrum using multitaper aproach
+
+    """
+
     spec, freq, jackknife_errors, _, _ = mtspec(data, delta=delta , time_bandwidth=3.5, statistics=True)
     spec = np.sqrt(spec) #mtspec Amplitude spectrum
     jackknife_errors = np.sqrt(jackknife_errors)

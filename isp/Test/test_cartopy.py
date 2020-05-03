@@ -10,6 +10,7 @@ def main():
     # ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
     proj = ccrs.PlateCarree()
     fig, ax = plt.subplots(1, 1, subplot_kw=dict(projection=proj))
+
     # ax = axes[0]
     # ax.set_extent([80, 170, -45, 30], crs=ccrs.PlateCarree())
 
@@ -63,5 +64,5 @@ def plot_google_maps():
 
 
 if __name__ == '__main__':
-    # main()
+    #main()
     plot_google_maps()

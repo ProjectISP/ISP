@@ -2,14 +2,14 @@ import math
 import numpy as np
 from mtspec import mtspec
 
+from isp.seismogramInspector.signal_processing_advanced import spectrumelement
+
 
 class PlotToolsManager:
 
     def __init__(self, id):
         """
         Manage Plot signal analysis in Earthquake Frame.
-
-
 
         :param obs_file_path: The file path of pick observations.
         """
@@ -33,6 +33,33 @@ class PlotToolsManager:
         plt.grid(True, which="both", ls="-", color='grey')
         plt.legend()
         self.mpf.show()
+
+    def plot_spectrum_all(self, all_items):
+        import matplotlib.pyplot as plt
+        from isp.Gui.Frames import MatplotlibFrame
+        fig, ax1 = plt.subplots(figsize=(6, 6))
+        self.mpf = MatplotlibFrame(fig)
+
+        for key, seismogram in all_items:
+            data = seismogram[2]
+            delta = 1 / seismogram[0][6]
+            sta = seismogram[0][1]
+            [spec, freq, jackknife_errors] = spectrumelement(data, delta, sta)
+            info = "{}.{}.{}".format(seismogram[0][0], seismogram[0][1], seismogram[0][3])
+            ax1.loglog(freq, spec, linewidth=1.0, label=info)
+            ax1.frequencies = freq
+            ax1.spectrum = spec
+            ax1.set_ylim(spec.min() / 10.0, spec.max() * 100.0)
+            # ax1.set_xlim(freq[0], 1/(2*delta))
+            plt.ylabel('Amplitude')
+            plt.xlabel('Frequency [Hz]')
+            plt.grid(True, which="both", ls="-", color='grey')
+            plt.legend()
+        self.mpf.show()
+
+
+
+
 
     def find_nearest(self,array, value):
         idx, val = min(enumerate(array), key=lambda x: abs(x[1] - value))

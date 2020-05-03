@@ -29,9 +29,9 @@ class ConvolveWaveletBase:
         :keyword kwargs:
         :keyword wmin: Minimum number of cycles. Default = 6.
         :keyword wmax: Maximum number of cycles. Default = 6.
-        :keyword tt: Central frequency of the Morlet Wavelet. Default = 2.
-        :keyword fmin: Minimum frequency (in Hz). Default = 2.
-        :keyword fmax: Maximum frequency (in Hz). Default = 12.
+        :keyword tt: Period of the Morlet Wavelet. Default = 2.
+        :keyword fmin: Minimum Central frequency (in Hz). Default = 2.
+        :keyword fmax: Maximum Central frequency (in Hz). Default = 12.
         :keyword nf: Number of logarithmically spaced frequencies between fmin and fmax. Default = 20.
         :keyword use_rfft: True if it should use rfft instead of fft. Default = True.
         :keyword decimate: True if it should try to decimate the trace. Default = False. The decimation
@@ -41,6 +41,7 @@ class ConvolveWaveletBase:
         :example:
         >>> cw = ConvolveWavelet(file_path)
         >>> cw.setup_wavelet()
+        >>> sc = cw.scalogram_in_dbs
         >>> cf = cw.cf_lowpass()
         """
 

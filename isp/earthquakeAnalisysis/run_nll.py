@@ -17,6 +17,7 @@ from obspy.core.event import Origin
 
 from isp import ROOT_DIR
 from isp.DataProcessing import DatalessManager
+from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Utils import ObspyUtil
 from isp.Utils.subprocess_utils import exc_cmd
 
@@ -34,6 +35,7 @@ class NllManager:
         self.__dataless_dir = dataless_path
         self.__obs_file_path = obs_file_path
         self.__create_dirs()
+        self.__metadata_manager = None
 
     @property
     def nll_bin_path(self):
@@ -254,7 +256,8 @@ class NllManager:
         exc_cmd(command, cwd=output_path.parent)
 
     def grid_to_time(self, latitude, longitude, depth, dimension, option, wave):
-        self.stations_to_nll()
+        #self.stations_to_nll()
+        self.stations_to_nll_v2()
         output = self.set_grid2time_template(latitude, longitude, depth, dimension, option, wave)
         self.__append_files(self.get_stations_template_file_path, output)
         output_path = Path(output)
@@ -267,27 +270,65 @@ class NllManager:
         command = "{} {}".format(self.get_bin_file("NLLoc"), output_path.name)
         return exc_cmd(command, cwd=output_path.parent)
 
-    def stations_to_nll(self):
-        dm = DatalessManager(self.__dataless_dir)
-        if len(dm.stations_stats) == 0:
+    # def stations_to_nll(self):
+    #     dm = DatalessManager(self.__dataless_dir)
+    #     if len(dm.stations_stats) == 0:
+    #         raise FileNotFoundError("No dataless found at location {}.".format(self.__dataless_dir))
+    #     station_names = []
+    #     station_latitudes = []
+    #     station_longitudes = []
+    #     station_depths = []
+    #     for st in dm.stations_stats:
+    #         station_names.append(st.Name)
+    #         station_latitudes.append(st.Lat)
+    #         station_longitudes.append(st.Lon)
+    #         station_depths.append(st.Depth/1000)
+    #
+    #     data = {'Code': 'GTSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lon': station_longitudes,
+    #             'Lat': station_latitudes, 'Z': '0.000', 'Depth': station_depths}
+    #
+    #     df = pd.DataFrame(data, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
+    #
+    #     outstations_path = os.path.join(self.get_stations_dir, "stations.txt")
+    #     df.to_csv(outstations_path, sep=' ', header=False, index=False)
+    #     return outstations_path
+
+    def stations_to_nll_v2(self):
+
+        try:
+            metadata_manager = MetadataManager(self.__dataless_dir)
+            inv = metadata_manager.get_inventory()
+        except:
             raise FileNotFoundError("No dataless found at location {}.".format(self.__dataless_dir))
+
         station_names = []
         station_latitudes = []
         station_longitudes = []
         station_depths = []
-        for st in dm.stations_stats:
-            station_names.append(st.Name)
-            station_latitudes.append(st.Lat)
-            station_longitudes.append(st.Lon)
-            station_depths.append(st.Depth/1000)
 
-        data = {'Code': 'GTSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lon': station_longitudes,
-                'Lat': station_latitudes, 'Z': '0.000', 'Depth': station_depths}
+        if inv:
+            number_of_nets = len(inv)
+            for j in range(number_of_nets):
+                net = inv[j]
+                for k in range(len(net)):
+                    sta = net[k]
+                    code = sta.code
+                    latitude = sta.latitude
+                    longitude = sta.longitude
+                    elevation = sta.elevation
+                    station_names.append(code)
+                    station_latitudes.append(latitude)
+                    station_longitudes.append(longitude)
+                    station_depths.append(elevation)
 
-        df = pd.DataFrame(data, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
+            data = {'Code': 'GTSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lat': station_latitudes,
+                    'Lon': station_longitudes, 'Z': '0.000', 'Depth': station_depths}
 
-        outstations_path = os.path.join(self.get_stations_dir, "stations.txt")
-        df.to_csv(outstations_path, sep=' ', header=False, index=False)
+            df = pd.DataFrame(data, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
+
+            outstations_path = os.path.join(self.get_stations_dir, "stations.txt")
+            df.to_csv(outstations_path, sep=' ', header=False, index=False)
+
         return outstations_path
 
     def get_NLL_info(self) -> Origin:

@@ -1,18 +1,22 @@
+#import time
+import math
 from matplotlib.colors import Normalize
-from isp.DataProcessing import SeismogramDataAdvanced
+from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiTimeFrequencyFrame, FilesView, \
     MatplotlibCanvas, MessageDialog
 from isp.Gui.Frames.parameters import ParametersSettings
+from isp.Gui.Frames.time_frequency_advance_frame import TimeFrequencyAdvance
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.seismogramInspector.MTspectrogram import MTspectrogram, WignerVille
 import matplotlib.pyplot as plt
-from isp.seismogramInspector.ba_fast import ccwt_ba_fast
-from isp.seismogramInspector.CWT_fast import cwt_fast
 import numpy as np
+#from isp.seismogramInspector.ba_fast import ccwt_ba_fast
+#from isp.seismogramInspector.CWT_fast import cwt_fast
+
 
 @add_save_load()
 class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
@@ -25,7 +29,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.__metadata_manager = None
         self.inventory = {}
         self._stations_info = {}
-
+        self.tr1 = []
+        self.tr2 = []
         self.canvas_plot1 = MatplotlibCanvas(self.widget_plot_up, nrows=2)
         self.canvas_plot1.set_xlabel(1, "Time (s)")
         self.canvas_plot1.set_ylabel(0, "Amplitude ")
@@ -46,9 +51,12 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.datalessBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         # Action Buttons
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
+        self.actionOpen_Spectral_Analysis.triggered.connect(self.time_frequency_advance)
         self.plotBtn.clicked.connect(self.plot_seismogram)
         # Parameters settings
         self.parameters = ParametersSettings()
+        # Time Frequency Advance
+        #self.time_frequency_advance = TimeFrequencyAdvance()
 
     def filter_error_message(self, msg):
         md = MessageDialog(self)
@@ -68,6 +76,11 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
     def open_parameters_settings(self):
         self.parameters.show()
+
+    def time_frequency_advance(self):
+        self._time_frequency_advance = TimeFrequencyAdvance(self.tr1, self.tr2)
+        self._time_frequency_advance.show()
+
 
     def validate_file(self):
         if not MseedUtil.is_valid_mseed(self.file_selector.file_path):
@@ -148,7 +161,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
         if selection == "Seismogram 2":
             #self.validate_file()
-            [self.tr2,t] = self.get_data()
+            [self.tr2, t] = self.get_data()
             self.canvas_plot2.plot(t, self.tr2.data, 0, color="black", linewidth=0.5)
             self.canvas_plot2.set_xlabel(1, "Time (s)")
             self.canvas_plot2.set_ylabel(0, "Amplitude ")
@@ -157,7 +170,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             self.canvas_plot2.set_plot_label(0, info)
 
             if self.time_frequencyChB.isChecked():
-                self.time_frequency(self.tr2,selection)
+                self.time_frequency(self.tr2, selection)
 
     def time_frequency(self, tr, order):
         selection = self.time_frequencyCB.currentText()
@@ -224,6 +237,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
 
         elif selection == "Continuous Wavelet Transform":
+            #if self.trimCB.isChecked() and diff >= 0:
+            #    tr.trim(starttime=ts, endtime=te)
 
             fs = tr.stats.sampling_rate
             nf = 40
@@ -233,21 +248,56 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             wmax = self.wminSB.value()
             tt = int( self.wavelet_lenghtDB.value()*fs)
             npts = len(tr.data)
-            [ba, nConv, frex, half_wave] = ccwt_ba_fast(npts, fs, f_min, f_max, wmin, wmax,tt, nf)
-            cf, sc, scalogram = cwt_fast(tr.data, ba, nConv, frex, half_wave, fs)
-            scalogram = np.abs(scalogram) ** 2
+            # Old version
+            #[ba, nConv, frex, half_wave] = ccwt_ba_fast(npts, fs, f_min, f_max, wmin, wmax,tt, nf)
+            #cf, sc, scalogram = cwt_fast(tr.data, ba, nConv, frex, half_wave, fs)
+            #scalogram = np.abs(scalogram) ** 2
+            # scalogram2 = 10 * (np.log10(scalogram / np.max(scalogram)))
+            #
             t = np.linspace(0, tr.stats.delta * npts, npts)
-            scalogram2 = 10 * (np.log10(scalogram / np.max(scalogram)))
+            cw = ConvolveWaveletScipy(self.file_selector.file_path)
+            if self.trimCB.isChecked() and diff >= 0:
+                cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=tt, fmin=f_min, fmax=f_max, nf=nf, use_rfft=False,
+                                 decimate=False)
+            else:
+                cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=tt, fmin=f_min, fmax=f_max, nf=nf, use_rfft=False,
+                                 decimate=False)
+
+            scalogram2 = cw.scalogram_in_dbs()
+
+
+            scalogram2 = np.around(scalogram2, decimals=2)
+            scalogram2 = np.clip(scalogram2, a_min=-120, a_max=0)
+            cf = cw.cf_lowpass()
+            #start =time.time()
             x, y = np.meshgrid(t, np.linspace(f_min, f_max, scalogram2.shape[0]))
-            max_cwt = np.max(scalogram2)
-            min_cwt = np.min(scalogram2)
+            #print(time.time()-start)
+            c_f = wmin / 2 * math.pi
+            f = np.linspace(f_min, f_max, scalogram2.shape[0])
+            pred = (math.sqrt(2) * c_f / f) * fs - (math.sqrt(2) * c_f / f_max) * fs
+
+            pred_comp = t[len(t)-1]-pred
+            min_cwt= -120
+            max_cwt = 0
+
             norm = Normalize(vmin=min_cwt, vmax=max_cwt)
 
             if order == "Seismogram 1":
                 self.canvas_plot1.plot(t[0:len(t) - 1], cf, 0, clear_plot=False, is_twinx=True, color="red",
                                        linewidth=0.5)
-                self.canvas_plot1.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]",
-                                               cmap=plt.get_cmap("jet"), norm = norm)
+
+                self.canvas_plot1.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
+
+                #ax_test = self.canvas_plot1.get_axe(1)
+                #ax_test.imshow(scalogram2, extent=[0, max(t), min(f), max(f)],cmap = "jet")
+                #ax_test.pcolormesh(t, f, scalogram2, cmap=plt.get_cmap("jet"))
+                #ax_test.set_xlim(t[0],max(t))
+                #ax_test.set_ylim(f[0], max(f))
+
+
+                ax_cone = self.canvas_plot1.get_axe(1)
+                ax_cone.fill_between(pred, f, 0, color= "black", edgecolor="red", alpha=0.3)
+                ax_cone.fill_between(pred_comp, f, 0, color="black", edgecolor="red", alpha=0.3)
                 self.canvas_plot1.set_xlabel(1, "Time (s)")
                 self.canvas_plot1.set_ylabel(0, "Amplitude ")
                 self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
@@ -257,6 +307,10 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                                        linewidth=0.5)
                 self.canvas_plot2.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]",
                                            cmap=plt.get_cmap("jet"), norm = norm)
+
+                ax_cone2 = self.canvas_plot2.get_axe(1)
+                ax_cone2.fill_between(pred, f, 0, color="black", edgecolor="red", alpha=0.3)
+                ax_cone2.fill_between(pred_comp, f, 0, color="black", edgecolor="red", alpha=0.3)
                 self.canvas_plot2.set_xlabel(1, "Time (s)")
                 self.canvas_plot2.set_ylabel(0, "Amplitude ")
                 self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")

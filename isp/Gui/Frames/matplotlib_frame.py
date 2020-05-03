@@ -535,11 +535,10 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         vmin = kwargs.pop('vmin', numpy.amin(z))
         vmax = kwargs.pop('vmax', numpy.amax(z))
         clabel = kwargs.pop('clabel', '')
-
         x_label = ax.get_xlabel()
 
         if plot_type == "contourf":
-            levels = kwargs.pop('levels', 100)
+            levels = kwargs.pop('levels', 50)
             cs = ax.contourf(x, y, z, levels=levels, cmap=cmap, vmin=vmin, vmax=vmax, **kwargs)
         elif plot_type == "scatter":
             area = 10.*z**2  # points size from 0 to 5
@@ -554,6 +553,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         if show_colorbar:
             self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, extend='both', pad=0.0)
             self.__cbar.ax.set_ylabel(clabel)
+
         ax.set_xlim(*self.get_xlim_from_data(ax, 0))
         ax.set_ylim(*self.get_ylim_from_data(ax, 0))
         if x_label is not None and len(x_label) != 0:
@@ -871,17 +871,16 @@ class CartopyCanvas(BasePltPyqtCanvas):
         ax.set_extent(extent, crs=ccrs.PlateCarree())
 
 
+        try:
+            if resolution is "high":
 
-        if resolution is "high":
+                ax.add_wms(wms, layer)
+        except:
 
-            ax.add_wms(wms, layer)
-
-        else:
-
-            coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
-                edgecolor='k', alpha=0.6, linewidth=0.5, facecolor=cartopy.feature.COLORS['land'])
-            ax.stock_img()
-            ax.add_feature(coastline_10m)
+                coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
+                    edgecolor='k', alpha=0.6, linewidth=0.5, facecolor=cartopy.feature.COLORS['land'])
+                ax.stock_img()
+                ax.add_feature(coastline_10m)
 
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
@@ -906,7 +905,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
         sub_ax.outline_patch.set_path_effects([effect])
 
-        # Add the land, coastlines and the extent of the Solomon Islands.
+        # Add the land, coastlines and the extent .
         sub_ax.add_feature(cfeature.LAND)
         sub_ax.coastlines()
         extent_box = sgeom.box(extent[0], extent[2], extent[1], extent[3])

@@ -521,10 +521,43 @@
     <addaction name="actionGet_Stations_Info"/>
     <addaction name="actionSet_Parameters"/>
    </widget>
+   <widget class="QMenu" name="menuGo">
+    <property name="title">
+     <string>Go</string>
+    </property>
+    <addaction name="actionArray_Anlysis"/>
+    <addaction name="actionMoment_Tensor_Inversion"/>
+    <addaction name="actionTime_Frequency_Analysis"/>
+    <addaction name="actionReceiver_Functions"/>
+   </widget>
+   <widget class="QMenu" name="menuProject">
+    <property name="title">
+     <string>Project</string>
+    </property>
+    <addaction name="actionOpen_project"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
+   <addaction name="menuGo"/>
+   <addaction name="menuProject"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionArray_Anlysis"/>
+   <addaction name="actionMoment_Tensor_Inversion"/>
+   <addaction name="actionTime_Frequency_Analysis"/>
+   <addaction name="actionReceiver_Functions"/>
+   <addaction name="actionOpen_project"/>
+  </widget>
   <action name="actionWhatever">
    <property name="text">
     <string>Whatever</string>
@@ -568,7 +601,59 @@
     <string>Trim</string>
    </property>
   </action>
+  <action name="actionArray_Anlysis">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/signal-icon.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Array Anlysis</string>
+   </property>
+  </action>
+  <action name="actionMoment_Tensor_Inversion">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/tensor-icon.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Moment Tensor Inversion</string>
+   </property>
+  </action>
+  <action name="actionTime_Frequency_Analysis">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/seosmogram-icon.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Time-Frequency Analysis</string>
+   </property>
+  </action>
+  <action name="actionReceiver_Functions">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/rf-icon.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Receiver Functions</string>
+   </property>
+  </action>
+  <action name="actionOpen_project">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/manage-icon.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Open project</string>
+   </property>
+  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

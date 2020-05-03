@@ -19,6 +19,7 @@ from isp.earthquakeAnalisysis import PickerManager
 import numpy as np
 import matplotlib.pyplot as plt
 
+from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement
 
 
@@ -70,10 +71,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.updateBtn.clicked.connect(self.plot_seismogram)
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
-        #self.mapBtn.clicked.connect(self.plot_map_stations)
+        self.mapBtn.clicked.connect(self.plot_map_stations)
         self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
-
+        self.actionArray_Anlysis.triggered.connect(self.open_array_analysis)
+        self.actionMoment_Tensor_Inversion.triggered.connect(self.open_moment_tensor)
+        self.actionTime_Frequency_Analysis.triggered.connect(self.time_frequency_analysis)
+        self.actionReceiver_Functions.triggered.connect(self.open_receiver_functions)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -320,6 +324,31 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         except:
             pass
 
+    def plot_map_stations(self):
+
+        obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
+        obsfiles.sort()
+
+        #files_at_page = self.get_files_at_page()
+        map_dict={}
+        sd = []
+
+        for file in obsfiles:
+            st = SeismogramDataAdvanced(file)
+
+            name = st.stats.Network+"."+st.stats.Station
+
+            sd.append(name)
+
+            st_coordinates = self.__metadata_manager.extract_coordinates(self.inventory, file)
+
+            map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
+
+        self.map_stations = StationsMap(map_dict)
+        self.map_stations.plot_stations_map()
+
+
+
 
     def redraw_pickers(self, file_name, axe_index):
 
@@ -465,6 +494,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.spectrum = PlotToolsManager(id)
             self.spectrum.plot_spectrum(freq, spec, jackknife_errors)
 
+        if event.key == 's':
+            id = ""
+            self.spectrum = PlotToolsManager(id)
+            self.spectrum.plot_spectrum_all(self.chop.items())
+
+
         if event.key == 'z':
             start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
             end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
@@ -488,17 +523,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax = self.canvas.get_axe(self.ax_num)
 
             ax2 = ax.twinx()
-            cs = ax2.contourf(x, y, z, levels=100, cmap=plt.get_cmap("jet"), alpha = 0.2)
+            z= np.clip(z, a_min=-120, a_max=0)
+            cs = ax2.contourf(x, y, z, levels=50, cmap=plt.get_cmap("jet"), alpha = 0.2)
             fig = ax2.get_figure()
-
-            #fig.tight_layout()
-            ax2.set_ylim(0, 25)
+            ax2.set_ylim(0, fn)
             t = t[0:len(x)]
             ax2.set_xlim(t[0],t[-1])
             ax2.set_ylabel('Frequency [ Hz]')
-            #ax2.yaxis.tick_right()
-            vmin = np.amin(z)
-            vmax = np.amax(z)
+            vmin = -120
+            vmax = 0
             cs.set_clim(vmin, vmax)
             axs = []
             for j in range(self.items_per_page):
@@ -507,10 +540,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             if self.nums_clicks > 0:
                 pass
             else:
-                print("Plotting Colorbar")
-                print(self.nums_clicks)
+
                 self.cbar = fig.colorbar(cs, ax=axs[j], extend='both', orientation='horizontal', pad=0.2)
                 self.cbar.ax.set_ylabel("Power [dB]")
+                #self.cbar.ax.set_ylim(-100,0)
 
             tr=self.st[self.ax_num]
             tt = tr.times("matplotlib")
@@ -529,4 +562,18 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax.xaxis.set_major_formatter(formatter)
             self.nums_clicks = self.nums_clicks+1
 
+    def open_array_analysis(self):
+        self.controller().open_array_window()
 
+    def open_moment_tensor(self):
+        self.controller().open_momentTensor_window()
+
+    def time_frequency_analysis(self):
+        self.controller().open_seismogram_window()
+
+    def open_receiver_functions(self):
+        self.controller().open_receiverFunctions()
+
+    def controller(self):
+        from isp.Gui.controllers import Controller
+        return Controller()
