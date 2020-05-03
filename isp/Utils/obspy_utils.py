@@ -167,6 +167,14 @@ class ObspyUtil:
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(hyp_file_path))
 
+    @staticmethod
+    def has_same_sample_rate(st: Stream, value):
+        for tr in st:
+            print(tr.stats.sampling_rate)
+            if tr.stats.sampling_rate != value:
+                return False
+        return True
+
 
 class MseedUtil:
 
