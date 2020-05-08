@@ -1,8 +1,11 @@
 import os
 import unittest
+from datetime import datetime
 
+from obspy import UTCDateTime
 from obspy.core.event import Origin
 
+from isp.Structures.structures import Search
 from isp.Utils import ObspyUtil
 from isp.db import db
 from isp.earthquakeAnalisysis import PickerManager
@@ -36,26 +39,39 @@ class MyTestCase(unittest.TestCase):
         print(EventArrayModel.get_all())
         print(PhaseInfoModel.get_all())
 
-
     def test_event_location_insert(self):
-        from isp.earthquakeAnalisysis import  NllManager
-        nll_manager=NllManager(PickerManager.get_default_output_path(), None)
-        origin = nll_manager.get_NLL_info()
-        print(origin)
-
-    def test_insert(self):
         hyp_file = os.path.join(dir_path, "test_data", "last.hyp")
         origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file)
-        event_model = EventLocationModel.create_from_origin(origin)
-        event_model.save()
-        event_model: EventLocationModel = EventLocationModel.find_by_id(event_model.id)
-        print(event_model)
-        # moment_dict = {"id": generate_id(16), "event_info_id": event_model.id, ....}
-        # mt_model = MomentTensorModel.from_dict(moment_dict)
-        # mt_model.save()
+        try:
+            event_model = EventLocationModel.create_from_origin(origin)
+            event_model.save()
+            event_model: EventLocationModel = EventLocationModel.find_by_id(event_model.id)
+            self.assertIsNotNone(event_model)
+            print("Insert")
+        except AttributeError:
+            print("Already insert")
+
+    def test_find_by(self):
+        self.test_event_location_insert()
+        date_time = datetime(2015, 9, 17, 15, 11, 44, 424088)
+        event_model = EventLocationModel.find_by(origin_time=date_time, transformation="SIMPLE")
+        self.assertIsNotNone(event_model)
+
+    def test_search(self):
+        self.test_event_location_insert()
+        search = Search(SearchBy="latitude, longitude", SearchValue="35, -7",
+                        Page=1, PerPage=10, OrderBy="latitude", MapColumnAndValue=True)
+        self.assertIsNotNone(EventLocationModel.search(search).result[0])
+
+        start_date = UTCDateTime("2015-05-08T14:01:58.112160Z").datetime
+        end_date = UTCDateTime("2016-06-08T14:01:58.112160Z").datetime
+        string_query = "(latitude BETWEEN 30 and 38) and " \
+                       "(longitude BETWEEN -10 and -6) and " \
+                       "origin_time BETWEEN '{}' and '{}'".format(start_date, end_date)
+        search = Search(SearchBy="", SearchValue="", Page=1, PerPage=10, OrderBy="id",
+                        TextualQuery=string_query, MapColumnAndValue=True)
+        self.assertEqual(1, len(EventLocationModel.search(search).result))
 
 
 if __name__ == '__main__':
     unittest.main()
-
-
