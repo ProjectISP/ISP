@@ -217,7 +217,7 @@ class Search(NamedTuple):
 
     Fields:
         SearchBy: A table's column's name to search. You can pass multiple values by using comma separation.
-            e.g: "username, name", it will perform a search in this to columns.
+            e.g: "username, name", it will perform a search in this two columns.
 
         SearchValue: The value to search. You can pass multiple values by using comma separation.
             e.g: "John, Sara", it will perform a search for this values for the given columns.

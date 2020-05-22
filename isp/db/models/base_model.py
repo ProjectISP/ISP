@@ -1,4 +1,5 @@
 from sqlalchemy import Column, or_, and_, text
+from sqlalchemy.orm import Query
 
 from isp.Exceptions import EntityNotFound, QueryException
 from isp.Structures.structures import Search, SearchResult
@@ -162,10 +163,11 @@ class BaseModel:
 
         search_columns = []
         for column_name in search.SearchBy.split(","):  # accepts multiple columns split by ,
-            search_column = cls._get_column_from_name(column_name)
-            if search_column is None:
-                raise QueryException("The column {} you are trying to search at don't exists.".format(column_name))
-            search_columns.append(search_column)
+            if len(column_name) > 0:
+                search_column = cls._get_column_from_name(column_name)
+                if search_column is None:
+                    raise QueryException("The column {} you are trying to search at don't exists.".format(column_name))
+                search_columns.append(search_column)
 
         find_values = []
         for value in search.SearchValue.split(","):  # accepts multiple values split by ,
@@ -203,12 +205,14 @@ class BaseModel:
         :return: A SearchResult instance
         """
 
-        query = cls._create_query(search)
+        query: Query = cls._create_query(search)
 
-        page = query.paginate(per_page=search.PerPage, page=search.Page)
+        # page = query.paginate(per_page=search.PerPage, page=search.Page)
 
-        entities = page.items
-        total = page.total
+        # entities = page.items
+        entities = query.all()
+        # total = page.total
+        total = len(entities)
         if entities:
             return SearchResult(entities, total)
 
