@@ -42,8 +42,8 @@ def ccwt_ba_fast(npts, srate,fmin, fmax, wmin, wmax,tt, nf):
     dt = 1/srate
     
     #time = (np.arange(0, npts-1, 1))/srate
-    frex = np.logspace(np.log2(fmin), np.log2(fmax), nf,base=2) #Logarithmically space central frequencies
-
+    #frex = np.logspace(np.log2(fmin), np.log2(fmax), nf,base=2) #Logarithmically space central frequencies
+    frex = np.logspace(np.log10(fmin), np.log10(fmax), nf)
     wtime =  np.arange(-tt,tt+dt, dt) #Kernel of the Mother Morlet Wavelet
     half_wave = (len(wtime)-1)/2
     nCycles=np.logspace(np.log10(wmin),np.log10(wmax),nf)

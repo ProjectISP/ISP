@@ -217,7 +217,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             if self.trimCB.isChecked() and diff >= 0:
                 x, y, log_spectrogram = wignerspec.compute_wigner_spectrogram(tr, start_time=ts, end_time=te)
             else:
-                x, y, log_spectrogram = wignerspec.compute_spectrogram(tr)
+                x, y, log_spectrogram = wignerspec.compute_wigner_spectrogram(tr)
 
             if order == "Seismogram 1":
                 self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Rel Power ",
@@ -266,15 +266,16 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             scalogram2 = cw.scalogram_in_dbs()
 
 
-            scalogram2 = np.around(scalogram2, decimals=2)
+            #scalogram2 = np.around(scalogram2, decimals=2)
             scalogram2 = np.clip(scalogram2, a_min=-120, a_max=0)
             cf = cw.cf_lowpass()
-            #start =time.time()
-            x, y = np.meshgrid(t, np.linspace(f_min, f_max, scalogram2.shape[0]))
-            #print(time.time()-start)
+            freq = np.logspace(np.log10(f_min), np.log10(f_max))
+            k = wmin / (2 * np.pi * freq)
+            delay = int(fs*np.mean(k))
+            x, y = np.meshgrid(t, np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0]))
             c_f = wmin / 2 * math.pi
-            f = np.linspace(f_min, f_max, scalogram2.shape[0])
-            pred = (math.sqrt(2) * c_f / f) * fs - (math.sqrt(2) * c_f / f_max) * fs
+            f = np.linspace((f_min), (f_max), scalogram2.shape[0])
+            pred = (math.sqrt(2) * c_f / f)  - (math.sqrt(2) * c_f / f_max)
 
             pred_comp = t[len(t)-1]-pred
             min_cwt= -120
@@ -282,8 +283,11 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
             norm = Normalize(vmin=min_cwt, vmax=max_cwt)
 
+            tf=t[delay:len(t)]
+            cf = cf[0:len(tf)]
             if order == "Seismogram 1":
-                self.canvas_plot1.plot(t[0:len(t) - 1], cf, 0, clear_plot=False, is_twinx=True, color="red",
+
+                self.canvas_plot1.plot(tf, cf, 0, clear_plot=True, is_twinx=True, color="red",
                                        linewidth=0.5)
 
                 self.canvas_plot1.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
@@ -303,7 +307,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
 
             if order == "Seismogram 2":
-                self.canvas_plot2.plot(t[0:len(t) - 1], cf, 0, clear_plot=False, is_twinx=True, color="red",
+                self.canvas_plot2.plot(tf, cf, 0, clear_plot=True, is_twinx=True, color="red",
                                        linewidth=0.5)
                 self.canvas_plot2.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]",
                                            cmap=plt.get_cmap("jet"), norm = norm)

@@ -578,7 +578,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             ax = self.get_axe(axes_index)
             if is_twinx:
                 tw_ax = self.__add_twinx_ax(axes_index)
-                artist = self.__plot(x, y, tw_ax, clear_plot=True, **kwargs)
+                artist = self.__plot(x, y, tw_ax, clear_plot=False, **kwargs)
                 if artist:
                     self.set_yaxis_color(tw_ax, artist.get_color())
                 return artist

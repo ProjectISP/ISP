@@ -282,3 +282,36 @@ def spectrumelement(data,delta,sta):
     spec = np.sqrt(spec) #mtspec Amplitude spectrum
     jackknife_errors = np.sqrt(jackknife_errors)
     return spec, freq, jackknife_errors
+
+
+def sta_lta(data, sampling_rate):
+    from obspy.signal.trigger import classic_sta_lta
+    from obspy.signal.filter import lowpass
+    import numpy as np
+    cft = classic_sta_lta(data, int(1 * sampling_rate), int(40 * sampling_rate))
+    cft=cft-np.mean(cft)
+    ##
+    #cft = np.diff(cft)
+    ##
+    window = np.hanning(len(cft))
+    cft = window*cft
+    cf1= lowpass(cft, 0.15, sampling_rate, corners=3, zerophase=True)
+    return cf1
+
+
+def envelope(data,sampling_rate):
+    import obspy.signal
+    import numpy as np
+    from obspy.signal.filter import lowpass
+    N = len(data)
+    D = 2 ** math.ceil(math.log2(N))
+    z = np.zeros(D - N)
+
+    data = np.concatenate((data, z), axis=0)
+    ###Necesary padding with zeros
+    data_envelope = obspy.signal.filter.envelope(data)
+    data_envelope = data_envelope[0:N]
+    window = np.hanning(len(data_envelope))
+    data_envelope = window * data_envelope
+    data_envelope1 = lowpass(data_envelope, 0.15, sampling_rate, corners=3, zerophase=True)
+    return data_envelope1

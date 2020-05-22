@@ -491,7 +491,7 @@ class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
 
     def plot_arrivals2(self, axe_index: int, station_stats):
         delta_time = self.event_time.matplotlib_date
-        print(delta_time)
+        #print(delta_time)
         line = self.__canvas.draw_arrow(delta_time, axe_index, "Event time", color="red", linestyles='--',
                                         picker=False)
         #sma = SeismogramAnalysis(station_stats.Lat, station_stats.Lon)
@@ -505,6 +505,8 @@ class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
                                             picker=False)
             self.add_arrivals_line(line)
 
+    def get_event_coordinates(self):
+        return self.latitude,self.longitude,self.event_depth
 
     def set_buttons_visibility(self, is_visible: bool):
         """

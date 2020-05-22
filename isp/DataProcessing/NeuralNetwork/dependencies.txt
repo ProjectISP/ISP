@@ -1,3 +1,4 @@
+python gpd_var.py -V -I red_ejemplo.in -O red_ejemplo.out
 conda create -n tensorflow python=3.6 anaconda
 conda install -c anaconda hdf5 h5py graphviz pydot
 conda install -c conda-forge obspy
