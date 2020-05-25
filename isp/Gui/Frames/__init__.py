@@ -12,5 +12,6 @@ from isp.Gui.Frames.earthquake_frame import EarthquakeAnalysisFrame
 from isp.Gui.Frames.array_analysis_frames import ArrayAnalysisFrame
 from isp.Gui.Frames.isola_ISP_frame import MTIFrame
 from isp.Gui.Frames.receiver_functions_frame import  RecfFrame
+from isp.Gui.Frames.event_location_frame import EventLocationFrame
 #from isp.Gui.Frames.time_frequency_advance_frame import TimeFrequencyAdvance
 

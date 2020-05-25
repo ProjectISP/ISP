@@ -342,7 +342,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     # Rotate to GAC,only first version #
     def rotate(self):
         if self.st:
-            print(self.chop)
             self.canvas.clear()
             all_traces_rotated = []
             stations = ObspyUtil.get_stations_from_stream(self.st)
@@ -382,12 +381,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     if tr.stats.channel[2] == "T":
                         id_old = st_stats['net'] + "." + st_stats['station'] + "." + st_stats['location'] + "." \
                          + st_stats['channel'][0:2]+"E"
-                        self.chop[id_new] = self.chop.pop(id_old)
+                        if self.chop:
+                            try:
+                                self.chop[id_new] = self.chop.pop(id_old)
+                            except:
+                                pass
                     if tr.stats.channel[2] == "R":
                         id_old = st_stats['net'] + "." + st_stats['station'] + "." + st_stats['location'] + "." \
                          + st_stats['channel'][0:2]+"N"
-                        self.chop[id_new] = self.chop.pop(id_old)
-
+                        if self.chop:
+                            try:
+                                self.chop[id_new] = self.chop.pop(id_old)
+                            except:
+                                pass
                     self.canvas.plot_date(t, s, index, color="steelblue", fmt='-', linewidth=0.5)
                     info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
                     self.canvas.set_plot_label(index, info)
@@ -587,9 +593,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.chop[tr.id][2] = data
                 self.canvas.plot_date(t, data, ax_index, clear_plot=False, color='orangered', fmt='-', linewidth=0.5)
 
-
-
-
     def on_click_matplotlib(self, event, canvas):
         if isinstance(canvas, MatplotlibCanvas):
             polarity, color = map_polarity_from_pressed_key(event.key)
@@ -657,15 +660,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self._stations_info.show()
 
     def on_select(self, ax_index, xmin, xmax):
-        files_at_page = self.get_files_at_page()
-        file = files_at_page[ax_index]
-        st = SeismogramDataAdvanced(file)
-        metadata = [st.stats.Network, st.stats.Station, st.stats.Location, st.stats.Channel, st.stats.StartTime,
-                   st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
+        #files_at_page = self.get_files_at_page()
+        #file = files_at_page[ax_index]
+        #st = SeismogramDataAdvanced(file)
+        #metadata = [st.stats.Network, st.stats.Station, st.stats.Location, st.stats.Channel, st.stats.StartTime,
+        #           st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
 
         tr = self.st[ax_index]
         t = self.st[ax_index].times("matplotlib")
         y = self.st[ax_index].data
+        dic_metadata = ObspyUtil.get_stats_from_trace(tr)
+        metadata = [dic_metadata['net'], dic_metadata['station'], dic_metadata['location'], dic_metadata['channel'],
+                    dic_metadata['starttime'],dic_metadata['endtime'],dic_metadata['sampling_rate'],
+                    dic_metadata['npts']]
         #identify metadata with ax
         id = tr.id
 
@@ -685,10 +692,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def find_chop_by_ax(self, ax):
-        files_at_page = self.get_files_at_page()
-        file = files_at_page[ax]
-        st_stats = ObspyUtil.get_stats(file)
-        id = st_stats.Network+"."+st_stats.Station+"."+st_stats.Location+"."+st_stats.Channel
+        #files_at_page = self.get_files_at_page()
+        #file = files_at_page[ax]
+        #st_stats = ObspyUtil.get_stats(file)
+        #id = st_stats.Network+"."+st_stats.Station+"."+st_stats.Location+"."+st_stats.Channel
+        id = self.st[ax].id
         for key, value in self.chop.items():
             if key == id:
                 identified_chop = self.chop[id]

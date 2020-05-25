@@ -83,8 +83,10 @@ class ObspyUtil:
         channel = tr.stats.channel
         starttime = tr.stats.starttime
         endtime = tr.stats.endtime
+        npts= tr.stats.npts
+        sampling_rate=tr.stats.sampling_rate
         stats =  {'net': net, 'station': station, 'location':location, 'channel':channel, 'starttime':starttime,
-                  'endtime':endtime}
+                  'endtime':endtime,'npts': npts, 'sampling_rate':sampling_rate}
         return stats
 
     @staticmethod

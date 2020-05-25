@@ -3,7 +3,10 @@ from PyQt5 import QtGui, QtWebEngineWidgets
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
-
+from isp.db import db
+import os
+#from isp.db.models import FirstPolarityModel, MomentTensorModel, EventArrayModel, PhaseInfoModel,\
+#    EventLocationModel, ArrayAnalysisModel
 # pyqt5 vars
 
 pyqt = PyQt
@@ -39,6 +42,13 @@ def start_isp():
     app_logger.info("ISP GUI Started")
     app_logger.info("User preferences is at: {}".format(get_settings_file()))
     sys.exit(app.exec_())
+
+
+dir_path = os.path.dirname(os.path.abspath(__file__))
+db.set_db_url("sqlite:///{}/isp_test.db".format(dir_path))
+db.start()
+
+
 
 if __name__ == '__main__':
     start_isp()
