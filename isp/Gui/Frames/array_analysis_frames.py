@@ -105,13 +105,12 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         sstep = slim / len(arf)
         x = np.linspace(-1 * slim, slim, (slim - (-1 * slim) / sstep))
         y = np.linspace(-1 * slim, slim, (slim - (-1 * slim) / sstep))
-        X, Y = np.meshgrid(x, y)
         self.canvas.plot_contour(x, y, arf, axes_index=0, clabel="Power [dB]", cmap=plt.get_cmap("jet"))
         self.canvas.set_xlabel(0, "Sx (s/km)")
         self.canvas.set_ylabel(0, "Sy (s/km)")
-        lon=coords[:,1]
-        lat=coords[:,0]
-        depth=coords[:,2]
+        #lon=coords[:,1]
+        #lat=coords[:,0]
+        #depth=coords[:,2]
         #self.cartopy_canvas.plot_stations(lon, lat, depth, 0)
 
     def FK_plot(self):
@@ -184,6 +183,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                     obsfiles.append(os.path.abspath(os.path.join(dirpath, f)))
         obsfiles.sort()
         parameters = self.__parameters.getParameters()
+        print(parameters)
         all_traces =[]
 
         for file in obsfiles:

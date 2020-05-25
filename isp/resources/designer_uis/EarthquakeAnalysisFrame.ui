@@ -310,6 +310,9 @@
                 <property name="text">
                  <string>Rotate</string>
                 </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
              </layout>
@@ -534,6 +537,7 @@
     </property>
     <addaction name="actionGet_Stations_Info"/>
     <addaction name="actionSet_Parameters"/>
+    <addaction name="actionClean_selection"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -692,6 +696,11 @@
   <action name="actionEnvelope">
    <property name="text">
     <string>Envelope</string>
+   </property>
+  </action>
+  <action name="actionClean_selection">
+   <property name="text">
+    <string>Clean selection</string>
    </property>
   </action>
  </widget>

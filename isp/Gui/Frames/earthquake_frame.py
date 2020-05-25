@@ -5,7 +5,7 @@ from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, Convolve
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Exceptions import parse_excepts
-from isp.Gui import pw
+from isp.Gui import pw,pqg
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, EventInfoBox, \
     MatplotlibCanvas
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
@@ -88,6 +88,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # Parameters settings
 
         self.parameters = ParametersSettings()
+
+
+        # shortcuts
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'),self)
+        self.shortcut_open.activated.connect(self.clean_chop_at_page)
 
     def open_parameters_settings(self):
         self.parameters.show()
@@ -337,6 +342,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     # Rotate to GAC,only first version #
     def rotate(self):
         if self.st:
+            print(self.chop)
             self.canvas.clear()
             all_traces_rotated = []
             stations = ObspyUtil.get_stations_from_stream(self.st)
@@ -365,17 +371,28 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             # plot
             files_at_page = self.get_files_at_page()
             for index, file_path in enumerate(files_at_page):
-                print(files_at_page)
                 tr = all_traces_rotated[index]
                 t = tr.times("matplotlib")
                 s = tr.data
                 if tr.stats.channel[2] == "T" or tr.stats.channel[2] == "R":
                     st_stats = ObspyUtil.get_stats_from_trace(tr)
+                    id_new = st_stats['net'] + "." + st_stats['station'] + "." + st_stats['location'] + "." \
+                         + st_stats['channel']
+                    #change chop_dictionary
+                    if tr.stats.channel[2] == "T":
+                        id_old = st_stats['net'] + "." + st_stats['station'] + "." + st_stats['location'] + "." \
+                         + st_stats['channel'][0:2]+"E"
+                        self.chop[id_new] = self.chop.pop(id_old)
+                    if tr.stats.channel[2] == "R":
+                        id_old = st_stats['net'] + "." + st_stats['station'] + "." + st_stats['location'] + "." \
+                         + st_stats['channel'][0:2]+"N"
+                        self.chop[id_new] = self.chop.pop(id_old)
+
                     self.canvas.plot_date(t, s, index, color="steelblue", fmt='-', linewidth=0.5)
                     info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
                     self.canvas.set_plot_label(index, info)
                     self.redraw_pickers(file_path, index)
-                # redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
+                # redraw_chop = 1 redraw chopped data, 2 update in case data chopped is modified
                     self.redraw_chop(tr, s, index)
                 else:
                     st_stats = ObspyUtil.get_stats_from_trace(tr)
@@ -566,7 +583,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 t = self.chop[tr.id][1]
                 xmin_index = self.chop[tr.id][3]
                 xmax_index = self.chop[tr.id][4]
-                data =s[xmin_index:xmax_index]
+                data = s[xmin_index:xmax_index]
                 self.chop[tr.id][2] = data
                 self.canvas.plot_date(t, data, ax_index, clear_plot=False, color='orangered', fmt='-', linewidth=0.5)
 
@@ -680,7 +697,32 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         return identified_chop, id
 
 
+    def clean_chop_at_page(self):
+        if self.st:
+            try:
+                n = len(self.st)
+                for j in range(n):
+                    tr = self.st[j]
+                    stats = ObspyUtil.get_stats_from_trace(tr)
+                    id = stats['net']+"."+stats['station']+"."+stats['location']+"."+stats['channel']
+                    self.chop.pop(id)
+                    data = tr.data
+                    t = tr.times("matplotlib")
+                    self.canvas.plot_date(t, data, j, clear_plot=False, color='black', fmt='-', linewidth=0.5)
+            except Exception:
+                raise Exception('Nothing to clean')
+
     def key_pressed(self, event):
+
+        if event.key == 'd':
+           [identified_chop, id] = self.find_chop_by_ax(self.ax_num)
+           self.chop.pop(id)
+           tr = self.st[self.ax_num]
+           data = tr.data
+           t = tr.times("matplotlib")
+           self.canvas.plot_date(t, data, self.ax_num, clear_plot=False, color='black', fmt='-', linewidth=0.5)
+
+
         if event.key == 'a':
 
             [identified_chop, id]= self.find_chop_by_ax(self.ax_num)
