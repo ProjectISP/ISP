@@ -216,9 +216,9 @@ class ConvolveWaveletBase:
         return nproc
 
     @staticmethod
-    def __tapper(data, max_percentage=0.01):
+    def __tapper(data, max_percentage=0.05):
         tr = Trace(data)
-        tr.taper(max_percentage=max_percentage)
+        tr.taper(max_percentage=max_percentage,type='blackman')
         return tr.data
 
     # def __chop_data(self, delta_time, start_time: UTCDateTime, end_time: UTCDateTime):

@@ -1,7 +1,7 @@
 import matplotlib.dates as mdt
 from obspy import UTCDateTime, Stream
 from obspy.geodetics import gps2dist_azimuth
-from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced
+from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Exceptions import parse_excepts
@@ -20,7 +20,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from isp.earthquakeAnalisysis.stations_map import StationsMap
-from isp.seismogramInspector.signal_processing_advanced import spectrumelement
+from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
@@ -71,12 +71,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.updateBtn.clicked.connect(self.plot_seismogram)
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
+        self.rotateBtn.clicked.connect(self.rotate)
         self.mapBtn.clicked.connect(self.plot_map_stations)
         self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
+        self.actionWrite_Current_Page.triggered.connect(self.write_files_page)
         self.actionArray_Anlysis.triggered.connect(self.open_array_analysis)
         self.actionMoment_Tensor_Inversion.triggered.connect(self.open_moment_tensor)
         self.actionTime_Frequency_Analysis.triggered.connect(self.time_frequency_analysis)
+        self.actionSTA_LTA.triggered.connect(self.run_STA_LTA)
+        self.actionCWT_CF.triggered.connect(self.cwt_cf)
+        self.actionEnvelope.triggered.connect(self.envelope)
         self.actionReceiver_Functions.triggered.connect(self.open_receiver_functions)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
@@ -86,6 +91,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def open_parameters_settings(self):
         self.parameters.show()
+
+    #@property
+    #def event_info(self) -> EventInfoBox:
+    #    return self.__event_info
 
     @property
     def dataless_manager(self):
@@ -197,7 +206,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def sort_by_distance_advance(self, file):
 
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
-
          if st_stats:
 
              dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
@@ -278,6 +286,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 last_index = index
 
                 st_stats = ObspyUtil.get_stats(file_path)
+
                 if st_stats and self.sortCB.isChecked() == False:
                     info = "{}.{}.{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
                     self.canvas.set_plot_label(index, info)
@@ -311,7 +320,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             if min_starttime and max_endtime is not None:
                 auto_start = min(min_starttime)
                 auto_end = max(max_endtime)
-
+                self.auto_start = auto_start
+                self.auto_end = auto_end
 
             ax = self.canvas.get_axe(last_index)
             if self.trimCB.isChecked():
@@ -323,6 +333,195 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.canvas.set_xlabel(last_index, "Date")
         except:
             pass
+
+    # Rotate to GAC,only first version #
+    def rotate(self):
+        if self.st:
+            self.canvas.clear()
+            all_traces_rotated = []
+            stations = ObspyUtil.get_stations_from_stream(self.st)
+            start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+            end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+            for k in range(len(stations)):
+                st1 = self.st.copy()
+                print("Computing", stations[k])
+                st2 = st1.select(station=stations[k])
+                try:
+                    maxstart = np.max([tr.stats.starttime for tr in st2])
+                    minend = np.min([tr.stats.endtime for tr in st2])
+                    st2.trim(maxstart, minend)
+                    tr = st2[0]
+                    coordinates = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
+                    [azim, bazim, inci] = ObspyUtil.coords2azbazinc(coordinates.Latitude,coordinates.Longitude,
+                    coordinates.Elevation,self.event_info.latitude, self.event_info.longitude, self.event_info.event_depth)
+
+                    st2.rotate(method='NE->RT', back_azimuth=bazim)
+                except:
+                    print("The GAC Rotation is not posible for",stations[k])
+                for tr in st2:
+                    all_traces_rotated.append(tr)
+
+            self.st = Stream(traces=all_traces_rotated)
+            # plot
+            files_at_page = self.get_files_at_page()
+            for index, file_path in enumerate(files_at_page):
+                print(files_at_page)
+                tr = all_traces_rotated[index]
+                t = tr.times("matplotlib")
+                s = tr.data
+                if tr.stats.channel[2] == "T" or tr.stats.channel[2] == "R":
+                    st_stats = ObspyUtil.get_stats_from_trace(tr)
+                    self.canvas.plot_date(t, s, index, color="steelblue", fmt='-', linewidth=0.5)
+                    info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
+                    self.canvas.set_plot_label(index, info)
+                    self.redraw_pickers(file_path, index)
+                # redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
+                    self.redraw_chop(tr, s, index)
+                else:
+                    st_stats = ObspyUtil.get_stats_from_trace(tr)
+                    self.canvas.plot_date(t, s, index, color="black", fmt='-', linewidth=0.5)
+                    info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
+                    self.canvas.set_plot_label(index, info)
+                    self.redraw_pickers(file_path, index)
+                    # redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
+                    self.redraw_chop(tr, s, index)
+                last_index =  index
+
+            ax = self.canvas.get_axe(last_index)
+            try:
+                if self.trimCB.isChecked():
+                    ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+                else:
+                    ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+                formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+                ax.xaxis.set_major_formatter(formatter)
+                self.canvas.set_xlabel(last_index, "Date")
+            except:
+                pass
+
+    def run_STA_LTA(self):
+        files_at_page = self.get_files_at_page()
+        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
+        for index, file_path in enumerate(files_at_page):
+
+            tr = self.st[index]
+            cf = sta_lta(tr.data, tr.stats.sampling_rate)
+            st_stats = ObspyUtil.get_stats_from_trace(tr)
+            # Normalize
+            cf =cf/max(cf)
+            # forward to be centered the peak
+            start = tr.stats.starttime-0.5
+            tr.stats.starttime = start
+            t = tr.times("matplotlib")
+            self.canvas.plot_date(t, tr.data, index, color="black", fmt='-', linewidth=0.5)
+            info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
+            self.canvas.set_plot_label(index, info)
+            self.redraw_pickers(file_path, index)
+            self.redraw_chop(tr, tr.data, index)
+
+            t = t[0:len(cf)]
+            ax = self.canvas.get_axe(index)
+            ax2 = ax.twinx()
+            ax2.plot(t, cf,color="green", linewidth=0.5)
+            ax2.set_ylim(-1.05, 1.05)
+            last_index = index
+        ax = self.canvas.get_axe(last_index)
+        try:
+            if self.trimCB.isChecked():
+                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+            else:
+                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(last_index, "Date")
+        except:
+            pass
+
+    def cwt_cf(self):
+        files_at_page = self.get_files_at_page()
+        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        diff = end_time - start_time
+        for index, file_path in enumerate(files_at_page):
+            tr = self.st[index]
+            cw = ConvolveWaveletScipy(file_path)
+            if self.trimCB.isChecked() and diff >= 0:
+                cw.setup_wavelet(start_time, end_time, wmin=6, wmax=6, tt=10, fmin=0.5, fmax=23, nf=40, use_rfft=False,
+                                 decimate=False)
+            else:
+                cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.5, fmax=23, nf=40, use_rfft=False,
+                                 decimate=False)
+
+            #delay = cw.get_time_delay()
+            f = np.logspace(np.log10(0.5), np.log10(25))
+            k = 6 / (2 * np.pi * f) #one standar deviation
+            delay = np.mean(k)
+            start=tr.stats.starttime+delay
+            tr.stats.starttime=start
+            t = tr.times("matplotlib")
+            cf = cw.cf_lowpass()
+            # Normalize
+            cf = cf / max(cf)
+            t=t[0:len(cf)]
+            #self.canvas.plot(t, cf, index, is_twinx=True, color="red",linewidth=0.5)
+            #self.canvas.set_ylabel_twinx(index, "CWT (CF)")
+            ax = self.canvas.get_axe(index)
+            ax2 = ax.twinx()
+            ax2.plot(t, cf, color="red", linewidth=0.5)
+            ax2.set_ylim(-1.05, 1.05)
+            last_index = index
+        ax = self.canvas.get_axe(last_index)
+        try:
+            if self.trimCB.isChecked():
+                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+            else:
+                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(last_index, "Date")
+        except:
+            pass
+
+    def envelope(self):
+        files_at_page = self.get_files_at_page()
+        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        diff = end_time - start_time
+        for index, file_path in enumerate(files_at_page):
+            tr = self.st[index]
+            t = tr.times("matplotlib")
+            cf = envelope(tr.data,tr.stats.sampling_rate)
+            self.canvas.plot(t, cf, index, clear_plot=False, color="blue", linewidth=0.5)
+            last_index = index
+
+        ax = self.canvas.get_axe(last_index)
+        try:
+            if self.trimCB.isChecked():
+                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+            else:
+                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(last_index, "Date")
+        except:
+            pass
+
+    def write_files_page(self):
+        import os
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        if self.st:
+            n = len(self.st)
+            for j in range(n):
+                tr = self.st[j]
+                t1 = tr.stats.starttime
+                id = tr.id+".."+"D"+"."+str(t1.year)+"."+str(t1.julday)
+                print(tr.id, "Writing data processed")
+                path_output = os.path.join(dir_path, id)
+                tr.write(path_output, format="MSEED")
+
 
     def plot_map_stations(self):
 
@@ -346,9 +545,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.map_stations = StationsMap(map_dict)
         self.map_stations.plot_stations_map()
-
-
-
 
     def redraw_pickers(self, file_name, axe_index):
 

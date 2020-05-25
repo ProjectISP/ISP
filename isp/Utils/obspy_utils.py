@@ -1,3 +1,4 @@
+import math
 import os
 from enum import unique, Enum
 from typing import List
@@ -6,6 +7,7 @@ import numpy as np
 from obspy import Stream, read, Trace, UTCDateTime, read_events
 # noinspection PyProtectedMember
 from obspy.core.event import Origin
+from obspy.geodetics import gps2dist_azimuth
 from obspy.io.mseed.core import _is_mseed
 from obspy.io.xseed.parser import Parser
 
@@ -64,6 +66,58 @@ class ObspyUtil:
         tr = st[0]
         stats = TracerStats.from_dict(tr.stats)
         return stats
+
+    @staticmethod
+    def get_stats_from_trace(tr: Trace):
+
+        """
+        Reads only the header for the metadata and return a :class:`TracerStats`.
+
+        :param ftrace: obspy trace.
+        :return: A Dictionary with TracerStats contain the metadata.
+
+        """
+        net = tr.stats.network
+        station = tr.stats.station
+        location = tr.stats.location
+        channel = tr.stats.channel
+        starttime = tr.stats.starttime
+        endtime = tr.stats.endtime
+        stats =  {'net': net, 'station': station, 'location':location, 'channel':channel, 'starttime':starttime,
+                  'endtime':endtime}
+        return stats
+
+    @staticmethod
+    def get_stations_from_stream(st: Stream):
+
+        stations = []
+
+        for tr in st:
+            station = tr.stats.station
+            if stations.count(station):
+                pass
+            else:
+                stations.append(station)
+
+        return stations
+
+
+    @staticmethod
+    def coords2azbazinc(station_latitude, station_longitude,station_elevation, origin_latitude,
+                        origin_longitude, origin_depth):
+
+        """
+        Returns azimuth, backazimuth and incidence angle from station coordinates
+        given in first trace of stream and from event location specified in origin
+        dictionary.
+        """
+
+        dist, bazim, azim = gps2dist_azimuth(station_latitude, station_longitude, float(origin_latitude),
+                                             float(origin_longitude))
+        elev_diff = station_elevation - float(origin_depth)
+        inci = math.atan2(dist, elev_diff) * 180.0 / math.pi
+
+        return azim, bazim, inci
 
     @staticmethod
     def filter_trace(trace, trace_filter, f_min, f_max, **kwargs):
