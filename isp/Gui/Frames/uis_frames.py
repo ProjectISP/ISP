@@ -25,5 +25,5 @@ UiCrustalModelParametersFrame = load_ui_designers("CrustalModelParametersFrame.u
 UiReceiverFunctions = load_ui_designers("ReceiverFunctionsFrame.ui")
 UiReceiverFunctionsCut = load_ui_designers("RfDialogsCutEqs.ui")
 UiTimeFrequencyWidget = load_ui_designers("TimeFrequencyAddWidget.ui")
-
+UiEventLocationFrame = load_ui_designers("EventLocationFrame.ui")
 
