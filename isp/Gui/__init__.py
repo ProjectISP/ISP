@@ -25,7 +25,7 @@ def get_settings_file():
     return user_preferences.fileName()
 
 
-if __name__ == '__main__':
+def start_isp():
     import sys
     from isp.Gui.StyleLib import set_isp_mpl_style_file
     from isp import app_logger
@@ -39,4 +39,7 @@ if __name__ == '__main__':
     app_logger.info("ISP GUI Started")
     app_logger.info("User preferences is at: {}".format(get_settings_file()))
     sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    start_isp()
 

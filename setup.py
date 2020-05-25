@@ -72,16 +72,31 @@ def extract_focmec():
         print(error)
     return extract_at
 
+def extract_mti():
+    extract_at = os.path.join(ROOT_DIR, "mti")
+    try:
+        if not os.path.isdir(extract_at):
+            os.mkdir(extract_at)
+        else:
+            shutil.rmtree(extract_at)
+            os.mkdir(extract_at)
+        shutil.unpack_archive("mti.tar.gz", extract_at)
+    except IOError as error:
+        print(error)
+    return extract_at
+
 
 class CustomBuildExtCommand(build_ext):
     def run(self):
         print("Extracting files.")
-        nll_dir = extract_nll()
-        focmec_dir = extract_focmec()
+        #nll_dir = extract_nll()
+        #focmec_dir = extract_focmec()
+        mti_dir = extract_mti()
         print("Finished ")
 
-        self.make_nll(nll_dir)
-        self.make_focmec(focmec_dir)
+        #self.make_nll(nll_dir)
+        #self.make_focmec(focmec_dir)
+        self.make_mti(mti_dir)
 
         # run build
         build_ext.run(self)
@@ -111,12 +126,24 @@ class CustomBuildExtCommand(build_ext):
         except sb.SubprocessError:  # some warnings nothing so bad.
             print("FOCMEC successfully installed")
 
+    def make_mti(self, mti_dir):
+        src_path = os.path.join(mti_dir, "green")
+        command = "sh compile_mti.sh"
+        try:
+            exc_cmd(command, cwd=src_path, shell=True)
+            print("MTI successfully installed")
+        except sb.CalledProcessError as e:  # this is a bad error.
+            print("Error on trying to run MTI make file.")
+            print(e)
+        except sb.SubprocessError:  # some warnings nothing so bad.
+            print("MTI successfully installed")
+
 
 setup(
     cmdclass={
         'build_ext': CustomBuildExtCommand,
     },
-    ext_modules=cythonize(os.path.join(cy_path, 'ccwt_cy.pyx')),
-    include_dirs=[numpy.get_include()],
-    ext_package='isp.c_lib'
+    #ext_modules=cythonize(os.path.join(cy_path, 'ccwt_cy.pyx')),
+    #include_dirs=[numpy.get_include()],
+    #ext_package='isp.c_lib'
 )
