@@ -55,148 +55,6 @@
               </sizepolicy>
              </property>
              <layout class="QGridLayout" name="gridLayout_4">
-              <item row="2" column="3">
-               <widget class="QDateTimeEdit" name="dateTimeEdit_1">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>30</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
-                </property>
-                <property name="currentSection">
-                 <enum>QDateTimeEdit::YearSection</enum>
-                </property>
-                <property name="displayFormat">
-                 <string>yyyy/M/d h:mm:ss UTC</string>
-                </property>
-                <property name="calendarPopup">
-                 <bool>true</bool>
-                </property>
-                <property name="timeSpec">
-                 <enum>Qt::LocalTime</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="2" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label">
-                <property name="text">
-                 <string>Start Time</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="4" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_4">
-                <property name="text">
-                 <string>Net</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QPushButton" name="selectDirBtn">
-                <property name="text">
-                 <string>files</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="5" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_5">
-                <property name="text">
-                 <string>Station</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="6" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string>Channel</string>
-                </property>
-               </widget>
-              </item>
-              <item row="5" column="0">
-               <widget class="QPushButton" name="locateBtn">
-                <property name="text">
-                 <string>Locate</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0">
-               <widget class="QPushButton" name="selectDatalessDirBtn">
-                <property name="text">
-                 <string>dataless</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="1">
-               <widget class="QLineEdit" name="datalessPathForm">
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="3">
-               <widget class="QDateTimeEdit" name="dateTimeEdit_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>30</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
-                </property>
-                <property name="currentSection">
-                 <enum>QDateTimeEdit::YearSection</enum>
-                </property>
-                <property name="displayFormat">
-                 <string>yyyy/M/d h:mm:ss UTC</string>
-                </property>
-                <property name="calendarPopup">
-                 <bool>true</bool>
-                </property>
-                <property name="timeSpec">
-                 <enum>Qt::LocalTime</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="5">
-               <widget class="QLineEdit" name="stationForm"/>
-              </item>
-              <item row="3" column="6">
-               <widget class="QLineEdit" name="channelForm"/>
-              </item>
-              <item row="3" column="2" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_2">
-                <property name="text">
-                 <string>End Time</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="4">
-               <widget class="QLineEdit" name="netForm"/>
-              </item>
-              <item row="2" column="7">
-               <widget class="QCheckBox" name="selectCB">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="text">
-                 <string>Select Files</string>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="7">
-               <widget class="QCheckBox" name="trimCB">
-                <property name="text">
-                 <string>Trim Time</string>
-                </property>
-               </widget>
-              </item>
               <item row="5" column="6">
                <widget class="QComboBox" name="comboBox_sort">
                 <property name="minimumSize">
@@ -313,6 +171,172 @@
                 <property name="checkable">
                  <bool>true</bool>
                 </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QPushButton" name="selectDirBtn">
+                <property name="text">
+                 <string>files</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="4" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Net</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>Start Time</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QDateTimeEdit" name="dateTimeEdit_1">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
+                </property>
+                <property name="currentSection">
+                 <enum>QDateTimeEdit::YearSection</enum>
+                </property>
+                <property name="displayFormat">
+                 <string>yyyy/M/d h:mm:ss UTC</string>
+                </property>
+                <property name="calendarPopup">
+                 <bool>true</bool>
+                </property>
+                <property name="timeSpec">
+                 <enum>Qt::LocalTime</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="5" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_5">
+                <property name="text">
+                 <string>Station</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QPushButton" name="selectDatalessDirBtn">
+                <property name="text">
+                 <string>dataless</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="6" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>Channel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QPushButton" name="locateBtn">
+                <property name="text">
+                 <string>Locate</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="3">
+               <widget class="QDateTimeEdit" name="dateTimeEdit_2">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
+                </property>
+                <property name="currentSection">
+                 <enum>QDateTimeEdit::YearSection</enum>
+                </property>
+                <property name="displayFormat">
+                 <string>yyyy/M/d h:mm:ss UTC</string>
+                </property>
+                <property name="calendarPopup">
+                 <bool>true</bool>
+                </property>
+                <property name="timeSpec">
+                 <enum>Qt::LocalTime</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QLineEdit" name="datalessPathForm">
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="5">
+               <widget class="QLineEdit" name="stationForm"/>
+              </item>
+              <item row="3" column="6">
+               <widget class="QLineEdit" name="channelForm"/>
+              </item>
+              <item row="3" column="2" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>End Time</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="7">
+               <widget class="QCheckBox" name="selectCB">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>Select Files</string>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="4">
+               <widget class="QLineEdit" name="netForm"/>
+              </item>
+              <item row="3" column="7">
+               <widget class="QCheckBox" name="trimCB">
+                <property name="text">
+                 <string>Trim Time</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="8">
+               <widget class="QComboBox" name="ChopCB">
+                <item>
+                 <property name="text">
+                  <string>Body waves</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Surf Waves</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Coda</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Noise</string>
+                 </property>
+                </item>
                </widget>
               </item>
              </layout>

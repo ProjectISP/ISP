@@ -37,7 +37,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.__dataless_manager = None
         self.__metadata_manager = None
         self.st = None
-        self.chop = {}
+        self.chop = {'Body waves':{}, 'Surf Waves':{}, 'Coda':{}, 'Noise':{}}
+        self.color={'Body waves':'orangered','Surf Waves':'blue','Coda':'grey','Noise':'green'}
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
@@ -349,7 +350,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             for k in range(len(stations)):
                 st1 = self.st.copy()
-                print("Computing", stations[k])
+                #print("Computing", stations[k])
                 st2 = st1.select(station=stations[k])
                 try:
                     maxstart = np.max([tr.stats.starttime for tr in st2])
@@ -381,19 +382,22 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     if tr.stats.channel[2] == "T":
                         id_old = st_stats['net'] + "." + st_stats['station'] + "." + st_stats['location'] + "." \
                          + st_stats['channel'][0:2]+"E"
-                        if self.chop:
-                            try:
-                                self.chop[id_new] = self.chop.pop(id_old)
-                            except:
-                                pass
+                        try:
+                            for key , value in self.chop.items():
+                                if id_new in self.chop[key]:
+                                    self.chop[key][id_new] = self.chop[key].pop(id_old)
+                        except:
+                            pass
+
                     if tr.stats.channel[2] == "R":
                         id_old = st_stats['net'] + "." + st_stats['station'] + "." + st_stats['location'] + "." \
                          + st_stats['channel'][0:2]+"N"
-                        if self.chop:
-                            try:
-                                self.chop[id_new] = self.chop.pop(id_old)
-                            except:
-                                pass
+                        try:
+                            for key , value in self.chop.items():
+                                if id_new in self.chop[key]:
+                                    self.chop[key][id_new] = self.chop[key].pop(id_old)
+                        except:
+                            pass
                     self.canvas.plot_date(t, s, index, color="steelblue", fmt='-', linewidth=0.5)
                     info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
                     self.canvas.set_plot_label(index, info)
@@ -447,7 +451,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             t = t[0:len(cf)]
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
-            ax2.plot(t, cf,color="green", linewidth=0.5)
+            ax2.plot(t, cf,color="grey", linewidth=0.5, alpha = 0.5)
             ax2.set_ylim(-1.05, 1.05)
             last_index = index
         ax = self.canvas.get_axe(last_index)
@@ -511,12 +515,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         files_at_page = self.get_files_at_page()
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-        diff = end_time - start_time
         for index, file_path in enumerate(files_at_page):
             tr = self.st[index]
             t = tr.times("matplotlib")
             cf = envelope(tr.data,tr.stats.sampling_rate)
-            self.canvas.plot(t, cf, index, clear_plot=False, color="blue", linewidth=0.5)
+            self.canvas.plot(t, cf, index, clear_plot=False, color="blue", linewidth=0.5, alpha = 0.5)
             last_index = index
 
         ax = self.canvas.get_axe(last_index)
@@ -580,18 +583,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.picked_at.pop(key)
                 self.picked_at[str(new_line)] = ps
 
-
     def redraw_chop(self, tr, s, ax_index):
-        #chop = {key: values for key, values in self.chop.items()}
-        new_id = tr.id
-        for key, value in self.chop.items():
-            if  key == new_id:
-                t = self.chop[tr.id][1]
-                xmin_index = self.chop[tr.id][3]
-                xmax_index = self.chop[tr.id][4]
+       self.kind_wave = self.ChopCB.currentText()
+       for key, value in self.chop.items():
+           if tr.id in self.chop[key]:
+                t = self.chop[key][tr.id][1]
+                xmin_index = self.chop[key][tr.id][3]
+                xmax_index = self.chop[key][tr.id][4]
                 data = s[xmin_index:xmax_index]
-                self.chop[tr.id][2] = data
-                self.canvas.plot_date(t, data, ax_index, clear_plot=False, color='orangered', fmt='-', linewidth=0.5)
+                self.chop[key][tr.id][2] = data
+                self.canvas.plot_date(t, data, ax_index, clear_plot=False, color=self.color[key],
+                                 fmt='-', linewidth=0.5)
 
     def on_click_matplotlib(self, event, canvas):
         if isinstance(canvas, MatplotlibCanvas):
@@ -660,12 +662,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self._stations_info.show()
 
     def on_select(self, ax_index, xmin, xmax):
-        #files_at_page = self.get_files_at_page()
-        #file = files_at_page[ax_index]
-        #st = SeismogramDataAdvanced(file)
-        #metadata = [st.stats.Network, st.stats.Station, st.stats.Location, st.stats.Channel, st.stats.StartTime,
-        #           st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
-
+        self.kind_wave = self.ChopCB.currentText()
         tr = self.st[ax_index]
         t = self.st[ax_index].times("matplotlib")
         y = self.st[ax_index].data
@@ -673,18 +670,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         metadata = [dic_metadata['net'], dic_metadata['station'], dic_metadata['location'], dic_metadata['channel'],
                     dic_metadata['starttime'],dic_metadata['endtime'],dic_metadata['sampling_rate'],
                     dic_metadata['npts']]
-        #identify metadata with ax
         id = tr.id
-
         self.canvas.plot_date(t, y, ax_index, clear_plot=False, color="black", fmt='-', linewidth=0.5)
         xmin_index = np.max(np.where(t <= xmin))
         xmax_index = np.min(np.where(t >= xmax))
         t = t[xmin_index:xmax_index]
         s = y[xmin_index:xmax_index]
-        self.canvas.plot_date(t, s, ax_index, clear_plot=False, color = 'orangered', fmt='-', linewidth=0.5)
-        #ax.fill_between(t, 0, y, where=(t >= xmin) & (t < xmax), color="red", edgecolor="red", alpha=0.3)
-        self.chop[id] = [metadata, t, s, xmin_index, xmax_index]
-
+        self.canvas.plot_date(t, s, ax_index, clear_plot=False, color = self.color[self.kind_wave], fmt='-', linewidth=0.5)
+        id = {id: [metadata, t, s, xmin_index, xmax_index]}
+        self.chop[self.kind_wave].update(id)
 
 
     def enter_axes(self, event):
@@ -692,14 +686,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def find_chop_by_ax(self, ax):
-        #files_at_page = self.get_files_at_page()
-        #file = files_at_page[ax]
-        #st_stats = ObspyUtil.get_stats(file)
-        #id = st_stats.Network+"."+st_stats.Station+"."+st_stats.Location+"."+st_stats.Channel
         id = self.st[ax].id
-        for key, value in self.chop.items():
-            if key == id:
-                identified_chop = self.chop[id]
+        for key, value in self.chop[self.kind_wave].items():
+            if id in self.chop[self.kind_wave]:
+                identified_chop = self.chop[self.kind_wave][id]
             else:
                 pass
         return identified_chop, id
@@ -709,30 +699,32 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if self.st:
             try:
                 n = len(self.st)
+                self.kind_wave = self.ChopCB.currentText()
                 for j in range(n):
                     tr = self.st[j]
-                    stats = ObspyUtil.get_stats_from_trace(tr)
-                    id = stats['net']+"."+stats['station']+"."+stats['location']+"."+stats['channel']
-                    self.chop.pop(id)
-                    data = tr.data
-                    t = tr.times("matplotlib")
-                    self.canvas.plot_date(t, data, j, clear_plot=False, color='black', fmt='-', linewidth=0.5)
+                    if tr.id in self.chop[self.kind_wave]:
+                        self.chop[self.kind_wave].pop(tr.id)
+                        data = tr.data
+                        t = tr.times("matplotlib")
+                        self.canvas.plot_date(t, data, j, clear_plot=False, color='black', fmt='-', linewidth=0.5)
+                        self.redraw_chop(tr, data, j)
             except Exception:
                 raise Exception('Nothing to clean')
 
     def key_pressed(self, event):
 
         if event.key == 'd':
+           self.kind_wave = self.ChopCB.currentText()
            [identified_chop, id] = self.find_chop_by_ax(self.ax_num)
-           self.chop.pop(id)
+           self.chop[self.kind_wave].pop(id)
            tr = self.st[self.ax_num]
            data = tr.data
            t = tr.times("matplotlib")
            self.canvas.plot_date(t, data, self.ax_num, clear_plot=False, color='black', fmt='-', linewidth=0.5)
-
+           self.redraw_chop(tr, data, self.ax_num)
 
         if event.key == 'a':
-
+            self.kind_wave = self.ChopCB.currentText()
             [identified_chop, id]= self.find_chop_by_ax(self.ax_num)
             data = identified_chop[2]
             delta = 1 / identified_chop[0][6]
@@ -741,9 +733,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.spectrum.plot_spectrum(freq, spec, jackknife_errors)
 
         if event.key == 's':
+            self.kind_wave = self.ChopCB.currentText()
             id = ""
             self.spectrum = PlotToolsManager(id)
-            self.spectrum.plot_spectrum_all(self.chop.items())
+            self.spectrum.plot_spectrum_all(self.chop[self.kind_wave].items())
 
 
         if event.key == 'z':
