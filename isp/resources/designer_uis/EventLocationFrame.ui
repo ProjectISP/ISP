@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1246</width>
-    <height>602</height>
+    <height>588</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -123,6 +123,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="displayFormat">
+         <string>dd/MM/yyyy HH:mm:ss</string>
+        </property>
        </widget>
       </item>
       <item row="9" column="1">
@@ -132,6 +135,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="displayFormat">
+         <string>dd/MM/yyyy HH:mm:ss</string>
         </property>
        </widget>
       </item>
@@ -220,7 +226,10 @@
          </sizepolicy>
         </property>
         <property name="decimals">
-         <number>4</number>
+         <number>8</number>
+        </property>
+        <property name="minimum">
+         <double>-9999999999999.000000000000000</double>
         </property>
         <property name="maximum">
          <double>9999999999999.000000000000000</double>
@@ -239,10 +248,16 @@
          <string notr="true"/>
         </property>
         <property name="decimals">
-         <number>4</number>
+         <number>8</number>
+        </property>
+        <property name="minimum">
+         <double>-9999999999999.000000000000000</double>
         </property>
         <property name="maximum">
          <double>9999999999999.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -266,10 +281,17 @@
         </property>
        </widget>
       </item>
+      <item row="11" column="0" colspan="2">
+       <widget class="QPushButton" name="btnShowAll">
+        <property name="text">
+         <string>Show All</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="2,1">
       <item>
        <widget class="QWidget" name="widget" native="true">
         <property name="sizePolicy">
@@ -287,19 +309,6 @@
         <property name="styleSheet">
          <string notr="true"/>
         </property>
-        <widget class="QLabel" name="label">
-         <property name="geometry">
-          <rect>
-           <x>220</x>
-           <y>20</y>
-           <width>55</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>MAP</string>
-         </property>
-        </widget>
        </widget>
       </item>
       <item>

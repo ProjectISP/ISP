@@ -29,19 +29,23 @@ class SQLAlchemyModel(pyc.QAbstractTableModel):
 
         self._filter = ()
         self._rows = []
+        self._deleted_rows = []
 
-        self.refresh()
+        self.revertAll()
 
 
-    def rowCount(self, parent = pyc.QModelIndex()):
+    def rowCount(self, parent=pyc.QModelIndex()):
         return 0 if isinstance(parent, pyc.QModelIndex) and parent.isValid() else len(self._rows)
 
-    def columnCount(self, parent = pyc.QModelIndex()):
+    def columnCount(self, parent=pyc.QModelIndex()):
         return 0 if isinstance(parent, pyc.QModelIndex) and parent.isValid() else len(self._columns) 
 
     def data(self, index: pyc.QModelIndex, role: int=qt.DisplayRole):
-        if ((role not in [qt.DisplayRole, qt.EditRole]) or 
-        (index.column() not in range(len(self._columns))) or (index.row() not in range(len(self._rows)))):
+        # If role or index are not in correct ranges, return None
+        check_role = role not in [qt.DisplayRole, qt.EditRole]
+        check_col = index.column() not in range(len(self._columns))
+        check_row = index.row() not in range(len(self._rows))
+        if check_role or check_col or check_row:
             return None
 
         row = self._rows[index.row()]
@@ -50,23 +54,47 @@ class SQLAlchemyModel(pyc.QAbstractTableModel):
             ret = pyc.QDateTime(ret)
         return ret
 
-    def headerData(self, section: int, orientation: qt.Orientation = qt.Horizontal, role: int = qt.DisplayRole):
+    def headerData(self, section: int, orientation: qt.Orientation=qt.Horizontal, role: int=qt.DisplayRole):
         if (orientation != qt.Horizontal) or (role != qt.DisplayRole) or (section not in range(len(self._columns))):
             return None
 
         return self._col_names[section]
 
-    def setFilter(self, *filter):
-        self._filter = filter
-        self.refresh()
+    # TODO: Maybe this should be in a proxy model
+    def removeRows(self, row, count, parent=pyc.QModelIndex()) :
+        if (row + count) > len(self._rows):
+            return False
 
-    def refresh(self):
+        self.beginRemoveRows(pyc.QModelIndex(), row, row + count - 1)
+        self._deleted_rows = [*self._deleted_rows, *self._rows[row:row + count]]
+        del self._rows[row:row + count]
+        self.endRemoveRows()
+        return True
+
+    # TODO: delete does not return anything, so it cannot be checked if submit
+    # is OK
+    def submitAll(self):
+        for row in self._deleted_rows:
+            row.delete()
+
+        self._deleted_rows = []
+        return True
+
+    def revertAll(self):
         self.layoutAboutToBeChanged.emit()
+        self._deleted_rows = []
         if self._filter:
             self._rows = self._model.query.filter(*self._filter).all()
         else:
             self._rows = self._model.query.all()
 
         self.layoutChanged.emit()
+
+    def setFilter(self, *filter):
+        self._filter = filter
+
+
+    def getRows(self):
+        return self._rows
 
     # TODO: setData, flags, setHeaderData for editable model

@@ -95,6 +95,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'),self)
         self.shortcut_open.activated.connect(self.clean_chop_at_page)
 
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+P'),self)
+        self.shortcut_open.activated.connect(self.comboBox_phases.showPopup)
+
     def open_parameters_settings(self):
         self.parameters.show()
 

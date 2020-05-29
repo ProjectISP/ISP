@@ -10,12 +10,12 @@ from isp.Gui.Models.sql_alchemy_model import SQLAlchemyModel
 from isp.db.models import EventLocationModel
 
 from sqlalchemy.sql.sqltypes import DateTime
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from isp.Utils import ObspyUtil
 from obspy.core.event import Origin
 
-class EventColumn (enum.Enum):
+class EventColumn(enum.Enum):
 
     TIME = 0
     TRANSFORMATION = 1
@@ -32,7 +32,7 @@ class MinMaxValidator(pyc.QObject):
 
     validChanged = pyc.pyqtSignal(bool)
 
-    def __init__(self, min, max, signal = 'valueChanged', value = 'value', parent = None):
+    def __init__(self, min, max, signal='valueChanged', value='value', parent=None):
         super().__init__(parent)
 
         if not isinstance(min, pw.QWidget) or not isinstance(max, pw.QWidget):
@@ -41,7 +41,7 @@ class MinMaxValidator(pyc.QObject):
         if not hasattr(min, signal) or not hasattr(max, signal):
             raise AttributeError(f'min and max have no {signal} signal')
 
-        def has_method (c, m): 
+        def has_method(c, m): 
             return hasattr(c,m) and callable(getattr(c,m))
 
         if not has_method(min, value) or not has_method(max, value):
@@ -95,12 +95,15 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.setupUi(self)
         self.setWindowTitle('Events Location')
 
-        self.refreshLimits()
-
         columns = ['origin_time', 'transformation', 'rms', 'latitude', 'longitude', 'depth', 'uncertainty']
         col_names = ['Origin Time', 'Transformation', 'RMS', 'Latitude', 'Longitude', 'Depth', 'Uncertainty']
         model = SQLAlchemyModel(EventLocationModel, columns, col_names, self)
         self.tableView.setModel(model)
+        self.tableView.setSelectionBehavior(pw.QAbstractItemView.SelectRows)
+        self.tableView.setContextMenuPolicy(qt.ActionsContextMenu)
+        remove_action = pw.QAction("Remove selected location(s)", self)
+        remove_action.triggered.connect(self._onRemoveRowsTriggered)
+        self.tableView.addAction(remove_action)
 
         valLat = MinMaxValidator(self.minLat, self.maxLat)
         valLon = MinMaxValidator(self.minLon, self.maxLon)
@@ -113,11 +116,12 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         
         self.actionRead_hyp_folder.triggered.connect(self._readHypFolder)
         self.btnRefreshQuery.clicked.connect(self._refreshQuery)
+        self.btnShowAll.clicked.connect(self._showAll)
 
     def refreshLimits(self):
-        events = EventLocationModel.get_all()
+        events = self.tableView.model().getRows()
 
-        if events is not None:
+        if events :
             max_lat = -math.inf
             min_lat = math.inf
             max_lon = -math.inf
@@ -137,17 +141,26 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
                 if event.origin_time < min_orig : min_orig = event.origin_time
                 if event.origin_time > max_orig : max_orig = event.origin_time
 
-            self.maxLat.setValue(max_lat)
-            self.minLat.setValue(min_lat)
-            self.maxLon.setValue(max_lon)
-            self.minLon.setValue(min_lon)
-            self.maxDepth.setValue(max_dep)
-            self.minDepth.setValue(min_dep)
+            self.maxLat.setValue(math.ceil(max_lat))
+            self.minLat.setValue(math.floor(min_lat))
+            self.maxLon.setValue(math.ceil(max_lon))
+            self.minLon.setValue(math.floor(min_lon))
+            self.maxDepth.setValue(math.ceil(max_dep))
+            # TODO: depth can be negative?  fix ui limit
+            self.minDepth.setValue(math.floor(min_dep))
             # TODO magnitude
             #self.maxMag.setValue(max_mag)
             #self.minMag.setValue(min_mag)
-            self.maxOrig.setDateTime(max_orig)
-            self.minOrig.setDateTime(min_orig)
+            self.maxOrig.setDateTime(max_orig + timedelta(seconds=1))
+            self.minOrig.setDateTime(min_orig - timedelta(seconds=1))
+
+    def _onRemoveRowsTriggered(self):
+        selected_rowindexes = self.tableView.selectionModel().selectedRows()
+        selected_rows = [r.row() for r in selected_rowindexes]
+        for r in sorted(selected_rows, reverse=True):
+            print(self.tableView.model().removeRow(r))
+
+        self.tableView.model().submitAll()
 
     def _checkQueryParameters(self):
         self.btnRefreshQuery.setEnabled(all(v.valid for v in self._validators))
@@ -158,7 +171,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         for file in files:
             file_abs = os.path.abspath(os.path.join(dir, file))
             try:
-                origin: Origin = ObspyUtil.reads_hyp_to_origin(file_abs)
+                origin : Origin = ObspyUtil.reads_hyp_to_origin(file_abs)
                 try:
                     event_model = EventLocationModel.create_from_origin(origin)
                     event_model.save()
@@ -168,8 +181,9 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
             except :
                 print(f'File {file} could not be processed correctly')
 
+        # TODO: show all after reading folder or let filters?
+        self._showAll()
         self.refreshLimits()
-        self.tableView.model().refresh()
 
     def _refreshQuery(self):
         lat = EventLocationModel.latitude.between(self.minLat.value(), self.maxLat.value())
@@ -180,4 +194,9 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         maxOrig = self.maxOrig.dateTime().toPyDateTime()
         time = EventLocationModel.origin_time.between(minOrig, maxOrig)
         self.tableView.model().setFilter(lat, lon, depth, time)
+        self.tableView.model().revertAll()
+
+    def _showAll(self):
+        self.tableView.model().setFilter()
+        self.tableView.model().revertAll()
 

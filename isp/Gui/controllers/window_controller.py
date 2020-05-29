@@ -62,6 +62,8 @@ class Controller:
     def open_project(self):
         if not self.project_frame:
             self.project_frame = EventLocationFrame()
+        if not self.project_frame.isVisible() :
+            self.project_frame.refreshLimits()
         self.project_frame.show()
 
 
