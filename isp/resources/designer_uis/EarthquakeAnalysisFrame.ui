@@ -562,6 +562,7 @@
     <addaction name="actionGet_Stations_Info"/>
     <addaction name="actionSet_Parameters"/>
     <addaction name="actionClean_selection"/>
+    <addaction name="actionOpen_Magnitudes_Calculator"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -725,6 +726,11 @@
   <action name="actionClean_selection">
    <property name="text">
     <string>Clean selection</string>
+   </property>
+  </action>
+  <action name="actionOpen_Magnitudes_Calculator">
+   <property name="text">
+    <string>Open Magnitudes Calculator</string>
    </property>
   </action>
  </widget>

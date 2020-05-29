@@ -9,6 +9,7 @@ from isp.Gui import pw,pqg
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, EventInfoBox, \
     MatplotlibCanvas
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
+from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils import map_polarity_from_pressed_key
@@ -18,7 +19,6 @@ from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager
 import numpy as np
 import matplotlib.pyplot as plt
-
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope
 
@@ -80,6 +80,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionArray_Anlysis.triggered.connect(self.open_array_analysis)
         self.actionMoment_Tensor_Inversion.triggered.connect(self.open_moment_tensor)
         self.actionTime_Frequency_Analysis.triggered.connect(self.time_frequency_analysis)
+        self.actionOpen_Magnitudes_Calculator.triggered.connect(self.open_magnitudes_calculator)
         self.actionSTA_LTA.triggered.connect(self.run_STA_LTA)
         self.actionCWT_CF.triggered.connect(self.cwt_cf)
         self.actionEnvelope.triggered.connect(self.envelope)
@@ -475,15 +476,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             tr = self.st[index]
             cw = ConvolveWaveletScipy(file_path)
             if self.trimCB.isChecked() and diff >= 0:
-                cw.setup_wavelet(start_time, end_time, wmin=6, wmax=6, tt=10, fmin=0.5, fmax=23, nf=40, use_rfft=False,
+                cw.setup_wavelet(start_time, end_time, wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
                                  decimate=False)
             else:
-                cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.5, fmax=23, nf=40, use_rfft=False,
+                cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
                                  decimate=False)
 
-            #delay = cw.get_time_delay()
-            f = np.logspace(np.log10(0.5), np.log10(25))
-            k = 6 / (2 * np.pi * f) #one standar deviation
+            # delay = cw.get_time_delay()
+            f = np.logspace(np.log10(0.2), np.log10(10))
+            k =6 / (2 * np.pi * f) #one standar deviation
             delay = np.mean(k)
             start=tr.stats.starttime+delay
             tr.stats.starttime=start
@@ -800,6 +801,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
             ax.xaxis.set_major_formatter(formatter)
             self.nums_clicks = self.nums_clicks+1
+
+    def open_magnitudes_calculator(self):
+        self._magnitude_calc = MagnitudeCalc()
+        self._magnitude_calc.show()
 
     def open_array_analysis(self):
         self.controller().open_array_window()
