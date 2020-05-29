@@ -1,4 +1,5 @@
 from obspy import Stream, UTCDateTime
+from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
@@ -272,7 +273,8 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
                 print("Couldn't load url")
 
-            path = '/Users/robertocabieces/Documents/ISPshare/isp/mti/output/index.html'
+            
+            path = os.path.join(ROOT_DIR,'mti/output/index.html')
 
             url = pyc.QUrl.fromLocalFile(path)
             self.widget.load(url)
