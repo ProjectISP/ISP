@@ -117,6 +117,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.actionRead_hyp_folder.triggered.connect(self._readHypFolder)
         self.btnRefreshQuery.clicked.connect(self._refreshQuery)
         self.btnShowAll.clicked.connect(self._showAll)
+        self.PlotMapBtn.clicked.connect(self.plot_map)
 
     def refreshLimits(self):
         events = self.tableView.model().getRows()
@@ -200,3 +201,10 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.tableView.model().setFilter()
         self.tableView.model().revertAll()
 
+    def plot_map(self):
+        events = self.tableView.model().getRows()
+        lat = []
+        lon = []
+        for j in events:
+            lat.append(j.latitude)
+            lon.append(j.longitude)

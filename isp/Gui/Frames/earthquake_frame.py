@@ -806,7 +806,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.nums_clicks = self.nums_clicks+1
 
     def open_magnitudes_calculator(self):
-        self._magnitude_calc = MagnitudeCalc()
+        origin = self.nll_manager.get_NLL_info()
+        self._magnitude_calc = MagnitudeCalc(origin, self.inventory, self.chop)
         self._magnitude_calc.show()
 
     def open_array_analysis(self):
