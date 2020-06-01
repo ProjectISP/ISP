@@ -146,7 +146,7 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             label_water_level = pw.QLabel("Water level")
             label_units = pw.QLabel("deconvolve to")
             combo_param = pw.QComboBox()
-            combo_param.addItems(["DISP", "VEL", "ACC"])
+            combo_param.addItems(["DISP", "VEL", "ACC", "Wood Anderson"])
 
             freq_minDB1 = pw.QDoubleSpinBox()
             freq_minDB1.setMinimum(0)

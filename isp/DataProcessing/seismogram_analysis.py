@@ -171,10 +171,26 @@ class SeismogramDataAdvanced:
                 units = parameters[j][6]
                 pre_filt = (f1, f2, f3, f4)
 
-                if inventory:
-                    print("Deconvolving")
+                if inventory and units != "Wood Anderson":
+                    #print("Deconvolving")
                     try:
                         tr.remove_response(inventory=inventory, pre_filt=pre_filt, output=units, water_level=water_level)
+                    except:
+                        print("Coudn't deconvolve", tr.stats)
+                        tr.data = np.array([])
+
+                elif inventory and units == "Wood Anderson":
+                    #print("Simulating Wood Anderson Seismograph")
+                    resp = inventory.get_response(tr.id, tr.stats.starttime)
+                    resp = resp.response_stages[0]
+                    paz_wa = {'sensitivity': 2800, 'zeros': [0j], 'gain': 1,
+                              'poles': [-6.2832 - 4.7124j, -6.2832 + 4.7124j]}
+
+                    paz_mine = {'sensitivity': resp.stage_gain * resp.normalization_factor, 'zeros': resp.zeros,
+                                'gain': resp.stage_gain, 'poles': resp.poles}
+
+                    try:
+                        tr.simulate(paz_remove=paz_mine, paz_simulate=paz_wa, water_level=water_level)
                     except:
                         print("Coudn't deconvolve", tr.stats)
                         tr.data = np.array([])

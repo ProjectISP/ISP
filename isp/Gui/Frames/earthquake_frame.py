@@ -1,5 +1,6 @@
 import matplotlib.dates as mdt
 from obspy import UTCDateTime, Stream
+from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -18,6 +19,8 @@ from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.earthquakeAnalisysis import PickerManager
 import numpy as np
+import os
+from isp import ROOT_DIR
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope
@@ -91,10 +94,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.parameters = ParametersSettings()
 
-
         # shortcuts
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'),self)
         self.shortcut_open.activated.connect(self.clean_chop_at_page)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+M'), self)
+        self.shortcut_open.activated.connect(self.open_magnitudes_calculator)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+P'),self)
         self.shortcut_open.activated.connect(self.comboBox_phases.showPopup)
@@ -806,7 +811,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.nums_clicks = self.nums_clicks+1
 
     def open_magnitudes_calculator(self):
-        origin = self.nll_manager.get_NLL_info()
+        hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")
+        origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file)
         self._magnitude_calc = MagnitudeCalc(origin, self.inventory, self.chop)
         self._magnitude_calc.show()
 
