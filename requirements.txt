@@ -4,7 +4,7 @@ Cython
 deprecated
 matplotlib
 numpy
-scipy
+scipy >= 1.4.1
 obspy
 pandas
 PyQt5
