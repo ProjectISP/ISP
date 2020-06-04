@@ -95,6 +95,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.parameters = ParametersSettings()
 
         # shortcuts
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+L'), self)
+        self.shortcut_open.activated.connect(self.open_parameters_settings)
+
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'),self)
         self.shortcut_open.activated.connect(self.clean_chop_at_page)
 

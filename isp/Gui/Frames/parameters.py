@@ -142,7 +142,7 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
 
             label_freqmin = pw.QLabel("Corner Freq min")
-            label_freqmax = pw.QLabel("Corner Freq max (%Fn)")
+            label_freqmax = pw.QLabel("Corner Freq max")
             label_water_level = pw.QLabel("Water level")
             label_units = pw.QLabel("deconvolve to")
             combo_param = pw.QComboBox()

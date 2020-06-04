@@ -1,5 +1,4 @@
 from __future__ import unicode_literals
-
 import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -17,7 +16,6 @@ from matplotlib.patheffects import Stroke
 from matplotlib.widgets import SpanSelector
 from obspy import Stream
 from owslib.wms import WebMapService
-
 from isp.Gui import pw, pyc, qt
 from isp.Utils import ObspyUtil, AsycTime
 

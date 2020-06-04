@@ -84,7 +84,20 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
         self.event = origin
         self.chop = chop
         self.inventory = inventory
-        self.runBtn.clicked.connect(self.moment_magnitude)
+        self.runBtn.clicked.connect(self.run_magnitudes)
+        self.saveBtn.clicked.connect(self.save_results)
+        self.Mw = []
+        self.Mw_std=[]
+        self.Ms= []
+        self.Ms_std = []
+        self.Mb = []
+        self.Mb_std = []
+        self.ML = []
+        self.ML_std = []
+        self.Mc = []
+        self.Mc_std = []
+        self.ML = []
+        self.ML_std = []
 
     def moment_magnitude(self,):
         density = self.densityDB.value()
@@ -95,7 +108,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
         k = 0.32
         Mws = []
         Mws_std = []
-        self.Magnitude_Ws = []
+        Magnitude_Ws = []
         origin_time =self.event.time
         moments = []
         source_radii = []
@@ -103,7 +116,6 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
         corner_freqs = []
         self.spectrum_Widget_Canvas.plot([], [], 0)
         ax1 = self.spectrum_Widget_Canvas.get_axe(0)
-
         ax1.cla()
 
         for key in self.chop['Body waves']:
@@ -134,7 +146,6 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
             ax1.grid(True, which="both", ls="-", color='grey')
             ax1.legend()
 
-
             # Finish Plot
             tt = pick_time-origin_time
             #print("Distance",dist,"Vp",vp,"Q",quality,"Density",density, "Travel Time", tt)
@@ -160,7 +171,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
 
             corner_freqs.append(f_c)
             M_0 = 4.0 * np.pi * density * vp ** 3 * dist * np.sqrt(Omega_0 ** 2) / radiation_pattern
-            self.Magnitude_Ws.append(2.0 / 3.0 * (np.log10(M_0) - 9.1))
+            Magnitude_Ws.append(2.0 / 3.0 * (np.log10(M_0) - 9.1))
             r = 3 * k * vs / sum(corner_freqs)
             moments.append(M_0)
             source_radii.append(r)
@@ -195,9 +206,11 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
         Mw_std = 2.0 / 3.0 * moment_std / (moment * np.log(10))
         Mws_std.append(Mw_std)
         Mws.append(Mw)
-        print("Moment Magnitude",Mws)
-        print("Moment Magnitude deviation", Mws_std)
-        self.plot_histograms()
+        print("Moment Magnitude",Mws,"Moment Magnitude deviation", Mws_std)
+        label = "Mw"
+        self.plot_histograms(Magnitude_Ws,label)
+        self.Mw = Mw
+        self.Mw_std = Mw_std
 
     def magnitude_surface(self):
         Ms = []
@@ -207,17 +220,22 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
             coords = get_coordinates_from_metadata(self.inventory, magnitude_dict[0])
 
             dist= locations2degrees(coords.Latitude, coords.Longitude, self.event.latitude,self.event.longitude)
-            data = np.array(magnitude_dict[2])*1e9 # convert to nm
+            data = np.array(magnitude_dict[2])*1e6 # convert to nm
             Ms_value=np.log10(np.max(data)/(2*np.pi))+1.66*np.log10(dist)+3.3
             Ms.append(Ms_value)
 
+        Ms=np.array(Ms)
         Ms_mean = Ms.mean()
         Ms_deviation =Ms.std()
         print("Surface Magnitude", Ms_mean, "Variance", Ms_deviation)
+        label = "Ms"
+        self.plot_histograms(Ms,label)
+        self.Ms = Ms_mean
+        self.Ms_std = Ms_deviation
 
     def magnitude_body(self):
         Mb = []
-        path_to_atenuation_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "magnitude_atenuation")
+        path_to_atenuation_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "magnitude_atenuation", "atenuation.txt")
         x, y = np.loadtxt(path_to_atenuation_file, skiprows=1, unpack=True)
 
         for key in self.chop['Body waves']:
@@ -225,14 +243,22 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
             coords = get_coordinates_from_metadata(self.inventory, magnitude_dict[0])
             dist = locations2degrees(coords.Latitude, coords.Longitude, self.event.latitude, self.event.longitude)
             dist = np.floor(dist)
-            loc = np.where(x == dist)[0][0]
-            atenuation = y[loc]
-            data = np.array(magnitude_dict[2]) * 1e6  # convert to nm
-            Mb_value = (np.log10(np.max(data)) / (2 * np.pi)) + atenuation
-            Mb.append(Mb_value)
-            Mb_mean = Mb.mean()
-            Mb_deviation = Mb.std()
-            print("Body Magnitude", Mb_mean, "Variance", Mb_deviation)
+            if dist < 16:
+                print("Epicentral Distance ",dist," is less than 16 degrees, Body-wave Magnitude couldn't be calculated")
+            else:
+                loc = np.where(x == dist)[0][0]
+                atenuation = y[loc]
+                data = np.array(magnitude_dict[2]) * 1e6  # convert to nm
+                Mb_value = (np.log10(np.max(data)) / (2 * np.pi)) + atenuation
+                Mb.append(Mb_value)
+                Mb_mean = Mb.mean()
+                Mb_deviation = Mb.std()
+                self.Mb = Mb_mean
+                self.Mb_std = Mb_deviation
+                print("Body Magnitude", Mb_mean, "Variance", Mb_deviation)
+        label="Mb"
+        if len(Mb)>0:
+            self.plot_histograms(Mb,label)
 
     def magnitude_coda(self):
         Mc = []
@@ -246,19 +272,24 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
             coords = get_coordinates_from_metadata(self.inventory, magnitude_dict[0])
             dist, _, _ = gps2dist_azimuth(coords.Latitude, coords.Longitude, self.event.latitude, self.event.longitude)
             dist = dist / 1000
-            data = np.array(magnitude_dict[2])
-            N=len(data)
+            #data = np.array(magnitude_dict[2])
             pick_time = UTCDateTime(mdt.num2date(magnitude_dict[1][0]))
-            end_time = UTCDateTime(mdt.num2date(magnitude_dict[1][N]))
+            end_time = UTCDateTime(mdt.num2date(magnitude_dict[1][-1]))
             t_coda = end_time-pick_time
             Mc_value = a*np.log10(t_coda)+b*dist+c
+            Mc_value = Mc_value
             Mc.append(Mc_value)
-            Mc_mean = Mc.mean()
-            Mc_deviation = Mc.std()
-            print("Local Magnitude", Mc_mean, "Variance", Mc_deviation)
+            Mcs=np.array(Mc)
+            Mc_mean = Mcs.mean()
+            Mc_deviation = Mcs.std()
+
+        print("Coda Magnitude", Mc_mean, "Variance", Mc_deviation)
+        label="Mc"
+        self.plot_histograms(Mc, label)
+        self.Mc = Mc_mean
+        self.Mc_std = Mc_deviation
 
     def magnitude_local(self):
-
         ML = []
         for key in self.chop['Body waves']:
             magnitude_dict = self.chop['Body waves'][key]
@@ -266,21 +297,109 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
             dist, _, _ = gps2dist_azimuth(coords.Latitude, coords.Longitude, self.event.latitude, self.event.longitude)
             dist = dist/1000
             data = np.array(magnitude_dict[2])   # already converted Wood Anderson (Gain in mm 2800 +-60)
-            max_amplitude = np.max(data)*1e6 # convert to  mm --> nm
+            max_amplitude = np.max(data)*1e3 # convert to  mm --> nm
             ML_value = np.log10(max_amplitude)+1.11*np.log10(dist)+0.00189*dist-2.09
             ML.append(ML_value)
-            ML_mean = ML.mean()
-            ML_deviation = ML.std()
-            print("Local Magnitude", ML_mean, "Variance", ML_deviation)
+            MLs =np.array(ML)
+            ML_mean = MLs.mean()
+            ML_deviation = MLs.std()
+        print("Local Magnitude", ML_mean, "Variance", ML_deviation)
+        label="ML"
+        self.plot_histograms(ML,label)
+        self.ML = ML_mean
+        self.ML_std = ML_deviation
 
+    def plot_histograms(self,magnitudes,label):
 
+        self.ax2.hist(magnitudes, bins=4*len(magnitudes), alpha=0.5, label=label)
+        self.ax2.set_xlabel("Magnitude", size=12)
+        self.ax2.set_ylabel("Count", size=12)
+        self.ax2.legend(loc='upper right')
 
-    def plot_histograms(self):
+    def run_magnitudes(self):
         self.spectrum_Widget_Canvas.plot([], [], 1)
-        ax2 = self.spectrum_Widget_Canvas.get_axe(1)
-        ax2.cla()
-        ax2.hist(self.Magnitude_Ws, bins=4*len(self.Magnitude_Ws), alpha=0.5, label="Mw")
-        ax2.set_xlabel("Magnitude", size=12)
-        ax2.set_ylabel("Count", size=12)
-        ax2.legend(loc='upper right')
+        self.ax2 = self.spectrum_Widget_Canvas.get_axe(1)
+        self.ax2.cla()
+
+        if self.local_magnitudeRB.isChecked():
+            print("Calculating Local Magnitude")
+            try:
+             self.magnitude_local()
+            except:
+                pass
+
+        if self.magnitudesRB.isChecked():
+            try:
+                if self.body_waveCB.isChecked():
+                    print("Calculating Body-Wave Magnitude")
+                    self.magnitude_body()
+            except:
+                pass
+            try:
+                if self.surface_waveCB.isChecked():
+                    print("Calculating Surface-Wave Magnitude")
+                    self.magnitude_surface()
+            except:
+                pass
+            try:
+                if self.moment_magnitudeCB.isChecked():
+                    print("Calculating Moment Magnitude")
+                    self.moment_magnitude()
+            except:
+                pass
+
+            try:
+                if self.coda_magnitudeCB.isChecked():
+                    print("Coda Moment Magnitude")
+                    self.magnitude_coda()
+            except:
+                    pass
+
+        self.print_magnitudes_results()
+
+    def print_magnitudes_results(self):
+        self.magnitudesText.setPlainText(" Magnitudes Estimation Results ")
+        try:
+            if self.Mw:
+                self.magnitudesText.appendPlainText("Moment Magnitude: " " Mw {Mw:.3f} " 
+                                                      " std {std:.3f} ".format(Mw=self.Mw,std=self.Mw_std))
+        except:
+            pass
+
+        try:
+            if self.Ms:
+                self.magnitudesText.appendPlainText("Surface-Wave Magnitude: " " Ms {Ms:.3f} " 
+                                                        " std {std:.3f} ".format(Ms=self.Ms,std=self.Ms_std))
+        except:
+            pass
+        try:
+            if self.Mb:
+                self.magnitudesText.appendPlainText("Body-Wave Magnitude: " " Mb {Mb:.3f} "
+                                                    " std {std:.3f} ".format(Mb=self.Mb, std=self.Mb_std))
+        except:
+            pass
+        try:
+            if self.Mc:
+                self.magnitudesText.appendPlainText("Coda Magnitude: " " Mc {Mc:.3f} "
+                                                    " std {std:.3f} ".format(Mc=self.Mc, std=self.Mc_std))
+        except:
+            pass
+        try:
+            if self.ML:
+                self.magnitudesText.appendPlainText("Coda Magnitude: " " ML {ML:.3f} "
+                                                    " std {std:.3f} ".format(ML=self.ML, std=self.ML_std))
+        except:
+            pass
+
+
+    def save_results(self):
+        import pandas as pd
+        path_output =os.path.join(ROOT_DIR,"earthquakeAnalisysis","location_output","loc","magnitudes_output.mag")
+        Magnitude_results = { 'Magnitudes': ["Mw", "Mw_std", "Ms", "Ms_std", "Mb",
+          "Mb_std","Mc","Mc_std", "ML","ML_std",],'results':[self.Mw, self.Mw_std,self.Ms,self.Ms_std,self.Mb,
+            self.Mb_std, self.Mc,self.Mc_std,self.ML,self.ML_std]}
+        df = pd.DataFrame(Magnitude_results, columns=['Magnitudes','results'])
+        print(df)
+        df.to_csv(path_output, sep=' ', index=False)
+
 
