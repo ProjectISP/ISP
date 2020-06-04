@@ -9,6 +9,7 @@ from obspy.signal.filter import lowpass
 from scipy.signal import argrelextrema
 
 from isp.Exceptions import InvalidFile
+from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, MseedUtil
 
 
@@ -21,11 +22,11 @@ class ConvolveWaveletBase:
         convolve = cw.ccwt_ba_fast()
     """
 
-    def __init__(self, file_path, **kwargs):
+    def __init__(self, data, **kwargs):
         """
         Class to apply wavelet convolution to a mseed file.
         The bank of atoms is computed at the class initialisation.
-        :param str file_path: The mseed file path.
+        :param data: Either the mseed file path or an obspy Tracer.
         :keyword kwargs:
         :keyword wmin: Minimum number of cycles. Default = 6.
         :keyword wmax: Maximum number of cycles. Default = 6.
@@ -39,16 +40,20 @@ class ConvolveWaveletBase:
             sample rate to 100 Hz.
         :raise InvalidFile: If file is not a valid mseed.
         :example:
-        >>> cw = ConvolveWavelet(file_path)
+        >>> cw = ConvolveWavelet(data)
         >>> cw.setup_wavelet()
         >>> sc = cw.scalogram_in_dbs
         >>> cf = cw.cf_lowpass()
         """
 
-        if not MseedUtil.is_valid_mseed(file_path):
-            raise InvalidFile("The file: {} is not a valid mseed.".format(file_path))
-
-        self.file_path = file_path
+        if isinstance(data, Trace):
+            self.stats = TracerStats.from_dict(data.stats)
+            self.trace: Trace = data
+        else:
+            if not MseedUtil.is_valid_mseed(data):
+                raise InvalidFile("The file: {} is not a valid mseed.".format(data))
+            self.trace: Trace = read(data)[0]
+            self.stats = ObspyUtil.get_stats(data)
 
         self._wmin = float(kwargs.get("wmin", 6.))
         self._wmax = float(kwargs.get("wmax", 6.))
@@ -60,8 +65,6 @@ class ConvolveWaveletBase:
         self._decimate = kwargs.get("decimate", False)
 
         self._validate_kwargs()
-
-        self.stats = ObspyUtil.get_stats(self.file_path)
         # print(self.stats)
 
         self._data = None
@@ -77,12 +80,12 @@ class ConvolveWaveletBase:
         self._half_wave = None
 
     def __repr__(self):
-        return "ConvolveWavelet(file_path={}, wmin={}, wmax={}, tt={}, fmin={}, fmax={}, nf={})".format(
-            self.file_path, self._wmin, self._wmax, self._tt, self._fmin, self._fmax, self._nf)
+        return "ConvolveWavelet(data={}, wmin={}, wmax={}, tt={}, fmin={}, fmax={}, nf={})".format(
+            self.trace, self._wmin, self._wmax, self._tt, self._fmin, self._fmax, self._nf)
 
     def __eq__(self, other):
         # noinspection PyProtectedMember
-        return self.file_path == other.file_path and self._wmin == other._wmin and self._wmax == other._wmax \
+        return self.trace == other.trace and self._wmin == other._wmin and self._wmax == other._wmax \
                and self._tt == other._tt and self._fmin == other._fmin and self._fmax == other._fmax \
                and self._nf == other._nf and self._use_rfft == other._use_rfft \
                and self._start_time == other._start_time and self._end_time == other._end_time \
@@ -180,17 +183,15 @@ class ConvolveWaveletBase:
         self._half_wave = (len(self._wtime) - 1) / 2
 
     def __get_data_in_time(self, start_time, end_time):
-        st = read(self.file_path, starttime=start_time, endtime=end_time)
-        if st:
-            tr = st[0]
-            if self._decimate:
-                tr = self.decimate_data(tr)
-            tr.detrend(type='demean')
-            tr.taper(max_percentage=0.05)
-            self._npts = tr.stats.npts
-            self._sample_rate = tr.stats.sampling_rate
-            return tr.data
-        return None
+        tr = self.trace.copy()
+        tr.trim(starttime=start_time, endtime=end_time)
+        if self._decimate:
+            tr = self.decimate_data(tr)
+        tr.detrend(type='demean')
+        tr.taper(max_percentage=0.05)
+        self._npts = tr.stats.npts
+        self._sample_rate = tr.stats.sampling_rate
+        return tr.data
 
     def __get_resample_factor(self):
         rf = int(0.4 * self._sample_rate / self._fmax)
@@ -218,7 +219,7 @@ class ConvolveWaveletBase:
     @staticmethod
     def __tapper(data, max_percentage=0.05):
         tr = Trace(data)
-        tr.taper(max_percentage=max_percentage,type='blackman')
+        tr.taper(max_percentage=max_percentage, type='blackman')
         return tr.data
 
     # def __chop_data(self, delta_time, start_time: UTCDateTime, end_time: UTCDateTime):
@@ -379,11 +380,11 @@ class ConvolveWavelet(ConvolveWaveletBase):
         convolve = cw.ccwt_ba_fast()
     """
 
-    def __init__(self, file_path, **kwargs):
+    def __init__(self, data, **kwargs):
         """
         Class to apply wavelet convolution to a mseed file.
         The bank of atoms is computed at the class initialisation.
-        :param str file_path: The mseed file path.
+        :param data: Either the mseed file path or an obspy Tracer.
         :keyword kwargs:
         :keyword wmin: Minimum number of cycles. Default = 6.
         :keyword wmax: Maximum number of cycles. Default = 6.
@@ -397,12 +398,12 @@ class ConvolveWavelet(ConvolveWaveletBase):
             sample rate to 100 Hz.
         :raise TypeError: If file is not a valid mseed.
         :example:
-        >>> cw = ConvolveWavelet(file_path)
+        >>> cw = ConvolveWavelet(data)
         >>> cw.setup_wavelet()
         >>> cf = cw.cf_lowpass()
         """
 
-        super(ConvolveWavelet, self).__init__(file_path, **kwargs)
+        super(ConvolveWavelet, self).__init__(data, **kwargs)
 
         self.__conv = None  # convolution of ba and data_fft
         self.__n_conv = 0
@@ -522,11 +523,11 @@ class ConvolveWaveletScipy(ConvolveWaveletBase):
         convolve = cw.ccwt_ba_fast()
     """
 
-    def __init__(self, file_path, **kwargs):
+    def __init__(self, data, **kwargs):
         """
         Class to apply wavelet convolution to a mseed file.
         The bank of atoms is computed at the class initialisation.
-        :param str file_path: The mseed file path.
+        :param data: Either the mseed file path or an obspy Tracer.
         :keyword kwargs:
         :keyword wmin: Minimum number of cycles. Default = 6.
         :keyword wmax: Maximum number of cycles. Default = 6.
@@ -540,12 +541,12 @@ class ConvolveWaveletScipy(ConvolveWaveletBase):
             sample rate to 100 Hz.
         :raise TypeError: If file is not a valid mseed.
         :example:
-        >>> cw = ConvolveWavelet(file_path)
+        >>> cw = ConvolveWavelet(data)
         >>> cw.setup_wavelet()
         >>> cf = cw.cf_lowpass()
         """
 
-        super().__init__(file_path, **kwargs)
+        super().__init__(data, **kwargs)
 
     def __convolve(self, freq: tuple):
         freq, index = freq
