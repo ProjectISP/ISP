@@ -555,7 +555,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             for j in range(n):
                 tr = self.st[j]
                 t1 = tr.stats.starttime
-                id = tr.id+".."+"D"+"."+str(t1.year)+"."+str(t1.julday)
+                id = tr.id+"."+"D"+"."+str(t1.year)+"."+str(t1.julday)
                 print(tr.id, "Writing data processed")
                 path_output = os.path.join(dir_path, id)
                 tr.write(path_output, format="MSEED")
@@ -627,7 +627,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.picked_at[str(line)] = PickerStructure(t, stats.Station, x1, amplitude, color, label,
                                                         self.get_file_at_index(click_at_index))
             # Add pick data to file.
-            self.pm.add_data(t, amplitude, stats.Station, phase, First_Motion=polarity)
+            self.pm.add_data(t, amplitude, stats.Station, phase, Component = stats.Channel,  First_Motion=polarity)
             self.pm.save()  # maybe we can move this to when you press locate.
 
     def on_pick(self, event):

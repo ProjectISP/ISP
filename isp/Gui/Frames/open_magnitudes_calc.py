@@ -103,7 +103,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
         density = self.densityDB.value()
         vp = self.vpDB.value() * 1000
         vs = vp / 1.73
-        quality = self.qualityDB.value()
+        # quality = self.qualityDB.value()
         radiation_pattern = 0.52
         k = 0.32
         Mws = []
@@ -149,6 +149,10 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
             # Finish Plot
             tt = pick_time-origin_time
             #print("Distance",dist,"Vp",vp,"Q",quality,"Density",density, "Travel Time", tt)
+
+            # Q as a function of freq
+            quality = 100 * (freq) ** 0.8
+
 
             try:
                 fit = fit_spectrum(spec, freq, tt, spec.max(), 10.0, quality)
@@ -396,7 +400,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
         import pandas as pd
         path_output =os.path.join(ROOT_DIR,"earthquakeAnalisysis","location_output","loc","magnitudes_output.mag")
         Magnitude_results = { 'Magnitudes': ["Mw", "Mw_std", "Ms", "Ms_std", "Mb",
-          "Mb_std","Mc","Mc_std", "ML","ML_std",],'results':[self.Mw, self.Mw_std,self.Ms,self.Ms_std,self.Mb,
+          "Mb_std","Mc","Mc_std", "ML","ML_std"],'results':[self.Mw, self.Mw_std,self.Ms,self.Ms_std,self.Mb,
             self.Mb_std, self.Mc,self.Mc_std,self.ML,self.ML_std]}
         df = pd.DataFrame(Magnitude_results, columns=['Magnitudes','results'])
         print(df)

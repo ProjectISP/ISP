@@ -1,12 +1,15 @@
 import os
-
+import matplotlib.dates as mdt
 from obspy.core.event import Origin
-
+from isp import ROOT_DIR
+from isp.DataProcessing import SeismogramDataAdvanced
 from isp.Exceptions import InvalidFile, parse_excepts
 from isp.Gui import pw, pqg
 from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas, FocCanvas
+from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.plot_polarization import PlotPolarization
 from isp.Gui.Frames.qt_components import ParentWidget, FilterBox, FilesView, MessageDialog
+from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.earthquakeAnalisysis import NllManager, PolarizationAnalyis, PickerManager, FirstPolarity
 
@@ -25,8 +28,9 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         self._r = {}
         self._t = {}
         self._st = {}
-
-        self.filter_3ca = FilterBox(self.toolQFrame, 1)  # add filter box component.
+        self.inventory = {}
+        #self.filter_3ca = FilterBox(self.toolQFrame, 1)  # add filter box component.
+        self.parameters = ParametersSettings()
 
         # 3C_Component
         self.canvas = MatplotlibCanvas(self.plotMatWidget_3C)
@@ -51,11 +55,16 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
 
         self.selectDirBtn_3C.clicked.connect(self.on_click_select_directory_3C)
         self.rotateplotBtn.clicked.connect(lambda: self.on_click_rotate(self.canvas))
+        self.rot_macroBtn.clicked.connect(lambda: self.open_parameters_settings())
         self.polarizationBtn.clicked.connect(self.on_click_polarization)
         ###
         self.plotpolBtn.clicked.connect(self.plot_particle_motion)
+        self.stationsBtn.clicked.connect(self.stationsInfo)
+        self.save_rotatedBtn.clicked.connect(self.save_rotated)
         ###
 
+    def open_parameters_settings(self):
+        self.parameters.show()
 
     def info_message(self, msg):
         md = MessageDialog(self)
@@ -100,28 +109,36 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
         time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
         angle = self.degreeSB.value()
+        incidence_angle= self.incidenceSB.value()
+        method = self.methodCB.currentText()
+        parameters = self.parameters.getParameters()
         try:
-            sd = PolarizationAnalyis(self.vertical_component_file, self.north_component_file,
-                                     self.east_component_file)
-
-            time, z, r, t, st = sd.rotate(time1, time2, method="NE->RT", angle=angle,
-                                          filter_error_callback=self.info_message,
-                                          filter_value=self.filter_3ca.filter_value,
-                                          f_min=self.filter_3ca.min_freq, f_max=self.filter_3ca.max_freq)
+            sd = PolarizationAnalyis(self.vertical_component_file, self.north_component_file, self.east_component_file)
+            time, z, r, t, st = sd.rotate(self.inventory,time1, time2, angle, incidence_angle, method = method, parameters = parameters,
+                                          trim = True)
             self._z = z
             self._r = r
             self._t = t
             self._st = st
             rotated_seismograms = [z, r, t]
             for index, data in enumerate(rotated_seismograms):
-                canvas.plot(time, data, index, color="black", linewidth=0.5)
+                self.canvas.plot(time, data, index, color="black", linewidth=0.5)
+                info = "{}.{}.{}".format(self._st[index].stats.network, self._st[index].stats.station,
+                                         self._st[index].stats.channel)
+                ax = self.canvas.get_axe(0)
+                ax.set_xlim(time1.matplotlib_date, time2.matplotlib_date)
+                formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+                ax.xaxis.set_major_formatter(formatter)
+                self.canvas.set_plot_label(index, info)
+
             canvas.set_xlabel(2, "Time (s)")
 
         except InvalidFile:
             self.info_message("Invalid mseed files. Please, make sure to select all the three components (Z, N, E) "
-                              "for rotate.")
+                         "for rotate.")
         except ValueError as error:
             self.info_message(str(error))
+
 
     def on_click_polarization(self):
         time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
@@ -130,8 +147,7 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
                                  self.east_component_file)
         try:
             var = sd.polarize(time1, time2, self.doubleSpinBox_winlen.value(),
-                              self.filter_3ca.min_freq, self.filter_3ca.max_freq,
-                              method=self.comboBox_methodpolarization.currentText())
+                              self.freq_minDB.value(), self.freq_maxDB.value())
 
             artist = self.canvas_pol.plot(var['time'], var[self.comboBox_yaxis.currentText()], 0, clear_plot=True,
                                           linewidth=0.5)
@@ -150,9 +166,44 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
     def plot_particle_motion(self):
         self._plot_polarization = PlotPolarization(self._z, self._r, self._t)
         self._plot_polarization.show()
-        #
-        #print(max(self._z))
-        #print(self._plot_polarization.getSBvalue())
+
+    def stationsInfo(self):
+        files = []
+        try:
+            if self.vertical_component_file and self.north_component_file and self.east_component_file:
+                files = [self.vertical_component_file, self.north_component_file, self.east_component_file]
+        except:
+            pass
+
+        sd = []
+        if len(files)==3:
+            for file in files:
+                try:
+                    st = SeismogramDataAdvanced(file)
+
+                    station = [st.stats.Network,st.stats.Station,st.stats.Location,st.stats.Channel,st.stats.StartTime,
+                           st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
+
+                    sd.append(station)
+                except:
+                    pass
+
+            self._stations_info = StationsInfo(sd)
+            self._stations_info.show()
+
+    def save_rotated(self):
+        import os
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        if self._st:
+            n = len(self._st)
+            for j in range(n):
+                tr = self._st[j]
+                t1 = tr.stats.starttime
+                id = tr.id+"."+"D"+"."+str(t1.year)+"."+str(t1.julday)
+                print(tr.id, "Writing data processed")
+                path_output = os.path.join(dir_path, id)
+                tr.write(path_output, format="MSEED")
 
 
 @add_save_load()
@@ -255,8 +306,9 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
 
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg, set_default_complete=False))
     def on_click_run_loc(self):
+        transform = self.transCB.currentText()
         std_out = self.nll_manager.run_nlloc(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
-                                             self.grid_depth_bind.value)
+                                             self.grid_depth_bind.value,transform)
         self.info_message("Location complete. Check details.", std_out)
 
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
@@ -281,6 +333,40 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.residuals_canvas.set_yaxis_color(self.residuals_canvas.get_axe(0), artist.get_color(), is_left=True)
         self.residuals_canvas.plot(xs, ys, 0, is_twinx=True, color="red", linewidth=0.5)
         self.residuals_canvas.set_ylabel_twinx(0, "S wave Res")
+
+    def first_polarity(self):
+        import pandas as pd
+        path_output = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "first_polarity.fp")
+        self.firstpolarity_manager.create_input()
+        Station, Az, Dip, Motion = self.firstpolarity_manager.get_dataframe()
+        cat,Plane_A=self.firstpolarity_manager.extract_focmec_info()
+        #print(cat[0].focal_mechanisms[0])
+        strike_A = Plane_A.strike
+        dip_A = Plane_A.dip
+        rake_A = Plane_A.rake
+        misfit_first_polarity = cat[0].focal_mechanisms[0].misfit
+        azimuthal_gap = cat[0].focal_mechanisms[0].azimuthal_gap
+        number_of_polarities = cat[0].focal_mechanisms[0].station_polarity_count
+
+        first_polarity_results = {"First_Polarity":["Strike", "Dip", "Rake","misfit_first_polarity","azimuthal_gap",
+         "number_of_polarities"],"results":[strike_A,dip_A,rake_A,misfit_first_polarity,azimuthal_gap,
+                                            number_of_polarities]}
+        df = pd.DataFrame(first_polarity_results, columns=["First_Polarity","results"])
+        print(df)
+        df.to_csv(path_output, sep=' ', index=False)
+        self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, 0)
+        self.add_first_polarity_info(first_polarity_results)
+
+
+    def add_first_polarity_info(self, first_polarity_results):
+        self.FirstPolarityInfoText.setPlainText("First Polarity Results")
+        self.FirstPolarityInfoText.appendPlainText("Strike: {Strike:.3f}".format(Strike=first_polarity_results["results"][0]))
+        self.FirstPolarityInfoText.appendPlainText("Dip: {Dip:.3f}".format(Dip=first_polarity_results["results"][1]))
+        self.FirstPolarityInfoText.appendPlainText("Rake: {Rake:.3f}".format(Rake=first_polarity_results["results"][2]))
+        self.FirstPolarityInfoText.appendPlainText("Misfit: {Misfit:.3f}".format(Misfit=first_polarity_results["results"][3]))
+        self.FirstPolarityInfoText.appendPlainText("GAP: {GAP:.3f}".format(GAP=first_polarity_results["results"][4]))
+        self.FirstPolarityInfoText.appendPlainText("Number of polarities: {NP:.3f}".format(NP=first_polarity_results["results"][5]))
+
 
     def add_earthquake_info(self, origin: Origin):
 
@@ -308,12 +394,3 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
                                                         origin.quality.azimuthal_gap,
                                                         origin.quality.minimum_distance,
                                                         origin.quality.maximum_distance))
-    def first_polarity(self):
-        self.firstpolarity_manager.create_input()
-        Station, Az, Dip, Motion = self.firstpolarity_manager.get_dataframe()
-        cat,Plane_A=self.firstpolarity_manager.extract_focmec_info()
-        print(cat[0].focal_mechanisms[0])
-        strike_A = Plane_A.strike
-        dip_A = Plane_A.dip
-        rake_A = Plane_A.rake
-        self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, 0)

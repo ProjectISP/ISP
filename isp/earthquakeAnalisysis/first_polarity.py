@@ -65,13 +65,22 @@ class FirstPolarity:
                 dip = df.iloc[i].RAz
                 m = df.iloc[i].Pha
                 ph = str(df.iloc[i].On)
+
                 if dip >= 90:
                     dip = 180 - dip
+
                 if ph[0] == "P" and m != "?":
                     Az.append(az)
                     Dip.append(dip)
                     Motion.append(m)
                     Station.append(sta)
+
+                if ph[0] == "S" and m != "?":
+                    Az.append(az)
+                    Dip.append(dip)
+                    Motion.append(m)
+                    Station.append(sta)
+
         return Station, Az, Dip, Motion
 
     def get_NLL_info(self):

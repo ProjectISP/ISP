@@ -59,6 +59,12 @@ class NllManager:
         return run_file_path
 
     @property
+    def get_run_template_global_file_path(self):
+        run_template_global_file_path = os.path.join(self.get_run_dir, "global_template")
+        self.__validate_file(run_template_global_file_path)
+        return run_template_global_file_path
+
+    @property
     def get_vel_template_file_path(self):
         v2g_file_path = os.path.join(self.get_run_dir, "v2g_template")
         self.__validate_file(v2g_file_path)
@@ -132,6 +138,13 @@ class NllManager:
         return time_dir
 
     @property
+    def get_time_global_dir(self):
+        time_dir = os.path.join(self.root_path, "ak135")
+        self.__validate_dir(time_dir)
+        return time_dir
+
+
+    @property
     def get_stations_dir(self):
         stations_dir = os.path.join(self.root_path, "stations")
         self.__validate_dir(stations_dir)
@@ -194,6 +207,22 @@ class NllManager:
         df = pd.DataFrame(data)
         df.iloc[1, 0] = 'TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}'.format(lat=latitude, lon=longitude, depth=depth)
         df.iloc[3, 0] = 'LOCFILES {obspath} NLLOC_OBS {timepath} {locpath}'.format(obspath=self.__obs_file_path,
+                                                                                   timepath=travetimepath,
+                                                                                   locpath=locationpath)
+        output = os.path.join(self.get_temp_dir, "run_temp.txt")
+        df.to_csv(output, index=False, header=True, encoding='utf-8')
+        return output
+
+    def set_run_template_global(self):
+        run_path = self.get_run_template_global_file_path
+        data = pd.read_csv(run_path)
+        travetimepath = os.path.join(self.get_time_global_dir, "ak135")
+        locationpath = os.path.join(self.get_loc_dir, "location")+" 1"
+        stations_path = os.path.join(self.get_stations_template_file_path)
+        df = pd.DataFrame(data)
+        df.iloc[1, 0] = 'TRANS GLOBAL'
+        df.iloc[3, 0] = 'INCLUDE {obspath} '.format(obspath=stations_path)
+        df.iloc[4, 0] = 'LOCFILES {obspath} NLLOC_OBS {timepath} {locpath}'.format(obspath=self.__obs_file_path,
                                                                                    timepath=travetimepath,
                                                                                    locpath=locationpath)
         output = os.path.join(self.get_temp_dir, "run_temp.txt")
@@ -264,10 +293,25 @@ class NllManager:
         command = "{} {}".format(self.get_bin_file("Grid2Time"), output_path.name)
         exc_cmd(command, cwd=output_path.parent)
 
-    def run_nlloc(self, latitude, longitude, depth):
-        output = self.set_run_template(latitude, longitude, depth)
-        output_path = Path(output)
-        command = "{} {}".format(self.get_bin_file("NLLoc"), output_path.name)
+    def run_nlloc(self, latitude, longitude, depth, transform):
+
+        if transform == "SIMPLE":
+            output = self.set_run_template(latitude, longitude, depth)
+            output_path = Path(output)
+            command = "{} {}".format(self.get_bin_file("NLLoc"), output_path.name)
+            print(command)
+
+        elif transform == "GLOBAL":
+            import shutil
+            self.stations_to_nll_v2(transform="GLOBAL")
+            stations_path = os.path.join(self.get_stations_template_file_path)
+            temp_path = self.get_temp_dir
+            shutil.copy(stations_path, temp_path)
+            output = self.set_run_template_global()
+
+            output_path = Path(output)
+            command = "{} {}".format(self.get_bin_file("NLLoc"), output_path.name)
+            print(command)
         return exc_cmd(command, cwd=output_path.parent)
 
     # def stations_to_nll(self):
@@ -293,7 +337,7 @@ class NllManager:
     #     df.to_csv(outstations_path, sep=' ', header=False, index=False)
     #     return outstations_path
 
-    def stations_to_nll_v2(self):
+    def stations_to_nll_v2(self, transform="SIMPLE"):
 
         try:
             metadata_manager = MetadataManager(self.__dataless_dir)
@@ -319,10 +363,20 @@ class NllManager:
                     station_names.append(code)
                     station_latitudes.append(latitude)
                     station_longitudes.append(longitude)
-                    station_depths.append(elevation)
+                    if transform == "GLOBAL":
+                        elevation=elevation/1000
+                        station_depths.append(elevation)
 
-            data = {'Code': 'GTSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lat': station_latitudes,
+            #LOCSRCE
+            if transform == "SIMPLE":
+
+                data = {'Code': 'GTSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lat': station_latitudes,
                     'Lon': station_longitudes, 'Z': '0.000', 'Depth': station_depths}
+
+            if transform == "GLOBAL":
+                data = {'Code': 'LOCSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lat': station_latitudes,
+                        'Lon': station_longitudes, 'Z': '0.000', 'Depth': station_depths}
+
 
             df = pd.DataFrame(data, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
 

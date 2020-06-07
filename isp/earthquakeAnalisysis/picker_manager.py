@@ -156,10 +156,26 @@ class PickerManager:
         data[self.CodaDuration] = "{:.1f}".format(0) if data[self.CodaDuration] == "?" else data[self.CodaDuration]
         data[self.Period] = "{:.1f}".format(0) if data[self.Period] == "?" else data[self.Period]
 
-        if data[self.FirstMotion] == "+":
+        if data[self.FirstMotion] == "+" and kwargs.get("P_phase_descriptor")[0] == "P":
             data[self.FirstMotion] = "U"
-        elif data[self.FirstMotion] == "-":
+        elif data[self.FirstMotion] == "-" and kwargs.get("P_phase_descriptor")[0] == "P":
             data[self.FirstMotion] = "D"
+
+        if data[self.FirstMotion] == "+" and kwargs.get("P_phase_descriptor")[0] == "S":
+            if kwargs.get("Component")[2]=="N" or kwargs.get("Component")[2]=="R":
+                data[self.FirstMotion] = "f"
+
+        elif data[self.FirstMotion] == "-" and kwargs.get("P_phase_descriptor")[0] == "S":
+            if kwargs.get("Component")[2]=="N" or kwargs.get("Component")[2]=="R":
+                data[self.FirstMotion] = "b"
+
+        if data[self.FirstMotion] == "+" and kwargs.get("P_phase_descriptor")[0] == "S":
+            if kwargs.get("Component")[2]=="E" or kwargs.get("Component")[2]=="T":
+                data[self.FirstMotion] = "r"
+
+        elif data[self.FirstMotion] == "-" and kwargs.get("P_phase_descriptor")[0] == "S":
+            if kwargs.get("Component")[2]=="E" or kwargs.get("Component")[2]=="T":
+                data[self.FirstMotion] = "l"
 
         df = pd.DataFrame(data, columns=self.columns, index=[0])
         self.df: pd.DataFrame = self.df.append(df, ignore_index=True)

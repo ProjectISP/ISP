@@ -3,6 +3,8 @@ from obspy import Stream
 from obspy import UTCDateTime
 from obspy.signal.polarization import polarization_analysis
 
+from isp.DataProcessing import SeismogramDataAdvanced
+from isp.Gui.Frames import MessageDialog
 from isp.Utils import ObspyUtil, Filters
 
 
@@ -19,6 +21,7 @@ class PolarizationAnalyis:
         self.path_z = path_z
         self.path_n = path_n
         self.path_e = path_e
+        self.list_path = [path_z, path_n, path_e]
 
     def __get_stream(self, start_time: UTCDateTime, end_time: UTCDateTime) -> Stream:
 
@@ -26,28 +29,79 @@ class PolarizationAnalyis:
         ObspyUtil.trim_stream(st, start_time, end_time)
         return st
 
-    def rotate(self, t1: UTCDateTime, t2: UTCDateTime, method="NE->RT", angle=0, **kwargs):
-         #read seismograms
-         st = self.__get_stream(t1, t2)
-         sampling_rate=st[0].stats.sampling_rate
-         time = np.arange(0, len(st[0].data) / sampling_rate, 1. / sampling_rate)
+    def filter_error_message(self, msg):
+        md = MessageDialog(self)
+        md.set_info_message(msg)
 
-         # rotate
-         st.rotate(method=method, back_azimuth=angle)
+    # def rotate(self, t1: UTCDateTime, t2: UTCDateTime, angle, incidence_angle, method="NE->RT",  **kwargs):
+    #      #read seismograms
+    #      st = self.__get_stream(t1, t2)
+    #      #needs to implement an advance process
+    #
+    #
+    #
+    #      #
+    #      sampling_rate=st[0].stats.sampling_rate
+    #      #time = np.arange(0, len(st[0].data) / sampling_rate, 1. / sampling_rate)
+    #      time = st[0].times("matplotlib")
+    #      # rotate
+    #      if method == "NE->RT":
+    #         st.rotate(method=method, back_azimuth=angle)
+    #      elif method == 'ZNE->LQT':
+    #          st.rotate(method=method, back_azimuth=angle, inclination=incidence_angle)
+    #
+    #      #filter
+    #      filter_value = kwargs.get("filter_value", Filters.Default)
+    #      f_min = kwargs.get("f_min", 0.)
+    #      f_max = kwargs.get("f_max", 0.)
+    #      n=len(st)
+    #      data=[]
+    #      for i in range(n):
+    #
+    #          tr=st[i]
+    #
+    #          ObspyUtil.filter_trace(tr, filter_value, f_min, f_max)
+    #          data.append(tr.data)
+    #
+    #      return time, data[0], data[1], data[2], st
 
-         #filter
-         filter_value = kwargs.get("filter_value", Filters.Default)
-         f_min = kwargs.get("f_min", 0.)
-         f_max = kwargs.get("f_max", 0.)
-         n=len(st)
-         data=[]
-         for i in range(n):
+    def rotate(self, inventory, t1: UTCDateTime, t2: UTCDateTime, angle, incidence_angle, method="NE->RT", **kwargs):
+        all_traces = []
+        # Process advance
+        parameters = kwargs.get("parameters")
+        trim = kwargs.get("trim")
 
-             tr=st[i]
-             ObspyUtil.filter_trace(tr, filter_value, f_min, f_max)
-             data.append(tr.data)
+        for index, file_path in enumerate(self.list_path):
 
-         return time, data[0], data[1], data[2], st
+            sd = SeismogramDataAdvanced(file_path)
+
+            if trim:
+                tr = sd.get_waveform_advanced(parameters, inventory,filter_error_callback=self.filter_error_message,
+                                              start_time=t1, end_time=t2)
+            else:
+                tr = sd.get_waveform_advanced(parameters, inventory, filter_error_callback=self.filter_error_message)
+
+            all_traces.append(tr)
+
+            st = Stream(traces=all_traces)
+
+        #
+        sampling_rate = st[0].stats.sampling_rate
+        # time = np.arange(0, len(st[0].data) / sampling_rate, 1. / sampling_rate)
+        time = st[0].times("matplotlib")
+        # rotate
+        if method == "NE->RT":
+            st.rotate(method=method, back_azimuth=angle)
+        elif method == 'ZNE->LQT':
+            st.rotate(method=method, back_azimuth=angle, inclination=incidence_angle)
+
+        n = len(st)
+        data = []
+        for i in range(n):
+            tr = st[i]
+            data.append(tr.data)
+
+        return time, data[0], data[1], data[2], st
 
     def polarize(self, t1: UTCDateTime, t2: UTCDateTime, win_len, frqlow, frqhigh, method='flinn'):
 
