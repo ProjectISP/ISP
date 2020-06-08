@@ -13,6 +13,7 @@ from obspy.io.xseed.parser import Parser
 
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
+from isp.Utils.nllOrgErrors import computeOriginErrors
 
 
 @unique
@@ -219,6 +220,15 @@ class ObspyUtil:
             cat = read_events(hyp_file_path)
             event = cat[0]
             origin = event.origins[0]
+            modified_origin_90 = computeOriginErrors(origin)
+            origin.depth_errors["uncertainty"]=modified_origin_90['depth_errors'].uncertainty
+            origin.origin_uncertainty.max_horizontal_uncertainty = modified_origin_90['origin_uncertainty'].max_horizontal_uncertainty
+            origin.origin_uncertainty.min_horizontal_uncertainty = modified_origin_90[
+                'origin_uncertainty'].min_horizontal_uncertainty
+            origin.origin_uncertainty.azimuth_max_horizontal_uncertainty = modified_origin_90['origin_uncertainty'].azimuth_max_horizontal_uncertainty
+
+
+
             return origin
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(hyp_file_path))

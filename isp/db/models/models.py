@@ -133,14 +133,14 @@ class EventLocationModel(db.Model, BaseModel):
                        origin_time=origin.time.datetime):
             raise AttributeError("Object already exist in the database.")
 
-        # TODO Find transformation and ellipse_azimuth at origin.
         event_dict = {"id": generate_id(16), "origin_time": origin.time.datetime, "transformation": "SIMPLE",
                       "rms": origin.quality.standard_error, "latitude": origin.latitude,
                       "longitude": origin.longitude, "depth": origin.depth,
                       "uncertainty": origin.depth_errors["uncertainty"],
                       "max_horizontal_error": origin.origin_uncertainty.max_horizontal_uncertainty,
                       "min_horizontal_error": origin.origin_uncertainty.min_horizontal_uncertainty,
-                      "ellipse_azimuth": "0.", "number_of_phases": origin.quality.used_phase_count,
+                      "ellipse_azimuth": origin.origin_uncertainty.azimuth_max_horizontal_uncertainty,
+                      "number_of_phases": origin.quality.used_phase_count,
                       "azimuthal_gap": origin.quality.azimuthal_gap,
                       "max_distance": origin.quality.maximum_distance,
                       "min_distance": origin.quality.minimum_distance}
