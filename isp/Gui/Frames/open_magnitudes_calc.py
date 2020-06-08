@@ -1,9 +1,10 @@
 from obspy.geodetics import gps2dist_azimuth, locations2degrees
 from obspy import UTCDateTime, Trace
 from isp.Gui import pw
-from isp.Gui.Frames import MatplotlibCanvas
+from isp.Gui.Frames import MatplotlibCanvas, BaseFrame, SettingsLoader
 from isp.Gui.Frames.uis_frames import UiMagnitudeFrame
-from mtspec import mtspec
+from isp.Gui.Frames.qt_components import ParentWidget
+#from mtspec import mtspec
 import numpy as np
 import scipy
 import scipy.optimize
@@ -75,7 +76,7 @@ def get_coordinates_from_metadata(inventory, stats):
     return StationCoordinates.from_dict(coords)
 
 @add_save_load()
-class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
+class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
     def __init__(self, origin, inventory, chop):
         super(MagnitudeCalc, self).__init__()
         self.setupUi(self)
@@ -98,6 +99,12 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame):
         self.Mc_std = []
         self.ML = []
         self.ML_std = []
+
+    def closeEvent(self, ce):
+        self.save_values()
+        
+    def __load__(self):
+        self.load_values()
 
     def moment_magnitude(self,):
         density = self.densityDB.value()
