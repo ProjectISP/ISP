@@ -5,7 +5,7 @@ from isp.Gui.Frames.uis_frames import UiMainFrame, UiTimeFrequencyFrame, UiEarth
 
 from isp.Gui.Frames.qt_components import FilesView, Pagination, MessageDialog, FilterBox, TimeSelectorBox, \
     EventInfoBox, SpectrumBox, StationInfoBox
-from isp.Gui.Frames.main import BaseFrame, MainFrame
+from isp.Gui.Frames.main import BaseFrame, MainFrame, SettingsLoader
 from isp.Gui.Frames.matplotlib_frame import MatplotlibFrame, MatplotlibCanvas, CartopyCanvas, FocCanvas
 from isp.Gui.Frames.time_frequency_frames import TimeFrequencyFrame
 from isp.Gui.Frames.earthquake_frame import EarthquakeAnalysisFrame
