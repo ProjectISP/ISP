@@ -2,12 +2,13 @@ import math
 import enum
 import os
 
-from isp.Gui import pw, pyc, qt
+from isp.Gui import pw, pyc, qt, pqg
 from isp.Gui.Frames import BaseFrame
 from isp.Gui.Frames.uis_frames import UiEventLocationFrame
 from isp.Gui.Models.sql_alchemy_model import SQLAlchemyModel
 
-from isp.db.models import EventLocationModel
+from isp.db.models import EventLocationModel, FirstPolarityModel
+from isp.db import generate_id
 
 from sqlalchemy.sql.sqltypes import DateTime
 from datetime import datetime, timedelta
@@ -15,18 +16,9 @@ from datetime import datetime, timedelta
 from isp.Utils import ObspyUtil
 from obspy.core.event import Origin
 
-class EventColumn(enum.Enum):
+from sqlalchemy import Column
 
-    TIME = 0
-    TRANSFORMATION = 1
-    RMS = 2
-    LATITUDE = 3
-    LONGITUDE = 4
-    DEPTH = 5
-    UNCERTAINTY = 5
-
-    def __str__(self):
-        return str(self.value)
+from isp import LOCATION_OUTPUT_PATH
 
 class MinMaxValidator(pyc.QObject):
 
@@ -94,10 +86,27 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         super(EventLocationFrame, self).__init__()
         self.setupUi(self)
         self.setWindowTitle('Events Location')
+        self.setWindowIcon(pqg.QIcon(':\icons\compass-icon.png'))
+        
+        el_columns = [getattr(EventLocationModel, c) 
+                      for c in EventLocationModel.__table__.columns.keys()[1:]]
 
-        columns = ['origin_time', 'transformation', 'rms', 'latitude', 'longitude', 'depth', 'uncertainty']
-        col_names = ['Origin Time', 'Transformation', 'RMS', 'Latitude', 'Longitude', 'Depth', 'Uncertainty']
-        model = SQLAlchemyModel(EventLocationModel, columns, col_names, self)
+        fp_columns = [getattr(FirstPolarityModel, c) 
+                      for c in FirstPolarityModel.__table__.columns.keys()[2:]]
+
+        columns = [*el_columns, *fp_columns]
+
+        col_names = ['Origin Time', 'Transformation', 'RMS', 
+                     'Latitude', 'Longitude', 'Depth', 'Uncertainty', 
+                     'Max. Hor. Error', 'Min. Hor. Error', 'Ellipse Az.',
+                     'No. Phases', 'Az. Gap', 'Max. Dist.', 'Min. Dist.',
+                     'Mb', 'Mb Error', 'Ms', 'Ms Error', 'Ml', 'Ml Error',
+                     'Mw', 'Mw Error', 'Mc', 'Mc Error', 'Strike', 'Dip',
+                     'Rake', 'Misfit', 'Az. Gap', 'Stat. Pol. Count']
+
+        model = SQLAlchemyModel([EventLocationModel, FirstPolarityModel], columns, col_names, self)
+        model.addJoinArguments(EventLocationModel.first_polarity, isouter = True)
+        model.revertAll()
         self.tableView.setModel(model)
         self.tableView.setSelectionBehavior(pw.QAbstractItemView.SelectRows)
         self.tableView.setContextMenuPolicy(qt.ActionsContextMenu)
@@ -115,6 +124,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
             validator.validChanged.connect(self._checkQueryParameters)
         
         self.actionRead_hyp_folder.triggered.connect(self._readHypFolder)
+        self.actionRead_last_location.triggered.connect(self._readLastLocation)
         self.btnRefreshQuery.clicked.connect(self._refreshQuery)
         self.btnShowAll.clicked.connect(self._showAll)
         self.PlotMapBtn.clicked.connect(self.plot_map)
@@ -147,7 +157,6 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
             self.maxLon.setValue(math.ceil(max_lon))
             self.minLon.setValue(math.floor(min_lon))
             self.maxDepth.setValue(math.ceil(max_dep))
-            # TODO: depth can be negative?  fix ui limit
             self.minDepth.setValue(math.floor(min_dep))
             # TODO magnitude
             #self.maxMag.setValue(max_mag)
@@ -166,21 +175,97 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
     def _checkQueryParameters(self):
         self.btnRefreshQuery.setEnabled(all(v.valid for v in self._validators))
 
+    def _readHypFile(self, file_abs_path):
+        origin : Origin = ObspyUtil.reads_hyp_to_origin(file_abs_path)
+        try:
+            event_model = EventLocationModel.create_from_origin(origin)
+            event_model.save()
+        except AttributeError:
+            # TODO: what to do if it is already inserted?
+            event_model = EventLocationModel.find_by(latitude=origin.latitude, longitude=origin.longitude,
+                depth=origin.depth, origin_time=origin.time.datetime)
+
+        return event_model
+        
     def _readHypFolder(self):
         dir = pw.QFileDialog.getExistingDirectory(self, "Get directory to read .hyp files from")
+        
+        # If user cancels selecting folder, return
+        if not dir:
+            return 
+
         files = [f for f in os.listdir(dir) if f.endswith('.hyp')]
+        errors = []
         for file in files:
             file_abs = os.path.abspath(os.path.join(dir, file))
             try:
-                origin : Origin = ObspyUtil.reads_hyp_to_origin(file_abs)
-                try:
-                    event_model = EventLocationModel.create_from_origin(origin)
-                    event_model.save()
-                except AttributeError:
-                    # TODO: what to do if it is already inserted?
-                    pass
-            except :
-                print(f'File {file} could not be processed correctly')
+                self._readHypFile(file_abs)
+            except Exception as e:
+                errors.append(str(e))
+        
+        if errors:
+            m = pw.QMessageBox(pw.QMessageBox.Warning, self.windowTitle(),
+                           'Some errors ocurred while processing files. See detailed.', parent=self)
+            m.setDetailedText('\n'.join(errors))
+            m.exec()
+
+        # TODO: show all after reading folder or let filters?
+        self._showAll()
+        self.refreshLimits()
+
+    def _readLastLocation(self):
+        # Insert event location or get if it already exists
+        hyp_path = os.path.join(LOCATION_OUTPUT_PATH, 'last.hyp')
+        try:
+            event = self._readHypFile(hyp_path)
+        except Exception as e:
+            pw.QMessageBox.warning(self, self.windowTitle(), f'An error ocurred reading hyp file: {e}')
+            return
+
+        # Update magnitude data
+        mag_file = os.path.join(LOCATION_OUTPUT_PATH, 'magnitudes_output.mag')
+        if os.path.isfile(mag_file):
+            with open(mag_file) as f:
+                next(f)
+                mag_dict = {}
+                for line in f:
+                    key, value = line.split()
+                    key = key.lower().replace('std', 'error')
+                    try:
+                        value = float(value)
+                        mag_dict[key] = value
+                    except ValueError:
+                        pass
+                event.set_magnitudes(mag_dict)
+                event.save()
+
+        # Update first polarity data
+        # TODO: this could be improved by updating instead of removing the existing one
+        fp = FirstPolarityModel.find_by(event_info_id = event.id)
+        if fp:
+            fp.delete()
+
+        fp_file = os.path.join(LOCATION_OUTPUT_PATH, 'first_polarity.fp')
+        if os.path.isfile(fp_file):
+            with open(fp_file) as f:
+                next(f)
+                fp_dict = {}
+                fp_fields = {'Strike' : 'strike_fp', 'Dip' : 'dip_fp',
+                             'Rake' : 'rake_fp', 'misfit_first_polarity' : 'misfit_fp',
+                             'azimuthal_gap' : 'azimuthal_fp_Gap', 
+                             'number_of_polarities' : 'station_fp_polarities_count'  }
+                for line in f:
+                    key, value = line.split()
+                    try:
+                        key = fp_fields[key]
+                        value = float(value)
+                        fp_dict[key] = value
+                    except (ValueError, KeyError):
+                        pass
+                fp_dict['event_info_id'] = event.id
+                fp_dict['id'] = generate_id(16)
+                fp = FirstPolarityModel.from_dict(fp_dict)
+                fp.save()
 
         # TODO: show all after reading folder or let filters?
         self._showAll()

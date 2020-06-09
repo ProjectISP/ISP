@@ -337,7 +337,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -345,6 +345,7 @@
      <string>File</string>
     </property>
     <addaction name="actionRead_hyp_folder"/>
+    <addaction name="actionRead_last_location"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -352,6 +353,11 @@
   <action name="actionRead_hyp_folder">
    <property name="text">
     <string>Read hyp folder</string>
+   </property>
+  </action>
+  <action name="actionRead_last_location">
+   <property name="text">
+    <string>Read last location</string>
    </property>
   </action>
  </widget>

@@ -115,6 +115,8 @@ class EventLocationModel(db.Model, BaseModel):
     ml_error = Column(Float, nullable=True)
     mw = Column(Float, nullable=True)
     mw_error = Column(Float, nullable=True)
+    mc = Column(Float, nullable=True)
+    mc_error = Column(Float, nullable=True)
     first_polarity = relationship(RelationShip.FIRST_POLARITY, backref="event_location",
                                   cascade="save-update, merge, delete", lazy=True)
     moment_tensor = relationship(RelationShip.MOMENT_TENSOR, backref="event_location",
@@ -146,6 +148,16 @@ class EventLocationModel(db.Model, BaseModel):
                       "min_distance": origin.quality.minimum_distance}
 
         return cls(**event_dict)
+
+    def set_magnitudes(self, mag_dict):
+        import numbers
+        from collections.abc import Mapping
+        if not isinstance(mag_dict, Mapping):
+            raise AttributeError('Received argument is not a valid mapping')
+
+        for key, value in mag_dict.items():
+            if hasattr(self, key) and isinstance(value, numbers.Number):
+                setattr(self, key, value)
 
     @property
     def get_arrays(self):
