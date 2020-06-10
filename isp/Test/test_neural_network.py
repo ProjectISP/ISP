@@ -73,10 +73,11 @@ class TestCNNPicker(unittest.TestCase):
         cls.wave_form_file_e = os.path.join(dir_path, "test_data", "red_example.HHE.SAC")
 
     def test_cnn(self):
+        import os
         st = read(self.wave_form_file_e)
         st += read(self.wave_form_file_n)
         st += read(self.wave_form_file_z)
-
+        os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
         cnn = CNNPicker()
         cnn.setup_stream(st)  # set stream to use in prediction.
         cnn.predict()

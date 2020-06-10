@@ -563,6 +563,7 @@
     <addaction name="actionSet_Parameters"/>
     <addaction name="actionClean_selection"/>
     <addaction name="actionOpen_Magnitudes_Calculator"/>
+    <addaction name="actionRun_picker"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -731,6 +732,11 @@
   <action name="actionOpen_Magnitudes_Calculator">
    <property name="text">
     <string>Open Magnitudes Calculator</string>
+   </property>
+  </action>
+  <action name="actionRun_picker">
+   <property name="text">
+    <string>Run picker</string>
    </property>
   </action>
  </widget>

@@ -63,9 +63,10 @@ class StationsMap:
             ax.stock_img()
             ax.add_feature(coastline_10m)
 
-        geodetic_transform = ccrs.Geodetic()._as_mpl_transform(ax)
+        #geodetic_transform = ccrs.Geodetic()._as_mpl_transform(ax)
+        geodetic_transform = ccrs.PlateCarree()._as_mpl_transform(ax)
         text_transform = offset_copy(geodetic_transform, units='dots', x=-25)
-        ax.scatter(lon, lat, s=12, marker="^", color='red', alpha=0.7, transform=ccrs.Geodetic())
+        ax.scatter(lon, lat, s=12, marker="^", color='red', alpha=0.7, transform=ccrs.PlateCarree())
         N=len(name_stations)
         for n in range(N):
             lon1=lon[n]
@@ -76,9 +77,10 @@ class StationsMap:
                 bbox=dict(facecolor='sandybrown', alpha=0.5, boxstyle='round'))
 
         # Create an inset GeoAxes showing the Global location
-        sub_ax = self.mpf.canvas.figure.add_axes([0.70, 0.75, 0.28, 0.28],
-                              projection=ccrs.PlateCarree())
-        sub_ax.set_extent([-180, 180, -90, 90], geodetic)
+        #sub_ax = self.mpf.canvas.figure.add_axes([0.70, 0.75, 0.28, 0.28],
+        #                      projection=ccrs.PlateCarree())
+        sub_ax = self.mpf.canvas.figure.add_axes([0.70, 0.73, 0.28, 0.28], projection=ccrs.PlateCarree())
+        sub_ax.set_extent([-179.9, 180, -89.9, 90], geodetic)
 
         # Make a nice border around the inset axes.
         effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
@@ -94,8 +96,8 @@ class StationsMap:
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
 
-        gl.xlabels_top = False
-        gl.ylabels_left = False
+        gl.top_labels = False
+        gl.left_labels = False
         gl.xlines = False
         gl.ylines = False
 

@@ -883,8 +883,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
 
-        gl.xlabels_top = False
-        gl.ylabels_left = False
+        gl.top_labels = False
+        gl.left_labels = False
         gl.xlines = False
         gl.ylines = False
 
@@ -895,9 +895,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", alpha=0.3,cmap=plt.get_cmap('YlOrBr'))
 
         # Create an inset GeoAxes showing the Global location
-        sub_ax = fig.add_axes([0.70, 0.75, 0.28, 0.28],
-                              projection=ccrs.PlateCarree())
-        sub_ax.set_extent([-180, 180, -90, 90], geodetic)
+        sub_ax = self.mpf.canvas.figure.add_axes([0.70, 0.73, 0.28, 0.28], projection=ccrs.PlateCarree())
+        sub_ax.set_extent([-179.9, 180, -89.9, 90], geodetic)
 
         # Make a nice border around the inset axes.
         effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)

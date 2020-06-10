@@ -3,6 +3,7 @@ from obspy import UTCDateTime, Stream
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
+from isp.DataProcessing.NeuralNetwork import CNNPicker
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Exceptions import parse_excepts
@@ -25,12 +26,17 @@ import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope
 
-
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def __init__(self):
         super(EarthquakeAnalysisFrame, self).__init__()
         self.setupUi(self)
+
+        try:
+            self.cnn = CNNPicker()
+        except:
+            print("Neural Network cannot be loaded")
+
         self.inventory = {}
         self.files = []
         self.total_items = 0
@@ -88,6 +94,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionCWT_CF.triggered.connect(self.cwt_cf)
         self.actionEnvelope.triggered.connect(self.envelope)
         self.actionReceiver_Functions.triggered.connect(self.open_receiver_functions)
+        self.actionRun_picker.triggered.connect(self.run_picker)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -673,6 +680,35 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self._stations_info = StationsInfo(sd)
         self._stations_info.show()
 
+        # Neural Network for picking P and S waves
+    def run_picker(self):
+        os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+        if self.st:
+            stations = ObspyUtil.get_stations_from_stream(self.st)
+            index=0
+            for k in range(len(stations)):
+                st1 = self.st.copy()
+                # print("Computing", stations[k])
+                st2 = st1.select(station=stations[k])
+                try:
+                    maxstart = np.max([tr.stats.starttime for tr in st2])
+                    minend = np.min([tr.stats.endtime for tr in st2])
+                    st2.trim(maxstart, minend)
+                    self.cnn.setup_stream(st2)  # set stream to use in prediction.
+                    self.cnn.predict()
+                    arrivals = self.cnn.get_arrivals()
+                    print(arrivals)
+                    for k in range(len(arrivals["p"])):
+                        time = arrivals["p"][k].matplotlib_date
+                        self.canvas.draw_arrow(time, index + 2, "P", color="blue", linestyles='--', picker=False)
+                    for k in range(len(arrivals["s"])):
+                        time = arrivals["s"][k].matplotlib_date
+                        self.canvas.draw_arrow(time, index + 0, "S", color="purple", linestyles='--', picker=False)
+                        self.canvas.draw_arrow(time, index + 1, "S", color="purple", linestyles='--', picker=False)
+                    index = index+3
+                except:
+                    print("Prediction failed for ", stations[k])
+
     def on_select(self, ax_index, xmin, xmax):
         self.kind_wave = self.ChopCB.currentText()
         tr = self.st[ax_index]
@@ -816,8 +852,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def open_magnitudes_calculator(self):
         hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")
         origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file)
-        self._magnitude_calc = MagnitudeCalc(origin, self.inventory, self.chop)
-        self._magnitude_calc.show()
+        if origin:
+            self._magnitude_calc = MagnitudeCalc(origin, self.inventory, self.chop)
+            self._magnitude_calc.show()
 
     def open_array_analysis(self):
         self.controller().open_array_window()

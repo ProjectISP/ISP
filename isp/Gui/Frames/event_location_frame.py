@@ -95,8 +95,10 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.setupUi(self)
         self.setWindowTitle('Events Location')
 
-        columns = ['origin_time', 'transformation', 'rms', 'latitude', 'longitude', 'depth', 'uncertainty']
-        col_names = ['Origin Time', 'Transformation', 'RMS', 'Latitude', 'Longitude', 'Depth', 'Uncertainty']
+        columns = ['origin_time', 'transformation', 'rms', 'latitude', 'longitude', 'depth', 'uncertainty',
+                   'min_horizontal_error',"ellipse_azimuth"]
+        col_names = ['Origin Time', 'Transformation', 'RMS', 'Latitude', 'Longitude', 'Depth', 'Uncertainty',
+                     'smin',"Ellipse azimuth"]
         model = SQLAlchemyModel(EventLocationModel, columns, col_names, self)
         self.tableView.setModel(model)
         self.tableView.setSelectionBehavior(pw.QAbstractItemView.SelectRows)

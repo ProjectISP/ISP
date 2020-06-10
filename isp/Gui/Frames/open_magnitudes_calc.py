@@ -4,7 +4,7 @@ from isp.Gui import pw
 from isp.Gui.Frames import MatplotlibCanvas, BaseFrame, SettingsLoader
 from isp.Gui.Frames.uis_frames import UiMagnitudeFrame
 from isp.Gui.Frames.qt_components import ParentWidget
-#from mtspec import mtspec
+from mtspec import mtspec
 import numpy as np
 import scipy
 import scipy.optimize
@@ -87,6 +87,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         self.inventory = inventory
         self.runBtn.clicked.connect(self.run_magnitudes)
         self.saveBtn.clicked.connect(self.save_results)
+        self.plotBtn.clicked.connect(self.plot_comparison)
         self.Mw = []
         self.Mw_std=[]
         self.Ms= []
@@ -99,6 +100,11 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         self.Mc_std = []
         self.ML = []
         self.ML_std = []
+        self.Magnitude_Ws= []
+        self.Mss = []
+        self.Mcs = []
+        self.Mcs = []
+        self.MLs = []
 
     def closeEvent(self, ce):
         self.save_values()
@@ -106,13 +112,20 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
     def __load__(self):
         self.load_values()
 
-    def moment_magnitude(self,):
+    def moment_magnitude(self):
         density = self.densityDB.value()
         vp = self.vpDB.value() * 1000
-        vs = vp / 1.73
-        # quality = self.qualityDB.value()
-        radiation_pattern = 0.52
-        k = 0.32
+        vs = self.vsDB.value() * 1000
+
+        if self.phaseCB.currentText() == 'P-Wave':
+            radiation_pattern = 0.52
+            velocity = vp
+            k = 0.32
+        elif self.phaseCB.currentText() == "S-Wave":
+            radiation_pattern = 0.63
+            velocity = vs
+            k = 0.21
+
         Mws = []
         Mws_std = []
         Magnitude_Ws = []
@@ -158,7 +171,9 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
             #print("Distance",dist,"Vp",vp,"Q",quality,"Density",density, "Travel Time", tt)
 
             # Q as a function of freq
-            quality = 100 * (freq) ** 0.8
+            Qo = self.qualityDB.value()
+            a = self.coeffDB.value()
+            quality = (Qo) * (freq) ** a
 
 
             try:
@@ -181,7 +196,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
             ax1.grid(True, which="both", ls="-", color='grey')
 
             corner_freqs.append(f_c)
-            M_0 = 4.0 * np.pi * density * vp ** 3 * dist * np.sqrt(Omega_0 ** 2) / radiation_pattern
+            M_0 = 4.0 * np.pi * density * velocity ** 3 * dist * np.sqrt(Omega_0 ** 2) / radiation_pattern
             Magnitude_Ws.append(2.0 / 3.0 * (np.log10(M_0) - 9.1))
             r = 3 * k * vs / sum(corner_freqs)
             moments.append(M_0)
@@ -200,6 +215,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         # Calculate the source radius.
         source_radii = np.array(source_radii)
         source_radius = source_radii.mean()
+        self.source_radius = source_radius
         source_radius_std = source_radii.std()
 
         # Calculate the stress drop of the event based on the average moment and
@@ -212,7 +228,8 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
             print("Source radius:", source_radius, " Std:", source_radius_std)
             print("Stress drop:", stress_drop / 1E5, " Std:", stress_drop_std / 1E5)
 
-
+        self.stress_drop =  stress_drop
+        self.Magnitude_Ws = Magnitude_Ws
         Mw = 2.0 / 3.0 * (np.log10(moment) - 9.1)
         Mw_std = 2.0 / 3.0 * moment_std / (moment * np.log(10))
         Mws_std.append(Mw_std)
@@ -236,6 +253,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
             Ms.append(Ms_value)
 
         Ms=np.array(Ms)
+        self.Mss=Ms
         Ms_mean = Ms.mean()
         Ms_deviation =Ms.std()
         print("Surface Magnitude", Ms_mean, "Variance", Ms_deviation)
@@ -262,12 +280,14 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
                 data = np.array(magnitude_dict[2]) * 1e6  # convert to nm
                 Mb_value = (np.log10(np.max(data)) / (2 * np.pi)) + atenuation
                 Mb.append(Mb_value)
-                Mb_mean = Mb.mean()
+                Mbs = np.array(Mb)
+                Mb_mean = Mbs.mean()
                 Mb_deviation = Mb.std()
                 self.Mb = Mb_mean
                 self.Mb_std = Mb_deviation
                 print("Body Magnitude", Mb_mean, "Variance", Mb_deviation)
         label="Mb"
+        self.Mbs = Mbs
         if len(Mb)>0:
             self.plot_histograms(Mb,label)
 
@@ -297,6 +317,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         print("Coda Magnitude", Mc_mean, "Variance", Mc_deviation)
         label="Mc"
         self.plot_histograms(Mc, label)
+        self.Mcs = Mcs
         self.Mc = Mc_mean
         self.Mc_std = Mc_deviation
 
@@ -316,16 +337,11 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
             ML_deviation = MLs.std()
         print("Local Magnitude", ML_mean, "Variance", ML_deviation)
         label="ML"
+        self.MLs = MLs
         self.plot_histograms(ML,label)
         self.ML = ML_mean
         self.ML_std = ML_deviation
 
-    def plot_histograms(self,magnitudes,label):
-
-        self.ax2.hist(magnitudes, bins=4*len(magnitudes), alpha=0.5, label=label)
-        self.ax2.set_xlabel("Magnitude", size=12)
-        self.ax2.set_ylabel("Count", size=12)
-        self.ax2.legend(loc='upper right')
 
     def run_magnitudes(self):
         self.spectrum_Widget_Canvas.plot([], [], 1)
@@ -373,7 +389,9 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         try:
             if self.Mw:
                 self.magnitudesText.appendPlainText("Moment Magnitude: " " Mw {Mw:.3f} " 
-                                                      " std {std:.3f} ".format(Mw=self.Mw,std=self.Mw_std))
+                " std {std:.3f} " "Source Radious {source:.3f} " "Stress Drop {stress:.3E} ".format(Mw=self.Mw,
+                std=self.Mw_std, source = self.source_radius/1000, stress = self.stress_drop))
+
         except:
             pass
 
@@ -413,4 +431,41 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         print(df)
         df.to_csv(path_output, sep=' ', index=False)
 
+    def plot_histograms(self,magnitudes,label):
 
+        self.ax2.hist(magnitudes, bins=4*len(magnitudes), alpha=0.5, label=label)
+        self.ax2.set_xlabel("Magnitude", size=12)
+        self.ax2.set_ylabel("Count", size=12)
+        self.ax2.legend(loc='upper right')
+
+    def plot_comparison(self):
+        import matplotlib.pyplot as plt
+        from isp.Gui.Frames import MatplotlibFrame
+        list_magnitudes = []
+        labels = []
+        if len(self.Magnitude_Ws)>=0:
+            list_magnitudes.append(self.Magnitude_Ws)
+            labels.append("Mw")
+        if len(self.Mss) >= 0:
+            list_magnitudes.append(self.Mss)
+            labels.append("Ms")
+        if len(self.Mcs) >= 0:
+            list_magnitudes.append(self.Mcs)
+            labels.append("Mc")
+        if len(self.MLs) >= 0:
+            labels.append("ML")
+            list_magnitudes.append(self.MLs)
+        fig, ax1 = plt.subplots(figsize=(6, 6))
+        self.mpf = MatplotlibFrame(fig)
+        k = 0
+        for magnitude in list_magnitudes:
+            label = labels[k]
+            x =np.arange(len(magnitude))+1
+            ax1.scatter(x, magnitude, s=15, alpha = 0.5, label=label)
+            ax1.tick_params(direction='in', labelsize=10)
+            ax1.legend(loc='upper right')
+            plt.ylabel('Magnitudes',fontsize=10)
+            plt.xlabel('Counts', fontsize=10)
+            k = k+1
+
+        self.mpf.show()
