@@ -564,6 +564,7 @@
     <addaction name="actionClean_selection"/>
     <addaction name="actionOpen_Magnitudes_Calculator"/>
     <addaction name="actionRun_picker"/>
+    <addaction name="actionRun_Event_Detector"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -737,6 +738,11 @@
   <action name="actionRun_picker">
    <property name="text">
     <string>Run picker</string>
+   </property>
+  </action>
+  <action name="actionRun_Event_Detector">
+   <property name="text">
+    <string>Run Event Detector</string>
    </property>
   </action>
  </widget>

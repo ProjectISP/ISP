@@ -96,13 +96,11 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
 
         columns = [*el_columns, *fp_columns]
 
-<<<<<<< HEAD
         columns = ['origin_time', 'transformation', 'rms', 'latitude', 'longitude', 'depth', 'uncertainty',
                    'min_horizontal_error',"ellipse_azimuth"]
         col_names = ['Origin Time', 'Transformation', 'RMS', 'Latitude', 'Longitude', 'Depth', 'Uncertainty',
                      'smin',"Ellipse azimuth"]
         model = SQLAlchemyModel(EventLocationModel, columns, col_names, self)
-=======
         col_names = ['Origin Time', 'Transformation', 'RMS', 
                      'Latitude', 'Longitude', 'Depth', 'Uncertainty', 
                      'Max. Hor. Error', 'Min. Hor. Error', 'Ellipse Az.',
@@ -114,7 +112,6 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         model = SQLAlchemyModel([EventLocationModel, FirstPolarityModel], columns, col_names, self)
         model.addJoinArguments(EventLocationModel.first_polarity, isouter = True)
         model.revertAll()
->>>>>>> d88267f88a7568834a1f5d6dd60ec2aa746d82d7
         self.tableView.setModel(model)
         self.tableView.setSelectionBehavior(pw.QAbstractItemView.SelectRows)
         self.tableView.setContextMenuPolicy(qt.ActionsContextMenu)

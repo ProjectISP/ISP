@@ -2,7 +2,9 @@ import matplotlib.dates as mdt
 from obspy import UTCDateTime, Stream
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth
-from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
+from obspy.signal.trigger import coincidence_trigger
+
+from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy, ConvolveWavelet
 from isp.DataProcessing.NeuralNetwork import CNNPicker
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.plot_tools_manager import PlotToolsManager
@@ -39,6 +41,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.inventory = {}
         self.files = []
+        self.events_times = []
         self.total_items = 0
         self.items_per_page = 1
         # dict to keep track of picks-> dict(key: PickerStructure) as key we use the drawn line.
@@ -95,6 +98,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionEnvelope.triggered.connect(self.envelope)
         self.actionReceiver_Functions.triggered.connect(self.open_receiver_functions)
         self.actionRun_picker.triggered.connect(self.run_picker)
+        self.actionRun_Event_Detector.triggered.connect(self.detect_events)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -308,6 +312,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.redraw_pickers(file_path, index)
                 #redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
                 self.redraw_chop(tr, s, index)
+                self.redraw_event_times(index)
+
                 last_index = index
 
                 st_stats = ObspyUtil.get_stats(file_path)
@@ -492,7 +498,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         diff = end_time - start_time
         for index, file_path in enumerate(files_at_page):
             tr = self.st[index]
-            cw = ConvolveWaveletScipy(file_path)
+            cw = ConvolveWaveletScipy(tr)
             if self.trimCB.isChecked() and diff >= 0:
                 cw.setup_wavelet(start_time, end_time, wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
                                  decimate=False)
@@ -553,6 +559,56 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         except:
             pass
 
+
+    # New function to detect events using Complex Morlet wavelet detector
+
+    def detect_events(self):
+
+        all_traces = []
+
+        parameters = self.parameters.getParameters()
+        starttime = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        endtime = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        diff = endtime - starttime
+        obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
+        obsfiles.sort()
+
+        for file in obsfiles:
+            sd = SeismogramDataAdvanced(file)
+            if self.trimCB.isChecked() and diff >= 0:
+                tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                              filter_error_callback=self.filter_error_message,
+                                              start_time=starttime, end_time=endtime)
+                cw = ConvolveWaveletScipy(tr)
+                cw.setup_wavelet(starttime, endtime, wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
+                                 decimate=False)
+            else:
+                tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                              filter_error_callback=self.filter_error_message)
+                cw = ConvolveWaveletScipy(tr)
+                cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
+                                 decimate=False)
+
+            cf = cw.cf_lowpass()
+            # Normalize
+            cf = cf / max(cf)
+            tr.data = cf
+            all_traces.append(tr)
+
+        self.st = Stream(traces=all_traces)
+        trigger =coincidence_trigger(trigger_type=None, thr_on = 0.8, thr_off = 0.4,
+                                  thr_coincidence_sum = 5, stream=self.st, details=True)
+
+        print("Detection done ")
+        for k in range(len(trigger)):
+            detection = trigger[k]
+            for key in detection:
+
+                if key == 'time':
+                    time = detection[key]
+                    self.events_times.append(time)
+
+
     def write_files_page(self):
         import os
         root_path = os.path.dirname(os.path.abspath(__file__))
@@ -601,6 +657,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                                   amplitude=ps.Amplitude, color=ps.Color, picker=True)
                 self.picked_at.pop(key)
                 self.picked_at[str(new_line)] = ps
+
+    def redraw_event_times(self, index):
+        if len(self.events_times)>0:
+            for k in self.events_times:
+                k = k.matplotlib_date
+                self.canvas.draw_arrow(k ,index, "Event Detected", color="blue",linestyles='--', picker=False)
 
     def redraw_chop(self, tr, s, ax_index):
        self.kind_wave = self.ChopCB.currentText()

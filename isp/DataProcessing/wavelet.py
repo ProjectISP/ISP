@@ -55,6 +55,7 @@ class ConvolveWaveletBase:
             self.trace: Trace = read(data)[0]
             self.stats = ObspyUtil.get_stats(data)
 
+
         self._wmin = float(kwargs.get("wmin", 6.))
         self._wmax = float(kwargs.get("wmax", 6.))
         self._tt = float(kwargs.get("tt", 2.))
