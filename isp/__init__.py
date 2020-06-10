@@ -2,7 +2,7 @@ import logging
 import os
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-LOCATION_OUTPUT_PATH = os.path.join(ROOT_DIR, 'earthquakeAnalisysis\location_output\loc')
+LOCATION_OUTPUT_PATH = os.path.join(ROOT_DIR, 'earthquakeAnalisysis/location_output/loc')
 RESOURCE_PATH = os.path.join(ROOT_DIR, 'resources')
 IMAGES_PATH = os.path.join(RESOURCE_PATH, 'images')
 UIS_PATH = os.path.join(RESOURCE_PATH, 'designer_uis')
