@@ -66,7 +66,9 @@ class SQLAlchemyModel(pyc.QAbstractTableModel):
     # is OK
     def submitAll(self):
         for row in self._deleted_rows:
-            row.delete()
+            for entity in row[len(self._columns):]:
+                if isinstance(entity, BaseModel):
+                    entity.delete()
 
         self._deleted_rows = []
         return True
@@ -75,7 +77,7 @@ class SQLAlchemyModel(pyc.QAbstractTableModel):
         self.layoutAboutToBeChanged.emit()
         self._deleted_rows = []
         
-        query = db.session.query().add_columns(*self._columns)
+        query = db.session.query(*self._columns, *self._models)
         
         for p,d in zip(self._join_params, self._join_dicts) :
             query = query.join(*p, **d)
@@ -94,10 +96,22 @@ class SQLAlchemyModel(pyc.QAbstractTableModel):
         self._join_params.append(args)
         self._join_dicts.append(kwargs) 
 
-    # TODO: change join arguments?
-
+    # TODO: change join arguments or delete?
+    # Get row values following columns order
     def getRows(self):
-        return self._rows
+        rows = []
+        for t in self._rows:
+            rows.append(t[:len(self._columns)])
+        return rows
+    
+    # Get all model entities following self._models' order
+    # For each row, one particular entity could be None
+    # if there is no row associated by the relationship.
+    def getEntities(self):
+        entities = []
+        for t in self._rows:
+            entities.append(t[len(self._columns):])
+        return entities
 
     # Qt overriden methods
     def rowCount(self, parent=pyc.QModelIndex()):
@@ -120,6 +134,7 @@ class SQLAlchemyModel(pyc.QAbstractTableModel):
         except IndexError:
             ret = None
 
+        # TODO: should this be the delegate's responsibility?
         if type(ret) is datetime.datetime:
             ret = pyc.QDateTime(ret)
 

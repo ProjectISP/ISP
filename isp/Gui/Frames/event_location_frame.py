@@ -20,6 +20,14 @@ from sqlalchemy import Column
 
 from isp import LOCATION_OUTPUT_PATH
 
+class DateTimeFormatDelegate(pw.QStyledItemDelegate):
+    def __init__(self, date_format, parent=None):
+        super().__init__(parent)        
+        self.date_format = date_format
+
+    def displayText(self, value, locale):
+        return value.toString(self.date_format)
+
 class MinMaxValidator(pyc.QObject):
 
     validChanged = pyc.pyqtSignal(bool)
@@ -95,6 +103,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
                       for c in FirstPolarityModel.__table__.columns.keys()[2:]]
 
         columns = [*el_columns, *fp_columns]
+
         col_names = ['Origin Time', 'Transformation', 'RMS', 
                      'Latitude', 'Longitude', 'Depth', 'Uncertainty', 
                      'Max. Hor. Error', 'Min. Hor. Error', 'Ellipse Az.',
@@ -112,6 +121,8 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         remove_action = pw.QAction("Remove selected location(s)", self)
         remove_action.triggered.connect(self._onRemoveRowsTriggered)
         self.tableView.addAction(remove_action)
+        self.tableView.setItemDelegateForColumn(0, DateTimeFormatDelegate('dd/MM/yyyy hh:mm:ss.zzz'))
+        self.tableView.resizeColumnsToContents()
 
         valLat = MinMaxValidator(self.minLat, self.maxLat)
         valLon = MinMaxValidator(self.minLon, self.maxLon)
@@ -129,7 +140,10 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.PlotMapBtn.clicked.connect(self.plot_map)
 
     def refreshLimits(self):
-        events = self.tableView.model().getRows()
+        entities = self.tableView.model().getEntities()
+        events = []
+        for t in entities:
+            events.append(t[0])
 
         if events :
             max_lat = -math.inf
@@ -167,7 +181,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         selected_rowindexes = self.tableView.selectionModel().selectedRows()
         selected_rows = [r.row() for r in selected_rowindexes]
         for r in sorted(selected_rows, reverse=True):
-            print(self.tableView.model().removeRow(r))
+            self.tableView.model().removeRow(r)
 
         self.tableView.model().submitAll()
 
@@ -286,9 +300,11 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.tableView.model().revertAll()
 
     def plot_map(self):
-        events = self.tableView.model().getRows()
+        entities = self.tableView.model().getEntities()
         lat = []
         lon = []
-        for j in events:
-            lat.append(j.latitude)
-            lon.append(j.longitude)
+        for j in entities:
+            lat.append(j[0].latitude)
+            lon.append(j[0].longitude)
+        print(lat)
+        print(lon)
