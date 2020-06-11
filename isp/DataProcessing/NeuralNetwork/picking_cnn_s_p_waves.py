@@ -184,7 +184,7 @@ class CNNPicker:
             # self.__stream.resample(100)  # TODO test re sample. it gets more events.
             self.__stream.interpolate(self.resample_freq)
 
-    def predict(self):
+    def predict(self, verbose=False):
         """
         Run predict from model. Before calling it be sure to call setup_stream(stream) first. After
             run predict you can call get_arrivals() to get the arrival times of P and S waves.
@@ -196,7 +196,7 @@ class CNNPicker:
             raise ValueError("Please call setup_stream(stream) before predict.")
 
         tr_win = self.__normalize_data()
-        ts = self.model.predict(tr_win, verbose=True)
+        ts = self.model.predict(tr_win, verbose=verbose)
         self.prob_p, self.prob_s, self.prob_n = np.rollaxis(ts, 1)
 
     def get_time_from_index(self, index):

@@ -322,8 +322,8 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.add_earthquake_info(origin)
         xp, yp, xs, ys = self.nll_manager.ger_NLL_residuals()
         self.plot_residuals(xp, yp, xs, ys)
-        if self.pdfCB.isChecked:
-            self.nll_manager.plot_scatter()
+        #if self.pdfCB.isChecked:
+        #    self.nll_manager.plot_scatter()
 
     def plot_residuals(self, xp, yp, xs, ys):
 

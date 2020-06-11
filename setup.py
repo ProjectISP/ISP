@@ -73,7 +73,9 @@ def extract_focmec():
     return extract_at
 
 def extract_mti():
-    extract_at = os.path.join(ROOT_DIR, "mti")
+    extract_at = os.path.join(ROOT_DIR, "mti", "green")
+    print(extract_at)
+
     try:
         if not os.path.isdir(extract_at):
             os.mkdir(extract_at)
@@ -89,13 +91,13 @@ def extract_mti():
 class CustomBuildExtCommand(build_ext):
     def run(self):
         print("Extracting files.")
-        #nll_dir = extract_nll()
-        #focmec_dir = extract_focmec()
+        nll_dir = extract_nll()
+        focmec_dir = extract_focmec()
         mti_dir = extract_mti()
         print("Finished ")
 
-        #self.make_nll(nll_dir)
-        #self.make_focmec(focmec_dir)
+        self.make_nll(nll_dir)
+        self.make_focmec(focmec_dir)
         self.make_mti(mti_dir)
 
         # run build
@@ -127,7 +129,7 @@ class CustomBuildExtCommand(build_ext):
             print("FOCMEC successfully installed")
 
     def make_mti(self, mti_dir):
-        src_path = os.path.join(mti_dir, "green")
+        src_path = os.path.join(mti_dir)
         command = "sh compile_mti.sh"
         try:
             exc_cmd(command, cwd=src_path, shell=True)

@@ -846,15 +846,12 @@ class CartopyCanvas(BasePltPyqtCanvas):
         # TODO implement a useful plot for cartopy this is just a test.
         self.clear()
         ax = self.get_axe(axes_index)
-        fig = ax.get_figure()
 
 
-        im = plt.imread('/Users/robertocabieces/Documents/ISPshare/isp/resources/images/05.png')
-        newax = fig.add_axes([0.3, 0.3, 0.1, 0.1])
-        newax.imshow(im, aspect ='auto')
-
-
-
+        #fig = ax.get_figure()
+        #im = plt.imread('/Users/robertocabieces/Documents/ISPshare/isp/resources/images/05.png')
+        #newax = fig.add_axes([0.3, 0.3, 0.1, 0.1])
+        #newax.imshow(im, aspect ='auto')
         wms = WebMapService(self.MAP_SERVICE_URL)
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
         #layer = 'GEBCO_08 Hillshade'
@@ -867,7 +864,6 @@ class CartopyCanvas(BasePltPyqtCanvas):
         extent = [xmin, xmax, ymin, ymax]
 
         ax.set_extent(extent, crs=ccrs.PlateCarree())
-
 
         try:
             if resolution is "high":
@@ -895,7 +891,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", alpha=0.3,cmap=plt.get_cmap('YlOrBr'))
 
         # Create an inset GeoAxes showing the Global location
-        sub_ax = self.mpf.canvas.figure.add_axes([0.70, 0.73, 0.28, 0.28], projection=ccrs.PlateCarree())
+        sub_ax = ax.figure.add_axes([0.70, 0.73, 0.28, 0.28], projection=ccrs.PlateCarree())
         sub_ax.set_extent([-179.9, 180, -89.9, 90], geodetic)
 
         # Make a nice border around the inset axes.
@@ -944,8 +940,6 @@ class CartopyCanvas(BasePltPyqtCanvas):
         cmap = kwargs.pop('cmap', plt.get_cmap('jet'))
         vmin = kwargs.pop('vmin', numpy.amin(depth))
         vmax = kwargs.pop('vmax', numpy.amax(depth))
-        print(x)
-        print(y)
         cs = ax.scatter(x, y, s=10, c=depth / 10, marker="^", cmap=plt.get_cmap('YlOrBr'))
         cs.set_clim(vmin, vmax)
         if show_colorbar:
@@ -978,7 +972,7 @@ class FocCanvas(BasePltPyqtCanvas):
         c_layout = kwargs.pop("constrained_layout", False)
         super().__init__(parent,constrained_layout=c_layout, **kwargs)
 
-    def drawFocMec(self, strike, dip, rake, sta, az, inc,pol, axes_index):
+    def drawFocMec(self, strike, dip, rake, sta, az, inc, pol, axes_index):
         from obspy.imaging.beachball import beach
         import numpy as np
         azims = []
@@ -1009,11 +1003,9 @@ class FocCanvas(BasePltPyqtCanvas):
             polarities.append(polarity)
             ax.text(x, y, "  " + station, va="top", bbox=bbox, zorder=2)
 
-
         azims = np.array(azims)
         incis = np.array(incis)
         incis=incis/90
-
         x=incis*np.cos(azims)
         y=incis*np.sin(azims)
         polarities = np.array(polarities, dtype=bool)

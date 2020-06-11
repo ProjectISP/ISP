@@ -742,16 +742,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self._stations_info = StationsInfo(sd)
         self._stations_info.show()
 
-        # Neural Network for picking P and S waves
     def run_picker(self):
         os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
         if self.st:
             stations = ObspyUtil.get_stations_from_stream(self.st)
             index=0
-            for k in range(len(stations)):
-                st1 = self.st.copy()
-                # print("Computing", stations[k])
-                st2 = st1.select(station=stations[k])
+            for station in stations:
+                st2 = self.st.select(station=station)
                 try:
                     maxstart = np.max([tr.stats.starttime for tr in st2])
                     minend = np.min([tr.stats.endtime for tr in st2])
@@ -759,17 +756,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     self.cnn.setup_stream(st2)  # set stream to use in prediction.
                     self.cnn.predict()
                     arrivals = self.cnn.get_arrivals()
-                    print(arrivals)
-                    for k in range(len(arrivals["p"])):
-                        time = arrivals["p"][k].matplotlib_date
-                        self.canvas.draw_arrow(time, index + 2, "P", color="blue", linestyles='--', picker=False)
-                    for k in range(len(arrivals["s"])):
-                        time = arrivals["s"][k].matplotlib_date
-                        self.canvas.draw_arrow(time, index + 0, "S", color="purple", linestyles='--', picker=False)
-                        self.canvas.draw_arrow(time, index + 1, "S", color="purple", linestyles='--', picker=False)
+                    for k , times in arrivals.items():
+                        for t in times:
+                            if k == "p":
+                                self.canvas.draw_arrow(t.matplotlib_date, index + 2,
+                                                       "P", color="blue", linestyles='--', picker=False)
+                            if k == "s":
+                                self.canvas.draw_arrow(t.matplotlib_date, index + 0,
+                                                       "S", color="purple", linestyles='--', picker=False)
+                                self.canvas.draw_arrow(t.matplotlib_date, index + 1,
+                                                       "S", color="purple", linestyles='--', picker=False)
                     index = index+3
-                except:
-                    print("Prediction failed for ", stations[k])
+                except ValueError as e:
+                    md = MessageDialog(self)
+                    md.set_info_message("Prediction failed for station {}\n{}".format(station,e))
 
     def on_select(self, ax_index, xmin, xmax):
         self.kind_wave = self.ChopCB.currentText()
