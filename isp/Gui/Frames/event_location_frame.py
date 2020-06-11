@@ -111,11 +111,15 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
                      'Mb', 'Mb Error', 'Ms', 'Ms Error', 'Ml', 'Ml Error',
                      'Mw', 'Mw Error', 'Mc', 'Mc Error', 'Strike', 'Dip',
                      'Rake', 'Misfit', 'Az. Gap', 'Stat. Pol. Count']
-
-        model = SQLAlchemyModel([EventLocationModel, FirstPolarityModel], columns, col_names, self)
-        model.addJoinArguments(EventLocationModel.first_polarity, isouter = True)
-        model.revertAll()
-        self.tableView.setModel(model)
+        entities = [EventLocationModel, FirstPolarityModel]
+        self.model = SQLAlchemyModel(entities, columns, col_names, self)
+        self.model.addJoinArguments(EventLocationModel.first_polarity, isouter = True)
+        self.model.revertAll()
+        sortmodel = pyc.QSortFilterProxyModel()
+        sortmodel.setSourceModel(self.model)
+        self.tableView.setModel(sortmodel)
+        self.tableView.setSortingEnabled(True)
+        self.tableView.sortByColumn(0, qt.AscendingOrder)
         self.tableView.setSelectionBehavior(pw.QAbstractItemView.SelectRows)
         self.tableView.setContextMenuPolicy(qt.ActionsContextMenu)
         remove_action = pw.QAction("Remove selected location(s)", self)
@@ -132,6 +136,8 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self._validators = [valLat, valLon, valDepth, valMag, valOrig]
         for validator in self._validators:
             validator.validChanged.connect(self._checkQueryParameters)
+        self.minOrig.setDisplayFormat('dd/MM/yyyy hh:mm:ss.zzz')
+        self.maxOrig.setDisplayFormat('dd/MM/yyyy hh:mm:ss.zzz')
         
         self.actionRead_hyp_folder.triggered.connect(self._readHypFolder)
         self.actionRead_last_location.triggered.connect(self._readLastLocation)
@@ -140,7 +146,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.PlotMapBtn.clicked.connect(self.plot_map)
 
     def refreshLimits(self):
-        entities = self.tableView.model().getEntities()
+        entities = self.model.getEntities()
         events = []
         for t in entities:
             events.append(t[0])
@@ -179,11 +185,16 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
 
     def _onRemoveRowsTriggered(self):
         selected_rowindexes = self.tableView.selectionModel().selectedRows()
+        # If table's model is a proxy model, map to source indexes
+        if isinstance(self.tableView.model(), pyc.QAbstractProxyModel):
+            selected_rowindexes = [self.tableView.model().mapToSource(i) 
+                                   for i in selected_rowindexes]
+
         selected_rows = [r.row() for r in selected_rowindexes]
         for r in sorted(selected_rows, reverse=True):
-            self.tableView.model().removeRow(r)
+            self.model.removeRow(r)
 
-        self.tableView.model().submitAll()
+        self.model.submitAll()
 
     def _checkQueryParameters(self):
         self.btnRefreshQuery.setEnabled(all(v.valid for v in self._validators))
@@ -253,7 +264,8 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
                 event.save()
 
         # Update first polarity data
-        # TODO: this could be improved by updating instead of removing the existing one
+        # TODO: this could be improved by updating instead of removing the
+        # existing one
         fp = FirstPolarityModel.find_by(event_info_id = event.id)
         if fp:
             fp.delete()
@@ -292,15 +304,15 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         minOrig = self.minOrig.dateTime().toPyDateTime()
         maxOrig = self.maxOrig.dateTime().toPyDateTime()
         time = EventLocationModel.origin_time.between(minOrig, maxOrig)
-        self.tableView.model().setFilter(lat, lon, depth, time)
-        self.tableView.model().revertAll()
+        self.model.setFilter(lat, lon, depth, time)
+        self.model.revertAll()
 
     def _showAll(self):
-        self.tableView.model().setFilter()
-        self.tableView.model().revertAll()
+        self.model.setFilter()
+        self.model.revertAll()
 
     def plot_map(self):
-        entities = self.tableView.model().getEntities()
+        entities = self.model.getEntities()
         lat = []
         lon = []
         for j in entities:
