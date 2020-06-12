@@ -312,7 +312,6 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.model.revertAll()
 
     def plot_map(self):
-<<<<<<< HEAD
         import cartopy
         from matplotlib.transforms import offset_copy
         import cartopy.crs as ccrs
@@ -332,15 +331,13 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         # layer = 'GEBCO_08 Hillshade'
         layer = 'GEBCO_2019_Grid'
         # layer = 'shaded_relief'
-        entities = self.tableView.model().getEntities()
-=======
-        entities = self.model.getEntities()
->>>>>>> 9c6d4bc0ad28c82e31e13efc6fe6b5b11f8a67fc
-        lat = []
-        lon = []
-        for j in entities:
-            lat.append(j[0].latitude)
-            lon.append(j[0].longitude)
+        # entities = self.tableView.model().getEntities()
+        # entities = self.model.getEntities()
+        # lat = []
+        # lon = []
+        # for j in entities:
+        #     lat.append(j[0].latitude)
+        #     lon.append(j[0].longitude)
 
         #self.map_widget.fig.ax.plot([1, 2, 3], [1, 2, 3], 'go-', label='line 1', linewidth=2)
         #self.map_widget.canvas.ax.set_ylabel("Longitude")
