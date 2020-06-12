@@ -914,7 +914,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def open_magnitudes_calculator(self):
         hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")
         origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file)
-        if origin:
+        if isinstance(origin, Origin):
             self._magnitude_calc = MagnitudeCalc(origin, self.inventory, self.chop)
             self._magnitude_calc.show()
 

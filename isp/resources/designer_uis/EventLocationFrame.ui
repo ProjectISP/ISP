@@ -306,7 +306,7 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout" stretch="2,1">
       <item>
-       <widget class="QWidget" name="widget" native="true">
+       <widget class="MatplotlibWidget" name="map_widget" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -337,7 +337,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -361,6 +361,14 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MatplotlibWidget</class>
+   <extends>QWidget</extends>
+   <header>isp/db/map_class/clases_mpl_pyqt</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

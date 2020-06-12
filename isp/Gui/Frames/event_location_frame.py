@@ -1,7 +1,7 @@
 import math
 import enum
 import os
-
+from matplotlib.figure import Figure
 from isp.Gui import pw, pyc, qt, pqg
 from isp.Gui.Frames import BaseFrame
 from isp.Gui.Frames.uis_frames import UiEventLocationFrame
@@ -300,11 +300,57 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.tableView.model().revertAll()
 
     def plot_map(self):
+        import cartopy
+        from matplotlib.transforms import offset_copy
+        import cartopy.crs as ccrs
+        import cartopy.io.img_tiles as cimgt
+        import matplotlib.pyplot as plt
+        from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+        from owslib.wms import WebMapService
+        from matplotlib.patheffects import Stroke
+        import cartopy.feature as cfeature
+        import shapely.geometry as sgeom
+
+        # MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
+        MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
+        # MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/etopo1/MapServer/WMSServer'
+        wms = WebMapService(MAP_SERVICE_URL)
+        geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
+        # layer = 'GEBCO_08 Hillshade'
+        layer = 'GEBCO_2019_Grid'
+        # layer = 'shaded_relief'
         entities = self.tableView.model().getEntities()
         lat = []
         lon = []
         for j in entities:
             lat.append(j[0].latitude)
             lon.append(j[0].longitude)
-        print(lat)
-        print(lon)
+
+        #self.map_widget.fig.ax.plot([1, 2, 3], [1, 2, 3], 'go-', label='line 1', linewidth=2)
+        #self.map_widget.canvas.ax.set_ylabel("Longitude")
+        #self.map_widgetcanvas.ax.set_xlabel("Latitude")
+
+        self.map_widget.ax.plot(lon,lat,'o')
+        extent = [-14, 0, 34, 38]
+        self.map_widget.ax.set_extent(extent, crs=ccrs.PlateCarree())
+
+        try:
+             self.map_widget.ax.add_wms(wms, layer)
+        except:
+             coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
+                                                                 edgecolor='k', alpha=0.6, linewidth=0.5,
+                                                                 facecolor=cartopy.feature.COLORS['land'])
+             self.map_widget.ax.stock_img()
+             self.map_widget.ax.add_feature(coastline_10m)
+        #
+        gl = self.map_widget.ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
+        #
+        gl.top_labels = False
+        gl.left_labels = False
+        gl.xlines = False
+        gl.ylines = False
+        #
+        gl.xformatter = LONGITUDE_FORMATTER
+        gl.yformatter = LATITUDE_FORMATTER
+        self.map_widget.fig.canvas.draw()

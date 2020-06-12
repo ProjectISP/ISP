@@ -35,7 +35,7 @@ def read_log(file):
     
     log_dict = {}
     
-    log_dict["Time"] = obspy.UTCDateTime('T'.join(lines[ri+1].strip('\n').split(' ')[4:]))
+    #log_dict["Time"] = obspy.UTCDateTime('T'.join(lines[ri+1].strip('\n').split(' ')[4:]))
     log_dict["Latitude"] = float(lines[ri+2].split(' ')[5])
     log_dict["Longitude"] = float(lines[ri+2].split(' ')[11])
     log_dict["Depth"] = float(lines[ri+2].split(' ')[17])
@@ -55,8 +55,8 @@ def read_log(file):
     log_dict["mrp"] = mrp
     log_dict["mtp"] = mtp
     
-    log_dict["m0"] = float(lines[ri+11].split('M0')[1].split('Nm')[0].strip(' ='))
-    log_dict["mw"] = float(lines[ri+11].split('M0')[1].split('Nm')[1].strip('\n ( ) Mw = '))
+    log_dict["mo"] = float(lines[ri+11].split('M0')[1].split('Nm')[0].strip(' ='))
+    log_dict["mw_mt"] = float(lines[ri+11].split('M0')[1].split('Nm')[1].strip('\n ( ) Mw = '))
     
     regex = re.compile('[a-zA-Z =:%,\n]')
     
@@ -67,11 +67,11 @@ def read_log(file):
     
     fp1_strike, fp1_dip, fp1_rake = [float(x) for x in re.sub(regex, ' ', lines[ri+13].split(':')[1]).split(' ') if x != '' and x != '-']
     fp2_strike, fp2_dip, fp2_rake = [float(x) for x in re.sub(regex, ' ', lines[ri+14].split(':')[1]).split(' ') if x != '' and x != '-']
-    log_dict["fp1_strike"] = fp1_strike
-    log_dict["fp1_dip"] = fp1_dip
-    log_dict["fp1_rake"] = fp1_rake
-    log_dict["fp2_strike"] = fp2_strike
-    log_dict["fp2_dip"] = fp2_dip
-    log_dict["fp2_rake"] = fp2_rake
+    log_dict["strike_mt"] = fp1_strike
+    log_dict["dip_mt"] = fp1_dip
+    log_dict["rake_mt"] = fp1_rake
+    #log_dict["fp2_strike"] = fp2_strike
+    #log_dict["fp2_dip"] = fp2_dip
+    #log_dict["fp2_rake"] = fp2_rake
     
     return log_dict
