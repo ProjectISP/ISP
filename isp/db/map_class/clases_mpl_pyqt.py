@@ -49,10 +49,10 @@ class MatplotlibWidget(Canvas):
         self.ax = self.fig.add_subplot(111, projection = ccrs.Mercator())
 
 
-        #self.lat = inset_axes(self.ax, width="30.0%",height="100%",loc='center left',bbox_to_anchor=(-0.35, 0.0, 1, 1),
-        #        bbox_transform=self.ax.transAxes, borderpad=0)
-        #self.lon = inset_axes(self.ax, width="46.5%", height="100%", loc='upper center', bbox_to_anchor=(0.0, 0, 1, 1),
-         #                     bbox_transform=self.ax.transAxes, borderpad=0)
+        self.lat = inset_axes(self.ax, width=0.4,height="100%",loc='center left',bbox_to_anchor=(-0.1, 0.0, 1, 1),
+                bbox_transform=self.ax.transAxes, borderpad=0)
+        self.lon = inset_axes(self.ax, width="100.0%", height=0.4, loc='upper center', bbox_to_anchor=(0.0, 0.12, 1, 1),
+                             bbox_transform=self.ax.transAxes, borderpad=0)
 
         super(MatplotlibWidget, self).__init__(self.fig)
         self.setParent(parent)

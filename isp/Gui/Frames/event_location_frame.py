@@ -1,21 +1,15 @@
 import math
-import enum
 import os
-from matplotlib.figure import Figure
 from isp.Gui import pw, pyc, qt, pqg
 from isp.Gui.Frames import BaseFrame
 from isp.Gui.Frames.uis_frames import UiEventLocationFrame
 from isp.Gui.Models.sql_alchemy_model import SQLAlchemyModel
-
 from isp.db.models import EventLocationModel, FirstPolarityModel
 from isp.db import generate_id
-
 from sqlalchemy.sql.sqltypes import DateTime
 from datetime import datetime, timedelta
-
 from isp.Utils import ObspyUtil
 from obspy.core.event import Origin
-
 from sqlalchemy import Column
 
 from isp import LOCATION_OUTPUT_PATH
@@ -144,6 +138,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.btnRefreshQuery.clicked.connect(self._refreshQuery)
         self.btnShowAll.clicked.connect(self._showAll)
         self.PlotMapBtn.clicked.connect(self.plot_map)
+        self.plot_focal_mecbtn.clicked.connect(self.plot_foc_mec)
 
     def refreshLimits(self):
         entities = self.model.getEntities()
@@ -312,58 +307,106 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.model.revertAll()
 
     def plot_map(self):
-        import cartopy
-        from matplotlib.transforms import offset_copy
+        import numpy as np
         import cartopy.crs as ccrs
-        import cartopy.io.img_tiles as cimgt
         import matplotlib.pyplot as plt
         from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
         from owslib.wms import WebMapService
-        from matplotlib.patheffects import Stroke
-        import cartopy.feature as cfeature
-        import shapely.geometry as sgeom
+        import matplotlib.image as mpimg
+        from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
+        from PIL import Image
 
-        # MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
+
         MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
-        # MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/etopo1/MapServer/WMSServer'
-        wms = WebMapService(MAP_SERVICE_URL)
-        geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
-        # layer = 'GEBCO_08 Hillshade'
+        #wms = WebMapService(MAP_SERVICE_URL)
         layer = 'GEBCO_2019_Grid'
-        # layer = 'shaded_relief'
-        # entities = self.tableView.model().getEntities()
-        # entities = self.model.getEntities()
-        # lat = []
-        # lon = []
-        # for j in entities:
-        #     lat.append(j[0].latitude)
-        #     lon.append(j[0].longitude)
 
-        #self.map_widget.fig.ax.plot([1, 2, 3], [1, 2, 3], 'go-', label='line 1', linewidth=2)
-        #self.map_widget.canvas.ax.set_ylabel("Longitude")
-        #self.map_widgetcanvas.ax.set_xlabel("Latitude")
-
-        self.map_widget.ax.plot(lon,lat,'o')
-        extent = [-14, 0, 34, 38]
+        entities = self.model.getEntities()
+        lat = []
+        lon = []
+        depth = []
+        mag = []
+        for j in entities:
+             lat.append(j[0].latitude)
+             lon.append(j[0].longitude)
+             depth.append(j[0].depth)
+             mag.append(j[0].mw)
+        #print(entities)
+        mag = np.array(mag)
+        mag = 0.5*np.exp(mag)
+        min_lon = -14
+        max_lon = -4
+        min_lat = 34
+        max_lat = 38
+        extent = [min_lon, max_lon, min_lat, max_lat]
         self.map_widget.ax.set_extent(extent, crs=ccrs.PlateCarree())
 
         try:
-             self.map_widget.ax.add_wms(wms, layer)
-        except:
-             coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
-                                                                 edgecolor='k', alpha=0.6, linewidth=0.5,
-                                                                 facecolor=cartopy.feature.COLORS['land'])
              self.map_widget.ax.stock_img()
-             self.map_widget.ax.add_feature(coastline_10m)
+             #self.map_widget.ax.add_wms(wms, layer)
+        except:
+            pass
+
+        lon = np.array(lon)
+        lat = np.array(lat)
+        depth = np.array(depth)/1000
+        color_map = plt.cm.get_cmap('rainbow')
+        reversed_color_map = color_map.reversed()
+        cs = self.map_widget.ax.scatter(lon, lat, s=mag, c=depth ,edgecolors= "black",cmap=reversed_color_map,transform =ccrs.PlateCarree())
+        cb = self.map_widget.fig.colorbar(cs, orientation='horizontal', fraction=0.05, extend='both', pad=0.15)
+        self.map_widget.lat.scatter(depth, lat, s=mag, c=depth ,edgecolors= "black",cmap=reversed_color_map)
+        self.map_widget.lat.set_ylim((min_lat, max_lat))
+        self.map_widget.lon.scatter(lon, depth, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map)
+        self.map_widget.lon.xaxis.tick_top()
+        self.map_widget.lon.invert_yaxis()
+        #self.map_widget.lon.set(xlabel='Longitude', ylabel='Depth (km)')
+        self.map_widget.lon.set_xlim((min_lon, max_lon))
+        # Plot Focal Mechanism #
+        img = Image.open('/Users/robertocabieces/Documents/ISPshare/isp/db/map_class/foca_mec.png')
+        imagebox = OffsetImage(img, zoom=0.5)
+        imagebox.image.axes = self.map_widget.ax
+        ab = AnnotationBbox(imagebox, (-6, 35), pad=0, frameon=False)
+        self.map_widget.ax.add_artist(ab)
+
+
+       #############
+       # test1
+        #imagebox = plt.imread('/Users/robertocabieces/Documents/ISPshare/isp/db/map_class/foca_mec.png')
+        #im = OffsetImage(imagebox, zoom=0.05)
+        #ab = AnnotationBbox(im, (-10, 35), xycoords='data', frameon=False)
+        #self.map_widget.lon.add_artist(ab)
+       # test2
+        #im = plt.imread('/Users/robertocabieces/Documents/ISPshare/isp/db/map_class/foca_mec.png')
+        #newax = self.map_widget.fig.add_axes([0.3, 0.3, 0.1, 0.1])
+        #newax.imshow(im, aspect = 'equal')
+        #newax.axis('off')
         #
         gl = self.map_widget.ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                            linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
-        #
         gl.top_labels = False
         gl.left_labels = False
         gl.xlines = False
         gl.ylines = False
-        #
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
+
         self.map_widget.fig.canvas.draw()
+
+    def plot_foc_mec(self):
+        import matplotlib.pyplot as plt
+        from obspy.imaging.beachball import beach
+        #plt.rcParams.update({'font.size': 16})
+        #fig = plt.figure(figsize=(8, 8))
+        ax = plt.axes()
+        plt.axis('off')
+        ax.axes.get_xaxis().set_visible(False)
+        ax.axes.get_yaxis().set_visible(False)
+        lw = 2
+        plt.xlim(-100 - lw / 2, 100 + lw / 2)
+        plt.ylim(-100 - lw / 2, 100 + lw / 2)
+        beach2 = beach([90, 0, 30], facecolor='r', linewidth=1., alpha=0.8, width=80)
+        ax.add_collection(beach2)
+        outfile = '/Users/robertocabieces/Documents/ISPshare/isp/db/map_class/foca_mec'
+        plt.savefig(outfile, bbox_inches='tight', pad_inches=0, transparent=True,edgecolor='none')
+        plt.clf()
+        plt.close()
