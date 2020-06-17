@@ -537,7 +537,7 @@
      <x>0</x>
      <y>0</y>
      <width>1680</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -554,6 +554,8 @@
     <addaction name="actionWrithe_files"/>
     <addaction name="separator"/>
     <addaction name="menuWrite_Files"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpen_Settings"/>
    </widget>
    <widget class="QMenu" name="menuActions">
     <property name="title">
@@ -743,6 +745,11 @@
   <action name="actionRun_Event_Detector">
    <property name="text">
     <string>Run Event Detector</string>
+   </property>
+  </action>
+  <action name="actionOpen_Settings">
+   <property name="text">
+    <string>Open Settings</string>
    </property>
   </action>
  </widget>

@@ -27,4 +27,5 @@ UiReceiverFunctionsCut = load_ui_designers("RfDialogsCutEqs.ui")
 UiTimeFrequencyWidget = load_ui_designers("TimeFrequencyAddWidget.ui")
 UiEventLocationFrame = load_ui_designers("EventLocationFrame.ui")
 UiMagnitudeFrame = load_ui_designers("MagnitudeFrame.ui")
+UiSettingsDialog = load_ui_designers("SettingsDialog.ui")
 
