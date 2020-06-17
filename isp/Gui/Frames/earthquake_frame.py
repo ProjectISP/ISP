@@ -11,11 +11,12 @@ from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Exceptions import parse_excepts
 from isp.Gui import pw,pqg
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, EventInfoBox, \
-    MatplotlibCanvas
+    MatplotlibCanvas 
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
 from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
+from isp.Gui.Frames.settings_dialog import SettingsDialog
 from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Structures.structures import PickerStructure
@@ -27,18 +28,22 @@ from isp import ROOT_DIR
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope
+from isp.Gui import pqg
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def __init__(self):
         super(EarthquakeAnalysisFrame, self).__init__()
         self.setupUi(self)
+        self.setWindowTitle('Earthquake Location')
+        self.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
 
         try:
             self.cnn = CNNPicker()
         except:
             print("Neural Network cannot be loaded")
 
+        self.settings_dialog = SettingsDialog(self)
         self.inventory = {}
         self.files = []
         self.events_times = []
@@ -99,6 +104,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionReceiver_Functions.triggered.connect(self.open_receiver_functions)
         self.actionRun_picker.triggered.connect(self.run_picker)
         self.actionRun_Event_Detector.triggered.connect(self.detect_events)
+        self.actionOpen_Settings.triggered.connect(lambda : self.settings_dialog.show())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
