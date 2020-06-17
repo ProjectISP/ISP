@@ -36,9 +36,9 @@ def read_log(file):
     log_dict = {}
     
     #log_dict["Time"] = obspy.UTCDateTime('T'.join(lines[ri+1].strip('\n').split(' ')[4:]))
-    log_dict["Latitude"] = float(lines[ri+2].split(' ')[5])
-    log_dict["Longitude"] = float(lines[ri+2].split(' ')[11])
-    log_dict["Depth"] = float(lines[ri+2].split(' ')[17])
+    log_dict["latitude"] = float(lines[ri+2].split(' ')[5])
+    log_dict["longitude"] = float(lines[ri+2].split(' ')[11])
+    log_dict["depth"] = float(lines[ri+2].split(' ')[16])
     
     log_dict["VR"] = float(lines[ri+6].strip('\n').split(':')[1].strip(' %'))
     log_dict["CN"] = float(lines[ri+7].strip('\n').split(':')[1].strip(' '))

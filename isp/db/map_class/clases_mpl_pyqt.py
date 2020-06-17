@@ -46,12 +46,12 @@ class MatplotlibWidget(Canvas):
     def __init__(self, parent=None):
 
         self.fig = Figure()
-        self.ax = self.fig.add_subplot(111, projection = ccrs.Mercator())
+        self.ax = self.fig.add_subplot(111, projection = ccrs.PlateCarree())
 
 
-        self.lat = inset_axes(self.ax, width=0.4,height="100%",loc='center left',bbox_to_anchor=(-0.1, 0.0, 1, 1),
+        self.lat = inset_axes(self.ax, width=0.4,height="100%",loc='center left',bbox_to_anchor=(-0.08, 0.0, 1, 1),
                 bbox_transform=self.ax.transAxes, borderpad=0)
-        self.lon = inset_axes(self.ax, width="100.0%", height=0.4, loc='upper center', bbox_to_anchor=(0.0, 0.12, 1, 1),
+        self.lon = inset_axes(self.ax, width="100.0%", height=0.4, loc='upper center', bbox_to_anchor=(0.0, 0.14, 1, 1),
                              bbox_transform=self.ax.transAxes, borderpad=0)
 
         super(MatplotlibWidget, self).__init__(self.fig)

@@ -4,7 +4,7 @@ from isp.Gui import pw, pyc, qt, pqg
 from isp.Gui.Frames import BaseFrame
 from isp.Gui.Frames.uis_frames import UiEventLocationFrame
 from isp.Gui.Models.sql_alchemy_model import SQLAlchemyModel
-from isp.db.models import EventLocationModel, FirstPolarityModel
+from isp.db.models import EventLocationModel, FirstPolarityModel, MomentTensorModel
 from isp.db import generate_id
 from sqlalchemy.sql.sqltypes import DateTime
 from datetime import datetime, timedelta
@@ -12,7 +12,9 @@ from isp.Utils import ObspyUtil
 from obspy.core.event import Origin
 from sqlalchemy import Column
 
-from isp import LOCATION_OUTPUT_PATH
+from isp import LOCATION_OUTPUT_PATH, MOMENT_TENSOR_OUTPUT
+from isp.mti.read_log import read_log
+
 
 class DateTimeFormatDelegate(pw.QStyledItemDelegate):
     def __init__(self, date_format, parent=None):
@@ -96,7 +98,10 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         fp_columns = [getattr(FirstPolarityModel, c) 
                       for c in FirstPolarityModel.__table__.columns.keys()[2:]]
 
-        columns = [*el_columns, *fp_columns]
+        mti_columns = [getattr(MomentTensorModel, c)
+                      for c in MomentTensorModel.__table__.columns.keys()[2:]]
+
+        columns = [*el_columns, *fp_columns, *mti_columns]
 
         col_names = ['Origin Time', 'Transformation', 'RMS', 
                      'Latitude', 'Longitude', 'Depth', 'Uncertainty', 
@@ -104,10 +109,14 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
                      'No. Phases', 'Az. Gap', 'Max. Dist.', 'Min. Dist.',
                      'Mb', 'Mb Error', 'Ms', 'Ms Error', 'Ml', 'Ml Error',
                      'Mw', 'Mw Error', 'Mc', 'Mc Error', 'Strike', 'Dip',
-                     'Rake', 'Misfit', 'Az. Gap', 'Stat. Pol. Count']
-        entities = [EventLocationModel, FirstPolarityModel]
+                     'Rake', 'Misfit', 'Az. Gap', 'Stat. Pol. Count', 'Latitude_mti','Longitude_mti', 'Depth_mti',
+                     'VR','CN','dc', 'clvd','iso','Mw_mt', 'Mo', 'Strike_mt', 'dip_mt', 'rake_mt', 'mrr','mtt', 'mpp',
+                     'mrt', 'mrp', 'mtp']
+
+        entities = [EventLocationModel, FirstPolarityModel, MomentTensorModel]
         self.model = SQLAlchemyModel(entities, columns, col_names, self)
         self.model.addJoinArguments(EventLocationModel.first_polarity, isouter = True)
+        self.model.addJoinArguments(EventLocationModel.moment_tensor, isouter=True)
         self.model.revertAll()
         sortmodel = pyc.QSortFilterProxyModel()
         sortmodel.setSourceModel(self.model)
@@ -287,7 +296,18 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
                 fp = FirstPolarityModel.from_dict(fp_dict)
                 fp.save()
 
-        # TODO: show all after reading folder or let filters?
+        mti = MomentTensorModel.find_by(event_info_id=event.id)
+        if mti:
+            mti.delete()
+
+        mti_file = os.path.join(MOMENT_TENSOR_OUTPUT, 'log.txt')
+        if os.path.isfile(mti_file):
+            mti_dict = read_log(mti_file)
+            mti_dict['event_info_id'] = event.id
+            mti_dict['id'] = generate_id(16)
+            mti = MomentTensorModel.from_dict(mti_dict)
+            mti.save()
+
         self._showAll()
         self.refreshLimits()
 
@@ -316,9 +336,17 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
         from PIL import Image
 
+        cb = []
+        try:
+
+            cb.remove()
+
+        except:
+
+            pass
 
         MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
-        #wms = WebMapService(MAP_SERVICE_URL)
+        wms = WebMapService(MAP_SERVICE_URL)
         layer = 'GEBCO_2019_Grid'
 
         entities = self.model.getEntities()
@@ -334,18 +362,19 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         #print(entities)
         mag = np.array(mag)
         mag = 0.5*np.exp(mag)
-        min_lon = -14
-        max_lon = -4
-        min_lat = 34
-        max_lat = 38
+        min_lon = -16
+        max_lon = -3
+        min_lat = 33
+        max_lat = 39
         extent = [min_lon, max_lon, min_lat, max_lat]
         self.map_widget.ax.set_extent(extent, crs=ccrs.PlateCarree())
 
         try:
-             self.map_widget.ax.stock_img()
-             #self.map_widget.ax.add_wms(wms, layer)
+               #self.map_widget.ax.coastlines()
+               #self.map_widget.ax.stock_img()
+               self.map_widget.ax.add_wms(wms, layer)
         except:
-            pass
+             pass
 
         lon = np.array(lon)
         lat = np.array(lat)
@@ -358,45 +387,44 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.map_widget.lat.set_ylim((min_lat, max_lat))
         self.map_widget.lon.scatter(lon, depth, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map)
         self.map_widget.lon.xaxis.tick_top()
+        self.map_widget.lon.yaxis.tick_right()
         self.map_widget.lon.invert_yaxis()
         #self.map_widget.lon.set(xlabel='Longitude', ylabel='Depth (km)')
+
+
         self.map_widget.lon.set_xlim((min_lon, max_lon))
+
+
+        #magnitude legend
+        kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color = "red", func=lambda s: np.log(s / 0.5))
+        self.map_widget.ax.legend(*cs.legend_elements(**kw),loc="lower right", title="Magnitudes")
+
         # Plot Focal Mechanism #
         img = Image.open('/Users/robertocabieces/Documents/ISPshare/isp/db/map_class/foca_mec.png')
-        imagebox = OffsetImage(img, zoom=0.5)
+        imagebox = OffsetImage(img, zoom=0.08)
         imagebox.image.axes = self.map_widget.ax
-        ab = AnnotationBbox(imagebox, (-6, 35), pad=0, frameon=False)
+        ab = AnnotationBbox(imagebox, [-10, 35], frameon=False)
         self.map_widget.ax.add_artist(ab)
 
+        self.map_widget.ax.annotate('', xy=(-11, 36), xycoords='data',
+         xytext=(-10, 35), textcoords='data',arrowprops=dict(arrowstyle="->",
+                            connectionstyle="arc3,rad=.2"))
 
-       #############
-       # test1
-        #imagebox = plt.imread('/Users/robertocabieces/Documents/ISPshare/isp/db/map_class/foca_mec.png')
-        #im = OffsetImage(imagebox, zoom=0.05)
-        #ab = AnnotationBbox(im, (-10, 35), xycoords='data', frameon=False)
-        #self.map_widget.lon.add_artist(ab)
-       # test2
-        #im = plt.imread('/Users/robertocabieces/Documents/ISPshare/isp/db/map_class/foca_mec.png')
-        #newax = self.map_widget.fig.add_axes([0.3, 0.3, 0.1, 0.1])
-        #newax.imshow(im, aspect = 'equal')
-        #newax.axis('off')
-        #
         gl = self.map_widget.ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                            linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
+
         gl.top_labels = False
         gl.left_labels = False
         gl.xlines = False
         gl.ylines = False
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
-
         self.map_widget.fig.canvas.draw()
+
 
     def plot_foc_mec(self):
         import matplotlib.pyplot as plt
         from obspy.imaging.beachball import beach
-        #plt.rcParams.update({'font.size': 16})
-        #fig = plt.figure(figsize=(8, 8))
         ax = plt.axes()
         plt.axis('off')
         ax.axes.get_xaxis().set_visible(False)
