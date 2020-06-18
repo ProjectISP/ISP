@@ -3,13 +3,12 @@ from obspy import UTCDateTime, Stream
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth
 from obspy.signal.trigger import coincidence_trigger
-
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy, ConvolveWavelet
 from isp.DataProcessing.NeuralNetwork import CNNPicker
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Exceptions import parse_excepts
-from isp.Gui import pw,pqg
+from isp.Gui import pw, pqg, pyc, qt
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, EventInfoBox, \
     MatplotlibCanvas 
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
@@ -28,7 +27,54 @@ from isp import ROOT_DIR
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope
-from isp.Gui import pqg
+
+
+class PickerWorker(pyc.QThread):
+    def __init__(self, progressbar, st, cnn, canvas):
+        super(PickerWorker, self).__init__()
+        self.progressbar = progressbar
+        self.st = st
+        self.cnn = cnn
+        self.canvas = canvas
+
+    def run(self):
+        self._run_picker()
+
+    def _run_picker(self):
+        os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+        if self.st:
+            stations = ObspyUtil.get_stations_from_stream(self.st)
+            N = len(stations)
+            pyc.QMetaObject.invokeMethod(self.progressbar, 'setValue', qt.AutoConnection, pyc.Q_ARG(int, 0))
+            pyc.QMetaObject.invokeMethod(self.progressbar, 'setMaximum', qt.AutoConnection, pyc.Q_ARG(int, N))
+            # TODO OPEN MP FOR MULTIPLE STATIONS
+            index=0
+            for station in stations:
+                st2 = self.st.select(station=station)
+                try:
+                    maxstart = np.max([tr.stats.starttime for tr in st2])
+                    minend = np.min([tr.stats.endtime for tr in st2])
+                    st2.trim(maxstart, minend)
+                    self.cnn.setup_stream(st2)  # set stream to use in prediction.
+                    self.cnn.predict()
+                    arrivals = self.cnn.get_arrivals()
+                    for k , times in arrivals.items():
+                        for t in times:
+                            if k == "p":
+                                self.canvas.draw_arrow(t.matplotlib_date, index + 2,
+                                                       "P", color="blue", linestyles='--', picker=False)
+                            if k == "s":
+                                self.canvas.draw_arrow(t.matplotlib_date, index + 0,
+                                                       "S", color="purple", linestyles='--', picker=False)
+                                self.canvas.draw_arrow(t.matplotlib_date, index + 1,
+                                                       "S", color="purple", linestyles='--', picker=False)
+
+                except ValueError as e:
+                    md = MessageDialog(self)
+                    md.set_info_message("Prediction failed for station {}\n{}".format(station,e))
+
+                index = index + 3
+                pyc.QMetaObject.invokeMethod(self.progressbar, 'setValue', qt.AutoConnection, pyc.Q_ARG(int, index/3))
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
@@ -43,6 +89,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         except:
             print("Neural Network cannot be loaded")
 
+        self.progressbar = pw.QProgressDialog(self)
+        self.progressbar.setWindowTitle('Neural Network Running')
+        self.progressbar.setLabelText(" Computing Auto-Picking ")
+        self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
+        self.progressbar.close()
         self.settings_dialog = SettingsDialog(self)
         self.inventory = {}
         self.files = []
@@ -102,7 +153,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionCWT_CF.triggered.connect(self.cwt_cf)
         self.actionEnvelope.triggered.connect(self.envelope)
         self.actionReceiver_Functions.triggered.connect(self.open_receiver_functions)
-        self.actionRun_picker.triggered.connect(self.run_picker)
+        self.actionRun_picker.triggered.connect(self.picker_thread)
         self.actionRun_Event_Detector.triggered.connect(self.detect_events)
         self.actionOpen_Settings.triggered.connect(lambda : self.settings_dialog.show())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
@@ -130,6 +181,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     #@property
     #def event_info(self) -> EventInfoBox:
     #    return self.__event_info
+
+    def picker_thread(self):
+        w = PickerWorker(self.progressbar, self.st, self.cnn, self.canvas)
+        self.progressbar.reset()
+        w.start()
+        self.progressbar.exec()
+        # TODO METHOD TO READ ARRIVALS AND WRITE TO XML
 
     @property
     def dataless_manager(self):
