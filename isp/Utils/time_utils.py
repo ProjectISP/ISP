@@ -11,6 +11,7 @@ class AsycTime(Thread):
         self.seconds = 1
         self.__callback = None
         self.__return_callback = None
+        self.__obj = None
 
     def run(self) -> None:
         if self.seconds is not 0:
@@ -19,16 +20,18 @@ class AsycTime(Thread):
         if self.__callback:
             result = self.__callback()
         if self.__return_callback:
-            self.__return_callback(result)
+            self.__return_callback(self.__obj, result)
 
-    def set_return_callback(self, func):
+    def set_return_callback(self, obj, func):
         """
         Set a method to get the return value of this process. The method must have a result argument.
 
+        :param obj: The self object for this method.
         :param func: A method to catch the return value of the running method.
         :return:
         """
         self.__return_callback = func
+        self.__obj = obj
 
     def wait(self, seconds: float, func):
         """
@@ -69,7 +72,7 @@ class AsycTime(Thread):
             @wraps(func)
             def wrap_func(*args, **kwargs):
                 new_thread = AsycTime()
-                new_thread.set_return_callback(return_value_callback)
+                new_thread.set_return_callback(args[0], return_value_callback)
                 new_thread.wait(0, lambda: func(*args, **kwargs))
             return wrap_func
         return app_decorator
