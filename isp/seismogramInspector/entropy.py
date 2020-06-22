@@ -65,17 +65,17 @@ def perm_entropy(x, order=3, delay=1, normalize=False):
     --------
     1. Permutation entropy with order 2
 
-        >>> from entropy import perm_entropy
-        >>> x = [4, 7, 9, 10, 6, 11, 3]
-        >>> # Return a value in bit between 0 and log2(factorial(order))
-        >>> print(perm_entropy(x, order=2))
+      #  >>> from entropy import perm_entropy
+      #  >>> x = [4, 7, 9, 10, 6, 11, 3]
+      #  >>> # Return a value in bit between 0 and log2(factorial(order))
+      #  >>> print(perm_entropy(x, order=2))
             0.918
     2. Normalized permutation entropy with order 3
 
-        >>> from entropy import perm_entropy
-        >>> x = [4, 7, 9, 10, 6, 11, 3]
-        >>> # Return a value comprised between 0 and 1.
-        >>> print(perm_entropy(x, order=3, normalize=True))
+      # >>> from entropy import perm_entropy
+      #  >>> x = [4, 7, 9, 10, 6, 11, 3]
+      #  >>> # Return a value comprised between 0 and 1.
+      #  >>> print(perm_entropy(x, order=3, normalize=True))
             0.589
     """
     x = np.array(x)
@@ -143,27 +143,27 @@ def spectral_entropy(x, sf, method='fft', nperseg=None, normalize=False):
     --------
     1. Spectral entropy of a pure sine using FFT
 
-        >>> from entropy import spectral_entropy
-        >>> import numpy as np
-        >>> sf, f, dur = 100, 1, 4
-        >>> N = sf * duration # Total number of discrete samples
-        >>> t = np.arange(N) / sf # Time vector
-        >>> x = np.sin(2 * np.pi * f * t)
-        >>> print(np.round(spectral_entropy(x, sf, method='fft'), 2)
-            0.0
+    #    >>> from entropy import spectral_entropy
+    #    >>> import numpy as np
+    #    >>> sf, f, dur = 100, 1, 4
+    #    >>> N = sf * duration # Total number of discrete samples
+    #    >>> t = np.arange(N) / sf # Time vector
+    #    >>> x = np.sin(2 * np.pi * f * t)
+    #    >>> print(np.round(spectral_entropy(x, sf, method='fft'), 2)
+    #        0.0
 
     2. Spectral entropy of a random signal using Welch's method
 
-        >>> from entropy import spectral_entropy
-        >>> import numpy as np
-        >>> np.random.seed(42)
-        >>> x = np.random.rand(3000)
-        >>> print(spectral_entropy(x, sf=100, method='welch'))
+    #    >>> from entropy import spectral_entropy
+    #    >>> import numpy as np
+    #    >>> np.random.seed(42)
+    #    >>> x = np.random.rand(3000)
+    #    >>> print(spectral_entropy(x, sf=100, method='welch'))
             9.939
 
     3. Normalized spectral entropy
 
-        >>> print(spectral_entropy(x, sf=100, method='welch', normalize=True))
+    #    >>> print(spectral_entropy(x, sf=100, method='welch', normalize=True))
             0.995
     """
     x = np.array(x)
@@ -225,18 +225,18 @@ def svd_entropy(x, order=3, delay=1, normalize=False):
     --------
     1. SVD entropy with order 2
 
-        >>> from entropy import svd_entropy
-        >>> x = [4, 7, 9, 10, 6, 11, 3]
-        >>> # Return a value in bit between 0 and log2(factorial(order))
-        >>> print(svd_entropy(x, order=2))
+        # >>> from entropy import svd_entropy
+        # >>> x = [4, 7, 9, 10, 6, 11, 3]
+        # >>> # Return a value in bit between 0 and log2(factorial(order))
+        # >>> print(svd_entropy(x, order=2))
             0.762
 
     2. Normalized SVD entropy with order 3
 
-        >>> from entropy import svd_entropy
-        >>> x = [4, 7, 9, 10, 6, 11, 3]
-        >>> # Return a value comprised between 0 and 1.
-        >>> print(svd_entropy(x, order=3, normalize=True))
+        # >>> from entropy import svd_entropy
+        # >>> x = [4, 7, 9, 10, 6, 11, 3]
+        # >>> # Return a value comprised between 0 and 1.
+        # >>> print(svd_entropy(x, order=3, normalize=True))
             0.687
     """
     x = np.array(x)
@@ -251,37 +251,37 @@ def svd_entropy(x, order=3, delay=1, normalize=False):
 
 
 
-def _app_samp_entropy(x, order, metric='chebyshev', approximate=True):
-    """Utility function for `app_entropy`` and `sample_entropy`.
-    """
-    _all_metrics = KDTree.valid_metrics
-    if metric not in _all_metrics:
-        raise ValueError('The given metric (%s) is not valid. The valid '
-                         'metric names are: %s' % (metric, _all_metrics))
-    phi = np.zeros(2)
-    r = 0.2 * np.std(x, axis=-1, ddof=1)
-
-    # compute phi(order, r)
-    _emb_data1 = _embed(x, order, 1)
-    if approximate:
-        emb_data1 = _emb_data1
-    else:
-        emb_data1 = _emb_data1[:-1]
-    count1 = KDTree(emb_data1, metric=metric).query_radius(emb_data1, r,
-                                                           count_only=True
-                                                           ).astype(np.float64)
-    # compute phi(order + 1, r)
-    emb_data2 = _embed(x, order + 1, 1)
-    count2 = KDTree(emb_data2, metric=metric).query_radius(emb_data2, r,
-                                                           count_only=True
-                                                           ).astype(np.float64)
-    if approximate:
-        phi[0] = np.mean(np.log(count1 / emb_data1.shape[0]))
-        phi[1] = np.mean(np.log(count2 / emb_data2.shape[0]))
-    else:
-        phi[0] = np.mean((count1 - 1) / (emb_data1.shape[0] - 1))
-        phi[1] = np.mean((count2 - 1) / (emb_data2.shape[0] - 1))
-    return phi
+# def _app_samp_entropy(x, order, metric='chebyshev', approximate=True):
+#     """Utility function for `app_entropy`` and `sample_entropy`.
+#     """
+#     _all_metrics = KDTree.valid_metrics
+#     if metric not in _all_metrics:
+#         raise ValueError('The given metric (%s) is not valid. The valid '
+#                          'metric names are: %s' % (metric, _all_metrics))
+#     phi = np.zeros(2)
+#     r = 0.2 * np.std(x, axis=-1, ddof=1)
+#
+#     # compute phi(order, r)
+#     _emb_data1 = _embed(x, order, 1)
+#     if approximate:
+#         emb_data1 = _emb_data1
+#     else:
+#         emb_data1 = _emb_data1[:-1]
+#     count1 = KDTree(emb_data1, metric=metric).query_radius(emb_data1, r,
+#                                                            count_only=True
+#                                                            ).astype(np.float64)
+#     # compute phi(order + 1, r)
+#     emb_data2 = _embed(x, order + 1, 1)
+#     count2 = KDTree(emb_data2, metric=metric).query_radius(emb_data2, r,
+#                                                            count_only=True
+#                                                            ).astype(np.float64)
+#     if approximate:
+#         phi[0] = np.mean(np.log(count1 / emb_data1.shape[0]))
+#         phi[1] = np.mean(np.log(count2 / emb_data2.shape[0]))
+#     else:
+#         phi[0] = np.mean((count1 - 1) / (emb_data1.shape[0] - 1))
+#         phi[1] = np.mean((count2 - 1) / (emb_data2.shape[0] - 1))
+#     return phi
 
 
 #@jit('f8(f8[:], i4, f8)', nopython=True)
@@ -380,11 +380,11 @@ def app_entropy(x, order=2, metric='chebyshev'):
 
     1. Approximate entropy with order 2.
 
-        >>> from entropy import app_entropy
-        >>> import numpy as np
-        >>> np.random.seed(1234567)
-        >>> x = np.random.rand(3000)
-        >>> print(app_entropy(x, order=2))
+        # >>> from entropy import app_entropy
+        # >>> import numpy as np
+        # >>> np.random.seed(1234567)
+        # >>> x = np.random.rand(3000)
+        # >>> print(app_entropy(x, order=2))
             2.075
     """
     phi = _app_samp_entropy(x, order=order, metric=metric, approximate=True)
@@ -445,20 +445,20 @@ def sample_entropy(x, order=2, metric='chebyshev'):
     --------
     1. Sample entropy with order 2.
 
-        >>> from entropy import sample_entropy
-        >>> import numpy as np
-        >>> np.random.seed(1234567)
-        >>> x = np.random.rand(3000)
-        >>> print(sample_entropy(x, order=2))
+        # >>> from entropy import sample_entropy
+        # >>> import numpy as np
+        # >>> np.random.seed(1234567)
+        # >>> x = np.random.rand(3000)
+        # >>> print(sample_entropy(x, order=2))
             2.192
 
     2. Sample entropy with order 3 using the Euclidean distance.
 
-        >>> from entropy import sample_entropy
-        >>> import numpy as np
-        >>> np.random.seed(1234567)
-        >>> x = np.random.rand(3000)
-        >>> print(sample_entropy(x, order=3, metric='euclidean'))
+        # >>> from entropy import sample_entropy
+        # >>> import numpy as np
+        # >>> np.random.seed(1234567)
+        # >>> x = np.random.rand(3000)
+        # >>> print(sample_entropy(x, order=3, metric='euclidean'))
             2.725
     """
     x = np.asarray(x, dtype=np.float64)

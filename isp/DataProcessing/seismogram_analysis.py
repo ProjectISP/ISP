@@ -1,11 +1,14 @@
 from enum import Enum, unique
-from obspy import read
+from obspy import read, Stream
 from obspy.geodetics import locations2degrees
 from obspy.taup import TauPyModel
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, Filters
 import numpy as np
 from isp.DataProcessing.dataless_manager import DatalessManager
+from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise
+
+
 @unique
 class ArrivalsModels(Enum):
     Iasp91 = "iasp91"
@@ -117,6 +120,7 @@ class SeismogramDataAdvanced:
 
         start_time = kwargs.get("start_time", self.stats.StartTime)
         end_time = kwargs.get("end_time", self.stats.EndTime)
+        trace_number = kwargs.get("trace_number", 0)
         tr = self.tracer
 
         tr.trim(starttime = start_time, endtime = end_time)
@@ -161,6 +165,12 @@ class SeismogramDataAdvanced:
                 except ValueError as e:
                     self.__send_filter_error_callback(filter_error_callback, str(e))
 
+            if parameters[j][0] == 'shift':
+                shifts = parameters[j][1]
+                for c, value in enumerate(shifts, 1):
+                    if value[0] == trace_number:
+                        tr.stats.starttime = tr.stats.starttime+value[1]
+
             if parameters[j][0] == 'remove response':
 
                 f1 = parameters[j][1]
@@ -194,5 +204,24 @@ class SeismogramDataAdvanced:
                     except:
                         print("Coudn't deconvolve", tr.stats)
                         tr.data = np.array([])
+
+            if parameters[j][0] == 'add white noise':
+                tr = add_white_noise(tr,parameters[j][1])
+
+            if parameters[j][0] == 'whitening':
+                tr = whiten(tr,parameters[j][1], parameters[j][2])
+
+            if parameters[j][0] == 'time normalization':
+                tr = normalize(tr, norm_win=parameters[j][1],norm_method=parameters[j][2])
+
+            if parameters[j][0] == 'wavelet denoise':
+                tr = wavelet_denoise(tr, dwt = parameters[j][1], threshold=parameters[j][2])
+
+            if parameters[j][0] == 'resample':
+                tr.resample(sampling_rate=parameters[j][1],window='hanning',no_filter=parameters[j][2])
+            if parameters[j][0] == 'fill gaps':
+                st = Stream(tr)
+                st.merge(fill_value=parameters[j][1])
+                tr = st[0]
 
         return tr

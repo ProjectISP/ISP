@@ -10,10 +10,16 @@ class ActionEnum (enum.Enum):
     TAPER = "taper"
     NORMALIZE = "normalize"
     FILTER = "filter"
+    RESAMPLE = "resample"
+    FILL_GAPS = "fill faps"
     DIFFERENTIATE = "differentiate"
     INTEGRATE = "integrate"
     SHIFT = "shift"
     REMOVE_RESPONSE = "remove response"
+    ADD_WHITE_NOISE = "add white noise"
+    WHITENING = "whitening"
+    TNOR = "time normalization"
+    WAVELET_DENOISE = "wavelet denoise"
 
     def __str__(self):
         return str(self.value)
@@ -200,10 +206,108 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             param_layout.addWidget(combo_param)
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
-        elif self.addCombo.currentData() is ActionEnum.Remove_Response:
-             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
-             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.Remove_Response.value))
-             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+        elif self.addCombo.currentData() is ActionEnum.ADD_WHITE_NOISE:
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1,
+                                     pw.QTableWidgetItem(ActionEnum.ADD_WHITE_NOISE.value))
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+            label_power_Db = pw.QLabel("Noise Power [db]")
+            power = pw.QDoubleSpinBox()
+            power.setMinimum(1)
+            power.setSingleStep(1)
+            power.setMaximum(100)
+            param_layout.addWidget(label_power_Db)
+            param_layout.addWidget(power)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
+
+        elif self.addCombo.currentData() is ActionEnum.WHITENING:
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1,
+                                     pw.QTableWidgetItem(ActionEnum.WHITENING.value))
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+            label_freq_min = pw.QLabel("Freq min")
+            label_freq_max = pw.QLabel("Freq max")
+            freq_max = pw.QDoubleSpinBox()
+            freq_max.setMinimum(0)
+            freq_max.setSingleStep(0.01)
+            freq_min = pw.QDoubleSpinBox()
+            freq_min.setMinimum(0)
+            freq_min.setSingleStep(0.01)
+            param_layout.addWidget(label_freq_min)
+            param_layout.addWidget(freq_min)
+            param_layout.addWidget(label_freq_max)
+            param_layout.addWidget(freq_max)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
+
+        elif self.addCombo.currentData() is ActionEnum.TNOR:
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1,
+                                     pw.QTableWidgetItem(ActionEnum.TNOR.value))
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+            time_window_label = pw.QLabel("time window")
+            time_window = pw.QDoubleSpinBox()
+            time_window.setMinimum(0)
+            time_window.setSingleStep(0.1)
+            method_label = pw.QLabel("method")
+            combo_param = pw.QComboBox()
+            combo_param.addItems(['time normalization', '1bit', 'clipping', 'clipping iteration'])
+            param_layout.addWidget(time_window_label)
+            param_layout.addWidget(time_window)
+            param_layout.addWidget(method_label)
+            param_layout.addWidget(combo_param)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
+
+        elif self.addCombo.currentData() is ActionEnum.WAVELET_DENOISE:
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1,
+                                     pw.QTableWidgetItem(ActionEnum.WAVELET_DENOISE.value))
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+            family_label = pw.QLabel("wavelet family")
+            param_layout.addWidget(family_label)
+            combo_param = pw.QComboBox()
+            combo_param.addItems(['db2', 'db4', 'db6', 'db8', 'db10',  'db12',  'db14',  'db16',  'db18', 'db19', 'db20',
+               'sym2', 'sym4', 'sym6', 'sym8',  'sym10',  'sym12',  'sym14',  'sym16',  'sym18',  'sym20',
+                'coif2', 'coif3', 'coif4', 'coif6', 'coif8', 'coif10', 'coif12', 'coif14', 'coif16',
+                'bior1.1', 'bior1.3', 'bior1.5', 'bior2.2', 'bior2.4', 'bior2.6', 'bior2.8', 'bior3.1', 'bior3.3',
+                                  'bior3.5', 'bior3.7', 'bior3.9', 'bior4.4', 'bior5.5', 'bior6.8'])
+            param_layout.addWidget(combo_param)
+            threshold_label = pw.QLabel("threshold")
+            param_layout.addWidget(threshold_label)
+            threshold= pw.QDoubleSpinBox()
+            threshold.setMinimum(0)
+            threshold.setSingleStep(0.01)
+            param_layout.addWidget(threshold)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
+
+
+        elif self.addCombo.currentData() is ActionEnum.RESAMPLE:
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1,
+                                     pw.QTableWidgetItem(ActionEnum.RESAMPLE.value))
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+            sampling_rate_label = pw.QLabel("new sampling rate [sps]")
+            sampling_rate = pw.QDoubleSpinBox()
+            sampling_rate.setMinimum(0)
+            sampling_rate.setSingleStep(0.01)
+            pre_filterCB = pw.QCheckBox("pre-filter")
+            param_layout.addWidget(sampling_rate_label)
+            param_layout.addWidget(sampling_rate)
+            param_layout.addWidget(pre_filterCB)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
+
+        elif self.addCombo.currentData() is ActionEnum.FILL_GAPS:
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1,
+                                     pw.QTableWidgetItem(ActionEnum.FILL_GAPS.value))
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+            method_label = pw.QLabel("method")
+            combo_param = pw.QComboBox()
+            combo_param.addItems(['latest','interpolate'])
+            param_layout.addWidget(method_label)
+            param_layout.addWidget(combo_param)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
+
+
 
 
     def removeRow(self, order_widget):
@@ -313,5 +417,32 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
                 combo_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(0).widget().currentText()
                 parameters.append([action, combo_value])
 
+            elif (action == ActionEnum.ADD_WHITE_NOISE.value):
+                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
+                parameters.append([action, spin_value1])
+
+            elif (action == ActionEnum.WHITENING.value):
+                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
+                spin_value2 = self.tableWidget.cellWidget(i, 2).layout().itemAt(3).widget().value()
+                parameters.append([action, spin_value1,spin_value2])
+
+            elif (action == ActionEnum.TNOR.value):
+                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
+                combo_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(3).widget().currentText()
+                parameters.append([action, spin_value1, combo_value1])
+
+            elif (action == ActionEnum.WAVELET_DENOISE.value):
+                combo_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().currentText()
+                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(3).widget().value()
+                parameters.append([action, combo_value1, spin_value1])
+
+            elif (action == ActionEnum.RESAMPLE.value):
+                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
+                check_box1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(2).widget().isChecked()
+                parameters.append([action, spin_value1, check_box1])
+
+            elif (action == ActionEnum.FILL_GAPS.value):
+                 combo_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().currentText()
+                 parameters.append([action, combo_value1])
 
         return parameters

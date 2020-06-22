@@ -536,8 +536,12 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         x_label = ax.get_xlabel()
 
         if plot_type == "contourf":
-            levels = kwargs.pop('levels', 50)
+            levels = kwargs.pop('levels', 40)
             cs = ax.contourf(x, y, z, levels=levels, cmap=cmap, vmin=vmin, vmax=vmax, **kwargs)
+
+        elif plot_type == "pcolormesh":
+            cs = ax.pcolormesh(x, y, z, cmap=cmap, vmin=vmin, vmax=vmax, **kwargs)
+
         elif plot_type == "scatter":
             area = 10.*z**2  # points size from 0 to 5
             cs = ax.scatter(x, y, s=area, c=z, cmap=cmap, alpha=0.5, vmin=vmin, vmax=vmax, marker=".", **kwargs)
@@ -663,6 +667,23 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         if self.axes is not None:
             ax = self.get_axe(axes_index)
             self.__plot_3d(x, y, z, ax, "scatter", clear_plot=clear_plot, show_colorbar=show_colorbar, **kwargs)
+
+    def pcolormesh(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
+        """
+        Wrapper for matplotlib scatter3d.
+
+        :param x: x-axis data.
+        :param y: y-axis data.
+        :param z: z-axis data.
+        :param axes_index: The subplot axes index.
+        :param clear_plot: True to clean plot, False to plot over.
+        :param show_colorbar: True to show colorbar, false otherwise.
+        :param kwargs: Valid Matplotlib kwargs for scatter.
+        :return:
+        """
+        if self.axes is not None:
+            ax = self.get_axe(axes_index)
+            self.__plot_3d(x, y, z, ax, "pcolormesh", clear_plot=clear_plot, show_colorbar=show_colorbar, **kwargs)
 
     def clear_color_bar(self):
         if self.__cbar:

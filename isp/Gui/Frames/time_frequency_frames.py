@@ -1,4 +1,4 @@
-#import time
+import os
 import math
 from matplotlib.colors import Normalize
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
@@ -8,14 +8,14 @@ from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, UiTimeFrequencyFrame, FilesView, \
     MatplotlibCanvas, MessageDialog
 from isp.Gui.Frames.parameters import ParametersSettings
+from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.time_frequency_advance_frame import TimeFrequencyAdvance
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime
 from isp.Utils import MseedUtil, ObspyUtil
 from isp.seismogramInspector.MTspectrogram import MTspectrogram, WignerVille
 import matplotlib.pyplot as plt
 import numpy as np
-#from isp.seismogramInspector.ba_fast import ccwt_ba_fast
-#from isp.seismogramInspector.CWT_fast import cwt_fast
+
 
 
 @add_save_load()
@@ -53,6 +53,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
         self.actionOpen_Spectral_Analysis.triggered.connect(self.time_frequency_advance)
         self.plotBtn.clicked.connect(self.plot_seismogram)
+        self.stationsBtn.clicked.connect(self.stations_info)
         # Parameters settings
         self.parameters = ParametersSettings()
         # Time Frequency Advance
@@ -143,6 +144,19 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
         return t1, t2
 
+    def stations_info(self):
+        obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
+        obsfiles.sort()
+        sd = []
+        for file in obsfiles:
+            st = SeismogramDataAdvanced(file)
+            station = [st.stats.Network, st.stats.Station, st.stats.Location, st.stats.Channel, st.stats.StartTime,
+                       st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
+            sd.append(station)
+        self._stations_info = StationsInfo(sd, check= False)
+        self._stations_info.show()
+
+
     def plot_seismogram(self):
         selection = self.selectCB.currentText()
 
@@ -190,17 +204,29 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             else:
                 x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr)
 
+            log_spectrogram = np.clip(log_spectrogram, a_min=self.minlevelCB.value(), a_max=0)
+            min_log_spectrogram = self.minlevelCB.value()
+            max_log_spectrogram = 0
+
             if order == "Seismogram 1":
-                self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
-                                         cmap=plt.get_cmap("jet"))
+                if self.typeCB.currentText() == 'contourf':
+                    self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
+                                         cmap=plt.get_cmap("jet"),vmin= min_log_spectrogram, vmax=max_log_spectrogram)
+                elif self.typeCB.currentText() == 'pcolormesh':
+                    self.canvas_plot1.pcolormesh(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
+                                                   cmap=plt.get_cmap("jet"),vmin= min_log_spectrogram, vmax=max_log_spectrogram)
                 self.canvas_plot1.set_xlabel(1, "Time (s)")
                 self.canvas_plot1.set_ylabel(0, "Amplitude ")
                 self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
 
             elif order == "Seismogram 2":
-
-                self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
-                                               cmap=plt.get_cmap("jet"))
+                if self.typeCB.currentText() == 'contourf':
+                    self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
+                                               cmap=plt.get_cmap("jet"),vmin= min_log_spectrogram, vmax=max_log_spectrogram)
+                elif self.typeCB.currentText() == 'pcolormesh':
+                    self.canvas_plot2.pcolormesh(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
+                                                   cmap=plt.get_cmap("jet"), vmin=min_log_spectrogram,
+                                                   vmax=max_log_spectrogram)
                 self.canvas_plot2.set_xlabel(1, "Time (s)")
                 self.canvas_plot2.set_ylabel(0, "Amplitude ")
                 self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
@@ -219,55 +245,54 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             else:
                 x, y, log_spectrogram = wignerspec.compute_wigner_spectrogram(tr)
 
+            #log_spectrogram = np.clip(log_spectrogram, a_min=self.minlevelCB.value(), a_max=0)
+            #min_log_spectrogram = self.minlevelCB.value()
+            #max_log_spectrogram = 0
+
             if order == "Seismogram 1":
-                self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Rel Power ",
-                                         cmap=plt.get_cmap("jet"))
+                if self.typeCB.currentText() == 'contourf':
+                    self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Rel Power ",
+                    cmap=plt.get_cmap("jet"))
+                elif self.typeCB.currentText() == 'pcolormesh':
+                    self.canvas_plot1.pcolormesh(x, y, log_spectrogram, axes_index=1, clabel="Rel Power ",
+                         cmap=plt.get_cmap("jet"))
                 self.canvas_plot1.set_xlabel(1, "Time (s)")
                 self.canvas_plot1.set_ylabel(0, "Amplitude ")
                 self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
 
             elif order == "Seismogram 2":
-
-                self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
-                                               cmap=plt.get_cmap("jet"))
+                if self.typeCB.currentText() == 'contourf':
+                    self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
+                     cmap=plt.get_cmap("jet"))
+                elif self.typeCB.currentText() == 'pcolormesh':
+                    self.canvas_plot2.pcolormesh(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
+                                                   cmap=plt.get_cmap("jet"))
                 self.canvas_plot2.set_xlabel(1, "Time (s)")
                 self.canvas_plot2.set_ylabel(0, "Amplitude ")
                 self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
 
-
-
         elif selection == "Continuous Wavelet Transform":
-            #if self.trimCB.isChecked() and diff >= 0:
-            #    tr.trim(starttime=ts, endtime=te)
-
             fs = tr.stats.sampling_rate
-            nf = 40
+            nf = self.atomsSB.value()
             f_min = self.freq_min_cwtDB.value()
             f_max = self.freq_max_cwtDB.value()
             wmin = self.wminSB.value()
             wmax = self.wminSB.value()
-            tt = int( self.wavelet_lenghtDB.value()*fs)
+            #tt = int( self.wavelet_lenghtDB.value()*fs)
             npts = len(tr.data)
-            # Old version
-            #[ba, nConv, frex, half_wave] = ccwt_ba_fast(npts, fs, f_min, f_max, wmin, wmax,tt, nf)
-            #cf, sc, scalogram = cwt_fast(tr.data, ba, nConv, frex, half_wave, fs)
-            #scalogram = np.abs(scalogram) ** 2
-            # scalogram2 = 10 * (np.log10(scalogram / np.max(scalogram)))
-            #
             t = np.linspace(0, tr.stats.delta * npts, npts)
-            cw = ConvolveWaveletScipy(self.file_selector.file_path)
+            #cw = ConvolveWaveletScipy(self.file_selector.file_path)
+            cw = ConvolveWaveletScipy(tr)
+
             if self.trimCB.isChecked() and diff >= 0:
-                cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=tt, fmin=f_min, fmax=f_max, nf=nf, use_rfft=False,
+                cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf, use_rfft=False,
                                  decimate=False)
             else:
-                cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=tt, fmin=f_min, fmax=f_max, nf=nf, use_rfft=False,
+                cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf, use_rfft=False,
                                  decimate=False)
 
             scalogram2 = cw.scalogram_in_dbs()
-
-
-            #scalogram2 = np.around(scalogram2, decimals=2)
-            scalogram2 = np.clip(scalogram2, a_min=-120, a_max=0)
+            scalogram2 = np.clip(scalogram2, a_min=self.minlevelCB.value(), a_max=0)
             cf = cw.cf_lowpass()
             freq = np.logspace(np.log10(f_min), np.log10(f_max))
             k = wmin / (2 * np.pi * freq)
@@ -278,7 +303,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             pred = (math.sqrt(2) * c_f / f)  - (math.sqrt(2) * c_f / f_max)
 
             pred_comp = t[len(t)-1]-pred
-            min_cwt= -120
+            min_cwt= self.minlevelCB.value()
             max_cwt = 0
 
             norm = Normalize(vmin=min_cwt, vmax=max_cwt)
@@ -289,15 +314,10 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
                 self.canvas_plot1.plot(tf, cf, 0, clear_plot=True, is_twinx=True, color="red",
                                        linewidth=0.5)
-
-                self.canvas_plot1.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
-
-                #ax_test = self.canvas_plot1.get_axe(1)
-                #ax_test.imshow(scalogram2, extent=[0, max(t), min(f), max(f)],cmap = "jet")
-                #ax_test.pcolormesh(t, f, scalogram2, cmap=plt.get_cmap("jet"))
-                #ax_test.set_xlim(t[0],max(t))
-                #ax_test.set_ylim(f[0], max(f))
-
+                if self.typeCB.currentText() == 'pcolormesh':
+                    self.canvas_plot1.pcolormesh(x, y, scalogram2, axes_index=1, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
+                elif self.typeCB.currentText() == 'contourf':
+                    self.canvas_plot1.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
 
                 ax_cone = self.canvas_plot1.get_axe(1)
                 ax_cone.fill_between(pred, f, 0, color= "black", edgecolor="red", alpha=0.3)
@@ -309,8 +329,11 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             if order == "Seismogram 2":
                 self.canvas_plot2.plot(tf, cf, 0, clear_plot=True, is_twinx=True, color="red",
                                        linewidth=0.5)
-                self.canvas_plot2.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]",
-                                           cmap=plt.get_cmap("jet"), norm = norm)
+
+                if self.typeCB.currentText() == 'pcolormesh':
+                    self.canvas_plot2.pcolormesh(x, y, scalogram2, axes_index=1, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
+                elif self.typeCB.currentText() == 'contourf':
+                    self.canvas_plot2.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
 
                 ax_cone2 = self.canvas_plot2.get_axe(1)
                 ax_cone2.fill_between(pred, f, 0, color="black", edgecolor="red", alpha=0.3)

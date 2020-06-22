@@ -520,6 +520,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
+        params = self.settings_dialog.getParameters()
+        print(params)
         for index, file_path in enumerate(files_at_page):
 
             tr = self.st[index]

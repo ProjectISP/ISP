@@ -241,16 +241,8 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
             cf, sc, scalogram1 = cwt_fast(tr1.data, ba, nConv, frex, half_wave, fs)
 
             cf, sc, scalogram2 = cwt_fast(tr2.data, ba, nConv, frex, half_wave, fs)
-            #cfs1 = np.abs(scalogram1) ** 2
-            #cfs2 = np.abs(scalogram2) ** 2
-            crossCFS = scalogram1 * np.conj(scalogram2)
-            #crosspec = crossCFS/(np.sqrt(cfs1)*np.sqrt(cfs2))
-            # factor_f = 2*math.pi*frex
-            # for j in range(scalogram1.shape[0]):
-            #     cfs1[:,j]=factor_f[j]*cfs1[:,j]
-            #     cfs2[:, j] = factor_f[j] * cfs2[:, j]
-            #     crossCFS[:, j] = factor_f[j]*crossCFS[:,j]
 
+            crossCFS = scalogram1 * np.conj(scalogram2)
 
             cross_scalogram = np.abs(crossCFS)**2
             cross_scalogram = 10*np.log(cross_scalogram/np.max(cross_scalogram))

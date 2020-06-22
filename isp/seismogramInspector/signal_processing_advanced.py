@@ -5,15 +5,15 @@ Created on Tue Jul  9 18:15:16 2019
 
 @author: robertocabieces
 """
+from signal import signal
+
 from mtspec import mtspec
 import numpy as np
-from obspy import read
 import math
 import scipy.signal
-import matplotlib.pyplot as plt
-
+import pywt
 from isp.seismogramInspector.entropy import spectral_entropy
-
+import copy
 
 def find_nearest(array, value):
     idx,val = min(enumerate(array), key=lambda x: abs(x[1]-value))
@@ -315,3 +315,189 @@ def envelope(data,sampling_rate):
     #data_envelope = window * data_envelope
     #data_envelope1 = lowpass(data_envelope, 0.15, sampling_rate, corners=3, zerophase=True)
     return data_envelope
+
+
+def add_white_noise(tr, SNR_dB):
+    L = len(tr.data)
+    SNR = 10**(SNR_dB/10)
+    Esym = np.sum(np.abs(tr.data)**2)/L
+    N0 = Esym / SNR
+    noiseSigma = np.sqrt(N0)
+    n = noiseSigma * np.random.normal(size=L)
+    tr.data = tr.data+ n
+    return tr
+
+
+def whiten(tr, freqmin, freqmax):
+    nsamp = tr.stats.sampling_rate
+
+    n = len(tr.data)
+    if n == 1:
+        return tr
+    else:
+        frange = float(freqmax) - float(freqmin)
+        nsmo = int(np.fix(min(0.01, 0.5 * (frange)) * float(n) / nsamp))
+        f = np.arange(n) * nsamp / (n - 1.)
+        JJ = ((f > float(freqmin)) & (f < float(freqmax))).nonzero()[0]
+
+        # signal FFT
+        FFTs = np.fft.fft(tr.data)
+        FFTsW = np.zeros(n) + 1j * np.zeros(n)
+
+        # Apodization to the left with cos^2 (to smooth the discontinuities)
+        smo1 = (np.cos(np.linspace(np.pi / 2, np.pi, nsmo + 1)) ** 2)
+        FFTsW[JJ[0]:JJ[0] + nsmo + 1] = smo1 * np.exp(1j * np.angle(FFTs[JJ[0]:JJ[0] + nsmo + 1]))
+
+        # boxcar
+        FFTsW[JJ[0] + nsmo + 1:JJ[-1] - nsmo] = np.ones(len(JJ) - 2 * (nsmo + 1)) \
+                                                * np.exp(1j * np.angle(FFTs[JJ[0] + nsmo + 1:JJ[-1] - nsmo]))
+
+        # Apodization to the right with cos^2 (to smooth the discontinuities)
+        smo2 = (np.cos(np.linspace(0, np.pi / 2, nsmo + 1)) ** 2)
+        espo = np.exp(1j * np.angle(FFTs[JJ[-1] - nsmo:JJ[-1] + 1]))
+        FFTsW[JJ[-1] - nsmo:JJ[-1] + 1] = smo2 * espo
+
+        whitedata = 2. * np.fft.ifft(FFTsW).real
+
+        tr.data = np.require(whitedata, dtype="float32")
+
+        return tr
+
+
+# Functions Noise Processing
+
+def get_window(N, alpha=0.2):
+
+    window = np.ones(N)
+    x = np.linspace(-1., 1., N)
+    ind1 = (abs(x) > 1 - alpha) * (x < 0)
+    ind2 = (abs(x) > 1 - alpha) * (x > 0)
+    window[ind1] = 0.5 * (1 - np.cos(np.pi * (x[ind1] + 1) / alpha))
+    window[ind2] = 0.5 * (1 - np.cos(np.pi * (x[ind2] - 1) / alpha))
+    return window
+
+def normalize(tr, clip_factor=6, clip_weight=10, norm_win=None, norm_method="1bit"):
+    if norm_method == 'clipping':
+        lim = clip_factor * np.std(tr.data)
+        tr.data[tr.data > lim] = lim
+        tr.data[tr.data < -lim] = -lim
+
+    elif norm_method == "clipping iteration":
+        lim = clip_factor * np.std(np.abs(tr.data))
+
+        # as long as still values left above the waterlevel, clip_weight
+        while tr.data[np.abs(tr.data) > lim] != []:
+            tr.data[tr.data > lim] /= clip_weight
+            tr.data[tr.data < -lim] /= clip_weight
+
+    elif norm_method == 'time normalization':
+        lwin = int(tr.stats.sampling_rate * norm_win)
+        st = 0  # starting point
+        N = lwin  # ending point
+
+        while N < tr.stats.npts:
+            win = tr.data[st:N]
+
+            w = np.mean(np.abs(win)) / (2. * lwin + 1)
+
+            # weight center of window
+            tr.data[st + int(lwin / 2)] /= w
+
+            # shift window
+            st += 1
+            N += 1
+
+        # taper edges
+        #taper = get_window(tr.stats.npts)
+        #tr.data *= taper
+
+    elif norm_method == "1bit":
+        tr.data = np.sign(tr.data)
+        tr.data = np.float32(tr.data)
+
+    return tr
+
+# Denoise Section
+
+def denoise(tr, type='mean', k=4, fwhm=1):
+    # k window size in seconds
+
+    n = len(tr.data)
+    if type == 'mean':
+        k = k/tr.stats.sampling_rate
+
+        # initialize filtered signal vector
+        filtsig = np.zeros(n)
+        for i in range(k, n - k - 1):
+            # each point is the average of k surrounding points
+            filtsig[i] = np.mean(signal[i - k:i + k])
+        tr.data = filtsig
+
+    if type == 'gaussian':
+        ## create Gaussian kernel
+        # full-width half-maximum: the key Gaussian parameter in seconds
+        # normalized time vector in seconds
+        gtime = np.arange(-k, k)
+        # create Gaussian window
+        gauswin = np.exp(-(4 * np.log(2) * gtime ** 2) / fwhm ** 2)
+        # compute empirical FWHM
+        pstPeakHalf = k + np.argmin((gauswin[k:] - .5) ** 2)
+        prePeakHalf = np.argmin((gauswin - .5) ** 2)
+        empFWHM = gtime[pstPeakHalf] - gtime[prePeakHalf]
+        # then normalize Gaussian to unit energy
+        gauswin = gauswin / np.sum(gauswin)
+        # implement the filter
+        # initialize filtered signal vector
+        filtsigG = copy.deepcopy(signal)
+        # implement the running mean filter
+        for i in range(k + 1, n - k - 1):
+            # each point is the weighted average of k surrounding points
+            filtsigG[i] = np.sum(signal[i - k:i + k] * gauswin)
+        tr.data = filtsigG
+
+    if type == 'tkeo':
+
+        # extract needed variables
+        emgtime = tr.times()
+        emg = tr.data
+
+        # initialize filtered signal
+        emgf = copy.deepcopy(emg)
+
+        # the loop version for interpretability
+        for i in range(1, len(emgf) - 1):
+            emgf[i] = emg[i] ** 2 - emg[i - 1] * emg[i + 1]
+
+        # the vectorized version for speed and elegance
+        emgf2 = copy.deepcopy(emg)
+        emgf2[1:-1] = emg[1:-1] ** 2 - emg[0:-2] * emg[2:]
+
+        ## convert both signals to zscore
+
+        # find timepoint zero
+        time0 = np.argmin(emgtime ** 2)
+
+        # convert original EMG to z-score from time-zero
+        emgZ = (emg - np.mean(emg[0:time0])) / np.std(emg[0:time0])
+
+        # same for filtered EMG energy
+        emgZf = (emgf - np.mean(emgf[0:time0])) / np.std(emgf[0:time0])
+        tr.data = emgZf
+
+    return tr
+
+def wavelet_denoise(tr, threshold = 0.04, dwt = 'sym4' ):
+    # Threshold for filtering
+    # Create wavelet object and define parameters
+    w = pywt.Wavelet(dwt)
+    maxlev = pywt.dwt_max_level(len(tr.data), w.dec_len)
+    # Decompose into wavelet components, to the level selected:
+    coeffs = pywt.wavedec(tr.data, dwt, level=maxlev)
+    # cA = pywt.threshold(cA, threshold*max(cA))
+    for i in range(1, len(coeffs)):
+        coeffs[i] = pywt.threshold(coeffs[i], threshold * max(coeffs[i]))
+    datarec = pywt.waverec(coeffs, dwt)
+    tr.data = datarec
+    return tr
+
+

@@ -12,6 +12,8 @@ from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdateti
 from isp.Gui import pw
 import os
 import matplotlib.dates as mdt
+
+from isp.Utils import MseedUtil
 from isp.arrayanalysis import array_analysis
 
 
@@ -183,18 +185,19 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                     obsfiles.append(os.path.abspath(os.path.join(dirpath, f)))
         obsfiles.sort()
         parameters = self.__parameters.getParameters()
-        print(parameters)
         all_traces =[]
-
+        trace_number = 0
         for file in obsfiles:
             sd = SeismogramDataAdvanced(file)
             if self.trimCB.isChecked() and diff >= 0:
                 tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
-                    start_time=starttime, end_time=endtime)
+                    start_time=starttime, end_time=endtime, trace_number=trace_number)
             else:
-                tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message)
+                tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
+                                              trace_number=trace_number)
 
             all_traces.append(tr)
+            trace_number = trace_number  + 1
 
         self.st = Stream(traces=all_traces)
 
@@ -204,31 +207,18 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.stream_frame.show()
 
     def stationsInfo(self):
-
-        file_path = self.root_pathFK_bind.value
-        obsfiles = []
-
-        for dirpath, _, filenames in os.walk(file_path):
-            for f in filenames:
-                if f != ".DS_Store":
-                    obsfiles.append(os.path.abspath(os.path.join(dirpath, f)))
+        obsfiles = MseedUtil.get_mseed_files(self.root_pathFK_bind.value)
         obsfiles.sort()
         sd = []
-
         for file in obsfiles:
-
             st = SeismogramDataAdvanced(file)
-
-            station = [st.stats.Network,st.stats.Station,st.stats.Location,st.stats.Channel,st.stats.StartTime,
+            station = [st.stats.Network, st.stats.Station, st.stats.Location, st.stats.Channel, st.stats.StartTime,
                        st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
-
             sd.append(station)
-
-        self._stations_info = StationsInfo(sd)
+        self._stations_info = StationsInfo(sd, check=True)
         self._stations_info.show()
 
     def write(self):
-
         root_path = os.path.dirname(os.path.abspath(__file__))
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         n=len(self.st)

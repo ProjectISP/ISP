@@ -13,3 +13,4 @@ mtspec
 nitime
 Cartopy
 pillow
+PyWavelets
