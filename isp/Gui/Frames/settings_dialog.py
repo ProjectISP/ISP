@@ -13,8 +13,14 @@ class SettingsDialog(pw.QDialog, UiSettingsDialog):
     def getParameters(self):
         param_dict = {}
         for i in range(self.formLayout.rowCount()):
-            widget = self.formLayout.itemAt(i, pw.QFormLayout.FieldRole).widget().value()
-            label = self.formLayout.itemAt(i, pw.QFormLayout.LabelRole).widget().text()
-            param_dict[label] = widget 
+            field = self.formLayout.itemAt(i, pw.QFormLayout.FieldRole)
+            label = self.formLayout.itemAt(i, pw.QFormLayout.LabelRole)
+            if hasattr(field, 'widget') and hasattr(label, 'widget'): 
+                field = field.widget()
+                label = label.widget()
+                if hasattr(label, 'text') and hasattr(field, 'value'):
+                    field = field.value()
+                    label = label.text()
+                    param_dict[label] = field 
 
         return param_dict
