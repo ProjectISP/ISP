@@ -7,7 +7,7 @@ MOMENT_TENSOR_OUTPUT = os.path.join(ROOT_DIR, 'mti/output')
 RESOURCE_PATH = os.path.join(ROOT_DIR, 'resources')
 IMAGES_PATH = os.path.join(RESOURCE_PATH, 'images')
 UIS_PATH = os.path.join(RESOURCE_PATH, 'designer_uis')
-
+FOC_MEC_PATH = os.path.join(ROOT_DIR, 'FOCMEC/bin')
 
 def create_logger():
 

@@ -5,10 +5,14 @@ Created on Tue Dec 17 20:26:28 2019
 
 @author: robertocabieces
 """
+import shutil
+import subprocess
 
 import pandas as pd
 import os
 from obspy import read_events, Catalog
+
+from isp import FOC_MEC_PATH, ROOT_DIR
 from isp.earthquakeAnalisysis import focmecobspy
 from isp.Utils.subprocess_utils import exc_cmd
 
@@ -106,6 +110,19 @@ class FirstPolarity:
     def run_focmec(self):
         command=os.path.join(self.get_foc_dir,'rfocmec_UW')
         exc_cmd(command)
+
+    # def run_focmec(self):
+    #     command = os.path.join(FOC_MEC_PATH,'focmec')
+    #     input_run_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity/formec_run')
+    #     input_focmec_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity/test.inp')
+    #     output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity')
+    #     shutil.copy(input_focmec_path,'.')
+    #     p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout='log.txt')
+    #     f = open(input_run_path, 'r')
+    #     string = f.read()
+    #     p.communicate(input=string.encode())
+    #     shutil.move('mechanism.out',output_path)
+    #     shutil.move('focmec.lst', output_path)
 
     def extract_focmec_info(self):
         catalog: Catalog = focmecobspy._read_focmec(os.path.join(self.get_foc_dir,'focmec.lst'))
