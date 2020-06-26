@@ -3,6 +3,7 @@ import matplotlib.dates as mdt
 from obspy.core.event import Origin
 from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
+from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile, parse_excepts
 from isp.Gui import pw, pqg
 from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas, FocCanvas
@@ -317,7 +318,10 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         scatter_x, scatter_y, scatter_z, pdf = self.nll_manager.get_NLL_scatter()
         lat = origin.latitude
         lon = origin.longitude
-        self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0, resolution = "high")
+        stations = self.nll_manager.stations_match()
+
+        self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0,
+                                     resolution= 'high', stations = stations)
         # Writing Location information
         self.add_earthquake_info(origin)
         xp, yp, xs, ys = self.nll_manager.ger_NLL_residuals()
@@ -333,6 +337,7 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.residuals_canvas.set_yaxis_color(self.residuals_canvas.get_axe(0), artist.get_color(), is_left=True)
         self.residuals_canvas.plot(xs, ys, 0, is_twinx=True, color="red", linewidth=0.5)
         self.residuals_canvas.set_ylabel_twinx(0, "S wave Res")
+        self.residuals_canvas.plot(xp, yp, axes_index=0, linewidth=0.5)
 
     def first_polarity(self):
         import pandas as pd
@@ -352,7 +357,6 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
          "number_of_polarities"],"results":[strike_A,dip_A,rake_A,misfit_first_polarity,azimuthal_gap,
                                             number_of_polarities]}
         df = pd.DataFrame(first_polarity_results, columns=["First_Polarity","results"])
-        print(df)
         df.to_csv(path_output, sep=' ', index=False)
         self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, 0)
         self.add_first_polarity_info(first_polarity_results)

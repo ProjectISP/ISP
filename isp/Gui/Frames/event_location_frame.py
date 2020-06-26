@@ -11,10 +11,13 @@ from datetime import datetime, timedelta
 from isp.Utils import ObspyUtil
 from obspy.core.event import Origin
 from sqlalchemy import Column
-
-from isp import LOCATION_OUTPUT_PATH, MOMENT_TENSOR_OUTPUT
+import matplotlib.pyplot as plt
+from obspy.imaging.beachball import beach
+from isp import LOCATION_OUTPUT_PATH, MOMENT_TENSOR_OUTPUT, ROOT_DIR
 from isp.mti.read_log import read_log
-
+import matplotlib.image as mpimg
+from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
+from PIL import Image
 
 class DateTimeFormatDelegate(pw.QStyledItemDelegate):
     def __init__(self, date_format, parent=None):
@@ -130,6 +133,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.tableView.addAction(remove_action)
         self.tableView.setItemDelegateForColumn(0, DateTimeFormatDelegate('dd/MM/yyyy hh:mm:ss.zzz'))
         self.tableView.resizeColumnsToContents()
+        self.tableView.doubleClicked.connect(self._plot_foc_mec)
 
         valLat = MinMaxValidator(self.minLat, self.maxLat)
         valLon = MinMaxValidator(self.minLon, self.maxLon)
@@ -148,6 +152,59 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.btnShowAll.clicked.connect(self._showAll)
         self.PlotMapBtn.clicked.connect(self.plot_map)
         self.plot_focal_mecbtn.clicked.connect(self.plot_foc_mec)
+
+    def _plot_row(self, index):
+        # try:
+        #     self.text.pop(0).remove()
+        # except:
+        #     pass
+        lat_index = self.model.index(index.row(), 3)
+        lon_index = self.model.index(index.row(), 4)
+        depth_index = self.model.index(index.row(), 5)
+        lat = self.model.data(lat_index)
+        lon = self.model.data(lon_index)
+        depth = self.model.data(depth_index)
+        print(lat,lon,depth)
+        self.text=self.map_widget.ax.annotate('Hola', xy=(-12, 35), xycoords='data',
+                                    xytext=(-12, 36), textcoords='data', arrowprops=dict(arrowstyle="->",
+                                                                                         connectionstyle="arc3,rad=.2"))
+
+        self.map_widget.fig.canvas.draw()
+
+    def _plot_foc_mec(self, index):
+         # Plot Focal Mechanism
+
+         if self.methodCB.currentText() == "First Polarity":
+            strike = self.model.data(self.model.index(index.row(), 24))
+            dip = self.model.data(self.model.index(index.row(), 25))
+            rake = self.model.data(self.model.index(index.row(), 26))
+            self.plot_foc_mec(method = self.methodCB.currentText(), strike = strike, dip = dip, rake = rake)
+
+         if self.methodCB.currentText() == "MTI":
+             mrr = self.model.data(self.model.index(index.row(), 43))
+             mtt = self.model.data(self.model.index(index.row(), 44))
+             mpp = self.model.data(self.model.index(index.row(), 45))
+             mrt = self.model.data(self.model.index(index.row(), 46))
+             mrp = self.model.data(self.model.index(index.row(), 47))
+             mtp = self.model.data(self.model.index(index.row(), 48))
+             self.plot_foc_mec(method=self.methodCB.currentText(), mrr=mrr, mtt=mtt, mpp=mpp, mrt=mrt, mrp=mrp,mtp=mtp)
+
+         # plot in the map
+         lat = self.model.data(self.model.index(index.row(), 3))
+         lon = self.model.data(self.model.index(index.row(), 4))
+         file = os.path.join(ROOT_DIR, 'db/map_class/foc_mec.png')
+
+         img = Image.open(file)
+         imagebox = OffsetImage(img, zoom=0.08)
+         imagebox.image.axes = self.map_widget.ax
+         ab = AnnotationBbox(imagebox, [lon+0.3, lat+0.3], frameon=False)
+         self.map_widget.ax.add_artist(ab)
+
+         self.map_widget.ax.annotate('', xy=(lon, lat), xycoords='data',
+         xytext=(lon+0.3, lat+0.3), textcoords='data',arrowprops=dict(arrowstyle="->",
+                           connectionstyle="arc3,rad=.2"))
+
+         self.map_widget.fig.canvas.draw()
 
     def refreshLimits(self):
         entities = self.model.getEntities()
@@ -332,9 +389,6 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         import matplotlib.pyplot as plt
         from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
         from owslib.wms import WebMapService
-        import matplotlib.image as mpimg
-        from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
-        from PIL import Image
 
         cb = []
         try:
@@ -390,25 +444,12 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.map_widget.lon.yaxis.tick_right()
         self.map_widget.lon.invert_yaxis()
         #self.map_widget.lon.set(xlabel='Longitude', ylabel='Depth (km)')
-
-
         self.map_widget.lon.set_xlim((min_lon, max_lon))
-
 
         #magnitude legend
         kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color = "red", func=lambda s: np.log(s / 0.5))
         self.map_widget.ax.legend(*cs.legend_elements(**kw),loc="lower right", title="Magnitudes")
 
-        # Plot Focal Mechanism #
-        img = Image.open('/Users/robertocabieces/Documents/ISPshare/isp/db/map_class/foca_mec.png')
-        imagebox = OffsetImage(img, zoom=0.08)
-        imagebox.image.axes = self.map_widget.ax
-        ab = AnnotationBbox(imagebox, [-10, 35], frameon=False)
-        self.map_widget.ax.add_artist(ab)
-
-        self.map_widget.ax.annotate('', xy=(-11, 36), xycoords='data',
-         xytext=(-10, 35), textcoords='data',arrowprops=dict(arrowstyle="->",
-                            connectionstyle="arc3,rad=.2"))
 
         gl = self.map_widget.ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                            linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
@@ -422,9 +463,26 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.map_widget.fig.canvas.draw()
 
 
-    def plot_foc_mec(self):
-        import matplotlib.pyplot as plt
-        from obspy.imaging.beachball import beach
+    def plot_foc_mec(self, method, **kwargs):
+
+        # Plot and save beachball from First Polarity or MTI
+        if method == "First Polarity":
+
+            strike = kwargs.pop('strike')
+            dip = kwargs.pop('dip')
+            rake = kwargs.pop('rake')
+            fm = [strike, dip, rake]
+
+        elif method == "MTI":
+
+            mrr = kwargs.pop('mrr')
+            mtt = kwargs.pop('mtt')
+            mpp = kwargs.pop('mpp')
+            mrt = kwargs.pop('mrt')
+            mrp = kwargs.pop('mrp')
+            mtp = kwargs.pop('mtp')
+            fm = [mrr, mtt, mpp, mrt, mrp, mtp]
+
         ax = plt.axes()
         plt.axis('off')
         ax.axes.get_xaxis().set_visible(False)
@@ -432,9 +490,12 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         lw = 2
         plt.xlim(-100 - lw / 2, 100 + lw / 2)
         plt.ylim(-100 - lw / 2, 100 + lw / 2)
-        beach2 = beach([90, 0, 30], facecolor='r', linewidth=1., alpha=0.8, width=80)
+        if method == "First Polarity":
+            beach2 = beach(fm, facecolor='r', linewidth=1., alpha=0.8, width=80)
+        elif method == "MTI":
+            beach2 = beach(fm, facecolor='b', linewidth=1., alpha=0.8, width=80)
         ax.add_collection(beach2)
-        outfile = '/Users/robertocabieces/Documents/ISPshare/isp/db/map_class/foca_mec'
+        outfile = os.path.join(ROOT_DIR, 'db/map_class/foc_mec.png')
         plt.savefig(outfile, bbox_inches='tight', pad_inches=0, transparent=True,edgecolor='none')
         plt.clf()
         plt.close()

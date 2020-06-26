@@ -399,11 +399,8 @@ class NllManager:
         if os.path.isfile(location_file_check):
             my_array = np.genfromtxt(location_file_check, skip_header=3)
             y = my_array[:, 0]
-            print(y)
             x = my_array[:, 1]
-            print(x)
             z = my_array[:, 2]
-            print(z)
             pdf = my_array[:, 4]
 
             pdf = np.array(pdf) / np.max(pdf)
@@ -437,6 +434,38 @@ class NllManager:
             return xp, yp, xs, ys
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
+
+    def check_stations(self):
+        location_file = os.path.join(self.get_loc_dir, "last.hyp")
+        if os.path.isfile(location_file):
+            df = pd.read_csv(location_file, delim_whitespace=True, skiprows=16)
+            xp = []
+            for i in range(len(df)):
+                phase = df.iloc[i].On
+                if df.iloc[i].Weight > 0.01 and phase[0].upper() == "P":
+                    xp.append(df.iloc[i].PHASE)
+
+        return xp
+
+    def load_stations_file(self):
+        stations_path = os.path.join(self.get_stations_dir, "stations.txt")
+        stations = np.loadtxt(stations_path, dtype = str)
+        name = stations[:,1]
+        lon = stations[:,4]
+        lat = stations[:, 3]
+        all = [name, lon, lat]
+        return all
+
+    def stations_match(self):
+        stations_located = self.check_stations()
+        all_stations_names = self.load_stations_file()
+
+        stations = {}
+        for name,lon,lat in zip(all_stations_names[0],all_stations_names[1],all_stations_names[2]):
+            if name in stations_located:
+                stations[name] = [lon, lat]
+
+        return stations
 
     # TODO Move this to some frame, don't call Gui stuff on backend.
     # def plot_scatter(self):

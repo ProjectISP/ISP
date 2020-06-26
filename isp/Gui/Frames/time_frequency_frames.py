@@ -210,23 +210,25 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
             if order == "Seismogram 1":
                 if self.typeCB.currentText() == 'contourf':
+                    print("plotting countourf")
                     self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
                                          cmap=plt.get_cmap("jet"),vmin= min_log_spectrogram, vmax=max_log_spectrogram)
                 elif self.typeCB.currentText() == 'pcolormesh':
+                    print("plotting pcolormesh")
                     self.canvas_plot1.pcolormesh(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
-                                                   cmap=plt.get_cmap("jet"),vmin= min_log_spectrogram, vmax=max_log_spectrogram)
+                            cmap=plt.get_cmap("jet"),vmin= min_log_spectrogram, vmax=max_log_spectrogram)
                 self.canvas_plot1.set_xlabel(1, "Time (s)")
                 self.canvas_plot1.set_ylabel(0, "Amplitude ")
                 self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
 
             elif order == "Seismogram 2":
                 if self.typeCB.currentText() == 'contourf':
-                    self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
-                                               cmap=plt.get_cmap("jet"),vmin= min_log_spectrogram, vmax=max_log_spectrogram)
+                    self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
+                                               cmap=plt.get_cmap("jet"), vmin= min_log_spectrogram, vmax=max_log_spectrogram)
                 elif self.typeCB.currentText() == 'pcolormesh':
-                    self.canvas_plot2.pcolormesh(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
-                                                   cmap=plt.get_cmap("jet"), vmin=min_log_spectrogram,
-                                                   vmax=max_log_spectrogram)
+                    self.canvas_plot2.pcolormesh(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
+                            cmap=plt.get_cmap("jet"), vmin=min_log_spectrogram, vmax=max_log_spectrogram)
+
                 self.canvas_plot2.set_xlabel(1, "Time (s)")
                 self.canvas_plot2.set_ylabel(0, "Amplitude ")
                 self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
@@ -251,10 +253,10 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
             if order == "Seismogram 1":
                 if self.typeCB.currentText() == 'contourf':
-                    self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Rel Power ",
+                    self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Rel Power ",
                     cmap=plt.get_cmap("jet"))
                 elif self.typeCB.currentText() == 'pcolormesh':
-                    self.canvas_plot1.pcolormesh(x, y, log_spectrogram, axes_index=1, clabel="Rel Power ",
+                    self.canvas_plot1.pcolormesh(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Rel Power ",
                          cmap=plt.get_cmap("jet"))
                 self.canvas_plot1.set_xlabel(1, "Time (s)")
                 self.canvas_plot1.set_ylabel(0, "Amplitude ")
@@ -262,10 +264,10 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
             elif order == "Seismogram 2":
                 if self.typeCB.currentText() == 'contourf':
-                    self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
+                    self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
                      cmap=plt.get_cmap("jet"))
                 elif self.typeCB.currentText() == 'pcolormesh':
-                    self.canvas_plot2.pcolormesh(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
+                    self.canvas_plot2.pcolormesh(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
                                                    cmap=plt.get_cmap("jet"))
                 self.canvas_plot2.set_xlabel(1, "Time (s)")
                 self.canvas_plot2.set_ylabel(0, "Amplitude ")
@@ -315,9 +317,9 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 self.canvas_plot1.plot(tf, cf, 0, clear_plot=True, is_twinx=True, color="red",
                                        linewidth=0.5)
                 if self.typeCB.currentText() == 'pcolormesh':
-                    self.canvas_plot1.pcolormesh(x, y, scalogram2, axes_index=1, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
+                    self.canvas_plot1.pcolormesh(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
                 elif self.typeCB.currentText() == 'contourf':
-                    self.canvas_plot1.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
+                    self.canvas_plot1.plot_contour(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
 
                 ax_cone = self.canvas_plot1.get_axe(1)
                 ax_cone.fill_between(pred, f, 0, color= "black", edgecolor="red", alpha=0.3)
@@ -331,9 +333,9 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                                        linewidth=0.5)
 
                 if self.typeCB.currentText() == 'pcolormesh':
-                    self.canvas_plot2.pcolormesh(x, y, scalogram2, axes_index=1, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
+                    self.canvas_plot2.pcolormesh(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
                 elif self.typeCB.currentText() == 'contourf':
-                    self.canvas_plot2.plot_contour(x, y, scalogram2, axes_index=1, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
+                    self.canvas_plot2.plot_contour(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
 
                 ax_cone2 = self.canvas_plot2.get_axe(1)
                 ax_cone2.fill_between(pred, f, 0, color="black", edgecolor="red", alpha=0.3)

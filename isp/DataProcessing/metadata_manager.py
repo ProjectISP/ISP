@@ -38,5 +38,12 @@ class MetadataManager:
 
         return StationCoordinates.from_dict(coords)
 
+    def extrac_coordinates_from_station_name(self, inventory, name):
+        selected_inv = inventory.select(station=name)
+        cont = selected_inv.get_contents()
+        coords = selected_inv.get_coordinates(cont['channels'][0])
+        return StationCoordinates.from_dict(coords)
+
+
 
 

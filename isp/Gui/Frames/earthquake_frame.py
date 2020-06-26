@@ -19,7 +19,7 @@ from isp.Gui.Frames.settings_dialog import SettingsDialog
 from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Structures.structures import PickerStructure
-from isp.Utils import MseedUtil, ObspyUtil
+from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.earthquakeAnalisysis import PickerManager
 import numpy as np
 import os
@@ -626,8 +626,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             pass
 
 
-    # New function to detect events using Complex Morlet wavelet detector
-
+    # @AsycTime.run_async()
     def detect_events(self):
 
         all_traces = []
@@ -665,7 +664,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         trigger =coincidence_trigger(trigger_type=None, thr_on = 0.8, thr_off = 0.4,
                                   thr_coincidence_sum = 5, stream=self.st, details=True)
 
-        print("Detection done ")
+
         for k in range(len(trigger)):
             detection = trigger[k]
             for key in detection:
@@ -673,6 +672,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 if key == 'time':
                     time = detection[key]
                     self.events_times.append(time)
+
+        md = MessageDialog(self)
+        md.set_info_message("Events Detection done")
+        self.plot_seismogram()
 
 
     def write_files_page(self):
@@ -807,35 +810,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self._stations_info = StationsInfo(sd)
         self._stations_info.show()
-
-    def run_picker(self):
-        os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-        if self.st:
-            stations = ObspyUtil.get_stations_from_stream(self.st)
-            index=0
-            for station in stations:
-                st2 = self.st.select(station=station)
-                try:
-                    maxstart = np.max([tr.stats.starttime for tr in st2])
-                    minend = np.min([tr.stats.endtime for tr in st2])
-                    st2.trim(maxstart, minend)
-                    self.cnn.setup_stream(st2)  # set stream to use in prediction.
-                    self.cnn.predict()
-                    arrivals = self.cnn.get_arrivals()
-                    for k , times in arrivals.items():
-                        for t in times:
-                            if k == "p":
-                                self.canvas.draw_arrow(t.matplotlib_date, index + 2,
-                                                       "P", color="blue", linestyles='--', picker=False)
-                            if k == "s":
-                                self.canvas.draw_arrow(t.matplotlib_date, index + 0,
-                                                       "S", color="purple", linestyles='--', picker=False)
-                                self.canvas.draw_arrow(t.matplotlib_date, index + 1,
-                                                       "S", color="purple", linestyles='--', picker=False)
-                    index = index+3
-                except ValueError as e:
-                    md = MessageDialog(self)
-                    md.set_info_message("Prediction failed for station {}\n{}".format(station,e))
 
     def on_select(self, ax_index, xmin, xmax):
         self.kind_wave = self.ChopCB.currentText()

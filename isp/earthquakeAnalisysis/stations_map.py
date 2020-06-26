@@ -37,7 +37,6 @@ class StationsMap:
         lat = []
         lon = []
         for name, coords in self.__stations_dict.items():
-            print(coords)
             name_stations.append(name)
             lat.append(float(coords[0]))
             lon.append(float(coords[1]))

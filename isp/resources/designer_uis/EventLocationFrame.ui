@@ -207,6 +207,19 @@
         </property>
        </widget>
       </item>
+      <item row="6" column="1">
+       <widget class="QDoubleSpinBox" name="minMag">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximum">
+         <double>10.990000000000000</double>
+        </property>
+       </widget>
+      </item>
       <item row="7" column="0">
        <widget class="QLabel" name="label_9">
         <property name="text">
@@ -288,23 +301,109 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="1">
-       <widget class="QDoubleSpinBox" name="minMag">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximum">
-         <double>10.990000000000000</double>
-        </property>
-       </widget>
-      </item>
       <item row="13" column="0" colspan="2">
        <widget class="QPushButton" name="plot_focal_mecbtn">
         <property name="text">
          <string>Plot Focal Mechanisms</string>
+        </property>
+       </widget>
+      </item>
+      <item row="14" column="0" colspan="2">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Preferences</string>
+        </property>
+       </widget>
+      </item>
+      <item row="15" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
+         <string>Magnitude Prefered</string>
+        </property>
+       </widget>
+      </item>
+      <item row="15" column="1">
+       <widget class="QComboBox" name="magnitudeCB">
+        <item>
+         <property name="text">
+          <string>Mw</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Ms</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>ML</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Mc</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="16" column="0">
+       <widget class="QLabel" name="label_13">
+        <property name="text">
+         <string>Focal Mecanism</string>
+        </property>
+       </widget>
+      </item>
+      <item row="16" column="1">
+       <widget class="QComboBox" name="methodCB">
+        <item>
+         <property name="text">
+          <string>First Polarity</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>MTI</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="17" column="0">
+       <widget class="QLabel" name="label_14">
+        <property name="text">
+         <string>WMS</string>
+        </property>
+       </widget>
+      </item>
+      <item row="17" column="1">
+       <widget class="QLineEdit" name="wmsLE">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>125</width>
+          <height>21</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="18" column="0">
+       <widget class="QLabel" name="label_15">
+        <property name="text">
+         <string>Layer</string>
+        </property>
+       </widget>
+      </item>
+      <item row="18" column="1">
+       <widget class="QLineEdit" name="layerLE">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
        </widget>
       </item>
