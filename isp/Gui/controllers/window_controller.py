@@ -1,6 +1,6 @@
 # Singleton/SingletonDecorator.py
 from isp.Gui.Frames import MainFrame, TimeFrequencyFrame, EarthquakeAnalysisFrame, ArrayAnalysisFrame, MTIFrame,\
-    RecfFrame, EventLocationFrame
+    RecfFrame, EventLocationFrame, SyntheticsAnalisysFrame
 
 from isp.Utils import Singleton
 
@@ -15,6 +15,7 @@ class Controller:
         self.moment_tensor_frame = None
         self.receiver_functions_frame = None
         self.project_frame = None
+        self.synthetics_frame = None
 
     def open_main_window(self):
         # Start the ui designer
@@ -26,6 +27,7 @@ class Controller:
         self.main_frame.momentTensorButton.clicked.connect(self.open_momentTensor_window)
         self.main_frame.receiverFunctionsButton.clicked.connect(self.open_receiverFunctions)
         self.main_frame.actionOpen_Project.triggered.connect(self.open_project)
+        self.main_frame.actionCreate_new_Project.triggered.connect(self.create_project)
         # show frame
         self.main_frame.show()
 
@@ -65,5 +67,10 @@ class Controller:
         if not self.project_frame.isVisible() :
             self.project_frame.refreshLimits()
         self.project_frame.show()
+
+    def create_project(self):
+        if not self.synthetics_frame:
+            self.synthetics_frame = SyntheticsAnalisysFrame()
+        self.synthetics_frame.show()
 
 
