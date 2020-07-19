@@ -117,10 +117,11 @@ class FirstPolarity:
     #     input_focmec_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity/test.inp')
     #     output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity')
     #     shutil.copy(input_focmec_path,'.')
-    #     p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout='log.txt')
-    #     f = open(input_run_path, 'r')
-    #     string = f.read()
-    #     p.communicate(input=string.encode())
+    #     with open(input_run_path, 'r') as f, open('./log.txt', 'w') as log:
+    #         p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=log)
+    #         f = open(input_run_path, 'r')
+    #         string = f.read()
+    #         p.communicate(input=string.encode())
     #     shutil.move('mechanism.out',output_path)
     #     shutil.move('focmec.lst', output_path)
 

@@ -1,12 +1,16 @@
 from isp.Gui import pw, pyc, qt
-from isp.Gui.Frames import UiSyntheticsGeneratorDialog
+from isp.Gui.Frames import UiSyntheticsGeneratorDialog, SettingsLoader
+from isp.Gui.Utils.pyqt_utils import add_save_load
 
 from obspy.clients.syngine import Client
 
 from concurrent.futures.thread import ThreadPoolExecutor
 import os
+import pickle
+from datetime import datetime
 
-class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog):
+@add_save_load()
+class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metaclass=SettingsLoader):
     def __init__(self, parent=None):
         super(SyntheticsGeneratorDialog, self).__init__(parent)
         self.setupUi(self)
@@ -36,6 +40,13 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog):
                 bool(self.tableWidget.selectedIndexes())))
         self.buttonBox.clicked.connect(self._buttonBoxClicked)
 
+        # TODO Add inventory for selecting stations database location.
+       
+    def closeEvent(self, ce):
+        self.load_values()
+
+    def __load__(self):
+        self.load_values()
 
     def _buttonBoxClicked(self, button):
         if (pw.QDialogButtonBox.ApplyRole == self.buttonBox.buttonRole(button)):
@@ -45,8 +56,39 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog):
                 return
             bulk = []
             for i in range(self.tableWidget.rowCount()):
-                bulk.append([self.tableWidget.item(i,0).data(0), 
-                             self.tableWidget.item(i,1).data(0)])
+                lat_str = self.tableWidget.item(i,0).data(0)
+                lon_str = self.tableWidget.item(i,1).data(0)
+
+                if lat_str and lon_str:
+                    try:
+                        lat = float(lat_str)
+                        lon = float(lon_str)
+                    except ValueError:
+                        pw.QMessageBox.warning(self, self.windowTitle(), 
+                                               f"Lat/lon not valid numbers at row {i + 1}")
+                        return
+                    if not(-90 <= lat <= 90 and -180 <= lon <= 180):
+                        pw.QMessageBox.warning(self, self.windowTitle(), 
+                                               f"Lat/lon out of range at row {i + 1}")
+                        return
+
+                net = self.tableWidget.item(i,2).data(0)
+                stat = self.tableWidget.item(i,3).data(0)
+                if lat_str and lon_str and net and stat:
+                    bulk.append({"latitude": lat, "longitude": lon, 
+                                 "networkcode": net, "stationcode": stat})
+                elif lat_str and lon_str and not net and not stat:
+                    bulk.append([lat, lon])
+                elif net and stat and not lat_str and not lon_str:
+                    bulk.append([net, stat])
+                else:
+                    message = (
+                        f"Invalid station at row {i + 1}. Must insert" 
+                        f"lat/lon or net/stat or the four parameters."
+                    )
+                    pw.QMessageBox.warning(self, self.windowTitle(), 
+                                           message)
+                    return
 
             params = {"model" : self.comboBoxModels.currentText(),
                       "bulk" : bulk,
@@ -58,19 +100,44 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog):
                       "endtime" : self.dateTimeEditEnd.dateTime().toPyDateTime(),
                       "format" : "miniseed"}
 
-            if self.buttonGroupMTFP.checkedId() == 0 :
-                mtparams = [self.doubleSBMrr.value(),
-                            self.doubleSBMtt.value(),
-                            self.doubleSBMpp.value(),
-                            self.doubleSBMrt.value(),
-                            self.doubleSBMrp.value(),
-                            self.doubleSBMtp.value()]
+            if self.radioButtonMT.isChecked() :
+                mrr_str = self.lineEditMrr.text()
+                mtt_str = self.lineEditMtt.text()
+                mpp_str = self.lineEditMpp.text()
+                mrt_str = self.lineEditMrt.text()
+                mrp_str = self.lineEditMrp.text()
+                mtp_str = self.lineEditMtp.text()
+                if (not mrr_str or not mtt_str or not mpp_str or 
+                    not mrt_str or not mrp_str or not mtp_str):
+                    pw.QMessageBox.warning(self, self.windowTitle(), 
+                                           "Some moment tensor value is missing")
+                    return
+                try:
+                    mrr = float(mrr_str)
+                    mtt = float(mtt_str)
+                    mpp = float(mpp_str)
+                    mrt = float(mrt_str)
+                    mrp = float(mrp_str)
+                    mtp = float(mtp_str)
+                except ValueError:
+                    pw.QMessageBox.warning(self, self.windowTitle(), 
+                                           "Moment tensor values are invalid")
+                    return
+                mtparams = [mrr, mtt, mpp, mrt, mrp, mtp]
                 params["sourcemomenttensor"] = mtparams
             else :
                 fpparams = [self.doubleSBStrike.value(),
                             self.doubleSBDip.value(),
-                            self.doubleSBRake.value(),
-                            self.doubleSBM0.value()]
+                            self.doubleSBRake.value()]
+                if self.lineEditM0.text():
+                    try:
+                        m0 = float(self.lineEditM0.text())
+                        fpparams.append(m0)
+                    except:
+                        pw.QMessageBox.warning(self, self.windowTitle(), 
+                                               "M0 value is invalid")
+                        return
+
                 params["sourcedoublecouple"] = fpparams
 
      
@@ -79,11 +146,22 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog):
                 r = self.progress_dialog.exec()
                 if r == pw.QDialog.Accepted :
                     st = f.result()
+                    if not st:
+                        pw.QMessageBox.warning(self, self.windowTitle(), 
+                                           "Synthetics generator request failed.")
+                        return
+
                     dir_path = pw.QFileDialog.getExistingDirectory(
                         self, 'Select Output Directory')
                     for tr in st:
                         path_output =  os.path.join(dir_path, tr.id)
                         tr.write(path_output, format="MSEED")
+                    current = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+                    name = 'generation_params' + current + '.pkl'
+                    with open(os.path.join(dir_path, name), 'wb') as f:
+                        pickle.dump(params, f)
+
+                    self.save_values()
 
             
 
@@ -99,11 +177,13 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog):
     def _buttonAddStationClicked(self):
         self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
         item = pw.QTableWidgetItem()
-        item.setData(0, 0.0)
         self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, item)
         item = pw.QTableWidgetItem()
-        item.setData(0, 0.0)
         self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, item)
+        item = pw.QTableWidgetItem()
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, item)
+        item = pw.QTableWidgetItem()
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, item)
 
     def _buttonRemoveStationClicked(self):
         rows = self.tableWidget.selectionModel().selectedRows()
@@ -118,4 +198,3 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog):
         # and disable FP parameters and viceversa.
         self.groupBoxMT.setEnabled(mt_checked)
         self.groupBoxFP.setEnabled(not mt_checked)
-
