@@ -267,8 +267,15 @@ class MseedUtil:
         new_list = []
         for file in files:
             st = read(file, headonly=True)
-            if st.select(network = selection[0], station = selection[1], channel = selection[2]):
-                new_list.append(file)
+            if len(selection[0]) >0 and len(selection[1]) > 0 and len(selection[2]):
+                if st.select(network = selection[0], station = selection[1], channel = selection[2]):
+                    new_list.append(file)
+            if len(selection[0]) > 0 and len(selection[1]) == 0 and len(selection[2]) == 0:
+                if st.select(network=selection[0]):
+                    new_list.append(file)
+            if len(selection[0]) > 0 and len(selection[1]) > 0 and len(selection[2]) == 0:
+                if st.select(network=selection[0], station = selection[1]):
+                    new_list.append(file)
         return new_list
 
 

@@ -251,7 +251,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         files_path = MseedUtil.get_mseed_files(dir_path)
 
         if self.selectCB.isChecked():
+
             selection = [self.netForm.text(), self.stationForm.text(), self.channelForm.text()]
+
             files_path = MseedUtil.get_selected_files(files_path, selection)
 
         return files_path
@@ -335,6 +337,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         ##
         self.nums_clicks = 0
         all_traces = []
+        # TO DO REVIEW SELECTION
         files_path = self.get_files(self.root_path_bind.value)
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":
@@ -390,7 +393,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 elif st_stats and self.sortCB.isChecked() and self.comboBox_sort.currentText() == "Distance":
 
                     dist = self.sort_by_distance_advance(file_path)
-                    dist = "{:.1f}".format(dist/1000)
+                    dist = "{:.1f}".format(dist/1000.0)
                     info = "{}.{}.{} Distance {} km".format(st_stats.Network, st_stats.Station, st_stats.Channel,
                                                          str(dist))
                     self.canvas.set_plot_label(index, info)

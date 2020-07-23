@@ -1,6 +1,8 @@
 import os
 import matplotlib.dates as mdt
-from isp.DataProcessing import SeismogramDataAdvanced
+from obspy import Stream, read
+
+from isp.DataProcessing import SeismogramDataAdvanced, SeismogramData
 from isp.Exceptions import InvalidFile
 from isp.Gui import pw, pqg
 from isp.Gui.Frames import UiSyntheticsAnalisysFrame, MatplotlibCanvas, CartopyCanvas, FocCanvas
@@ -8,7 +10,6 @@ from isp.Gui.Frames.qt_components import ParentWidget, FilesView, MessageDialog
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.synthetics_generator_dialog import SyntheticsGeneratorDialog
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
-from isp.earthquakeAnalisysis import NllManager, PolarizationAnalyis, PickerManager, FirstPolarity
 
 import pickle
 
@@ -30,6 +31,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         self._t = {}
         self._st = {}
         self.inventory = {}
+        parameters = {}
 
         self._generator = SyntheticsGeneratorDialog(self)
 
@@ -56,7 +58,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         self.file_selector.setDragEnabled(True)
 
         self.selectDirBtn_3C.clicked.connect(self.on_click_select_directory_3C)
-        self.plotBtn.clicked.connect(lambda: self.on_click_rotate(self.canvas))
+        self.plotBtn.clicked.connect(self.on_click_rotate)
         ###
         self.stationsBtn.clicked.connect(self.stationsInfo)
         ###
@@ -114,16 +116,18 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
     def on_click_rotate(self, canvas):
         time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
         time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
+        print(self.vertical_component_file)
         try:
-            # TODO: Check this
-            sd = PolarizationAnalyis(self.vertical_component_file, self.north_component_file, self.east_component_file)
-            time, z, r, t, st = sd.rotate(self.inventory,time1, time2, 0, 0, trim = True)
-            self._z = z
-            self._r = r
-            self._t = t
-            self._st = st
-            rotated_seismograms = [z, r, t]
-            for index, data in enumerate(rotated_seismograms):
+            sd = SeismogramData(self.vertical_component_file)
+            z = sd.get_waveform()
+            sd = SeismogramData(self.north_component_file)
+            n = sd.get_waveform()
+            sd = SeismogramData(self.east_component_file)
+            e = sd.get_waveform()
+            seismograms = [z, n, e]
+            time = z.times("matplotlib")
+            self._st = Stream(traces=seismograms)
+            for index, data in enumerate(seismograms):
                 self.canvas.plot(time, data, index, color="black", linewidth=0.5)
                 info = "{}.{}.{}".format(self._st[index].stats.network, self._st[index].stats.station,
                                          self._st[index].stats.channel)
@@ -133,13 +137,12 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                 ax.xaxis.set_major_formatter(formatter)
                 self.canvas.set_plot_label(index, info)
 
-            canvas.set_xlabel(2, "Time (s)")
+            self.canvas.set_xlabel(2, "Time (s)")
 
         except InvalidFile:
-            self.info_message("Invalid mseed files. Please, make sure to select all the three components (Z, N, E) "
-                         "for rotate.")
-        except ValueError as error:
-            self.info_message(str(error))
+            self.info_message("Invalid mseed files. Please, make sure you have generated correctly the synthetics")
+        #except ValueError as error:
+        #    self.info_message(str(error))
 
     def stationsInfo(self):
         files = []
