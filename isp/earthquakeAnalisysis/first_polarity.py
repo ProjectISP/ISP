@@ -108,7 +108,6 @@ class FirstPolarity:
                 f.write("{:4s}  {:6.2f}  {:6.2f}{:1s}\n".format(Station[j], Az[j], Dip[j], Motion[j]))
 
     # def run_focmec(self):
-<<<<<<< HEAD
     #     command=os.path.join(self.get_foc_dir,'rfocmec_UW')
     #     exc_cmd(command)
 
@@ -124,7 +123,6 @@ class FirstPolarity:
         p.communicate(input=string.encode())
         shutil.move('mechanism.out',output_path)
         shutil.move('focmec.lst', output_path)
-=======
     #     command = os.path.join(FOC_MEC_PATH,'focmec')
     #     input_run_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity/formec_run')
     #     input_focmec_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity/test.inp')
@@ -137,7 +135,6 @@ class FirstPolarity:
     #         p.communicate(input=string.encode())
     #     shutil.move('mechanism.out',output_path)
     #     shutil.move('focmec.lst', output_path)
->>>>>>> a60dbde5342d8224c1d42f4fbe236293d007d702
 
     def extract_focmec_info(self):
         catalog: Catalog = focmecobspy._read_focmec(os.path.join(self.get_foc_dir,'focmec.lst'))
