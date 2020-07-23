@@ -339,7 +339,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -348,6 +348,7 @@
     </property>
     <addaction name="actionOpen_Project"/>
     <addaction name="actionCreate_new_Project"/>
+    <addaction name="actionRetrieve_data"/>
     <addaction name="actionExit"/>
    </widget>
    <addaction name="menuFile"/>
@@ -365,6 +366,7 @@
    </attribute>
    <addaction name="actionCreate_new_Project"/>
    <addaction name="actionOpen_Project"/>
+   <addaction name="actionRetrieve_data"/>
   </widget>
   <action name="actionOpen_Project">
    <property name="icon">
@@ -394,6 +396,16 @@
    </property>
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionRetrieve_data">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/manage-icon.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Retrieve data</string>
    </property>
   </action>
  </widget>
