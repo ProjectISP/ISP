@@ -316,6 +316,162 @@ class array:
         return stack
 
 
+class vespagram:
+    def __init__(self,st, linf, lsup, win_len, slow, baz, method, inv):
+        """
+        Vespagram, computed a fixed slowness or backazimuth
 
+        :param params required to initialize the class:
+        linf min frequency (Hz)
+        lsup max frequency (Hz)
+        win_len win size in seconds to be analyzed in every step
+        slow = slowness of analysis
+        baz backazimuth of analysis
+        """
+        self.st = st
+        self.inv = inv
+        self.method = method
+        self.linf = linf
+        self.lsup = lsup
+        self.win_len = win_len
+        self.slow = slow
+        self.baz = baz
+
+    def vespa(self, start_time=None, end_time=None):
+        npts = len(self.st[0])
+        fs = self.st[0].stats.sampling_rate
+        # lim = int((npts/fs) - self.win_len)
+        self.st.trim(starttime=start_time, endtime=end_time)
+        [t,vesp_deg] = self.__vespa(start_time, end_time)
+
+
+    def __vespa(self, st, t1, t2):
+        npts = len(st[0].data)
+        lim = (t2-t1) - self.win_len
+        vesp_deg = np.zeros([360, lim])
+        t = np.linspace(0, (st[0].stats.delta * npts), npts - self.win_len)
+        for n in range(start = 0, stop = lim, step = self.win_len):
+            st_copy=st.copy
+            st_copy.trim(starttime=t1+n, endtime=t2+n)
+            vesp_deg[:,n]=self.__vespa_slow(st.copy)
+
+        return t,vesp_deg
+
+
+
+
+    def __vespa_slow(self, st):
+
+        def find_nearest(array, value):
+
+            idx, val = min(enumerate(array), key=lambda x: abs(x[1] - value))
+            return idx, val
+
+        sides = 'onesided'
+        pi = math.pi
+        st.sort()
+        n = len(st)
+        for i in range(n):
+            coords = self.inv.get_coordinates(st[i].id)
+            st[i].stats.coordinates = AttribDict(
+                {'latitude': coords['latitude'], 'elevation': coords['elevation'], 'longitude': coords['longitude']})
+
+        coord = get_geometry(st, coordsys='lonlat', return_center=True)
+
+        tr = st[0]
+        win = len(tr.data)
+        if (win % 2) == 0:
+            nfft = win / 2 + 1
+        else:
+            nfft = (win + 1) / 2
+
+        nr = st.count()  # number of stations
+        delta = st[0].stats.delta
+        fs = 1 / delta
+        fn = fs / 2
+        freq = np.arange(0, fn, fn / nfft)
+
+        value1, freq1 = find_nearest(freq, self.linf)
+        value2, freq2 = find_nearest(freq, self.lsup)
+        df = value2 - value1
+        m = np.zeros((win, nr))
+
+        WW=np.hamming(int(win))
+        WW=np.transpose(WW)
+        for i in range(nr):
+            tr = st[i]
+            if self.method == "FK":
+                m[:,i]=(tr.data-np.mean(tr.data))*WW
+            else:
+                m[:, i] = (tr.data - np.mean(tr.data))
+        pdata = np.transpose(m)
+
+        #####Coherence######
+        NW = 2  # the time-bandwidth product##Buena seleccion de 2-3
+        K = 2 * NW - 1
+        tapers, eigs = alg.dpss_windows(win, NW, K)
+        tdata = tapers[None, :, :] * pdata[:, None, :]
+        tspectra = fftpack.fft(tdata)
+
+        w = np.empty((nr, int(K), int(nfft)))
+        for i in range(nr):
+            w[i], _ = utils.adaptive_weights(tspectra[i], eigs, sides=sides)
+
+        nseq = nr
+        L = int(nfft)
+        Cx = np.ones((nr, nr, df), dtype=np.complex128)
+
+        if self.method == "MTP.COHERENCE":
+            for i in range(nr):
+                for j in range(nr):
+                    sxy = alg.mtm_cross_spectrum(tspectra[i], (tspectra[j]), (w[i], w[j]), sides='onesided')
+                    sxx = alg.mtm_cross_spectrum(tspectra[i], tspectra[i], w[i], sides='onesided')
+                    syy = alg.mtm_cross_spectrum(tspectra[j], tspectra[j], w[j], sides='onesided')
+                    s = sxy / np.sqrt((sxx * syy))
+                    cxcohe = s[value1:value2]
+                    Cx[i, j, :] = cxcohe
+
+        ####Calculates Conventional FK-power  ##without normalization
+        if self.method == "FK":
+            for i in range(nr):
+                for j in range(nr):
+                    A = np.fft.rfft(m[:, i])
+                    B = np.fft.rfft(m[:, j])
+                    #Power
+                    #out = A * np.conjugate(B)
+
+                    #Relative Power
+                    den=np.absolute(A)*np.absolute(np.conjugate(B))
+                    out = (A * np.conjugate(B))/den
+
+                    cxcohe = out[value1:value2]
+                    Cx[i, j, :] = cxcohe
+
+        r = np.zeros((nr, 2))
+        S = np.zeros((1, 2))
+        Pow = np.zeros(360)
+        for n in range(nr):
+            r[n, :] = coord[n][0:2]
+
+        freq = freq[value1:value2]
+
+        rad = np.pi/180
+        for j in range(360):
+            S[0, 0] = self.slow*np.cos(rad * j)
+            S[0, 1] = self.slow*np.sin(rad * j)
+            k = (S * r)
+            K = np.sum(k, axis=1)
+            n = 0
+            for f in freq:
+                A = np.exp(-1j * 2 * pi * f) ** K
+                B = np.conjugate(np.transpose(A))
+                D = np.matmul(B, Cx[:, :, n]) / nr
+                P = np.matmul(D, A) / nr
+                Pow[j] += np.abs(P)
+                n = n + 1
+
+        Pow = Pow / len(freq)
+
+        return Pow
 
 

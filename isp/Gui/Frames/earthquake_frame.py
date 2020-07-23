@@ -365,11 +365,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             if self.trimCB.isChecked() and diff >= 0:
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                               filter_error_callback=self.filter_error_message,
-                                              start_time=start_time, end_time=end_time)
+                                              start_time=start_time, end_time=end_time, trace_number=index)
             else:
 
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                                   filter_error_callback=self.filter_error_message)
+                                                   filter_error_callback=self.filter_error_message,trace_number=index)
             if len(tr) > 0:
                 t = tr.times("matplotlib")
                 s = tr.data

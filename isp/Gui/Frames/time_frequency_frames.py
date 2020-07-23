@@ -11,7 +11,7 @@ from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.time_frequency_advance_frame import TimeFrequencyAdvance
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime
-from isp.Utils import MseedUtil, ObspyUtil
+from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.seismogramInspector.MTspectrogram import MTspectrogram, WignerVille
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,13 +32,13 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.tr1 = []
         self.tr2 = []
         self.canvas_plot1 = MatplotlibCanvas(self.widget_plot_up, nrows=2)
-        self.canvas_plot1.set_xlabel(1, "Time (s)")
-        self.canvas_plot1.set_ylabel(0, "Amplitude ")
-        self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
+       # self.canvas_plot1.set_xlabel(1, "Time (s)")
+       # self.canvas_plot1.set_ylabel(0, "Amplitude ")
+       # self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
         self.canvas_plot2 = MatplotlibCanvas(self.widget_plot_down, nrows=2)
-        self.canvas_plot2.set_xlabel(1, "Time (s)")
-        self.canvas_plot2.set_ylabel(0, "Amplitude ")
-        self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
+       # self.canvas_plot2.set_xlabel(1, "Time (s)")
+       # self.canvas_plot2.set_ylabel(0, "Amplitude ")
+       # self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
         # Binding
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
@@ -163,7 +163,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         if selection == "Seismogram 1":
             #self.validate_file()
             [self.tr1, t] = self.get_data()
-            self.canvas_plot1.plot(t, self.tr1.data, 0, color="black", linewidth=0.5)
+            self.canvas_plot1.plot(t, self.tr1.data, 0,clear_plot=True, color="black", linewidth=0.5)
             self.canvas_plot1.set_xlabel(1, "Time (s)")
             self.canvas_plot1.set_ylabel(0, "Amplitude ")
             self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
@@ -176,7 +176,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         if selection == "Seismogram 2":
             #self.validate_file()
             [self.tr2, t] = self.get_data()
-            self.canvas_plot2.plot(t, self.tr2.data, 0, color="black", linewidth=0.5)
+            self.canvas_plot2.plot(t, self.tr2.data, 0,clear_plot=True, color="black", linewidth=0.5)
             self.canvas_plot2.set_xlabel(1, "Time (s)")
             self.canvas_plot2.set_ylabel(0, "Amplitude ")
             self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
@@ -186,6 +186,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             if self.time_frequencyChB.isChecked():
                 self.time_frequency(self.tr2, selection)
 
+    @AsycTime.run_async()
     def time_frequency(self, tr, order):
         selection = self.time_frequencyCB.currentText()
         ts, te = self.get_time_window()
@@ -210,10 +211,11 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
             if order == "Seismogram 1":
                 if self.typeCB.currentText() == 'contourf':
-                    print("plotting countourf")
+
                     self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
                                          cmap=plt.get_cmap("jet"),vmin= min_log_spectrogram, vmax=max_log_spectrogram)
                 elif self.typeCB.currentText() == 'pcolormesh':
+
                     print("plotting pcolormesh")
                     self.canvas_plot1.pcolormesh(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
                             cmap=plt.get_cmap("jet"),vmin= min_log_spectrogram, vmax=max_log_spectrogram)
@@ -223,9 +225,11 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
             elif order == "Seismogram 2":
                 if self.typeCB.currentText() == 'contourf':
+
                     self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
                                                cmap=plt.get_cmap("jet"), vmin= min_log_spectrogram, vmax=max_log_spectrogram)
                 elif self.typeCB.currentText() == 'pcolormesh':
+
                     self.canvas_plot2.pcolormesh(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
                             cmap=plt.get_cmap("jet"), vmin=min_log_spectrogram, vmax=max_log_spectrogram)
 
@@ -246,10 +250,6 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 x, y, log_spectrogram = wignerspec.compute_wigner_spectrogram(tr, start_time=ts, end_time=te)
             else:
                 x, y, log_spectrogram = wignerspec.compute_wigner_spectrogram(tr)
-
-            #log_spectrogram = np.clip(log_spectrogram, a_min=self.minlevelCB.value(), a_max=0)
-            #min_log_spectrogram = self.minlevelCB.value()
-            #max_log_spectrogram = 0
 
             if order == "Seismogram 1":
                 if self.typeCB.currentText() == 'contourf':

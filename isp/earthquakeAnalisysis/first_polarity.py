@@ -107,22 +107,22 @@ class FirstPolarity:
             for j in range(N):
                 f.write("{:4s}  {:6.2f}  {:6.2f}{:1s}\n".format(Station[j], Az[j], Dip[j], Motion[j]))
 
-    def run_focmec(self):
-        command=os.path.join(self.get_foc_dir,'rfocmec_UW')
-        exc_cmd(command)
-
     # def run_focmec(self):
-    #     command = os.path.join(FOC_MEC_PATH,'focmec')
-    #     input_run_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity/formec_run')
-    #     input_focmec_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity/test.inp')
-    #     output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity')
-    #     shutil.copy(input_focmec_path,'.')
-    #     p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout='log.txt')
-    #     f = open(input_run_path, 'r')
-    #     string = f.read()
-    #     p.communicate(input=string.encode())
-    #     shutil.move('mechanism.out',output_path)
-    #     shutil.move('focmec.lst', output_path)
+    #     command=os.path.join(self.get_foc_dir,'rfocmec_UW')
+    #     exc_cmd(command)
+
+    def run_focmec(self):
+        command = os.path.join(FOC_MEC_PATH,'focmec')
+        input_run_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity/formec_run')
+        input_focmec_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity/test.inp')
+        output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity')
+        shutil.copy(input_focmec_path,'.')
+        p = subprocess.Popen(executable=command, stdin=subprocess.PIPE, stdout='log.txt')
+        f = open(input_run_path, 'r')
+        string = f.read()
+        p.communicate(input=string.encode())
+        shutil.move('mechanism.out',output_path)
+        shutil.move('focmec.lst', output_path)
 
     def extract_focmec_info(self):
         catalog: Catalog = focmecobspy._read_focmec(os.path.join(self.get_foc_dir,'focmec.lst'))
