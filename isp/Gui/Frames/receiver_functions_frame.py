@@ -13,17 +13,24 @@ import isp.receiverfunctions.rf_main_window_utils as mwu
 from isp.Gui.Frames.uis_frames import UiReceiverFunctions
 
 # other imports
+import io
 import os
 import math
+import copy
 import pickle
 import pathlib
 import cartopy
 import cartopy.crs as ccrs
+from cartopy.io.img_tiles import Stamen
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import numpy as np
 from functools import partial
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import matplotlib.gridspec as gridspec
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from owslib.wms import WebMapService
 
 
 
@@ -44,6 +51,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.first_rf_stack_plot = True
         self.first_hk_stack_plot = True
         self.first_map_plot = True
+        self.hk_result = {}
         
         # CCP stacking-related attributes
         self.ccp_grid = {'x0':None, 'y0':None, 'x1':None, 'y1':None}
@@ -55,6 +63,11 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.rfs_dicts = None
         self.stack = None
         self.istack = None
+        self.depth_array = None
+        self.first_ccp_stack_plot = True
+        self.mplwidget_5_basemap = None
+        self.mplwidget_5_gridlines = None
+        self.mplwidget_5_ccp_pcolormesh = None
         
         # Connect GUI elements
         self.connect_rf_analysis_gui_elements()
@@ -74,7 +87,10 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.pushButton_3.clicked.connect(self.plot_rf_stack)
         self.pushButton_5.clicked.connect(self.plot_hk_stack)
         self.pushButton_9.clicked.connect(self.plot_map)
-        self.pushButton_26.clicked.connect(self.cross_section)
+        self.pushButton_4.clicked.connect(partial(self.save_figure_dialog, "stack_figure"))
+        self.pushButton_15.clicked.connect(partial(self.save_figure_dialog, "hk_stack_figure"))
+        self.pushButton_10.clicked.connect(partial(self.save_figure_dialog, "earthquakes_map_figure"))
+        self.pushButton_6.clicked.connect(self.save_hk_result)
         # Combobox changes
         self.comboBox_3.currentTextChanged.connect(self.plot_rfs)
         # mplwidgets
@@ -83,6 +99,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
     def connect_ccp_stack_gui_elements(self):
         # Menu actions
         self.actionRead_RFs.triggered.connect(self.ccp_stack_read_rfs)
+        self.actionRead_CCP_Stack.triggered.connect(self.read_ccp_stack)
         # mplwidget
         self.mplwidget_5.figure.canvas.mpl_connect('button_press_event', self.ccp_stack_map_event_handler)
         self.mplwidget_5.figure.canvas.mpl_connect('button_release_event', self.ccp_stack_map_event_handler)
@@ -91,31 +108,60 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.pushButton_11.clicked.connect(partial(self.ccp_stack_map_toggle_plot_mode, "grid"))
         self.pushButton_25.clicked.connect(partial(self.ccp_stack_map_toggle_plot_mode, "cross_section"))
         self.pushButton_12.clicked.connect(self.compute_ccp_stack)
+        self.pushButton_14.clicked.connect(self.save_ccp_stack)
+        self.pushButton_13.clicked.connect(partial(self.save_figure_dialog, "ccp_stack_figure"))
+        self.pushButton_26.clicked.connect(self.cross_section_dialog)
+
+        self.doubleSpinBox_21.valueChanged.connect(self.change_ccp_map_extent)
+        self.doubleSpinBox_22.valueChanged.connect(self.change_ccp_map_extent)
+        self.doubleSpinBox_23.valueChanged.connect(self.change_ccp_map_extent)
+        self.doubleSpinBox_24.valueChanged.connect(self.change_ccp_map_extent)
+        self.doubleSpinBox_25.valueChanged.connect(self.plot_ccp_stack)
+        
+        #♠self.doubleSpinBox_26.valueChanged.connect(self.plot_ccp_stack)
+        
+        self.comboBox_6.currentTextChanged.connect(self.plot_ccp_basemap)
+        self.spinBox_5.valueChanged.connect(self.plot_ccp_stack)
+        self.doubleSpinBox_26.valueChanged.connect(self.ccp_map_axes_gridlines)
+        self.spinBox_6.valueChanged.connect(self.update_ccp_tile_map)
+        
     
     def read_waveforms(self):
         """Map the mseed files inside the given directory, return a dict
         
         """
         dir_ = pw.QFileDialog.getExistingDirectory()
-        self.data_map = mwu.map_earthquakes(eq_dir=dir_)
         
-        # Populate the station combobox
-        for stnm in sorted(list(self.data_map.keys())):
-            self.comboBox.addItem(stnm)
+        if dir_:
+            self.data_map = mwu.map_earthquakes(eq_dir=dir_)
+            
+            # Populate the station combobox
+            for stnm in sorted(list(self.data_map.keys())):
+                self.comboBox.addItem(stnm)
     
     def read_metadata(self):
         """Read the event data file
         
         """
         dir_ = pw.QFileDialog.getOpenFileName()[0]
-        self.arrivals = pickle.load(open(dir_, 'rb'))
+        
+        if dir_:
+            self.arrivals = pickle.load(open(dir_, 'rb'))
+            
+            # Enable the other menu actions
+            self.actionRead_waveforms.setEnabled(True)
+            self.actionRead_RFs.setEnabled(True)
+            self.actionRead_CCP_Stack.setEnabled(True)
     
     def compute_srcfs(self):
         """Compute source functions by averaging the L (or Z) component of all
         stations in the array
         
         """
-        self.srcfs = mwu.compute_source_functions(self.data_map)
+        self.srcfs = mwu.compute_source_functions(self.data_map,
+                                                  corner_freqs=(self.doubleSpinBox_27.value(),
+                                                                self.doubleSpinBox_28.value())
+                                                  )
     
     def compute_rfs(self):
         """Compute and plot selected receiver functions
@@ -126,7 +172,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         a = self.doubleSpinBox.value()
         c = self.doubleSpinBox_2.value()
         self.rfs = mwu.compute_rfs(stnm, self.data_map, self.arrivals,
-                                     srfs=self.srcfs, a=a, c=c)
+                                     srfs=self.srcfs, a=a, c=c,
+                                     corner_freqs=(self.doubleSpinBox_27.value(),
+                                                   self.doubleSpinBox_28.value()))
         self.rf_pages = int(math.ceil(len(self.rfs)/7))
         self.label_14.setText("{}/{}".format(self.rf_current_page, self.rf_pages))
         self.plot_rfs()
@@ -229,10 +277,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
         """
         if self.first_rf_stack_plot:
-            gs = gridspec.GridSpec(2, 1, height_ratios=[1, 7])
-            gs.update(left=0.125, right=0.95, top=0.98, bottom=0.075, hspace=0.1)
-            self.mplwidget_2.figure.add_subplot(gs[0])
-            self.mplwidget_2.figure.add_subplot(gs[1])
+            self.mplwidget_2.figure.subplots(2, gridspec_kw={'height_ratios': [1, 7]})
+            self.mplwidget_2.figure.subplots_adjust(left=0.125, bottom=0.075,
+                                                    right=0.95, top=0.98, hspace=0.1)
             self.first_rf_stack_plot = False
         else:
             for i in range(2):
@@ -284,9 +331,8 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
         """
         if self.first_hk_stack_plot:
-            gs = gridspec.GridSpec(1, 1)
-            gs.update(left=0.175, right=0.95, top=0.95, bottom=0.15)
-            self.mplwidget_3.figure.add_subplot(gs[0])
+            self.mplwidget_3.figure.subplots(1)
+            self.mplwidget_3.figure.subplots_adjust(left=0.175, right=0.95, top=0.95, bottom=0.15)
             self.first_hk_stack_plot = False
         else:
             self.mplwidget_3.figure.axes[0].clear()
@@ -306,23 +352,66 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         maxk = max(self.doubleSpinBox_3.value(), self.doubleSpinBox_4.value())
         kvalues = self.spinBox_4.value()
         
-        H_arr, k_arr, matrix = mwu.compute_hk_stack(self.rfs, H_range=(minH, maxH), H_values=Hvalues,
-                                        k_range=(mink, maxk), k_values=kvalues)
+        H_arr, k_arr, matrix, H, k = mwu.compute_hk_stack(self.rfs, H_range=(minH, maxH), H_values=Hvalues,
+                                                          k_range=(mink, maxk), k_values=kvalues)
+
+        a, error_area, k_95, H_95 = mwu.determine_error_region(matrix, H_arr, k_arr)
+        
+        self.hk_result = {"H_arr":H_arr,
+                          "k_arr":k_arr,
+                          "Hk_stack":matrix,
+                          "H":H,
+                          "H_95":H_95,
+                          "k":k,
+                          "k_95":k_95}
 
         self.setup_hk_stack_axes()        
         self.mplwidget_3.figure.axes[0].pcolormesh(H_arr, k_arr, matrix, cmap="inferno")
+        self.mplwidget_3.figure.axes[0].contour(H_arr, k_arr, matrix, levels=[np.max(matrix) - np.std(matrix)], colors=["green"])
         self.mplwidget_3.figure.axes[0].set_xlim(minH, maxH)
         self.mplwidget_3.figure.axes[0].set_ylim(mink, maxk)
+        if error_area != None:
+            self.mplwidget_3.figure.axes[0].axvline(H, color="white")
+            self.mplwidget_3.figure.axes[0].axhline(k, color="white")
+            self.label_3.setText("H: {:.2f} ({:.2f} - {:.2f} @ 95%) km".format(H, H_95[0], H_95[1]))
+            self.label_22.setText("k: {:.2f} ({:.2f} - {:.2f} @ 95%)".format(k, k_95[0], k_95[1]))
+        else:
+            self.label_3.setText("H: {:.2f} (n/a @ 95%) km".format(H))
+            self.label_22.setText("k: {:.2f} (n/a @ 95%)".format(k))
         self.mplwidget_3.figure.canvas.draw()
     
+    def save_hk_result(self):
+        """Saves the H-k stack. Writes the station name, location, and H and
+        k values in a chosen txt file (creates one if it doesn't exist). Saves
+        the H-k stack as a .pickle in the same location.
+
+        """
+        stnm = self.comboBox.currentText()
+        
+        txt_fname = pw.QFileDialog.getSaveFileName()[0]
+        if not os.path.exists(txt_fname):
+            with open(txt_fname, "w", newline='\n') as f:
+                f.write("STATION,LONG,LAT,H,MIN_H95,MAX_H95,k,MIN_k95,MAX_k95" + '\n')
+
+        stla = self.arrivals['stations'][stnm]["lat"]
+        stlo = self.arrivals['stations'][stnm]["lon"]
+        
+        line = stnm + "," + str(stlo) + "," + str(stla) + "," + str(self.hk_result['H']) + "," + str(self.hk_result['H_95'][0]) + "," + str(self.hk_result['H_95'][1]) \
+               + "," + str(self.hk_result['k']) + "," + str(self.hk_result['k_95'][0]) + "," + str(self.hk_result['k_95'][1])
+        with open(txt_fname, "a", newline='\n') as f:
+            f.write(line + '\n')
+        
+        pickle_output_path = os.sep.join(txt_fname.split(os.sep)[:-1])
+        pickle_fname = stnm + "_Hk" + ".pickle"
+        pickle.dump(self.hk_result, open(os.path.join(pickle_output_path, pickle_fname), "wb"))
+
     def setup_map_axes(self):
         """Prepare map axes for plotting
         
         """
         if self.first_map_plot:
-            gs = gridspec.GridSpec(1, 1)
-            gs.update(left=0.05, right=0.95, top=0.95, bottom=0.05)
-            self.mplwidget_4.figure.add_subplot(gs[0], projection=ccrs.Miller())
+            self.mplwidget_4.figure.subplots(1, subplot_kw=dict(projection=ccrs.Miller()))
+            self.mplwidget_4.figure.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05)
             self.first_map_plot = False
         else:
             self.mplwidget_4.figure.axes[0].clear()
@@ -346,7 +435,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
                 self.mplwidget_4.figure.axes[0].plot(lon, lat, marker='o', color='red',
                                                      transform=ccrs.Geodetic(), markersize=1.5)
         
-        self.mplwidget_4.figure.axes[0].set_extent([-180, 180, -90, 90], ccrs.PlateCarree())
+        self.mplwidget_4.figure.axes[0].set_extent([-180, 180, -90, 90])
         
         self.mplwidget_4.figure.canvas.draw()
     
@@ -354,7 +443,15 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         """Prepare ccp map axes for plotting
         
         """
-        self.mplwidget_5.figure.add_subplot(111, projection=ccrs.PlateCarree())
+        if self.first_ccp_stack_plot:
+            self.mplwidget_5.figure.subplots(1, subplot_kw=dict(projection=ccrs.PlateCarree()))
+            self.mplwidget_5.figure.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05)
+            self.ccp_map_axes_gridlines()
+            self.first_ccp_stack_plot = False
+        else:
+            self.mplwidget_5.figure.axes[0].clear()
+            self.ccp_grid_mpl_line = None
+            self.ccp_cross_section_mpl_line = None
     
     def ccp_stack_map_toggle_plot_mode(self, mode):
         """Enable or disable user ability to manually plot the grid limits or
@@ -444,9 +541,47 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         """Read receiver functions and plot stations on the map
         
         """
-        self.setup_ccp_map_axes()
         dir_ = pw.QFileDialog.getExistingDirectory()
         self.rfs_dicts = mwu.map_rfs(rfs_dir=dir_)
+        
+        self.setup_ccp_map_axes()
+        self.plot_ccp_stations()
+        self.change_ccp_map_extent()
+        
+        self.mplwidget_5.figure.canvas.draw()
+
+    def compute_ccp_stack(self):
+        """Compute and draw CCP stack
+        
+        """
+        dz = self.doubleSpinBox_15.value()
+        max_depth = self.doubleSpinBox_16.value()
+        dlat = self.doubleSpinBox_14.value()
+        dlon = self.doubleSpinBox_13.value()
+        
+        self.stack, self.depth_array = mwu.ccp_stack(self.rfs_dicts, self.arrivals,
+                                                     min(self.doubleSpinBox_11.value(), self.doubleSpinBox_12.value()),
+                                                     max(self.doubleSpinBox_11.value(), self.doubleSpinBox_12.value()),
+                                                     min(self.doubleSpinBox_9.value(), self.doubleSpinBox_10.value()),
+                                                     max(self.doubleSpinBox_9.value(), self.doubleSpinBox_10.value()),
+                                                     dlon,
+                                                     dlat,
+                                                     dz,
+                                                     max_depth)
+        
+        self.istack = None
+        
+        self.stack_x = np.arange(min(self.doubleSpinBox_11.value(), self.doubleSpinBox_12.value()),
+                      max(self.doubleSpinBox_11.value(), self.doubleSpinBox_12.value()), dlon)
+        self.stack_y = np.arange(min(self.doubleSpinBox_9.value(), self.doubleSpinBox_10.value()),
+                      max(self.doubleSpinBox_9.value(), self.doubleSpinBox_10.value()), dlat)
+        
+        self.plot_ccp_stack()
+        
+        self.doubleSpinBox_25.setMaximum(max_depth-dz)
+        self.doubleSpinBox_25.setSingleStep(dz)        
+        
+    def plot_ccp_stations(self):
         lats, lons = [], []
         for stnm in self.rfs_dicts.keys():
             stla = self.arrivals['stations'][stnm]["lat"]
@@ -454,43 +589,151 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             lats.append(stla)
             lons.append(stlo)
             self.mplwidget_5.figure.axes[0].plot(stlo, stla, marker="^",
-                                                 transform=ccrs.Geodetic(), color="green")
-            self.mplwidget_5.figure.axes[0].coastlines()
+                                                 transform=ccrs.Geodetic(), color="green")        
+        self.doubleSpinBox_21.setValue(min(lats) - 0.5)
+        self.doubleSpinBox_22.setValue(max(lats) + 0.5)
+        self.doubleSpinBox_23.setValue(min(lons) - 0.5)
+        self.doubleSpinBox_24.setValue(max(lons) + 0.5)
+    
+    def plot_ccp_basemap(self):
+        # Updates to cartopy objects are never shown on already displayed
+        # axes, so we create a new axis for the basemaps, to be placed behind
+        # the data axes
+        if self.first_ccp_stack_plot:
+                    return
 
-        self.mplwidget_5.figure.axes[0].set_extent([min(lons) - 0.5,
-                                                    max(lons) + 0.5,
-                                                    min(lats) - 0.5,
-                                                    max(lats) + 0.5], ccrs.PlateCarree())
+        if self.mplwidget_5_basemap != None:
+            #Remove previous basemap if necessary
+            self.mplwidget_5_basemap.remove()
 
-        self.mplwidget_5.figure.canvas.draw()
-
-    def compute_ccp_stack(self):
-        """Compute and draw CCP stack
+        if self.comboBox_6.currentText() == "None":
+            self.mplwidget_5_basemap = None
+            self.mplwidget_5.figure.axes[0].background_patch.set_facecolor((1, 1, 1, 1))
+        else:
+            self.mplwidget_5_basemap = self.mplwidget_5.figure.subplots(1, subplot_kw=dict(projection=ccrs.PlateCarree()))
+            self.mplwidget_5.figure.axes[0].set_zorder(1)
+            self.mplwidget_5.figure.axes[0].background_patch.set_facecolor((1, 1, 1, 0))
+            self.mplwidget_5_basemap.set_zorder(0)
+            self.mplwidget_5_basemap.set_extent(self.mplwidget_5.figure.axes[0].get_extent())
         
-        """
-        self.stack = mwu.ccp_stack(self.rfs_dicts, self.arrivals,
-                                     min(self.ccp_grid['x0'], self.ccp_grid['x1']),
-                                     max(self.ccp_grid['x0'], self.ccp_grid['x1']),
-                                     min(self.ccp_grid['y0'], self.ccp_grid['y1']),
-                                     max(self.ccp_grid['y0'], self.ccp_grid['y1']))
+        if self.comboBox_6.currentText() == "GEBCO":
+            MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
+            wms = WebMapService(MAP_SERVICE_URL)
+            layer = 'GEBCO_2019_Grid'
+            self.mplwidget_5_basemap.add_wms(wms, layer)
+        elif self.comboBox_6.currentText() == "Stamen":
+            self.mplwidget_5_basemap.add_image(Stamen('terrain-background'), self.spinBox_6.value())
         
-        self.stack_x = np.arange(min(self.ccp_grid['x0'], self.ccp_grid['x1']),
-                      max(self.ccp_grid['x0'], self.ccp_grid['x1']), 0.01)
-        self.stack_y = np.arange(min(self.ccp_grid['y0'], self.ccp_grid['y1']),
-                      max(self.ccp_grid['y0'], self.ccp_grid['y1']), 0.01)
-        self.mplwidget_5.figure.axes[0].pcolormesh(self.stack_x, self.stack_y, self.stack[:,:,300].T, transform=ccrs.PlateCarree())
         self.mplwidget_5.figure.canvas.draw()
     
-    def cross_section(self):
-        """Extract a cross-section from the CCP stack
-        
+    def update_ccp_tile_map(self):
+        if self.comboBox_6.currentText() == "Stamen":
+            self.plot_ccp_basemap()
+
+    def ccp_map_axes_gridlines(self):
+        """Plots grid lines and labels according to the user specified
+        spacing (value of doubleSpinBox_26). If spacing = 0, no grid lines are
+        drawn.
+
         """
+        if self.first_ccp_stack_plot:
+            return
+        
+        spacing = self.doubleSpinBox_26.value()
+        
+        if self.mplwidget_5_gridlines != None:
+            # Remove previous gridlines if necessary
+            self.mplwidget_5_gridlines.remove()
+            
+            if spacing == 0:
+                return
+        
+        # Updates to cartopy objects are never shown on already displayed
+        # axes, so we create a new axis for the basemaps, to be placed on top
+        # the data axes
+        self.mplwidget_5_gridlines = self.mplwidget_5.figure.subplots(1, subplot_kw=dict(projection=ccrs.PlateCarree()))
+        self.mplwidget_5_gridlines.set_zorder(2)
+        self.mplwidget_5_gridlines.background_patch.set_facecolor((1, 1, 1, 0))
+        extent = self.mplwidget_5.figure.axes[0].get_extent()
+        self.mplwidget_5_gridlines.set_extent(extent)
+        self.ccp_map_gridlines = self.mplwidget_5_gridlines.gridlines(draw_labels=True)
+        xticks = np.arange(extent[0], extent[1] + spacing, spacing)
+        yticks = np.arange(extent[2], extent[3] + spacing, spacing)
+        self.ccp_map_gridlines.xlocator = mticker.FixedLocator(xticks)
+        self.ccp_map_gridlines.ylocator = mticker.FixedLocator(yticks)
+        
+        self.mplwidget_5.figure.canvas.draw()
+            
+
+    def plot_ccp_stack(self):
+        if self.first_ccp_stack_plot:
+            return
+        
+        try:
+            self.mplwidget_5_ccp_pcolormesh.remove()
+        except AttributeError:
+            pass
+
+        alpha = self.spinBox_5.value()/100
+        hslice = np.where(self.depth_array == self.doubleSpinBox_25.value())[0][0]
+        self.mplwidget_5_ccp_pcolormesh = self.mplwidget_5.figure.axes[0].pcolormesh(self.stack_x, self.stack_y, self.stack[:,:,hslice].T,
+                                                                                     alpha=alpha, transform=ccrs.PlateCarree(), cmap="RdBu")
+        self.first_ccp_stack_plot = False
+        self.mplwidget_5.figure.canvas.draw()
+    
+    def save_ccp_stack(self):
+        if self.stack == None:
+            return
+        
+        fname = pw.QFileDialog.getSaveFileName()[0]
+        
+        if fname:
+            ccp_dict = {"ccp_stack":self.stack,
+                        "x_array":self.stack_x,
+                        "y_array":self.stack_y,
+                        "z_array":self.depth_array}
+    
+            
+            pickle.dump(ccp_dict, open(fname, "wb"))
+    
+    def read_ccp_stack(self):
+        fname = pw.QFileDialog.getOpenFileName()[0]
+        
+        if fname:
+            ccp_dict = pickle.load(open(fname, 'rb'))
+            self.stack = ccp_dict["ccp_stack"]
+            self.stack_x = ccp_dict["x_array"]
+            self.stack_y = ccp_dict["y_array"]
+            self.depth_array = ccp_dict["z_array"]
+            
+            self.doubleSpinBox_25.setMaximum(np.max(self.depth_array))
+            self.doubleSpinBox_25.setSingleStep(np.diff(self.depth_array)[0])
+            self.plot_ccp_stack()
+    
+    def change_ccp_map_extent(self):
+        if not self.first_ccp_stack_plot:
+            miny = min(self.doubleSpinBox_21.value(), self.doubleSpinBox_22.value())
+            maxy = max(self.doubleSpinBox_21.value(), self.doubleSpinBox_22.value())
+            minx = min(self.doubleSpinBox_23.value(), self.doubleSpinBox_24.value())
+            maxx = max(self.doubleSpinBox_23.value(), self.doubleSpinBox_24.value())
+            self.mplwidget_5.figure.axes[0].set_extent([minx, maxx, miny, maxy], crs=ccrs.PlateCarree())
+            
+            # A secondary axis containing a tile map may exist, if so, we need to adjust its extent
+            # too:
+            if len(self.mplwidget_5.figure.axes) > 1:
+                self.mplwidget_5.figure.axes[1].set_extent([minx, maxx, miny, maxy], crs=ccrs.PlateCarree())
+
+            self.ccp_map_axes_gridlines()
+
+    
+    def cross_section_dialog(self):
+        
         if self.istack == None:
             self.istack = mwu.interpolate_ccp_stack(self.stack_x, self.stack_y, self.stack)
         
         start = (self.doubleSpinBox_18.value(), self.doubleSpinBox_17.value())
         end = (self.doubleSpinBox_20.value(), self.doubleSpinBox_19.value())
-        newlats, newlons = mwu.compute_intermediate_points(start, end, 100)
+        newlats, newlons, dist_arr = mwu.compute_intermediate_points(start, end, 100)
 
         matrix = []
         for i, stack in enumerate(self.istack):
@@ -501,15 +744,90 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
         matrix = np.array(matrix)
         
-        matplotlib.use('QT5Agg')
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.pcolormesh(matrix)
-        fig.show()
+        dialog = dialogs.CrossSectionDialog(dist_arr, -self.depth_array, matrix[:, 1:-1], start, end)
+        dialog.exec_()
         
     def cut_earthquakes_dialog(self):
         """Display the Cut earthquakes from local data dialog
         
         """
         dialog = dialogs.CutEarthquakesDialog()
-        dialog.show()
+        dialog.exec_()
+
+    def save_figure_dialog(self, figure):
+        """Display the save figure dialog
+        
+        """
+
+        if figure == "stack_figure":
+            fig = self.mplwidget_2.figure
+        elif figure == "hk_stack_figure":
+            fig = self.mplwidget_3.figure
+        elif figure == "earthquakes_map_figure":
+            fig = self.mplwidget_4.figure
+        elif figure == "ccp_stack_figure":
+            # ccp stack figure must be recreated as the patched pcolormesh
+            # used by cartopy cannot be pickled
+            fig = plt.figure()
+            fig.subplots(1, subplot_kw=dict(projection=ccrs.PlateCarree()))
+            fig.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05)
+            
+            lats, lons = [], []
+            for stnm in self.rfs_dicts.keys():
+                stla = self.arrivals['stations'][stnm]["lat"]
+                stlo = self.arrivals['stations'][stnm]["lon"]
+                lats.append(stla)
+                lons.append(stlo)
+                fig.axes[0].plot(stlo, stla, marker="^", transform=ccrs.Geodetic(), color="green")
+            
+            if self.stack != None:
+
+                hslice = np.where(self.depth_array == self.doubleSpinBox_25.value())[0][0]
+                fig.axes[0].pcolormesh(self.stack_x, self.stack_y, self.stack[:,:,hslice].T, transform=ccrs.PlateCarree(), cmap="RdBu",
+                                       alpha=self.spinBox_5.value()/100)
+                fig.axes[0].plot([self.ccp_cross_section['x0'], self.ccp_cross_section['x1']],
+                                 [self.ccp_cross_section['y0'], self.ccp_cross_section['y1']], color="red")
+
+            if self.comboBox_6.currentText() == "GEBCO":
+                MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
+                wms = WebMapService(MAP_SERVICE_URL)
+                layer = 'GEBCO_2019_Grid'
+                fig.axes[0].add_wms(wms, layer)
+            elif self.comboBox_6.currentText() == "Stamen":
+                fig.axes[0].add_image(Stamen('terrain-background'), self.spinBox_6.value())
+
+            spacing = self.doubleSpinBox_26.value()
+            if spacing > 0:
+                extent = self.mplwidget_5.figure.axes[0].get_extent()
+                fig.axes[0].set_extent(extent)
+                fig.axes[0].gridlines(draw_labels=True)
+                xticks = np.arange(extent[0], extent[1] + spacing, spacing)
+                yticks = np.arange(extent[2], extent[3] + spacing, spacing)
+                fig.axes[0].xlocator = mticker.FixedLocator(xticks)
+                fig.axes[0].ylocator = mticker.FixedLocator(yticks)
+            
+            dialog = dialogs.SaveFigureDialog(fig)
+            dialog.exec_()
+            return
+        
+        # We do not want to modify the original figure on the main frame of
+        # the program. But figure objects cannot be copied, not even with
+        # copy.deepcopy(). Therefore we pickle the original figure and load it
+        # again as a new one
+        
+        buffer = io.BytesIO()
+        pickle.dump(fig, buffer)
+        # Point to the first byte of the buffer and read it
+        buffer.seek(0)
+        fig_copy = pickle.load(buffer)
+        
+        #We also need a new canvas manager
+        newfig = plt.figure()
+        newmanager = newfig.canvas.manager
+        newmanager.canvas.figure = fig_copy
+        fig_copy.set_canvas(newmanager.canvas)        
+        
+        dialog = dialogs.SaveFigureDialog(fig_copy)
+        dialog.exec_()
+        return
+        

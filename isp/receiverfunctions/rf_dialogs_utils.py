@@ -25,15 +25,16 @@ def map_data(path, quick=True):
             full_path_to_file = os.path.join(top_dir, file)
             
             if quick:
-                stnm = file.split('.')[0]
-                chnm = file.split('.')[3]
-                year = int(file.split('.')[5])
-                jday = int(file.split('.')[6])
+                year = int(file.split('.')[0])
+                jday = int(file.split('.')[1])
+                stnm = file.split('.')[3]
+                chnm = file.split('.')[5]
 
-            data_map.setdefault(stnm, {})
-            data_map[stnm].setdefault(year, {})
-            data_map[stnm][year].setdefault(jday, {})
-            data_map[stnm][year][jday].setdefault(chnm, full_path_to_file)
+            if os.stat(full_path_to_file).st_size > 0:
+                data_map.setdefault(stnm, {})
+                data_map[stnm].setdefault(year, {})
+                data_map[stnm][year].setdefault(jday, {})
+                data_map[stnm][year][jday].setdefault(chnm, full_path_to_file)
             
     return data_map
 
@@ -86,7 +87,9 @@ def taup_arrival_times(catalog, stationxml, phase="P", earth_model="iasp91",
             # Distance, azimuth and back_azimuth for event:
             m_dist, az, back_az = obspy.geodetics.base.gps2dist_azimuth(evla, evlo,
                                                                         stla, stlo)
-            deg_dist = math.degrees(m_dist/EARTH_RADIUS)
+            #deg_dist = math.degrees(m_dist/EARTH_RADIUS)
+            deg_dist = obspy.geodetics.base.kilometers2degrees(m_dist/1000)
+            
             arrivals["stations"][stnm] = {"lon":stlo, "lat":stla, "elev":stev}
             
             # Check that deg_dist is inside the desired distance range
@@ -119,10 +122,14 @@ def cut_earthquakes(data_map, arrivals, time_before, time_after, min_snr,
     for eq in arrivals["events"].keys():
         otime = arrivals["events"][eq]['event_info']['origin_time']
         year = otime.year
-        
+
         for stnm in data_map.keys():#arrivals["events"][eq]['arrivals'].keys():
             
             if not stnm in arrivals["events"][eq]['arrivals'].keys():
+                continue
+
+            # Check if there is data for that year; else continue with next station
+            if not year in data_map[stnm].keys():
                 continue
             
             atime = otime + arrivals["events"][eq]['arrivals'][stnm]['arrival_time']
@@ -137,6 +144,7 @@ def cut_earthquakes(data_map, arrivals, time_before, time_after, min_snr,
             stime_jday = stime.julday
             etime_jday = etime.julday
             
+            # Check if there is data for this julday; else continue with next station
             if not stime_jday in data_map[stnm][year].keys() or not etime_jday in data_map[stnm][year].keys():
                 continue
             
@@ -177,7 +185,10 @@ def cut_earthquakes(data_map, arrivals, time_before, time_after, min_snr,
             
             # Remove response and rotate
             if remove_response:
-                stream.remove_response(inventory=inv, pre_filt=pre_filt, output="DISP")
+                try:
+                    stream.remove_response(inventory=inv, pre_filt=pre_filt, output="DISP")
+                except ValueError:
+                    continue
 
             stream.rotate('->ZNE', inventory=inv)
             stream.rotate('ZNE->{}'.format(rotation), back_azimuth=baz, inclination=inc)

@@ -1,8 +1,8 @@
 from isp.Gui.Frames.uis_frames import UiMainFrame, UiTimeFrequencyFrame, UiEarthquakeAnalysisFrame, \
     UiPaginationWidget, UiFilterDockWidget, UiTimeSelectorDockWidget, UiEventInfoDockWidget, UiEarthquake3CFrame, \
     UiEarthquakeLocationFrame, UiSpectrumDockWidget, UiTimeAnalysisWidget, UiStationInfoDockWidget, \
-    UiArrayAnalysisFrame, UiMomentTensor, UiReceiverFunctions, UiReceiverFunctionsCut, UiTimeFrequencyWidget, \
-    UiSyntheticsAnalisysFrame, UiSyntheticsGeneratorDialog
+    UiArrayAnalysisFrame, UiMomentTensor, UiReceiverFunctions, UiReceiverFunctionsCut, UiReceiverFunctionsSaveFigure, \
+    UiReceiverFunctionsCrossSection, UiTimeFrequencyWidget, UiSyntheticsAnalisysFrame, UiSyntheticsGeneratorDialog
 
 from isp.Gui.Frames.qt_components import FilesView, Pagination, MessageDialog, FilterBox, TimeSelectorBox, \
     EventInfoBox, SpectrumBox, StationInfoBox

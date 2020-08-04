@@ -10,8 +10,7 @@ import obspy
 import numpy as np
 import math
 import scipy.interpolate as scint
-import pickle
-
+import dill as pickle
 
 def map_earthquakes(eq_dir="earthquakes"):
     earthquake_map = {}
@@ -19,8 +18,8 @@ def map_earthquakes(eq_dir="earthquakes"):
         for file in files:
             path = os.path.join(top_dir, file)
             station = path.split(os.path.sep)[-2]
-            event_id = int(path.split(os.path.sep)[-1].split('_')[0].strip("EQ"))
             if file.endswith(".mseed"):
+                event_id = int(path.split(os.path.sep)[-1].split('_')[0].strip("EQ"))
                 earthquake_map.setdefault(station, {})
                 earthquake_map[station][event_id] = path
     
@@ -114,7 +113,7 @@ def compute_rfs(stnm, data_map, arrivals, srfs={}, dcmpn="Q", scmpn="L",
         
         num = dfft * np.conj(sfft)
         deno = np.maximum(sfft * np.conj(sfft), c*np.max(sfft * np.conj(sfft)))
-        gfilt = np.exp(np.maximum(-(2*np.pi*freq**2)/(a**2), -700) - 1j * -stime * 2*np.pi*freq)
+        gfilt = np.exp(np.maximum(-(2*np.pi*freq**2)/(a**2), -600) - 1j * -stime * 2*np.pi*freq) 
         rf = (1 + c) * np.fft.ifft(num/deno * gfilt)[:len(dcmp)].real
         
         rfs.append([rf, t, baz, distance, ray_param, 1, event_id]) # int 1 = accept this rf; 0 = discard (for use in the gui)
@@ -123,28 +122,38 @@ def compute_rfs(stnm, data_map, arrivals, srfs={}, dcmpn="Q", scmpn="L",
 
 def bin_rfs(rfs, sort_param=2, min_=0, max_=360, bin_size=10, overlap=5):
     
-    bins = []
-    
-    i = 0
-    while min_ + (bin_size * (i + 1) - overlap * i) <= max_:
-        llim = min_ + (bin_size * i - overlap * i)
-        rlim = min_ + (bin_size * (i + 1) - overlap * i)
-        
-        bins.append((llim, rlim))
-        
-        i += 1
-    
-    if bins[-1][1] < max_:
-        bins.append((bins[-1][1] - overlap, max_))
-    
-    bin_plot_ycoords = [(x[0] + x[1])/2 for x in bins]
-    rf_bin_indexes = []
+    if bin_size == 0:
 
-    for rf in rfs:
-        for i, bin_ in enumerate(bins):
-            if rf[sort_param] >= bin_[0] and rf[sort_param] <= bin_[1]:
-                rf_bin_indexes.append(i)
-                break
+        bin_plot_ycoords = []
+        rf_bin_indexes = []
+        for j, rf in enumerate(rfs):
+            rf_bin_indexes.append(j)
+            bin_plot_ycoords.append(rf[sort_param])
+
+    else:
+    
+        bins = []
+        
+        i = 0
+        while min_ + (bin_size * (i + 1) - overlap * i) <= max_:
+            llim = min_ + (bin_size * i - overlap * i)
+            rlim = min_ + (bin_size * (i + 1) - overlap * i)
+            
+            bins.append((llim, rlim))
+            
+            i += 1
+        
+        if bins[-1][1] < max_:
+            bins.append((bins[-1][1] - overlap, max_))
+        
+        bin_plot_ycoords = [(x[0] + x[1])/2 for x in bins]
+        rf_bin_indexes = []
+    
+        for rf in rfs:
+            for i, bin_ in enumerate(bins):
+                if rf[sort_param] >= bin_[0] and rf[sort_param] <= bin_[1]:
+                    rf_bin_indexes.append(i)
+                    break
 
     return rf_bin_indexes, bin_plot_ycoords
 
@@ -198,8 +207,13 @@ def compute_stack(rfs, bin_size=0, overlap=0, moveout_correction="Ps",
                 stack += rf[0]
 
     if normalize:
+        print(np.abs(bin_stacks.max(axis=0)))
         bin_stacks /= np.abs(bin_stacks.max(axis=0))
-        bin_stacks *= bin_size
+        
+        if bin_size >= 5:
+            bin_stacks *= bin_size
+        else:
+            bin_stacks *= 5
         
         stack /= np.abs(np.max(stack))
 
@@ -226,23 +240,25 @@ def compute_hk_stack(rfs, avg_vp=6.3, H_range=(25, 55), H_values=100, k_range=(1
     vs = np.array([avg_vp/k for k in k_arr])
     
     for rf_arr in rfs:
-        rf = scint.interp1d(rf_arr[1], rf_arr[0])
-        p = rf_arr[4]
-        tps = np.einsum('i,j->ji', H_arr, (np.sqrt(1/(vs**2) - p**2) - np.sqrt(1/(avg_vp**2) - p**2)))
-        tppps = np.einsum('i,j->ji', H_arr, (np.sqrt(1/(vs**2) - p**2) + np.sqrt(1/(avg_vp**2) - p**2)))
-        tpsps = np.einsum('i,j->ji', H_arr, 2 * (np.sqrt(1/(vs**2) - p**2)))
-        rf_sum = w1 * rf(tps) + w2 * rf(tppps) - w3 * rf(tpsps)
         
-        S1_num += rf(tps)
-        S1_deno += rf(tps)**2
-    
-        S2_num += rf(tppps)
-        S2_deno += rf(tppps)**2
-    
-        S3_num += rf(tpsps)
-        S3_deno += rf(tpsps)**2
+        if rf_arr[5]:
+            rf = scint.interp1d(rf_arr[1], rf_arr[0])
+            p = rf_arr[4]
+            tps = np.einsum('i,j->ji', H_arr, (np.sqrt(1/(vs**2) - p**2) - np.sqrt(1/(avg_vp**2) - p**2)))
+            tppps = np.einsum('i,j->ji', H_arr, (np.sqrt(1/(vs**2) - p**2) + np.sqrt(1/(avg_vp**2) - p**2)))
+            tpsps = np.einsum('i,j->ji', H_arr, 2 * (np.sqrt(1/(vs**2) - p**2)))
+            rf_sum = w1 * rf(tps) + w2 * rf(tppps) - w3 * rf(tpsps)
+            
+            S1_num += rf(tps)
+            S1_deno += rf(tps)**2
         
-        matrix += rf_sum
+            S2_num += rf(tppps)
+            S2_deno += rf(tppps)**2
+        
+            S3_num += rf(tpsps)
+            S3_deno += rf(tpsps)**2
+            
+            matrix += rf_sum
     
     S1 = S1_num**2 / S1_deno
     S2 = S2_num**2 / S2_deno
@@ -256,9 +272,11 @@ def compute_hk_stack(rfs, avg_vp=6.3, H_range=(25, 55), H_values=100, k_range=(1
     H = H_arr[maxx]
     k = k_arr[maxy]
 
-    return H_arr, k_arr, matrix
+    return H_arr, k_arr, matrix, H, k
 
 def save_rfs(stnm, a, c, rfs, outdir="rf/"):
+
+        rfs = [rf for rf in rfs if rf[5]]    
 
         rfs_dict = {"station": stnm,
                     "deconvolution_parameters": {"a":a, "c":c},
@@ -278,15 +296,15 @@ def map_rfs(rfs_dir="rf"):
 
     return rfs_map
 
-def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx=0.01, dy=0.01,
-              model='iasp91', dz=0.1, max_depth=70):
+def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx, dy, dz, max_depth,
+              model='iasp91'):
 
     y = np.arange(min_y, max_y, dy)
     x = np.arange(min_x, max_x, dx)
     z = np.arange(0, max_depth, dz)
 
     stack = np.zeros((len(x), len(y), len(z)))
-    counts = np.ones((len(x), len(y), len(z)))
+    counts = np.zeros((len(x), len(y), len(z)))
     
     # Read earth model:
     path_model=os.path.join(os.path.dirname(os.path.abspath(__file__)), "earth_models")
@@ -379,9 +397,11 @@ def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx=0.01, dy=0.01,
                         counts[ix2,iy2,k] += 1
 
                 
-                r0 = r        
+                r0 = r 
+    
+    stack_average = stack/counts
 
-    return stack
+    return stack, np.arange(0, max_depth, dz)
 
 def compute_intermediate_points(start, end, npts):
     A_lats = np.radians(start[1])
@@ -419,27 +439,120 @@ def compute_intermediate_points(start, end, npts):
     newlats.append(end[1])
     newlons.append(end[0])
     
-    return newlats, newlons
+    # approximate distance array (in km)
+    total_dist = c*6371.0
+    dist_arr = np.arange(0, total_dist, total_dist/npts)
+    
+    return newlats, newlons, dist_arr
         
 
-def point_inside_polygon(x,y,poly):
+def point_inside_polygon(x, y, poly, include_edges=True):
+    '''
+    Test if point (x,y) is inside polygon poly.
 
+    poly is N-vertices polygon defined as 
+    [(x1,y1),...,(xN,yN)] or [(x1,y1),...,(xN,yN),(x1,y1)]
+    (function works fine in both cases)
+
+    Geometrical idea: point is inside polygon if horisontal beam
+    to the right from point crosses polygon even number of times. 
+    Works fine for non-convex polygons.
+    '''
     n = len(poly)
-    inside =False
+    inside = False
 
-    p1x,p1y = poly[0]
-    for i in range(n+1):
-        p2x,p2y = poly[i % n]
-        if y > min(p1y,p2y):
-            if y <= max(p1y,p2y):
-                if x <= max(p1x,p2x):
-                    if p1y != p2y:
-                        xinters = (y-p1y)*(p2x-p1x)/(p2y-p1y)+p1x
-                    if p1x == p2x or x <= xinters:
-                        inside = not inside
-        p1x,p1y = p2x,p2y
+    p1x, p1y = poly[0]
+    for i in range(1, n + 1):
+        p2x, p2y = poly[i % n]
+        if p1y == p2y:
+            if y == p1y:
+                if min(p1x, p2x) <= x <= max(p1x, p2x):
+                    # point is on horisontal edge
+                    inside = include_edges
+                    break
+                elif x < min(p1x, p2x):  # point is to the left from current edge
+                    inside = not inside
+        else:  # p1y!= p2y
+            if min(p1y, p2y) <= y <= max(p1y, p2y):
+                xinters = (y - p1y) * (p2x - p1x) / float(p2y - p1y) + p1x
+
+                if x == xinters:  # point is right on the edge
+                    inside = include_edges
+                    break
+
+                if x < xinters:  # point is to the left from current edge
+                    inside = not inside
+
+        p1x, p1y = p2x, p2y
 
     return inside
+
+def iscontiguous(coords, region):
+    moves = [(-1, -1), (-1, 0), (-1, 1),
+             (0, -1), (0, 1),
+             (1, -1), (1, 0), (1, 1)]
+    for p in region:
+        move = (p[0] - coords[0], p[1] - coords[1])
+        if move in moves:
+            return True
+
+    return False
+
+def determine_error_region(matrix, H_arr, k_arr):
+    error_area = None
+    dict_ = {"H_arr":H_arr,"k_arr":k_arr, "matrix":matrix}
+
+    import pickle
+    pickle.dump(dict_, open("test_hk.pickle", "wb"))
+    maxy = np.where(matrix == np.max(matrix))[0][0]
+    maxx = np.where(matrix == np.max(matrix))[1][0]    
+    error_region = np.max(matrix) - np.std(matrix)
+    error_matrix = np.zeros(matrix.shape)
+    error_matrix[np.where(matrix > error_region)[0], np.where(matrix > error_region)[1]] = 1
+    
+    a = np.diff(error_matrix)
+    a[np.where(a == -1)[0], np.where(a == -1)[1]] = 1
+    
+    regions = {}    
+    
+    label = 1
+    for i in range(a.shape[0]):
+        for j in range(a.shape[1]):
+            coords = (i,j)
+            value = a[i,j]
+            
+            if value == 1 and not regions:
+                regions.setdefault(label, [])
+                regions[label].append(coords)
+            elif value == 1:
+                region_exists = False
+                for region in regions.keys():
+                    if iscontiguous(coords, regions[region]):
+                        regions[region].append(coords)
+                        region_exists = True
+                        break
+                
+                if not region_exists:
+                    label += 1
+                    regions.setdefault(label, [])
+                    regions[label].append(coords)
+    
+    for r in regions.keys():
+        region = regions[r]
+        if point_inside_polygon(maxy, maxx, region):
+            error_area = region
+            break
+
+    if error_area != None:
+        error_k_values = k_arr[[x[0] for x in error_area]]
+        error_H_values = H_arr[[x[1] for x in error_area]]
+        k_95 = (np.min(error_k_values), np.max(error_k_values))
+        H_95 = (np.min(error_H_values), np.max(error_H_values))
+    else:
+        k_95 = None
+        H_95 = None
+    
+    return a, error_area, k_95, H_95
 
 def interpolate_ccp_stack(x, y, stack):
     
@@ -449,9 +562,6 @@ def interpolate_ccp_stack(x, y, stack):
                                       fill_value=np.NaN))
     
     return interps
-        
-def ccp_cross_section(x, y, z, stack, coords):
-    pass
         
         
 """if __name__ == "__main__":
