@@ -32,4 +32,5 @@ UiMagnitudeFrame = load_ui_designers("MagnitudeFrame.ui")
 UiSettingsDialog = load_ui_designers("SettingsDialog.ui")
 UiSyntheticsAnalisysFrame = load_ui_designers("SyntheticsAnalisysFrame.ui")
 UiSyntheticsGeneratorDialog = load_ui_designers("SyntheticsGeneratorDialog.ui")
+UiDataDownloadFrame = load_ui_designers("DataDownload.ui")
 
