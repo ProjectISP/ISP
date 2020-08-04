@@ -1,6 +1,6 @@
 # Singleton/SingletonDecorator.py
 from isp.Gui.Frames import MainFrame, TimeFrequencyFrame, EarthquakeAnalysisFrame, ArrayAnalysisFrame, MTIFrame,\
-    RecfFrame, EventLocationFrame, SyntheticsAnalisysFrame
+    RecfFrame, EventLocationFrame, SyntheticsAnalisysFrame, DataDownloadFrame
 
 from isp.Utils import Singleton
 
@@ -16,6 +16,7 @@ class Controller:
         self.receiver_functions_frame = None
         self.project_frame = None
         self.synthetics_frame = None
+        self.data_download_frame = None
 
     def open_main_window(self):
         # Start the ui designer
@@ -76,5 +77,7 @@ class Controller:
 
 
     def retrieve_data(self):
-        pass
+        if not self.data_download_frame:
+            self.data_download_frame = DataDownloadFrame()
+        self.data_download_frame.show()
 
