@@ -339,7 +339,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -350,6 +350,7 @@
     <addaction name="actionCreate_new_Project"/>
     <addaction name="actionRetrieve_data"/>
     <addaction name="actionExit"/>
+    <addaction name="actionPPSDs"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -406,6 +407,11 @@
    </property>
    <property name="text">
     <string>Retrieve data</string>
+   </property>
+  </action>
+  <action name="actionPPSDs">
+   <property name="text">
+    <string>PPSDs</string>
    </property>
   </action>
  </widget>

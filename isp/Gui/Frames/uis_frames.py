@@ -33,4 +33,6 @@ UiSettingsDialog = load_ui_designers("SettingsDialog.ui")
 UiSyntheticsAnalisysFrame = load_ui_designers("SyntheticsAnalisysFrame.ui")
 UiSyntheticsGeneratorDialog = load_ui_designers("SyntheticsGeneratorDialog.ui")
 UiDataDownloadFrame = load_ui_designers("DataDownload.ui")
+UiPPSDs = load_ui_designers("PPSD.ui")
+UiPPSDs_dialog = load_ui_designers("PPSD_DBGeneratorDialog.ui")
 
