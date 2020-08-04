@@ -36,6 +36,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         self._generator = SyntheticsGeneratorDialog(self)
 
         # 3C_Component
+        self.focmec_canvas = FocCanvas(self.widget_fp)
         self.canvas = MatplotlibCanvas(self.plotMatWidget_3C)
         self.canvas.set_new_subplot(3, ncols=1)
 
@@ -138,7 +139,8 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                 self.canvas.set_plot_label(index, info)
 
             self.canvas.set_xlabel(2, "Time (s)")
-
+            self.focmec_canvas.drawFocMec(30, 40, 50, [], [], [], [], 0)
+            #self.cartopy_canvas.plot_map(-4, 36, [], [], [], 0,resolution='low', stations=stations)
         except InvalidFile:
             self.info_message("Invalid mseed files. Please, make sure you have generated correctly the synthetics")
         #except ValueError as error:

@@ -6,7 +6,7 @@ Created on Thu Jun  4 17:54:07 2020
 """
 
 import obspy
-
+import os
 import pickle
 import matplotlib.pyplot as plt
 
@@ -27,7 +27,7 @@ def map_data(path, quick=True):
                 stnm = file.split('.')[3]
                 chnm = file.split('.')[5]
             else:
-                header = #read header
+                #header = #read header
                 year = header.stats.year
                 jday
                 stnm
