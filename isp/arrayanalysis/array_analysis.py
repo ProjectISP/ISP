@@ -257,32 +257,31 @@ class array:
 
 
 
-    def stack_stream(self, path, sx, sy, coord):
+    def stack_stream(self, st2, sx, sy, coord):
         sx = -1*sx
         sy = -1*sy
         s = np.array([sx, sy, 0])
-        st = read(path+ "/"+"*.*")
+        #st = read(path+ "/"+"*.*")
         x = []
         y = []
         r = []
         for i in range(len(coord) - 1):
             r.append(coord[i])
-
-        for j in range(len(st)):
+        for j in range(len(st2)):
             TAU = np.dot(r[j], s)
             TAU= TAU[0]
-            st[j].stats.starttime = st[j].stats.starttime + TAU
+            st2[j].stats.starttime = st2[j].stats.starttime + TAU
 
 
-        maxstart = np.max([tr.stats.starttime for tr in st])
-        minend = np.min([tr.stats.endtime for tr in st])
-        st.trim(maxstart, minend)
-        fs=st[0].stats.sampling_rate
-        time = np.linspace(0, fs , num=len(st[0].data))
-        mat = np.zeros([len(st), len(st[0].data)])
-        N = len(st)
+        maxstart = np.max([tr.stats.starttime for tr in st2])
+        minend = np.min([tr.stats.endtime for tr in st2])
+        st2.trim(maxstart, minend)
+        fs=st2[0].stats.sampling_rate
+        time = np.linspace(0, fs , num=len(st2[0].data))
+        mat = np.zeros([len(st2), len(st2[0].data)])
+        N = len(st2)
         for i in range(N - 1):
-            mat[i, :] = st[i].data
+            mat[i, :] = st2[i].data
 
         return mat, time
 

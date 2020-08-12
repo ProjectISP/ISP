@@ -62,6 +62,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.__dataless_manager = None
         self.__metadata_manager = None
         self.st = None
+        self.cf = None
         self.chop = {'Body waves':{}, 'Surf Waves':{}, 'Coda':{}, 'Noise':{}}
         self.color={'Body waves':'orangered','Surf Waves':'blue','Coda':'grey','Noise':'green'}
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
@@ -131,6 +132,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+P'),self)
         self.shortcut_open.activated.connect(self.comboBox_phases.showPopup)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+K'), self)
+        self.shortcut_open.activated.connect(self.save_cf)
 
     def open_parameters_settings(self):
         self.parameters.show()
@@ -264,6 +268,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.earthquake_location_frame.set_dataless_dir(value)
 
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
+    @AsycTime.run_async()
     def onChange_metadata_path(self, value):
         try:
             self.__metadata_manager = MetadataManager(value)
@@ -520,6 +525,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 pass
 
     def run_STA_LTA(self):
+        self.cf = []
+        cfs = []
         files_at_page = self.get_files_at_page()
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
@@ -527,12 +534,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         params = self.settings_dialog.getParameters()
         print(params)
         for index, file_path in enumerate(files_at_page):
-
             tr = self.st[index]
             cf = sta_lta(tr.data, tr.stats.sampling_rate)
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             # Normalize
-            cf =cf/max(cf)
+            #cf =cf/max(cf)
             # forward to be centered the peak
             start = tr.stats.starttime-0.5
             tr.stats.starttime = start
@@ -549,6 +555,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax2.plot(t, cf,color="grey", linewidth=0.5, alpha = 0.5)
             ax2.set_ylim(-1.05, 1.05)
             last_index = index
+            tr.data = cf
+            cfs.append(tr)
+        self.cf = Stream(traces=cfs)
+
         ax = self.canvas.get_axe(last_index)
         try:
             if self.trimCB.isChecked():
@@ -607,6 +617,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             pass
 
     def envelope(self):
+        self.cf = []
+        cfs = []
         files_at_page = self.get_files_at_page()
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
@@ -616,7 +628,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             cf = envelope(tr.data,tr.stats.sampling_rate)
             self.canvas.plot(t, cf, index, clear_plot=False, color="blue", linewidth=0.5, alpha = 0.5)
             last_index = index
-
+            tr.data = cf
+            cfs.append(tr)
+        self.cf = Stream(traces=cfs)
         ax = self.canvas.get_axe(last_index)
         try:
             if self.trimCB.isChecked():
@@ -696,6 +710,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 path_output = os.path.join(dir_path, id)
                 tr.write(path_output, format="MSEED")
 
+    def save_cf(self):
+        import os
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        if self.cf:
+            n = len(self.cf)
+            for j in range(n):
+                tr = self.cf[j]
+                t1 = tr.stats.starttime
+                id = tr.id + "." + "M" + "." + str(t1.year) + "." + str(t1.julday)
+                print(tr.id, "Writing data processed")
+                path_output = os.path.join(dir_path, id)
+                tr.write(path_output, format="MSEED")
 
     def plot_map_stations(self):
 

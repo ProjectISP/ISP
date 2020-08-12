@@ -293,10 +293,10 @@ def sta_lta(data, sampling_rate):
     ##
     #cft = np.diff(cft)
     ##
-    #window = np.hanning(len(cft))
-    #cft = window*cft
-    #cf1= lowpass(cft, 0.15, sampling_rate, corners=3, zerophase=True)
-    return cft
+    window = np.hanning(len(cft))
+    cft = window*cft
+    cf1= lowpass(cft, 0.15, sampling_rate, corners=3, zerophase=True)
+    return cf1
 
 
 def envelope(data,sampling_rate):
@@ -311,10 +311,10 @@ def envelope(data,sampling_rate):
     ###Necesary padding with zeros
     data_envelope = obspy.signal.filter.envelope(data)
     data_envelope = data_envelope[0:N]
-    #window = np.hanning(len(data_envelope))
-    #data_envelope = window * data_envelope
-    #data_envelope1 = lowpass(data_envelope, 0.15, sampling_rate, corners=3, zerophase=True)
-    return data_envelope
+    window = np.hanning(len(data_envelope))
+    data_envelope = window * data_envelope
+    data_envelope1 = lowpass(data_envelope, 0.15, sampling_rate, corners=3, zerophase=True)
+    return data_envelope1
 
 
 def add_white_noise(tr, SNR_dB):

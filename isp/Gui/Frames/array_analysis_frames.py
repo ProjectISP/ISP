@@ -116,7 +116,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         #self.cartopy_canvas.plot_stations(lon, lat, depth, 0)
 
     def FK_plot(self):
-
+        self.canvas_stack.set_new_subplot(nrows=1, ncols=1)
         starttime = convert_qdatetime_utcdatetime(self.starttime_date)
         endtime = convert_qdatetime_utcdatetime(self.endtime_date)
         selection = self.inventory.select(station=self.stationLE.text(), channel = self.channelLE.text())
@@ -161,11 +161,14 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             self.canvas_slow_map.set_xlabel(0, "Sx [s/km]")
             self.canvas_slow_map.set_ylabel(0, "Sy [s/km]")
             # Call Stack and Plot###
-            stream_stack, time = wavenumber.stack_stream(self.root_pathFK_bind.value, Sxpow, Sypow, coord)
-            stack = wavenumber.stack(stream_stack)
-            self.canvas_stack.plot(time, stack, axes_index = 0)
-            self.canvas_stack.set_xlabel(0, " Time [s] ")
-            self.canvas_stack.set_ylabel(0, "Stack Amplitude")
+            #stream_stack, time = wavenumber.stack_stream(self.root_pathFK_bind.value, Sxpow, Sypow, coord)
+            if st:
+                st2 = self.st.copy()
+                stream_stack, time = wavenumber.stack_stream(st2, Sxpow, Sypow, coord)
+                stack = wavenumber.stack(stream_stack)
+                self.canvas_stack.plot(time, stack, axes_index = 0)
+                self.canvas_stack.set_xlabel(0, " Time [s] ")
+                self.canvas_stack.set_ylabel(0, "Stack Amplitude")
 
     def filter_error_message(self, msg):
         md = MessageDialog(self)
