@@ -94,7 +94,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.setupUi(self)
         self.setWindowTitle('Events Location')
         self.setWindowIcon(pqg.QIcon(':\icons\compass-icon.png'))
-        
+        self.cb = None
         el_columns = [getattr(EventLocationModel, c) 
                       for c in EventLocationModel.__table__.columns.keys()[1:]]
 
@@ -150,8 +150,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.actionRead_last_location.triggered.connect(self._readLastLocation)
         self.btnRefreshQuery.clicked.connect(self._refreshQuery)
         self.btnShowAll.clicked.connect(self._showAll)
-        self.PlotMapBtn.clicked.connect(self.plot_map)
-        self.plot_focal_mecbtn.clicked.connect(self.plot_foc_mec)
+        self.PlotMapBtn.clicked.connect(self.__plot_map)
 
     def _plot_row(self, index):
         # try:
@@ -173,12 +172,14 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
 
     def _plot_foc_mec(self, index):
          # Plot Focal Mechanism
-
+         check = False
          if self.methodCB.currentText() == "First Polarity":
             strike = self.model.data(self.model.index(index.row(), 24))
             dip = self.model.data(self.model.index(index.row(), 25))
             rake = self.model.data(self.model.index(index.row(), 26))
-            self.plot_foc_mec(method = self.methodCB.currentText(), strike = strike, dip = dip, rake = rake)
+            if None not in [strike, dip, rake]:
+                self.plot_foc_mec(method = self.methodCB.currentText(), strike = strike, dip = dip, rake = rake)
+                check = True
 
          if self.methodCB.currentText() == "MTI":
              mrr = self.model.data(self.model.index(index.row(), 43))
@@ -187,24 +188,28 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
              mrt = self.model.data(self.model.index(index.row(), 46))
              mrp = self.model.data(self.model.index(index.row(), 47))
              mtp = self.model.data(self.model.index(index.row(), 48))
-             self.plot_foc_mec(method=self.methodCB.currentText(), mrr=mrr, mtt=mtt, mpp=mpp, mrt=mrt, mrp=mrp,mtp=mtp)
+             if None not in [mrr, mtt, mpp, mrt, mrp, mtp]:
+                self.plot_foc_mec(method=self.methodCB.currentText(), mrr=mrr, mtt=mtt, mpp=mpp, mrt=mrt, mrp=mrp,mtp=mtp)
+                check = True
 
-         # plot in the map
-         lat = self.model.data(self.model.index(index.row(), 3))
-         lon = self.model.data(self.model.index(index.row(), 4))
-         file = os.path.join(ROOT_DIR, 'db/map_class/foc_mec.png')
 
-         img = Image.open(file)
-         imagebox = OffsetImage(img, zoom=0.08)
-         imagebox.image.axes = self.map_widget.ax
-         ab = AnnotationBbox(imagebox, [lon+0.3, lat+0.3], frameon=False)
-         self.map_widget.ax.add_artist(ab)
+         if check:
+             # plot in the map
+             lat = self.model.data(self.model.index(index.row(), 3))
+             lon = self.model.data(self.model.index(index.row(), 4))
+             file = os.path.join(ROOT_DIR, 'db/map_class/foc_mec.png')
 
-         self.map_widget.ax.annotate('', xy=(lon, lat), xycoords='data',
-         xytext=(lon+0.3, lat+0.3), textcoords='data',arrowprops=dict(arrowstyle="->",
-                           connectionstyle="arc3,rad=.2"))
+             img = Image.open(file)
+             imagebox = OffsetImage(img, zoom=0.08)
+             imagebox.image.axes = self.map_widget.ax
+             ab = AnnotationBbox(imagebox, [lon+0.3, lat+0.3], frameon=False)
+             self.map_widget.ax.add_artist(ab)
 
-         self.map_widget.fig.canvas.draw()
+             self.map_widget.ax.annotate('', xy=(lon, lat), xycoords='data',
+             xytext=(lon+0.3, lat+0.3), textcoords='data',arrowprops=dict(arrowstyle="->",
+                               connectionstyle="arc3,rad=.2"))
+
+             self.map_widget.fig.canvas.draw()
 
     def refreshLimits(self):
         entities = self.model.getEntities()
@@ -383,25 +388,32 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.model.setFilter()
         self.model.revertAll()
 
-    def plot_map(self):
+
+    def __plot_map(self):
+
+        URL = self.wmsLE.text()
+        layer = self.layerLE.text()
+        if URL is not "" and layer is not "":
+            self.plot_map(map_service = URL, layer = layer)
+        else:
+            self.plot_map()
+
+    def plot_map(self, map_service = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?',
+                 layer = 'GEBCO_2019_Grid'):
+
+        #self.map_widget.fig.clf()
         import numpy as np
         import cartopy.crs as ccrs
         import matplotlib.pyplot as plt
         from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
         from owslib.wms import WebMapService
 
-        cb = []
-        try:
+        if self.cb:
+            self.cb.remove()
 
-            cb.remove()
-
-        except:
-
-            pass
-
-        MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
+        MAP_SERVICE_URL = map_service
         wms = WebMapService(MAP_SERVICE_URL)
-        layer = 'GEBCO_2019_Grid'
+        layer = layer
 
         entities = self.model.getEntities()
         lat = []
@@ -409,11 +421,18 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         depth = []
         mag = []
         for j in entities:
-             lat.append(j[0].latitude)
-             lon.append(j[0].longitude)
-             depth.append(j[0].depth)
-             mag.append(j[0].mw)
+            lat.append(j[0].latitude)
+            lon.append(j[0].longitude)
+            depth.append(j[0].depth)
+
+            if j[0].mw == None:
+                j[0].mw = 3.0
+
+            mag.append(j[0].mw)
+
+
         #print(entities)
+
         mag = np.array(mag)
         mag = 0.5*np.exp(mag)
         min_lon = -16
@@ -436,7 +455,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         color_map = plt.cm.get_cmap('rainbow')
         reversed_color_map = color_map.reversed()
         cs = self.map_widget.ax.scatter(lon, lat, s=mag, c=depth ,edgecolors= "black",cmap=reversed_color_map,transform =ccrs.PlateCarree())
-        cb = self.map_widget.fig.colorbar(cs, orientation='horizontal', fraction=0.05, extend='both', pad=0.15)
+        self.cb = self.map_widget.fig.colorbar(cs, orientation='horizontal', fraction=0.05, extend='both', pad=0.15, label ='Depth (km)')
         self.map_widget.lat.scatter(depth, lat, s=mag, c=depth ,edgecolors= "black",cmap=reversed_color_map)
         self.map_widget.lat.set_ylim((min_lat, max_lat))
         self.map_widget.lon.scatter(lon, depth, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map)

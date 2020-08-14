@@ -1,6 +1,6 @@
-from isp.Structures.structures import StationsStats, StationCoordinates
+from isp.Structures.structures import StationCoordinates
 from isp.Utils import MseedUtil, ObspyUtil
-from obspy import read, read_inventory
+from obspy import read_inventory
 
 
 class MetadataManager:

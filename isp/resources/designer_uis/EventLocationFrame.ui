@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Earthquakes Data Base</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
@@ -302,27 +302,23 @@
        </widget>
       </item>
       <item row="13" column="0" colspan="2">
-       <widget class="QPushButton" name="plot_focal_mecbtn">
-        <property name="text">
-         <string>Plot Focal Mechanisms</string>
-        </property>
-       </widget>
-      </item>
-      <item row="14" column="0" colspan="2">
        <widget class="QLabel" name="label">
         <property name="text">
          <string>Preferences</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
        </widget>
       </item>
-      <item row="15" column="0">
+      <item row="14" column="0">
        <widget class="QLabel" name="label_12">
         <property name="text">
          <string>Magnitude Prefered</string>
         </property>
        </widget>
       </item>
-      <item row="15" column="1">
+      <item row="14" column="1">
        <widget class="QComboBox" name="magnitudeCB">
         <item>
          <property name="text">
@@ -346,14 +342,14 @@
         </item>
        </widget>
       </item>
-      <item row="16" column="0">
+      <item row="15" column="0">
        <widget class="QLabel" name="label_13">
         <property name="text">
          <string>Focal Mecanism</string>
         </property>
        </widget>
       </item>
-      <item row="16" column="1">
+      <item row="15" column="1">
        <widget class="QComboBox" name="methodCB">
         <item>
          <property name="text">
@@ -367,14 +363,14 @@
         </item>
        </widget>
       </item>
-      <item row="17" column="0">
+      <item row="16" column="0">
        <widget class="QLabel" name="label_14">
         <property name="text">
          <string>WMS</string>
         </property>
        </widget>
       </item>
-      <item row="17" column="1">
+      <item row="16" column="1">
        <widget class="QLineEdit" name="wmsLE">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -390,14 +386,14 @@
         </property>
        </widget>
       </item>
-      <item row="18" column="0">
+      <item row="17" column="0">
        <widget class="QLabel" name="label_15">
         <property name="text">
          <string>Layer</string>
         </property>
        </widget>
       </item>
-      <item row="18" column="1">
+      <item row="17" column="1">
        <widget class="QLineEdit" name="layerLE">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">

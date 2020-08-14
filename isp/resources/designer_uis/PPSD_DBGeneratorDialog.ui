@@ -26,10 +26,27 @@
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="1" column="1">
         <layout class="QGridLayout" name="gridLayout">
-         <item row="13" column="1">
-          <widget class="QLineEdit" name="stationsTx"/>
+         <item row="8" column="2">
+          <widget class="QDoubleSpinBox" name="smoothingSB">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
          </item>
-         <item row="10" column="0" colspan="3">
+         <item row="0" column="2">
+          <widget class="QLineEdit" name="nameForm"/>
+         </item>
+         <item row="15" column="3">
+          <widget class="QPushButton" name="saveBtn">
+           <property name="text">
+            <string>Save DB</string>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="0" colspan="4">
           <widget class="Line" name="line_2">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
@@ -39,11 +56,11 @@
          <item row="2" column="0">
           <widget class="QPushButton" name="datalessBtn">
            <property name="text">
-            <string>Metadata Directory</string>
+            <string>Set Metadata Directory</string>
            </property>
           </widget>
          </item>
-         <item row="6" column="1">
+         <item row="6" column="2">
           <widget class="QSpinBox" name="lenghtSB">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -56,7 +73,7 @@
            </property>
           </widget>
          </item>
-         <item row="14" column="2">
+         <item row="14" column="3">
           <widget class="QPushButton" name="continueBtn">
            <property name="enabled">
             <bool>false</bool>
@@ -66,24 +83,24 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0" colspan="3">
+         <item row="3" column="0" colspan="4">
           <widget class="Line" name="line">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
-         <item row="14" column="1">
+         <item row="14" column="2">
           <widget class="QPushButton" name="processBtn">
            <property name="text">
             <string>Process</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1" colspan="2">
+         <item row="1" column="2" colspan="2">
           <widget class="QLineEdit" name="rootPathForm"/>
          </item>
-         <item row="4" column="0" colspan="3" alignment="Qt::AlignHCenter">
+         <item row="4" column="0" colspan="4" alignment="Qt::AlignHCenter">
           <widget class="QLabel" name="label_2">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -96,10 +113,10 @@
            </property>
           </widget>
          </item>
-         <item row="13" column="2">
+         <item row="13" column="3">
           <widget class="QLineEdit" name="chnTx"/>
          </item>
-         <item row="2" column="1" colspan="2">
+         <item row="2" column="2" colspan="2">
           <widget class="QLineEdit" name="datalessPathForm"/>
          </item>
          <item row="8" column="0">
@@ -109,7 +126,7 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="2">
+         <item row="0" column="3">
           <widget class="QPushButton" name="loadBtn">
            <property name="text">
             <string>Load DB</string>
@@ -123,27 +140,7 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>DB Name</string>
-           </property>
-          </widget>
-         </item>
-         <item row="11" column="1" alignment="Qt::AlignHCenter">
-          <widget class="QLabel" name="label_4">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Stations</string>
-           </property>
-          </widget>
-         </item>
-         <item row="9" column="1">
+         <item row="9" column="2">
           <widget class="QDoubleSpinBox" name="periodSB">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -166,7 +163,7 @@
            </property>
           </widget>
          </item>
-         <item row="11" column="2" alignment="Qt::AlignHCenter">
+         <item row="11" column="3" alignment="Qt::AlignHCenter">
           <widget class="QLabel" name="label_5">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -179,7 +176,7 @@
            </property>
           </widget>
          </item>
-         <item row="7" column="1">
+         <item row="7" column="2">
           <widget class="QSpinBox" name="overlapSB">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -209,30 +206,40 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="nameForm"/>
-         </item>
-         <item row="8" column="1">
-          <widget class="QDoubleSpinBox" name="smoothingSB">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+         <item row="2" column="1">
+          <widget class="QPushButton" name="load_metadataBtn">
+           <property name="text">
+            <string>Load Metadata</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
+         <item row="1" column="0" colspan="2">
           <widget class="QPushButton" name="selectDirBtn">
            <property name="text">
             <string>Files Directory</string>
            </property>
           </widget>
          </item>
-         <item row="15" column="2">
-          <widget class="QPushButton" name="saveBtn">
+         <item row="13" column="1" colspan="2">
+          <widget class="QLineEdit" name="stationsTx"/>
+         </item>
+         <item row="11" column="1" colspan="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_4">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
-            <string>Save DB</string>
+            <string>Stations</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>DB Name</string>
            </property>
           </widget>
          </item>

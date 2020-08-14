@@ -13,3 +13,4 @@ class PPSDFrame(BaseFrame, UiPPSDs):
 
     def run_ppsds(self):
         self.ppsds_dialog.show()
+

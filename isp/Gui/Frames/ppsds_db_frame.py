@@ -19,10 +19,10 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         self.progressbar.setLabelText(" Computing PPSDs ")
         self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
         self.progressbar.close()
+
         # Binding
         self.root_path_bind = BindPyqtObject(self.rootPathForm)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
-
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.datalessBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
@@ -32,6 +32,7 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         self.continueBtn.clicked.connect(lambda: self._ppsd_thread(self.ppsd_continue))
         self.saveBtn.clicked.connect(lambda: self.saveDB())
         self.loadBtn.clicked.connect(lambda: self.load_ppsd_db())
+        self.load_metadataBtn.clicked.connect(lambda: self.load_metadata())
 
     def _stopBtnCallback(self):
         if self.ppsds is not None:
@@ -58,17 +59,20 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         if dir_path:
             bind.value = dir_path
 
-    def onChange_metadata_path(self, value):
-        try:
-            self.__metadata_manager = MetadataManager(value)
-            self.inventory = self.__metadata_manager.get_inventory()
-        except:
-            pass
+    def load_metadata(self):
+        if self.dataless_path_bind.value is not "":
+            try:
+                self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
+                self.inventory = self.__metadata_manager.get_inventory()
+                print(self.inventory)
+            except:
+                pass
 
     def process_ppsds(self):
         file_path = self.root_path_bind.value
+        self.selection = {"nets":self.netsTx.text(),"stations":self.stationsTx.text(),"channels":self.chnTx.text()}
         self.ppsds = ppsdsISP(file_path, self.inventory, self.lenghtSB.value(), self.overlapSB.value(),
-                         self.smoothingSB.value(), self.periodSB.value())
+                         self.smoothingSB.value(), self.periodSB.value(), self.selection)
 
         self.ppsds.fileProcessed.connect(self.progressbar.setValue)
         ini_dict, size = self.ppsds.create_dict()
@@ -87,7 +91,7 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         pyc.QMetaObject.invokeMethod(self.progressbar, 'setMaximum', qt.AutoConnection, pyc.Q_ARG(int, size))
         pyc.QMetaObject.invokeMethod(self.progressbar, 'setValue', qt.AutoConnection, pyc.Q_ARG(int, 0))
         self.db = self.ppsds.get_all_values(self.db)
-        print(self.db)
+        #print(self.db)
 
     def saveDB(self):
         if self.db:

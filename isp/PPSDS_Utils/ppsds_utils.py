@@ -17,7 +17,7 @@ import pickle
 class ppsdsISP(pyc.QObject):
     fileProcessed = pyc.pyqtSignal(int)
 
-    def __init__(self, files_path, metadata, length, overlap, smoothing, period):
+    def __init__(self, files_path, metadata, length, overlap, smoothing, period, selection):
         """
                 PPSDs utils for ISP.
 
@@ -35,10 +35,9 @@ class ppsdsISP(pyc.QObject):
         self.period = period
         self.check = False
         self.processedFiles = 0
-        #self.selection = kwargs.pop('selection')
-        #self.nets = kwargs.pop('nets').split(',')
-        #self.stations = kwargs.pop('stations').split(',')
-        #self.channels = kwargs.pop('channels').split(',')
+        self.nets = selection.pop('nets').split(',')
+        self.stations = selection.pop('stations').split(',')
+        self.channels = selection.pop('channels').split(',')
 
 
     def create_dict(self):
@@ -59,27 +58,47 @@ class ppsdsISP(pyc.QObject):
                 sta = header[0].stats.station
                 stations = {sta: {}}
                 chn = header[0].stats.channel
+                ## Filter per nets
                 # 1. Check if the net exists, else add
-                #if self.selection[0] and self.nets.count(net) == 1:
                 if net not in data_map['nets']:
-                    data_map['nets'] = network
-                #else:
-                #    data_map['nets'] = network
+                    # 1.1 Check the filter per network
+
+                    if net in self.nets:
+                        data_map['nets'] = network
+                    # 1.2 the filter per network is not activated
+                    if self.nets[0] == "":
+                        data_map['nets'] = network
 
                 # 2. Check if the station exists, else add
-
-                if sta not in data_map['nets'][net]:
-                    data_map['nets'][net].update(stations)
+                try:
+                    if sta not in data_map['nets'][net]:
+                        if sta in self.stations:
+                            data_map['nets'][net].update(stations)
+                        if self.stations[0] == "":
+                            data_map['nets'][net].update(stations)
+                except:
+                    pass
 
                 # 3. Check if the channels exists, else add
+                try:
+                    if chn in data_map['nets'][net][sta]:
+                        if chn in self.channels:
+                            data_map['nets'][net][sta][chn].append(paths)
+                            size = size + 1
+                        if self.channels[0] == "":
+                            data_map['nets'][net][sta][chn].append(paths)
+                            size = size + 1
+                    else:
+                        if chn in self.channels:
+                            data_map['nets'][net][sta][chn] = [paths]
+                            size = size + 1
+                        if self.channels[0] == "":
+                            data_map['nets'][net][sta][chn] = [paths]
+                            size = size + 1
+                except:
+                    pass
 
-                if chn in data_map['nets'][net][sta]:
-                    data_map['nets'][net][sta][chn].append(paths)
 
-                else:
-                    data_map['nets'][net][sta][chn] = [paths]
-
-                size = size + 1
 
         return data_map, size
 
