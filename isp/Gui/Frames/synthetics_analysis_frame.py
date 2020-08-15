@@ -40,6 +40,9 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         self.canvas = MatplotlibCanvas(self.plotMatWidget_3C)
         self.canvas.set_new_subplot(3, ncols=1)
 
+        # Map
+        self.cartopy_canvas = CartopyCanvas(self.map_widget)
+
         # binds
         self.root_path_bind_3C = BindPyqtObject(self.rootPathForm_3C, self.onChange_root_path_3C)
         self.vertical_form_bind = BindPyqtObject(self.verticalQLineEdit)
@@ -117,7 +120,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
     def on_click_rotate(self, canvas):
         time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
         time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
-        print(self.vertical_component_file)
+
         try:
             sd = SeismogramData(self.vertical_component_file)
             z = sd.get_waveform()
@@ -140,11 +143,11 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
             self.canvas.set_xlabel(2, "Time (s)")
             self.focmec_canvas.drawFocMec(30, 40, 50, [], [], [], [], 0)
-            #self.cartopy_canvas.plot_map(-4, 36, [], [], [], 0,resolution='low', stations=stations)
         except InvalidFile:
             self.info_message("Invalid mseed files. Please, make sure you have generated correctly the synthetics")
-        #except ValueError as error:
-        #    self.info_message(str(error))
+
+        self.__map_coords()
+
 
     def stationsInfo(self):
         files = []
@@ -169,6 +172,35 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
             self._stations_info = StationsInfo(sd)
             self._stations_info.show()
+
+    def __map_coords(self):
+        map_dict = {}
+        sd = []
+        with open(self.generation_params_file, 'rb') as f:
+            params = pickle.load(f)
+
+        n = len(params["bulk"])
+        for j in range(n):
+
+            for key in params["bulk"][j]:
+                if key == "latitude":
+                   lat = params["bulk"][j][key]
+
+                elif key == "longitude":
+                    lon = params["bulk"][j][key]
+
+                #elif key == "networkcode":
+                #    net = params["bulk"][j][key]
+
+                elif key == "stationcode":
+                    sta = params["bulk"][j][key]
+
+                    sd.append(sta)
+                    map_dict[sta] = [lon, lat]
+
+
+        self.cartopy_canvas.plot_map(params['sourcelongitude'], params['sourcelatitude'], -6, 36, 1000, 0,
+                                     resolution='low', stations=map_dict)
 
 
 

@@ -893,12 +893,13 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         ax.set_extent(extent, crs=ccrs.PlateCarree())
 
-        try:
-            if resolution is "high":
 
+        if resolution is "high":
+            try:
                 ax.add_wms(wms, layer)
-        except:
-
+            except:
+                pass
+        elif resolution is "low":
                 coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
                     edgecolor='k', alpha=0.6, linewidth=0.5, facecolor=cartopy.feature.COLORS['land'])
                 #ax.stock_img()

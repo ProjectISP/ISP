@@ -19,10 +19,10 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         self.progressbar.setLabelText(" Computing PPSDs ")
         self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
         self.progressbar.close()
+
         # Binding
         self.root_path_bind = BindPyqtObject(self.rootPathForm)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
-
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.datalessBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
@@ -32,6 +32,8 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         self.continueBtn.clicked.connect(lambda: self._ppsd_thread(self.ppsd_continue))
         self.saveBtn.clicked.connect(lambda: self.saveDB())
         self.loadBtn.clicked.connect(lambda: self.load_ppsd_db())
+        self.load_metadataBtn.clicked.connect(lambda: self.load_metadata())
+        self.add_dataBtn.clicked.connect(lambda: self.add_data())
 
     def _stopBtnCallback(self):
         if self.ppsds is not None:
@@ -58,36 +60,60 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         if dir_path:
             bind.value = dir_path
 
-    def onChange_metadata_path(self, value):
-        try:
-            self.__metadata_manager = MetadataManager(value)
-            self.inventory = self.__metadata_manager.get_inventory()
-        except:
-            pass
+    def load_metadata(self):
+        if self.dataless_path_bind.value is not "":
+            try:
+                self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
+                self.inventory = self.__metadata_manager.get_inventory()
+
+            except:
+                pass
 
     def process_ppsds(self):
         file_path = self.root_path_bind.value
+
         self.ppsds = ppsdsISP(file_path, self.inventory, self.lenghtSB.value(), self.overlapSB.value(),
                          self.smoothingSB.value(), self.periodSB.value())
 
         self.ppsds.fileProcessed.connect(self.progressbar.setValue)
-        ini_dict, size = self.ppsds.create_dict()
+        ini_dict, size = self.ppsds.create_dict(net_list = self.netsTx.text(),sta_list = self.stationsTx.text(),chn_list = self.chnTx.text())
         pyc.QMetaObject.invokeMethod(self.progressbar, 'setMaximum', qt.AutoConnection, pyc.Q_ARG(int, size))
         pyc.QMetaObject.invokeMethod(self.progressbar, 'setValue', qt.AutoConnection, pyc.Q_ARG(int, 0))
         self.db = self.ppsds.get_all_values(ini_dict)
-        print(self.db)
+        self.saveBtn.setEnabled(True)
 
 
     def ppsd_continue(self):
         self.ppsds.check= False
         self.ppsds.processedFiles = 0
-
         size = ppsdsISP.size_db(self.db)
         self.ppsds.blockSignals(False)
         pyc.QMetaObject.invokeMethod(self.progressbar, 'setMaximum', qt.AutoConnection, pyc.Q_ARG(int, size))
         pyc.QMetaObject.invokeMethod(self.progressbar, 'setValue', qt.AutoConnection, pyc.Q_ARG(int, 0))
         self.db = self.ppsds.get_all_values(self.db)
-        print(self.db)
+
+    def add_data(self):
+        file_path = self.root_path_bind.value
+        self.ppsds = ppsdsISP(file_path, self.inventory, self.lenghtSB.value(), self.overlapSB.value(),
+                              self.smoothingSB.value(), self.periodSB.value())
+
+        self.ppsds.fileProcessed.connect(self.progressbar.setValue)
+
+        if self.db:
+            ini_dict, size = self.ppsds.add_db_files(self.db, net_list=self.netsTx.text(), sta_list=self.stationsTx.text(),
+                                                    chn_list=self.chnTx.text())
+
+            pyc.QMetaObject.invokeMethod(self.progressbar, 'setMaximum', qt.AutoConnection, pyc.Q_ARG(int, size))
+            pyc.QMetaObject.invokeMethod(self.progressbar, 'setValue', qt.AutoConnection, pyc.Q_ARG(int, 0))
+            self.db = self.ppsds.get_all_values(ini_dict)
+            md = MessageDialog(self)
+            md.set_info_message("Data incorporated and processed")
+        else:
+            md = MessageDialog(self)
+            md.set_info_message("No data to add and process")
+
+
+
 
     def saveDB(self):
         if self.db:
@@ -96,6 +122,9 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
                                   self.smoothingSB.value(),self.periodSB.value()]
             path = pw.QFileDialog.getExistingDirectory(self,'Select Directory', self.root_path_bind.value)
             ppsdsISP.save_PPSDs(params, path, self.nameForm.text())
+        else:
+            md = MessageDialog(self)
+            md.set_info_message("No data to save in DB")
 
 
     def load_ppsd_db(self):
@@ -113,7 +142,9 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         self.smoothingSB.setEnabled(False)
         self.periodSB.setEnabled(False)
         self.processBtn.setEnabled(False)
-        self.continueBtn.setEnabled(False)
+        self.continueBtn.setEnabled(True)
+        self.add_dataBtn.setEnabled(True)
+        self.saveBtn.setEnabled(True)
         self.ppsds = ppsdsISP(file_path, self.inventory, self.lenghtSB.value(), self.overlapSB.value(),
                               self.smoothingSB.value(), self.periodSB.value())
         self.ppsds.fileProcessed.connect(self.progressbar.setValue)

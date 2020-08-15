@@ -229,7 +229,6 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
 
         # Canvas for FOCMEC  Results
         self.focmec_canvas = FocCanvas(self.widget_focmec)
-
         self.grid_latitude_bind = BindPyqtObject(self.gridlatSB)
         self.grid_longitude_bind = BindPyqtObject(self.gridlonSB)
         self.grid_depth_bind = BindPyqtObject(self.griddepthSB)
@@ -343,6 +342,7 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         import pandas as pd
         path_output = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "first_polarity.fp")
         self.firstpolarity_manager.create_input()
+        self.firstpolarity_manager.run_focmec()
         Station, Az, Dip, Motion = self.firstpolarity_manager.get_dataframe()
         cat,Plane_A=self.firstpolarity_manager.extract_focmec_info()
         #print(cat[0].focal_mechanisms[0])

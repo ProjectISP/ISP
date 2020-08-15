@@ -17,7 +17,7 @@ import pickle
 class ppsdsISP(pyc.QObject):
     fileProcessed = pyc.pyqtSignal(int)
 
-    def __init__(self, files_path, metadata, length, overlap, smoothing, period):
+    def __init__(self, files_path, metadata, length, overlap, smoothing, period, **kwargs):
         """
                 PPSDs utils for ISP.
 
@@ -35,19 +35,22 @@ class ppsdsISP(pyc.QObject):
         self.period = period
         self.check = False
         self.processedFiles = 0
-        #self.selection = kwargs.pop('selection')
-        #self.nets = kwargs.pop('nets').split(',')
-        #self.stations = kwargs.pop('stations').split(',')
-        #self.channels = kwargs.pop('channels').split(',')
 
 
-    def create_dict(self):
+
+
+    def create_dict(self, **kwargs):
+
+        net_list = kwargs.pop('net_list').split(',')
+        sta_list = kwargs.pop('sta_list').split(',')
+        chn_list = kwargs.pop('chn_list').split(',')
 
         obsfiles = [f for f in listdir(self.files_path) if isfile(join(self.files_path, f))]
         obsfiles.sort()
         data_map = {}
         data_map['nets'] = {}
         size = 0
+
         for i in obsfiles:
 
             paths = os.path.join(self.files_path, i)
@@ -59,31 +62,51 @@ class ppsdsISP(pyc.QObject):
                 sta = header[0].stats.station
                 stations = {sta: {}}
                 chn = header[0].stats.channel
+
+                ## Filter per nets
                 # 1. Check if the net exists, else add
-                #if self.selection[0] and self.nets.count(net) == 1:
                 if net not in data_map['nets']:
-                    data_map['nets'] = network
-                #else:
-                #    data_map['nets'] = network
+                    # 1.1 Check the filter per network
+
+                    if net in net_list:
+                        data_map['nets'].update(network)
+                    # 1.2 the filter per network is not activated
+                    if net_list[0] == "":
+                        data_map['nets'].update(network)
 
                 # 2. Check if the station exists, else add
-
-                if sta not in data_map['nets'][net]:
-                    data_map['nets'][net].update(stations)
+                try:
+                    if sta not in data_map['nets'][net]:
+                        if sta in sta_list:
+                            data_map['nets'][net].update(stations)
+                        if sta_list[0] == "":
+                            data_map['nets'][net].update(stations)
+                except:
+                    pass
 
                 # 3. Check if the channels exists, else add
+                try:
+                    if chn in data_map['nets'][net][sta]:
+                        if chn in chn_list:
+                            data_map['nets'][net][sta][chn].append(paths)
+                            size = size + 1
+                        if chn_list[0] == "":
+                            data_map['nets'][net][sta][chn].append(paths)
+                            size = size + 1
+                    else:
+                        if chn in chn_list:
+                            data_map['nets'][net][sta][chn] = [paths]
+                            size = size + 1
+                        if chn_list[0] == "":
+                            data_map['nets'][net][sta][chn] = [paths]
+                            size = size + 1
 
-                if chn in data_map['nets'][net][sta]:
-                    data_map['nets'][net][sta][chn].append(paths)
-
-                else:
-                    data_map['nets'][net][sta][chn] = [paths]
-
-                size = size + 1
+                except:
+                    pass
 
         return data_map, size
 
-    def get_all_values(self,nested_dictionary):
+    def get_all_values(self, nested_dictionary):
         for key, value in nested_dictionary.items():
             if self.check == False:
                 if type(value) is dict:
@@ -149,8 +172,11 @@ class ppsdsISP(pyc.QObject):
                         k = k + len(value)
         return k
 
-    def add_db_files(self, data_map):
+    def add_db_files(self, data_map, **kwargs):
 
+        net_list = kwargs.pop('net_list').split(',')
+        sta_list = kwargs.pop('sta_list').split(',')
+        chn_list = kwargs.pop('chn_list').split(',')
         obsfiles = [f for f in listdir(self.files_path) if isfile(join(self.files_path, f))]
         obsfiles.sort()
 
@@ -166,27 +192,46 @@ class ppsdsISP(pyc.QObject):
                 sta = header[0].stats.station
                 stations = {sta: {}}
                 chn = header[0].stats.channel
+
+                ## Filter per nets
                 # 1. Check if the net exists, else add
-                #if self.selection[0] and self.nets.count(net) == 1:
                 if net not in data_map['nets']:
-                    data_map['nets'] = network
-                #else:
-                #    data_map['nets'] = network
+                    # 1.1 Check the filter per network
+
+                    if net in net_list:
+                        data_map['nets'].update(network)
+                    # 1.2 the filter per network is not activated
+                    if net_list[0] == "":
+                        data_map['nets'].update(network)
 
                 # 2. Check if the station exists, else add
+                try:
+                    if sta not in data_map['nets'][net]:
+                        if sta in sta_list:
+                            data_map['nets'][net].update(stations)
+                        if sta_list[0] == "":
+                            data_map['nets'][net].update(stations)
+                except:
+                    pass
 
-                if sta not in data_map['nets'][net]:
-                    data_map['nets'][net].update(stations)
+                # 3.1 Check if the channels exists, else add
 
-                # 3. Check if the channels exists, else add
-
-                if chn in data_map['nets'][net][sta] and type(data_map['nets'][net][sta][chn][0]) == list:
-                    data_map['nets'][net][sta][chn][0].append(paths)
-
-                else:
-                    data_map['nets'][net][sta][chn][0] = [paths]
-
-                size = size + 1
+                try:
+                    if chn in data_map['nets'][net][sta] and type(data_map['nets'][net][sta][chn][0]) == list:
+                        if chn in chn_list:
+                            data_map['nets'][net][sta][chn][0].append(paths)
+                            size = size + 1
+                        if chn_list[0] == "":
+                            size = size + 1
+                    else:
+                        if chn in chn_list:
+                            data_map['nets'][net][sta][chn] = [paths]
+                            size = size + 1
+                        if chn_list[0] == "":
+                            data_map['nets'][net][sta][chn] = [paths]
+                            size = size + 1
+                except:
+                    pass
 
         return data_map, size
 
