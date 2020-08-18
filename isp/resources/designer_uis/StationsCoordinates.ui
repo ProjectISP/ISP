@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>589</width>
-    <height>409</height>
+    <width>565</width>
+    <height>498</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -41,17 +41,42 @@
      </column>
      <column>
       <property name="text">
-       <string>Depth</string>
+       <string>Depth (m)</string>
       </property>
      </column>
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="addBtn">
-     <property name="text">
-      <string>Add Station Coordinates</string>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="addBtn">
+       <property name="text">
+        <string>Add station</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="saveBtn">
+       <property name="text">
+        <string>Save Coordinates</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Station File Name</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="rootPathForm"/>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

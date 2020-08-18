@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from obspy import Stream
+from obspy import Stream, UTCDateTime
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.seismogram_analysis import SeismogramDataAdvanced
 from isp.Gui.Frames import BaseFrame, \
@@ -8,12 +8,14 @@ MatplotlibCanvas, UiArrayAnalysisFrame, CartopyCanvas, MatplotlibFrame, MessageD
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_coordinates import StationsCoords
 from isp.Gui.Frames.stations_info import StationsInfo
+from isp.Gui.Frames.vespagram import Vespagram
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Gui import pw
 import os
 import matplotlib.dates as mdt
-
-from isp.Utils import MseedUtil
+from datetime import date
+import pandas as pd
+from isp.Utils import MseedUtil, AsycTime
 from isp.arrayanalysis import array_analysis
 
 
@@ -38,7 +40,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas.set_new_subplot(1, ncols=1)
 
         #Binding
-        self.root_path_bind = BindPyqtObject(self.rootPathForm)
+
         self.root_pathFK_bind = BindPyqtObject(self.rootPathFormFK)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
@@ -46,6 +48,10 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.fmax_bind = BindPyqtObject(self.fmaxSB)
         self.grid_bind = BindPyqtObject(self.gridSB)
         self.smax_bind = BindPyqtObject(self.smaxSB)
+
+        # On select
+
+        self.canvas_fk.register_on_select(self.on_select, rectprops=dict(alpha=0.2, facecolor='red'))
 
 
         self.fminFK_bind = BindPyqtObject(self.fminFKSB)
@@ -56,7 +62,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.slow_grid_bind = BindPyqtObject(self.gridFKSB)
 
         # Bind buttons
-        self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
+
         self.selectDirBtnFK.clicked.connect(lambda: self.on_click_select_directory(self.root_pathFK_bind))
         self.datalessBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
 
@@ -68,13 +74,16 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.actionWrite.triggered.connect(self.write)
 
         self.stationsBtn.clicked.connect(self.stationsInfo)
-        self.stations_coordsBtn.clicked.connect(self.stations_coordinates)
-
+        self.mapBtn.clicked.connect(self.stations_map)
+        self.actionCreate_Stations_File.triggered.connect(self.stations_coordinates)
+        self.actionLoad_Stations_File.triggered.connect(self.load_path)
+        self.actionRunVespagram.triggered.connect(self.open_vespagram)
         # Parameters settings
         self.__parameters = ParametersSettings()
 
         # Stations Coordinates
         self.__stations_coords = StationsCoords()
+
 
     def open_parameters_settings(self):
         self.__parameters.show()
@@ -82,12 +91,18 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
     def stations_coordinates(self):
         self.__stations_coords.show()
 
+    def open_vespagram(self):
+        if self.st and self.inventory and self.t1 and self.t2:
+            self.__vespagram = Vespagram(self.st, self.inventory, self.t1, self.t2)
+            self.__vespagram.show()
+
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
         if dir_path:
             bind.value = dir_path
 
+    @AsycTime.run_async()
     def onChange_metadata_path(self, value):
         try:
             self.__metadata_manager = MetadataManager(value)
@@ -95,25 +110,42 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         except:
             pass
 
-    def arf(self):
-        # Test get coordinates#
-        coords = self.__stations_coords.getCoordinates()
-        print(coords)
+    def load_path(self):
+        selected_file = pw.QFileDialog.getOpenFileName(self, "Select Stations Coordinates file")
+        self.path_file = selected_file[0]
+        df = pd.read_csv(self.path_file, delim_whitespace=True)
+        n = len(df)
+        self.coords = np.zeros([n, 3])
+        for i in range(n):
+            #coords[i]=data[i]
+            self.coords[i] = np.array([df['Lon'][i], df['Lat'][i], df['Depth'][i]])
 
-        coords_path = os.path.join(self.root_path_bind.value, "coords.txt")
-        wavenumber = array_analysis.array()
-        arf,coords = wavenumber.arf(coords_path, self.fmin_bind.value, self.fmax_bind.value, self.smax_bind.value)
-        slim = self.smax_bind.value
-        sstep = slim / len(arf)
-        x = np.linspace(-1 * slim, slim, (slim - (-1 * slim) / sstep))
-        y = np.linspace(-1 * slim, slim, (slim - (-1 * slim) / sstep))
-        self.canvas.plot_contour(x, y, arf, axes_index=0, clabel="Power [dB]", cmap=plt.get_cmap("jet"))
-        self.canvas.set_xlabel(0, "Sx (s/km)")
-        self.canvas.set_ylabel(0, "Sy (s/km)")
-        #lon=coords[:,1]
-        #lat=coords[:,0]
-        #depth=coords[:,2]
-        #self.cartopy_canvas.plot_stations(lon, lat, depth, 0)
+    def arf(self):
+
+        if self.coords.all():
+
+            wavenumber = array_analysis.array()
+            arf = wavenumber.arf(self.coords, self.fmin_bind.value, self.fmax_bind.value,
+                                         self.smax_bind.value, self.grid_bind.value)
+
+            slim = self.smax_bind.value
+            x = y = np.linspace(-1 * slim, slim, len(arf))
+            self.canvas.plot_contour(x, y, arf, axes_index=0, clabel="Power [dB]", cmap=plt.get_cmap("jet"))
+            self.canvas.set_xlabel(0, "Sx (s/km)")
+            self.canvas.set_ylabel(0, "Sy (s/km)")
+
+
+    def stations_map(self):
+        coords = {}
+        if self.path_file:
+            df = pd.read_csv(self.path_file, delim_whitespace=True)
+            n = len(df)
+            self.coords = np.zeros([n, 3])
+            for i in range(n):
+                 coords[df['Name'][i]]=[df['Lon'][i], df['Lat'][i]]
+        #resolution = self.resCB.currentText()
+        self.cartopy_canvas.plot_map(df['Lon'][0], df['Lat'][0], 0, 0, 0, 0, resolution = "low",
+                                     stations = coords)
 
     def FK_plot(self):
         self.canvas_stack.set_new_subplot(nrows=1, ncols=1)
@@ -231,5 +263,28 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             path_output =  os.path.join(dir_path, tr.id)
             tr.write(path_output, format="MSEED")
 
+    def __to_UTC(self, DT):
 
+        # Convert start from Greogorian to actual date
+        Time = DT
+        Time = Time - int(Time)
+        d = date.fromordinal(int(DT))
+        date1 = d.isoformat()
+        H = (Time * 24)
+        H1 = int(H)  # Horas
+        minutes = (H - int(H)) * 60
+        minutes1 = int(minutes)
+        seconds = (minutes - int(minutes)) * 60
+        H1 = str(H1).zfill(2)
+        minutes1 = str(minutes1).zfill(2)
+        seconds = "%.2f" % seconds
+        seconds = str(seconds).zfill(2)
+        DATE = date1 + "T" + str(H1) + minutes1 + seconds
+
+        t1 = UTCDateTime(DATE)
+        return t1
+
+    def on_select(self, ax_index, xmin, xmax):
+        self.t1 = self.__to_UTC(xmin)
+        self.t2 = self.__to_UTC(xmax)
 

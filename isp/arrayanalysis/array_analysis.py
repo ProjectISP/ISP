@@ -19,6 +19,8 @@ from nitime import utils
 from datetime import date
 from scipy.signal import hilbert
 from scipy.fftpack import next_fast_len
+from isp.Gui import pw
+import pandas as pd
 
 
 
@@ -27,7 +29,7 @@ class array:
 
     def __init__(self):
         """
-                FK and Multitaper Coherence program.
+                ARF, (FK and Multitaper) Coherence program and Vespagram.
 
 
 
@@ -35,20 +37,19 @@ class array:
         """
 
 
-    def arf(self, path, fmin, flim, slim):
+   # def load_stations_coords(self):
 
-        data=np.loadtxt(path,skiprows=1,usecols = (1,2,3))
-        n=len(data)
-        coords=np.zeros([n,3])
-        for i in range(n):
-            coords[i]=data[i]
-        print(coords)
-        sstep = slim / 50
-        fstep= flim / 50
+
+
+    def arf(self, coords, fmin, flim, slim, sgrid):
+
+
+        sstep = sgrid
+        fstep= flim / 40
         fmax=flim
-        transff=array_transff_freqslowness(coords, slim, sstep, fmin, fmax, fstep, coordsys='lonlat')
+        transff = array_transff_freqslowness(coords, slim, sstep, fmin, fmax, fstep, coordsys='lonlat')
 
-        return transff,coords
+        return transff
 
     def azimuth2mathangle(self, azimuth):
         if azimuth <= 90:
@@ -315,8 +316,9 @@ class array:
         return stack
 
 
-class vespagram:
-    def __init__(self,st, linf, lsup, win_len, slow, baz, method, inv):
+class vespagram_util:
+    
+    def __init__(self, st, linf, lsup, win_len, slow, baz, inv, t1, t2, res, method = "FK"):
         """
         Vespagram, computed a fixed slowness or backazimuth
 
@@ -327,7 +329,10 @@ class vespagram:
         slow = slowness of analysis
         baz backazimuth of analysis
         """
+
         self.st = st
+        self.t1 = t1
+        self.t2 = t2
         self.inv = inv
         self.method = method
         self.linf = linf
@@ -335,27 +340,54 @@ class vespagram:
         self.win_len = win_len
         self.slow = slow
         self.baz = baz
-
-    def vespa(self, start_time=None, end_time=None):
-        npts = len(self.st[0])
-        fs = self.st[0].stats.sampling_rate
-        # lim = int((npts/fs) - self.win_len)
-        self.st.trim(starttime=start_time, endtime=end_time)
-        [t,vesp_deg] = self.__vespa(start_time, end_time)
+        self.res = res
 
 
-    def __vespa(self, st, t1, t2):
-        npts = len(st[0].data)
-        lim = (t2-t1) - self.win_len
-        vesp_deg = np.zeros([360, lim])
-        t = np.linspace(0, (st[0].stats.delta * npts), npts - self.win_len)
-        for n in range(start = 0, stop = lim, step = self.win_len):
-            st_copy=st.copy
-            st_copy.trim(starttime=t1+n, endtime=t2+n)
-            vesp_deg[:,n]=self.__vespa_slow(st.copy)
+    def azimuth2mathangle(self, azimuth):
+        if azimuth <= 90:
+            mathangle = 90 - azimuth
+        elif 90 < azimuth <= 180:
+            mathangle = 270 + (180 - azimuth)
+        elif 180 < azimuth <= 270:
+            mathangle = 180 + (270 - azimuth)
+        else:
+            mathangle = 90 + (360 - azimuth)
+        return mathangle
 
-        return t,vesp_deg
+    def vespa_deg(self):
+        self.st.trim(starttime= self.t1, endtime=self.t2)
 
+        return self.__vespa()
+
+
+    def __vespa(self):
+        win_len = int(self.win_len*self.st[0].stats.sampling_rate)
+        npts = len(self.st[0].data)
+        delta = self.st[0].stats.delta
+
+        lim = npts - win_len
+
+
+        x = ((self.res)/100)*win_len
+        steps = np.arange(0, lim, npts/x)
+
+        vespa_spec = np.zeros([360, len(steps)])
+        j= 0
+        for n in np.nditer(steps):
+
+            st = self.st.copy()
+            start_time = self.t1 + n*delta
+            end_time = self.t1+self.win_len + n*delta
+            st.trim(starttime=start_time, endtime=end_time)
+            slow_spectrum = self.__vespa_slow(st)
+            vespa_spec[:, j] = slow_spectrum
+            j = j + 1
+
+        log_vespa_spectrogram = 10. * np.log(vespa_spec / np.max(vespa_spec))
+        t = np.linspace(0, self.t2-self.t1, log_vespa_spectrogram.shape[1])
+        x, y = np.meshgrid(t, np.linspace(0, 360, log_vespa_spectrogram.shape[0]))
+
+        return x, y, log_vespa_spectrogram
 
 
 
@@ -365,6 +397,17 @@ class vespagram:
 
             idx, val = min(enumerate(array), key=lambda x: abs(x[1] - value))
             return idx, val
+
+        def azimuth2mathangle(azimuth):
+            if azimuth <= 90:
+                mathangle = 90 - azimuth
+            elif 90 < azimuth <= 180:
+                mathangle = 270 + (180 - azimuth)
+            elif 180 < azimuth <= 270:
+                mathangle = 180 + (270 - azimuth)
+            else:
+                mathangle = 90 + (360 - azimuth)
+            return mathangle
 
         sides = 'onesided'
         pi = math.pi
@@ -456,8 +499,9 @@ class vespagram:
 
         rad = np.pi/180
         for j in range(360):
-            S[0, 0] = self.slow*np.cos(rad * j)
-            S[0, 1] = self.slow*np.sin(rad * j)
+            j = azimuth2mathangle(j)
+            S[0, 0] = self.slow*np.cos(rad * (j))
+            S[0, 1] = self.slow*np.sin(rad * (j))
             k = (S * r)
             K = np.sum(k, axis=1)
             n = 0
@@ -468,6 +512,7 @@ class vespagram:
                 P = np.matmul(D, A) / nr
                 Pow[j] += np.abs(P)
                 n = n + 1
+
 
         Pow = Pow / len(freq)
 

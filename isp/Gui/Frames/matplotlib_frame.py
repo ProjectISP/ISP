@@ -875,7 +875,6 @@ class CartopyCanvas(BasePltPyqtCanvas):
             lat.append(float(coords[1]))
             lon.append(float(coords[0]))
 
-        # TODO implement a useful plot for cartopy this is just a test.
         self.clear()
         ax = self.get_axe(axes_index)
 
@@ -931,7 +930,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
 
         ax.plot(x, y, color='red', marker='*',markersize=3)
-        ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", alpha=0.3,cmap=plt.get_cmap('YlOrBr'))
+        ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", alpha=0.3, cmap=plt.get_cmap('YlOrBr'))
 
         # Create an inset GeoAxes showing the Global location
         sub_ax = ax.figure.add_axes([0.70, 0.73, 0.28, 0.28], projection=ccrs.PlateCarree())

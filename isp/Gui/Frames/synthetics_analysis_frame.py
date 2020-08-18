@@ -199,7 +199,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                     map_dict[sta] = [lon, lat]
 
 
-        self.cartopy_canvas.plot_map(params['sourcelongitude'], params['sourcelatitude'], -6, 36, 1000, 0,
+        self.cartopy_canvas.plot_map(params['sourcelongitude'], params['sourcelatitude'], 0, 0, 0, 0,
                                      resolution='low', stations=map_dict)
 
 
