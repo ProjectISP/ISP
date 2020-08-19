@@ -35,20 +35,40 @@ class Vespagram(pw.QFrame, UiVespagram):
 
     def run_vespa(self):
 
+
         vespa = vespagram_util(self.st, self.freq_min_DB.value(), self.freq_max_DB.value(), self.win_len_DB.value(),
                                self.slownessDB.value(), self.backazimuthCB.value(), self.inv, self.t1, self.t2,
-                               self.overlapSB.value(), method = "FK")
+                               self.overlapSB.value(), selection = self.selectionCB.currentText(), method = "FK")
 
         self.x, self.y, self.log_vespa_spectrogram = vespa.vespa_deg()
         md = MessageDialog(self)
         md.set_info_message("Vespagram Estimated !!!")
 
+
     def plot_vespa(self):
+
+        if self.selectionCB.currentText() == "Slowness":
+            self.__plot_vespa_slow()
+        else:
+            self.__plot_vespa_az()
+
+
+    def __plot_vespa_slow(self):
         base_line = self.base_lineDB.value()
         colour = self.colourCB.currentText()
         vespagram = np.clip(self.log_vespa_spectrogram, a_min=base_line, a_max=0)
 
-        self.canvas_vespagram.plot_contour(self.x, self.y, vespagram, axes_index=0, clabel="Cross Power [dB]",
+        self.canvas_vespagram.plot_contour(self.x, self.y, vespagram, axes_index=0, clabel="Power [dB]",
                                            cmap=plt.get_cmap(colour))
         self.canvas_vespagram.set_xlabel(0, "Time (s)")
-        self.canvas_vespagram.set_ylabel(0, "Azimuth ")
+        self.canvas_vespagram.set_ylabel(0, "Azimuth")
+
+    def __plot_vespa_az(self):
+        base_line = self.base_lineDB.value()
+        colour = self.colourCB.currentText()
+        vespagram = np.clip(self.log_vespa_spectrogram, a_min=base_line, a_max=0)
+
+        self.canvas_vespagram.plot_contour(self.x, self.y, vespagram, axes_index=1, clabel="Power [dB]",
+                                           cmap=plt.get_cmap(colour))
+        self.canvas_vespagram.set_xlabel(1, "Time (s)")
+        self.canvas_vespagram.set_ylabel(1, "Slowness (s/km)")

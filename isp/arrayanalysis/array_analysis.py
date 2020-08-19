@@ -83,7 +83,7 @@ class array:
 
         try:
             out = array_processing(st, **kwargs)
-            print("Finished")
+
 
             T = out[:, 0]
             relpower = out[:, 1]
@@ -135,7 +135,6 @@ class array:
         seconds = "%.2f" % seconds
         seconds = str(seconds).zfill(2)
         DATE = date1 + "T" + str(H1) + minutes1 + seconds
-        print(DATE)
         t1 = UTCDateTime(DATE)
         ########End conversion###############################
 
@@ -318,7 +317,8 @@ class array:
 
 class vespagram_util:
     
-    def __init__(self, st, linf, lsup, win_len, slow, baz, inv, t1, t2, res, method = "FK"):
+    def __init__(self, st, linf, lsup, win_len, slow, baz, inv, t1, t2, res, selection = "Slowness", method = "FK"):
+
         """
         Vespagram, computed a fixed slowness or backazimuth
 
@@ -341,6 +341,7 @@ class vespagram_util:
         self.slow = slow
         self.baz = baz
         self.res = res
+        self.selection = selection
 
 
     def azimuth2mathangle(self, azimuth):
@@ -361,6 +362,7 @@ class vespagram_util:
 
 
     def __vespa(self):
+
         win_len = int(self.win_len*self.st[0].stats.sampling_rate)
         npts = len(self.st[0].data)
         delta = self.st[0].stats.delta
@@ -379,13 +381,21 @@ class vespagram_util:
             start_time = self.t1 + n*delta
             end_time = self.t1+self.win_len + n*delta
             st.trim(starttime=start_time, endtime=end_time)
-            slow_spectrum = self.__vespa_slow(st)
+            if self.selection == "Slowness":
+                slow_spectrum = self.__vespa_slow(st)
+            else:
+                slow_spectrum = self.__vespa_az(st)
+
             vespa_spec[:, j] = slow_spectrum
             j = j + 1
 
         log_vespa_spectrogram = 10. * np.log(vespa_spec / np.max(vespa_spec))
         t = np.linspace(0, self.t2-self.t1, log_vespa_spectrogram.shape[1])
-        x, y = np.meshgrid(t, np.linspace(0, 360, log_vespa_spectrogram.shape[0]))
+
+        if self.selection == "Slowness":
+            x, y = np.meshgrid(t, np.linspace(0, 360, log_vespa_spectrogram.shape[0]))
+        else:
+            x, y = np.meshgrid(t, np.linspace(-1*self.slow, self.slow, log_vespa_spectrogram.shape[0]))
 
         return x, y, log_vespa_spectrogram
 
@@ -459,8 +469,7 @@ class vespagram_util:
         for i in range(nr):
             w[i], _ = utils.adaptive_weights(tspectra[i], eigs, sides=sides)
 
-        nseq = nr
-        L = int(nfft)
+
         Cx = np.ones((nr, nr, df), dtype=np.complex128)
 
         if self.method == "MTP.COHERENCE":
@@ -518,4 +527,130 @@ class vespagram_util:
 
         return Pow
 
+    def __vespa_az(self, st):
 
+        def find_nearest(array, value):
+
+            idx, val = min(enumerate(array), key=lambda x: abs(x[1] - value))
+            return idx, val
+
+        def azimuth2mathangle(azimuth):
+            if azimuth <= 90:
+                mathangle = 90 - azimuth
+            elif 90 < azimuth <= 180:
+                mathangle = 270 + (180 - azimuth)
+            elif 180 < azimuth <= 270:
+                mathangle = 180 + (270 - azimuth)
+            else:
+                mathangle = 90 + (360 - azimuth)
+            return mathangle
+
+        sides = 'onesided'
+        pi = math.pi
+        st.sort()
+        n = len(st)
+        for i in range(n):
+            coords = self.inv.get_coordinates(st[i].id)
+            st[i].stats.coordinates = AttribDict(
+                {'latitude': coords['latitude'], 'elevation': coords['elevation'], 'longitude': coords['longitude']})
+
+        coord = get_geometry(st, coordsys='lonlat', return_center=True)
+
+        tr = st[0]
+        win = len(tr.data)
+        if (win % 2) == 0:
+            nfft = win / 2 + 1
+        else:
+            nfft = (win + 1) / 2
+
+        nr = st.count()  # number of stations
+        delta = st[0].stats.delta
+        fs = 1 / delta
+        fn = fs / 2
+        freq = np.arange(0, fn, fn / nfft)
+
+        value1, freq1 = find_nearest(freq, self.linf)
+        value2, freq2 = find_nearest(freq, self.lsup)
+        df = value2 - value1
+        m = np.zeros((win, nr))
+
+        WW=np.hamming(int(win))
+        WW=np.transpose(WW)
+        for i in range(nr):
+            tr = st[i]
+            if self.method == "FK":
+                m[:,i]=(tr.data-np.mean(tr.data))*WW
+            else:
+                m[:, i] = (tr.data - np.mean(tr.data))
+        pdata = np.transpose(m)
+
+        #####Coherence######
+        NW = 2  # the time-bandwidth product##Buena seleccion de 2-3
+        K = 2 * NW - 1
+        tapers, eigs = alg.dpss_windows(win, NW, K)
+        tdata = tapers[None, :, :] * pdata[:, None, :]
+        tspectra = fftpack.fft(tdata)
+
+        w = np.empty((nr, int(K), int(nfft)))
+        for i in range(nr):
+            w[i], _ = utils.adaptive_weights(tspectra[i], eigs, sides=sides)
+
+        Cx = np.ones((nr, nr, df), dtype=np.complex128)
+
+        if self.method == "MTP.COHERENCE":
+            for i in range(nr):
+                for j in range(nr):
+                    sxy = alg.mtm_cross_spectrum(tspectra[i], (tspectra[j]), (w[i], w[j]), sides='onesided')
+                    sxx = alg.mtm_cross_spectrum(tspectra[i], tspectra[i], w[i], sides='onesided')
+                    syy = alg.mtm_cross_spectrum(tspectra[j], tspectra[j], w[j], sides='onesided')
+                    s = sxy / np.sqrt((sxx * syy))
+                    cxcohe = s[value1:value2]
+                    Cx[i, j, :] = cxcohe
+
+        ####Calculates Conventional FK-power  ##without normalization
+        if self.method == "FK":
+            for i in range(nr):
+                for j in range(nr):
+                    A = np.fft.rfft(m[:, i])
+                    B = np.fft.rfft(m[:, j])
+                    #Power
+                    #out = A * np.conjugate(B)
+
+                    #Relative Power
+                    den=np.absolute(A)*np.absolute(np.conjugate(B))
+                    out = (A * np.conjugate(B))/den
+
+                    cxcohe = out[value1:value2]
+                    Cx[i, j, :] = cxcohe
+
+        r = np.zeros((nr, 2))
+        S = np.zeros((1, 2))
+        Pow = np.zeros(360)
+        for n in range(nr):
+            r[n, :] = coord[n][0:2]
+
+        freq = freq[value1:value2]
+
+        rad = np.pi/180
+        #slow_range = np.arange(-1*self.slow, self.slow, self.slow/360)
+        slow_range = np.linspace(-1*self.slow, self.slow, 360)
+
+        for j in range(360):
+
+            S[0, 0] = slow_range[j]*np.cos(rad * self.baz)
+            S[0, 1] = slow_range[j]*np.sin(rad * self.baz)
+            k = (S * r)
+            K = np.sum(k, axis=1)
+            n = 0
+            for f in freq:
+                A = np.exp(-1j * 2 * pi * f) ** K
+                B = np.conjugate(np.transpose(A))
+                D = np.matmul(B, Cx[:, :, n]) / nr
+                P = np.matmul(D, A) / nr
+                Pow[j] += np.abs(P)
+                n = n + 1
+
+
+        Pow = Pow / len(freq)
+
+        return Pow

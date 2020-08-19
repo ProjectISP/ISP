@@ -163,7 +163,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_fk.set_ylabel(0, " Rel Power ")
         self.canvas_fk.set_ylabel(1, " Absolute Power ")
         self.canvas_fk.set_ylabel(2, " Back Azimuth ")
-        self.canvas_fk.set_ylabel(3, " Slowness ")
+        self.canvas_fk.set_ylabel(3, " Slowness [s/km] ")
         self.canvas_fk.set_xlabel(3, "Time [s]")
         ax = self.canvas_fk.get_axe(3)
         formatter = mdt.DateFormatter('%H:%M:%S')
