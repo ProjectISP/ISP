@@ -60,6 +60,12 @@ class PPSDFrame(BaseFrame, UiPPSDs):
                 self.comboBox_2.setCurrentIndex(new_index)
     
     def plot_ppsds(self, stations_per_page):
+        
+        # Check which radiobutton is checked: PDFs or Variation
+        if self.radioButton.isChecked():
+            plot_mode = "pdf"
+        elif self.radioButton_2.isChecked():
+            plot_mode = "variation"
 
         stations_per_page = self.spinBox.value()
         #mode = self.comboBox.currentText() # NOT YET IMPLEMENTED
@@ -128,25 +134,65 @@ class PPSDFrame(BaseFrame, UiPPSDs):
             
             c = 0 # c index of channel in current station
             for chnm in sorted(db_query[stnm]['channels']):
-            
+                # THIS WILL BE MOVED TO AN EXTERNAL METHOD IN A FUTURE REVISION
                 ppsd = self.ppsd_db['nets'][ntwk][stnm][chnm][1]
                 ppsd.calculate_histogram()
-                zdata = (ppsd.current_histogram * 100 / (ppsd.current_histogram_count or 1))
-                xedges = ppsd.period_xedges
-                yedges = ppsd.db_bin_edges
-                meshgrid = np.meshgrid(xedges, yedges)                    
-                mode = ppsd.db_bin_centers[ppsd._current_hist_stack.argmax(axis=1)]            
+                
+                if plot_mode == "pdf":
+                
+                    zdata = (ppsd.current_histogram * 100 / (ppsd.current_histogram_count or 1))
+                    xedges = ppsd.period_xedges
+                    yedges = ppsd.db_bin_edges
+                    meshgrid = np.meshgrid(xedges, yedges)                    
+                    mode = ppsd.db_bin_centers[ppsd._current_hist_stack.argmax(axis=1)]            
+    
+                    self.mplwidget.figure.axes[j + c].pcolormesh(meshgrid[0], meshgrid[1], zdata.T, cmap=obspy.imaging.cm.pqlx)
+                    self.mplwidget.figure.axes[j + c].set_xscale("log")
+                    self.mplwidget.figure.axes[j + c].plot(ppsd.period_bin_centers, mode, color='black', linewidth=2, linestyle='--', label="Mode")
+                    
+                    self.mplwidget.figure.axes[j + c].set_xscale("log")
+                    
+                    self.mplwidget.figure.axes[j + c].set_xlabel("Period (s)")
+                    self.mplwidget.figure.axes[j + c].set_ylabel("Amplitude (dB)")
+                
+                elif plot_mode == "variation":
+                    # THIS WILL BE MOVED TO AN EXTERNAL METHOD IN A FUTURE REVISION
+                    hist_dict = {}
+                    num_period_bins = len(ppsd.period_bin_centers)
+                    num_db_bins = len(ppsd.db_bin_centers)
+                    for i in range(24):
+                        hist_dict.setdefault(i, np.zeros((num_period_bins, num_db_bins), dtype=np.uint64))
 
-                self.mplwidget.figure.axes[j + c].pcolormesh(meshgrid[0], meshgrid[1], zdata.T, cmap=obspy.imaging.cm.pqlx)
-                self.mplwidget.figure.axes[j + c].set_xscale("log")
-                self.mplwidget.figure.axes[j + c].plot(ppsd.period_bin_centers, mode, color='black', linewidth=2, linestyle='--', label="Mode")
-                
-                self.mplwidget.figure.axes[j + c].set_xscale("log")
-                
+                    for i, time in enumerate(ppsd.times_processed):
+                        year = time.year
+                        jday = time.julday
+                        hour = time.hour
+                        inds = ppsd._binned_psds[i]
+                        inds = ppsd.db_bin_edges.searchsorted(inds, side="left") - 1
+                        inds[inds == -1] = 0
+                        inds[inds == num_db_bins] -= 1
+                        for i, inds_ in enumerate(inds):
+                            # count how often each bin has been hit for this period bin,
+                            # set the current 2D histogram column accordingly
+                            hist_dict[hour][i, inds_] += 1
+
+                    # Finally compute statistical mode for each hour:
+                    modes = []
+                    for i in sorted(list(hist_dict.keys())):
+                        current_hist = hist_dict[i]
+                        mode = ppsd.db_bin_centers[current_hist.argmax(axis=1)]
+                        modes.append(mode)
+                    
+                    x = ppsd.period_bin_centers
+                    y = np.arange(1, 25, 1)
+
+                    self.mplwidget.figure.axes[j + c].contourf(y, x, np.array(modes).T, cmap=obspy.imaging.cm.pqlx, levels=200)
+                    self.mplwidget.figure.axes[j + c].set_xlabel("GMT Hour")
+                    self.mplwidget.figure.axes[j + c].set_ylabel("Period (s)")
+                    self.mplwidget.figure.axes[j + c].set_ylim(0.02, 120)
+
                 self.mplwidget.figure.axes[j + c].set_title(chnm, fontsize=9, fontweight="medium")
-                self.mplwidget.figure.axes[j + c].set_xlabel("Period (s)")
-                self.mplwidget.figure.axes[j + c].set_ylabel("Amplitude (dB)")
-                
+
                 if c == 0:
                     self.mplwidget.figure.axes[j].set_title(stnm, loc="left", fontsize=11, fontweight="bold")
                 

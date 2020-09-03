@@ -98,19 +98,30 @@
               <string>Variation</string>
              </property>
              <property name="checkable">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboBox"/>
+            <widget class="QComboBox" name="comboBox">
+             <item>
+              <property name="text">
+               <string>Diurnal</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Seasonal</string>
+              </property>
+             </item>
+            </widget>
            </item>
           </layout>
          </item>
          <item>
           <widget class="QRadioButton" name="radioButton">
            <property name="text">
-            <string>PPSD</string>
+            <string>PDF</string>
            </property>
            <property name="checkable">
             <bool>true</bool>
@@ -295,5 +306,22 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>radioButton_2</sender>
+   <signal>pressed()</signal>
+   <receiver>radioButton</receiver>
+   <slot>toggle()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>72</x>
+     <y>138</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>60</x>
+     <y>165</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
