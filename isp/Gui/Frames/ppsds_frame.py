@@ -1,8 +1,12 @@
 from isp.Gui.Frames import BaseFrame, UiPPSDs
 from isp.Gui.Frames.ppsds_db_frame import PPSDsGeneratorDialog
+import isp.receiverfunctions.rf_dialogs as dialogs # using save_figure dialog
 
 from PyQt5 import uic, QtGui, QtCore, QtWidgets
 import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
+import io
+import pickle
 import numpy as np
 import obspy.imaging.cm
 from functools import partial
@@ -32,6 +36,7 @@ class PPSDFrame(BaseFrame, UiPPSDs):
         self.comboBox_2.currentIndexChanged.connect(self.plot_ppsds)
         self.pushButton.clicked.connect(partial(self.change_page_index, "decrease_index"))
         self.pushButton_2.clicked.connect(partial(self.change_page_index, "increase_index"))
+        self.pushButton_3.clicked.connect(self.save_plot)
         #self.comboBox_2.currentTextChanged.connect(self.plot_ppsds)
 
     def run_ppsds(self):
@@ -60,6 +65,9 @@ class PPSDFrame(BaseFrame, UiPPSDs):
                 self.comboBox_2.setCurrentIndex(new_index)
     
     def plot_ppsds(self, stations_per_page):
+        
+        starttime = obspy.UTCDateTime(self.dateTimeEdit_4.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz000Z"))
+        endtime = obspy.UTCDateTime(self.dateTimeEdit_5.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz000Z"))
         
         # Check which radiobutton is checked: PDFs or Variation
         if self.radioButton.isChecked():
@@ -136,7 +144,11 @@ class PPSDFrame(BaseFrame, UiPPSDs):
             for chnm in sorted(db_query[stnm]['channels']):
                 # THIS WILL BE MOVED TO AN EXTERNAL METHOD IN A FUTURE REVISION
                 ppsd = self.ppsd_db['nets'][ntwk][stnm][chnm][1]
-                ppsd.calculate_histogram()
+                
+                if starttime == endtime:
+                    ppsd.calculate_histogram()
+                else:
+                    ppsd.calculate_histogram(starttime=starttime, endtime=endtime)
                 
                 if plot_mode == "pdf":
                 
@@ -156,40 +168,85 @@ class PPSDFrame(BaseFrame, UiPPSDs):
                     self.mplwidget.figure.axes[j + c].set_ylabel("Amplitude (dB)")
                 
                 elif plot_mode == "variation":
+                    variation = self.comboBox.currentText()
                     # THIS WILL BE MOVED TO AN EXTERNAL METHOD IN A FUTURE REVISION
-                    hist_dict = {}
-                    num_period_bins = len(ppsd.period_bin_centers)
-                    num_db_bins = len(ppsd.db_bin_centers)
-                    for i in range(24):
-                        hist_dict.setdefault(i, np.zeros((num_period_bins, num_db_bins), dtype=np.uint64))
-
-                    for i, time in enumerate(ppsd.times_processed):
-                        year = time.year
-                        jday = time.julday
-                        hour = time.hour
-                        inds = ppsd._binned_psds[i]
-                        inds = ppsd.db_bin_edges.searchsorted(inds, side="left") - 1
-                        inds[inds == -1] = 0
-                        inds[inds == num_db_bins] -= 1
-                        for i, inds_ in enumerate(inds):
-                            # count how often each bin has been hit for this period bin,
-                            # set the current 2D histogram column accordingly
-                            hist_dict[hour][i, inds_] += 1
-
-                    # Finally compute statistical mode for each hour:
-                    modes = []
-                    for i in sorted(list(hist_dict.keys())):
-                        current_hist = hist_dict[i]
-                        mode = ppsd.db_bin_centers[current_hist.argmax(axis=1)]
-                        modes.append(mode)
+                    if variation == "Diurnal":
+                        hist_dict = {}
+                        num_period_bins = len(ppsd.period_bin_centers)
+                        num_db_bins = len(ppsd.db_bin_centers)
+                        for i in range(24):
+                            hist_dict.setdefault(i, np.zeros((num_period_bins, num_db_bins), dtype=np.uint64))
+    
+                        for i, time in enumerate(ppsd.times_processed):
+                            if starttime != time:
+                                if not starttime < time < endtime:
+                                    continue
+                            year = time.year
+                            jday = time.julday
+                            hour = time.hour
+                            # Check here if time is inside starttime-endtime <---- TO DO
+                            inds = ppsd._binned_psds[i]
+                            inds = ppsd.db_bin_edges.searchsorted(inds, side="left") - 1
+                            inds[inds == -1] = 0
+                            inds[inds == num_db_bins] -= 1
+                            for i, inds_ in enumerate(inds):
+                                # count how often each bin has been hit for this period bin,
+                                # set the current 2D histogram column accordingly
+                                hist_dict[hour][i, inds_] += 1
+    
+                        # Finally compute statistical mode for each hour:
+                        modes = []
+                        for i in sorted(list(hist_dict.keys())):
+                            current_hist = hist_dict[i]
+                            mode = ppsd.db_bin_centers[current_hist.argmax(axis=1)]
+                            modes.append(mode)
+                        
+                        x = ppsd.period_bin_centers
+                        y = np.arange(1, 25, 1)
+    
+                        self.mplwidget.figure.axes[j + c].contourf(y, x, np.array(modes).T, cmap=obspy.imaging.cm.pqlx, levels=200)
+                        self.mplwidget.figure.axes[j + c].set_xlabel("GMT Hour")
+                        self.mplwidget.figure.axes[j + c].set_ylabel("Period (s)")
+                        self.mplwidget.figure.axes[j + c].set_ylim(0.02, 120)
+                    elif variation == "Seasonal":
+                        # Create blank 2D histogram for each hour
+                        hist_dict = {}
+                        num_period_bins = len(ppsd.period_bin_centers)
+                        num_db_bins = len(ppsd.db_bin_centers)
+                        for i in range(12):
+                            hist_dict.setdefault(i, np.zeros((num_period_bins, num_db_bins), dtype=np.uint64))
+                        for i, time in enumerate(ppsd.times_processed):
+                            if starttime != time:
+                                if not starttime < time < endtime:
+                                    continue
+                            year = time.year
+                            jday = time.julday
+                            hour = time.hour
+                            month = time.month
+                            inds = ppsd._binned_psds[i]
+                            inds = ppsd.db_bin_edges.searchsorted(inds, side="left") - 1
+                            inds[inds == -1] = 0
+                            inds[inds == num_db_bins] -= 1
+                            for i, inds_ in enumerate(inds):
+                                # count how often each bin has been hit for this period bin,
+                                # set the current 2D histogram column accordingly
+                                hist_dict[month - 1][i, inds_] += 1
                     
-                    x = ppsd.period_bin_centers
-                    y = np.arange(1, 25, 1)
+                        # Finally compute statistical mode for each month:
+                        modes = []
+                        for i in sorted(list(hist_dict.keys())):
+                            current_hist = hist_dict[i]
+                            mode = ppsd.db_bin_centers[current_hist.argmax(axis=1)]
+                            modes.append(mode)
+                        
+                        x = ppsd.period_bin_centers
+                        y = np.arange(1, 13, 1)
 
-                    self.mplwidget.figure.axes[j + c].contourf(y, x, np.array(modes).T, cmap=obspy.imaging.cm.pqlx, levels=200)
-                    self.mplwidget.figure.axes[j + c].set_xlabel("GMT Hour")
-                    self.mplwidget.figure.axes[j + c].set_ylabel("Period (s)")
-                    self.mplwidget.figure.axes[j + c].set_ylim(0.02, 120)
+                        self.mplwidget.figure.axes[j + c].contourf(y, x, np.array(modes).T, cmap=obspy.imaging.cm.pqlx, levels=200)
+                        self.mplwidget.figure.axes[j + c].set_xlabel("Month")
+                        self.mplwidget.figure.axes[j + c].set_ylabel("Period (s)")
+                        self.mplwidget.figure.axes[j + c].set_ylim(0.02, 120)
+                        self.mplwidget.figure.axes[j + c].set_xlim(1, 12)
 
                 self.mplwidget.figure.axes[j + c].set_title(chnm, fontsize=9, fontweight="medium")
 
@@ -214,3 +271,21 @@ class PPSDFrame(BaseFrame, UiPPSDs):
                 
             
         self.mplwidget.figure.canvas.draw()
+
+    def save_plot(self):
+        fig = self.mplwidget.figure
+        buffer = io.BytesIO()
+        pickle.dump(fig, buffer)
+        # Point to the first byte of the buffer and read it
+        buffer.seek(0)
+        fig_copy = pickle.load(buffer)
+        
+        #We also need a new canvas manager
+        newfig = plt.figure()
+        newmanager = newfig.canvas.manager
+        newmanager.canvas.figure = fig_copy
+        fig_copy.set_canvas(newmanager.canvas)        
+        
+        dialog = dialogs.SaveFigureDialog(fig_copy)
+        dialog.exec_()
+        return
