@@ -19,8 +19,7 @@ from nitime import utils
 from datetime import date
 from scipy.signal import hilbert
 from scipy.fftpack import next_fast_len
-from isp.Gui import pw
-import pandas as pd
+
 
 
 
@@ -37,7 +36,6 @@ class array:
         """
 
 
-   # def load_stations_coords(self):
 
 
 
@@ -61,6 +59,25 @@ class array:
         else:
             mathangle = 90 + (360 - azimuth)
         return mathangle
+
+    def gregorian2date(self, DT):
+        #####Convert start from Greogorian to actual date###############
+        Time = DT
+        Time = Time - int(Time)
+        d = date.fromordinal(int(DT))
+        date1 = d.isoformat()
+        H = (Time * 24)
+        H1 = int(H)  # Horas
+        minutes = (H - int(H)) * 60
+        minutes1 = int(minutes)
+        seconds = (minutes - int(minutes)) * 60
+        H1 = str(H1).zfill(2)
+        minutes1 = str(minutes1).zfill(2)
+        seconds = "%.2f" % seconds
+        seconds = str(seconds).zfill(2)
+        DATE = date1 + "T" + str(H1) + minutes1 + seconds
+        t1 = UTCDateTime(DATE)
+        return t1
 
     def FK(self, st, inv, stime, etime, fmin, fmax, slim, sres, win_len, win_frac):
 
@@ -250,7 +267,7 @@ class array:
 
         nn=len(x)
         maximum_power=np.where(Pow == np.amax(Pow))
-        Sxpow=(maximum_power[1]-nn/2)*sinc
+        Sxpow = (maximum_power[1]-nn/2)*sinc
         Sypow = (maximum_power[0]-nn/2)*sinc
 
         return Pow, Sxpow, Sypow, coord
@@ -283,7 +300,12 @@ class array:
         for i in range(N - 1):
             mat[i, :] = st2[i].data
 
-        return mat, time
+        stats = {'network': st2[0].stats.station, 'station': 'STACK', 'location': '',
+                      'channel': st2[0].stats.channel, 'npts': st2[0].stats.npts,
+                      'sampling_rate':st2[0].stats.sampling_rate, 'mseed': {'dataquality': 'D'},
+                 'starttime': st2[0].stats.starttime}
+
+        return mat, time, stats
 
     def stack(self, data, stack_type = 'linear', order = 2):
 

@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from obspy import Stream, UTCDateTime
+from obspy import Stream, UTCDateTime, Trace
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.seismogram_analysis import SeismogramDataAdvanced
 from isp.Gui.Frames import BaseFrame, \
@@ -10,15 +10,16 @@ from isp.Gui.Frames.stations_coordinates import StationsCoords
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.vespagram import Vespagram
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
-from isp.Gui import pw
+from isp.Gui import pw, pqg
 import os
 import matplotlib.dates as mdt
 from datetime import date
 import pandas as pd
 from isp.Utils import MseedUtil, AsycTime
 from isp.arrayanalysis import array_analysis
-
-
+from isp import ROOT_DIR
+from isp.Utils.subprocess_utils import exc_cmd
+from pathlib import Path
 class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
     def __init__(self):
@@ -78,12 +79,16 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.actionCreate_Stations_File.triggered.connect(self.stations_coordinates)
         self.actionLoad_Stations_File.triggered.connect(self.load_path)
         self.actionRunVespagram.triggered.connect(self.open_vespagram)
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'), self)
+        self.shortcut_open.activated.connect(self.open_solutions)
+
         # Parameters settings
         self.__parameters = ParametersSettings()
 
         # Stations Coordinates
         self.__stations_coords = StationsCoords()
-
+        # picks
+        self.picks =  {'Time': [], 'Phase': [], 'BackAzimuth':[], 'Slowness':[], 'Power':[]}
 
     def open_parameters_settings(self):
         self.__parameters.show()
@@ -164,13 +169,15 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_fk.set_ylabel(1, " Absolute Power ")
         self.canvas_fk.set_ylabel(2, " Back Azimuth ")
         self.canvas_fk.set_ylabel(3, " Slowness [s/km] ")
-        self.canvas_fk.set_xlabel(3, "Time [s]")
+        self.canvas_fk.set_xlabel(3, " Time [s] ")
         ax = self.canvas_fk.get_axe(3)
         formatter = mdt.DateFormatter('%H:%M:%S')
         ax.xaxis.set_major_formatter(formatter)
         ax.xaxis.set_tick_params(rotation = 30)
 
     def on_click_matplotlib(self, event, canvas):
+        output_path = os.path.join(ROOT_DIR, 'arrayanalysis', 'dataframe.csv')
+
         if isinstance(canvas, MatplotlibCanvas):
             st = self.st.copy()
             wavenumber = array_analysis.array()
@@ -180,6 +187,9 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             Z, Sxpow, Sypow, coord = wavenumber.FKCoherence(st, selection, DT,
             self.fminFK_bind.value, self.fmaxFK_bind.value, self.smaxFK_bind.value, self.timewindow_bind.value,
                                    self.slow_grid_bind.value, self.methodSB.currentText())
+
+            backacimuth = wavenumber.azimuth2mathangle(np.arctan2(Sypow, Sxpow) * 180 / np.pi)
+            slowness = np.abs(Sxpow, Sypow)
             if self.methodSB.currentText() == "FK":
                 clabel="Power"
             elif self.methodSB.currentText() == "MTP.COHERENCE":
@@ -192,15 +202,32 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             self.canvas_slow_map.plot_contour(X, Y, Z, axes_index=0, clabel=clabel, cmap=plt.get_cmap("jet"))
             self.canvas_slow_map.set_xlabel(0, "Sx [s/km]")
             self.canvas_slow_map.set_ylabel(0, "Sy [s/km]")
+
+            # Save in a dataframe the pick value
+            x1 = wavenumber.gregorian2date(x1)
+
+            self.picks['Time'].append(x1.isoformat())
+            self.picks['Phase'].append("P")
+            self.picks['BackAzimuth'].append(backacimuth[0])
+            self.picks['Slowness'].append(slowness[0])
+            self.picks['Power'].append(np.max(Z))
+            df = pd.DataFrame(self.picks)
+            df.to_csv(output_path, index = False, header=True)
+
             # Call Stack and Plot###
             #stream_stack, time = wavenumber.stack_stream(self.root_pathFK_bind.value, Sxpow, Sypow, coord)
+
             if st:
                 st2 = self.st.copy()
-                stream_stack, time = wavenumber.stack_stream(st2, Sxpow, Sypow, coord)
-                stack = wavenumber.stack(stream_stack)
-                self.canvas_stack.plot(time, stack, axes_index = 0)
+                # Align for the maximum power and give the data of the traces
+                stream_stack, self.time, self.stats = wavenumber.stack_stream(st2, Sxpow, Sypow, coord)
+                # stack the traces
+                self.stack = wavenumber.stack(stream_stack)
+                self.canvas_stack.plot(self.time, self.stack, axes_index = 0)
                 self.canvas_stack.set_xlabel(0, " Time [s] ")
                 self.canvas_stack.set_ylabel(0, "Stack Amplitude")
+
+
 
     def filter_error_message(self, msg):
         md = MessageDialog(self)
@@ -258,10 +285,21 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         n=len(self.st)
         for j in range(n):
-            tr=self.st[j]
+
+            tr = self.st[j]
+            t1 = tr.stats.starttime
+            id = tr.id+"."+"D"+"."+str(t1.year)+"."+str(t1.julday)
             print(tr.id, "Writing data processed")
-            path_output =  os.path.join(dir_path, tr.id)
+            path_output = os.path.join(dir_path, id)
             tr.write(path_output, format="MSEED")
+
+    def write_stack(self):
+        if len(self.stack)>0:
+            root_path = os.path.dirname(os.path.abspath(__file__))
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+            tr = Trace(data=self.stack, header=self.stats)
+            tr.write(dir_path, format="MSEED")
+
 
     def __to_UTC(self, DT):
 
@@ -288,3 +326,11 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.t1 = self.__to_UTC(xmin)
         self.t2 = self.__to_UTC(xmax)
 
+    def open_solutions(self):
+        output_path = os.path.join(ROOT_DIR,'arrayanalysis','dataframe.csv')
+        try:
+            command = "{} {}".format('open', output_path)
+            exc_cmd(command, cwd = ROOT_DIR)
+        except:
+            md = MessageDialog(self)
+            md.set_error_message("Coundn't open solutions file")
