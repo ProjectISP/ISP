@@ -9,8 +9,11 @@ import io
 import pickle
 import numpy as np
 import obspy.imaging.cm
+import obspy.signal.spectral_estimation as osse
 from functools import partial
 import copy
+from obspy.signal.spectral_estimation import earthquake_models
+from matplotlib.patheffects import withStroke
 
 class PPSDFrame(BaseFrame, UiPPSDs):
 
@@ -160,12 +163,16 @@ class PPSDFrame(BaseFrame, UiPPSDs):
     
                     self.mplwidget.figure.axes[j + c].pcolormesh(meshgrid[0], meshgrid[1], zdata.T, cmap=obspy.imaging.cm.pqlx)
                     self.mplwidget.figure.axes[j + c].set_xscale("log")
-                    self.mplwidget.figure.axes[j + c].plot(ppsd.period_bin_centers, mode, color='black', linewidth=2, linestyle='--', label="Mode")
+                    
+                    #self.mplwidget.figure.axes[j + c].plot(ppsd.period_bin_centers, mode, color='black', linewidth=2, linestyle='--', label="Mode")
                     
                     self.mplwidget.figure.axes[j + c].set_xscale("log")
                     
                     self.mplwidget.figure.axes[j + c].set_xlabel("Period (s)")
                     self.mplwidget.figure.axes[j + c].set_ylabel("Amplitude (dB)")
+                    
+                    self.plot_statistics(self.mplwidget.figure.axes[j + c], ppsd)
+                    self.mplwidget.figure.axes[j + c].set_xlim(0.02, 120)
                 
                 elif plot_mode == "variation":
                     variation = self.comboBox.currentText()
@@ -271,6 +278,55 @@ class PPSDFrame(BaseFrame, UiPPSDs):
                 
             
         self.mplwidget.figure.canvas.draw()
+    
+    def plot_statistics(self, axis, ppsd):
+        if self.checkBox.isChecked():
+            mean = ppsd.get_mean()
+            axis.plot(mean[0], mean[1], color='white', linewidth=2, linestyle='--', label="Mean")
+        
+        if self.checkBox_2.isChecked():
+            mode = ppsd.get_mode()       
+            axis.plot(mode[0], mode[1], color='black', linewidth=2, linestyle='--', label="Mode")
+
+        if self.checkBox_3.isChecked():
+            nhnm = osse.get_nhnm()    
+            axis.plot(nhnm[0], nhnm[1], color='gray', linewidth=2, linestyle='-', label="NHNM (Peterson et al., 2003)")
+
+        if self.checkBox_4.isChecked():
+            nlnm = osse.get_nlnm()      
+            axis.plot(nlnm[0], nlnm[1], color='gray', linewidth=2, linestyle='-', label="NLNM (Peterson et al., 2003)")
+
+        if self.groupBox_2.isChecked():
+
+            min_mag, max_mag, min_dist, max_dist = (self.doubleSpinBox.value(), self.doubleSpinBox_2.value(),
+                                                    self.doubleSpinBox_3.value(), self.doubleSpinBox_4.value())
+    
+            for key, data in earthquake_models.items():
+                magnitude, distance = key
+                frequencies, accelerations = data
+                accelerations = np.array(accelerations)
+                frequencies = np.array(frequencies)
+                periods = 1.0 / frequencies
+                # Eq.1 from Clinton and Cauzzi (2013) converts
+                # power to density
+                ydata = accelerations / (periods ** (-.5))
+                ydata = 20 * np.log10(ydata / 2)
+                if not (min_mag <= magnitude <= max_mag and
+                        min_dist <= distance <= max_dist and
+                        min(ydata) < ppsd.db_bin_edges[-1]):
+                    continue
+                xdata = periods
+                axis.plot(xdata, ydata, '0.4', linewidth=2, color="black")
+                leftpoint = np.argsort(xdata)[0]
+                if not ydata[leftpoint] < ppsd.db_bin_edges[-1]:
+                    continue
+                axis.text(xdata[leftpoint],
+                        ydata[leftpoint],
+                        'M%.1f\n%dkm' % (magnitude, distance),
+                        ha='right', va='top',
+                        color='w', weight='bold', fontsize='x-small',
+                        path_effects=[withStroke(linewidth=3,
+                                                 foreground='0.4')])
 
     def save_plot(self):
         fig = self.mplwidget.figure
