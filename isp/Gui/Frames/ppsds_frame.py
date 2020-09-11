@@ -126,7 +126,7 @@ class PPSDFrame(BaseFrame, UiPPSDs):
             pages = round(len(db_query.keys())/stations_per_page)
         except ZeroDivisionError: # This means no stations are selected
             md = MessageDialog(self)
-            md.set_info_message("No stations selected.")
+            md.set_warning_message("No stations selected!!!")
             return
         
         if self.pages != pages:
@@ -161,16 +161,21 @@ class PPSDFrame(BaseFrame, UiPPSDs):
                     ppsd.calculate_histogram(starttime=starttime, endtime=endtime)
                 
                 if plot_mode == "pdf":
-                
-                    zdata = (ppsd.current_histogram * 100 / (ppsd.current_histogram_count or 1))
+                    try:
+                        zdata = (ppsd.current_histogram * 100 / (ppsd.current_histogram_count or 1))
+                    except:  # This means no stations are selected
+                        md = MessageDialog(self)
+                        md.set_error_message("Some data channel no valid.")
+                        return
+
                     xedges = ppsd.period_xedges
                     yedges = ppsd.db_bin_edges
-                    meshgrid = np.meshgrid(xedges, yedges)                    
-                    mode = ppsd.db_bin_centers[ppsd._current_hist_stack.argmax(axis=1)]            
-    
+                    meshgrid = np.meshgrid(xedges, yedges)
+                    mode = ppsd.db_bin_centers[ppsd._current_hist_stack.argmax(axis=1)]
+
                     self.mplwidget.figure.axes[j + c].pcolormesh(meshgrid[0], meshgrid[1], zdata.T, cmap=obspy.imaging.cm.pqlx)
                     self.mplwidget.figure.axes[j + c].set_xscale("log")
-                    
+
                     #self.mplwidget.figure.axes[j + c].plot(ppsd.period_bin_centers, mode, color='black', linewidth=2, linestyle='--', label="Mode")
                     
                     self.mplwidget.figure.axes[j + c].set_xscale("log")

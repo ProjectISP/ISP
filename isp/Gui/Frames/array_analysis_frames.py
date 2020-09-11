@@ -143,7 +143,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                 self.canvas.set_ylabel(0, "Sy (s/km)")
         except:
             md = MessageDialog(self)
-            md.set_error_message("Coundn't compute ARF, please check if you have loaded stations coords")
+            md.set_error_message("Couldn't compute ARF, please check if you have loaded stations coords")
 
 
 
