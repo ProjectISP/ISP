@@ -1,6 +1,7 @@
 from isp.Gui import pw
 from isp.Gui.Frames import MatplotlibCanvas, MessageDialog
 from isp.Gui.Frames.uis_frames import UiVespagram
+#from isp.Utils import AsycTime
 from isp.arrayanalysis.array_analysis import vespagram_util
 import numpy as np
 import matplotlib.pyplot as plt
@@ -33,6 +34,7 @@ class Vespagram(pw.QFrame, UiVespagram):
     def __load__(self):
         self.load_values()
 
+    #@AsycTime.run_async()
     def run_vespa(self):
 
 

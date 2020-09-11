@@ -634,7 +634,7 @@
              </widget>
             </item>
             <item row="8" column="0">
-             <widget class="QComboBox" name="comboBox">
+             <widget class="QComboBox" name="phaseCB">
               <item>
                <property name="text">
                 <string>Phase</string>
@@ -673,7 +673,7 @@
              </widget>
             </item>
             <item row="8" column="1">
-             <widget class="QComboBox" name="comboBox_2">
+             <widget class="QComboBox" name="stackCB">
               <item>
                <property name="text">
                 <string>Linear Stack</string>
@@ -716,7 +716,14 @@
      <addaction name="actionCreate_Stations_File"/>
      <addaction name="actionLoad_Stations_File"/>
     </widget>
-    <addaction name="actionWrite"/>
+    <widget class="QMenu" name="menuWrite_Seismograms">
+     <property name="title">
+      <string>Write Seismograms</string>
+     </property>
+     <addaction name="actionProcessed_Seimograms"/>
+     <addaction name="actionStacked_Seismograms"/>
+    </widget>
+    <addaction name="menuWrite_Seismograms"/>
     <addaction name="menuStations_Coordinates"/>
    </widget>
    <widget class="QMenu" name="menuParameters">
@@ -736,16 +743,6 @@
    <addaction name="menuVespagram"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionWrite">
-   <property name="icon">
-    <iconset>
-     <normalon>:/Iconos/Imagenes/Compas.png</normalon>
-    </iconset>
-   </property>
-   <property name="text">
-    <string>Write Seismograms</string>
-   </property>
-  </action>
   <action name="actionCreatenewProject">
    <property name="icon">
     <iconset>
@@ -784,6 +781,16 @@
   <action name="actionRunVespagram">
    <property name="text">
     <string>Run</string>
+   </property>
+  </action>
+  <action name="actionProcessed_Seimograms">
+   <property name="text">
+    <string>Processed Seimograms</string>
+   </property>
+  </action>
+  <action name="actionStacked_Seismograms">
+   <property name="text">
+    <string>Stacked Seismograms</string>
    </property>
   </action>
  </widget>

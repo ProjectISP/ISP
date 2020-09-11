@@ -22,8 +22,6 @@ from scipy.fftpack import next_fast_len
 
 
 
-
-
 class array:
 
     def __init__(self):
@@ -307,7 +305,7 @@ class array:
 
         return mat, time, stats
 
-    def stack(self, data, stack_type = 'linear', order = 2):
+    def stack(self, data, stack_type = 'Linear Stack', order = 2):
 
         """
         Stack data by first axis.
@@ -320,9 +318,9 @@ class array:
             ``('root', order)``: root stack of given order
             (order 1 corresponds to linear stack).
         """
-        if stack_type == 'linear':
+        if stack_type == 'Linear Stack':
             stack = np.mean(data, axis=0)
-        elif stack_type == 'PWS':
+        elif stack_type == 'Phase Weigth Stack':
             npts = np.shape(data)[1]
             nfft = next_fast_len(npts)
             anal_sig = hilbert(data, N=nfft)[:, :npts]
@@ -420,7 +418,6 @@ class vespagram_util:
             x, y = np.meshgrid(t, np.linspace(-1*self.slow, self.slow, log_vespa_spectrogram.shape[0]))
 
         return x, y, log_vespa_spectrogram
-
 
 
     def __vespa_slow(self, st):
@@ -548,6 +545,7 @@ class vespagram_util:
         Pow = Pow / len(freq)
 
         return Pow
+
 
     def __vespa_az(self, st):
 

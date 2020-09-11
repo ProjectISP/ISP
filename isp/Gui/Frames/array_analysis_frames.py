@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from numba import jit
 from obspy import Stream, UTCDateTime, Trace
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.seismogram_analysis import SeismogramDataAdvanced
@@ -72,7 +73,8 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.runFKBtn.clicked.connect(lambda: self.FK_plot())
         self.plotBtn.clicked.connect(lambda: self.plot_seismograms())
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
-        self.actionWrite.triggered.connect(self.write)
+        self.actionProcessed_Seimograms.triggered.connect(self.write)
+        self.actionStacked_Seismograms.triggered.connect(self.write_stack)
 
         self.stationsBtn.clicked.connect(self.stationsInfo)
         self.mapBtn.clicked.connect(self.stations_map)
@@ -95,6 +97,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
     def stations_coordinates(self):
         self.__stations_coords.show()
+
 
     def open_vespagram(self):
         if self.st and self.inventory and self.t1 and self.t2:
@@ -126,18 +129,23 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             self.coords[i] = np.array([df['Lon'][i], df['Lat'][i], df['Depth'][i]])
 
     def arf(self):
+        try:
+            if self.coords.all():
 
-        if self.coords.all():
+                wavenumber = array_analysis.array()
+                arf = wavenumber.arf(self.coords, self.fmin_bind.value, self.fmax_bind.value,
+                                             self.smax_bind.value, self.grid_bind.value)
 
-            wavenumber = array_analysis.array()
-            arf = wavenumber.arf(self.coords, self.fmin_bind.value, self.fmax_bind.value,
-                                         self.smax_bind.value, self.grid_bind.value)
+                slim = self.smax_bind.value
+                x = y = np.linspace(-1 * slim, slim, len(arf))
+                self.canvas.plot_contour(x, y, arf, axes_index=0, clabel="Power [dB]", cmap=plt.get_cmap("jet"))
+                self.canvas.set_xlabel(0, "Sx (s/km)")
+                self.canvas.set_ylabel(0, "Sy (s/km)")
+        except:
+            md = MessageDialog(self)
+            md.set_error_message("Coundn't compute ARF, please check if you have loaded stations coords")
 
-            slim = self.smax_bind.value
-            x = y = np.linspace(-1 * slim, slim, len(arf))
-            self.canvas.plot_contour(x, y, arf, axes_index=0, clabel="Power [dB]", cmap=plt.get_cmap("jet"))
-            self.canvas.set_xlabel(0, "Sx (s/km)")
-            self.canvas.set_ylabel(0, "Sy (s/km)")
+
 
 
     def stations_map(self):
@@ -157,23 +165,28 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         starttime = convert_qdatetime_utcdatetime(self.starttime_date)
         endtime = convert_qdatetime_utcdatetime(self.endtime_date)
         selection = self.inventory.select(station=self.stationLE.text(), channel = self.channelLE.text())
-        wavenumber = array_analysis.array()
-        relpower,abspower, AZ, Slowness, T = wavenumber.FK(self.st, selection, starttime, endtime,
-        self.fminFK_bind.value, self.fmaxFK_bind.value, self.smaxFK_bind.value, self.slow_grid_bind.value,
-        self.timewindow_bind.value, self.overlap_bind.value)
-        self.canvas_fk.scatter3d(T, relpower,relpower, axes_index=0, clabel="Power [dB]")
-        self.canvas_fk.scatter3d(T, abspower, relpower, axes_index=1, clabel="Power [dB]")
-        self.canvas_fk.scatter3d(T, AZ, relpower, axes_index=2, clabel="Power [dB]")
-        self.canvas_fk.scatter3d(T, Slowness, relpower, axes_index=3, clabel="Power [dB]")
-        self.canvas_fk.set_ylabel(0, " Rel Power ")
-        self.canvas_fk.set_ylabel(1, " Absolute Power ")
-        self.canvas_fk.set_ylabel(2, " Back Azimuth ")
-        self.canvas_fk.set_ylabel(3, " Slowness [s/km] ")
-        self.canvas_fk.set_xlabel(3, " Time [s] ")
-        ax = self.canvas_fk.get_axe(3)
-        formatter = mdt.DateFormatter('%H:%M:%S')
-        ax.xaxis.set_major_formatter(formatter)
-        ax.xaxis.set_tick_params(rotation = 30)
+        if self.trimCB.isChecked():
+            wavenumber = array_analysis.array()
+            relpower,abspower, AZ, Slowness, T = wavenumber.FK(self.st, selection, starttime, endtime,
+            self.fminFK_bind.value, self.fmaxFK_bind.value, self.smaxFK_bind.value, self.slow_grid_bind.value,
+            self.timewindow_bind.value, self.overlap_bind.value)
+            self.canvas_fk.scatter3d(T, relpower,relpower, axes_index=0, clabel="Power [dB]")
+            self.canvas_fk.scatter3d(T, abspower, relpower, axes_index=1, clabel="Power [dB]")
+            self.canvas_fk.scatter3d(T, AZ, relpower, axes_index=2, clabel="Power [dB]")
+            self.canvas_fk.scatter3d(T, Slowness, relpower, axes_index=3, clabel="Power [dB]")
+            self.canvas_fk.set_ylabel(0, " Rel Power ")
+            self.canvas_fk.set_ylabel(1, " Absolute Power ")
+            self.canvas_fk.set_ylabel(2, " Back Azimuth ")
+            self.canvas_fk.set_ylabel(3, " Slowness [s/km] ")
+            self.canvas_fk.set_xlabel(3, " Time [s] ")
+            ax = self.canvas_fk.get_axe(3)
+            formatter = mdt.DateFormatter('%H:%M:%S')
+            ax.xaxis.set_major_formatter(formatter)
+            ax.xaxis.set_tick_params(rotation = 30)
+        else:
+            md = MessageDialog(self)
+            md.set_info_message("Please select dates and then check Trim box")
+
 
     def on_click_matplotlib(self, event, canvas):
         output_path = os.path.join(ROOT_DIR, 'arrayanalysis', 'dataframe.csv')
@@ -207,7 +220,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             x1 = wavenumber.gregorian2date(x1)
 
             self.picks['Time'].append(x1.isoformat())
-            self.picks['Phase'].append("P")
+            self.picks['Phase'].append(self.phaseCB.currentText())
             self.picks['BackAzimuth'].append(backacimuth[0])
             self.picks['Slowness'].append(slowness[0])
             self.picks['Power'].append(np.max(Z))
@@ -222,7 +235,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                 # Align for the maximum power and give the data of the traces
                 stream_stack, self.time, self.stats = wavenumber.stack_stream(st2, Sxpow, Sypow, coord)
                 # stack the traces
-                self.stack = wavenumber.stack(stream_stack)
+                self.stack = wavenumber.stack(stream_stack, stack_type = self.stackCB.currentText())
                 self.canvas_stack.plot(self.time, self.stack, axes_index = 0)
                 self.canvas_stack.set_xlabel(0, " Time [s] ")
                 self.canvas_stack.set_ylabel(0, "Stack Amplitude")
@@ -283,22 +296,35 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
     def write(self):
         root_path = os.path.dirname(os.path.abspath(__file__))
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
-        n=len(self.st)
-        for j in range(n):
-
-            tr = self.st[j]
-            t1 = tr.stats.starttime
-            id = tr.id+"."+"D"+"."+str(t1.year)+"."+str(t1.julday)
-            print(tr.id, "Writing data processed")
-            path_output = os.path.join(dir_path, id)
-            tr.write(path_output, format="MSEED")
+        if dir_path:
+            n=len(self.st)
+            try:
+                if len(n)>0:
+                    for j in range(n):
+                        tr = self.st[j]
+                        t1 = tr.stats.starttime
+                        id = tr.id+"."+"D"+"."+str(t1.year)+"."+str(t1.julday)
+                        print(tr.id, "Writing data processed")
+                        path_output = os.path.join(dir_path, id)
+                        tr.write(path_output, format="MSEED")
+                else:
+                    md = MessageDialog(self)
+                    md.set_info_message("Nothing to write")
+            except:
+                pass
 
     def write_stack(self):
-        if len(self.stack)>0:
-            root_path = os.path.dirname(os.path.abspath(__file__))
-            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
-            tr = Trace(data=self.stack, header=self.stats)
-            tr.write(dir_path, format="MSEED")
+            if len(self.stack)>0:
+                root_path = os.path.dirname(os.path.abspath(__file__))
+                dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+                if dir_path:
+                    tr = Trace(data=self.stack, header=self.stats)
+                    file = os.path.join(dir_path,tr.id)
+                    tr.write(file, format="MSEED")
+            else:
+                md = MessageDialog(self)
+                md.set_info_message("Nothing to write")
+
 
 
     def __to_UTC(self, DT):
