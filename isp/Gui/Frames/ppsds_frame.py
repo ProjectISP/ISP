@@ -14,6 +14,7 @@ from functools import partial
 import copy
 from obspy.signal.spectral_estimation import earthquake_models
 from matplotlib.patheffects import withStroke
+from isp.Gui.Frames import MessageDialog
 
 class PPSDFrame(BaseFrame, UiPPSDs):
 
@@ -121,7 +122,13 @@ class PPSDFrame(BaseFrame, UiPPSDs):
             self.mplwidget.figure.add_subplot(gs[i])                    
 
         # If necessary populate the page combobox
-        pages = round(len(db_query.keys())/stations_per_page)
+        try:
+            pages = round(len(db_query.keys())/stations_per_page)
+        except ZeroDivisionError: # This means no stations are selected
+            md = MessageDialog(self)
+            md.set_info_message("No stations selected.")
+            return
+        
         if self.pages != pages:
             self.pages = pages
             self.comboBox_2.clear()
@@ -282,11 +289,11 @@ class PPSDFrame(BaseFrame, UiPPSDs):
     def plot_statistics(self, axis, ppsd):
         if self.checkBox.isChecked():
             mean = ppsd.get_mean()
-            axis.plot(mean[0], mean[1], color='white', linewidth=2, linestyle='--', label="Mean")
+            axis.plot(mean[0], mean[1], color='black', linewidth=1, linestyle='--', label="Mean")
         
         if self.checkBox_2.isChecked():
             mode = ppsd.get_mode()       
-            axis.plot(mode[0], mode[1], color='black', linewidth=2, linestyle='--', label="Mode")
+            axis.plot(mode[0], mode[1], color='green', linewidth=1, linestyle='--', label="Mode")
 
         if self.checkBox_3.isChecked():
             nhnm = osse.get_nhnm()    
