@@ -8,10 +8,9 @@
     <file alias="signal-icon.png">images/icons/signal.png</file>
     <file alias="compass-icon.png">images/icons/Compas.png</file>
     <file alias="pen-icon.png">images/icons/Lapiz.png</file>
+    <file alias="ppsd.png">images/icons/ppsd.png</file>
     <file alias="balcony-icon.png">images/icons/Balc¢n.png</file>
   </qresource>
-  <qresource lang="brocoli-icon.png" prefix="images/icons/Brocoli.png"/>
-  <qresource prefix="newPrefix"/>
   <qresource prefix="logo">
     <file alias="logo-image.png">images/LOGO.png</file>
   </qresource>

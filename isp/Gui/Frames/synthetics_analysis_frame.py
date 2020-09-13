@@ -75,8 +75,22 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
     def _generationParamsChanged(self):
         with open(self.generation_params_file, 'rb') as f:
-            params = pickle.load(f)
-            self.paramsTextEdit.setPlainText(str(params))
+            self.params = pickle.load(f)
+            depth_est =self.params['sourcedepthinmeters']
+            depth_est =(float(depth_est))/1000
+           #self.paramsTextEdit.setPlainText(str(params))
+            self.paramsTextEdit.setPlainText("Earth Model: {model}".format(model=self.params['model']))
+            self.paramsTextEdit.appendPlainText("Event Coords: {lat} {lon} {depth}".format(
+                lat=self.params['sourcelatitude'],lon=self.params['sourcelongitude'],
+                              depth=str(depth_est)))
+            self.paramsTextEdit.appendPlainText("Time: {time}".format(time=self.params['origintime']))
+            self.paramsTextEdit.appendPlainText("Units: {units}".format(units=self.params['units']))
+
+            if 'sourcedoublecouple' in self.params:
+                self.paramsTextEdit.appendPlainText("Source: {source}".format(source= self.params['sourcedoublecouple']))
+            if 'sourcemomenttensor' in self.params:
+                self.paramsTextEdit.appendPlainText("Source: {source}".format(source= self.params['sourcemomenttensor']))
+
 
     @staticmethod
     def drop_event(event: pqg.QDropEvent, bind_object: BindPyqtObject):
@@ -142,7 +156,12 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                 self.canvas.set_plot_label(index, info)
 
             self.canvas.set_xlabel(2, "Time (s)")
-            self.focmec_canvas.drawFocMec(30, 40, 50, [], [], [], [], 0)
+
+            if 'sourcedoublecouple' in self.params:
+                self.focmec_canvas.drawSynthFocMec(0, first_polarity = self.params['sourcedoublecouple'], mti = [])
+            if 'sourcemomenttensor' in self.params:
+                self.focmec_canvas.drawSynthFocMec(0, first_polarity= [], mti=self.params['sourcemomenttensor'])
+
         except InvalidFile:
             self.info_message("Invalid mseed files. Please, make sure you have generated correctly the synthetics")
 

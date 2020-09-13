@@ -1073,3 +1073,24 @@ class FocCanvas(BasePltPyqtCanvas):
         ax.set_title("Focal Mechanism")
         ax.set_axis_off()
         self.draw()
+
+    def drawSynthFocMec(self, axes_index, **kwargs):
+        from obspy.imaging.beachball import beach
+        first_polarity = kwargs.pop("first_polarity")
+        first_polarity = first_polarity[0:3]
+        mti = kwargs.pop("mti")
+
+        self.clear()
+        ax = self.get_axe(axes_index)
+        if len(first_polarity) > 0:
+            beach2 = beach(first_polarity, facecolor='r', linewidth=1., alpha=0.3, width=2)
+        if len(mti) > 0:
+            beach2 = beach(mti, facecolor='b', linewidth=1., alpha=0.3, width=2)
+
+        ax.add_collection(beach2)
+        ax.set_ylim(-1, 1)
+        ax.set_xlim(-1, 1)
+
+        ax.set_title("Focal Mechanism")
+        ax.set_axis_off()
+        self.draw()

@@ -349,8 +349,8 @@
     <addaction name="actionOpen_Project"/>
     <addaction name="actionCreate_new_Project"/>
     <addaction name="actionRetrieve_data"/>
-    <addaction name="actionExit"/>
     <addaction name="actionPPSDs"/>
+    <addaction name="actionExit"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -365,9 +365,10 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionCreate_new_Project"/>
    <addaction name="actionOpen_Project"/>
+   <addaction name="actionCreate_new_Project"/>
    <addaction name="actionRetrieve_data"/>
+   <addaction name="actionPPSDs"/>
   </widget>
   <action name="actionOpen_Project">
    <property name="icon">
@@ -376,7 +377,7 @@
     </iconset>
    </property>
    <property name="text">
-    <string>Open Project</string>
+    <string>Database</string>
    </property>
   </action>
   <action name="actionCreate_new_Project">
@@ -386,7 +387,7 @@
     </iconset>
    </property>
    <property name="text">
-    <string>Create new Project</string>
+    <string>Synthetics tool</string>
    </property>
   </action>
   <action name="actionExit">
@@ -406,10 +407,15 @@
     </iconset>
    </property>
    <property name="text">
-    <string>Retrieve data</string>
+    <string> Retrieve data</string>
    </property>
   </action>
   <action name="actionPPSDs">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/icons/ppsd.jpg</normaloff>
+     <normalon>:/icons/ppsd.png</normalon>:/icons/ppsd.jpg</iconset>
+   </property>
    <property name="text">
     <string>PPSDs</string>
    </property>

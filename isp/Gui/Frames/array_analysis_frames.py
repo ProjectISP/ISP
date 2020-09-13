@@ -150,15 +150,18 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
     def stations_map(self):
         coords = {}
+
         if self.path_file:
             df = pd.read_csv(self.path_file, delim_whitespace=True)
             n = len(df)
             self.coords = np.zeros([n, 3])
             for i in range(n):
                  coords[df['Name'][i]]=[df['Lon'][i], df['Lat'][i]]
-        #resolution = self.resCB.currentText()
-        self.cartopy_canvas.plot_map(df['Lon'][0], df['Lat'][0], 0, 0, 0, 0, resolution = "low",
+        try:
+            self.cartopy_canvas.plot_map(df['Lon'][0], df['Lat'][0], 0, 0, 0, 0, resolution = "low",
                                      stations = coords)
+        except:
+            pass
 
     def FK_plot(self):
         self.canvas_stack.set_new_subplot(nrows=1, ncols=1)

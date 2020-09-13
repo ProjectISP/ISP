@@ -95,6 +95,7 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
                       "sourcelatitude" : self.doubleSBSrcLat.value(),
                       "sourcelongitude" : self.doubleSBSrcLon.value(),
                       "sourcedepthinmeters" : self.doubleSBDep.value(),
+                      "units": self.unitsCB.currentText(),
                       "origintime" : self.dateTimeEditOrigin.dateTime().toPyDateTime(),
                       "starttime" : self.dateTimeEditStart.dateTime().toPyDateTime(),
                       "endtime" : self.dateTimeEditEnd.dateTime().toPyDateTime(),
@@ -163,6 +164,8 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
 
                     self.save_values()
 
+                    pw.QMessageBox.information(self, self.windowTitle(),
+                                           "Synthetics generation done !!!")
             
 
     def _requestSynthetics(self, params):

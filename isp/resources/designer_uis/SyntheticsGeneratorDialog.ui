@@ -115,20 +115,20 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox">
+        <widget class="QComboBox" name="unitsCB">
          <item>
           <property name="text">
-           <string>Velocity</string>
+           <string>velocity</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>Displacement</string>
+           <string>displacement</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>Acceleration</string>
+           <string>acceleration</string>
           </property>
          </item>
         </widget>
