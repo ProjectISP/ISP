@@ -537,7 +537,7 @@
      <x>0</x>
      <y>0</y>
      <width>1680</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -590,6 +590,7 @@
     <addaction name="actionSTA_LTA"/>
     <addaction name="actionCWT_CF"/>
     <addaction name="actionEnvelope"/>
+    <addaction name="actionStack"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
@@ -750,6 +751,14 @@
   <action name="actionOpen_Settings">
    <property name="text">
     <string>Open Settings</string>
+   </property>
+  </action>
+  <action name="actionStack">
+   <property name="text">
+    <string>Stack</string>
+   </property>
+   <property name="shortcut">
+    <string/>
    </property>
   </action>
  </widget>

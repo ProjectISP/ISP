@@ -64,7 +64,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.st = None
         self.cf = None
         self.chop = {'Body waves':{}, 'Surf Waves':{}, 'Coda':{}, 'Noise':{}}
-        self.color={'Body waves':'orangered','Surf Waves':'blue','Coda':'grey','Noise':'green'}
+        self.color={'Body waves':'orangered','Surf Waves':'blue','Coda':'purple','Noise':'green'}
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
@@ -114,6 +114,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRun_picker.triggered.connect(self._picker_thread)
         self.actionRun_Event_Detector.triggered.connect(self.detect_events)
         self.actionOpen_Settings.triggered.connect(lambda : self.settings_dialog.show())
+        self.actionStack.triggered.connect(lambda : self.stack_seismograms())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -135,6 +136,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+K'), self)
         self.shortcut_open.activated.connect(self.save_cf)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+N'), self)
+        self.shortcut_open.activated.connect(self.stack_seismograms)
 
     def open_parameters_settings(self):
         self.parameters.show()
@@ -342,7 +346,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         ##
         self.nums_clicks = 0
         all_traces = []
-        # TO DO REVIEW SELECTION
         files_path = self.get_files(self.root_path_bind.value)
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":
@@ -437,6 +440,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.canvas.set_xlabel(last_index, "Date")
         except:
             pass
+
+
 
     # Rotate to GAC,only first version #
     def rotate(self):
@@ -723,6 +728,37 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 print(tr.id, "Writing data processed")
                 path_output = os.path.join(dir_path, id)
                 tr.write(path_output, format="MSEED")
+
+    def stack_seismograms(self):
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=1, ncols=1)
+        index = 0
+        colors = ['black','indianred','chocolate','darkorange','olivedrab','lightseagreen',
+                  'royalblue','darkorchid','magenta']
+        ##
+        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+
+        if len(self.st)>0:
+            i = 0
+            for tr in self.st:
+                if len(tr) > 0:
+                    t = tr.times("matplotlib")
+                    s = tr.data
+                    self.canvas.plot_date(t, s, index, clear_plot=False, color=colors[i], fmt='-', linewidth=0.5)
+                    i = i + 1
+        try:
+            ax = self.canvas.get_axe(0)
+            if self.trimCB.isChecked():
+                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+            else:
+                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(0, "Date")
+        except:
+            pass
+
 
     def plot_map_stations(self):
 
