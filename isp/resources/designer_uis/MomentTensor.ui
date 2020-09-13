@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1469</width>
-    <height>948</height>
+    <height>952</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -30,6 +30,9 @@
     <bool>true</bool>
    </property>
    <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="1" rowspan="5">
+     <widget class="QWebEngineView" name="widget"/>
+    </item>
     <item row="1" column="0">
      <widget class="QSplitter" name="splitter_3">
       <property name="sizePolicy">
@@ -106,10 +109,16 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="0">
-           <widget class="QPushButton" name="plotBtn">
-            <property name="text">
-             <string>Process and Plot</string>
+          <item row="1" column="0">
+           <widget class="QDateTimeEdit" name="starttime_date">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="displayFormat">
+             <string>yyyy/MM/dd hh:mm:ss UTC</string>
             </property>
            </widget>
           </item>
@@ -117,6 +126,13 @@
            <widget class="QCheckBox" name="trimCB">
             <property name="text">
              <string>Trim</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1" alignment="Qt::AlignHCenter">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>           End Time    </string>
             </property>
            </widget>
           </item>
@@ -133,30 +149,31 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QDateTimeEdit" name="starttime_date">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="displayFormat">
-             <string>yyyy/MM/dd hh:mm:ss UTC</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_13">
-            <property name="text">
-             <string>           End Time    </string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0" colspan="2">
+          <item row="5" column="1">
            <widget class="QPushButton" name="run_inversionBtn">
             <property name="text">
-             <string>Run Invesion</string>
+             <string>Run Inversion</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QPushButton" name="stations_mapBtn">
+            <property name="text">
+             <string>Plot Stations Map</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QPushButton" name="plotBtn">
+            <property name="text">
+             <string>Process and Plot Seismograms</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QPushButton" name="plot_solutionBtn">
+            <property name="text">
+             <string>Plot Last solution</string>
             </property>
            </widget>
           </item>
@@ -166,15 +183,18 @@
       </widget>
      </widget>
     </item>
-    <item row="1" column="1" rowspan="3">
-     <widget class="QWebEngineView" name="widget"/>
-    </item>
     <item row="2" column="0">
      <widget class="QTabWidget" name="tabWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="maximumSize">
        <size>
         <width>640</width>
-        <height>380</height>
+        <height>572</height>
        </size>
       </property>
       <property name="currentIndex">
@@ -190,14 +210,23 @@
           <x>-1</x>
           <y>0</y>
           <width>631</width>
-          <height>361</height>
+          <height>521</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_3">
-         <item row="1" column="2">
-          <widget class="QLabel" name="label_7">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetFixedSize</enum>
+         </property>
+         <item row="3" column="1">
+          <widget class="QDoubleSpinBox" name="timeDB"/>
+         </item>
+         <item row="2" column="1">
+          <widget class="QDoubleSpinBox" name="magnitudeDB"/>
+         </item>
+         <item row="6" column="0" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_4">
            <property name="text">
-            <string>Origin Time</string>
+            <string>Freq Min</string>
            </property>
           </widget>
          </item>
@@ -214,33 +243,10 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="depthDB"/>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_6">
+         <item row="5" column="0">
+          <widget class="QCheckBox" name="deviatoricCB">
            <property name="text">
-            <string>Depth</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QDoubleSpinBox" name="latDB">
-           <property name="decimals">
-            <number>5</number>
-           </property>
-           <property name="minimum">
-            <double>-90.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>90.000000000000000</double>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>Latitude</string>
+            <string>Deviatoric</string>
            </property>
           </widget>
          </item>
@@ -257,10 +263,13 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="2">
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>Longitude</string>
+         <item row="6" column="3">
+          <widget class="QDoubleSpinBox" name="freq_max_DB"/>
+         </item>
+         <item row="2" column="3">
+          <widget class="QDoubleSpinBox" name="location_uncDB">
+           <property name="maximum">
+            <double>90000.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -270,44 +279,7 @@
             <string>Circle Shape</string>
            </property>
            <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="2">
-          <widget class="QCheckBox" name="gfCB">
-           <property name="text">
-            <string>Use Precalculated GFs</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="3">
-          <widget class="QCheckBox" name="covarianceCB">
-           <property name="text">
-            <string>Covariance</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0" alignment="Qt::AlignHCenter">
-          <widget class="QLabel" name="label_4">
-           <property name="text">
-            <string>Freq Min</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="1">
-          <widget class="QDoubleSpinBox" name="freq_min_DB"/>
-         </item>
-         <item row="6" column="3">
-          <widget class="QDoubleSpinBox" name="freq_max_DB"/>
-         </item>
-         <item row="5" column="0">
-          <widget class="QCheckBox" name="deviatoricCB">
-           <property name="text">
-            <string>Deviatoric</string>
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -318,15 +290,18 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_8">
-           <property name="text">
-            <string>Time Uncertainity</string>
+         <item row="0" column="1">
+          <widget class="QDoubleSpinBox" name="latDB">
+           <property name="decimals">
+            <number>5</number>
+           </property>
+           <property name="minimum">
+            <double>-90.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>90.000000000000000</double>
            </property>
           </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QDoubleSpinBox" name="timeDB"/>
          </item>
          <item row="3" column="2">
           <widget class="QLabel" name="label_14">
@@ -335,6 +310,16 @@
            </property>
           </widget>
          </item>
+         <item row="7" column="0" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>Dist Min (km)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QDoubleSpinBox" name="freq_min_DB"/>
+         </item>
          <item row="3" column="3">
           <widget class="QDoubleSpinBox" name="depth_uncDB">
            <property name="maximum">
@@ -342,10 +327,79 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="3">
-          <widget class="QDoubleSpinBox" name="location_uncDB">
+         <item row="7" column="1">
+          <widget class="QDoubleSpinBox" name="min_distCB">
            <property name="maximum">
-            <double>90000.000000000000000</double>
+            <double>9000.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Time Uncertainity</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Longitude</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="3">
+          <widget class="QCheckBox" name="covarianceCB">
+           <property name="text">
+            <string>Covariance</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Origin Time</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Depth</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Latitude</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>Dist Max (km)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="3">
+          <widget class="QDoubleSpinBox" name="max_distCB">
+           <property name="maximum">
+            <double>10000.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="depthDB"/>
+         </item>
+         <item row="5" column="2">
+          <widget class="QCheckBox" name="gfCB">
+           <property name="text">
+            <string>Use Precalculated GFs</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -363,8 +417,15 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
-          <widget class="QDoubleSpinBox" name="magnitudeDB"/>
+         <item row="8" column="0" colspan="4">
+          <widget class="QPlainTextEdit" name="infoTx">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777214</height>
+            </size>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -404,7 +465,6 @@
     <property name="title">
      <string>Read Event</string>
     </property>
-    <addaction name="actionFrom_Database"/>
     <addaction name="actionFrom_File"/>
    </widget>
    <addaction name="menuFile"/>

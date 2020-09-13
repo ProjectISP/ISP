@@ -5,7 +5,7 @@ from obspy.geodetics.base import gps2dist_azimuth
 
 class MTIManager:
 
-    def __init__(self, st, inv, lat0, lon0):
+    def __init__(self, st, inv, lat0, lon0, min_dist, max_dist):
         """
         Manage MTI files for run isola class program.
         st: stream of seismograms
@@ -15,6 +15,8 @@ class MTIManager:
         self.__inv = inv
         self.lat = lat0
         self.lon = lon0
+        self.min_dist = min_dist
+        self.max_dist = max_dist
 
     @staticmethod
     def __validate_file(file_path):
@@ -59,11 +61,25 @@ class MTIManager:
                 item = '{net}:{station}::{channel}    {lat}    {lon}'.format(net=net,
                         station=station, channel=channel[0:2],lat=lat,lon=lon)
 
-
-                file_list.append(item)
-                dist1.append(dist)
-                keydict = dict(zip(file_list, dist1))
-                file_list.sort(key=keydict.get)
+            # filter by distance
+                if self.min_dist and self.max_dist > 0:
+                    # do the distance filter
+                    if dist>=self.min_dist:
+                        file_list.append(item)
+                        dist1.append(dist)
+                        keydict = dict(zip(file_list, dist1))
+                        file_list.sort(key=keydict.get)
+                    if dist<=self.max_dist:
+                        file_list.append(item)
+                        dist1.append(dist)
+                        keydict = dict(zip(file_list, dist1))
+                        file_list.sort(key=keydict.get)
+                # do not filter by distance
+                else:
+                    file_list.append(item)
+                    dist1.append(dist)
+                    keydict = dict(zip(file_list, dist1))
+                    file_list.sort(key=keydict.get)
 
         self.stations_index = ind
         self.stream = self.sort_stream(dist1)
@@ -74,9 +90,9 @@ class MTIManager:
         data = {'item': file_list}
 
         df = pd.DataFrame(data, columns=['item'])
-        print(df)
+        #print(df)
         outstations_path = os.path.join(self.get_stations_dir, "stations.txt")
-        print(outstations_path)
+        #print(outstations_path)
         df.to_csv(outstations_path, header=False, index=False)
         return self.stream , deltas, outstations_path
 

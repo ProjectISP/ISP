@@ -33,6 +33,18 @@ import matplotlib.patches as mpatches
 from matplotlib import animation
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+def rename_keys(somedict, prefix='', suffix=''):
+	"""
+	Returns a dictionary with keys renamed by adding some prefix and/or suffix
+	:param somedict: dictionary, whose keys will be remapped
+	:type somedict: dictionary
+	:param prefix: new keys starts with
+	:type prefix: string, optional
+	:param suffix: new keys ends with
+	:type suffix: string, optional
+	:returns : dictionary with keys renamed
+	"""
+	return dict(map(lambda key, value: (prefix+str(key)+suffix, value), somedict.items()))
 
 def align_yaxis(ax1, ax2, v1=0, v2=0):
     """
@@ -2893,6 +2905,7 @@ class ISOLA:
 
 
     def plot_stations(self, network=True, location=False, channelcode=False, fontsize=0):
+
         """
         Plot a map of stations used in the inversion.
 
@@ -2925,10 +2938,10 @@ class ISOLA:
 
         L1 = L2 = L3 = True
         for sta in self.stations:
-            az = radians(sta['az'])
+            az = np.radians(sta['az'])
             dist = sta['dist'] / 1000  # from meter to kilometer
-            y = cos(az) * dist  # N
-            x = sin(az) * dist  # E
+            y = np.cos(az) * dist  # N
+            x = np.sin(az) * dist  # E
             label = None
             if sta['useN'] and sta['useE'] and sta['useZ']:
                 color = 'red'

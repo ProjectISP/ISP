@@ -14,7 +14,7 @@ class StationsMap:
 
 
 
-    def plot_stations_map(self):
+    def plot_stations_map(self, save = False):
         from matplotlib.transforms import offset_copy
         import cartopy.crs as ccrs
         import cartopy.io.img_tiles as cimgt
@@ -24,6 +24,7 @@ class StationsMap:
         from matplotlib.patheffects import Stroke
         import cartopy.feature as cfeature
         import shapely.geometry as sgeom
+        from matplotlib import pyplot as plt
         # MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
         MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
         # MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/etopo1/MapServer/WMSServer'
@@ -43,7 +44,7 @@ class StationsMap:
 
         #
         proj = ccrs.PlateCarree()
-        fig, ax = plt.subplots(1, 1, subplot_kw=dict(projection=proj), figsize=(10, 10))
+        fig, ax = plt.subplots(1, 1, subplot_kw=dict(projection=proj), figsize=(16, 12))
         self.mpf = MatplotlibFrame(fig)
 
         xmin = min(lon)-4
@@ -103,7 +104,9 @@ class StationsMap:
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
 
+        #plt.savefig("/Users/robertocabieces/Documents/ISPshare/isp/mti/output/stations.png",bbox_inches='tight')
         self.mpf.show()
+
 
 
 
