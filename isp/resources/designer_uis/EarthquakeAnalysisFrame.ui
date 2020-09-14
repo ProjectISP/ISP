@@ -578,20 +578,21 @@
     <addaction name="actionTime_Frequency_Analysis"/>
     <addaction name="actionReceiver_Functions"/>
    </widget>
-   <widget class="QMenu" name="menuView">
+   <widget class="QMenu" name="menuCompute">
     <property name="title">
-     <string>View</string>
+     <string>Compute</string>
     </property>
     <addaction name="actionSTA_LTA"/>
     <addaction name="actionCWT_CF"/>
     <addaction name="actionEnvelope"/>
     <addaction name="actionSpectral_Entropy"/>
+    <addaction name="actionAllSeismograms"/>
     <addaction name="actionStack"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
    <addaction name="menuGo"/>
-   <addaction name="menuView"/>
+   <addaction name="menuCompute"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -737,9 +738,9 @@
     <string>Open Settings</string>
    </property>
   </action>
-  <action name="actionStack">
+  <action name="actionAllSeismograms">
    <property name="text">
-    <string>Stack</string>
+    <string>All Seismograms</string>
    </property>
    <property name="shortcut">
     <string/>
@@ -753,6 +754,11 @@
   <action name="actionRemove_all_selections">
    <property name="text">
     <string>Remove all selections</string>
+   </property>
+  </action>
+  <action name="actionStack">
+   <property name="text">
+    <string>Stack</string>
    </property>
   </action>
  </widget>

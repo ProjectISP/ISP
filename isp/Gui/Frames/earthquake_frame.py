@@ -22,6 +22,7 @@ from isp.Gui.Utils import map_polarity_from_pressed_key
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
+from isp.arrayanalysis import array_analysis
 from isp.earthquakeAnalisysis import PickerManager
 import numpy as np
 import os
@@ -112,7 +113,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRun_picker.triggered.connect(self._picker_thread)
         self.actionRun_Event_Detector.triggered.connect(self.detect_events)
         self.actionOpen_Settings.triggered.connect(lambda : self.settings_dialog.show())
-        self.actionStack.triggered.connect(lambda : self.stack_seismograms())
+        self.actionAllSeismograms.triggered.connect(lambda : self.plot_all_seismograms())
+        self.actionStack.triggered.connect(lambda: self.stack_all_seismograms())
         self.actionSpectral_Entropy.triggered.connect(lambda : self.spectral_entropy())
         self.actionRemove_all_selections.triggered.connect(lambda : self.clean_all_chop())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
@@ -141,7 +143,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open.activated.connect(self.save_cf)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+N'), self)
-        self.shortcut_open.activated.connect(self.stack_seismograms)
+        self.shortcut_open.activated.connect(self.plot_all_seismograms)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+B'), self)
+        self.shortcut_open.activated.connect(self.stack_all_seismograms)
 
     def open_parameters_settings(self):
         self.parameters.show()
@@ -838,7 +843,34 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 path_output = os.path.join(dir_path, id)
                 tr.write(path_output, format="MSEED")
 
-    def stack_seismograms(self):
+    def stack_all_seismograms(self):
+
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=1, ncols=1)
+        index = 0
+        ##
+        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        wavenumber = array_analysis.array()
+        stream_stack, t, stats, time = wavenumber.stack_seismograms(self.st)
+        stack = wavenumber.stack(stream_stack, stack_type= 'Linear Stack')
+
+        self.canvas.plot_date(time, stack, index, clear_plot=True, color='steelblue', fmt='-',linewidth=0.5)
+        info = "{}".format(stats['station'])
+        self.canvas.set_plot_label(index, info)
+        try:
+            ax = self.canvas.get_axe(0)
+            if self.trimCB.isChecked():
+                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+            else:
+                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(0, "Date")
+        except:
+            pass
+
+    def plot_all_seismograms(self):
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=1, ncols=1)
         index = 0

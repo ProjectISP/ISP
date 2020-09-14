@@ -305,6 +305,28 @@ class array:
 
         return mat, time, stats
 
+
+    def stack_seismograms(self, st):
+        maxstart = np.max([tr.stats.starttime for tr in st])
+        minend = np.min([tr.stats.endtime for tr in st])
+        st.trim(maxstart, minend)
+        fs = st[0].stats.sampling_rate
+        time = np.linspace(0, fs, num=len(st[0].data))
+        serial_time = st[0].times("matplotlib")
+        mat = np.zeros([len(st), len(st[0].data)])
+        N = len(st)
+        for i in range(N - 1):
+            mat[i, :] = st[i].data
+
+        stats = {'network': st[0].stats.station, 'station': 'STACK', 'location': '',
+                 'channel': st[0].stats.channel, 'npts': st[0].stats.npts,
+                 'sampling_rate': st[0].stats.sampling_rate, 'mseed': {'dataquality': 'D'},
+                 'starttime': st[0].stats.starttime}
+
+        return mat, time, stats, serial_time
+
+
+
     def stack(self, data, stack_type = 'Linear Stack', order = 2):
 
         """
@@ -333,6 +355,9 @@ class array:
             raise ValueError('stack type is not valid.')
 
         return stack
+
+
+
 
 
 class vespagram_util:

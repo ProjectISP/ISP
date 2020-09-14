@@ -146,8 +146,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             md.set_error_message("Couldn't compute ARF, please check if you have loaded stations coords")
 
 
-
-
     def stations_map(self):
         coords = {}
 
