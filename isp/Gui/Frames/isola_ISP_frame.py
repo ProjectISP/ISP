@@ -352,7 +352,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
 
         self.map_stations = StationsMap(map_dict)
-        self.map_stations.plot_stations_map()
+        self.map_stations.plot_stations_map(latitude = self.latDB.value(),longitude=self.lonDB.value())
 
 
 

@@ -567,6 +567,7 @@
     <addaction name="actionOpen_Magnitudes_Calculator"/>
     <addaction name="actionRun_picker"/>
     <addaction name="actionRun_Event_Detector"/>
+    <addaction name="actionRemove_all_selections"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -577,12 +578,6 @@
     <addaction name="actionTime_Frequency_Analysis"/>
     <addaction name="actionReceiver_Functions"/>
    </widget>
-   <widget class="QMenu" name="menuProject">
-    <property name="title">
-     <string>Project</string>
-    </property>
-    <addaction name="actionOpen_project"/>
-   </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
      <string>View</string>
@@ -590,12 +585,12 @@
     <addaction name="actionSTA_LTA"/>
     <addaction name="actionCWT_CF"/>
     <addaction name="actionEnvelope"/>
+    <addaction name="actionSpectral_Entropy"/>
     <addaction name="actionStack"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
    <addaction name="menuGo"/>
-   <addaction name="menuProject"/>
    <addaction name="menuView"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -613,7 +608,6 @@
    <addaction name="actionMoment_Tensor_Inversion"/>
    <addaction name="actionTime_Frequency_Analysis"/>
    <addaction name="actionReceiver_Functions"/>
-   <addaction name="actionOpen_project"/>
   </widget>
   <action name="actionWhatever">
    <property name="text">
@@ -693,16 +687,6 @@
     <string>Receiver Functions</string>
    </property>
   </action>
-  <action name="actionOpen_project">
-   <property name="icon">
-    <iconset>
-     <normalon>:/icons/manage-icon.png</normalon>
-    </iconset>
-   </property>
-   <property name="text">
-    <string>Open project</string>
-   </property>
-  </action>
   <action name="actionSTA_LTA">
    <property name="text">
     <string>STA/LTA</string>
@@ -759,6 +743,16 @@
    </property>
    <property name="shortcut">
     <string/>
+   </property>
+  </action>
+  <action name="actionSpectral_Entropy">
+   <property name="text">
+    <string>Spectral Entropy</string>
+   </property>
+  </action>
+  <action name="actionRemove_all_selections">
+   <property name="text">
+    <string>Remove all selections</string>
    </property>
   </action>
  </widget>

@@ -28,9 +28,7 @@ import os
 from isp import ROOT_DIR
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
-from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope
-
-
+from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
@@ -115,6 +113,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRun_Event_Detector.triggered.connect(self.detect_events)
         self.actionOpen_Settings.triggered.connect(lambda : self.settings_dialog.show())
         self.actionStack.triggered.connect(lambda : self.stack_seismograms())
+        self.actionSpectral_Entropy.triggered.connect(lambda : self.spectral_entropy())
+        self.actionRemove_all_selections.triggered.connect(lambda : self.clean_all_chop())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -127,6 +127,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'),self)
         self.shortcut_open.activated.connect(self.clean_chop_at_page)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+C'), self)
+        self.shortcut_open.activated.connect(self.clean_events_detected)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+M'), self)
         self.shortcut_open.activated.connect(self.open_magnitudes_calculator)
@@ -443,7 +446,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
 
-    # Rotate to GAC,only first version #
+    # Rotate to GAC #
     def rotate(self):
         if self.st:
             self.canvas.clear()
@@ -535,18 +538,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         files_at_page = self.get_files_at_page()
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        self.canvas.clear()
         self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
         params = self.settings_dialog.getParameters()
-        print(params)
+        STA = params["STA"]
+        LTA = params["LTA"]
         for index, file_path in enumerate(files_at_page):
             tr = self.st[index]
-            cf = sta_lta(tr.data, tr.stats.sampling_rate)
+
+            if STA < LTA:
+                cf = sta_lta(tr.data, tr.stats.sampling_rate, STA = STA, LTA = LTA)
+            else:
+                cf = sta_lta(tr.data, tr.stats.sampling_rate)
+
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             # Normalize
             #cf =cf/max(cf)
             # forward to be centered the peak
-            start = tr.stats.starttime-0.5
-            tr.stats.starttime = start
             t = tr.times("matplotlib")
             self.canvas.plot_date(t, tr.data, index, color="black", fmt='-', linewidth=0.5)
             info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
@@ -555,15 +563,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.redraw_chop(tr, tr.data, index)
 
             t = t[0:len(cf)]
+
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
-            ax2.plot(t, cf,color="grey", linewidth=0.5, alpha = 0.5)
-            ax2.set_ylim(-1.05, 1.05)
+            ax2.plot(t, cf, color="grey", linewidth=0.5)
             last_index = index
-            tr.data = cf
-            cfs.append(tr)
-        self.cf = Stream(traces=cfs)
-
+            tr_cf = tr.copy()
+            tr_cf.data = cf
+            tr_cf.times = t
+            cfs.append(tr_cf)
         ax = self.canvas.get_axe(last_index)
         try:
             if self.trimCB.isChecked():
@@ -576,28 +584,62 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         except:
             pass
 
+        self.cf = Stream(traces=cfs)
+
+
+
     def cwt_cf(self):
+        self.cf = []
+        cfs = []
         files_at_page = self.get_files_at_page()
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
+        params = self.settings_dialog.getParameters()
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         diff = end_time - start_time
+        cycles = params["Num Cycles"]
+        fmin = params["Fmin"]
+        fmax = params["Fmax"]
+
         for index, file_path in enumerate(files_at_page):
             tr = self.st[index]
+            st_stats = ObspyUtil.get_stats_from_trace(tr)
             cw = ConvolveWaveletScipy(tr)
             if self.trimCB.isChecked() and diff >= 0:
-                cw.setup_wavelet(start_time, end_time, wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
-                                 decimate=False)
-            else:
-                cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
-                                 decimate=False)
 
-            # delay = cw.get_time_delay()
-            f = np.logspace(np.log10(0.2), np.log10(10))
-            k =6 / (2 * np.pi * f) #one standar deviation
-            delay = np.mean(k)
-            start=tr.stats.starttime+delay
+                if fmin > fmax and cycles > 5:
+                    tt = int(tr.stats.sampling_rate / fmin)
+                    cw.setup_wavelet(start_time, end_time, wmin=cycles, wmax=cycles, tt=tt, fmin=fmin, fmax=fmax, nf=40,
+                                 use_rfft=False, decimate=False)
+
+                else:
+                    cw.setup_wavelet(start_time, end_time,wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
+                                     decimate=False)
+
+            else:
+                if fmin > fmax and cycles > 5:
+                    tt = int(tr.stats.sampling_rate / fmin)
+                    cw.setup_wavelet(start_time, end_time, wmin=cycles, wmax=cycles, tt=tt, fmin=fmin, fmax=fmax, nf=40,
+                                     use_rfft=False, decimate=False)
+
+                else:
+                    cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False, decimate=False)
+
+            delay = cw.get_time_delay()
+            start = tr.stats.starttime + delay
+            #f = np.logspace(np.log10(fmin), np.log10(fmax))
+            #k = cycles / (2 * np.pi * f) #one standar deviation
+            #delay = np.mean(k)
+
             tr.stats.starttime=start
             t = tr.times("matplotlib")
+
+            self.canvas.plot_date(t, tr.data, index, color="black", fmt='-', linewidth=0.5)
+            info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
+            self.canvas.set_plot_label(index, info)
+            self.redraw_pickers(file_path, index)
+            self.redraw_chop(tr, tr.data, index)
             cf = cw.cf_lowpass()
             # Normalize
             cf = cf / max(cf)
@@ -606,9 +648,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             #self.canvas.set_ylabel_twinx(index, "CWT (CF)")
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
-            ax2.plot(t, cf, color="red", linewidth=0.5)
+            ax2.plot(t, cf, color="red", linewidth=0.5, alpha = 0.5)
             ax2.set_ylim(-1.05, 1.05)
             last_index = index
+            tr_cf = tr.copy()
+            tr_cf.data = cf
+            tr_cf.times = t
+            cfs.append(tr_cf)
         ax = self.canvas.get_axe(last_index)
         try:
             if self.trimCB.isChecked():
@@ -620,22 +666,34 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.canvas.set_xlabel(last_index, "Date")
         except:
             pass
+        self.cf = Stream(traces=cfs)
 
     def envelope(self):
         self.cf = []
         cfs = []
         files_at_page = self.get_files_at_page()
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         for index, file_path in enumerate(files_at_page):
             tr = self.st[index]
             t = tr.times("matplotlib")
+            st_stats = ObspyUtil.get_stats_from_trace(tr)
             cf = envelope(tr.data,tr.stats.sampling_rate)
-            self.canvas.plot(t, cf, index, clear_plot=False, color="blue", linewidth=0.5, alpha = 0.5)
+
+            self.canvas.plot_date(t, tr.data, index, color="black", fmt='-', linewidth=0.5)
+            self.canvas.plot_date(t, cf, index, color="blue", clear_plot=False, fmt='-', linewidth=0.5, alpha = 0.5)
+            info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
+            self.canvas.set_plot_label(index, info)
+            self.redraw_pickers(file_path, index)
+            self.redraw_chop(tr, tr.data, index)
+
             last_index = index
-            tr.data = cf
-            cfs.append(tr)
-        self.cf = Stream(traces=cfs)
+            tr_cf = tr.copy()
+            tr_cf.data = cf
+            tr_cf.times = t
+            cfs.append(tr_cf)
         ax = self.canvas.get_axe(last_index)
         try:
             if self.trimCB.isChecked():
@@ -648,10 +706,59 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         except:
             pass
 
+        self.cf = Stream(traces=cfs)
+
+    @AsycTime.run_async()
+    def spectral_entropy(self):
+        win = 2**10
+        self.cf = []
+        cfs = []
+        files_at_page = self.get_files_at_page()
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
+        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        for index, file_path in enumerate(files_at_page):
+            tr = self.st[index]
+            t = tr.times("matplotlib")
+
+            delta =tr.stats.delta
+            st_stats = ObspyUtil.get_stats_from_trace(tr)
+            cf = Entropydetect(tr.data, win, delta)
+            t_entropy = t[0:len(cf)]
+            self.canvas.plot_date(t, tr.data, index, color="black", fmt='-', linewidth=0.5)
+            info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
+            self.canvas.set_plot_label(index, info)
+            self.redraw_pickers(file_path, index)
+            self.redraw_chop(tr, tr.data, index)
+            cf = cf / max(cf)
+            ax = self.canvas.get_axe(index)
+            ax2 = ax.twinx()
+            ax2.plot(t_entropy, cf, color="green", linewidth=0.5, alpha=0.5)
+            ax2.set_ylim(-1.05, 1.05)
+            last_index = index
+            tr_cf = tr.copy()
+            tr_cf.data = cf
+            tr_cf.times = t_entropy
+            cfs.append(tr_cf)
+        ax = self.canvas.get_axe(last_index)
+        try:
+            if self.trimCB.isChecked():
+                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+            else:
+                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(last_index, "Date")
+        except:
+            pass
+
+        self.cf = Stream(traces=cfs)
+
 
     # @AsycTime.run_async()
     def detect_events(self):
-
+        standard_deviations = []
         all_traces = []
 
         parameters = self.parameters.getParameters()
@@ -679,13 +786,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             cf = cw.cf_lowpass()
             # Normalize
-            cf = cf / max(cf)
-            tr.data = cf
-            all_traces.append(tr)
-
+            standard_deviations.append(np.std(cf))
+            #cf = cf / max(cf)
+            tr_cf = tr.copy()
+            tr_cf.data = cf
+            all_traces.append(tr_cf)
+        max_threshold = 3*np.max(standard_deviations)
+        min_threshold = np.mean(standard_deviations)
         self.st = Stream(traces=all_traces)
-        trigger =coincidence_trigger(trigger_type=None, thr_on = 0.8, thr_off = 0.4,
-                                  thr_coincidence_sum = 5, stream=self.st, details=True)
+        trigger =coincidence_trigger(trigger_type=None, thr_on = max_threshold, thr_off = min_threshold,
+                                  thr_coincidence_sum = 4, stream=self.st, details=True)
 
 
         for k in range(len(trigger)):
@@ -702,7 +812,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def write_files_page(self):
-        import os
+
         root_path = os.path.dirname(os.path.abspath(__file__))
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         if self.st:
@@ -716,7 +826,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 tr.write(path_output, format="MSEED")
 
     def save_cf(self):
-        import os
         root_path = os.path.dirname(os.path.abspath(__file__))
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         if self.cf:
@@ -745,7 +854,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 if len(tr) > 0:
                     t = tr.times("matplotlib")
                     s = tr.data
-                    self.canvas.plot_date(t, s, index, clear_plot=False, color=colors[i], fmt='-', linewidth=0.5)
+                    self.canvas.plot_date(t, s, index, clear_plot=False, color=colors[i], fmt='-', alpha = 0.5,
+                                          linewidth=0.5)
                     i = i + 1
         try:
             ax = self.canvas.get_axe(0)
@@ -761,7 +871,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def plot_map_stations(self):
-
+        [lat,lon] = [self.event_info.latitude, self.event_info.longitude]
         obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
         obsfiles.sort()
 
@@ -781,7 +891,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
 
         self.map_stations = StationsMap(map_dict)
-        self.map_stations.plot_stations_map()
+        self.map_stations.plot_stations_map(latitude = lat, longitude=lon)
 
     def redraw_pickers(self, file_name, axe_index):
 
@@ -911,6 +1021,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 pass
         return identified_chop, id
 
+    def clean_events_detected(self):
+        if len(self.events_times)>0:
+            self.events_times = []
+            self.plot_seismogram()
+
+
+    def clean_all_chop(self):
+        self.chop = {'Body waves': {}, 'Surf Waves': {}, 'Coda': {}, 'Noise': {}}
+        self.plot_seismogram()
 
     def clean_chop_at_page(self):
         if self.st:
@@ -957,6 +1076,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
         if event.key == 'z':
+            # Compute Multitaper Spectrogram
+            params = self.settings_dialog.getParameters()
+
+
             start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
             end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             [identified_chop, id] = self.find_chop_by_ax(self.ax_num)
@@ -968,14 +1091,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             fs = identified_chop[0][6]
             delta = 1 /fs
             fn = fs/2
-            win = int(3*fs)
-            tbp = 3
-            ntapers = 3
+
+
+            win = int(params["Win"]*fs)
+            tbp = params["TW"]
+            ntapers = int(params["N Tapers"])
             f_min = 0
             f_max = fn
-
+            print(win,tbp,ntapers)
             self.spectrogram = PlotToolsManager(id)
-            [x,y,z] = self.spectrogram.compute_spectrogram_plot(data, win, delta, tbp, ntapers, f_min, f_max, t)
+            if win > 0.5*fs and ntapers > 2 and tbp > 2:
+                [x,y,z] = self.spectrogram.compute_spectrogram_plot(data, win, delta, tbp, ntapers, f_min, f_max, t)
+            else:
+                [x, y, z] = self.spectrogram.compute_spectrogram_plot(data, int(3*fs), delta, 3.5, 3, f_min, f_max, t)
             ax = self.canvas.get_axe(self.ax_num)
 
             ax2 = ax.twinx()

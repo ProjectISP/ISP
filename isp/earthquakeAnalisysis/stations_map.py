@@ -14,7 +14,7 @@ class StationsMap:
 
 
 
-    def plot_stations_map(self, save = False):
+    def plot_stations_map(self, **kwargs):
         from matplotlib.transforms import offset_copy
         import cartopy.crs as ccrs
         import cartopy.io.img_tiles as cimgt
@@ -33,6 +33,9 @@ class StationsMap:
         #layer = 'GEBCO_08 Hillshade'
         layer ='GEBCO_2019_Grid'
         #layer = 'shaded_relief'
+
+        epi_lat = kwargs.pop('latitude')
+        epi_lon = kwargs.pop('longitude')
 
         name_stations = []
         lat = []
@@ -67,6 +70,7 @@ class StationsMap:
         geodetic_transform = ccrs.PlateCarree()._as_mpl_transform(ax)
         text_transform = offset_copy(geodetic_transform, units='dots', x=-25)
         ax.scatter(lon, lat, s=12, marker="^", color='red', alpha=0.7, transform=ccrs.PlateCarree())
+        ax.plot(epi_lon, epi_lat, color='black', marker='*', markersize=8)
         N=len(name_stations)
         for n in range(N):
             lon1=lon[n]
