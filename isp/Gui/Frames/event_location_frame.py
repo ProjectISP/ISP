@@ -6,16 +6,16 @@ from isp.Gui.Frames.uis_frames import UiEventLocationFrame
 from isp.Gui.Models.sql_alchemy_model import SQLAlchemyModel
 from isp.db.models import EventLocationModel, FirstPolarityModel, MomentTensorModel
 from isp.db import generate_id
-from sqlalchemy.sql.sqltypes import DateTime
+#from sqlalchemy.sql.sqltypes import DateTime
 from datetime import datetime, timedelta
 from isp.Utils import ObspyUtil
 from obspy.core.event import Origin
-from sqlalchemy import Column
+#from sqlalchemy import Column
 import matplotlib.pyplot as plt
 from obspy.imaging.beachball import beach
 from isp import LOCATION_OUTPUT_PATH, MOMENT_TENSOR_OUTPUT, ROOT_DIR
 from isp.mti.read_log import read_log
-import matplotlib.image as mpimg
+#import matplotlib.image as mpimg
 from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
 from PIL import Image
 
@@ -447,7 +447,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
                #self.map_widget.ax.stock_img()
                self.map_widget.ax.add_wms(wms, layer)
         except:
-             pass
+               self.map_widget.ax.coastlines()
 
         lon = np.array(lon)
         lat = np.array(lat)

@@ -179,20 +179,17 @@ background-color: rgb(233, 233, 233);</string>
       <item>
        <widget class="QWidget" name="widget_4" native="true">
         <layout class="QGridLayout" name="gridLayout_4">
-         <item row="2" column="0">
-          <widget class="QSpinBox" name="gridlonSB">
-           <property name="minimum">
-            <number>-180</number>
-           </property>
-           <property name="maximum">
-            <number>180</number>
+         <item row="4" column="0" colspan="2">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Geographic Transformation</string>
            </property>
           </widget>
          </item>
          <item row="3" column="1">
           <widget class="QLabel" name="label_4">
            <property name="text">
-            <string>Depth</string>
+            <string>Depth (km)</string>
            </property>
           </widget>
          </item>
@@ -208,16 +205,6 @@ background-color: rgb(233, 233, 233);</string>
              <string>GLOBAL</string>
             </property>
            </item>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QSpinBox" name="griddepthSB">
-           <property name="minimum">
-            <number>-5</number>
-           </property>
-           <property name="maximum">
-            <number>800</number>
-           </property>
           </widget>
          </item>
          <item row="2" column="1">
@@ -242,16 +229,32 @@ background-color: rgb(233, 233, 233);</string>
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QSpinBox" name="gridlatSB">
+          <widget class="QDoubleSpinBox" name="gridlatSB">
+           <property name="minimum">
+            <double>-90.000000000000000</double>
+           </property>
            <property name="maximum">
-            <number>90</number>
+            <double>90.000000000000000</double>
            </property>
           </widget>
          </item>
-         <item row="4" column="0" colspan="2">
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>Geographic Transformation</string>
+         <item row="2" column="0">
+          <widget class="QDoubleSpinBox" name="gridlonSB">
+           <property name="minimum">
+            <double>-180.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>180.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QDoubleSpinBox" name="griddepthSB">
+           <property name="minimum">
+            <double>-10.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>1000.990000000000009</double>
            </property>
           </widget>
          </item>
@@ -393,13 +396,6 @@ background-color: rgb(233, 233, 233);</string>
            </property>
           </widget>
          </item>
-         <item row="6" column="0" colspan="3">
-          <widget class="QPushButton" name="genvelBtn">
-           <property name="text">
-            <string>Generate Velocity Grid</string>
-           </property>
-          </widget>
-         </item>
          <item row="4" column="0">
           <widget class="QLabel" name="label_18">
            <property name="text">
@@ -419,6 +415,34 @@ background-color: rgb(233, 233, 233);</string>
            <property name="text">
             <string>Grid Size (km)</string>
            </property>
+          </widget>
+         </item>
+         <item row="6" column="0" colspan="4">
+          <widget class="QPushButton" name="genvelBtn">
+           <property name="text">
+            <string>Generate Velocity Grid</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="3">
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>Model</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="3">
+          <widget class="QComboBox" name="modelCB">
+           <item>
+            <property name="text">
+             <string>2D</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>3D</string>
+            </property>
+           </item>
           </widget>
          </item>
         </layout>
@@ -447,27 +471,6 @@ background-color: rgb(233, 233, 233);</string>
            </item>
           </widget>
          </item>
-         <item row="0" column="0">
-          <widget class="QComboBox" name="comboBox_grid">
-           <item>
-            <property name="text">
-             <string>GRID2D</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>GRID3D</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item row="1" column="0" colspan="2">
-          <widget class="QPushButton" name="grdtimeBtn">
-           <property name="text">
-            <string>Grid to Time</string>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="1">
           <widget class="QComboBox" name="comboBox_angles">
            <item>
@@ -482,35 +485,47 @@ background-color: rgb(233, 233, 233);</string>
            </item>
           </widget>
          </item>
+         <item row="0" column="0">
+          <widget class="QComboBox" name="comboBox_grid">
+           <item>
+            <property name="text">
+             <string>GRID2D</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>GRID3D</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="3">
+          <widget class="QPushButton" name="grdtimeBtn">
+           <property name="text">
+            <string>Grid to Time</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QDoubleSpinBox" name="distanceSB">
+           <property name="maximum">
+            <double>1000.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_12">
+           <property name="text">
+            <string>Distance limit (km)</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
       <item>
        <widget class="QWidget" name="widget_3" native="true">
         <layout class="QGridLayout" name="gridLayout_5">
-         <item row="3" column="0" colspan="2">
-          <widget class="QPushButton" name="runlocBtn">
-           <property name="text">
-            <string>Run Location</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLabel" name="label_16">
-           <property name="text">
-            <string>Search</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QComboBox" name="comboBox_3">
-           <item>
-            <property name="text">
-             <string>OCT-TREE</string>
-            </property>
-           </item>
-          </widget>
-         </item>
          <item row="2" column="1">
           <widget class="QLabel" name="label_17">
            <property name="text">
@@ -542,11 +557,13 @@ background-color: rgb(233, 233, 233);</string>
            </item>
           </widget>
          </item>
-         <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
-          <widget class="QLabel" name="label_15">
-           <property name="text">
-            <string>Location Parameters</string>
-           </property>
+         <item row="1" column="0">
+          <widget class="QComboBox" name="comboBox_3">
+           <item>
+            <property name="text">
+             <string>OCT-TREE</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item row="4" column="0">
@@ -556,10 +573,38 @@ background-color: rgb(233, 233, 233);</string>
            </property>
           </widget>
          </item>
+         <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_15">
+           <property name="text">
+            <string>Location Parameters</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="label_16">
+           <property name="text">
+            <string>Search</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="2">
+          <widget class="QPushButton" name="runlocBtn">
+           <property name="text">
+            <string>Run Location</string>
+           </property>
+          </widget>
+         </item>
          <item row="4" column="1">
+          <widget class="QPushButton" name="plotpdfBtn">
+           <property name="text">
+            <string>Plot PDF</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0" colspan="2">
           <widget class="QPushButton" name="firstpolarityBtn">
            <property name="text">
-            <string>First Polarity</string>
+            <string>Compute Focal Mechanism (FP)</string>
            </property>
           </widget>
          </item>

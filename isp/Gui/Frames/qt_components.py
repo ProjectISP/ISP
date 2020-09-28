@@ -219,13 +219,17 @@ class Pagination(pw.QWidget, UiPaginationWidget):
         self.__update_buttons()
 
     def __onChange_items_per_page(self, value):
-        value = int(value)
-        if self.__items_per_page != value:
-            self.__items_per_page = value
-            self.__number_of_pages = self.number_of_pages
-            self.__onPage_changed(1)
-            if self.__onItemPerPageChange_callback:
-                self.__onItemPerPageChange_callback(value)
+
+        try:
+            value = int(value)
+            if self.__items_per_page != value:
+                self.__items_per_page = value
+                self.__number_of_pages = self.number_of_pages
+                self.__onPage_changed(1)
+                if self.__onItemPerPageChange_callback:
+                    self.__onItemPerPageChange_callback(value)
+        except:
+            print("please enter number of files per page")
 
     def bind_onPage_changed(self, func):
         if not isinstance(func, FunctionType):

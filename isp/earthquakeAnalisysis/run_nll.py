@@ -8,15 +8,13 @@ Created on Tue Dec 17 20:26:28 2019
 
 import os
 from pathlib import Path
-
-import matplotlib.pyplot as plt
+import fnmatch
 import numpy as np
 import pandas as pd
-from obspy import read_events
+import shutil
 from obspy.core.event import Origin
-
+from obspy.geodetics import gps2dist_azimuth
 from isp import ROOT_DIR
-from isp.DataProcessing import DatalessManager
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Utils import ObspyUtil
 from isp.Utils.subprocess_utils import exc_cmd
@@ -36,6 +34,13 @@ class NllManager:
         self.__obs_file_path = obs_file_path
         self.__create_dirs()
         self.__metadata_manager = None
+
+
+    def find_files(self,base, pattern):
+        '''Return list of files matching pattern in base folder.'''
+        return [n for n in fnmatch.filter(os.listdir(base), pattern) if os.path.isfile(os.path.join(base, n))]
+
+
 
     @property
     def nll_bin_path(self):
@@ -82,13 +87,14 @@ class NllManager:
         self.__validate_file(stations_file_path)
         return stations_file_path
 
-    def get_model_file_path(self, wave_type: str):
+    def get_model_file_path(self, wave_type: str, model):
         """
         Gets the model path for S or P wave.
 
         :param wave_type: Either S or P wave.
         :return: The path for the model S or P.
         """
+
         if wave_type.upper() == "P":
             model_path_p = os.path.join(self.get_local_models_dir, "modelP")
             self.__validate_file(model_path_p)
@@ -100,6 +106,7 @@ class NllManager:
             return model_path_s
         else:
             raise AttributeError("Wrong wave type. The wave type {} is not valid".format(wave_type))
+
 
     @property
     def get_run_dir(self):
@@ -128,6 +135,12 @@ class NllManager:
     @property
     def get_local_models_dir(self):
         models_dir = os.path.join(self.root_path, "local_models")
+        self.__validate_dir(models_dir)
+        return models_dir
+
+    @property
+    def get_local_models_dir3D(self):
+        models_dir = os.path.join(self.root_path, "model3D")
         self.__validate_dir(models_dir)
         return models_dir
 
@@ -200,17 +213,37 @@ class NllManager:
         self.__obs_file_path = file_path
 
     def set_run_template(self, latitude, longitude, depth):
+        files = self.find_files(self.get_time_dir, 'layer.P.mod.hdr')
+        file_name = os.path.join(self.get_time_dir, files[0])
+        fa = open(file_name)
+        # Reads the header file
+        hline = fa.readline().split()
+        xNum, yNum, zNum = map(int, hline[:3])
+        xOrig, yOrig, zOrig, dx, dy, dz = map(float, hline[3:-2])
+        fa.close()
+
         run_path = self.get_run_template_file_path
-        data = pd.read_csv(run_path)
+        data = pd.read_csv(run_path, header = None)
         travetimepath = os.path.join(self.get_time_dir, "layer")
         locationpath = os.path.join(self.get_loc_dir, "location")
         df = pd.DataFrame(data)
         df.iloc[1, 0] = 'TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}'.format(lat=latitude, lon=longitude, depth=depth)
         df.iloc[3, 0] = 'LOCFILES {obspath} NLLOC_OBS {timepath} {locpath}'.format(obspath=self.__obs_file_path,
-                                                                                   timepath=travetimepath,
-                                                                                   locpath=locationpath)
+                            timepath=travetimepath,locpath=locationpath)
+        if xNum == 2:
+           xNum = int(yNum/2)
+           yNum = int(yNum/2)
+           df.iloc[6, 0] = 'LOCGRID  {x} {y} {z} {xo} {yo} {zo} {dx} {dy} {dz} PROB_DENSITY  SAVE'.format(x=xNum,
+                            y=yNum,z=zNum,xo=xOrig,yo=yOrig,zo=zOrig,dx=dx, dy=dy,dz=dz)
+        else:
+
+
+
+            df.iloc[6, 0] = 'LOCGRID  {x} {y} {z} {xo} {yo} {zo} {dx} {dy} {dz} PROB_DENSITY  SAVE'.format(x=xNum, y=yNum, z=zNum,xo=xOrig, yo=yOrig, zo=zOrig,
+                                                                                    dx=dx, dy=dy, dz=dz)
+
         output = os.path.join(self.get_temp_dir, "run_temp.txt")
-        df.to_csv(output, index=False, header=True, encoding='utf-8')
+        df.to_csv(output, index=False, header=False, encoding='utf-8')
         return output
 
     def set_run_template_global(self):
@@ -274,24 +307,30 @@ class NllManager:
         command = "cat {}".format(file_path_to_cat)
         exc_cmd(command, stdout=open(file_path_to_append, 'a'), close_fds=True)
 
-    def vel_to_grid(self, latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz, grid_type, wave_type):
+    def vel_to_grid(self, latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz, grid_type, wave_type, model):
+        if model == "2D":
+            x_node = 2 # mandatory for 2D models
+            output = self.set_vel2grid_template(latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz,
+                                                grid_type, wave_type)
+            model_path = self.get_model_file_path(wave_type,model)
+            self.__append_files(model_path, output)
+            output_path = Path(output)
+            command = "{} {}".format(self.get_bin_file("Vel2Grid"), output_path.name)
+            exc_cmd(command, cwd=output_path.parent)
+        elif model == "3D":
+             self.__write_header(latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz, wave_type)
+             self.grid3d(wave_type)
 
-        output = self.set_vel2grid_template(latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz,
-                                            grid_type, wave_type)
-        model_path = self.get_model_file_path(wave_type)
-        self.__append_files(model_path, output)
-        output_path = Path(output)
-        command = "{} {}".format(self.get_bin_file("Vel2Grid"), output_path.name)
-        exc_cmd(command, cwd=output_path.parent)
 
-    def grid_to_time(self, latitude, longitude, depth, dimension, option, wave):
-        #self.stations_to_nll()
-        self.stations_to_nll_v2()
+    def grid_to_time(self, latitude, longitude, depth, dimension, option, wave, limit):
+
+        self.stations_to_nll_v2(latitude, longitude, depth, limit)
         output = self.set_grid2time_template(latitude, longitude, depth, dimension, option, wave)
         self.__append_files(self.get_stations_template_file_path, output)
         output_path = Path(output)
         command = "{} {}".format(self.get_bin_file("Grid2Time"), output_path.name)
         exc_cmd(command, cwd=output_path.parent)
+
 
     def run_nlloc(self, latitude, longitude, depth, transform):
 
@@ -299,45 +338,22 @@ class NllManager:
             output = self.set_run_template(latitude, longitude, depth)
             output_path = Path(output)
             command = "{} {}".format(self.get_bin_file("NLLoc"), output_path.name)
-            print(command)
+
 
         elif transform == "GLOBAL":
-            import shutil
+
             self.stations_to_nll_v2(transform="GLOBAL")
             stations_path = os.path.join(self.get_stations_template_file_path)
             temp_path = self.get_temp_dir
             shutil.copy(stations_path, temp_path)
             output = self.set_run_template_global()
-
             output_path = Path(output)
             command = "{} {}".format(self.get_bin_file("NLLoc"), output_path.name)
-            print(command)
+
         return exc_cmd(command, cwd=output_path.parent)
 
-    # def stations_to_nll(self):
-    #     dm = DatalessManager(self.__dataless_dir)
-    #     if len(dm.stations_stats) == 0:
-    #         raise FileNotFoundError("No dataless found at location {}.".format(self.__dataless_dir))
-    #     station_names = []
-    #     station_latitudes = []
-    #     station_longitudes = []
-    #     station_depths = []
-    #     for st in dm.stations_stats:
-    #         station_names.append(st.Name)
-    #         station_latitudes.append(st.Lat)
-    #         station_longitudes.append(st.Lon)
-    #         station_depths.append(st.Depth/1000)
-    #
-    #     data = {'Code': 'GTSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lon': station_longitudes,
-    #             'Lat': station_latitudes, 'Z': '0.000', 'Depth': station_depths}
-    #
-    #     df = pd.DataFrame(data, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
-    #
-    #     outstations_path = os.path.join(self.get_stations_dir, "stations.txt")
-    #     df.to_csv(outstations_path, sep=' ', header=False, index=False)
-    #     return outstations_path
 
-    def stations_to_nll_v2(self, transform="SIMPLE"):
+    def stations_to_nll_v2(self, latitude_f, longitude_f, depth_f, limit, transform="SIMPLE"):
 
         try:
             metadata_manager = MetadataManager(self.__dataless_dir)
@@ -359,15 +375,17 @@ class NllManager:
                     code = sta.code
                     latitude = sta.latitude
                     longitude = sta.longitude
-                    elevation = sta.elevation
-                    station_names.append(code)
-                    station_latitudes.append(latitude)
-                    station_longitudes.append(longitude)
-                    if transform == "GLOBAL":
-                        elevation=elevation/1000
+                    elevation = sta.elevation/1000
+
+                    # filter minimum distance
+                    dist, _, _ = gps2dist_azimuth(latitude, longitude, latitude_f,longitude_f)
+                    dist = dist/1000
+                    if dist<limit:
+                        station_names.append(code)
+                        station_latitudes.append(latitude)
+                        station_longitudes.append(longitude)
                         station_depths.append(elevation)
 
-            #LOCSRCE
             if transform == "SIMPLE":
 
                 data = {'Code': 'GTSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lat': station_latitudes,
@@ -442,7 +460,7 @@ class NllManager:
             xp = []
             for i in range(len(df)):
                 phase = df.iloc[i].On
-                if df.iloc[i].Weight > 0.01 and phase[0].upper() == "P":
+                if df.iloc[i].Res > 0 and phase[0].upper() == "P":
                     xp.append(df.iloc[i].PHASE)
 
         return xp
@@ -467,47 +485,76 @@ class NllManager:
 
         return stations
 
-    # TODO Move this to some frame, don't call Gui stuff on backend.
-    # def plot_scatter(self):
-    #
-    #     from isp.Gui.Frames import MatplotlibFrame
-    #
-    #     [x,y,z,pdf] = self.get_NLL_scatter()
-    #     pdf = np.array(pdf) / np.max(pdf)
-    #     f = 111.111 * np.cos(38.5 * np.pi / 180)
-    #     x = (x / f) - 9
-    #     y = (y / 111.111) + 38.5
-    #     left, width = 0.06, 0.65
-    #     bottom, height = 0.1, 0.65
-    #     spacing = 0.02
-    #     rect_scatter = [left, bottom, width, height]
-    #     rect_scatterlon = [left, bottom + height + spacing, width, 0.2]
-    #     rect_scatterlat = [left + width + spacing, bottom, 0.2, height]
-    #
-    #
-    #     fig = plt.figure(figsize=(10, 8))
-    #     self.mpf = MatplotlibFrame(fig)
-    #     ax_scatter = plt.axes(rect_scatter)
-    #     ax_scatter.tick_params(direction='in', top=True, right=True, labelsize=10)
-    #     plt.scatter(x, y, s=10, c=pdf, alpha=0.5, marker=".", cmap=plt.cm.jet)
-    #     plt.xlabel("Longitude", fontsize=10)
-    #     plt.ylabel("Latitude", fontsize=10)
-    #     ax_scatx = plt.axes(rect_scatterlon)
-    #     ax_scatx.tick_params(direction='in', labelbottom=False, labelsize=10)
-    #     plt.scatter(x, z, s=10, c=pdf, alpha=0.5, marker=".", cmap=plt.cm.jet)
-    #     plt.ylabel("Depth (km)", fontsize=10)
-    #     plt.gca().invert_yaxis()
-    #     ax_scatx = plt.axes(rect_scatterlat)
-    #     ax_scatx.tick_params(direction='in', labelleft=False, labelsize=10)
-    #     ax_scaty = plt.axes(rect_scatterlat)
-    #     ax_scaty.tick_params(direction='in')
-    #     ax_scaty.tick_params(which='major', labelsize=10)
-    #     plt.scatter(z, y, s=10, c=pdf, alpha=0.5, marker=".", cmap=plt.cm.jet)
-    #     ax_scaty = plt.axes(rect_scatterlat)
-    #     ax_scaty.tick_params(direction='in', labelsize=10)
-    #     plt.xlabel("Depth (km)", fontsize=10)
-    #     cax = plt.axes([0.95, 0.1, 0.02, 0.8])
-    #     plt.colorbar(cax=cax)
-    #     #plt.show()
-    #     self.mpf.show()
+    # read NLL 3D grids
 
+    def grid3d(self, wave_type):
+        if wave_type == "P":
+            file_name = "layer.P.mod"
+        elif wave_type == "S":
+            file_name = "layer.S.mod"
+        path = os.path.join(self.get_local_models_dir3D, file_name)
+        aslow, xNum, yNum, zNum = self.read_modfiles(path)
+        output_name = file_name+".buf"
+        output= os.path.join(self.get_model_dir, output_name)
+        with open(file_name, 'wb'):
+            aslow.astype('float32').tofile(output)
+
+
+    def read_modfiles(self, file_name):
+
+        xNum, yNum, zNum, xOrig, yOrig, zOrig, dx, dy, dz = self.__read_header(file_name)
+        aslow = np.empty([xNum, yNum, zNum])
+
+        for k in range(zNum):
+            new_k = k * int(dz)
+            depth = int(zOrig) + new_k
+            strdepth = str(depth)
+            fm_name = file_name + strdepth + '.mod'
+            fm = open(fm_name)
+            for j in range(yNum):
+                line = fm.readline().split()
+                for i in range(xNum):
+                    vel = float(line[i])
+                    slow = dx * 1. / vel
+                    aslow[i, j, k] = slow
+        fm.close()
+        return aslow, xNum, yNum, zNum
+
+    def __read_header(self, file_name):
+
+        fa = open(file_name + '.hdr')
+
+        # Reads the header file
+        hline = fa.readline().split()
+        xNum, yNum, zNum = map(int, hline[:3])
+        xOrig, yOrig, zOrig, dx, dy, dz = map(float, hline[3:-2])
+        hline = fa.readline().split()
+        Transf, lat0, lon0, Rot0 = hline[1], hline[3], hline[5], hline[7]
+        fa.close()
+        return xNum, yNum, zNum, xOrig, yOrig, zOrig, dx, dy, dz
+
+
+
+    def __write_header(self, latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz, wave_type):
+        """
+        Take the parameters of the 3D_Grid, and writes the header file in model
+        """
+        if wave_type == "P":
+            file_name = os.path.join(self.get_local_models_dir3D,"layer.P.mod.hdr")
+        elif wave_type == "S":
+            file_name = os.path.join(self.get_local_models_dir3D,"layer.S.mod.hdr")
+
+
+        shift_x = -0.5*float(x_node)
+        shift_y = -0.5*float(y_node)
+
+        coords = '{xnd} {ynd} {znd} {shift_x} {shift_y}  {depth} {dx:.2f} {dy:.2f} {dz:.2f} SLOW_LEN FLOAT\n'.format(xnd=x_node,
+                    ynd=y_node,znd=z_node,shift_x=shift_x, shift_y=shift_y, depth = depth, dx=dx,dy=dy, dz=dz)
+        transf = 'TRANSFORM SIMPLE LatOrig {xorig:.2f} LongOrig {yorig:.2f} RotCW 0.000000'.format(xorig=latitude, yorig=longitude)
+        new_file = open(file_name, mode="w+", encoding="utf-8")
+        new_file.write(coords)
+        new_file.close()
+        new_file = open(file_name, mode="a+", encoding="utf-8")
+        new_file.write(transf)
+        new_file.close()
+        shutil.copy(file_name, self.get_model_dir)

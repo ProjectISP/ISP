@@ -171,7 +171,7 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
 
             if fs1 != fs2:
                 self.tr1.resample(max_sampling_rates)
-                self.tr1.resample(max_sampling_rates)
+                self.tr2.resample(max_sampling_rates)
 
             cc1 = correlate_maxlag(self.tr1.data, self.tr1.data, maxlag = max([len(self.tr1.data),len(self.tr2.data)]))
             cc2 = correlate_maxlag(self.tr2.data, self.tr2.data, maxlag = max([len(self.tr1.data),len(self.tr2.data)]))

@@ -5,10 +5,10 @@ from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtCore import QSize
 #from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-from isp.Gui import pw
-import cartopy
-from matplotlib.transforms import offset_copy
+#from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+#from isp.Gui import pw
+#import cartopy
+#from matplotlib.transforms import offset_copy
 import cartopy.crs as ccrs
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 # class MplCanvas(FigureCanvas):
@@ -65,3 +65,27 @@ class MatplotlibWidget(Canvas):
 
     def minimumSizeHint(self):
         return QSize(10, 10)
+
+# class MatplotlibWidgetModel(Canvas):
+#     def __init__(self, parent=None):
+#
+#         self.fig = Figure()
+#         self.ax = self.fig.add_subplot(111)
+#
+#
+#         self.lat = inset_axes(self.ax, width=0.4,height="100%",loc='center left',bbox_to_anchor=(-0.08, 0.0, 1, 1),
+#                 bbox_transform=self.ax.transAxes, borderpad=0)
+#         self.lon = inset_axes(self.ax, width="100.0%", height=0.4, loc='upper center', bbox_to_anchor=(0.0, 0.14, 1, 1),
+#                              bbox_transform=self.ax.transAxes, borderpad=0)
+#
+#         super(MatplotlibWidgetModel, self).__init__(self.fig)
+#         self.setParent(parent)
+#         super(MatplotlibWidgetModel, self).setSizePolicy(
+#             QSizePolicy.Expanding, QSizePolicy.Expanding)
+#         super(MatplotlibWidgetModel, self).updateGeometry()
+#
+#     def sizeHint(self):
+#         return QSize(*self.get_width_height())
+#
+#     def minimumSizeHint(self):
+#         return QSize(10, 10)

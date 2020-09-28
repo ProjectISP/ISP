@@ -26,7 +26,7 @@ def exc_cmd(cmd, **kwargs):
     cmd = shlex.split(cmd)
     with sb.Popen(cmd, stdin=stdin, stdout=stdout, stderr=stderr, shell=False, encoding=encoding, **kwargs) as p:
         try:
-            std_out, std_err = p.communicate(timeout=15)
+            std_out, std_err = p.communicate(timeout=3600)
         except sb.TimeoutExpired:
             p.kill()
             std_out, std_err = p.communicate()  # try again if timeout fails.

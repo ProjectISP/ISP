@@ -61,7 +61,7 @@ class FirstPolarity:
         location_file = os.path.join(self.get_loc_dir, "last.hyp")
         df = pd.read_csv(location_file, delim_whitespace=True, skiprows=16)
         for i in range(len(df)):
-            if df.iloc[i].Weight > 0.01:
+            if df.iloc[i].RAz > 0:
                 sta = str(df.iloc[i].PHASE)
                 if len(sta) >= 5:
                     sta = sta[0:4]

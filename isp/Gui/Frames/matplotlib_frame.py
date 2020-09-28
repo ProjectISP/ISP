@@ -721,7 +721,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             annotate = ax.annotate(arrow_label, xy=(x_pos, 0), xytext=(0, -30), bbox=bbox, xycoords='data',
                                    textcoords='offset points', annotation_clip=True, arrowprops=arrowprops)
 
-            line = ax.vlines(x_pos, ymin, ymax, color=color, picker=picker, **kwargs)
+            line = ax.vlines(x_pos, ymin, ymax, color=color, picker=picker,lw=0.75, **kwargs)
 
             point = ax.plot(x_pos, amplitude, marker='o', color="steelblue") if amplitude else [None]
             # Add annotate and point in a dict with a key equal to line signature.

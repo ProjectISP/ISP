@@ -1,11 +1,11 @@
 from concurrent.futures.thread import ThreadPoolExecutor
-
 import matplotlib.dates as mdt
-from obspy import UTCDateTime, Stream
+from obspy import UTCDateTime, Stream, Trace
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth
+from obspy.signal.cross_correlation import correlate_template
 from obspy.signal.trigger import coincidence_trigger
-from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy, ConvolveWavelet
+from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.NeuralNetwork import CNNPicker
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.plot_tools_manager import PlotToolsManager
@@ -15,6 +15,7 @@ from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, Mes
     MatplotlibCanvas 
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
 from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
+from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.settings_dialog import SettingsDialog
@@ -29,7 +30,8 @@ import os
 from isp import ROOT_DIR
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
-from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect
+from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
+    correlate_maxlag, get_lags
 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
@@ -99,8 +101,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
         self.rotateBtn.clicked.connect(self.rotate)
         self.mapBtn.clicked.connect(self.plot_map_stations)
+        self.crossBtn.clicked.connect(self.cross)
         self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
+        self.actionOpen_Earth_Model_Viewer.triggered.connect(lambda: self.open_earth_model_viewer())
         self.actionWrite_Current_Page.triggered.connect(self.write_files_page)
         self.actionArray_Anlysis.triggered.connect(self.open_array_analysis)
         self.actionMoment_Tensor_Inversion.triggered.connect(self.open_moment_tensor)
@@ -122,6 +126,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # Parameters settings
 
         self.parameters = ParametersSettings()
+        # Earth Model Viewer
+
+        self.earthmodel = EarthModelViewer()
 
         # shortcuts
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+L'), self)
@@ -151,6 +158,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def open_parameters_settings(self):
         self.parameters.show()
 
+    def open_earth_model_viewer(self):
+        self.earthmodel.show()
     #@property
     #def event_info(self) -> EventInfoBox:
     #    return self.__event_info
@@ -393,6 +402,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 t = tr.times("matplotlib")
                 s = tr.data
                 self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
+                if  self.pagination.items_per_page>=16:
+                    ax = self.canvas.get_axe(index)
+                    ax.spines["top"].set_visible(False)
+                    ax.spines["bottom"].set_visible(False)
+                    ax.tick_params(top=False)
+                    ax.tick_params(labeltop=False)
+                    if index!=(self.pagination.items_per_page-1):
+                       ax.tick_params(bottom=False)
+
+
+
                 self.redraw_pickers(file_path, index)
                 #redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
                 self.redraw_chop(tr, s, index)
@@ -1019,6 +1039,80 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self._stations_info = StationsInfo(sd)
         self._stations_info.show()
+
+
+    def cross(self):
+        self.cf = []
+        cfs = []
+        max_values = []
+        files_at_page = self.get_files_at_page()
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
+
+        try:
+            if len(self.st)>0 and self.trimCB.isChecked():
+                num = self.crossSB.value()
+
+                if num<=len(files_at_page):
+                    template = self.st[num-1]
+
+                else:
+                    template = self.st[0]
+
+                for j, tr in enumerate(self.st):
+                    sampling_rates = []
+                    if self.crossCB.currentText() == "Auto":
+                        template=tr
+                        temp_stats = ObspyUtil.get_stats_from_trace(template)
+                        st_stats = ObspyUtil.get_stats_from_trace(tr)
+                        info = "Auto-Correlation {}.{}.{}".format(st_stats['net'], st_stats['station'],
+                                                                            st_stats['channel'])
+                    else:
+                        st_stats = ObspyUtil.get_stats_from_trace(tr)
+                        temp_stats = ObspyUtil.get_stats_from_trace(template)
+                        info = "Cross-Correlation {}.{}.{} --> {}.{}.{}".format(st_stats['net'], st_stats['station'],
+                                                                            st_stats['channel'],
+                                                                            temp_stats['net'], temp_stats['station'],
+                                                                            temp_stats['channel'])
+
+                    fs1 = tr.stats.sampling_rate
+                    fs2 = template.stats.sampling_rate
+                    sampling_rates.append(fs1)
+                    sampling_rates.append(fs2)
+                    max_sampling_rates = np.max(sampling_rates)
+
+                    if fs1 != fs2:
+                        self.tr.resample(max_sampling_rates)
+                        self.template.resample(max_sampling_rates)
+
+                    cc = correlate_maxlag(tr.data, template.data, maxlag=max([len(tr.data), len(template.data)]))
+
+                    stats = {'network': st_stats['net'], 'station': st_stats['station'], 'location': '',
+                             'channel': st_stats['channel'], 'npts': len(cc),
+                             'sampling_rate': max_sampling_rates, 'mseed': {'dataquality': 'M'},
+                             'starttime': temp_stats['starttime']}
+
+                    maximo = np.where(cc == np.max(cc))
+                    max_values.append(maximo)
+                    self.canvas.plot(get_lags(cc) / max_sampling_rates, cc, j, clear_plot=True,
+                                     linewidth=0.5, color="black")
+
+                    max_line = ((maximo[0][0])/max_sampling_rates)-0.5*(len(cc)/max_sampling_rates)
+                    self.canvas.draw_arrow(max_line, j, "max lag", color="red", linestyles='-', picker=False)
+                    self.canvas.set_plot_label(j, info)
+                    ax = self.canvas.get_axe(j)
+                    ax.set_xlim(min(get_lags(cc) / max_sampling_rates), max(get_lags(cc) / max_sampling_rates))
+                    # saving
+                    cfs.append(Trace(cc , stats))
+
+                self.canvas.set_xlabel(j, "Time [s] from zero lag")
+
+                self.cf = Stream(cfs)
+        except:
+            md = MessageDialog(self)
+            md.set_warning_message("Check correlation template and trim time")
+
+
 
     def on_select(self, ax_index, xmin, xmax):
         self.kind_wave = self.ChopCB.currentText()

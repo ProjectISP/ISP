@@ -12,8 +12,8 @@ from isp.Gui.Frames.plot_polarization import PlotPolarization
 from isp.Gui.Frames.qt_components import ParentWidget, FilterBox, FilesView, MessageDialog
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
-from isp.earthquakeAnalisysis import NllManager, PolarizationAnalyis, PickerManager, FirstPolarity
-
+from isp.earthquakeAnalisysis import NllManager, PolarizationAnalyis, PickerManager, FirstPolarity, PDFmanger
+import numpy as np
 
 @add_save_load()
 class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
@@ -244,6 +244,7 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.runlocBtn.clicked.connect(lambda: self.on_click_run_loc())
         self.plotmapBtn.clicked.connect(lambda: self.on_click_plot_map())
         self.firstpolarityBtn.clicked.connect(self.first_polarity)
+        self.plotpdfBtn.clicked.connect(self.plot_pdf)
 
     @property
     def nll_manager(self):
@@ -296,13 +297,21 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
                                      self.grid_ynode_bind.value, self.grid_znode_bind.value,
                                      self.grid_dxsize_bind.value, self.grid_dysize_bind.value,
                                      self.grid_dzsize_bind.value, self.comboBox_gridtype.currentText(),
-                                     self.comboBox_wavetype.currentText())
+                                     self.comboBox_wavetype.currentText(),self.modelCB.currentText())
 
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def on_click_run_grid_to_time(self):
+
+
+        if self.distanceSB.value()>0:
+            limit = self.distanceSB.value()
+        else:
+            limit = np.sqrt((self.grid_xnode_bind.value * self.grid_dxsize_bind.value) ** 2 +
+                            (self.grid_xnode_bind.value * self.grid_dxsize_bind.value) ** 2)
+
         self.nll_manager.grid_to_time(self.grid_latitude_bind.value, self.grid_longitude_bind.value,
                                       self.grid_depth_bind.value, self.comboBox_grid.currentText(),
-                                      self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText())
+                                      self.comboBox_angles.currentText(), self.comboBox_ttwave.currentText(),limit)
 
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg, set_default_complete=False))
     def on_click_run_loc(self):
@@ -325,8 +334,13 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.add_earthquake_info(origin)
         xp, yp, xs, ys = self.nll_manager.ger_NLL_residuals()
         self.plot_residuals(xp, yp, xs, ys)
-        #if self.pdfCB.isChecked:
-        #    self.nll_manager.plot_scatter()
+
+
+
+    def plot_pdf(self):
+        scatter_x, scatter_y, scatter_z, pdf = self.nll_manager.get_NLL_scatter()
+        self.pdf = PDFmanger(scatter_x, scatter_y, scatter_z, pdf)
+        self.pdf.plot_scatter()
 
     def plot_residuals(self, xp, yp, xs, ys):
 

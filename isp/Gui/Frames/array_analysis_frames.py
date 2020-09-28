@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from numba import jit
 from obspy import Stream, UTCDateTime, Trace
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.seismogram_analysis import SeismogramDataAdvanced
@@ -20,7 +19,7 @@ from isp.Utils import MseedUtil, AsycTime
 from isp.arrayanalysis import array_analysis
 from isp import ROOT_DIR
 from isp.Utils.subprocess_utils import exc_cmd
-from pathlib import Path
+
 class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
     def __init__(self):
