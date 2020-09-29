@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>TimeFrequencyAnalysis</class>
+ <widget class="QMainWindow" name="TimeFrequencyAnalysis">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1400</width>
-    <height>889</height>
+    <width>1501</width>
+    <height>859</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,13 +23,21 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Time-Frequency Analysis</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="autoFillBackground">
     <bool>true</bool>
    </property>
    <layout class="QGridLayout" name="gridLayout">
+    <item row="3" column="1">
+     <widget class="QWidget" name="widget_plot_down" native="true">
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(255, 255, 255);</string>
+      </property>
+      <zorder>gridLayoutWidget_3</zorder>
+     </widget>
+    </item>
     <item row="1" column="0">
      <widget class="QSplitter" name="splitter_3">
       <property name="sizePolicy">
@@ -99,10 +107,10 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_12">
+          <item row="3" column="0">
+           <widget class="QPushButton" name="plotBtn">
             <property name="text">
-             <string>Start Time             </string>
+             <string>Process and Plot</string>
             </property>
            </widget>
           </item>
@@ -120,10 +128,20 @@
             </item>
            </widget>
           </item>
-          <item row="3" column="0">
-           <widget class="QPushButton" name="plotBtn">
+          <item row="0" column="0" alignment="Qt::AlignHCenter">
+           <widget class="QLabel" name="label_12">
             <property name="text">
-             <string>Process and Plot</string>
+             <string>Start Time             </string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QDoubleSpinBox" name="minlevelCB">
+            <property name="minimum">
+             <double>-900.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>0.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -131,19 +149,6 @@
            <widget class="QLabel" name="label_13">
             <property name="text">
              <string>           End Time    </string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QDateTimeEdit" name="endtime_date">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="displayFormat">
-             <string>yyyy/MM/dd hh:mm:ss UTC</string>
             </property>
            </widget>
           </item>
@@ -157,6 +162,27 @@
             </property>
             <property name="displayFormat">
              <string>yyyy/MM/dd hh:mm:ss UTC</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QComboBox" name="typeCB">
+            <item>
+             <property name="text">
+              <string>contourf</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>pcolormesh</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QCheckBox" name="trimCB">
+            <property name="text">
+             <string>Trim</string>
             </property>
            </widget>
           </item>
@@ -184,13 +210,6 @@
             </item>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QCheckBox" name="trimCB">
-            <property name="text">
-             <string>Trim</string>
-            </property>
-           </widget>
-          </item>
           <item row="5" column="0">
            <widget class="QLabel" name="label_14">
             <property name="text">
@@ -198,18 +217,17 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="1">
-           <widget class="QComboBox" name="typeCB">
-            <item>
-             <property name="text">
-              <string>contourf</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>pcolormesh</string>
-             </property>
-            </item>
+          <item row="1" column="1">
+           <widget class="QDateTimeEdit" name="endtime_date">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="displayFormat">
+             <string>yyyy/MM/dd hh:mm:ss UTC</string>
+            </property>
            </widget>
           </item>
           <item row="6" column="0">
@@ -219,30 +237,13 @@
             </property>
            </widget>
           </item>
-          <item row="6" column="1">
-           <widget class="QDoubleSpinBox" name="minlevelCB">
-            <property name="minimum">
-             <double>-900.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>0.000000000000000</double>
-            </property>
-           </widget>
-          </item>
          </layout>
         </item>
        </layout>
       </widget>
      </widget>
     </item>
-    <item row="3" column="1">
-     <widget class="QWidget" name="widget_plot_down" native="true">
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255);</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1">
+    <item row="1" column="1" rowspan="2">
      <widget class="QWidget" name="widget_plot_up" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -264,7 +265,7 @@
        <widget class="QTabWidget" name="tabWidget">
         <property name="maximumSize">
          <size>
-          <width>420</width>
+          <width>440</width>
           <height>380</height>
          </size>
         </property>
@@ -347,7 +348,7 @@
            <rect>
             <x>-1</x>
             <y>9</y>
-            <width>411</width>
+            <width>431</width>
             <height>341</height>
            </rect>
           </property>
@@ -400,10 +401,32 @@
             </widget>
            </item>
            <item row="0" column="5">
-            <widget class="QComboBox" name="comboBox_2">
+            <widget class="QComboBox" name="wavelet_typeCB">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
              <item>
               <property name="text">
-               <string>C. Morlet</string>
+               <string>Complex Morlet</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Paul</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Mexican Hat</string>
               </property>
              </item>
             </widget>
@@ -417,6 +440,16 @@
            </item>
            <item row="0" column="3">
             <widget class="QSpinBox" name="atomsSB"/>
+           </item>
+           <item row="3" column="2">
+            <widget class="QLabel" name="label_16">
+             <property name="text">
+              <string>m</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="3">
+            <widget class="QSpinBox" name="wavelets_param"/>
            </item>
           </layout>
          </widget>
@@ -432,7 +465,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1400</width>
+     <width>1501</width>
      <height>22</height>
     </rect>
    </property>

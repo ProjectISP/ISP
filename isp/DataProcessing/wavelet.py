@@ -33,7 +33,9 @@ class ConvolveWaveletBase:
         :keyword tt: Period of the Morlet Wavelet. Default = 2.
         :keyword fmin: Minimum Central frequency (in Hz). Default = 2.
         :keyword fmax: Maximum Central frequency (in Hz). Default = 12.
+        :keyword m: Parameter for Paul Wavelet. Default = 30.
         :keyword nf: Number of logarithmically spaced frequencies between fmin and fmax. Default = 20.
+        :keyword use_wavelet: Default = Complex Morlet
         :keyword use_rfft: True if it should use rfft instead of fft. Default = True.
         :keyword decimate: True if it should try to decimate the trace. Default = False. The decimation
             factor is equal to q = 0.4*SR/fmax. For SR=200Hz and fmax=40Hz, q=2. This will downsize the
@@ -55,14 +57,15 @@ class ConvolveWaveletBase:
             self.trace: Trace = read(data)[0]
             self.stats = ObspyUtil.get_stats(data)
 
-
         self._wmin = float(kwargs.get("wmin", 6.))
         self._wmax = float(kwargs.get("wmax", 6.))
         self._tt = float(kwargs.get("tt", 2.))
         self._fmin = float(kwargs.get("fmin", 2.))
         self._fmax = float(kwargs.get("fmax", 12.))
         self._nf = int(kwargs.get("nf", 20))
-        self._use_rfft = kwargs.get("use_rfft", True)
+        self._use_wavelet = kwargs.get("use_wavelet", "Complex Morlet")
+        self._m = int(kwargs.get("m", 30))
+        self._use_rfft = kwargs.get("use_rfft", False)
         self._decimate = kwargs.get("decimate", False)
 
         self._validate_kwargs()
@@ -90,7 +93,7 @@ class ConvolveWaveletBase:
                and self._tt == other._tt and self._fmin == other._fmin and self._fmax == other._fmax \
                and self._nf == other._nf and self._use_rfft == other._use_rfft \
                and self._start_time == other._start_time and self._end_time == other._end_time \
-               and self._decimate == other._decimate
+               and self._decimate == other._decimate and self._use_wavelet == other._use_wavelet
 
     def _validate_data(self):
         if self._data is None:
@@ -110,20 +113,41 @@ class ConvolveWaveletBase:
         return self._npts
 
     def filter_win(self, freq, index):
-        # Create the Morlet wavelet and get its fft
-        s = self._n_cycles[index] / (2 * np.pi * freq)
-        # Normalize Factor
-        normalization = 1 / (np.pi * s ** 2) ** 0.25
-        # Complex sine = np.multiply(1j*2*(np.pi)*frex[fi],wtime))
-        # Gaussian = np.exp(-1*np.divide(np.power(wtime,2),2*s**2))
-        cmw = np.multiply(np.exp(np.multiply(1j * 2 * np.pi * freq, self._wtime)),
-                          np.exp(-1 * np.divide(np.power(self._wtime, 2), 2 * s ** 2)))
-        cmw = cmw.conjugate()
-        # Normalizing. The square root term causes the wavelet to be normalized to have an energy of 1.
-        cmw = normalization * cmw
 
-        if self._use_rfft:
-            cmw = np.real(cmw)
+        if self._use_wavelet == "Paul":
+
+            num = (2 ** self._m * 1j * np.math.factorial(self._m))
+            den = np.sqrt(np.pi * np.math.factorial((2 * self._m)))
+            s = (2 * self._m + 1) / (freq * np.pi * 4)
+            mu = self._wtime / s
+
+            p = 1 / (1 - 1j * mu) ** (self._m + 1)
+            cmw = (num * p) / den
+
+        elif self._use_wavelet == "Mexican Hat":
+            m = 2
+            sigma = (2 * m + 1) / (4 * np.pi * freq)
+            k1 = 2 / ((np.pi ** 0.25) * np.sqrt(2 * sigma))
+            k2 = ((self._wtime ** 2) / (sigma ** 2)) - 1
+            k3 = np.exp((-1 * self._wtime ** 2) / (2 * sigma ** 2))
+            cmw = -1 * k1 * k2 * k3
+
+        else:
+
+            # Create the Morlet wavelet and get its fft
+            s = self._n_cycles[index] / (2 * np.pi * freq)
+            # Normalize Factor
+            normalization = 1 / (np.pi * s ** 2) ** 0.25
+            # Complex sine = np.multiply(1j*2*(np.pi)*frex[fi],wtime))
+            # Gaussian = np.exp(-1*np.divide(np.power(wtime,2),2*s**2))
+            cmw = np.multiply(np.exp(np.multiply(1j * 2 * np.pi * freq, self._wtime)),
+                              np.exp(-1 * np.divide(np.power(self._wtime, 2), 2 * s ** 2)))
+            cmw = cmw.conjugate()
+            # Normalizing. The square root term causes the wavelet to be normalized to have an energy of 1.
+            cmw = normalization * cmw
+        #if self._use_rfft:
+        #   cmw = np.real(cmw)
+        #    print("R.Morlet Wavelet")
 
         return cmw
 
@@ -169,7 +193,8 @@ class ConvolveWaveletBase:
         self._fmin = float(kwargs.get("fmin", self._fmin))
         self._fmax = float(kwargs.get("fmax", self._fmax))
         self._nf = int(kwargs.get("nf", self._nf))
-
+        self._use_rfft = kwargs.get("use_rfft", False)
+        self._use_wavelet = kwargs.get("use_wavelet", "Complex Morlet")
         self._validate_kwargs()
         self._tf = None  # Makes tf none to force to recompute tf when calling other methods.
         self._setup_atoms()

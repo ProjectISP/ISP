@@ -49,11 +49,14 @@ def MTspectrum(data,win,dt,tbp,ntapers,linf,lsup):
 
 
 
-def Entropydetect(data,win,dt):           
-    
+def Entropydetect(data,win,dt):
+
+    N = int(len(win)/dt)
+    win = 2 ** math.ceil(math.log2(N))
+
     lim=len(data)-win
-    Entropy=np.zeros([1,int(lim)]) 
-     
+    Entropy=np.zeros([1,int(lim)])
+
     for n in range(lim):
         data1=data[n:win+n]
         data1=data1-np.mean(data1)

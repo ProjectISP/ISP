@@ -285,13 +285,17 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             t = np.linspace(0, tr.stats.delta * npts, npts)
             #cw = ConvolveWaveletScipy(self.file_selector.file_path)
             cw = ConvolveWaveletScipy(tr)
+            print(self.wavelet_typeCB.currentText())
+            wavelet=self.wavelet_typeCB.currentText()
 
+            m = self.wavelets_param.value()
             if self.trimCB.isChecked() and diff >= 0:
-                cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf, use_rfft=False,
-                                 decimate=False)
+
+                cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf,
+                                 use_wavelet = wavelet, m = m, decimate=False)
             else:
-                cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf, use_rfft=False,
-                                 decimate=False)
+                cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf,
+                                 use_wavelet = wavelet, m = m, decimate=False)
 
             scalogram2 = cw.scalogram_in_dbs()
             scalogram2 = np.clip(scalogram2, a_min=self.minlevelCB.value(), a_max=0)

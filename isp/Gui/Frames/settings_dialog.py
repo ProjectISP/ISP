@@ -12,15 +12,14 @@ class SettingsDialog(pw.QDialog, UiSettingsDialog):
 
     def getParameters(self):
         param_dict = {}
-        for i in range(self.formLayout.rowCount()):
-            field = self.formLayout.itemAt(i, pw.QFormLayout.FieldRole)
-            label = self.formLayout.itemAt(i, pw.QFormLayout.LabelRole)
-            if hasattr(field, 'widget') and hasattr(label, 'widget'): 
-                field = field.widget()
-                label = label.widget()
-                if hasattr(label, 'text') and hasattr(field, 'value'):
-                    field = field.value()
-                    label = label.text()
-                    param_dict[label] = field 
-
+        param_dict["STA"] = self.staDB.value()
+        param_dict["LTA"] = self.ltaDB.value()
+        param_dict["N Tapers"] = self.tapersDB.value()
+        param_dict["TW"] = self.twDB.value()
+        param_dict["Win"] = self.winDB.value()
+        param_dict["Num Cycles"] = self.ncyclesDB.value()
+        param_dict["Fmin"] = self.fminDB.value()
+        param_dict["Fmax"] = self.fminDB.value()
+        param_dict["win_entropy"] = self.win_entropyDB.value
         return param_dict
+

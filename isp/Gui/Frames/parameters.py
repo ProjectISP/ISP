@@ -11,7 +11,7 @@ class ActionEnum (enum.Enum):
     NORMALIZE = "normalize"
     FILTER = "filter"
     RESAMPLE = "resample"
-    FILL_GAPS = "fill faps"
+    FILL_GAPS = "fill gaps"
     DIFFERENTIATE = "differentiate"
     INTEGRATE = "integrate"
     SHIFT = "shift"
@@ -306,8 +306,6 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             param_layout.addWidget(method_label)
             param_layout.addWidget(combo_param)
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
-
-
 
 
     def removeRow(self, order_widget):

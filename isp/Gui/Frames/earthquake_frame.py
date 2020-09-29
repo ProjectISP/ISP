@@ -390,6 +390,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             sd = SeismogramDataAdvanced(file_path)
 
+
             if self.trimCB.isChecked() and diff >= 0:
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                               filter_error_callback=self.filter_error_message,
@@ -633,7 +634,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             cw = ConvolveWaveletScipy(tr)
             if self.trimCB.isChecked() and diff >= 0:
 
-                if fmin > fmax and cycles > 5:
+                if fmin < fmax and cycles > 5:
                     tt = int(tr.stats.sampling_rate / fmin)
                     cw.setup_wavelet(start_time, end_time, wmin=cycles, wmax=cycles, tt=tt, fmin=fmin, fmax=fmax, nf=40,
                                  use_rfft=False, decimate=False)
@@ -643,13 +644,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                      decimate=False)
 
             else:
-                if fmin > fmax and cycles > 5:
-                    tt = int(tr.stats.sampling_rate / fmin)
-                    cw.setup_wavelet(start_time, end_time, wmin=cycles, wmax=cycles, tt=tt, fmin=fmin, fmax=fmax, nf=40,
+                if fmin < fmax and cycles > 5:
+                   tt = int(tr.stats.sampling_rate / fmin)
+                   cw.setup_wavelet(wmin=cycles, wmax=cycles, tt=tt, fmin=fmin, fmax=fmax, nf=40,
                                      use_rfft=False, decimate=False)
-
                 else:
-                    cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False, decimate=False)
+                   cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False, decimate=False)
+
 
             delay = cw.get_time_delay()
             start = tr.stats.starttime + delay
@@ -705,15 +706,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             tr = self.st[index]
             t = tr.times("matplotlib")
             st_stats = ObspyUtil.get_stats_from_trace(tr)
-            cf = envelope(tr.data,tr.stats.sampling_rate)
-
+            cf = envelope(tr.data, tr.stats.sampling_rate)
             self.canvas.plot_date(t, tr.data, index, color="black", fmt='-', linewidth=0.5)
             self.canvas.plot_date(t, cf, index, color="blue", clear_plot=False, fmt='-', linewidth=0.5, alpha = 0.5)
             info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
             self.canvas.set_plot_label(index, info)
             self.redraw_pickers(file_path, index)
             self.redraw_chop(tr, tr.data, index)
-
             last_index = index
             tr_cf = tr.copy()
             tr_cf.data = cf
@@ -735,7 +734,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     @AsycTime.run_async()
     def spectral_entropy(self):
-        win = 2**10
+        params = self.settings_dialog.getParameters()
+        win = params["win_entropy"]
         self.cf = []
         cfs = []
         files_at_page = self.get_files_at_page()
@@ -820,7 +820,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         min_threshold = np.mean(standard_deviations)
         self.st = Stream(traces=all_traces)
         trigger =coincidence_trigger(trigger_type=None, thr_on = max_threshold, thr_off = min_threshold,
-                                  thr_coincidence_sum = 4, stream=self.st, details=True)
+                                     trigger_off_extension = 30, thr_coincidence_sum = 4, stream=self.st, details=True)
 
 
         for k in range(len(trigger)):
@@ -1092,7 +1092,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                              'sampling_rate': max_sampling_rates, 'mseed': {'dataquality': 'M'},
                              'starttime': temp_stats['starttime']}
 
-                    maximo = np.where(cc == np.max(cc))
+                    values = [np.max(cc),np.min(cc)]
+                    values = np.abs(values)
+
+                    if values[0]>values[1]:
+                        maximo = np.where(cc == np.max(cc))
+                    else:
+                        maximo = np.where(cc == np.min(cc))
+
                     max_values.append(maximo)
                     self.canvas.plot(get_lags(cc) / max_sampling_rates, cc, j, clear_plot=True,
                                      linewidth=0.5, color="black")

@@ -6,17 +6,13 @@ Created on Sat Mar 10 12:07:15 2018
 
 @author: robertocabieces
 """
-
 import matplotlib.pyplot as plt
 import numpy as np
-from obspy import Trace, read
-
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, MseedUtil
 from isp.seismogramInspector.signal_processing_advanced import MTspectrum
 from mtspec import wigner_ville_spectrum, mtspec, mt_coherence
-import math
 
 class MTspectrogram:
 

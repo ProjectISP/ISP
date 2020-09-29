@@ -340,6 +340,7 @@ class array:
             ``('root', order)``: root stack of given order
             (order 1 corresponds to linear stack).
         """
+
         if stack_type == 'Linear Stack':
             stack = np.mean(data, axis=0)
         elif stack_type == 'Phase Weigth Stack':

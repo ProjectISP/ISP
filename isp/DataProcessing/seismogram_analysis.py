@@ -94,9 +94,20 @@ class SeismogramDataAdvanced:
 
     def __init__(self, file_path):
         if file_path:
-            st = read(file_path)
-            self.__tracer = st[0]
+            self.st = read(file_path)
+
+            gaps = self.st.get_gaps()
+
+            if len(gaps) > 0:
+                self.st.print_gaps()
+                self.st.merge(fill_value = "interpolate")
+
+            self.__tracer = self.st[0]
             self.stats = TracerStats.from_dict(self.tracer.stats)
+
+
+
+
 
     @classmethod
     def from_tracer(cls, tracer):
