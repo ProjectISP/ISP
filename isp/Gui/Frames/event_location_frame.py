@@ -152,42 +152,46 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.btnShowAll.clicked.connect(self._showAll)
         self.PlotMapBtn.clicked.connect(self.__plot_map)
 
-    def _plot_row(self, index):
-        # try:
-        #     self.text.pop(0).remove()
-        # except:
-        #     pass
-        lat_index = self.model.index(index.row(), 3)
-        lon_index = self.model.index(index.row(), 4)
-        depth_index = self.model.index(index.row(), 5)
-        lat = self.model.data(lat_index)
-        lon = self.model.data(lon_index)
-        depth = self.model.data(depth_index)
-        print(lat,lon,depth)
-        self.text=self.map_widget.ax.annotate('Hola', xy=(-12, 35), xycoords='data',
-                                    xytext=(-12, 36), textcoords='data', arrowprops=dict(arrowstyle="->",
-                                                                                         connectionstyle="arc3,rad=.2"))
-
-        self.map_widget.fig.canvas.draw()
+    # def _plot_row(self, index):
+    #     # try:
+    #     #     self.text.pop(0).remove()
+    #     # except:
+    #     #     pass
+    #     lat_index = self.model.index(index.row(), 3)
+    #     lon_index = self.model.index(index.row(), 4)
+    #     depth_index = self.model.index(index.row(), 5)
+    #     lat = self.model.data(lat_index)
+    #     lon = self.model.data(lon_index)
+    #     depth = self.model.data(depth_index)
+    #     print(lat,lon,depth)
+    #     self.text=self.map_widget.ax.annotate('Hola', xy=(-12, 35), xycoords='data',
+    #                                 xytext=(-12, 36), textcoords='data', arrowprops=dict(arrowstyle="->",
+    #                                                                                      connectionstyle="arc3,rad=.2"))
+    #
+    #     self.map_widget.fig.canvas.draw()
 
     def _plot_foc_mec(self, index):
+
          # Plot Focal Mechanism
+         model = self.tableView.model()
          check = False
          if self.methodCB.currentText() == "First Polarity":
-            strike = self.model.data(self.model.index(index.row(), 24))
-            dip = self.model.data(self.model.index(index.row(), 25))
-            rake = self.model.data(self.model.index(index.row(), 26))
+
+            strike = model.data(model.index(index.row(), 24))
+            dip = model.data(model.index(index.row(), 25))
+            rake = model.data(model.index(index.row(), 26))
             if None not in [strike, dip, rake]:
                 self.plot_foc_mec(method = self.methodCB.currentText(), strike = strike, dip = dip, rake = rake)
                 check = True
 
          if self.methodCB.currentText() == "MTI":
-             mrr = self.model.data(self.model.index(index.row(), 43))
-             mtt = self.model.data(self.model.index(index.row(), 44))
-             mpp = self.model.data(self.model.index(index.row(), 45))
-             mrt = self.model.data(self.model.index(index.row(), 46))
-             mrp = self.model.data(self.model.index(index.row(), 47))
-             mtp = self.model.data(self.model.index(index.row(), 48))
+             mrr = model.data(model.index(index.row(), 43))
+             mtt = model.data(model.index(index.row(), 44))
+             mpp = model.data(model.index(index.row(), 45))
+             mrt = model.data(model.index(index.row(), 46))
+             mrp = model.data(model.index(index.row(), 47))
+             mtp = model.data(model.index(index.row(), 48))
+
              if None not in [mrr, mtt, mpp, mrt, mrp, mtp]:
                 self.plot_foc_mec(method=self.methodCB.currentText(), mrr=mrr, mtt=mtt, mpp=mpp, mrt=mrt, mrp=mrp,mtp=mtp)
                 check = True
@@ -195,8 +199,9 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
 
          if check:
              # plot in the map
-             lat = self.model.data(self.model.index(index.row(), 3))
-             lon = self.model.data(self.model.index(index.row(), 4))
+             lat = model.data(model.index(index.row(), 3))
+             lon = model.data(model.index(index.row(), 4))
+             print(lat,lon)
              file = os.path.join(ROOT_DIR, 'db/map_class/foc_mec.png')
 
              img = Image.open(file)
@@ -412,7 +417,10 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
             self.cb.remove()
 
         MAP_SERVICE_URL = map_service
-        wms = WebMapService(MAP_SERVICE_URL)
+        try:
+            wms = WebMapService(MAP_SERVICE_URL)
+        except:
+            pass
         layer = layer
 
         entities = self.model.getEntities()

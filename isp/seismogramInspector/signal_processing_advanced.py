@@ -51,7 +51,10 @@ def MTspectrum(data,win,dt,tbp,ntapers,linf,lsup):
 
 def Entropydetect(data,win,dt):
 
-    N = int(len(win)/dt)
+    if win > 0:
+        N = int(win/dt)
+    else:
+        N=1024
     win = 2 ** math.ceil(math.log2(N))
 
     lim=len(data)-win

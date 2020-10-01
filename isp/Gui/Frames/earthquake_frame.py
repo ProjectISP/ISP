@@ -121,6 +121,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionStack.triggered.connect(lambda: self.stack_all_seismograms())
         self.actionSpectral_Entropy.triggered.connect(lambda : self.spectral_entropy())
         self.actionRemove_all_selections.triggered.connect(lambda : self.clean_all_chop())
+        self.actionClean_selection.triggered.connect(lambda : self.clean_chop_at_page())
+        self.actionClean_Events_Detected.triggered.connect(lambda : self.clean_events_detected())
+        self.actionPlot_All_Seismograms.triggered.connect(lambda : self.plot_all_seismograms())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -154,6 +157,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+B'), self)
         self.shortcut_open.activated.connect(self.stack_all_seismograms)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+J'), self)
+        self.shortcut_open.activated.connect(self.clean_all_chop)
 
     def open_parameters_settings(self):
         self.parameters.show()
@@ -736,6 +742,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def spectral_entropy(self):
         params = self.settings_dialog.getParameters()
         win = params["win_entropy"]
+
         self.cf = []
         cfs = []
         files_at_page = self.get_files_at_page()
@@ -906,8 +913,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 if len(tr) > 0:
                     t = tr.times("matplotlib")
                     s = tr.data
-                    self.canvas.plot_date(t, s, index, clear_plot=False, color=colors[i], fmt='-', alpha = 0.5,
+                    if len(self.st)<10:
+                        self.canvas.plot_date(t, s, index, clear_plot=False, color=colors[i], fmt='-', alpha = 0.5,
                                           linewidth=0.5)
+                    else:
+                        self.canvas.plot_date(t, s, index, clear_plot=False, color='black', fmt='-', alpha=0.5,
+                                              linewidth=0.5)
                     i = i + 1
         try:
             ax = self.canvas.get_axe(0)
@@ -1260,7 +1271,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                 self.cbar = fig.colorbar(cs, ax=axs[j], extend='both', orientation='horizontal', pad=0.2)
                 self.cbar.ax.set_ylabel("Power [dB]")
-                #self.cbar.ax.set_ylim(-100,0)
 
             tr=self.st[self.ax_num]
             tt = tr.times("matplotlib")

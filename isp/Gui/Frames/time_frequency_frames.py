@@ -274,6 +274,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
 
         elif selection == "Continuous Wavelet Transform":
+
             fs = tr.stats.sampling_rate
             nf = self.atomsSB.value()
             f_min = self.freq_min_cwtDB.value()
@@ -285,7 +286,6 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             t = np.linspace(0, tr.stats.delta * npts, npts)
             #cw = ConvolveWaveletScipy(self.file_selector.file_path)
             cw = ConvolveWaveletScipy(tr)
-            print(self.wavelet_typeCB.currentText())
             wavelet=self.wavelet_typeCB.currentText()
 
             m = self.wavelets_param.value()
@@ -318,8 +318,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             cf = cf[0:len(tf)]
             if order == "Seismogram 1":
 
-                self.canvas_plot1.plot(tf, cf, 0, clear_plot=True, is_twinx=True, color="red",
-                                       linewidth=0.5)
+                #self.canvas_plot1.plot(tf, cf, 0, clear_plot=True, is_twinx=True, color="red",
+                #                       linewidth=0.5)
                 if self.typeCB.currentText() == 'pcolormesh':
                     self.canvas_plot1.pcolormesh(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)
                 elif self.typeCB.currentText() == 'contourf':
@@ -333,8 +333,9 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
 
             if order == "Seismogram 2":
-                self.canvas_plot2.plot(tf, cf, 0, clear_plot=True, is_twinx=True, color="red",
-                                       linewidth=0.5)
+
+                #self.canvas_plot2.plot(tf, cf, 0, clear_plot=True, is_twinx=True, color="red",
+                #                       linewidth=0.5)
 
                 if self.typeCB.currentText() == 'pcolormesh':
                     self.canvas_plot2.pcolormesh(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]", cmap=plt.get_cmap("jet"), vmin= min_cwt, vmax=max_cwt)

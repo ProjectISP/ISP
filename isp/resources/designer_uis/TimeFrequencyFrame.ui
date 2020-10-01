@@ -30,14 +30,6 @@
     <bool>true</bool>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="3" column="1">
-     <widget class="QWidget" name="widget_plot_down" native="true">
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255);</string>
-      </property>
-      <zorder>gridLayoutWidget_3</zorder>
-     </widget>
-    </item>
     <item row="1" column="0">
      <widget class="QSplitter" name="splitter_3">
       <property name="sizePolicy">
@@ -52,7 +44,20 @@
       <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QWidget" name="fileSelectorWidget" native="true"/>
+         <widget class="QWidget" name="fileSelectorWidget" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16700</height>
+           </size>
+          </property>
+         </widget>
         </item>
         <item>
          <layout class="QGridLayout" name="gridLayout_4">
@@ -100,58 +105,6 @@
         </item>
         <item>
          <layout class="QGridLayout" name="gridLayout_5">
-          <item row="4" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QCheckBox" name="time_frequencyChB">
-            <property name="text">
-             <string>Time-Frequency Analysis</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QPushButton" name="plotBtn">
-            <property name="text">
-             <string>Process and Plot</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QComboBox" name="selectCB">
-            <item>
-             <property name="text">
-              <string>Seismogram 1</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Seismogram 2</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="0" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_12">
-            <property name="text">
-             <string>Start Time             </string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1">
-           <widget class="QDoubleSpinBox" name="minlevelCB">
-            <property name="minimum">
-             <double>-900.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>0.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_13">
-            <property name="text">
-             <string>           End Time    </string>
-            </property>
-           </widget>
-          </item>
           <item row="1" column="0">
            <widget class="QDateTimeEdit" name="starttime_date">
             <property name="sizePolicy">
@@ -162,27 +115,6 @@
             </property>
             <property name="displayFormat">
              <string>yyyy/MM/dd hh:mm:ss UTC</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="1">
-           <widget class="QComboBox" name="typeCB">
-            <item>
-             <property name="text">
-              <string>contourf</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>pcolormesh</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QCheckBox" name="trimCB">
-            <property name="text">
-             <string>Trim</string>
             </property>
            </widget>
           </item>
@@ -210,10 +142,69 @@
             </item>
            </widget>
           </item>
+          <item row="4" column="0" alignment="Qt::AlignHCenter">
+           <widget class="QCheckBox" name="time_frequencyChB">
+            <property name="text">
+             <string>Time-Frequency Analysis</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QCheckBox" name="trimCB">
+            <property name="text">
+             <string>Trim</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QComboBox" name="selectCB">
+            <item>
+             <property name="text">
+              <string>Seismogram 1</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Seismogram 2</string>
+             </property>
+            </item>
+           </widget>
+          </item>
           <item row="5" column="0">
            <widget class="QLabel" name="label_14">
             <property name="text">
              <string>Plot type</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="plotBtn">
+            <property name="text">
+             <string>Process and Plot</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" alignment="Qt::AlignHCenter">
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>Start Time             </string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QDoubleSpinBox" name="minlevelCB">
+            <property name="minimum">
+             <double>-900.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1" alignment="Qt::AlignHCenter">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>           End Time    </string>
             </property>
            </widget>
           </item>
@@ -230,6 +221,20 @@
             </property>
            </widget>
           </item>
+          <item row="5" column="1">
+           <widget class="QComboBox" name="typeCB">
+            <item>
+             <property name="text">
+              <string>contourf</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>pcolormesh</string>
+             </property>
+            </item>
+           </widget>
+          </item>
           <item row="6" column="0">
            <widget class="QLabel" name="label_15">
             <property name="text">
@@ -244,33 +249,56 @@
      </widget>
     </item>
     <item row="1" column="1" rowspan="2">
-     <widget class="QWidget" name="widget_plot_up" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255);</string>
-      </property>
-     </widget>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QWidget" name="widget_plot_up" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_plot_down" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
-    <item row="3" column="0">
+    <item row="2" column="0">
      <layout class="QGridLayout" name="gridLayout_2">
       <property name="sizeConstraint">
        <enum>QLayout::SetMinAndMaxSize</enum>
       </property>
-      <item row="0" column="0">
+      <item row="0" column="1">
        <widget class="QTabWidget" name="tabWidget">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="maximumSize">
          <size>
           <width>440</width>
-          <height>380</height>
+          <height>440</height>
          </size>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -281,8 +309,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>411</width>
-            <height>351</height>
+            <width>431</width>
+            <height>101</height>
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
@@ -346,10 +374,10 @@
          <widget class="QWidget" name="gridLayoutWidget">
           <property name="geometry">
            <rect>
-            <x>-1</x>
-            <y>9</y>
+            <x>0</x>
+            <y>0</y>
             <width>431</width>
-            <height>341</height>
+            <height>161</height>
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout_6">

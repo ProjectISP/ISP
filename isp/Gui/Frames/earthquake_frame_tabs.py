@@ -397,12 +397,12 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
                                                 "Uncertainty {unc:.3f}".
                                                 format(lat=origin.latitude, long=origin.longitude,
                                                        depth=origin.depth / 1000,
-                                                       unc=origin.depth_errors['uncertainty'] / 10000))
+                                                       unc=origin.depth_errors['uncertainty']))
         self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err {:.3f}     "
                                                 "Min Horizontal Err {:.3f}     "
                                                 "Azimuth {:.3f}"
-                                                .format(origin.origin_uncertainty.max_horizontal_uncertainty / 1000,
-                                                        origin.origin_uncertainty.min_horizontal_uncertainty / 1000,
+                                                .format(origin.origin_uncertainty.max_horizontal_uncertainty,
+                                                        origin.origin_uncertainty.min_horizontal_uncertainty,
                                                         origin.origin_uncertainty.azimuth_max_horizontal_uncertainty))
 
         self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases {:.3f}     "

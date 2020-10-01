@@ -57,8 +57,6 @@
          </item>
         </layout>
        </widget>
-       <zorder>verticalLayoutWidget</zorder>
-       <zorder>map_widget</zorder>
       </widget>
      </widget>
     </item>
@@ -143,10 +141,24 @@
        </widget>
       </item>
       <item row="5" column="1">
-       <widget class="QDoubleSpinBox" name="latDB"/>
+       <widget class="QDoubleSpinBox" name="latDB">
+        <property name="minimum">
+         <double>-90.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>90.000000000000000</double>
+        </property>
+       </widget>
       </item>
       <item row="4" column="1">
-       <widget class="QDoubleSpinBox" name="lonDB"/>
+       <widget class="QDoubleSpinBox" name="lonDB">
+        <property name="minimum">
+         <double>-180.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>180.000000000000000</double>
+        </property>
+       </widget>
       </item>
       <item row="6" column="0" alignment="Qt::AlignHCenter">
        <widget class="QLabel" name="label_4">

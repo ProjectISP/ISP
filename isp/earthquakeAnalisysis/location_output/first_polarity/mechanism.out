@@ -1,11 +1,11 @@
-  Thu Sep 24 13:25:13 2020 for program Focmec
+  Thu Oct  1 11:58:16 2020 for program Focmec
  No comments
  Input from a file test.inp
  
- Polarities/Errors:  P 023/01  SV 000/00  SH 000/00
+ Polarities/Errors:  P 028/01  SV 000/00  SH 000/00
  There are no amplitude ratio data
  The minimum, increment and maximum B axis trend:   500.00    5.00  500.00
  The limits for the B axis plunge:     0.00    5.00   90.00
  The limits for Angle:     0.00    5.00  175.00
     Dip   Strike   Rake    Pol: P     SV    SH
-   14.11    4.56  -44.56       1.00  0.00  0.00
+   28.90   17.62  -29.03       1.00  0.00  0.00

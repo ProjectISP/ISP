@@ -727,9 +727,8 @@
       <string>Write Files</string>
      </property>
      <addaction name="actionWrite_Current_Page"/>
-     <addaction name="actionWrite_All"/>
     </widget>
-    <addaction name="actionWrithe_files"/>
+    <addaction name="actionNew_location"/>
     <addaction name="separator"/>
     <addaction name="menuWrite_Files"/>
     <addaction name="separator"/>
@@ -741,11 +740,12 @@
     </property>
     <addaction name="actionGet_Stations_Info"/>
     <addaction name="actionSet_Parameters"/>
-    <addaction name="actionClean_selection"/>
-    <addaction name="actionOpen_Magnitudes_Calculator"/>
     <addaction name="actionRun_picker"/>
     <addaction name="actionRun_Event_Detector"/>
+    <addaction name="actionClean_selection"/>
     <addaction name="actionRemove_all_selections"/>
+    <addaction name="actionClean_Events_Detected"/>
+    <addaction name="actionOpen_Magnitudes_Calculator"/>
     <addaction name="actionOpen_Earth_Model_Viewer"/>
    </widget>
    <widget class="QMenu" name="menuGo">
@@ -767,11 +767,19 @@
     <addaction name="actionSpectral_Entropy"/>
     <addaction name="actionAllSeismograms"/>
     <addaction name="actionStack"/>
+    <addaction name="actionPlot_All_Seismograms"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionOpen_Help"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
    <addaction name="menuGo"/>
    <addaction name="menuCompute"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -794,7 +802,7 @@
     <string>Whatever</string>
    </property>
   </action>
-  <action name="actionWrithe_files">
+  <action name="actionNew_location">
    <property name="text">
     <string>New Location</string>
    </property>
@@ -812,6 +820,9 @@
   <action name="actionSet_Parameters">
    <property name="text">
     <string>Macro</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
    </property>
   </action>
   <action name="actionTrim">
@@ -896,10 +907,16 @@
    <property name="text">
     <string>Clean selection</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
   </action>
   <action name="actionOpen_Magnitudes_Calculator">
    <property name="text">
     <string>Open Magnitudes Calculator</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
    </property>
   </action>
   <action name="actionRun_picker">
@@ -934,10 +951,16 @@
    <property name="text">
     <string>Remove all selections</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+J</string>
+   </property>
   </action>
   <action name="actionStack">
    <property name="text">
     <string>Stack</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
    </property>
   </action>
   <action name="actionEarth_Model_Viewer">
@@ -948,6 +971,27 @@
   <action name="actionOpen_Earth_Model_Viewer">
    <property name="text">
     <string>Open Earth Model Viewer</string>
+   </property>
+  </action>
+  <action name="actionOpen_Help">
+   <property name="text">
+    <string>Open Help</string>
+   </property>
+  </action>
+  <action name="actionClean_Events_Detected">
+   <property name="text">
+    <string>Clean Events Detected</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionPlot_All_Seismograms">
+   <property name="text">
+    <string>Plot All Seismograms</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
    </property>
   </action>
  </widget>
