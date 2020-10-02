@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head>
+
+  <script type="text/javascript" language="JavaScript">
+    //<![CDATA[
+    function reDo() {
+      if (innerWidth != origWidth || innerHeight != origHeight)
+        location.reload();
+    }
+    if ((parseInt(navigator.appVersion) == 4) && (navigator.appName == "Netscape")) {
+      origWidth = innerWidth;
+      origHeight = innerHeight;
+      onresize = reDo;
+    }
+    onerror = null;
+  //]]>
+  </script>
+  <style type="text/css">/*<![CDATA[*/
+
+    < !-- div.WebHelpPopupMenu {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      z-index: 4;
+      visibility: hidden;
+    }
+
+    p.WebHelpNavBar {
+      text-align: right;
+    }
+
+    -->
+  
+/*]]>*/</style>
+
+  <script type="text/javascript">//<![CDATA[
+
+    gRootRelPath = "../..";
+    gCommonRootRelPath = "../..";
+    gTopicId = "1.2.0_2";
+  
+//]]></script>
+
+  <script type="text/javascript" src="../../template/scripts/rh.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/common.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topic.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topicwidgets.min.js"></script>
+<script type="text/javascript" src="../../whxdata/projectsettings.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../template/styles/topic.min.css"/>
+  <link rel="stylesheet" type="text/css" href="../../template/single_page/topicheader.css"/>
+  <meta name="topic-status" content="Draft"/>
+
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta name="generator" content="Adobe RoboHelp 2020"/>
+  <title>Data Base</title>
+  <meta name="topic-status" content="Draft"/>
+  <link rel="stylesheet" type="text/css" href="../css/default.css"/>
+  <meta name="rh-authors" content="R.Cabieces"/>
+</head>
+
+<body>
+  <div class="topic-header rh-hide" id="rh-topic-header" onclick="rh._.goToFullLayout()">
+    <div class="logo">
+    </div>
+    <div class="nav">
+      <div class="title" title="Data Base">
+        <span>Data Base</span>
+      </div>
+      <div class="gotohome" title="Click here to see this page in full context">
+        <span>Click here to see this page in full context</span>
+      </div>
+    </div>
+  </div>
+  <div class="topic-header-shadow rh-hide" id="rh-topic-header-shadow"></div>
+
+
+
+  <h1>Data Base</h1>
+  <p><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"><b><span style="font-size:14.0pt">1. Data Base</span></b></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"><img src="../images/Compas.png"/>The Data Base sub-module is designed to incorporate all the results you can obtain from Earthquake location and Moment Tensor Inversion. It is possible to make queries to the data base, for example searching earthquake locations by a geographic frame or in a specific time spam. </span></span><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Moreover you can plot the results of your query in a map. With double click in a row of the table you can add a Focal mechanism detailed to the map and with right click just over one row of the table you can remove events.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">In the toolbar you will find two options, the first one “Read hyp folder load” will generate a database from all *.hyp that you had placed in the folder. The other option “Read last location” will load (last.hyp, from earthquake analysis), (log.txt, from Moment Tensor Inversion), (mechanism.out, from Earthquake analysis) and (magnitudes.out, from Earthquake analysis) and will fed the database with all of the information extracted.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Figure 1 shows  a Data Base example. To plot fashion maps you can add a WMS and the layer you want to plot. I suggest go to this web site to find nice WMS/layers:</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="background:white"><span style="tab-stops:45.8pt 91.6pt 137.4pt 183.2pt 229.0pt 274.8pt 320.6pt 366.4pt 412.2pt 458.0pt 503.8pt 549.6pt 595.4pt 641.2pt 687.0pt 732.8pt"><span style="font-family:Calibri,sans-serif"><i><span style="font-size:9.0pt"><span style="font-family:Menlo"><span style="color:gray"></span></span></span></i></span></span></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="background:white"><span style="tab-stops:45.8pt 91.6pt 137.4pt 183.2pt 229.0pt 274.8pt 320.6pt 366.4pt 412.2pt 458.0pt 503.8pt 549.6pt 595.4pt 641.2pt 687.0pt 732.8pt"><span style="font-family:Calibri,sans-serif"><i><span style="font-size:9.0pt"><span style="font-family:Menlo"><span style="color:#2f5496">MAP_SERVICE_URL = &#39;https://gis.ngdc.noaa.gov/arcgis/services/</span></span></span></i><span style="font-size:9.0pt"><span style="font-family:Menlo"><span style="color:#2f5496"></span></span></span></span></span></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <figure><img height="1016" src="../images/Data_base.png" width="1412"/>
+    <figcaption>Figure 1. Database sub-module. In the map is shown all the database. Earthquake epicenters are shown circles, the size is proportional to the preferred magnitude and the color is in accordance with the color bar. On the top the longitude cross-section and in the left the latitude cross-section.</figcaption>
+  </figure>
+  <p> </p>
+
+</body></html>

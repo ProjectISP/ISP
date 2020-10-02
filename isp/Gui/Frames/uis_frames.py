@@ -37,4 +37,5 @@ UiPPSDs = load_ui_designers("PPSD.ui")
 UiPPSDs_dialog = load_ui_designers("PPSD_DBGeneratorDialog.ui")
 UiVespagram = load_ui_designers("VespagramWidget.ui")
 UiEarth_model_viewer = load_ui_designers("EarthModelWidget.ui")
+UiHelp = load_ui_designers("help.ui")
 

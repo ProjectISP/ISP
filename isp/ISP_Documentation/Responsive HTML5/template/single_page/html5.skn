@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<skin>
+  <layout>single_page</layout>
+  <name>Azure_Blue</name>
+  <variables>
+    <css>
+      <and_search_disabled_image>andsearch_nomark.png</and_search_disabled_image>
+      <and_search_enabled_image>andsearch_mark.png</and_search_enabled_image>
+      <close_sidebar_image>slider_open.png</close_sidebar_image>
+      <custom_button_image_0>expand_all.svg</custom_button_image_0>
+      <custom_button_image_1>removesearch_mark.svg</custom_button_image_1>
+      <custom_button_image_2>print_desktop.png</custom_button_image_2>
+      <filter_active_checkbox_image>filter_mark.png</filter_active_checkbox_image>
+      <search_results_message_color>#929292</search_results_message_color>
+      <filter_applied_tab_image>filter_desktop_applied.png</filter_applied_tab_image>
+      <filter_back_button_mobile_image>back_mobile_filter.png</filter_back_button_mobile_image>
+      <filter_entry_color>#000000</filter_entry_color>
+      <filter_group_bgcolor>#eeeeee</filter_group_bgcolor>
+      <filter_inactive_checkbox_image>filter_nomark.png</filter_inactive_checkbox_image>
+      <filter_incative_radio_image>filter_nomark_radio.png</filter_incative_radio_image>
+      <filter_radio_image>filter_mark_radio.png</filter_radio_image>
+      <filter_reset_image>filter_clearall.png</filter_reset_image>
+      <filter_tab_image>filter_desktop.png</filter_tab_image>
+      <filter_title_color>#000000</filter_title_color>
+      <filter_title_seperator_color>#e6e6e6</filter_title_seperator_color>
+      <functionbar_bgcolor>transparent</functionbar_bgcolor>
+      <functionbar_border_color>#E6E6E6</functionbar_border_color>
+      <functionbar_mobile_bgcolor>#FFFFFF</functionbar_mobile_bgcolor>
+      <functionbar_mobile_border_color>#E6E6E6</functionbar_mobile_border_color>
+      <glossary_alphabet_color>#509de6</glossary_alphabet_color>
+      <glossary_definition_color>#000000</glossary_definition_color>
+      <glossary_search_bgcolor>#FFFFFF</glossary_search_bgcolor>
+      <glossary_search_border_color>#999999</glossary_search_border_color>
+      <glossary_search_text_color>#000000</glossary_search_text_color>
+      <glossary_seperator_color>#e6e6e6</glossary_seperator_color>
+      <glossary_tab_image>glossary_desktop.png</glossary_tab_image>
+      <glossary_term_color>#000000</glossary_term_color>
+      <goto_top_image>top.png</goto_top_image>
+      <header_bgcolor>#4996e8</header_bgcolor>
+      <header_font_color>#FFFFFF</header_font_color>
+      <index_alphabet_color>#509de6</index_alphabet_color>
+      <index_search_bgcolor>#FFFFFF</index_search_bgcolor>
+      <index_search_border_color>#999999</index_search_border_color>
+      <index_search_text_color>#000000</index_search_text_color>
+      <index_seperator_color>#e6e6e6</index_seperator_color>
+      <index_tab_image>index_desktop.png</index_tab_image>
+      <index_text_color>#000000</index_text_color>
+      <index_topic_image>idx_topic.png</index_topic_image>
+      <loading_image>loading.gif</loading_image>
+      <logo>logo.png</logo>
+      <menu_button_mobile_image>menu.png</menu_button_mobile_image>
+      <next_button_active_image>next_active.png</next_button_active_image>
+      <next_button_image>next.png</next_button_image>
+      <open_sidebar_image>slider.png</open_sidebar_image>
+      <title_font_family>Arial</title_font_family>
+      <page_font_family>&quot;Trebuchet MS&quot;, Arial, sans-serif</page_font_family>
+      <previous_button_active_image>previous_active.png</previous_button_active_image>
+      <previous_button_image>previous.png</previous_button_image>
+      <print_button_image>print_desktop.png</print_button_image>
+      <search_back_button_mobile_image>back_mobile.png</search_back_button_mobile_image>
+      <search_box_bgcolor>#FCFCFC</search_box_bgcolor>
+      <search_box_color>inherit</search_box_color>
+      <search_box_field_bgcolor>#FFFFFF</search_box_field_bgcolor>
+      <search_box_field_border_color>#ffffff</search_box_field_border_color>
+      <search_box_field_shadow_color>#cccccc</search_box_field_shadow_color>
+      <search_box_mobile_bgcolor>inherit</search_box_mobile_bgcolor>
+      <search_box_mobile_field_bgcolor>inherit</search_box_mobile_field_bgcolor>
+      <search_box_mobile_field_border_color>#CCCCCC</search_box_mobile_field_border_color>
+      <search_button_active_image>search_desktop_active.png</search_button_active_image>
+      <search_button_image>search_desktop.png</search_button_image>
+      <search_button_mobile_active_image>search_mobile_active.png</search_button_mobile_active_image>
+      <search_button_mobile_image>search_mobile_navigation.png</search_button_mobile_image>
+      <search_result_and_label>#000000</search_result_and_label>
+      <search_result_preview_color>#000000</search_result_preview_color>
+      <search_results_breadcrumb_color>#1268B8</search_results_breadcrumb_color>
+      <search_results_highlight_bgcolor>#FCFF00</search_results_highlight_bgcolor>
+      <search_results_highlight_color>#000000</search_results_highlight_color>
+      <search_results_title_color>#1268B8</search_results_title_color>
+      <search_tab_image>search_desktop.png</search_tab_image>
+      <sidebar_active_bgcolor>#FCFCFC</sidebar_active_bgcolor>
+      <sidebar_active_border_color>#D2D2D2</sidebar_active_border_color>
+      <sidebar_active_tab_mobile_bgcolor>#FFFFFF</sidebar_active_tab_mobile_bgcolor>
+      <sidebar_active_tab_tablet_bgcolor>#FFFFFF</sidebar_active_tab_tablet_bgcolor>
+      <sidebar_active_tab_tablet_border_color>#AAA7A7</sidebar_active_tab_tablet_border_color>
+      <sidebar_filter_tab_aplied_tablet_image>filter_tab_applied.png</sidebar_filter_tab_aplied_tablet_image>
+      <sidebar_filter_tab_tablet_image>filter_tab.png</sidebar_filter_tab_tablet_image>
+      <sidebar_glossary_tab_mobile_image>glossary_mobile.png</sidebar_glossary_tab_mobile_image>
+      <sidebar_glossary_tab_tablet_image>glossary_tab.png</sidebar_glossary_tab_tablet_image>
+      <sidebar_header_bgcolor>#F0F0F0</sidebar_header_bgcolor>
+      <sidebar_header_border_color>#E6E6E6</sidebar_header_border_color>
+      <sidebar_header_mobile_bgcolor>#F0F0F0</sidebar_header_mobile_bgcolor>
+      <sidebar_header_mobile_border_color>#E6E6E6</sidebar_header_mobile_border_color>
+      <sidebar_header_tablet_bgcolor>#F0F0F0</sidebar_header_tablet_bgcolor>
+      <sidebar_header_tablet_border_color>#AAA7A7</sidebar_header_tablet_border_color>
+      <sidebar_index_tab_mobile_image>index_mobile.png</sidebar_index_tab_mobile_image>
+      <sidebar_index_tab_tablet_image>index_tab.png</sidebar_index_tab_tablet_image>
+      <sidebar_search_tab_tablet_image>search_tab.png</sidebar_search_tab_tablet_image>
+      <sidebar_toc_tab_mobile_image>toc_mobile.png</sidebar_toc_tab_mobile_image>
+      <sidebar_toc_tab_tablet_image>toc_tab.png</sidebar_toc_tab_tablet_image>
+      <social_media_border_color>#3079D7</social_media_border_color>
+      <social_media_close_image>social_close_ltr.png</social_media_close_image>
+      <social_media_open_image>social_open.png</social_media_open_image>
+      <toc_close_book_image>toc_book_closed_desktop.png</toc_close_book_image>
+      <toc_close_book_mobile_image>toc_book_closed_mobile.png</toc_close_book_mobile_image>
+      <toc_link_image>toc_link_desktop.png</toc_link_image>
+      <toc_link_mobile_image>toc_link_mobile.png</toc_link_mobile_image>
+      <toc_open_book_image>toc_book_open_desktop.png</toc_open_book_image>
+      <toc_open_book_mobile_image>toc_book_open_mobile.png</toc_open_book_mobile_image>
+      <glossary_search_background_color>#FFFFFF</glossary_search_background_color>
+      <index_search_background_color>#ffffff</index_search_background_color>
+      <toc_selected_indicator_color>#509de6</toc_selected_indicator_color>
+      <toc_selected_text_color>#509de6</toc_selected_text_color>
+      <toc_tab_image>toc_desktop.png</toc_tab_image>
+      <toc_text_color>#000000</toc_text_color>
+      <toc_topic_image>toc_topic_desktop.png</toc_topic_image>
+      <toc_topic_mobile_image>toc_topic_mobile.png</toc_topic_mobile_image>
+      <toc_up_one_level_mobile_image>toc_book_open_drildown.png</toc_up_one_level_mobile_image>
+      <logo_width>32px</logo_width>
+      <logo_height>32px</logo_height>
+    </css>
+    <html>
+      <showOnlyDesktopView type="boolean">true</showOnlyDesktopView>
+      <assets type="array"></assets>
+      <custom_buttons type="array">
+        <custom_buttonsitem>
+          <image>expand_all.svg</image>
+          <name>Expand/Collapse All</name>
+          <onclick>rh.model.publish(rh.consts(&#39;EVT_EXPAND_COLLAPSE_ALL&#39;));return false;</onclick>
+          <title>Expand/Collapse All</title>
+        </custom_buttonsitem>
+        <custom_buttonsitem>
+          <image>removesearch_mark.svg</image>
+          <name>RemoveHighlight</name>
+          <onclick>rh.model.publish(rh.consts(&#39;EVT_REMOVE_HIGHLIGHT&#39;));return false;</onclick>
+          <title>Remove Highlight</title>
+        </custom_buttonsitem>
+        <custom_buttonsitem>
+          <image>print_desktop.png</image>
+          <name>Print</name>
+          <onclick>rh.model.publish(rh.consts(&#39;EVT_PRINT_TOPIC&#39;));return false;</onclick>
+          <title>Print</title>
+        </custom_buttonsitem>
+      </custom_buttons>
+      <do_not_preserve_ar type="boolean">true</do_not_preserve_ar>
+      <max_width_mobile>941</max_width_mobile>
+      <max_width_tablet>1295</max_width_tablet>
+      <page_font_family>\&quot;Trebuchet MS\&quot;, Arial, sans-serif</page_font_family>
+      <rtl type="boolean">false</rtl>
+      <search_results_highlight_bgcolor>#FCFF00</search_results_highlight_bgcolor>
+      <search_results_highlight_color>#000000</search_results_highlight_color>
+      <search_results_in_content_area type="boolean">false</search_results_in_content_area>
+      <show_filter type="boolean">true</show_filter>
+      <show_glossary type="boolean">true</show_glossary>
+      <show_header_on_mobile type="boolean">false</show_header_on_mobile>
+      <show_index type="boolean">true</show_index>
+      <show_toc type="boolean">true</show_toc>
+      <sidebar_open_by_default type="boolean">true</sidebar_open_by_default>
+      <toc_mobile_drill_down type="boolean">true</toc_mobile_drill_down>
+      <use_and_search type="boolean">true</use_and_search>
+      <use_facebook type="boolean">true</use_facebook>
+      <use_twitter type="boolean">true</use_twitter>
+    </html>
+  </variables>
+</skin>

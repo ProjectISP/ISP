@@ -1,0 +1,2764 @@
+/*************************************************************************
+* ADOBE CONFIDENTIAL
+* ___________________
+*
+* Copyright 2018 Adobe
+* All Rights Reserved.
+*
+* NOTICE: All information contained herein is, and remains
+* the property of Adobe and its suppliers, if any. The intellectual
+* and technical concepts contained herein are proprietary to Adobe
+* and its suppliers and are protected by all applicable intellectual
+* property laws, including trade secret and copyright laws.
+* Dissemination of this information or reproduction of this material
+* is strictly forbidden unless prior written permission is obtained
+* from Adobe.
+**************************************************************************/
+/* Skin Variables*/
+/* common  */
+/* single_page */
+/* home_page */
+body.media-mobile div.filter-holder ul, body.media-landscape div.filter-holder ul, body.media-desktop div.filter-holder ul, body.media-mobile div.filter-holder label, body.media-landscape div.filter-holder label, body.media-desktop div.filter-holder label, .unselectable, div.functionbar, div.topic div.functionholder, div.topic a.to_top, body.media-mobile div.mobilespecialfunctions, body.media-mobile div.searchbar.layout-visible, body.media-mobile div.functionbar, body.media-mobile div.filter-holder div.mobile-filter-heading, body.media-desktop div.searchbar-extra a.wSearchLink, body.media-desktop div.searchbar-extra div.searchAND.layout-visible label {
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+  user-select: none; }
+
+div.toc-holder ul {
+  list-style: none;
+  margin: 0;
+  padding: 0; }
+  div.toc-holder ul a {
+    display: block;
+    margin: 0;
+    padding: 0;
+    color: inherit; }
+  div.toc-holder ul li {
+    min-height: 1.2em;
+    line-height: 1.5em;
+    min-width: 6em;
+    border-right: .4em solid transparent; }
+    div.toc-holder ul li.selected {
+      text-decoration: underline; }
+    div.toc-holder ul li:not(.show) {
+      min-height: 0;
+      min-width: 0; }
+    div.toc-holder ul li li {
+      font-size: 100%; }
+  div.toc-holder ul li.child {
+    display: block;
+    overflow-y: hidden;
+    max-height: 0em;
+    -o-transition-duration: 0.5s;
+    -o-transition-timing-function: cubic-bezier(0, 1.05, 0, 1);
+    -o-transition-property: max-height;
+    -ms-transition-duration: 0.5s;
+    -ms-transition-timing-function: cubic-bezier(0, 1.05, 0, 1);
+    -ms-transition-property: max-height;
+    -moz-transition-duration: 0.5s;
+    -moz-transition-timing-function: cubic-bezier(0, 1.05, 0, 1);
+    -moz-transition-property: max-height;
+    -webkit-transition-duration: 0.5s;
+    -webkit-transition-timing-function: cubic-bezier(0, 1.05, 0, 1);
+    -webkit-transition-property: max-height;
+    transition-duration: 0.5s;
+    transition-timing-function: cubic-bezier(0, 1.05, 0, 1);
+    transition-property: max-height;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    -moz-perspective: 1000;
+    -ms-perspective: 1000;
+    perspective: 1000; }
+    div.toc-holder ul li.child:not(.show) {
+      overflow-x: hidden; }
+  div.toc-holder ul li.child.show {
+    max-height: 5000em;
+    min-height: 0;
+    overflow-y: visible;
+    -o-transition-duration: 0.7s;
+    -o-transition-timing-function: cubic-bezier(1, 0, 1, 0);
+    -o-transition-property: max-height;
+    -ms-transition-duration: 0.7s;
+    -ms-transition-timing-function: cubic-bezier(1, 0, 1, 0);
+    -ms-transition-property: max-height;
+    -moz-transition-duration: 0.7s;
+    -moz-transition-timing-function: cubic-bezier(1, 0, 1, 0);
+    -moz-transition-property: max-height;
+    -webkit-transition-duration: 0.7s;
+    -webkit-transition-timing-function: cubic-bezier(1, 0, 1, 0);
+    -webkit-transition-property: max-height;
+    transition-duration: 0.7s;
+    transition-timing-function: cubic-bezier(1, 0, 1, 0);
+    transition-property: max-height;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    -moz-perspective: 1000;
+    -ms-perspective: 1000;
+    perspective: 1000; }
+  div.toc-holder ul li.child.expanding.show {
+    max-height: 5000em;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: hidden; }
+  div.toc-holder ul li.child.collapsing {
+    overflow-x: hidden;
+    overflow-y: hidden; }
+div.toc-holder a {
+  text-decoration: none; }
+  div.toc-holder a:hover {
+    text-decoration: underline; }
+div.toc-holder:not(.drill-down) li.child.expanding.show {
+  margin-top: -0.14em;
+  margin-bottom: -0.14em; }
+div.toc-holder:not(.drill-down) li.child.collapsing {
+  margin-top: -0.14em;
+  margin-bottom: 0.3em; }
+
+@-ms-keyframes drill-down-up-mobile {
+  from {
+    margin-right: 25%; }
+  to {
+    margin-right: -2.6em; } }
+@-moz-keyframes drill-down-up-mobile {
+  from {
+    margin-right: 25%; }
+  to {
+    margin-right: -2.6em; } }
+@-webkit-keyframes drill-down-up-mobile {
+  from {
+    margin-right: 25%; }
+  to {
+    margin-right: -2.6em; } }
+@keyframes drill-down-up-mobile {
+  from {
+    margin-right: 25%; }
+  to {
+    margin-right: -2.6em; } }
+@-ms-keyframes drill-down-up-landscape {
+  from {
+    margin-right: 25%; }
+  to {
+    margin-right: 0; } }
+@-moz-keyframes drill-down-up-landscape {
+  from {
+    margin-right: 25%; }
+  to {
+    margin-right: 0; } }
+@-webkit-keyframes drill-down-up-landscape {
+  from {
+    margin-right: 25%; }
+  to {
+    margin-right: 0; } }
+@keyframes drill-down-up-landscape {
+  from {
+    margin-right: 25%; }
+  to {
+    margin-right: 0; } }
+body.media-mobile div.drill-down.toc-holder ul, body.media-landscape div.drill-down.toc-holder ul {
+  margin-right: 0 !important; }
+  body.media-mobile div.drill-down.toc-holder ul li.collapsing, body.media-landscape div.drill-down.toc-holder ul li.collapsing {
+    -ms-animation-name: drill-down-up;
+    -ms-animation-duration: 0.5s;
+    -moz-animation-name: drill-down-up;
+    -moz-animation-duration: 0.5s;
+    -webkit-animation-name: drill-down-up;
+    -webkit-animation-duration: 0.5s;
+    animation-name: drill-down-up;
+    animation-duration: 0.5s; }
+  body.media-mobile div.drill-down.toc-holder ul li.child ul.child, body.media-landscape div.drill-down.toc-holder ul li.child ul.child {
+    overflow: hidden; }
+body.media-mobile div.drill-down.toc-holder li, body.media-landscape div.drill-down.toc-holder li {
+  border-right-width: 0 !important; }
+  body.media-mobile div.drill-down.toc-holder li.selected, body.media-landscape div.drill-down.toc-holder li.selected {
+    padding-right: 1.55em !important;
+    background-position: 99% .8em;
+    /* For older browsers that don't support the new 4 property syntax */
+    background-position: right 0.4em top 0.8em;
+    /* For newer browsers */
+    border-right-width: .2em !important; }
+  body.media-mobile div.drill-down.toc-holder li.active.rh-hide, body.media-landscape div.drill-down.toc-holder li.active.rh-hide {
+    display: list-item !important; }
+  body.media-mobile div.drill-down.toc-holder li.inactive, body.media-landscape div.drill-down.toc-holder li.inactive {
+    display: none; }
+  body.media-mobile div.drill-down.toc-holder li.expanded, body.media-landscape div.drill-down.toc-holder li.expanded {
+    background-position: 99% .8em !important;
+    /* We need to override here because the icons goes wrong otherwise */ }
+body.media-mobile div.drill-down.toc-holder ul.child, body.media-landscape div.drill-down.toc-holder ul.child {
+  padding-right: 2.6em !important;
+  margin-right: 0; }
+body.media-mobile div.toc-holder ul, body.media-landscape div.toc-holder ul {
+  margin-right: .25em; }
+  body.media-mobile div.toc-holder ul li.book, body.media-landscape div.toc-holder ul li.book,
+  body.media-mobile div.toc-holder ul li.item,
+  body.media-landscape div.toc-holder ul li.item,
+  body.media-mobile div.toc-holder ul li.url,
+  body.media-landscape div.toc-holder ul li.url {
+    padding: 0.5em 2em 0.5em 1.75em;
+    margin-top: .25em;
+    margin-bottom: .25em;
+    margin-right: auto;
+    margin-left: .5em;
+    padding-left: 1.75em;
+    min-height: 1.5em;
+    vertical-align: middle;
+    -o-transition-duration: 0.35s;
+    -o-transition-timing-function: ease-out;
+    -o-transition-property: border-right;
+    -ms-transition-duration: 0.35s;
+    -ms-transition-timing-function: ease-out;
+    -ms-transition-property: border-right;
+    -moz-transition-duration: 0.35s;
+    -moz-transition-timing-function: ease-out;
+    -moz-transition-property: border-right;
+    -webkit-transition-duration: 0.35s;
+    -webkit-transition-timing-function: ease-out;
+    -webkit-transition-property: border-right;
+    transition-duration: 0.35s;
+    transition-timing-function: ease-out;
+    transition-property: border-right;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    -moz-perspective: 1000;
+    -ms-perspective: 1000;
+    perspective: 1000; }
+  body.media-mobile div.toc-holder ul li.book, body.media-landscape div.toc-holder ul li.book {
+    cursor: pointer; }
+  body.media-mobile div.toc-holder ul li.book.loading-book, body.media-landscape div.toc-holder ul li.book.loading-book {
+    background-image: url(var(--loading_image));
+    background-repeat: no-repeat;
+    background-position: 99% 0.8em;
+    background-size: 0.9375em 0.9375em;
+    /* For older browsers that don't support the new 4 property syntax */
+    background-image: url(var(--loading_image));
+    background-repeat: no-repeat;
+    background-position: right 0.6em top 0.8em;
+    background-size: 0.9375em 0.9375em;
+    /* For newer browsers */
+    background-size: 1em; }
+  body.media-mobile div.toc-holder ul li.child, body.media-landscape div.toc-holder ul li.child {
+    margin-right: -2.6em !important; }
+    body.media-mobile div.toc-holder ul li.child ul.child, body.media-landscape div.toc-holder ul li.child ul.child {
+      list-style: none;
+      padding-right: 3.4em; }
+
+body.media-desktop div.toc-holder {
+  margin-top: 2em; }
+  body.media-desktop div.toc-holder * {
+    width: auto;
+    white-space: nowrap; }
+  body.media-desktop div.toc-holder > ul li {
+    padding-right: 2em; }
+  body.media-desktop div.toc-holder ul {
+    margin: 0;
+    padding: 0; }
+    body.media-desktop div.toc-holder ul li.book,
+    body.media-desktop div.toc-holder ul li.item,
+    body.media-desktop div.toc-holder ul li.url {
+      font-size: 1.4em;
+      min-height: 1.2em;
+      padding: .1em 0;
+      margin: .1em 0;
+      vertical-align: middle; }
+    body.media-desktop div.toc-holder ul li.book {
+      cursor: pointer; }
+    body.media-desktop div.toc-holder ul li.book.loading-book {
+      padding-right: 2.15em;
+      background-image: url(var(--loading_image));
+      background-repeat: no-repeat;
+      background-position: 99% 0.4em;
+      background-size: auto;
+      /* For older browsers that don't support the new 4 property syntax */
+      background-image: url(var(--loading_image));
+      background-repeat: no-repeat;
+      background-position: right 0.6em top 0.4em;
+      background-size: auto;
+      /* For newer browsers */
+      background-size: 1em; }
+    body.media-desktop div.toc-holder ul li.item a {
+      background-position: 99% .15em;
+      /* For older browsers that don't support the new 4 property syntax */
+      background-position: right 0.55em top 0.15em;
+      /* For newer browsers */ }
+    body.media-desktop div.toc-holder ul li.url a {
+      background-position: 99% .2em;
+      /* For older browsers that don't support the new 4 property syntax */
+      background-position: right 0.6em top 0.2em;
+      /* For newer browsers */ }
+    body.media-desktop div.toc-holder ul li.child ul.child {
+      list-style: none;
+      padding-right: 0; }
+
+body.media-mobile div.idx-holder div.Index, body.media-mobile div.glo-holder div.Glossary, body.media-landscape div.idx-holder div.Index, body.media-landscape div.glo-holder div.Glossary, body.media-desktop div.idx-holder div.Index, body.media-desktop div.glo-holder div.Glossary {
+  width: 100%; }
+  body.media-mobile div.idx-holder div.Index input, body.media-mobile div.glo-holder div.Glossary input, body.media-landscape div.idx-holder div.Index input, body.media-landscape div.glo-holder div.Glossary input, body.media-desktop div.idx-holder div.Index input, body.media-desktop div.glo-holder div.Glossary input {
+    width: 98%;
+    margin: .6em 1% .3em;
+    height: 3em;
+    padding: 0 .3em;
+    font-size: 100%;
+    -webkit-appearance: none;
+    -webkit-border-radius: 0.5em;
+    -moz-border-radius: 0.5em;
+    border-radius: 0.5em; }
+    body.media-mobile div.idx-holder div.Index input:focus, body.media-mobile div.glo-holder div.Glossary input:focus, body.media-landscape div.idx-holder div.Index input:focus, body.media-landscape div.glo-holder div.Glossary input:focus, body.media-desktop div.idx-holder div.Index input:focus, body.media-desktop div.glo-holder div.Glossary input:focus {
+      outline: none; }
+    body.media-mobile div.idx-holder div.Index input::-webkit-input-placeholder, body.media-mobile div.glo-holder div.Glossary input::-webkit-input-placeholder, body.media-landscape div.idx-holder div.Index input::-webkit-input-placeholder, body.media-landscape div.glo-holder div.Glossary input::-webkit-input-placeholder, body.media-desktop div.idx-holder div.Index input::-webkit-input-placeholder, body.media-desktop div.glo-holder div.Glossary input::-webkit-input-placeholder {
+      font-style: italic;
+      padding-right: .3em; }
+    body.media-mobile div.idx-holder div.Index input:-moz-placeholder, body.media-mobile div.glo-holder div.Glossary input:-moz-placeholder, body.media-landscape div.idx-holder div.Index input:-moz-placeholder, body.media-landscape div.glo-holder div.Glossary input:-moz-placeholder, body.media-desktop div.idx-holder div.Index input:-moz-placeholder, body.media-desktop div.glo-holder div.Glossary input:-moz-placeholder {
+      font-style: italic;
+      padding-right: .3em; }
+    body.media-mobile div.idx-holder div.Index input::-moz-placeholder, body.media-mobile div.glo-holder div.Glossary input::-moz-placeholder, body.media-landscape div.idx-holder div.Index input::-moz-placeholder, body.media-landscape div.glo-holder div.Glossary input::-moz-placeholder, body.media-desktop div.idx-holder div.Index input::-moz-placeholder, body.media-desktop div.glo-holder div.Glossary input::-moz-placeholder {
+      font-style: italic;
+      padding-right: .3em; }
+    body.media-mobile div.idx-holder div.Index input::-ms-input-placeholder, body.media-mobile div.glo-holder div.Glossary input::-ms-input-placeholder, body.media-landscape div.idx-holder div.Index input::-ms-input-placeholder, body.media-landscape div.glo-holder div.Glossary input::-ms-input-placeholder, body.media-desktop div.idx-holder div.Index input::-ms-input-placeholder, body.media-desktop div.glo-holder div.Glossary input::-ms-input-placeholder {
+      font-style: italic;
+      padding-right: .3em; }
+  body.media-mobile div.idx-holder div.Index a, body.media-mobile div.glo-holder div.Glossary a, body.media-landscape div.idx-holder div.Index a, body.media-landscape div.glo-holder div.Glossary a, body.media-desktop div.idx-holder div.Index a, body.media-desktop div.glo-holder div.Glossary a {
+    color: inherit !important;
+    text-decoration: none;
+    display: block; }
+    body.media-mobile div.idx-holder div.Index a:hover, body.media-mobile div.glo-holder div.Glossary a:hover, body.media-landscape div.idx-holder div.Index a:hover, body.media-landscape div.glo-holder div.Glossary a:hover, body.media-desktop div.idx-holder div.Index a:hover, body.media-desktop div.glo-holder div.Glossary a:hover, body.media-mobile div.idx-holder div.Index a:active, body.media-mobile div.glo-holder div.Glossary a:active, body.media-landscape div.idx-holder div.Index a:active, body.media-landscape div.glo-holder div.Glossary a:active, body.media-desktop div.idx-holder div.Index a:active, body.media-desktop div.glo-holder div.Glossary a:active {
+      text-decoration: underline; }
+  body.media-mobile div.idx-holder div.Index ul, body.media-mobile div.glo-holder div.Glossary ul, body.media-landscape div.idx-holder div.Index ul, body.media-landscape div.glo-holder div.Glossary ul, body.media-desktop div.idx-holder div.Index ul, body.media-desktop div.glo-holder div.Glossary ul {
+    padding-right: 0px; }
+  body.media-mobile div.idx-holder div.Index .index-list, body.media-mobile div.glo-holder div.Glossary .index-list, body.media-landscape div.idx-holder div.Index .index-list, body.media-landscape div.glo-holder div.Glossary .index-list, body.media-desktop div.idx-holder div.Index .index-list, body.media-desktop div.glo-holder div.Glossary .index-list {
+    list-style-type: none;
+    margin-top: 0; }
+  body.media-mobile div.idx-holder div.Index li.treeitem, body.media-mobile div.glo-holder div.Glossary li.treeitem, body.media-landscape div.idx-holder div.Index li.treeitem, body.media-landscape div.glo-holder div.Glossary li.treeitem, body.media-desktop div.idx-holder div.Index li.treeitem, body.media-desktop div.glo-holder div.Glossary li.treeitem {
+    margin-right: .3em; }
+    body.media-mobile div.idx-holder div.Index li.treeitem.IndexAlphabet, body.media-mobile div.glo-holder div.Glossary li.treeitem.IndexAlphabet, body.media-landscape div.idx-holder div.Index li.treeitem.IndexAlphabet, body.media-landscape div.glo-holder div.Glossary li.treeitem.IndexAlphabet, body.media-desktop div.idx-holder div.Index li.treeitem.IndexAlphabet, body.media-desktop div.glo-holder div.Glossary li.treeitem.IndexAlphabet, body.media-mobile div.idx-holder div.Index li.treeitem.GloAlphabet, body.media-mobile div.glo-holder div.Glossary li.treeitem.GloAlphabet, body.media-landscape div.idx-holder div.Index li.treeitem.GloAlphabet, body.media-landscape div.glo-holder div.Glossary li.treeitem.GloAlphabet, body.media-desktop div.idx-holder div.Index li.treeitem.GloAlphabet, body.media-desktop div.glo-holder div.Glossary li.treeitem.GloAlphabet {
+      font-size: 1.2em;
+      border-bottom-style: solid;
+      border-bottom-width: .1em;
+      margin: auto auto 0.5em 0.3em;
+      padding-right: .3em; }
+    body.media-mobile div.idx-holder div.Index li.treeitem .IndexKeyword, body.media-mobile div.glo-holder div.Glossary li.treeitem .IndexKeyword, body.media-landscape div.idx-holder div.Index li.treeitem .IndexKeyword, body.media-landscape div.glo-holder div.Glossary li.treeitem .IndexKeyword, body.media-desktop div.idx-holder div.Index li.treeitem .IndexKeyword, body.media-desktop div.glo-holder div.Glossary li.treeitem .IndexKeyword,
+    body.media-mobile div.idx-holder div.Index li.treeitem .IndexKeyword:hover,
+    body.media-mobile div.glo-holder div.Glossary li.treeitem .IndexKeyword:hover,
+    body.media-landscape div.idx-holder div.Index li.treeitem .IndexKeyword:hover,
+    body.media-landscape div.glo-holder div.Glossary li.treeitem .IndexKeyword:hover,
+    body.media-desktop div.idx-holder div.Index li.treeitem .IndexKeyword:hover,
+    body.media-desktop div.glo-holder div.Glossary li.treeitem .IndexKeyword:hover,
+    body.media-mobile div.idx-holder div.Index li.treeitem .IndexLink,
+    body.media-mobile div.glo-holder div.Glossary li.treeitem .IndexLink,
+    body.media-landscape div.idx-holder div.Index li.treeitem .IndexLink,
+    body.media-landscape div.glo-holder div.Glossary li.treeitem .IndexLink,
+    body.media-desktop div.idx-holder div.Index li.treeitem .IndexLink,
+    body.media-desktop div.glo-holder div.Glossary li.treeitem .IndexLink,
+    body.media-mobile div.idx-holder div.Index li.treeitem .IndexLink:hover,
+    body.media-mobile div.glo-holder div.Glossary li.treeitem .IndexLink:hover,
+    body.media-landscape div.idx-holder div.Index li.treeitem .IndexLink:hover,
+    body.media-landscape div.glo-holder div.Glossary li.treeitem .IndexLink:hover,
+    body.media-desktop div.idx-holder div.Index li.treeitem .IndexLink:hover,
+    body.media-desktop div.glo-holder div.Glossary li.treeitem .IndexLink:hover,
+    body.media-mobile div.idx-holder div.Index li.treeitem .GlossTerm,
+    body.media-mobile div.glo-holder div.Glossary li.treeitem .GlossTerm,
+    body.media-landscape div.idx-holder div.Index li.treeitem .GlossTerm,
+    body.media-landscape div.glo-holder div.Glossary li.treeitem .GlossTerm,
+    body.media-desktop div.idx-holder div.Index li.treeitem .GlossTerm,
+    body.media-desktop div.glo-holder div.Glossary li.treeitem .GlossTerm,
+    body.media-mobile div.idx-holder div.Index li.treeitem .GlossTerm:hover,
+    body.media-mobile div.glo-holder div.Glossary li.treeitem .GlossTerm:hover,
+    body.media-landscape div.idx-holder div.Index li.treeitem .GlossTerm:hover,
+    body.media-landscape div.glo-holder div.Glossary li.treeitem .GlossTerm:hover,
+    body.media-desktop div.idx-holder div.Index li.treeitem .GlossTerm:hover,
+    body.media-desktop div.glo-holder div.Glossary li.treeitem .GlossTerm:hover {
+      min-height: 1.2em;
+      line-height: 1.5em;
+      cursor: pointer; }
+    body.media-mobile div.idx-holder div.Index li.treeitem .GlossTerm:hover, body.media-mobile div.glo-holder div.Glossary li.treeitem .GlossTerm:hover, body.media-landscape div.idx-holder div.Index li.treeitem .GlossTerm:hover, body.media-landscape div.glo-holder div.Glossary li.treeitem .GlossTerm:hover, body.media-desktop div.idx-holder div.Index li.treeitem .GlossTerm:hover, body.media-desktop div.glo-holder div.Glossary li.treeitem .GlossTerm:hover {
+      text-decoration: underline; }
+    body.media-mobile div.idx-holder div.Index li.treeitem .IndexLink, body.media-mobile div.glo-holder div.Glossary li.treeitem .IndexLink, body.media-landscape div.idx-holder div.Index li.treeitem .IndexLink, body.media-landscape div.glo-holder div.Glossary li.treeitem .IndexLink, body.media-desktop div.idx-holder div.Index li.treeitem .IndexLink, body.media-desktop div.glo-holder div.Glossary li.treeitem .IndexLink,
+    body.media-mobile div.idx-holder div.Index li.treeitem .IndexLink,
+    body.media-mobile div.glo-holder div.Glossary li.treeitem .IndexLink,
+    body.media-landscape div.idx-holder div.Index li.treeitem .IndexLink,
+    body.media-landscape div.glo-holder div.Glossary li.treeitem .IndexLink,
+    body.media-desktop div.idx-holder div.Index li.treeitem .IndexLink,
+    body.media-desktop div.glo-holder div.Glossary li.treeitem .IndexLink {
+      margin-top: .75em;
+      margin-bottom: .75em;
+      padding-right: 1.6em; }
+    body.media-mobile div.idx-holder div.Index li.treeitem .GlossDefinition, body.media-mobile div.glo-holder div.Glossary li.treeitem .GlossDefinition, body.media-landscape div.idx-holder div.Index li.treeitem .GlossDefinition, body.media-landscape div.glo-holder div.Glossary li.treeitem .GlossDefinition, body.media-desktop div.idx-holder div.Index li.treeitem .GlossDefinition, body.media-desktop div.glo-holder div.Glossary li.treeitem .GlossDefinition,
+    body.media-mobile div.idx-holder div.Index li.treeitem .GlossDefinition:hover,
+    body.media-mobile div.glo-holder div.Glossary li.treeitem .GlossDefinition:hover,
+    body.media-landscape div.idx-holder div.Index li.treeitem .GlossDefinition:hover,
+    body.media-landscape div.glo-holder div.Glossary li.treeitem .GlossDefinition:hover,
+    body.media-desktop div.idx-holder div.Index li.treeitem .GlossDefinition:hover,
+    body.media-desktop div.glo-holder div.Glossary li.treeitem .GlossDefinition:hover {
+      min-height: 1.2em;
+      line-height: 1.5em;
+      cursor: pointer;
+      text-decoration: none;
+      margin-right: 2.5em; }
+    body.media-mobile div.idx-holder div.Index li.treeitem .IndexChildBlock, body.media-mobile div.glo-holder div.Glossary li.treeitem .IndexChildBlock, body.media-landscape div.idx-holder div.Index li.treeitem .IndexChildBlock, body.media-landscape div.glo-holder div.Glossary li.treeitem .IndexChildBlock, body.media-desktop div.idx-holder div.Index li.treeitem .IndexChildBlock, body.media-desktop div.glo-holder div.Glossary li.treeitem .IndexChildBlock {
+      margin-right: 2.5em; }
+      body.media-mobile div.idx-holder div.Index li.treeitem .IndexChildBlock.IndexKeyword:hover, body.media-mobile div.glo-holder div.Glossary li.treeitem .IndexChildBlock.IndexKeyword:hover, body.media-landscape div.idx-holder div.Index li.treeitem .IndexChildBlock.IndexKeyword:hover, body.media-landscape div.glo-holder div.Glossary li.treeitem .IndexChildBlock.IndexKeyword:hover, body.media-desktop div.idx-holder div.Index li.treeitem .IndexChildBlock.IndexKeyword:hover, body.media-desktop div.glo-holder div.Glossary li.treeitem .IndexChildBlock.IndexKeyword:hover {
+        text-decoration: none; }
+      body.media-mobile div.idx-holder div.Index li.treeitem .IndexChildBlock .treeitem, body.media-mobile div.glo-holder div.Glossary li.treeitem .IndexChildBlock .treeitem, body.media-landscape div.idx-holder div.Index li.treeitem .IndexChildBlock .treeitem, body.media-landscape div.glo-holder div.Glossary li.treeitem .IndexChildBlock .treeitem, body.media-desktop div.idx-holder div.Index li.treeitem .IndexChildBlock .treeitem, body.media-desktop div.glo-holder div.Glossary li.treeitem .IndexChildBlock .treeitem {
+        margin-right: 0; }
+  body.media-mobile div.idx-holder div.Index .noResults, body.media-mobile div.glo-holder div.Glossary .noResults, body.media-landscape div.idx-holder div.Index .noResults, body.media-landscape div.glo-holder div.Glossary .noResults, body.media-desktop div.idx-holder div.Index .noResults, body.media-desktop div.glo-holder div.Glossary .noResults {
+    margin: 1rem 1rem 1rem 2rem;
+    font-size: 1em; }
+
+body.media-mobile div.idx-holder div.Index li.treeitem, body.media-mobile div.glo-holder div.Glossary li.treeitem, body.media-landscape div.idx-holder div.Index li.treeitem, body.media-landscape div.glo-holder div.Glossary li.treeitem {
+  margin-top: .75em;
+  margin-bottom: .75em;
+  min-height: 1.2em;
+  line-height: 1.5em; }
+  body.media-mobile div.idx-holder div.Index li.treeitem .GlossDefinition, body.media-mobile div.glo-holder div.Glossary li.treeitem .GlossDefinition, body.media-landscape div.idx-holder div.Index li.treeitem .GlossDefinition, body.media-landscape div.glo-holder div.Glossary li.treeitem .GlossDefinition,
+  body.media-mobile div.idx-holder div.Index li.treeitem .GlossDefinition:hover,
+  body.media-mobile div.glo-holder div.Glossary li.treeitem .GlossDefinition:hover,
+  body.media-landscape div.idx-holder div.Index li.treeitem .GlossDefinition:hover,
+  body.media-landscape div.glo-holder div.Glossary li.treeitem .GlossDefinition:hover {
+    margin-top: .75em;
+    margin-bottom: .75em; }
+  body.media-mobile div.idx-holder div.Index li.treeitem .IndexChildBlock, body.media-mobile div.glo-holder div.Glossary li.treeitem .IndexChildBlock, body.media-landscape div.idx-holder div.Index li.treeitem .IndexChildBlock, body.media-landscape div.glo-holder div.Glossary li.treeitem .IndexChildBlock {
+    margin-top: 0;
+    margin-bottom: 0; }
+
+body.media-mobile div.filter-holder, body.media-landscape div.filter-holder, body.media-desktop div.filter-holder {
+  padding-right: .25em;
+  width: calc(100% - .25em); }
+  body.media-mobile div.filter-holder p.filter-title, body.media-landscape div.filter-holder p.filter-title, body.media-desktop div.filter-holder p.filter-title {
+    display: block;
+    font-weight: bold;
+    padding: 0 2.25em .75em 0;
+    border-bottom-style: solid;
+    border-bottom-width: .1em;
+    width: 100%; }
+  body.media-mobile div.filter-holder p.filter-expression-message, body.media-landscape div.filter-holder p.filter-expression-message, body.media-desktop div.filter-holder p.filter-expression-message {
+    margin: 0.75em 0.2em 0.2em 0; }
+  body.media-mobile div.filter-holder ul, body.media-landscape div.filter-holder ul, body.media-desktop div.filter-holder ul {
+    list-style: none;
+    margin: 0;
+    padding: 0; }
+    body.media-mobile div.filter-holder ul li, body.media-landscape div.filter-holder ul li, body.media-desktop div.filter-holder ul li {
+      min-height: 1.3em;
+      line-height: 1.2em;
+      margin: 0.75em 0 0.1em 0; }
+      body.media-mobile div.filter-holder ul li li, body.media-landscape div.filter-holder ul li li, body.media-desktop div.filter-holder ul li li {
+        font-weight: normal;
+        margin-top: .3em;
+        font-size: 100%; }
+  body.media-mobile div.filter-holder input, body.media-landscape div.filter-holder input, body.media-desktop div.filter-holder input {
+    opacity: 0;
+    width: 1em; }
+  body.media-mobile div.filter-holder label, body.media-landscape div.filter-holder label, body.media-desktop div.filter-holder label {
+    display: block;
+    padding: 0.5em 2.5em 0.5em 0.5em; }
+
+body.media-mobile div.filter-holder {
+  width: 100%;
+  padding-right: 0; }
+
+body.media-desktop div.filter-holder > p {
+  font-size: 1.4em; }
+body.media-desktop div.filter-holder > ul {
+  font-size: 1.4em; }
+  body.media-desktop div.filter-holder > ul * {
+    font-size: 100%; }
+
+div.searchresults {
+  padding-right: 2em;
+  padding-left: 1em; }
+  div.searchresults .wSearchANDCheckbox {
+    display: none; }
+  div.searchresults .wSearchResultSettings {
+    display: none; }
+  div.searchresults .wSearchMessage {
+    font-size: 1em;
+    margin-bottom: .3em; }
+  div.searchresults .wSearchResultList {
+    padding: 0;
+    margin: 0;
+    list-style: none; }
+  div.searchresults .wSearchResultItem {
+    margin: 1em 0; }
+    div.searchresults .wSearchResultItem a.nolink {
+      text-decoration: none; }
+      div.searchresults .wSearchResultItem a.nolink:hover, div.searchresults .wSearchResultItem a.nolink:active {
+        text-decoration: underline; }
+      div.searchresults .wSearchResultItem a.nolink div.wSearchResultTitle,
+      div.searchresults .wSearchResultItem a.nolink div.wSearchResultTitleHover {
+        font-size: 1.25em;
+        margin-bottom: .25em;
+        word-wrap: break-word; }
+    div.searchresults .wSearchResultItem div.wSearchContext {
+      font-size: 1em; }
+    div.searchresults .wSearchResultItem div.wSearchURL {
+      margin-top: .5em;
+      font-size: .75em;
+      word-wrap: break-word; }
+  div.searchresults p.progressbar {
+    text-align: center; }
+
+body.media-mobile div.searchbar input, body.media-landscape div.searchbar input, body.media-desktop div.searchbar input {
+  width: 98%;
+  margin: .6em 1% .3em;
+  height: 3em;
+  max-height: 3em;
+  padding: 0 0.5em 0 0.3em;
+  font-size: 100%;
+  -webkit-appearance: none;
+  -webkit-border-radius: 0.5em;
+  -moz-border-radius: 0.5em;
+  border-radius: 0.5em; }
+  body.media-mobile div.searchbar input:focus, body.media-landscape div.searchbar input:focus, body.media-desktop div.searchbar input:focus {
+    outline: none; }
+  body.media-mobile div.searchbar input::-webkit-input-placeholder, body.media-landscape div.searchbar input::-webkit-input-placeholder, body.media-desktop div.searchbar input::-webkit-input-placeholder {
+    font-style: italic;
+    padding-right: .5em; }
+  body.media-mobile div.searchbar input:-moz-placeholder, body.media-landscape div.searchbar input:-moz-placeholder, body.media-desktop div.searchbar input:-moz-placeholder {
+    font-style: italic;
+    padding-right: .5em; }
+  body.media-mobile div.searchbar input::-moz-placeholder, body.media-landscape div.searchbar input::-moz-placeholder, body.media-desktop div.searchbar input::-moz-placeholder {
+    font-style: italic;
+    padding-right: .5em; }
+  body.media-mobile div.searchbar input::-ms-input-placeholder, body.media-landscape div.searchbar input::-ms-input-placeholder, body.media-desktop div.searchbar input::-ms-input-placeholder {
+    font-style: italic;
+    padding-right: .5em; }
+
+.search-suggestion {
+  margin-left: 0;
+  padding: .25em;
+  font-size: 1.4em;
+  line-height: 1.2em;
+  cursor: pointer; }
+  .search-suggestion .search-text, .search-suggestion .search-count {
+    display: inline; }
+  .search-suggestion .search-count {
+    float: right;
+    background-color: #acacac;
+    border-radius: .2rem;
+    padding: .1rem .3rem; }
+  .search-suggestion .topic-icon, .search-suggestion .count-number {
+    display: inline-block;
+    vertical-align: middle; }
+  .search-suggestion .topic-icon {
+    min-width: 1rem;
+    min-height: 1rem;
+    background-image: url("search_topic_desktop.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: auto; }
+
+.custom-button-0 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_0));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-0 a:focus {
+    background-image: url(var(--custom_button_selected_image_0)); }
+
+body.media-landscape div.header div.custom-button-0 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-1 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_1));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-1 a:focus {
+    background-image: url(var(--custom_button_selected_image_1)); }
+
+body.media-landscape div.header div.custom-button-1 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-2 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_2));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-2 a:focus {
+    background-image: url(var(--custom_button_selected_image_2)); }
+
+body.media-landscape div.header div.custom-button-2 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-3 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_3));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-3 a:focus {
+    background-image: url(var(--custom_button_selected_image_3)); }
+
+body.media-landscape div.header div.custom-button-3 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-4 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_4));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-4 a:focus {
+    background-image: url(var(--custom_button_selected_image_4)); }
+
+body.media-landscape div.header div.custom-button-4 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-5 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_5));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-5 a:focus {
+    background-image: url(var(--custom_button_selected_image_5)); }
+
+body.media-landscape div.header div.custom-button-5 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-6 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_6));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-6 a:focus {
+    background-image: url(var(--custom_button_selected_image_6)); }
+
+body.media-landscape div.header div.custom-button-6 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-7 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_7));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-7 a:focus {
+    background-image: url(var(--custom_button_selected_image_7)); }
+
+body.media-landscape div.header div.custom-button-7 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-8 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_8));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-8 a:focus {
+    background-image: url(var(--custom_button_selected_image_8)); }
+
+body.media-landscape div.header div.custom-button-8 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-9 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_9));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-9 a:focus {
+    background-image: url(var(--custom_button_selected_image_9)); }
+
+body.media-landscape div.header div.custom-button-9 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-10 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_10));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-10 a:focus {
+    background-image: url(var(--custom_button_selected_image_10)); }
+
+body.media-landscape div.header div.custom-button-10 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-11 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_11));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-11 a:focus {
+    background-image: url(var(--custom_button_selected_image_11)); }
+
+body.media-landscape div.header div.custom-button-11 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-12 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_12));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-12 a:focus {
+    background-image: url(var(--custom_button_selected_image_12)); }
+
+body.media-landscape div.header div.custom-button-12 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-13 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_13));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-13 a:focus {
+    background-image: url(var(--custom_button_selected_image_13)); }
+
+body.media-landscape div.header div.custom-button-13 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-14 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_14));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-14 a:focus {
+    background-image: url(var(--custom_button_selected_image_14)); }
+
+body.media-landscape div.header div.custom-button-14 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-15 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_15));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-15 a:focus {
+    background-image: url(var(--custom_button_selected_image_15)); }
+
+body.media-landscape div.header div.custom-button-15 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-16 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_16));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-16 a:focus {
+    background-image: url(var(--custom_button_selected_image_16)); }
+
+body.media-landscape div.header div.custom-button-16 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-17 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_17));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-17 a:focus {
+    background-image: url(var(--custom_button_selected_image_17)); }
+
+body.media-landscape div.header div.custom-button-17 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-18 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_18));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-18 a:focus {
+    background-image: url(var(--custom_button_selected_image_18)); }
+
+body.media-landscape div.header div.custom-button-18 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+.custom-button-19 a {
+  background-image: url("custom_button_place_holder.png");
+  background-image: url(var(--custom_button_image_19));
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: contain; }
+  .custom-button-19 a:focus {
+    background-image: url(var(--custom_button_selected_image_19)); }
+
+body.media-landscape div.header div.custom-button-19 {
+  float: left;
+  width: 1.875em;
+  margin-left: 2.5em; }
+
+body.media-mobile div.filter-holder ul, body.media-landscape div.filter-holder ul, body.media-desktop div.filter-holder ul, body.media-mobile div.filter-holder label, body.media-landscape div.filter-holder label, body.media-desktop div.filter-holder label, .unselectable, div.functionbar, div.topic div.functionholder, div.topic a.to_top, body.media-mobile div.mobilespecialfunctions, body.media-mobile div.searchbar.layout-visible, body.media-mobile div.functionbar, body.media-mobile div.filter-holder div.mobile-filter-heading, body.media-desktop div.searchbar-extra a.wSearchLink, body.media-desktop div.searchbar-extra div.searchAND.layout-visible label {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; }
+
+* {
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box; }
+
+a {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0); }
+
+/********
+*
+*	Webkit scrolling bug
+*
+********/
+body.ios {
+  /* avoid text zoom on orientation change on iOS */
+  -webkit-text-size-adjust: none; }
+
+body.media-mobile div.toc-holder, body.media-mobile div.idx-holder, body.media-mobile div.glo-holder, body.media-mobile.ios div.topic, body.media-landscape.ios div.topic {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: scroll !important; }
+
+/********
+*
+*	Hide and show. We use a custom hiding/loading scheme because data-if sets display to none. We can't animate that.
+*
+********/
+div.filter-holder a.reset-button, body.media-mobile div.toc-holder, body.media-mobile div.idx-holder, body.media-mobile div.glo-holder, body.media-mobile div.filter-holder, body.media-mobile div.searchbar, body.media-mobile div.searchresults, body.media-landscape div.toc-holder, body.media-landscape div.idx-holder, body.media-landscape div.glo-holder, body.media-landscape div.filter-holder, body.media-landscape div.searchbar, body.media-landscape div.searchresults, body.media-desktop div.toc-holder, body.media-desktop div.idx-holder, body.media-desktop div.glo-holder, body.media-desktop div.filter-holder, body.media-desktop div.searchbar, body.media-desktop div.searchbar-extra div.searchAND, body.media-desktop div.searchresults {
+  max-height: 0px;
+  overflow: hidden;
+  opacity: 0;
+  -o-transition-duration: 0.35s;
+  -o-transition-timing-function: ease-out;
+  -o-transition-property: opacity;
+  -ms-transition-duration: 0.35s;
+  -ms-transition-timing-function: ease-out;
+  -ms-transition-property: opacity;
+  -moz-transition-duration: 0.35s;
+  -moz-transition-timing-function: ease-out;
+  -moz-transition-property: opacity;
+  -webkit-transition-duration: 0.35s;
+  -webkit-transition-timing-function: ease-out;
+  -webkit-transition-property: opacity;
+  transition-duration: 0.35s;
+  transition-timing-function: ease-out;
+  transition-property: opacity;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  -ms-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  -moz-perspective: 1000;
+  -ms-perspective: 1000;
+  perspective: 1000;
+  z-index: 0; }
+
+.layout-visible {
+  max-height: 10000em !important;
+  -o-transition-duration: 0.35s;
+  -o-transition-timing-function: ease-out;
+  -o-transition-property: opacity;
+  -ms-transition-duration: 0.35s;
+  -ms-transition-timing-function: ease-out;
+  -ms-transition-property: opacity;
+  -moz-transition-duration: 0.35s;
+  -moz-transition-timing-function: ease-out;
+  -moz-transition-property: opacity;
+  -webkit-transition-duration: 0.35s;
+  -webkit-transition-timing-function: ease-out;
+  -webkit-transition-property: opacity;
+  transition-duration: 0.35s;
+  transition-timing-function: ease-out;
+  transition-property: opacity;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  -ms-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  -moz-perspective: 1000;
+  -ms-perspective: 1000;
+  perspective: 1000;
+  opacity: 1 !important; }
+
+/********
+*
+*	Loading image
+*
+********/
+.loading {
+  background-image: url(var(--loading_image)) !important;
+  min-height: 1.25in !important;
+  background-repeat: no-repeat !important;
+  background-position: center .25in !important;
+  background-size: 1in 1in !important; }
+
+div.topic-state {
+  position: absolute;
+  top: 25%;
+  width: 100%; }
+
+div.topic-state.loading {
+  bottom: 0;
+  background-position: center 25%; }
+
+.hide-children * {
+  display: none !important; }
+
+/********
+*
+*	Global elements
+*
+********/
+body {
+  font-family: var(--page_font_family);
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  overflow: hidden; }
+
+div.header {
+  color: var(--header_font_color);
+  background-color: var(--header_bgcolor); }
+  div.header div.logo {
+    height: 100%;
+    width: var(--logo_width);
+    background-color: transparent;
+    cursor: pointer;
+    background-image: url(var(--logo));
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: var(--logo_width) var(--logo_height); }
+  div.header div.logo[data-logo-selector='true'] {
+    height: 100%;
+    width: var(--logo_width);
+    background-color: transparent;
+    cursor: pointer;
+    background-image: url(var(--logo));
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain; }
+
+div.functionbar {
+  overflow: visible; }
+  div.functionbar div.nav a {
+    background-color: transparent;
+    text-decoration: none !important;
+    -o-transition-duration: 0.35s;
+    -o-transition-timing-function: ease-out;
+    -o-transition-property: background-color;
+    -ms-transition-duration: 0.35s;
+    -ms-transition-timing-function: ease-out;
+    -ms-transition-property: background-color;
+    -moz-transition-duration: 0.35s;
+    -moz-transition-timing-function: ease-out;
+    -moz-transition-property: background-color;
+    -webkit-transition-duration: 0.35s;
+    -webkit-transition-timing-function: ease-out;
+    -webkit-transition-property: background-color;
+    transition-duration: 0.35s;
+    transition-timing-function: ease-out;
+    transition-property: background-color;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    -moz-perspective: 1000;
+    -ms-perspective: 1000;
+    perspective: 1000;
+    border-top-width: 0.1em;
+    border-top-style: solid;
+    border-top-color: transparent;
+    border-bottom-width: 0.1em;
+    border-bottom-style: solid;
+    border-bottom-color: transparent;
+    border-right-width: 0.1em;
+    border-right-style: solid;
+    border-right-color: transparent;
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: transparent;
+    -o-transition-duration: 0.35s;
+    -o-transition-timing-function: ease-out;
+    -o-transition-property: border-color;
+    -ms-transition-duration: 0.35s;
+    -ms-transition-timing-function: ease-out;
+    -ms-transition-property: border-color;
+    -moz-transition-duration: 0.35s;
+    -moz-transition-timing-function: ease-out;
+    -moz-transition-property: border-color;
+    -webkit-transition-duration: 0.35s;
+    -webkit-transition-timing-function: ease-out;
+    -webkit-transition-property: border-color;
+    transition-duration: 0.35s;
+    transition-timing-function: ease-out;
+    transition-property: border-color;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    -moz-perspective: 1000;
+    -ms-perspective: 1000;
+    perspective: 1000; }
+
+.wGlossaryResult {
+  box-shadow: 0.1rem 0.1rem 0.5rem #cccccc;
+  padding: 0.01rem 0.1rem .3rem 0.7rem;
+  margin-left: -1rem;
+  margin-right: -1rem; }
+  .wGlossaryResult .search_glossary_term {
+    color: var(--search_results_title_color);
+    font-weight: bold; }
+  .wGlossaryResult .search_glossary_result {
+    color: var(--search_result_preview_color); }
+
+a.filter {
+  -o-transition-duration: 0.35s;
+  -o-transition-timing-function: ease-out;
+  -o-transition-property: background-image;
+  -ms-transition-duration: 0.35s;
+  -ms-transition-timing-function: ease-out;
+  -ms-transition-property: background-image;
+  -moz-transition-duration: 0.35s;
+  -moz-transition-timing-function: ease-out;
+  -moz-transition-property: background-image;
+  -webkit-transition-duration: 0.35s;
+  -webkit-transition-timing-function: ease-out;
+  -webkit-transition-property: background-image;
+  transition-duration: 0.35s;
+  transition-timing-function: ease-out;
+  transition-property: background-image;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  -ms-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  -moz-perspective: 1000;
+  -ms-perspective: 1000;
+  perspective: 1000; }
+
+div.functions {
+  overflow: auto; }
+
+div.mobilespecialfunctions {
+  display: none; }
+
+div.sidebarsizer {
+  display: none; }
+
+div.searchbar {
+  background-color: #f0f0f0;
+  background-color: #fcfcfc;
+  overflow: visible; }
+  div.searchbar .mobile_back,
+  div.searchbar .mobile_filter {
+    display: none; }
+
+.searchbar.left-pane.search-content.searchpage-mode.layout-visible {
+  height: 3.1em;
+  overflow: visible; }
+
+div.searchresults {
+  background-color: #ffffff;
+  bottom: 0;
+  overflow: auto !important; }
+
+div.topic {
+  background-color: #ffffff; }
+  div.topic div.functionholder {
+    display: none; }
+  div.topic a.to_top {
+    display: none; }
+
+iframe.topic {
+  border: none;
+  width: 100%;
+  height: 100%; }
+
+/********
+*
+*	Widget initialisation. The widgets are loaded for all media.
+*	Also, colours for the widgets are specified here so we keep the included scss free of layout settings
+*
+********/
+div.Index {
+  color: var(--index_text_color); }
+  div.Index input {
+    color: var(--index_search_text_color);
+    background-color: var(--index_search_background_color);
+    border-top-width: 0.1em;
+    border-top-style: solid;
+    border-top-color: var(--index_search_border_color);
+    border-bottom-width: 0.1em;
+    border-bottom-style: solid;
+    border-bottom-color: var(--index_search_border_color);
+    border-right-width: 0.1em;
+    border-right-style: solid;
+    border-right-color: var(--index_search_border_color);
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: var(--index_search_border_color); }
+  div.Index .IndexAlphabet {
+    color: var(--index_alphabet_color);
+    border-color: var(--index_seperator_color); }
+  div.Index .IndexLink {
+    background-image: url(var(--index_topic_image));
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: auto;
+    min-height: .9em !important;
+    line-height: 1.25em !important;
+    margin-top: .3em !important;
+    margin-bottom: .3em !important; }
+
+div.Glossary {
+  color: var(--glossary_term_color); }
+  div.Glossary input {
+    color: var(--glossary_search_text_color);
+    background-color: var(--glossary_search_background_color);
+    border-top-width: 0.1em;
+    border-top-style: solid;
+    border-top-color: var(--glossary_search_border_color);
+    border-bottom-width: 0.1em;
+    border-bottom-style: solid;
+    border-bottom-color: var(--glossary_search_border_color);
+    border-right-width: 0.1em;
+    border-right-style: solid;
+    border-right-color: var(--glossary_search_border_color);
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: var(--glossary_search_border_color); }
+  div.Glossary .GloAlphabet {
+    color: var(--glossary_alphabet_color);
+    border-color: var(--glossary_seperator_color); }
+  div.Glossary span.GlossDefinitionText {
+    color: var(--glossary_definition_color); }
+
+div.search-suggestion:hover {
+  background-color: #f0f0f0; }
+
+div.searchresults {
+  padding-top: 1em; }
+  div.searchresults div.search-alert {
+    color: #000000; }
+  div.searchresults .wSearchMessage {
+    color: var(--search_results_message_color); }
+  div.searchresults a {
+    color: var(--search_results_title_color); }
+  div.searchresults span.wSearchContext {
+    color: var(--search_result_preview_color); }
+  div.searchresults span.wSearchURL {
+    color: var(--search_results_breadcrumb_color); }
+  div.searchresults label.wSearchAndLabelResults {
+    display: block;
+    margin-bottom: .75em;
+    padding-top: .75em;
+    padding-bottom: .75em;
+    padding-right: 1.75em; }
+    div.searchresults label.wSearchAndLabelResults.active {
+      background-image: url(var(--and_search_enabled_image)); }
+
+div.toc-holder li {
+  color: var(--toc_text_color); }
+  div.toc-holder li.selected {
+    color: var(--toc_selected_text_color);
+    border-right-color: var(--toc_selected_indicator_color); }
+
+body.media-mobile div.drill-down.toc-holder li.book.expanded, body.media-landscape div.drill-down.toc-holder li.book.expanded {
+  background-image: url("toc_book_closed_mobile.png");
+  background-repeat: no-repeat;
+  background-position: 99% 0.8em;
+  background-size: 0.9375em 0.9375em;
+  /* For older browsers that don't support the new 4 property syntax */
+  background-image: url("toc_book_closed_mobile.png");
+  background-repeat: no-repeat;
+  background-position: right 0.6em top 0.8em;
+  background-size: 0.9375em 0.9375em;
+  /* For newer browsers */ }
+body.media-mobile div.drill-down.toc-holder li.book.active, body.media-landscape div.drill-down.toc-holder li.book.active {
+  background-image: url(var(--toc_up_one_level_mobile_image));
+  background-repeat: no-repeat;
+  background-position: 99% 0.8em;
+  background-size: 0.9375em 0.9375em;
+  /* For older browsers that don't support the new 4 property syntax */
+  background-image: url(var(--toc_up_one_level_mobile_image));
+  background-repeat: no-repeat;
+  background-position: right 0.6em top 0.8em;
+  background-size: 0.9375em 0.9375em;
+  /* For newer browsers */ }
+body.media-mobile div.drill-down.toc-holder ul li.selected, body.media-landscape div.drill-down.toc-holder ul li.selected {
+  padding-right: 1.8em !important; }
+body.media-mobile div.toc-holder ul li.book, body.media-landscape div.toc-holder ul li.book {
+  background-image: url(var(--toc_close_book_mobile_image));
+  background-repeat: no-repeat;
+  background-position: 99% 0.8em;
+  background-size: 0.9375em 0.9375em;
+  /* For older browsers that don't support the new 4 property syntax */
+  background-image: url(var(--toc_close_book_mobile_image));
+  background-repeat: no-repeat;
+  background-position: right 0.6em top 0.8em;
+  background-size: 0.9375em 0.9375em;
+  /* For newer browsers */ }
+body.media-mobile div.toc-holder ul li.expanded, body.media-landscape div.toc-holder ul li.expanded {
+  background-image: url(var(--toc_open_book_mobile_image));
+  background-repeat: no-repeat;
+  background-position: 99% 0.8em;
+  background-size: 0.9375em 0.9375em;
+  /* For older browsers that don't support the new 4 property syntax */
+  background-image: url(var(--toc_open_book_mobile_image));
+  background-repeat: no-repeat;
+  background-position: right 0.6em top 0.8em;
+  background-size: 0.9375em 0.9375em;
+  /* For newer browsers */ }
+body.media-mobile div.toc-holder ul li.item, body.media-landscape div.toc-holder ul li.item {
+  background-image: url(var(--toc_topic_mobile_image));
+  background-repeat: no-repeat;
+  background-position: 99% 0.8em;
+  background-size: 0.75em 0.9375em;
+  /* For older browsers that don't support the new 4 property syntax */
+  background-image: url(var(--toc_topic_mobile_image));
+  background-repeat: no-repeat;
+  background-position: right 0.6em top 0.8em;
+  background-size: 0.75em 0.9375em;
+  /* For newer browsers */ }
+body.media-mobile div.toc-holder ul li.url, body.media-landscape div.toc-holder ul li.url {
+  background-image: url(var(--toc_link_mobile_image));
+  background-repeat: no-repeat;
+  background-position: 99% 0.8em;
+  background-size: 1em 0.9375em;
+  /* For older browsers that don't support the new 4 property syntax */
+  background-image: url(var(--toc_link_mobile_image));
+  background-repeat: no-repeat;
+  background-position: right 0.6em top 0.8em;
+  background-size: 1em 0.9375em;
+  /* For newer browsers */ }
+
+body.media-desktop div.toc-holder ul li.book {
+  padding-right: 2.15em;
+  background-image: url(var(--toc_close_book_image));
+  background-repeat: no-repeat;
+  background-position: 99% 0.4em;
+  background-size: auto;
+  /* For older browsers that don't support the new 4 property syntax */
+  background-image: url(var(--toc_close_book_image));
+  background-repeat: no-repeat;
+  background-position: right 0.6em top 0.4em;
+  background-size: auto;
+  /* For newer browsers */ }
+body.media-desktop div.toc-holder ul li.expanded {
+  padding-right: 2.15em;
+  background-image: url(var(--toc_open_book_image));
+  background-repeat: no-repeat;
+  background-position: 99% 0.4em;
+  background-size: auto;
+  /* For older browsers that don't support the new 4 property syntax */
+  background-image: url(var(--toc_open_book_image));
+  background-repeat: no-repeat;
+  background-position: right 0.6em top 0.4em;
+  background-size: auto;
+  /* For newer browsers */ }
+body.media-desktop div.toc-holder ul li.item {
+  padding-right: 2.15em;
+  background-image: url(var(--toc_topic_image));
+  background-repeat: no-repeat;
+  background-position: 99% 0.4em;
+  background-size: auto;
+  /* For older browsers that don't support the new 4 property syntax */
+  background-image: url(var(--toc_topic_image));
+  background-repeat: no-repeat;
+  background-position: right 0.6em top 0.4em;
+  background-size: auto;
+  /* For newer browsers */ }
+body.media-desktop div.toc-holder ul li.url {
+  padding-right: 2.15em;
+  background-image: url(var(--toc_link_image));
+  background-repeat: no-repeat;
+  background-position: 99% 0.4em;
+  background-size: auto;
+  /* For older browsers that don't support the new 4 property syntax */
+  background-image: url(var(--toc_link_image));
+  background-repeat: no-repeat;
+  background-position: right 0.6em top 0.4em;
+  background-size: auto;
+  /* For newer browsers */ }
+
+div.filter-holder a.reset-button {
+  cursor: pointer;
+  background-image: url(var(--filter_reset_image));
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: 60% auto; }
+div.filter-holder p.filter-title {
+  color: var(--filter_title_color);
+  border-bottom-color: var(--filter_title_seperator_color); }
+div.filter-holder p.filter-expression-message {
+  color: #000000; }
+div.filter-holder ul.wFltOpts {
+  position: absolute;
+  top: 2.75em;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: auto; }
+  div.filter-holder ul.wFltOpts.checkbox label {
+    background-image: url(var(--filter_inactive_checkbox_image));
+    background-repeat: no-repeat;
+    background-position: 99% 0.8em;
+    background-size: 1em 1em;
+    /* For older browsers that don't support the new 4 property syntax */
+    background-image: url(var(--filter_inactive_checkbox_image));
+    background-repeat: no-repeat;
+    background-position: right 0.8em top 0.8em;
+    background-size: 1em 1em;
+    /* For newer browsers */ }
+  div.filter-holder ul.wFltOpts.checkbox label.checked {
+    background-image: url(var(--filter_active_checkbox_image));
+    background-repeat: no-repeat;
+    background-position: 99% 0.75em;
+    background-size: 1em 1em;
+    /* For older browsers that don't support the new 4 property syntax */
+    background-image: url(var(--filter_active_checkbox_image));
+    background-repeat: no-repeat;
+    background-position: right 0.8em top 0.75em;
+    background-size: 1em 1em;
+    /* For newer browsers */ }
+  div.filter-holder ul.wFltOpts.radio label {
+    background-image: url(var(--filter_incative_radio_image));
+    background-repeat: no-repeat;
+    background-position: 99% 0.6em;
+    background-size: 1em 1em;
+    /* For older browsers that don't support the new 4 property syntax */
+    background-image: url(var(--filter_incative_radio_image));
+    background-repeat: no-repeat;
+    background-position: right 0.8em top 0.6em;
+    background-size: 1em 1em;
+    /* For newer browsers */ }
+  div.filter-holder ul.wFltOpts.radio label.checked {
+    background-image: url(var(--filter_radio_image));
+    background-repeat: no-repeat;
+    background-position: 99% 0.6em;
+    background-size: 1em 1em;
+    /* For older browsers that don't support the new 4 property syntax */
+    background-image: url(var(--filter_radio_image));
+    background-repeat: no-repeat;
+    background-position: right 0.8em top 0.6em;
+    background-size: 1em 1em;
+    /* For newer browsers */ }
+  div.filter-holder ul.wFltOpts label {
+    color: var(--filter_entry_color); }
+    div.filter-holder ul.wFltOpts label.tag-parent {
+      background-color: var(--filter_group_bgcolor);
+      background-image: none !important;
+      font-weight: bold; }
+    div.filter-holder ul.wFltOpts label.title {
+      padding-right: 1.5em; }
+  div.filter-holder ul.wFltOpts input {
+    position: absolute;
+    width: 0px;
+    height: 0px; }
+  div.filter-holder ul.wFltOpts input:focus + label {
+    outline-style: dashed;
+    outline-width: thin; }
+
+input.wSearchField {
+  border-top-width: 0.1em;
+  border-top-style: solid;
+  border-top-color: var(--search_box_mobile_field_border_color);
+  border-bottom-width: 0.1em;
+  border-bottom-style: solid;
+  border-bottom-color: var(--search_box_mobile_field_border_color);
+  border-right-width: 0.1em;
+  border-right-style: solid;
+  border-right-color: var(--search_box_mobile_field_border_color);
+  border-left-width: 0.1em;
+  border-left-style: solid;
+  border-left-color: var(--search_box_mobile_field_border_color);
+  color: var(--search_box_mobile_color);
+  background-color: var(--search_box_mobile_field_bgcolor); }
+
+div.social_buttons {
+  -o-transition-duration: 0.35s;
+  -o-transition-timing-function: ease-out;
+  -o-transition-property: width, border-radius;
+  -ms-transition-duration: 0.35s;
+  -ms-transition-timing-function: ease-out;
+  -ms-transition-property: width, border-radius;
+  -moz-transition-duration: 0.35s;
+  -moz-transition-timing-function: ease-out;
+  -moz-transition-property: width, border-radius;
+  -webkit-transition-duration: 0.35s;
+  -webkit-transition-timing-function: ease-out;
+  -webkit-transition-property: width, border-radius;
+  transition-duration: 0.35s;
+  transition-timing-function: ease-out;
+  transition-property: width, border-radius;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  -ms-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  -moz-perspective: 1000;
+  -ms-perspective: 1000;
+  perspective: 1000;
+  font-size: 1.6em;
+  background-color: #ffffff;
+  position: fixed;
+  bottom: .8em;
+  left: 0;
+  z-index: 5000;
+  height: 1.6em;
+  width: 1.6em;
+  border-right-width: 0.05em;
+  border-right-style: solid;
+  border-right-color: var(--social_media_border_color);
+  border-top-width: 0.05em;
+  border-top-style: solid;
+  border-top-color: var(--social_media_border_color);
+  border-bottom-width: 0.05em;
+  border-bottom-style: solid;
+  border-bottom-color: var(--social_media_border_color);
+  -webkit-border-top-right-radius: 0.5em;
+  -moz-border-radius-topright: 0.5em;
+  border-top-right-radius: 0.5em;
+  -webkit-border-bottom-right-radius: 0.5em;
+  -moz-border-radius-bottomright: 0.5em;
+  border-bottom-right-radius: 0.5em; }
+  div.social_buttons a.social_buttons_controller {
+    display: block;
+    height: 100%;
+    width: 1.6em;
+    cursor: pointer;
+    background: transparent url(var(--social_media_open_image)) no-repeat 0.5em center;
+    background-size: 1em 1em;
+    float: right; }
+  div.social_buttons div {
+    height: 100%;
+    float: right; }
+    div.social_buttons div.fb-button, div.social_buttons div.twitter-button {
+      display: none; }
+  div.social_buttons.opened {
+    width: 25em;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0;
+    background: #ffffff;
+    -webkit-border-top-right-radius: 0;
+    -moz-border-radius-topright: 0;
+    border-top-right-radius: 0;
+    -webkit-border-bottom-right-radius: 0;
+    -moz-border-radius-bottomright: 0;
+    border-bottom-right-radius: 0; }
+    div.social_buttons.opened a.social_buttons_controller {
+      background-image: url(var(--social_media_close_image));
+      background-size: auto 50%;
+      max-width: 2em;
+      width: 20%;
+      cursor: pointer;
+      padding: 0;
+      margin: 0; }
+    div.social_buttons.opened div {
+      padding: 0;
+      margin: 0; }
+      div.social_buttons.opened div iframe {
+        width: 100% !important; }
+      div.social_buttons.opened div.fb-button {
+        display: block;
+        max-width: 7.5em;
+        width: 40%;
+        padding-top: .4em;
+        /* Will be overwritten for desktop */ }
+      div.social_buttons.opened div.twitter-button {
+        display: block;
+        max-width: 7.5em;
+        width: 40%;
+        padding-top: .21em;
+        /* Will be overwritten for desktop */ }
+
+/********
+*
+*	Wireframe
+*
+********/
+body.media-mobile {
+  /* We need to fix the position of the body to make sure the menu works on Android in RTL languages. */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-size: 100%;
+  /* 2x prescribed margin + default image width */ }
+  body.media-mobile div.mobilespecialfunctions, body.media-mobile div.searchbar.layout-visible, body.media-mobile div.functionbar {
+    top: 0; }
+    body.media-mobile div.mobile-header-visible.mobilespecialfunctions, body.media-mobile div.mobile-header-visible.searchbar.layout-visible, body.media-mobile div.mobile-header-visible.functionbar {
+      top: 3.125em; }
+  body.media-mobile div.mobilespecialfunctions, body.media-mobile div.searchbar.layout-visible {
+    display: block;
+    position: absolute;
+    right: 0;
+    -o-transition-duration: 0.5s;
+    -o-transition-timing-function: ease-out;
+    -o-transition-property: right;
+    -ms-transition-duration: 0.5s;
+    -ms-transition-timing-function: ease-out;
+    -ms-transition-property: right;
+    -moz-transition-duration: 0.5s;
+    -moz-transition-timing-function: ease-out;
+    -moz-transition-property: right;
+    -webkit-transition-duration: 0.5s;
+    -webkit-transition-timing-function: ease-out;
+    -webkit-transition-property: right;
+    transition-duration: 0.5s;
+    transition-timing-function: ease-out;
+    transition-property: right;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    -moz-perspective: 1000;
+    -ms-perspective: 1000;
+    perspective: 1000;
+    z-index: 5;
+    -webkit-transform: translateZ(0);
+    height: 3.1em;
+    width: 100%;
+    min-width: 15em;
+    padding-top: 0.75em;
+    padding-right: 0.6em;
+    padding-left: 0.6em;
+    background-color: var(--functionbar_mobile_bgcolor);
+    border-bottom-width: 0.1em;
+    border-bottom-style: solid;
+    border-bottom-color: var(--functionbar_mobile_border_color); }
+    body.media-mobile div.mobile-header-visible.mobilespecialfunctions, body.media-mobile div.mobile-header-visible.searchbar.layout-visible {
+      top: 3.125em; }
+  body.media-mobile div.toc-holder, body.media-mobile div.idx-holder, body.media-mobile div.glo-holder, body.media-mobile div.filter-holder, body.media-mobile div.searchresults.layout-visible, body.media-mobile div.topic {
+    position: absolute;
+    /* Positioning for when the header is hidden (default) or visible. */
+    top: 3.1em;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    padding-top: 0em;
+    padding-right: 0.25em;
+    padding-left: 0.25em;
+    padding-bottom: 0;
+    -o-transition-duration: 0.5s;
+    -o-transition-timing-function: ease-out;
+    -o-transition-property: right;
+    -ms-transition-duration: 0.5s;
+    -ms-transition-timing-function: ease-out;
+    -ms-transition-property: right;
+    -moz-transition-duration: 0.5s;
+    -moz-transition-timing-function: ease-out;
+    -moz-transition-property: right;
+    -webkit-transition-duration: 0.5s;
+    -webkit-transition-timing-function: ease-out;
+    -webkit-transition-property: right;
+    transition-duration: 0.5s;
+    transition-timing-function: ease-out;
+    transition-property: right;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    -moz-perspective: 1000;
+    -ms-perspective: 1000;
+    perspective: 1000; }
+    body.media-mobile div.mobile-header-visible.toc-holder, body.media-mobile div.mobile-header-visible.idx-holder, body.media-mobile div.mobile-header-visible.glo-holder, body.media-mobile div.mobile-header-visible.filter-holder, body.media-mobile div.mobile-header-visible.searchresults.layout-visible, body.media-mobile div.mobile-header-visible.topic {
+      top: 6.225em; }
+  body.media-mobile div.toc-holder, body.media-mobile div.idx-holder, body.media-mobile div.glo-holder {
+    width: 85%;
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: #e6e6e6;
+    background-color: var(--sidebar_bgcolor); }
+    body.media-mobile div.toc-holder input + *, body.media-mobile div.idx-holder input + *, body.media-mobile div.glo-holder input + * {
+      margin-top: 1.2em; }
+  body.media-mobile div.sidebar-opened.mobilespecialfunctions, body.media-mobile div.sidebar-opened.filter-holder, body.media-mobile div.sidebar-opened.searchbar.layout-visible, body.media-mobile div.sidebar-opened.topic {
+    right: 85%; }
+  body.media-mobile div.idx-holder input, body.media-mobile div.glo-holder input, body.media-mobile div.searchbar input {
+    font-size: .9em !important;
+    height: 2em !important; }
+  body.media-mobile div.header {
+    display: none; }
+    body.media-mobile div.header.mobile-header-visible {
+      display: block;
+      height: 3.125em;
+      width: 100%; }
+    body.media-mobile div.header div {
+      height: 100%; }
+      body.media-mobile div.header div.logo {
+        float: right;
+        margin-right: 1.25em;
+        margin-left: 1.625em;
+        width: 26px;
+        height: 26px;
+        margin-top: 0.75em;
+        background-size: contain; }
+      body.media-mobile div.header div.title {
+        line-height: 100%;
+        font-size: 1.625em;
+        overflow: auto;
+        position: relative;
+        top: 0.375em; }
+      body.media-mobile div.header div a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        cursor: pointer; }
+        body.media-mobile div.header div a.brs_next, body.media-mobile div.header div a.brs_previous {
+          display: none; }
+  body.media-mobile div.mobilespecialfunctions.searchpage-mode {
+    display: none;
+    /* Hide in searchpage mode to avoid buttons being selectable when searchbar is shown over this bar. */ }
+  body.media-mobile div.mobilespecialfunctions div.brs-holder {
+    float: left;
+    display: flex; }
+  body.media-mobile div.mobilespecialfunctions div.brs_next,
+  body.media-mobile div.mobilespecialfunctions div.brs_previous {
+    float: right;
+    height: 1.625em;
+    width: 1.625em;
+    margin-right: 0.75em; }
+    body.media-mobile div.mobilespecialfunctions div.brs_next a,
+    body.media-mobile div.mobilespecialfunctions div.brs_previous a {
+      margin-left: 0; }
+  body.media-mobile div.mobilespecialfunctions div.brs_next {
+    margin-left: 0.35em; }
+  body.media-mobile div.mobilespecialfunctions div.brs_previous {
+    margin-right: 0; }
+  body.media-mobile div.mobilespecialfunctions a {
+    display: block;
+    cursor: pointer;
+    height: 100%;
+    width: 2.4375em;
+    float: right;
+    text-decoration: none;
+    margin-left: 5%;
+    background-color: transparent; }
+    body.media-mobile div.mobilespecialfunctions a:active {
+      background-color: transparent; }
+    body.media-mobile div.mobilespecialfunctions a.menubutton {
+      background-image: url(var(--menu_button_mobile_image));
+      background-repeat: no-repeat;
+      background-position: right 0.2em;
+      background-size: auto; }
+    body.media-mobile div.mobilespecialfunctions a.fts {
+      background-image: url(var(--search_button_mobile_image));
+      background-repeat: no-repeat;
+      background-position: right top;
+      background-size: 1.625em; }
+    body.media-mobile div.mobilespecialfunctions a.filter {
+      background-image: url("filter_mobile.png");
+      background-repeat: no-repeat;
+      background-position: right top;
+      background-size: 1.625em;
+      margin-left: 0;
+      background-position: 99% .1em;
+      /* For older browsers that don't support the new 4 property syntax */
+      background-position: right 0.1em;
+      /* For modern browsers */ }
+      body.media-mobile div.mobilespecialfunctions a.filter.filter-applied {
+        background-image: url("filter_mobile_applied.png");
+        background-repeat: no-repeat;
+        background-position: right top;
+        background-size: 1.625em; }
+    body.media-mobile div.mobilespecialfunctions a.wBSNextButton {
+      background-image: url(var(--previous_button_image));
+      background-repeat: no-repeat;
+      background-position: right top;
+      background-size: 1.625em; }
+      body.media-mobile div.mobilespecialfunctions a.wBSNextButton:active {
+        background-image: url(var(--previous_button_active_image));
+        background-repeat: no-repeat;
+        background-position: right top;
+        background-size: 1.625em; }
+    body.media-mobile div.mobilespecialfunctions a.wBSBackButton {
+      background-image: url(var(--next_button_image));
+      background-repeat: no-repeat;
+      background-position: right top;
+      background-size: 1.625em; }
+      body.media-mobile div.mobilespecialfunctions a.wBSBackButton:active {
+        background-image: url(var(--next_button_active_image));
+        background-repeat: no-repeat;
+        background-position: right top;
+        background-size: 1.625em; }
+  body.media-mobile div.functionbar {
+    background-color: var(--sidebar_header_mobile_bgcolor);
+    position: absolute;
+    right: 0;
+    height: 3.1em;
+    width: 100%;
+    padding-top: 0.75em;
+    padding-right: 0.6em;
+    padding-left: 0.6em;
+    border-bottom-width: 0.1em;
+    border-bottom-style: solid;
+    border-bottom-color: var(--sidebar_header_mobile_border_color);
+    border-bottom-width: 0.01em;
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: var(--sidebar_header_mobile_border_color); }
+    body.media-mobile div.functionbar.searchpage-mode {
+      display: none;
+      /* Hide in searchpage mode to avoid buttons being selectable when searchbar is shown over this bar. */ }
+    body.media-mobile div.functionbar div.nav {
+      padding-right: 0.25em;
+      min-width: 13.15em; }
+      body.media-mobile div.functionbar div.nav a {
+        float: right;
+        display: block;
+        width: 3.8em;
+        height: 2.625em;
+        margin-left: 0.25em;
+        cursor: pointer;
+        -webkit-border-top-right-radius: 1em;
+        -moz-border-radius-topright: 1em;
+        border-top-right-radius: 1em;
+        -webkit-border-top-left-radius: 1em;
+        -moz-border-radius-topleft: 1em;
+        border-top-left-radius: 1em; }
+        body.media-mobile div.functionbar div.nav a.active {
+          background-color: var(--sidebar_active_tab_mobile_bgcolor); }
+        body.media-mobile div.functionbar div.nav a.toc {
+          background-image: url(var(--sidebar_toc_tab_mobile_image));
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: 1.9375em 1.25em; }
+        body.media-mobile div.functionbar div.nav a.idx {
+          background-image: url(var(--sidebar_index_tab_mobile_image));
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: 1.9375em 1.4375em; }
+        body.media-mobile div.functionbar div.nav a.glo {
+          background-image: url(var(--sidebar_glossary_tab_mobile_image));
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: 1.875em 1.25em; }
+        body.media-mobile div.functionbar div.nav a.filter {
+          display: none; }
+        body.media-mobile div.functionbar div.nav a.fts {
+          display: none; }
+  body.media-mobile div.toc-holder.drill-down ul li.collapsing {
+    -ms-animation-name: drill-down-up-mobile;
+    -ms-animation-duration: 0.5s;
+    -moz-animation-name: drill-down-up-mobile;
+    -moz-animation-duration: 0.5s;
+    -webkit-animation-name: drill-down-up-mobile;
+    -webkit-animation-duration: 0.5s;
+    animation-name: drill-down-up-mobile;
+    animation-duration: 0.5s; }
+  body.media-mobile div.searchbar {
+    bottom: auto !important; }
+  body.media-mobile div.filter-holder {
+    top: 0;
+    padding: 0;
+    background: #ffffff; }
+    body.media-mobile div.filter-holder > a.reset-button {
+      display: none; }
+    body.media-mobile div.filter-holder div.mobile-filter-heading {
+      height: 2.5em;
+      width: 100%;
+      padding-right: 2.5%;
+      padding-left: 0.6em;
+      border-bottom-width: 0.1em;
+      border-bottom-style: solid;
+      border-bottom-color: var(--filter_title_seperator_mobile_color); }
+      body.media-mobile div.filter-holder div.mobile-filter-heading a.mobile_back, body.media-mobile div.filter-holder div.mobile-filter-heading a.reset-button {
+        display: inline-block;
+        height: 1.625em;
+        cursor: pointer;
+        width: 7%;
+        margin: 0.8em 0 0 0; }
+      body.media-mobile div.filter-holder div.mobile-filter-heading a.mobile_back {
+        float: left;
+        margin-right: 2%;
+        background-image: url(var(--filter_back_button_mobile_image));
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: 1.375em 1.0625em; }
+      body.media-mobile div.filter-holder div.mobile-filter-heading a.reset-button {
+        float: right;
+        margin-left: 2%;
+        background-image: url(var(--filter_reset_image));
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: 1.375em 1.125em;
+        width: 8%; }
+      body.media-mobile div.filter-holder div.mobile-filter-heading div.page-title {
+        position: absolute;
+        top: 0.2em;
+        left: 10%;
+        right: 10%;
+        height: 2em;
+        line-height: 2em;
+        padding: 0;
+        color: var(--filter_title_color);
+        text-align: center;
+        overflow: auto; }
+        body.media-mobile div.filter-holder div.mobile-filter-heading div.page-title span {
+          font-weight: bold;
+          font-size: 1.1em; }
+    body.media-mobile div.filter-holder.layout-visible {
+      z-index: 50;
+      /* Make sure we are on top. */ }
+    body.media-mobile div.filter-holder ul.wFltOpts {
+      top: 3.1em; }
+  body.media-mobile div.searchbar.layout-visible {
+    z-index: 100; }
+    body.media-mobile div.searchbar.layout-visible a {
+      display: inline-block;
+      height: 1.625em;
+      cursor: pointer;
+      margin-left: 0.6em;
+      text-decoration: none !important;
+      float: right;
+      margin: 0 0 0 2%; }
+      body.media-mobile div.searchbar.layout-visible a.mobile_back {
+        background-image: url(var(--search_back_button_mobile_image));
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: 1.1875em 1.125em;
+        width: 7%; }
+      body.media-mobile div.searchbar.layout-visible a.mobile_filter {
+        width: 10%;
+        min-width: 2em;
+        margin-left: 0;
+        float: left;
+        width: 10%;
+        min-width: 2em;
+        background-image: url("filter_mobile.png");
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: contain; }
+        body.media-mobile div.searchbar.layout-visible a.mobile_filter.filter-applied {
+          width: 10%;
+          min-width: 2em;
+          background-image: url("filter_mobile_applied.png");
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: contain; }
+      body.media-mobile div.searchbar.layout-visible a.wSearchLink {
+        width: 10%;
+        min-width: 2em;
+        width: 10%;
+        min-width: 2em;
+        background-image: url(var(--search_button_mobile_image));
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: contain; }
+        body.media-mobile div.searchbar.layout-visible a.wSearchLink:active {
+          width: 10%;
+          min-width: 2em;
+          background-image: url(var(--search_button_mobile_active_image));
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: contain; }
+  body.media-mobile div.searchbar input {
+    float: right;
+    margin: -0.2em 6% 0 -3px; }
+    body.media-mobile div.searchbar input.no-filter {
+      /* There is no filter, fix the alignment */
+      margin: -0.2em 5% 0 5%; }
+  body.media-mobile div.searchresults.layout-visible {
+    z-index: 10;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 0.6em 0.85em 0 0.85em; }
+    body.media-mobile div.searchresults.layout-visible .search-alert {
+      margin-bottom: 0.6em; }
+    body.media-mobile div.searchresults.layout-visible .wSearchResultItem {
+      padding-bottom: .5em;
+      margin-bottom: .5em;
+      border-bottom-width: 0.1em;
+      border-bottom-style: solid;
+      border-bottom-color: #e6e6e6; }
+    body.media-mobile div.searchresults.layout-visible label.wSearchAndLabelResults {
+      background-image: url(var(--and_search_disabled_image));
+      background-repeat: no-repeat;
+      background-position: 0.4em 1em;
+      background-size: auto 0.8em;
+      background-position: 99% 1em; }
+      body.media-mobile div.searchresults.layout-visible label.wSearchAndLabelResults.active {
+        background-image: url(var(--and_search_enabled_image)); }
+  body.media-mobile div.topic div.topic-state.loading {
+    top: 3.1em; }
+
+div.searchbar {
+  bottom: auto !important;
+  z-index: 100 !important; }
+
+.search-suggestion {
+  margin-left: 0;
+  padding: .25rem;
+  font-size: 1rem;
+  clear: left;
+  line-height: 1.5rem;
+  cursor: pointer; }
+
+.search-suggestion .search-delete {
+  background-image: url("remove.png");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;
+  height: 1.1em;
+  width: 1.0em; }
+
+.search-suggestion .search-delete:hover {
+  background-image: url("remove-active.png"); }
+
+.search-suggestion .search-text, .search-suggestion .search-count {
+  display: inline; }
+
+.search-suggestion .topic-icon, .search-suggestion .count-number {
+  width: .5rem;
+  height: 0.5rem;
+  color: #ffffff; }
+
+.search-suggestion .topic-icon {
+  width: 1.5rem;
+  height: 1.2rem;
+  background-image: url("search_topic_desktop.png");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;
+  padding-top: .05rem; }
+
+.search_bar_top {
+  z-index: 100 !important; }
+
+.search-input-open {
+  box-shadow: 0.1rem 0.1rem 0.5rem #cccccc; }
+
+.searchbar-mobile .search-input {
+  margin-right: 5%;
+  margin-bottom: 0px;
+  margin-left: 5%;
+  width: 78%;
+  float: left; }
+
+.searchbar-mobile .search-input input {
+  width: 75% !important; }
+
+.searchbar-mobile .search-list {
+  margin-left: 5%;
+  padding-right: 0.4rem;
+  width: 100%;
+  width: 91%;
+  background-color: #fcfcfc; }
+
+.search-list table {
+  width: 100%;
+  border-spacing: 0; }
+  .search-list table .search-table-desktop {
+    width: 100%; }
+  .search-list table .search-table-mobile {
+    margin: .1em 5% .25em;
+    width: 90%; }
+  .search-list table td.search-text-column {
+    width: 93%;
+    padding-left: 0.5em; }
+    .search-list table td.search-text-column .search-text-mobile {
+      width: 95%; }
+  .search-list table tr:hover {
+    background-color: #e6e7e7; }
+
+.search-list .search-selected {
+  background-color: #e6e7e7 !important; }
+
+body.media-landscape {
+  font-size: 100%;
+  /* Elements that are positioned differently for different queries */ }
+  body.media-landscape div.toc-holder, body.media-landscape div.idx-holder, body.media-landscape div.glo-holder, body.media-landscape div.filter-holder, body.media-landscape div.searchbar, body.media-landscape div.searchresults.layout-visible {
+    position: absolute;
+    top: 4em;
+    right: 5em;
+    bottom: 0;
+    width: 20em; }
+  body.media-landscape div.functionbar {
+    position: absolute;
+    top: 4em;
+    right: 0;
+    bottom: 0;
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: #AAA7A7; }
+  body.media-landscape div.toc-holder, body.media-landscape div.idx-holder, body.media-landscape div.glo-holder, body.media-landscape div.filter-holder, body.media-landscape div.searchbar {
+    background-color: var(--sidebar_bgcolor);
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: #e6e6e6; }
+    body.media-landscape div.layout-visible.toc-holder, body.media-landscape div.layout-visible.idx-holder, body.media-landscape div.layout-visible.glo-holder, body.media-landscape div.layout-visible.filter-holder, body.media-landscape div.layout-visible.searchbar {
+      overflow: auto;
+      -webkit-overflow-scrolling: touch; }
+  body.media-landscape div.header {
+    height: 4em;
+    padding-top: 1.25em; }
+    body.media-landscape div.header div.brs-holder {
+      float: left;
+      display: flex; }
+    body.media-landscape div.header div {
+      height: 1.875em; }
+      body.media-landscape div.header div.logo {
+        float: right;
+        margin-left: 1.25em;
+        margin-right: 1.875em;
+        background-size: contain;
+        margin-top: -0.5rem;
+        width: 30px; }
+      body.media-landscape div.header div.title {
+        position: absolute;
+        top: 0.625em;
+        right: 2.34375em;
+        left: 4.6875em;
+        height: 1.1em;
+        line-height: 100%;
+        font-size: 1.875em;
+        overflow: auto; }
+      body.media-landscape div.header div.brs_next {
+        width: 1.875em;
+        margin-left: 2.5em; }
+        body.media-landscape div.header div.brs_next a {
+          background-image: url(var(--previous_button_image));
+          background-repeat: no-repeat;
+          background-position: right top;
+          background-size: contain; }
+          body.media-landscape div.header div.brs_next a:active {
+            background-color: transparent;
+            background-image: url(var(--previous_button_active_image));
+            background-repeat: no-repeat;
+            background-position: right top;
+            background-size: contain; }
+      body.media-landscape div.header div.brs_previous {
+        width: 1.875em;
+        margin-left: 1.5em; }
+        body.media-landscape div.header div.brs_previous a {
+          background-image: url(var(--next_button_image));
+          background-repeat: no-repeat;
+          background-position: right top;
+          background-size: contain; }
+          body.media-landscape div.header div.brs_previous a:active {
+            background-color: transparent;
+            background-image: url(var(--next_button_active_image));
+            background-repeat: no-repeat;
+            background-position: right top;
+            background-size: contain; }
+      body.media-landscape div.header div a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        cursor: pointer; }
+  body.media-landscape div.functionbar {
+    background-color: var(--sidebar_header_tablet_bgcolor);
+    width: 5em;
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: var(--sidebar_header_tablet_border_color); }
+    body.media-landscape div.functionbar div.nav {
+      padding-top: .4em;
+      padding-right: 0.625em; }
+      body.media-landscape div.functionbar div.nav a {
+        display: block;
+        width: calc(100% + .15em);
+        /* We take + .1em to overflow the active button over the border of the nav element */
+        height: 6em;
+        /* 2x the margin + the height of the buttons. */
+        margin-bottom: 0;
+        cursor: pointer;
+        -webkit-border-top-right-radius: 0.5em;
+        -moz-border-radius-topright: 0.5em;
+        border-top-right-radius: 0.5em;
+        -webkit-border-bottom-right-radius: 0.5em;
+        -moz-border-radius-bottomright: 0.5em;
+        border-bottom-right-radius: 0.5em; }
+        body.media-landscape div.functionbar div.nav a.active {
+          background-color: var(--sidebar_active_tab_tablet_bgcolor);
+          border-right-width: 0.1em;
+          border-right-style: solid;
+          border-right-color: var(--sidebar_active_tab_tablet_border_color);
+          border-top-width: 0.1em;
+          border-top-style: solid;
+          border-top-color: var(--sidebar_active_tab_tablet_border_color);
+          border-bottom-width: 0.1em;
+          border-bottom-style: solid;
+          border-bottom-color: var(--sidebar_active_tab_tablet_border_color); }
+        body.media-landscape div.functionbar div.nav a.toc {
+          background-image: url(var(--sidebar_toc_tab_tablet_image));
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: 1.9375em 1.625em; }
+        body.media-landscape div.functionbar div.nav a.idx {
+          background-image: url(var(--sidebar_index_tab_tablet_image));
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: 1.9375em 1.4375em; }
+        body.media-landscape div.functionbar div.nav a.glo {
+          background-image: url(var(--sidebar_glossary_tab_tablet_image));
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: 1.875em 1.125em; }
+        body.media-landscape div.functionbar div.nav a.filter {
+          background-image: url(var(--sidebar_filter_tab_tablet_image));
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: 1.5625em 1.4375em; }
+          body.media-landscape div.functionbar div.nav a.filter.filter-applied {
+            background-image: url(var(--sidebar_filter_tab_aplied_tablet_image));
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: 1.5625em 1.4375em; }
+        body.media-landscape div.functionbar div.nav a.fts {
+          background-image: url(var(--sidebar_search_tab_tablet_image));
+          background-repeat: no-repeat;
+          background-position: center center;
+          background-size: 1.625em 1.6875em; }
+  body.media-landscape div.toc-holder {
+    padding-right: .5em; }
+    body.media-landscape div.toc-holder ul {
+      margin-right: 0; }
+      body.media-landscape div.toc-holder ul li {
+        margin-right: 0 !important; }
+    body.media-landscape div.toc-holder.drill-down ul li.collapsing {
+      -ms-animation-name: drill-down-up-landscape;
+      -ms-animation-duration: 0.5s;
+      -moz-animation-name: drill-down-up-landscape;
+      -moz-animation-duration: 0.5s;
+      -webkit-animation-name: drill-down-up-landscape;
+      -webkit-animation-duration: 0.5s;
+      animation-name: drill-down-up-landscape;
+      animation-duration: 0.5s; }
+  body.media-landscape div.filter-holder:not(.layout-visible) {
+    padding: 0 !important; }
+  body.media-landscape div.filter-holder a.reset-button {
+    position: absolute;
+    top: .7em;
+    left: .25em;
+    height: 1.75em;
+    width: 2em; }
+  body.media-landscape div.filter-holder ul {
+    margin-top: 1.5rem; }
+    body.media-landscape div.filter-holder ul.wFltOptsGrp {
+      margin-top: 0rem; }
+  body.media-landscape div.searchbar {
+    border-bottom-width: 0.1em;
+    border-bottom-style: solid;
+    border-bottom-color: #e6e6e6;
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: #e6e6e6;
+    top: 4em; }
+    body.media-landscape div.searchbar a.wSearchLink {
+      display: none; }
+    body.media-landscape div.searchbar.searchpage-mode ~ div.topic {
+      right: 25em; }
+  body.media-landscape div.searchresults.layout-visible {
+    top: 7.3em;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: #e6e6e6; }
+    body.media-landscape div.searchresults.layout-visible label.wSearchAndLabelResults {
+      background-image: url(var(--and_search_disabled_image));
+      background-repeat: no-repeat;
+      background-position: right 1em;
+      background-size: auto 0.8em; }
+      body.media-landscape div.searchresults.layout-visible label.wSearchAndLabelResults.active {
+        background-image: url(var(--and_search_enabled_image)); }
+  body.media-landscape div.topic {
+    position: absolute;
+    top: 4em;
+    right: 5em;
+    left: 0;
+    bottom: 0;
+    z-index: 10;
+    -o-transition-duration: 0.35s;
+    -o-transition-timing-function: ease-out;
+    -o-transition-property: right;
+    -ms-transition-duration: 0.35s;
+    -ms-transition-timing-function: ease-out;
+    -ms-transition-property: right;
+    -moz-transition-duration: 0.35s;
+    -moz-transition-timing-function: ease-out;
+    -moz-transition-property: right;
+    -webkit-transition-duration: 0.35s;
+    -webkit-transition-timing-function: ease-out;
+    -webkit-transition-property: right;
+    transition-duration: 0.35s;
+    transition-timing-function: ease-out;
+    transition-property: right;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -ms-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    -moz-perspective: 1000;
+    -ms-perspective: 1000;
+    perspective: 1000; }
+    body.media-landscape div.topic.sidebar-opened {
+      right: 25em; }
+  body.media-landscape div.idx-holder input,
+  body.media-landscape div.glo-holder input,
+  body.media-landscape div.searchbar input {
+    font-size: 80% !important; }
+
+body.media-desktop {
+  font-size: 62.5%;
+  /* Set the default size to 10px. This makes for easy calculation according to spec */
+  /* Elements that are positioned differently for different queries */ }
+  body.media-desktop div.functionbar {
+    position: absolute;
+    top: 7em;
+    right: 0;
+    width: 35em;
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: #e6e6e6; }
+    body.media-desktop div.desktop-sidebar-hidden.functionbar {
+      display: none; }
+  body.media-desktop div.toc-holder.layout-visible, body.media-desktop div.idx-holder.layout-visible, body.media-desktop div.glo-holder.layout-visible, body.media-desktop div.filter-holder.layout-visible, body.media-desktop div.searchresults.search-sidebar {
+    position: absolute;
+    top: 11.3em;
+    right: 0;
+    width: 35em;
+    bottom: 0;
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: #e6e6e6;
+    background-color: var(--sidebar_bgcolor);
+    overflow: auto; }
+    body.media-desktop div.desktop-sidebar-hidden.toc-holder.layout-visible, body.media-desktop div.desktop-sidebar-hidden.idx-holder.layout-visible, body.media-desktop div.desktop-sidebar-hidden.glo-holder.layout-visible, body.media-desktop div.desktop-sidebar-hidden.filter-holder.layout-visible, body.media-desktop div.desktop-sidebar-hidden.searchresults.search-sidebar {
+      display: none; }
+  body.media-desktop div.searchbar.search-sidebar {
+    position: absolute;
+    top: 11.3em;
+    right: 0;
+    width: 35em;
+    border-left-width: 0.1em;
+    border-left-style: solid;
+    border-left-color: #e6e6e6;
+    background-color: #fcfcfc;
+    overflow: auto; }
+    body.media-desktop div.desktop-sidebar-hidden.searchbar.search-sidebar {
+      display: none; }
+  body.media-desktop div.searchresults.search-content, body.media-desktop div.topic {
+    position: absolute;
+    top: 7em;
+    right: 35em;
+    left: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0; }
+    body.media-desktop div.desktop-sidebar-hidden.searchresults.search-content, body.media-desktop div.desktop-sidebar-hidden.topic {
+      right: 0; }
+  body.media-desktop div.header {
+    height: 7em; }
+    body.media-desktop div.header div {
+      float: right; }
+      body.media-desktop div.header div.logo {
+        padding-left: 20px;
+        box-sizing: content-box;
+        height: 100%;
+        width: var(--logo_width);
+        margin-left: 3em;
+        background-origin: content-box;
+        max-width: 400px; }
+      body.media-desktop div.header div.title {
+        padding: 20px;
+        line-height: 100%;
+        font-size: 3em;
+        max-width: 28em;
+        font-family: var(--title_font_family);
+        overflow: auto; }
+      body.media-desktop div.header div.brs_next, body.media-desktop div.header div.brs_previous {
+        display: none; }
+      body.media-desktop div.header div.custom-button-0 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-1 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-2 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-3 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-4 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-5 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-6 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-7 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-8 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-9 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-10 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-11 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-12 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-13 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-14 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-15 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-16 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-17 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-18 {
+        display: none; }
+      body.media-desktop div.header div.custom-button-19 {
+        display: none; }
+  body.media-desktop div.functionbar {
+    background-color: var(--sidebar_header_bgcolor);
+    height: 4.3em;
+    padding: 0.6em;
+    border-bottom-width: 0.1em;
+    border-bottom-style: solid;
+    border-bottom-color: var(--sidebar_header_border_color);
+    min-width: 33em !important; }
+    body.media-desktop div.functionbar.desktop-sidebar-hidden {
+      display: none; }
+    body.media-desktop div.functionbar div.nav a {
+      float: right;
+      display: block;
+      width: 5.5em;
+      height: 3.741em;
+      cursor: pointer;
+      -webkit-border-top-right-radius: 0.9em;
+      -moz-border-radius-topright: 0.9em;
+      border-top-right-radius: 0.9em;
+      -webkit-border-top-left-radius: 0.9em;
+      -moz-border-radius-topleft: 0.9em;
+      border-top-left-radius: 0.9em;
+      background-color: transparent; }
+      body.media-desktop div.functionbar div.nav a.active {
+        background-color: var(--sidebar_active_bgcolor);
+        border-top-width: 0.1em;
+        border-top-style: solid;
+        border-top-color: var(--sidebar_active_border_color);
+        border-bottom-width: 0.1em;
+        border-bottom-style: solid;
+        border-bottom-color: var(--sidebar_active_border_color);
+        border-right-width: 0.1em;
+        border-right-style: solid;
+        border-right-color: var(--sidebar_active_border_color);
+        border-left-width: 0.1em;
+        border-left-style: solid;
+        border-left-color: var(--sidebar_active_border_color);
+        border-bottom: none; }
+      body.media-desktop div.functionbar div.nav a.toc {
+        background-image: url(var(--toc_tab_image));
+        background-repeat: no-repeat;
+        background-position: center 0.86em;
+        background-size: auto; }
+      body.media-desktop div.functionbar div.nav a.idx {
+        background-image: url(var(--index_tab_image));
+        background-repeat: no-repeat;
+        background-position: center 0.86em;
+        background-size: auto; }
+      body.media-desktop div.functionbar div.nav a.glo {
+        background-image: url(var(--glossary_tab_image));
+        background-repeat: no-repeat;
+        background-position: center 0.86em;
+        background-size: auto; }
+      body.media-desktop div.functionbar div.nav a.filter {
+        background-image: url(var(--filter_tab_image));
+        background-repeat: no-repeat;
+        background-position: center 0.86em;
+        background-size: auto; }
+        body.media-desktop div.functionbar div.nav a.filter.filter-applied {
+          background-image: url(var(--filter_applied_tab_image));
+          background-repeat: no-repeat;
+          background-position: center 0.86em;
+          background-size: auto; }
+      body.media-desktop div.functionbar div.nav a.fts {
+        display: none;
+        background-image: url(var(--search_tab_image));
+        background-repeat: no-repeat;
+        background-position: center 0.86em;
+        background-size: auto; }
+        body.media-desktop div.functionbar div.nav a.fts.search-sidebar {
+          display: block; }
+  body.media-desktop div.toc-holder.layout-visible {
+    margin-top: 0;
+    padding-top: .2em; }
+  body.media-desktop div.idx-holder div.Index li.treeitem {
+    margin-right: 1.43em !important;
+    font-size: 0.875rem; }
+  body.media-desktop div.idx-holder li.treeitem div {
+    font-size: 100%; }
+  body.media-desktop div.idx-holder .IndexAlphabet {
+    display: none; }
+  body.media-desktop div.glo-holder div.Glossary ul {
+    padding-right: 0px; }
+  body.media-desktop div.glo-holder div.Glossary li.treeitem {
+    margin-right: 1.43rem !important;
+    font-size: 0.875rem; }
+  body.media-desktop div.glo-holder div div {
+    font-size: 100%; }
+  body.media-desktop div.glo-holder .GloAlphabet {
+    display: none; }
+  body.media-desktop div.filter-holder {
+    display: none;
+    /*We need this to let IE11 hide the filter content on desktop (otherwise it will be visible over the sidebar and header.)*/ }
+    body.media-desktop div.filter-holder.layout-visible {
+      display: block; }
+      body.media-desktop div.filter-holder.layout-visible a.reset-button {
+        position: absolute;
+        top: 1em;
+        left: .5em;
+        height: 2em;
+        width: 2.5em; }
+  body.media-desktop div.searchbar.search-sidebar {
+    z-index: 1000;
+    background-color: var(--sidebar_bgcolor);
+    opacity: 100%;
+    border: 1px #e1e1e1;
+    border-radius: 4px; }
+  body.media-desktop div.searchbar.search-content {
+    display: none; }
+  body.media-desktop div.searchbar-extra {
+    color: #ffffff;
+    background-color: #509de6;
+    -webkit-border-radius: 0.4em;
+    -moz-border-radius: 0.4em;
+    border-radius: 0.4em;
+    padding: 0 .3em; }
+  body.media-desktop div.searchbar-extra {
+    position: absolute;
+    top: 2em;
+    left: 2em;
+    background: transparent;
+    color: #000000 !important;
+    -webkit-border-radius: 0.4em;
+    -moz-border-radius: 0.4em;
+    border-radius: 0.4em;
+    padding: .4em .3em;
+    background-color: var(--search_box_bgcolor);
+    box-shadow: 0.1rem 0.1rem 0.5rem var(--search_box_field_shadow_color);
+    z-index: 10;
+    width: 37em; }
+    body.media-desktop div.searchbar-extra input.wSearchField {
+      display: inline-block;
+      color: var(--search_box_color);
+      background-color: var(--search_box_field_bgcolor);
+      font-size: 1.5em;
+      height: 1.98em;
+      width: 22em;
+      padding: 0;
+      padding-right: 1em;
+      border-top-width: 0.1em;
+      border-top-style: solid;
+      border-top-color: var(--search_box_field_border_color);
+      border-bottom-width: 0.1em;
+      border-bottom-style: solid;
+      border-bottom-color: var(--search_box_field_border_color);
+      border-right-width: 0.1em;
+      border-right-style: solid;
+      border-right-color: var(--search_box_field_border_color);
+      border-left-width: 0.1em;
+      border-left-style: solid;
+      border-left-color: var(--search_box_field_border_color);
+      -webkit-border-radius: 0.2em;
+      -moz-border-radius: 0.2em;
+      border-radius: 0.2em;
+      vertical-align: bottom;
+      -o-transition-duration: 0.35s;
+      -o-transition-timing-function: ease-out;
+      -o-transition-property: width;
+      -ms-transition-duration: 0.35s;
+      -ms-transition-timing-function: ease-out;
+      -ms-transition-property: width;
+      -moz-transition-duration: 0.35s;
+      -moz-transition-timing-function: ease-out;
+      -moz-transition-property: width;
+      -webkit-transition-duration: 0.35s;
+      -webkit-transition-timing-function: ease-out;
+      -webkit-transition-property: width;
+      transition-duration: 0.35s;
+      transition-timing-function: ease-out;
+      transition-property: width;
+      -webkit-backface-visibility: hidden;
+      -moz-backface-visibility: hidden;
+      -ms-backface-visibility: hidden;
+      backface-visibility: hidden;
+      -webkit-perspective: 1000;
+      -moz-perspective: 1000;
+      -ms-perspective: 1000;
+      perspective: 1000; }
+      body.media-desktop div.searchbar-extra input.wSearchField:focus, body.media-desktop div.searchbar-extra input.wSearchField.searchpage-mode {
+        outline: 0; }
+    body.media-desktop div.searchbar-extra a.wSearchLink {
+      display: inline-block;
+      font-size: 1.5em;
+      height: 1.98em;
+      width: 2em;
+      text-decoration: none;
+      margin-right: -.22em;
+      padding: 0;
+      cursor: pointer;
+      vertical-align: bottom;
+      background-image: url(var(--search_button_image));
+      background-repeat: no-repeat;
+      background-position: 99% 0.4em;
+      background-size: 22px 22px;
+      /* For older browsers that don't support the new 4 property syntax */
+      background-image: url(var(--search_button_image));
+      background-repeat: no-repeat;
+      background-position: right 0.4em top 0.4em;
+      background-size: 22px 22px;
+      /* For newer browsers */ }
+      body.media-desktop div.searchbar-extra a.wSearchLink:active {
+        background-image: url(var(--search_button_active_image)); }
+    body.media-desktop div.searchbar-extra div.searchAND.layout-visible input {
+      display: block;
+      float: right;
+      margin-top: .6em; }
+    body.media-desktop div.searchbar-extra div.searchAND.layout-visible label {
+      display: block;
+      float: right;
+      margin-top: .7em;
+      cursor: pointer; }
+      body.media-desktop div.searchbar-extra div.searchAND.layout-visible label span {
+        font-size: 1.2em; }
+  body.media-desktop div.searchresults label.wSearchAndLabelResults {
+    color: var(--search_result_and_label);
+    background-position: right top;
+    background-size: auto 100%;
+    padding-top: .2em;
+    padding-right: 2.5em;
+    background-image: url(var(--and_search_disabled_image));
+    background-repeat: no-repeat;
+    background-position: right 0.6em;
+    background-size: auto 1em; }
+    body.media-desktop div.searchresults label.wSearchAndLabelResults.active {
+      background-image: url(var(--and_search_enabled_image));
+      background-repeat: no-repeat;
+      background-position: right 0.6em;
+      background-size: auto 1em; }
+    body.media-desktop div.searchresults label.wSearchAndLabelResults span {
+      font-size: 1.4em; }
+  body.media-desktop div.searchresults.search-sidebar {
+    top: 15.8em;
+    right: 0 !important; }
+    body.media-desktop div.searchresults.search-sidebar > div {
+      font-size: 1.4em; }
+  body.media-desktop div.searchresults.search-content {
+    z-index: 5;
+    padding: 1em 0 0 0;
+    width: auto !important; }
+    body.media-desktop div.searchresults.search-content label.wSearchAndLabelResults {
+      margin-top: 1em;
+      margin-right: 2.5em; }
+    body.media-desktop div.searchresults.search-content > div {
+      margin-right: 1.5em;
+      font-size: 1.6em; }
+  body.media-desktop div.sidebarsizer {
+    display: block;
+    position: absolute;
+    top: 7em;
+    right: 35em;
+    bottom: 0;
+    width: 1em;
+    cursor: col-resize;
+    overflow: visible;
+    z-index: 10; }
+    body.media-desktop div.sidebarsizer a.sidebartoggle {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      width: 1.6em;
+      height: 2.5em;
+      cursor: pointer;
+      background: transparent url(var(--close_sidebar_image)) no-repeat right top;
+      background-size: contain; }
+    body.media-desktop div.sidebarsizer.desktop-sidebar-hidden {
+      right: 0; }
+      body.media-desktop div.sidebarsizer.desktop-sidebar-hidden a.sidebartoggle {
+        background: transparent url(var(--open_sidebar_image)) no-repeat right top;
+        background-size: contain; }
+  body.media-desktop div.topic iframe.topic {
+    /* Position content for sidebar button */
+    width: calc(100% - 1em);
+    height: calc(100% - (4.5em + 5em));
+    margin-right: 1em; }
+  body.media-desktop div.topic div.functionholder {
+    display: block;
+    height: 4.3em;
+    border-bottom-width: 0.1em;
+    border-bottom-style: solid;
+    border-bottom-color: var(--functionbar_border_color);
+    padding-top: 1.075em;
+    padding-left: 2em;
+    width: 100%;
+    background-color: var(--functionbar_bgcolor); }
+    body.media-desktop div.topic div.functionholder div.buttons {
+      float: left; }
+      body.media-desktop div.topic div.functionholder div.buttons.left {
+        float: right; }
+      body.media-desktop div.topic div.functionholder div.buttons > div {
+        width: 2.15em;
+        height: 2.15em;
+        margin-right: 2em;
+        float: right; }
+        body.media-desktop div.topic div.functionholder div.buttons > div.twitter-button {
+          width: 90px;
+          overflow: hidden; }
+        body.media-desktop div.topic div.functionholder div.buttons > div.fb-button {
+          width: 150px;
+          overflow: hidden; }
+        body.media-desktop div.topic div.functionholder div.buttons > div img {
+          content: url(var(--next_button_image)); }
+        body.media-desktop div.topic div.functionholder div.buttons > div a {
+          display: block;
+          width: 100%;
+          height: 100%;
+          border: none;
+          text-decoration: none;
+          cursor: pointer;
+          background-color: transparent; }
+          body.media-desktop div.topic div.functionholder div.buttons > div a.wBSNextButton {
+            background-image: url(var(--previous_button_image));
+            background-repeat: no-repeat;
+            background-position: right top;
+            background-size: contain; }
+            body.media-desktop div.topic div.functionholder div.buttons > div a.wBSNextButton:active {
+              background-image: url(var(--previous_button_active_image));
+              background-repeat: no-repeat;
+              background-position: right top;
+              background-size: contain; }
+          body.media-desktop div.topic div.functionholder div.buttons > div a.wBSBackButton {
+            background-image: url(var(--next_button_image));
+            background-repeat: no-repeat;
+            background-position: right top;
+            background-size: contain; }
+            body.media-desktop div.topic div.functionholder div.buttons > div a.wBSBackButton:active {
+              background-image: url(var(--next_button_active_image));
+              background-repeat: no-repeat;
+              background-position: right top;
+              background-size: contain; }
+          body.media-desktop div.topic div.functionholder div.buttons > div a.print {
+            background-image: url(var(--print_button_image));
+            background-repeat: no-repeat;
+            background-position: right top;
+            background-size: contain; }
+  body.media-desktop div.topic a.to_top {
+    position: absolute;
+    left: 8em;
+    bottom: 0;
+    display: block;
+    height: 3.5em;
+    width: 4.5em;
+    cursor: pointer;
+    background-image: url(var(--goto_top_image));
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: contain; }
+  body.media-desktop div.idx-holder input,
+  body.media-desktop div.glo-holder input,
+  body.media-desktop div.searchbar input {
+    font-size: 1.2em !important; }
+  body.media-desktop div.social_buttons {
+    display: flex;
+    border-width: .1em !important; }
+    body.media-desktop div.social_buttons.opened div.fb-button,
+    body.media-desktop div.social_buttons.opened div.twitter-button {
+      padding-top: .1em; }
+
+.skip-to-content-container {
+  display: flex;
+  justify-content: center;
+  height: auto;
+  background-color: white; }
+
+.skip-to-content-link {
+  position: absolute;
+  top: -2rem;
+  margin: 0.25rem; }
+
+.skip-to-content-link:focus {
+  position: relative;
+  top: 0; }
+
+.placeholder {
+  background-color: transparent;
+  border: none;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  text-transform: inherit;
+  text-indent: inherit;
+  text-shadow: inherit;
+  text-align: inherit;
+  font: inherit;
+  cursor: inherit; }
+
+.js-focus-visible :focus:not(.focus-visible) {
+  outline: none; }
+
+.js-focus-visible .focus-visible:not(input) {
+  outline-width: 0.125rem;
+  outline-style: solid;
+  outline-color: black;
+  outline-color: var(--focus-outline-color);
+  outline-offset: -0.125rem; }
+  
+/*# sourceMappingURL=layout.css.map */

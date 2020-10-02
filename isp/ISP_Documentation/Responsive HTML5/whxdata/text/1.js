@@ -1,0 +1,1 @@
+rh._.exports({"0":["Main_Menu"],"1":["\n  ","\n  ","From the Main Menu you will be able to navigate to different modules and the main menu submodules.","\n  "," ","\n  ","\n  "," ","\n  ","\n    "," ","\n  ","\n  "," ","\n  "," ","\n  "," ","\n  "," ","\n  "," ","\n\n"],"2":["Main Menu"],"id":"1"})

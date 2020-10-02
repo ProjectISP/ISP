@@ -1,0 +1,1 @@
+(function() {    var toc =  [{"name":"Main_Menu","type":"item","tilePath":"","description":"","url":"assets/Main_Menu/Main_Menu.htm"},{"name":"Data Base","type":"item","tilePath":"","description":"","url":"assets/Main_Menu/Data_Base.htm"}];    window.rh.model.publish(rh.consts('KEY_TEMP_DATA'), toc, { sync:true });    })();

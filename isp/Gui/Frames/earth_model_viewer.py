@@ -28,11 +28,11 @@ class EarthModelViewer(pw.QFrame,UiEarth_model_viewer):
 
         def set_path(self):
             selected_file = pw.QFileDialog.getOpenFileName(self, "Select file *.buf")
-            if len(self.path_file)>0:
-                self.path_file = selected_file[0]
-                if isinstance(self.path_file, str):
-                    self.pathLE.setText(self.path_file)
-                    self.info_grid()
+            #if len(self.path_file)>0:
+            self.path_file = selected_file[0]
+            if isinstance(self.path_file, str):
+                self.pathLE.setText(self.path_file)
+                self.info_grid()
 
 
         def info_grid(self):
@@ -41,10 +41,10 @@ class EarthModelViewer(pw.QFrame,UiEarth_model_viewer):
             self.InfoTX.setPlainText("Model Primary Information")
             self.InfoTX.appendPlainText("Basename: {name} ".format(name=os.path.basename(grd.basename)))
             self.InfoTX.appendPlainText("nx: {nx} ny: {ny} nz: {nz}".format(nx=grd.nx, ny=grd.ny, nz=grd.nz))
-            self.InfoTX.appendPlainText("x_orig: {x_orig} y_orig: {y_orig} y_orig: {y_orig}".format(x_orig=grd.x_orig,
+            self.InfoTX.appendPlainText("x.orig: {x_orig} y.orig: {y_orig} z.orig: {y_orig}".format(x_orig=grd.x_orig,
                                       y_orig=grd.y_orig,z=grd.z_orig))
             self.InfoTX.appendPlainText("nx: {dx} ny: {dy} nz: {dz}".format(dx=grd.dx, dy=grd.dy, dz=grd.dz))
-            self.InfoTX.appendPlainText("transform {transform} LatOrig {LatOrig:.2f} LonOrig {LonOrig:.2f}".format(
+            self.InfoTX.appendPlainText("{transform} LatOrig {LatOrig:.2f} LonOrig {LonOrig:.2f}".format(
                 transform = grd.proj_name, LatOrig=grd.orig_lat, LonOrig=grd.orig_lon))
 
 
@@ -80,19 +80,24 @@ class EarthModelViewer(pw.QFrame,UiEarth_model_viewer):
             grid = grd.array
 
             if grd.z_orig * dz < zz <  grid.shape[2]* dz:
+
                 self.map_widget.ax.clear()
                 z = grid[:, :, zz].transpose()
                 if self.earth_modelCB.isChecked():
                     z = 1 / z
+                    print(np.min(z),np.max(z))
+                z = np.clip(z, a_min=np.min(z), a_max=np.max(z))
                 y = np.linspace(y0, y1, grid.shape[1])
                 x = np.linspace(x0, x1, grid.shape[0])
                 x, y = np.meshgrid(x, y)
                 self.map_widget.ax.set_extent(extent, crs=ccrs.PlateCarree())
                 self.map_widget.ax.coastlines()
-                cs = self.map_widget.ax.contourf(x, y, z, levels=100, cmap=reversed_color_map, alpha=0.2)
+                #cs = self.map_widget.ax.contourf(x, y, z, levels=100, cmap=reversed_color_map, alpha=0.2)
 
+                cs = self.map_widget.ax.contourf(x, y, z, levels=100,cmap=reversed_color_map, alpha=0.2,
+                                                 vmin =np.min(z), vmax = np.max(z))
                 if self.plt_cbar:
-
+                    #self.cb = self.map_widget.fig.colorbar(cs)
                     self.cb = self.map_widget.fig.colorbar(cs, orientation='horizontal', fraction=0.05, extend='both',
                                                            pad=0.3)
                     self.cb.ax.xaxis.tick_top()

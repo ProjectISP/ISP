@@ -14,6 +14,7 @@ from isp.Gui import pw, pqg, pyc, qt
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, EventInfoBox, \
     MatplotlibCanvas 
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
+from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -124,6 +125,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionClean_selection.triggered.connect(lambda : self.clean_chop_at_page())
         self.actionClean_Events_Detected.triggered.connect(lambda : self.clean_events_detected())
         self.actionPlot_All_Seismograms.triggered.connect(lambda : self.plot_all_seismograms())
+        self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -132,6 +134,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # Earth Model Viewer
 
         self.earthmodel = EarthModelViewer()
+
+        # help Documentation
+
+        self.help = HelpDoc()
 
         # shortcuts
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+L'), self)
@@ -160,6 +166,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+J'), self)
         self.shortcut_open.activated.connect(self.clean_all_chop)
+
+    def open_help(self):
+        self.help.show()
 
     def open_parameters_settings(self):
         self.parameters.show()
