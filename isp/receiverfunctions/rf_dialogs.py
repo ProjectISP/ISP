@@ -111,7 +111,7 @@ class CrossSectionDialog(QtWidgets.QDialog, UiReceiverFunctionsCrossSection):
         self.z = z
         
         self.mplwidget.figure.subplots(1)
-        im = self.mplwidget.figure.axes[0].pcolormesh(x, y, z, cmap="RdBu")
+        im = self.mplwidget.figure.axes[0].pcolormesh(x, y, z, vmin=-1., vmax=1, cmap="RdBu_r")
         
         divider = make_axes_locatable(self.mplwidget.figure.axes[0])
         cax = divider.append_axes("right", size="5%", pad=0.05)
@@ -124,7 +124,7 @@ class CrossSectionDialog(QtWidgets.QDialog, UiReceiverFunctionsCrossSection):
         self.pushButton_3.clicked.connect(self.close)
     
     def save_cross_section(self):
-        fname = pw.QFileDialog.getSaveFileName()[0]
+        fname = QtWidgets.QFileDialog.getSaveFileName()[0]
         
         css_dict = {"start":self.start,
                     "end":self.end,
@@ -148,8 +148,9 @@ class CrossSectionDialog(QtWidgets.QDialog, UiReceiverFunctionsCrossSection):
         newmanager.canvas.figure = fig_copy
         fig_copy.set_canvas(newmanager.canvas)        
         
-        dialog = SaveFigureDialog(fig_copy)
-        dialog.exec_()
+        """dialog = SaveFigureDialog(fig_copy, preferred_size, preferred_margins, preferred_title,
+                 preferred_xlabel, preferred_ylabel, preferred_fname)
+        dialog.exec_()"""
     
     def close(self):
         self.done(0)
