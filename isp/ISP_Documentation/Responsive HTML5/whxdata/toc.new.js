@@ -1,1 +1,1 @@
-(function() {    var toc =  [{"name":"assets","type":"book","tilePath":"","key":"toc1"}];    window.rh.model.publish(rh.consts('KEY_TEMP_DATA'), toc, { sync:true });    })();
+(function() {    var toc =  [{"name":"Home","type":"book","tilePath":"","key":"toc1"},{"name":"ISPcontent","type":"book","tilePath":"","key":"toc2"}];    window.rh.model.publish(rh.consts('KEY_TEMP_DATA'), toc, { sync:true });    })();

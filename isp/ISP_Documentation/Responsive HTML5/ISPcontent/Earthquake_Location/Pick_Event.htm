@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head>
+
+  <script type="text/javascript" language="JavaScript">
+    //<![CDATA[
+    function reDo() {
+      if (innerWidth != origWidth || innerHeight != origHeight)
+        location.reload();
+    }
+    if ((parseInt(navigator.appVersion) == 4) && (navigator.appName == "Netscape")) {
+      origWidth = innerWidth;
+      origHeight = innerHeight;
+      onresize = reDo;
+    }
+    onerror = null;
+  //]]>
+  </script>
+  <style type="text/css">/*<![CDATA[*/
+
+    < !-- div.WebHelpPopupMenu {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      z-index: 4;
+      visibility: hidden;
+    }
+
+    p.WebHelpNavBar {
+      text-align: right;
+    }
+
+    -->
+  
+/*]]>*/</style>
+
+  <script type="text/javascript">//<![CDATA[
+
+    gRootRelPath = "../..";
+    gCommonRootRelPath = "../..";
+    gTopicId = "2.2.0_5";
+  
+//]]></script>
+
+  <script type="text/javascript" src="../../template/scripts/rh.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/common.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topic.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topicwidgets.min.js"></script>
+<script type="text/javascript" src="../../whxdata/projectsettings.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../template/styles/topic.min.css"/>
+  <link rel="stylesheet" type="text/css" href="../../template/Red_Green/topicheader.css"/>
+  <meta name="topic-status" content="Draft"/>
+<link rel="stylesheet" type="text/css" href="../css/default.css"/><link rel="stylesheet" type="text/css" href="../css/book.css"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta name="generator" content="Adobe RoboHelp 2020"/>
+  <title>Pick Event</title>
+  <meta name="topic-status" content="Draft"/>
+  
+</head>
+
+<body>
+  <div class="topic-header rh-hide" id="rh-topic-header" onclick="rh._.goToFullLayout()">
+    <div class="logo">
+    </div>
+    <div class="nav">
+      <div class="title" title="Pick Event">
+        <span>Pick Event</span>
+      </div>
+      <div class="gotohome" title="Click here to see this page in full context">
+        <span>Click here to see this page in full context</span>
+      </div>
+    </div>
+  </div>
+  <div class="topic-header-shadow rh-hide" id="rh-topic-header-shadow"></div>
+
+
+
+  <div>
+    <p></p>
+  </div>
+  <div>
+  <h1 style="line-height: 1.5;text-align: justify">Pick Event</h1>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">The module Earthquake analysis allows you to analyze waveforms, polarization analysis of seismograms 3-components, calculate different magnitudes and finally locate an event and estimate the focal mechanism (First Polarity). We will walk through all of the functionality following this scheme:</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">From top to bottom in the left side of the window you will see,</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Event Info. This small box let enter information about an event, in this way you can plot the theoretical arrivals (ak-135) with respect your seismograms.</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol start="2" style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Files. By clicking in this button you will place the path of your files (*miniseed or *sac).</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol start="3" style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Metadata. By clicking in this button you will place the path to you metadata file. The metadata file must contain the information of all of the stations seismograms you want to analyze (metadata must be a *xml or *dlsv).</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol start="4" style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Start Time and End Time. The time boxes can be selected checking “Trim Time”. If you choose this option all the seismograms will be cut in accordance with the selected time window.</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol start="5" style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">   Stations Info will deploy a table with the fundamental information of the seismograms.</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol start="6" style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Phase box. This combo box allow the selection of specific phases for picking it in the seismograms.</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol start="7" style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Waves box. You can Choose Body, surface, coda or noise. With this selected you can highlight a time window of the seismogram for further analysis.</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol start="8" style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Net, Station and Channel. You can fill this boxes (also using wildcards) to select specific files from your files folder (check “select files”).</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol style="list-style-type:lower-roman">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Locate. After pick some phases in your seismogram you can locate an earthquake and show a location map. Previously you must have calculated travel-times for your velocity model (Further details in Event Location tab. 2.3)</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol start="10" style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Stations Map will show you the location of the stations that corresponds to the seismograms of your folder. The seismograms metadata must match with the metadata information.</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol start="11" style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Rotate. This option will rotate all your station - 3 components (must be named N,E,Z) to the GAC taking the reference the data of event info.</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol start="12" style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in" value="50"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Cross. This button will compute the cross-correlation (cc) or the autocorrelation of all processed seismograms with respect the reference “Ref”, the number of the seismogram from top to bottom.</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol start="13" style="list-style-type:lower-alpha">
+    <li style="text-align:justify; margin:0in 0in 0.0001pt 0.5in" value="1000"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Process and Plot. This action will read the seismograms from the selected folder and will carry out the processing from the established “MACRO”. Further details in MACRO section 7.0.</span></span></li>
+  </ol>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"><img src="../../assets/images/Event Analysis.png"/></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt 0.5in"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Additional options from the toolbar are:</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p align="center" style="text-align:center; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"><i>File</i></span></span></p>
+  <p align="center" style="text-align:center; margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">File <span style="font-family:Wingdings">à</span> New location will clean the picks that are saved automatically for be ready to compute new picking/location.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">File <span style="font-family:Wingdings">à</span> Write Files will write in the folder you select the processed seismograms.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">File <span style="font-family:Wingdings">à</span>Open Settings will open a window with the specific parameters of the subprocess that </span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">you can carry out in this module (sta/lta, wavelet detection, spectrogram, entropy…).</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p align="center" style="text-align:center; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"><i>Actions</i></span></span></p>
+  <p align="center" style="text-align:center; margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Actions <span style="font-family:Wingdings">à</span> Macro will deploy a window with all of the processing options. (See section 7). All of the processing options will be applied once you press the button Processing and Plot.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Actions <span style="font-family:Wingdings">à</span> Magnitude Calculator will open a window in which you can compute different magnitudes. For open this you must have estimated an event and have selected the time-windows in the seismograms that you want the magnitudes be calculated.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Actions <span style="font-family:Wingdings">à</span> Run Picker will carry out the automatic detection/classification of P- and S- waves from the previously loaded “Neural Network”. You must have three components per stations (named *N,*E,*Z). BE CAREFULL this computationally demanding.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Action <span style="font-family:Wingdings">à</span> Detect event will associate the automatic picks carried out by the wavelet picker ant will declare an event. The events will be shown in the seismograms window.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Action <span style="font-family:Wingdings">à</span> Open Earth Model Viewer will open a tool to visualize 3D velocity models. For visualize an Earth Model you need the binary files (*buf and  *hdr) created in the tab Event location. </span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">                                                                        <i>Compute</i></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Compute <span style="font-family:Wingdings">à</span> STA/LTA from all processed seismograms and will plot the result together. STA/LTA takes the parameters from Parameters Settings.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Compute <span style="font-family:Wingdings">à</span> CWT (CF) from all processed seismograms and will plot the result together. CWT takes the parameters from Parameters Settings.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Compute <span style="font-family:Wingdings">à</span> Envelope from all processed seismograms and will plot the result together. </span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Compute <span style="font-family:Wingdings">à</span> Spectral Entropy from all processed seismograms and will plot the result together. Spectral entropy is estimated in small time windows see Parameters Settings.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">All Seismograms <span style="font-family:Wingdings">à</span> Plot together all seismograms.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Stack <span style="font-family:Wingdings">à</span> Compute (linear, nth-root or PWS) stack of all processed seismograms.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">                                                                        Go</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Will ship you to the rest of ISP modules (RFs, Array analysis….).</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+
+</div>
+  <div>
+    <p style="text-align: right;"><span data-field="project-title" data-format="default" style="float: left;font-family: Calibri">ISP_Documentation</span>                                                                                                        <span style="font-family:Calibri;">Page <span data-field="page-number" data-format="default">1</span> of
+      <span data-field="total-pages" data-format="default">1</span>
+        </span>
+    </p>
+  </div>
+
+</body></html>

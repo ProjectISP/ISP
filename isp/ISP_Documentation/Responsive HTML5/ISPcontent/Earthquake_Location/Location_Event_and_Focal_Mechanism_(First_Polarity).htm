@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head>
+
+  <script type="text/javascript" language="JavaScript">
+    //<![CDATA[
+    function reDo() {
+      if (innerWidth != origWidth || innerHeight != origHeight)
+        location.reload();
+    }
+    if ((parseInt(navigator.appVersion) == 4) && (navigator.appName == "Netscape")) {
+      origWidth = innerWidth;
+      origHeight = innerHeight;
+      onresize = reDo;
+    }
+    onerror = null;
+  //]]>
+  </script>
+  <style type="text/css">/*<![CDATA[*/
+
+    < !-- div.WebHelpPopupMenu {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      z-index: 4;
+      visibility: hidden;
+    }
+
+    p.WebHelpNavBar {
+      text-align: right;
+    }
+
+    -->
+  
+/*]]>*/</style>
+
+  <script type="text/javascript">//<![CDATA[
+
+    gRootRelPath = "../..";
+    gCommonRootRelPath = "../..";
+    gTopicId = "2.2.0_3";
+  
+//]]></script>
+
+  <script type="text/javascript" src="../../template/scripts/rh.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/common.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topic.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topicwidgets.min.js"></script>
+<script type="text/javascript" src="../../whxdata/projectsettings.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../template/styles/topic.min.css"/>
+  <link rel="stylesheet" type="text/css" href="../../template/Red_Green/topicheader.css"/>
+  <meta name="topic-status" content="Draft"/>
+<link rel="stylesheet" type="text/css" href="../css/default.css"/><link rel="stylesheet" type="text/css" href="../css/book.css"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta name="generator" content="Adobe RoboHelp 2020"/>
+  <title>Location Event and Focal Mechanism (First Polarity)</title>
+  <meta name="topic-status" content="Draft"/>
+  
+</head>
+
+<body>
+  <div class="topic-header rh-hide" id="rh-topic-header" onclick="rh._.goToFullLayout()">
+    <div class="logo">
+    </div>
+    <div class="nav">
+      <div class="title" title="Location Event and Focal Mechanism (First Polarity)">
+        <span>Location Event and Focal Mechanism (First Polarity)</span>
+      </div>
+      <div class="gotohome" title="Click here to see this page in full context">
+        <span>Click here to see this page in full context</span>
+      </div>
+    </div>
+  </div>
+  <div class="topic-header-shadow rh-hide" id="rh-topic-header-shadow"></div>
+
+
+
+  <div>
+    <p></p>
+  </div>
+  <div>
+  <h1>Location Event and Focal Mechanism (First Polarity)</h1>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">In the Event Location Frame the user can configure the velocity grid 1D/3D model, locate earthquakes and compute Focal Mechanisms.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt;text-align:justify"> </p>
+  <p style="margin:0in 0in 0.0001pt"><img src="../../assets/images/Location.png"/></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">First it is needed to set a Velocity grid framework (Grid reference and transformation type are mandatory). For now is only available Transformation Simple and Global.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Next, the Grid dimensions (Grid Size). Case 2D the dimension always must be 2 and the grid reference is referred to the corner SW. Case 3D the grid reference is the center of the Grid.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Choose the grid type and the wave and then generate the velocity model binary files by clicking “Generate Velocity Grid”.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Once the binary files are generated you can check the results in the folder:</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">ISP/earthquakeAnalysis/location_output/model</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">+ Where and how place the velocity models?</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">2D models (see example)</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">LAYER   0.0  6.1 0.0    3.49  0.0  2.7 0.0</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">LAYER  11.0  6.4 0.0    3.66  0.0  2.7 0.0</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">LAYER  24.0  6.9 0.0    3.94  0.0  2.7 0.0</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">LAYER  31.0  8.0 0.0    4.57  0.0  2.7 0.0</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">ISP/earthquakeAnalysis/location_output/local_models</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">3D models</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">ISP/earthquakeAnalysis/location_output /model3D (see example)</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Every depth layer must be placed in files called, for example</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Layer.P.mod5.mod</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Which means that inside this file there is the grid for the layer at depth 5km.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">The layer must be a matrix with the values in the rows from top to bottom E<span style="font-family:Wingdings">à</span>W and from left to right S<span style="font-family:Wingdings">à</span>W</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">The most important step is to generate the travel-times for all the stations inside the maximum distance the user determine.  Please be sure that you have load the metadata previously in seismogram analysis.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">The generated travel-times will save in </span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">ISP/earthquakeAnalysis/location_output /time</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Once you have complete the above steps you can locate the earthquake and the focal mechanism.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">**For global is not necessary generate the velocity grid and travel times.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"> </p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">To visualize the detailed Probability Density Function, press “Plot PDF” once you have already carried out the location.</span></span></p>
+  <p style="text-align:justify; margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12.0pt"><span style="font-family:&quot;Calibri&quot;,sans-serif">Moreover, if you have picked the seismic phases and have been designated the polarity in “Event frame” , you will be able to  obtain the Focal Mechanism (it uses the subprogram FocMec).</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><img src="../../assets/images/OBS_polarity.png" width="600"/></p>
+  <p style="margin:0in 0in 0.0001pt;text-align:justify"> </p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><img src="../../assets/images/PDF.png" width="600"/></p>
+
+</div>
+  <div>
+    <p style="text-align: right;"><span data-field="project-title" data-format="default" style="float: left;font-family: Calibri">ISP_Documentation</span>                                                                                                        <span style="font-family:Calibri;">Page <span data-field="page-number" data-format="default">1</span> of
+      <span data-field="total-pages" data-format="default">1</span>
+        </span>
+    </p>
+  </div>
+
+</body></html>

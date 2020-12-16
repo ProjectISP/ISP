@@ -3,22 +3,66 @@
   <contextmap>
     
   </contextmap>
-  <topiclist defaulttopic="First_Topic.htm">
+  <topiclist defaulttopic="Home\Introduction.htm">
     
     <topic>
-      assets\Home\Introduction.htm
+      Home\Introduction.htm
     </topic>
     
     <topic>
-      assets\Main_Menu\Main_Menu.htm
+      ISPcontent\Main_Menu\Data_Base.htm
     </topic>
     
     <topic>
-      assets\Main_Menu\Data_Base.htm
+      ISPcontent\Main_Menu\Main_Menu.htm
     </topic>
     
     <topic>
-      First_Topic.htm
+      ISPcontent\Main_Menu\Synthetics_generator.htm
+    </topic>
+    
+    <topic>
+      ISPcontent\Earthquake_Location\3C_component.htm
+    </topic>
+    
+    <topic>
+      ISPcontent\Earthquake_Location\Earth_Model_Viwer.htm
+    </topic>
+    
+    <topic>
+      ISPcontent\Earthquake_Location\Location_Event_and_Focal_Mechanism_(First_Polarity).htm
+    </topic>
+    
+    <topic>
+      ISPcontent\Earthquake_Location\Magnitudes.htm
+    </topic>
+    
+    <topic>
+      ISPcontent\Earthquake_Location\Pick_Event.htm
+    </topic>
+    
+    <topic>
+      ISPcontent\Earthquake_Location\Shortcuts.htm
+    </topic>
+    
+    <topic>
+      ISPcontent\Time-Frequency_Analysis\Time-Frequency_Analysis.htm
+    </topic>
+    
+    <topic>
+      ISPcontent\Moment_Tensor_Inversion\Bayesian_Inversion.htm
+    </topic>
+    
+    <topic>
+      ISPcontent\Array_Anlysis\ARF.htm
+    </topic>
+    
+    <topic>
+      ISPcontent\Array_Anlysis\FK_and_Vespagram.htm
+    </topic>
+    
+    <topic>
+      ISPcontent\References.htm
     </topic>
     
   </topiclist>
@@ -39,5 +83,11 @@
       </filename>
     </filenameentry>
         
+    <filenameentry moniker="favicon">
+      <filename>
+        /Users/robertocabieces/Desktop/tutorial/ISP_Documentation/contents/assets/images/LOGOISP_def.png
+      </filename>
+    </filenameentry>
+    
   </filenamemap>
 </ppfml>

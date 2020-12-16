@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head>
+
+  <script type="text/javascript" language="JavaScript">
+    //<![CDATA[
+    function reDo() {
+      if (innerWidth != origWidth || innerHeight != origHeight)
+        location.reload();
+    }
+    if ((parseInt(navigator.appVersion) == 4) && (navigator.appName == "Netscape")) {
+      origWidth = innerWidth;
+      origHeight = innerHeight;
+      onresize = reDo;
+    }
+    onerror = null;
+  //]]>
+  </script>
+  <style type="text/css">/*<![CDATA[*/
+
+    < !-- div.WebHelpPopupMenu {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      z-index: 4;
+      visibility: hidden;
+    }
+
+    p.WebHelpNavBar {
+      text-align: right;
+    }
+
+    -->
+  
+/*]]>*/</style>
+
+  <script type="text/javascript">//<![CDATA[
+
+    gRootRelPath = "../..";
+    gCommonRootRelPath = "../..";
+    gTopicId = "2.3.0_1";
+  
+//]]></script>
+
+  <script type="text/javascript" src="../../template/scripts/rh.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/common.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topic.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topicwidgets.min.js"></script>
+<script type="text/javascript" src="../../whxdata/projectsettings.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../template/styles/topic.min.css"/>
+  <link rel="stylesheet" type="text/css" href="../../template/Red_Green/topicheader.css"/>
+  <meta name="topic-status" content="Draft"/>
+<link rel="stylesheet" type="text/css" href="../css/default.css"/><link rel="stylesheet" type="text/css" href="../css/book.css"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta name="generator" content="Adobe RoboHelp 2020"/>
+  <title>Time-Frequency Analysis</title>
+  <meta name="topic-status" content="Draft"/>
+  
+  <meta name="template" content="../Earthquake_Location/book.htt"/>
+</head>
+
+<body>
+  <div class="topic-header rh-hide" id="rh-topic-header" onclick="rh._.goToFullLayout()">
+    <div class="logo">
+    </div>
+    <div class="nav">
+      <div class="title" title="Time-Frequency Analysis">
+        <span>Time-Frequency Analysis</span>
+      </div>
+      <div class="gotohome" title="Click here to see this page in full context">
+        <span>Click here to see this page in full context</span>
+      </div>
+    </div>
+  </div>
+  <div class="topic-header-shadow rh-hide" id="rh-topic-header-shadow"></div>
+
+
+
+  <div>
+    <p></p>
+  </div>
+  <div>
+  <p style="list-style-type:none"><span style="font-size:24px;"><span style="font-family:Calibri,sans-serif">Time-Frequency (Multitaper Spectrogram, Continuous Wavelet and Wigner Distribution)</span></span></p>
+  <p style="list-style-type:none"> </p>
+  <p style="list-style-type:none"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">The Time-Frequency Analysis window is designed to facilitate the computation of advanced seismic signal processes  on individual seismograms.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">The seismograms are selected in the files explorer. You can also set a macro with basic process before running any time-Frequency analysis</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">The most important is the selection of the Seismogram (the analysis will be show in the upper panel . “seismogram 1” and lower panel seismogram 2). Then you can select which one of Time-Frequency analysis you want to compute.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Before Compute the Time-Frequency analysis be sure that you have filled the parameters of that kind of analysis (MT for multitaper spectrogram and CWT for Continuous Wavelet Transform).</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">With respect to the Wavelet:</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">The wavelet needs, select the wavelet (Morlet, Paul or Mexican Hat are available) and fill the parameters in accordance to the selected wavelet (Mallat, 2009).</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">With respect to the Multitaper (Thomson, 1982):</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">His analysis needs to specify the Window Length, Time-Bandwidth, the Number of Tapers and the range of the frequencies</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">In the Fig 3.1 is shown an example of computation of CWT and the uncertainty cone using the Morlet wavelet (upper panel) and multitaper spectrogram (lower panel).</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Once two seismograms are selected we can follow with more advanced signal processing (Open advanced analysis):</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ul>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Spectrum Comparison &gt;&gt;&gt; plot the amplitude and phase spectrum individual and together (Fig. 3.2).</span></span></li>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Coherence &gt;&gt;&gt; Plot the magnitude square coherence and its phase (Fig. 3.3).</span></span></li>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Cross Correlation &gt;&gt;&gt; Plot the Autocorrelations and the cross correlation of both signals (Fig. 3.4).</span></span></li>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Cross Wavelet &gt;&gt;&gt; Plot the Cross-CWT of both signals (Fig. 3.5).</span></span></li>
+  </ul>
+  <p style="margin:0in 0in 0.0001pt 0.5in"> </p>
+  <figure><img src="../../assets/images/Time_Frequency.png"/>
+    <figcaption><span style="font-size:10px;">Time-Frequency Anlaysis of two seismograms, upper CWT, Down Multitaper spectrogram</span></figcaption>
+  </figure>
+  <p> </p>
+  <p>Advanced Analysis</p>
+  <p> </p>
+  <figure><img src="../../assets/images/spectrum_advanced.png"/>
+    <figcaption>Spectrum Comparison Tab</figcaption>
+  </figure>
+  <p style="margin:0in 0in 0.0001pt 0.5in"> </p>
+  <p style="margin:0in 0in 0.0001pt 0.5in"> </p>
+  <p style="margin:0in 0in 0.0001pt 0.5in"> </p>
+  <figure><img src="../../assets/images/Coherence.png"/>
+    <figcaption>Magnitude square coherence and Phase</figcaption>
+  </figure>
+  <p style="margin:0in 0in 0.0001pt 0.5in"> </p>
+  <figure><img src="../../assets/images/Cross_autocorrelation.png"/>
+    <figcaption>Cross and auto correlations</figcaption>
+  </figure>
+  <p> </p>
+  <figure><img src="../../assets/images/Cross_wavelet.png"/>
+    <figcaption>Cross Continuous Wavelet (Morlet wavelet)</figcaption>
+  </figure>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+
+</div>
+  <div>
+    <p style="text-align: right;"><span data-field="project-title" data-format="default" style="float: left;font-family: Calibri">ISP_Documentation</span>                                                                                                        <span style="font-family:Calibri;">Page <span data-field="page-number" data-format="default">1</span> of
+      <span data-field="total-pages" data-format="default">1</span>
+        </span>
+    </p>
+  </div>
+
+</body></html>

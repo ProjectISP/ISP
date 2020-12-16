@@ -9,6 +9,7 @@ from obspy import Stream, read, Trace, UTCDateTime, read_events
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth
 from obspy.io.mseed.core import _is_mseed
+#from obspy.io.sac.core import _is_sac
 from obspy.io.xseed.parser import Parser
 
 from isp.Exceptions import InvalidFile
@@ -287,7 +288,12 @@ class MseedUtil:
         :param file_path: The full file's path.
         :return: True if path is an existing regular file and a valid mseed. False otherwise.
         """
+        #if os.path.isfile(file_path) and _is_mseed(file_path):
+        #   return True
+        #elif os.path.isfile(file_path) and _is_sac(file_path):
+        #   return True
         return os.path.isfile(file_path) and _is_mseed(file_path)
+
 
     @staticmethod
     def is_valid_dataless(file_path):
@@ -314,12 +320,13 @@ class MseedUtil:
         :return: A list of full path of dataless files.
         """
 
-        if os.path.isfile(root_dir) and cls.is_valid_dataless(root_dir):
+        #if os.path.isfile(root_dir) and cls.is_valid_dataless(root_dir):
+        if os.path.isfile(root_dir):
             return [root_dir]
         elif os.path.isdir(root_dir):
             files = [os.path.join(root_dir, file) for file in os.listdir(root_dir)
-                     if os.path.isfile(os.path.join(root_dir, file)) and
-                     cls.is_valid_dataless(os.path.join(root_dir, file))]
+                     if os.path.isfile(os.path.join(root_dir, file))]
+                     #and cls.is_valid_dataless(os.path.join(root_dir, file))]
             files.sort()
             return files
         return []

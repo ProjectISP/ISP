@@ -1,0 +1,1 @@
+(function() {    var toc =  [{"name":"Bayesian Inversion","type":"item","tilePath":"","description":"","url":"ISPcontent/Moment_Tensor_Inversion/Bayesian_Inversion.htm"}];    window.rh.model.publish(rh.consts('KEY_TEMP_DATA'), toc, { sync:true });    })();

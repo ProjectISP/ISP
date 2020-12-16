@@ -310,7 +310,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
         except:
-            raise FileNotFoundError("The metada is not valid")
+            raise FileNotFoundError("The metadata is not valid")
 
 
     def subprocess_feedback(self, err_msg: str, set_default_complete=True):

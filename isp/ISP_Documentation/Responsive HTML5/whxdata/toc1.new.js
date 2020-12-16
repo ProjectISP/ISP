@@ -1,1 +1,1 @@
-(function() {    var toc =  [{"name":"Home","type":"book","tilePath":"","key":"toc2"},{"name":"Main Menu","type":"book","tilePath":"","key":"toc3"}];    window.rh.model.publish(rh.consts('KEY_TEMP_DATA'), toc, { sync:true });    })();
+(function() {    var toc =  [{"name":"Introduction","type":"item","tilePath":"","description":"Introduction","url":"Home/Introduction.htm"}];    window.rh.model.publish(rh.consts('KEY_TEMP_DATA'), toc, { sync:true });    })();
