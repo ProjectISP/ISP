@@ -1,6 +1,8 @@
 import math
 import os
 from enum import unique, Enum
+from os import listdir
+from os.path import isfile, join
 from typing import List
 
 import numpy as np
@@ -348,3 +350,57 @@ class MseedUtil:
             files.sort()
             return files
         return []
+
+    @classmethod
+    def data_availability(cls, files_path: str,only_this = True):
+        import matplotlib.pyplot as plt
+        import matplotlib.dates as mdt
+        from isp.Gui.Frames import MatplotlibFrame
+
+        fig, hax = plt.subplots(1, 1, figsize=(12, 6))
+        cls.mpf = MatplotlibFrame(fig)
+        starttimes = []
+        endtimes = []
+        if only_this:
+
+            obsfiles = [f for f in listdir(files_path) if isfile(join(files_path, f))]
+            obsfiles.sort()
+        else:
+            obsfiles = []
+            for top_dir, sub_dir, files in os.walk(files_path):
+                for file in files:
+                    obsfiles.append(os.path.join(top_dir, file))
+            obsfiles.sort()
+
+        data_map = {}
+        data_map['nets'] = {}
+
+        for i in obsfiles:
+            paths = os.path.join(files_path, i)
+            if _is_mseed(paths):
+
+                header = read(paths, headlonly=True)
+                gap = header.get_gaps()
+                net = header[0].stats.network
+                sta = header[0].stats.station
+                chn = header[0].stats.channel
+                # times
+                starttimes.append(header[0].stats.starttime)
+                start = header[0].stats.starttime.matplotlib_date
+                endtimes.append(header[0].stats.endtime)
+                end = header[0].stats.endtime.matplotlib_date
+                name = net + "." + sta + "." + chn
+                hax.hlines(name, start, end, colors='k', linestyles='solid', label=name, lw=2)
+                if len(gap) > 0:
+                    for i in range(len(gap)):
+                        starttime_gap = gap[i][4].matplotlib_date
+                        endtime_gap = gap[i][5].matplotlib_date
+                        hax.hlines(name, starttime_gap, endtime_gap, colors='r', linestyles='solid', label=name, lw=2)
+
+        start_time = min(starttimes)
+        end_time = max(endtimes)
+        formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+        hax.xaxis.set_major_formatter(formatter)
+        hax.set_xlabel("Date")
+        hax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+        cls.mpf.show()

@@ -3,7 +3,6 @@ import matplotlib.dates as mdt
 from obspy import UTCDateTime, Stream, Trace
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth
-from obspy.signal.cross_correlation import correlate_template
 from obspy.signal.trigger import coincidence_trigger
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.NeuralNetwork import CNNPicker
@@ -126,6 +125,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionClean_Events_Detected.triggered.connect(lambda : self.clean_events_detected())
         self.actionPlot_All_Seismograms.triggered.connect(lambda : self.plot_all_seismograms())
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
+        self.actionOnly_a_folder.triggered.connect(lambda: self.availability())
+        self.actionAll_tree.triggered.connect(lambda: self.availability_all_tree())
+
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -1297,6 +1299,28 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
             ax.xaxis.set_major_formatter(formatter)
             self.nums_clicks = self.nums_clicks+1
+
+    def availability(self):
+
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
+        if os.path.isdir(dir_path):
+            try:
+                MseedUtil.data_availability(dir_path)
+            except:
+                md = MessageDialog(self)
+                md.set_warning_message("No data available")
+
+
+    def availability_all_tree(self):
+
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
+        if os.path.isdir(dir_path):
+            try:
+                MseedUtil.data_availability(dir_path, only_this = False)
+            except:
+                md = MessageDialog(self)
+                md.set_warning_message("No data available")
+
 
     def open_magnitudes_calculator(self):
         hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")
