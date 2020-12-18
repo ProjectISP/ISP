@@ -1,0 +1,72 @@
+h2 {
+	font-size: 1.6em;
+	clear: both;
+	border-bottom: 1px solid gray;
+}
+h3 {
+	font-size: 1.4em;
+	color: #bd009c;
+	clear: left;
+}
+table {
+	
+}
+tr {
+/* 	margin: none; */
+/* 	padding: none; */
+}
+th {
+	text-align: left;
+}
+td, th {
+	border-bottom: 1px solid gray;
+	padding: 0 1em;
+/* 	text-align: right; */
+}
+dt {
+	font-style: italic;
+}
+dd {
+	margin: 0 0 0.1em 0;
+	padding: 0 0 0 4em;
+}
+dt:hover, dd:hover, dt:hover+dd {
+	background-color: #d0d0d0;
+}
+td:nth-child(1n+2) {
+	text-align: right;
+}
+tr:nth-child(even) {
+	background-color: #f0f0f0;
+}
+tr:hover {
+	background-color: #d0d0d0;
+}
+
+
+.thumb {
+	border: 1px solid gray;
+	padding: 1em;
+	margin: 1em;
+}
+.tright {
+	float: right;
+	clear: right;
+}
+.tleft {
+	float: left;
+}
+.thumbcaption {
+	text-align: center;
+	color: gray;
+}
+.center {
+	text-align: center !important;
+}
+.untrusted {
+	color: gray;
+}
+.warning {
+	color: red;
+	font-weight: bold;
+}

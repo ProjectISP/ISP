@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head>
+
+  <script type="text/javascript" language="JavaScript">
+    //<![CDATA[
+    function reDo() {
+      if (innerWidth != origWidth || innerHeight != origHeight)
+        location.reload();
+    }
+    if ((parseInt(navigator.appVersion) == 4) && (navigator.appName == "Netscape")) {
+      origWidth = innerWidth;
+      origHeight = innerHeight;
+      onresize = reDo;
+    }
+    onerror = null;
+  //]]>
+  </script>
+  <style type="text/css">/*<![CDATA[*/
+
+    < !-- div.WebHelpPopupMenu {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      z-index: 4;
+      visibility: hidden;
+    }
+
+    p.WebHelpNavBar {
+      text-align: right;
+    }
+
+    -->
+  
+/*]]>*/</style>
+
+  <script type="text/javascript">//<![CDATA[
+
+    gRootRelPath = "../..";
+    gCommonRootRelPath = "../..";
+    gTopicId = "2.2.0_4";
+  
+//]]></script>
+
+  <script type="text/javascript" src="../../template/scripts/rh.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/common.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topic.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topicwidgets.min.js"></script>
+<script type="text/javascript" src="../../whxdata/projectsettings.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../template/styles/topic.min.css"/>
+  <link rel="stylesheet" type="text/css" href="../../template/Red_Green/topicheader.css"/>
+  <meta name="topic-status" content="Draft"/>
+<link rel="stylesheet" type="text/css" href="../css/default.css"/><link rel="stylesheet" type="text/css" href="../css/book.css"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta name="generator" content="Adobe RoboHelp 2020"/>
+  <title>Magnitudes</title>
+  <meta name="topic-status" content="Draft"/>
+  
+  <meta name="template" content="book.htt"/>
+</head>
+
+<body>
+  <div class="topic-header rh-hide" id="rh-topic-header" onclick="rh._.goToFullLayout()">
+    <div class="logo">
+    </div>
+    <div class="nav">
+      <div class="title" title="Magnitudes">
+        <span>Magnitudes</span>
+      </div>
+      <div class="gotohome" title="Click here to see this page in full context">
+        <span>Click here to see this page in full context</span>
+      </div>
+    </div>
+  </div>
+  <div class="topic-header-shadow rh-hide" id="rh-topic-header-shadow"></div>
+
+
+
+  <div>
+    <p></p>
+  </div>
+  <div>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:24px">Magnitudes Estimation</span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">With the Magnitude Estimation you can calculate:</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Local Magnitude (M<sub>L</sub>) or Body-wave (m<sub>b</sub>), Surface-wave (Ms), Moment Magnitude (M<sub>w</sub>) and Coda Magnitude.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">To estimate the magnitudes you have to select a time window of body, surface or coda on the seismograms. </span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <ol>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Units must be on velocity, so you must remove the response of the instrument to velocity, previously to open the Magnitudes window. For Local magnitude you have to remove the response of Wood-Anderson instrument.</span></span></li>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> The hypocenter must be already calculated. The program will read the *.hyp file before open Magnitudes window.</span></span></li>
+  </ol>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">If you place 0.00 on all parameters of local or coda magnitudes, the program will calculate these magnitude with default parameters as follows:</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Coda Magnitude:</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="background:white"><span style="tab-stops:45.8pt 91.6pt 137.4pt 183.2pt 229.0pt 274.8pt 320.6pt 366.4pt 412.2pt 458.0pt 503.8pt 549.6pt 595.4pt 641.2pt 687.0pt 732.8pt"><span style="font-family:Calibri,sans-serif"><i><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#8c8c8c"># Values for California</span></span></span></i><br/>
+            <span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808">a = </span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#1750eb">2.0; </span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808">b = </span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#1750eb">0.0035; </span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808">c= -</span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#1750eb">0.87</span></span></span></span></span></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="background:white"><span style="tab-stops:45.8pt 91.6pt 137.4pt 183.2pt 229.0pt 274.8pt 320.6pt 366.4pt 412.2pt 458.0pt 503.8pt 549.6pt 595.4pt 641.2pt 687.0pt 732.8pt"><span style="font-family:Calibri,sans-serif"><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808"></span></span></span></span></span></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="background:white"><span style="tab-stops:45.8pt 91.6pt 137.4pt 183.2pt 229.0pt 274.8pt 320.6pt 366.4pt 412.2pt 458.0pt 503.8pt 549.6pt 595.4pt 641.2pt 687.0pt 732.8pt"><span style="font-family:Calibri,sans-serif"><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808">Mc_value = a*np.log10(t_coda)+b*dist+c</span></span></span></span></span></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Local Magnitude:</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808">a = </span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#1750eb">1.11; </span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808">b =</span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#1750eb">0.00189; </span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808">c= -</span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#1750eb">2.09</span></span></span></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="background:white"><span style="tab-stops:45.8pt 91.6pt 137.4pt 183.2pt 229.0pt 274.8pt 320.6pt 366.4pt 412.2pt 458.0pt 503.8pt 549.6pt 595.4pt 641.2pt 687.0pt 732.8pt"><span style="font-family:Calibri,sans-serif"><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808">ML_value = np.log10(max_amplitude)+</span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#1750eb">a</span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808">*np.log10(dist)+</span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#1750eb">b</span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808">*dist+</span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#1750eb">c</span></span></span><span style="font-size:10.0pt"><span style="font-family:&quot;Courier New&quot;"><span style="color:#080808"></span></span></span></span></span></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Briefly, Once you have open the Magnitude Window, select the magnitudes you want to compute and run the computation.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">In the upper panel it is shown the spectrum of the body waves and the fit to calculate the moment magnitude. In the bottom panel is shown the histograms of all magnitudes (the result of the magnitudes for all seismograms for all kind of magnitudes) and on the left an additional plot used to visualize the dispersion of the results.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <figure><img src="../../assets/images/Magnitudes.png"/>
+    <figcaption>Magnitudes example</figcaption>
+  </figure>
+  <p> </p>
+
+</div>
+  <div>
+    <p style="text-align: right;"><span data-field="project-title" data-format="default" style="float: left;font-family: Calibri">ISP_Documentation</span>                                                                                                        <span style="font-family:Calibri;">Page <span data-field="page-number" data-format="default">1</span> of
+      <span data-field="total-pages" data-format="default">1</span>
+        </span>
+    </p>
+  </div>
+
+</body></html>

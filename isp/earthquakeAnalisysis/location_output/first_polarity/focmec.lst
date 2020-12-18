@@ -1,0 +1,55 @@
+  Thu Oct 29 10:31:23 2020 for program Focmec
+ No comments
+ Input from a file test.inp
+ 
+
+ Statn  Azimuth    TOA   Key  Log10 Ratio  NumPol  DenTOA  Comment
+  ECEU    79.8     81.7   U                                
+  CEU     79.8     81.8   U                                
+  ARNO     9.5     82.2   D                                
+  ESPR    37.9     82.7   U                                
+  PBDV   335.7     83.7   D                                
+  PVAQ   342.5     84.2   D                                
+  EGRO   348.9     84.5   D                                
+  EMIJ    63.5     85.0   U                                
+  EMIJ    63.5     80.6   U                                
+  PFVI   316.0     85.1   D                                
+  EMIN     7.1     85.3   D                                
+  EMIN     7.1     80.7   D                                
+  PCVE   337.7     85.3   D                                
+  PCVE   337.7     80.7   U                                
+  AVE    184.9     86.1   D                                
+  EMAL    62.1     86.1   U                                
+  OBS0   275.5     87.2   U                                
+  OBS0   275.5     81.6   U                                
+  PNCL   333.9     87.3   D                                
+  OBS0   268.9     87.7   U                                
+  OBS0   268.9     81.7   U                                
+  EVO    344.2     88.1   D                                
+  EVO    344.2     81.9   D                                
+  EBAD   359.3     88.5   D                                
+  OBS0   269.0     88.8   U                                
+  OBS0   269.0     82.0   U                                
+  OBS0   280.3     88.9   U                                
+  PMAF   331.3     89.5   D                                
+ Polarities/Errors:  P 028/01  SV 000/00  SH 000/00
+ There are no amplitude ratio data
+ The minimum, increment and maximum B axis trend:   500.00    5.00  500.00
+ The limits for the B axis plunge:     0.00    5.00   90.00
+ The limits for Angle:     0.00    5.00  175.00
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+     Dip,Strike,Rake     28.90    17.62   -29.03
+     Dip,Strike,Rake     76.43   133.54  -115.77   Auxiliary Plane
+     Lower Hem. Trend, Plunge of A,N     43.54    13.57   287.62    61.10
+     Lower Hem. Trend, Plunge of P,T     13.80    51.71   243.71    26.95
+     B trend, B plunge, Angle:  500.00  25.00 165.00
+
+ P Polarity error at  PCVE
+ P Polarity weights:  1.00
+  Total P polarity weight is  1.000   Total number:   1
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ Reached chosen maximum of    1 solutions
+
+ There are   1 acceptable solutions

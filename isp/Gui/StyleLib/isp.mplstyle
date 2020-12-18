@@ -1,0 +1,25 @@
+font.family:  sans-serif
+font.size: 8
+axes.titlesize: 8
+axes.labelsize: 8
+xtick.labelsize: 8
+ytick.labelsize: 8
+xtick.direction: in
+legend.fontsize: 8
+figure.titlesize: 12
+figure.subplot.hspace: 0.
+figure.subplot.wspace: 0.
+figure.constrained_layout.use = True
+## The figure subplot parameters.  All dimensions are a fraction of the figure width and height.
+#figure.subplot.left:   0.046  # the left side of the subplots of the figure
+#figure.subplot.right:  0.990    # the right side of the subplots of the figure
+#figure.subplot.bottom: 0.060   # the bottom of the subplots of the figure
+#figure.subplot.top:    0.995   # the top of the subplots of the figure
+#figure.subplot.wspace: 0.0    # the amount of width reserved for space between subplots,                               # expressed as a fraction of the average axis width
+#figure.subplot.hspace: 0.0    # the amount of height reserved for space between subplots,
+                               # expressed as a fraction of the average axis height
+#axes.spines.left:   True  # display axis spines
+#axes.spines.bottom: True
+#axes.spines.top:    True
+#axes.spines.right:  True
+#https://matplotlib.org/3.3.1/tutorials/introductory/customizing.html

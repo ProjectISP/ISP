@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1417</width>
+    <height>323</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTableWidget" name="tableWidget">
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>Remove</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Do</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Parameters</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QComboBox" name="addCombo">
+       <item>
+        <property name="text">
+         <string>rmean</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>taper</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>normalize</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>filter</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>denoise</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>sum</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>multiply</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>derivate</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>integrate</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>add noise</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>whiten</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>time normalization</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="addBtn">
+       <property name="text">
+        <string>Add</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head>
+
+  <script type="text/javascript" language="JavaScript">
+    //<![CDATA[
+    function reDo() {
+      if (innerWidth != origWidth || innerHeight != origHeight)
+        location.reload();
+    }
+    if ((parseInt(navigator.appVersion) == 4) && (navigator.appName == "Netscape")) {
+      origWidth = innerWidth;
+      origHeight = innerHeight;
+      onresize = reDo;
+    }
+    onerror = null;
+  //]]>
+  </script>
+  <style type="text/css">/*<![CDATA[*/
+
+    < !-- div.WebHelpPopupMenu {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      z-index: 4;
+      visibility: hidden;
+    }
+
+    p.WebHelpNavBar {
+      text-align: right;
+    }
+
+    -->
+  
+/*]]>*/</style>
+
+  <script type="text/javascript">//<![CDATA[
+
+    gRootRelPath = "../..";
+    gCommonRootRelPath = "../..";
+    gTopicId = "2.5.0_2";
+  
+//]]></script>
+
+  <script type="text/javascript" src="../../template/scripts/rh.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/common.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topic.min.js"></script>
+  <script type="text/javascript" src="../../template/scripts/topicwidgets.min.js"></script>
+<script type="text/javascript" src="../../whxdata/projectsettings.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../template/styles/topic.min.css"/>
+  <link rel="stylesheet" type="text/css" href="../../template/Red_Green/topicheader.css"/>
+  <meta name="topic-status" content="Draft"/>
+<link rel="stylesheet" type="text/css" href="../css/default.css"/><link rel="stylesheet" type="text/css" href="../css/book.css"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta name="generator" content="Adobe RoboHelp 2020"/>
+  <title>FK and Vespagram</title>
+  <meta name="topic-status" content="Draft"/>
+  
+</head>
+
+<body>
+  <div class="topic-header rh-hide" id="rh-topic-header" onclick="rh._.goToFullLayout()">
+    <div class="logo">
+    </div>
+    <div class="nav">
+      <div class="title" title="FK and Vespagram">
+        <span>FK and Vespagram</span>
+      </div>
+      <div class="gotohome" title="Click here to see this page in full context">
+        <span>Click here to see this page in full context</span>
+      </div>
+    </div>
+  </div>
+  <div class="topic-header-shadow rh-hide" id="rh-topic-header-shadow"></div>
+
+
+
+  <div>
+    <p></p>
+  </div>
+  <div>
+  <h1 style="text-align: justify">FK and Vespagram</h1>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">The Frequency-Wavenumber (FK) is basically a method to compute the beamforming in the frequency domain.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">To compute the FK you need follow this steps;</span></span></p>
+  <ol>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Files: Path where you have the seismograms</span></span></li>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Dataless: path where you have the metadata (*.dlsv or *.xml)</span></span></li>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Set temporal window of the analysis and check the box Trim</span></span></li>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Plot the seismograms</span></span></li>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Fill the parameters (Slowness Max, Time Window, overlap……)</span></span></li>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Choose methods</span></span></li>
+    <li style="margin:0in 0in 0.0001pt 0.5in"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"> Press Run F-K</span></span></li>
+  </ol>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Now, you will watch in the upper panels the Rel Power, Absolute Power, Back-Azimuth and Slowness results of your analysis. </span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Two more actions:</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">Double pick in the upper panels will run the FK in that specific time window (starting in the point). Then, the slowness map and the stack corresponding to the delays of the maximum power in the slowness vector will show up.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">The pick with the slowness vector corresponding to the phase you selected are automatically saved in the file “isp/arrayanalysis/dataframe.csv” and you can open the file just pressing “ctrl+o”</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <figure><img src="../../assets/images/FK.png" style="cursor: nesw-resize;"/>
+    <figcaption>FK, Stack and Slowness map example</figcaption>
+  </figure>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">The vespagram is a visualization of the FK results for an specific backazimuth or slowness. So, once you have done the FK analysis, you can compute the vespagram.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">But before, you must select the time window. Go with the mouse to the any upper panel. Pick, hold and drag to the right direction to do the selection.  Now you can open the vespagram window.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif"></span></span></p>
+  <p style="margin:0in 0in 0.0001pt"><span style="font-size:12pt"><span style="font-family:Calibri,sans-serif">In the vespagram window you can select the parameters (Win length, overlap, and frequency bandwidth of the analysis) and the backazimuth and slowness where you want to compute the vespagram.</span></span></p>
+  <p style="margin:0in 0in 0.0001pt"> </p>
+  <figure><img src="../../assets/images/vespagram.jpeg"/>
+    <figcaption>Vespagram example</figcaption>
+  </figure>
+  <p> </p>
+
+</div>
+  <div>
+    <p style="text-align: right;"><span data-field="project-title" data-format="default" style="float: left;font-family: Calibri">ISP_Documentation</span>                                                                                                        <span style="font-family:Calibri;">Page <span data-field="page-number" data-format="default">1</span> of
+      <span data-field="total-pages" data-format="default">1</span>
+        </span>
+    </p>
+  </div>
+
+</body></html>

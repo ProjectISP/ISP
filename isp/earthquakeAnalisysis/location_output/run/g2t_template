@@ -1,0 +1,6 @@
+#Type parameters
+CONTROL 1 54321
+TRANS SIMPLE 33 -10 0.0
+GTFILES  ./model/layer  ./time/layer P
+GTMODE GRID2D ANGLES_YES
+GT_PLFD  1.0e-3  1

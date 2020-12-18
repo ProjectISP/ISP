@@ -1,0 +1,17 @@
+<RCC>
+  <qresource prefix="icons">
+    <file alias="rf-icon.png">images/icons/rf.png</file>
+    <file alias="manage-icon.png">images/icons/manage.png</file>
+    <file alias="seosmogram-icon.png">images/icons/seismogram.png</file>
+    <file alias="map-icon.png">images/icons/map.png</file>
+    <file alias="tensor-icon.png">images/icons/tensor.png</file>
+    <file alias="signal-icon.png">images/icons/signal.png</file>
+    <file alias="compass-icon.png">images/icons/Compas.png</file>
+    <file alias="pen-icon.png">images/icons/Lapiz.png</file>
+    <file alias="ppsd.png">images/icons/ppsd.png</file>
+    <file alias="balcony-icon.png">images/icons/Balc¢n.png</file>
+  </qresource>
+  <qresource prefix="logo">
+    <file alias="logo-image.png">images/LOGO.png</file>
+  </qresource>
+</RCC>

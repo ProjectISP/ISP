@@ -1,0 +1,32 @@
+Datos del terremoto
+Evento: es2018kaiih
+FechaHora (UTC):  2018-08-21 00:28:57
+Latitud: 42.7059 
+Longitud: -7.6974
+Mw: 3.5
+M0: 1.79E21
+Prof:  11 KM
+TMS desviatorio (parte isótropa nula)
+Elementos del TMS (10^20 din cm)
+mzz: -5.86
+mxx: -6.8
+myy: 12.67
+mxz: 8.52
+myz: 5.83
+mxy: 10.44
+
+Descomposición del TMS
+Porcentaje doble par: 53
+Porcentaje dipolo: 47
+Doble par
+Plano A
+Azimut: 299 
+Buzamiento: 79
+Deslizamiento: -138
+Plano B
+Azimut: 200 
+Buzamiento: 49 
+Deslizamiento: -14 
+Calidad del ajuste
+Reducción de la varianza [0-100]: 70
+Calidad [0-4]: 2

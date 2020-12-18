@@ -1,0 +1,1 @@
+This folder is a default location for the picker output and nll files.

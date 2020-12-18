@@ -1,0 +1,17 @@
+sqlalchemy
+owslib
+Cython
+deprecated
+matplotlib
+numpy
+scipy >= 1.4.1
+obspy
+pandas
+PyQt5
+PyQtWebEngine
+mtspec
+nitime
+Cartopy
+pillow
+PyWavelets
+dill

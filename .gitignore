@@ -90,11 +90,11 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
+# Spyder project user_preferences
 .spyderproject
 .spyproject
 
-# Rope project settings
+# Rope project user_preferences
 .ropeproject
 
 # mkdocs documentation
@@ -103,3 +103,16 @@ venv.bak/
 # mypy
 .mypy_cache/
 .idea
+
+# remove this dir or file from git
+/isp/NLL7/
+/isp/FOCMEC/
+/isp/mti/green/
+/isp/mti/output/
+/isp/mti/input/
+*.hdr
+*.buf
+
+# remove the db file
+*.db
+

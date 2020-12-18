@@ -1,0 +1,1 @@
+(function() {    var toc =  [{"name":"Introduction","type":"item","tilePath":"","description":"Introduction","url":"Home/Introduction.htm"}];    window.rh.model.publish(rh.consts('KEY_TEMP_DATA'), toc, { sync:true });    })();

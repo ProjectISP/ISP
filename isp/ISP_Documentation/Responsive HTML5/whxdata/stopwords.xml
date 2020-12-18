@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<stopwords>
+
+  <wd name="a" />
+
+  <wd name="an" />
+
+  <wd name="the" />
+
+  <wd name="to" />
+
+  <wd name="of" />
+
+  <wd name="is" />
+
+  <wd name="for" />
+
+  <wd name="and" />
+
+  <wd name="or" />
+
+  <wd name="do" />
+
+  <wd name="be" />
+
+  <wd name="by" />
+
+  <wd name="he" />
+
+  <wd name="she" />
+
+  <wd name="on" />
+
+  <wd name="in" />
+
+  <wd name="at" />
+
+  <wd name="it" />
+
+  <wd name="not" />
+
+  <wd name="no" />
+
+  <wd name="are" />
+
+  <wd name="as" />
+
+  <wd name="but" />
+
+  <wd name="her" />
+
+  <wd name="his" />
+
+  <wd name="its" />
+
+  <wd name="non" />
+
+  <wd name="only" />
+
+  <wd name="than" />
+
+  <wd name="that" />
+
+  <wd name="then" />
+
+  <wd name="they" />
+
+  <wd name="this" />
+
+  <wd name="we" />
+
+  <wd name="were" />
+
+  <wd name="which" />
+
+  <wd name="with" />
+
+  <wd name="you" />
+
+  <wd name="into" />
+
+  <wd name="about" />
+
+  <wd name="after" />
+
+  <wd name="all" />
+
+  <wd name="also" />
+
+  <wd name="been" />
+
+  <wd name="can" />
+
+  <wd name="come" />
+
+  <wd name="form" />
+
+  <wd name="from" />
+
+  <wd name="had" />
+
+  <wd name="has" />
+
+  <wd name="have" />
+
+  <wd name="me" />
+
+  <wd name="made" />
+
+  <wd name="many" />
+
+  <wd name="may" />
+
+  <wd name="more" />
+
+  <wd name="most" />
+
+  <wd name="near" />
+
+  <wd name="over" />
+
+  <wd name="some" />
+
+  <wd name="such" />
+
+  <wd name="their" />
+
+  <wd name="there" />
+
+  <wd name="these" />
+
+  <wd name="under" />
+
+  <wd name="use" />
+
+  <wd name="was" />
+
+  <wd name="when" />
+
+  <wd name="where" />
+
+  <wd name="against" />
+
+  <wd name="among" />
+
+  <wd name="became" />
+
+  <wd name="because" />
+
+  <wd name="between" />
+
+  <wd name="during" />
+
+  <wd name="each" />
+
+  <wd name="early" />
+
+  <wd name="found" />
+
+  <wd name="however" />
+
+  <wd name="include" />
+
+  <wd name="late" />
+
+  <wd name="later" />
+
+  <wd name="med" />
+
+  <wd name="other" />
+
+  <wd name="several" />
+
+  <wd name="through" />
+
+  <wd name="until" />
+
+  <wd name="who" />
+
+  <wd name="how" />
+
+  <wd name="i" />
+
+  <wd name="what" />
+
+  <wd name="where" />
+
+</stopwords>

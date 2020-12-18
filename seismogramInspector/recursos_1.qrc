@@ -1,7 +1,0 @@
-<RCC>
-  <qresource prefix="Iconos">
-    <file>Imagenes/Compas.png</file>
-    <file>Imagenes/Lapiz.png</file>
-    <file>Imagenes/Balc¢n.png</file>
-  </qresource>
-</RCC>

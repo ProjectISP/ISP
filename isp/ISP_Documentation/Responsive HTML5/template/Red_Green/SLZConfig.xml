@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<slzconfig>
+ <screelayoutpage default="Topic.slp">
+ </screelayoutpage>
+ <baggage>
+   <file name="usersettings.js" />
+ </baggage>
+</slzconfig>
