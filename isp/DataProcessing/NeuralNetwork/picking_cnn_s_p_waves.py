@@ -7,7 +7,8 @@ from obspy.signal.trigger import trigger_onset
 
 import keras
 import tensorflow as tf
-from keras import Sequential
+from tensorflow.keras import Sequential
+#from keras import Sequential
 from keras.models import model_from_json
 
 

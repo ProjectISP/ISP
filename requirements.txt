@@ -15,3 +15,5 @@ Cartopy
 pillow
 PyWavelets
 dill
+Tensorflow
+Keras
