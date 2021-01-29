@@ -22,19 +22,26 @@ def map_data(path, quick=True):
     
     for top_dir, sub_dir, files in os.walk(path):
         for file in files:
-            full_path_to_file = os.path.join(top_dir, file)
-            
-            if quick:
-                year = int(file.split('.')[0])
-                jday = int(file.split('.')[1])
-                stnm = file.split('.')[3]
-                chnm = file.split('.')[5]
+            if file.endswith('.mseed'):
+                full_path_to_file = os.path.join(top_dir, file)
+                
+                if quick:
+                    year = int(file.split('.')[0])
+                    jday = int(file.split('.')[1])
+                    stnm = file.split('.')[3]
+                    chnm = file.split('.')[5]
+                else:
+                    record_info = obspy.io.mseed.util.get_record_information(full_path_to_file)
+                    year = record_info['starttime'].year
+                    jday = record_info['starttime'].julday
+                    stnm = record_info['station']
+                    chnm = record_info['channel']
 
-            if os.stat(full_path_to_file).st_size > 0:
-                data_map.setdefault(stnm, {})
-                data_map[stnm].setdefault(year, {})
-                data_map[stnm][year].setdefault(jday, {})
-                data_map[stnm][year][jday].setdefault(chnm, full_path_to_file)
+                if os.stat(full_path_to_file).st_size > 0:
+                    data_map.setdefault(stnm, {})
+                    data_map[stnm].setdefault(year, {})
+                    data_map[stnm][year].setdefault(jday, {})
+                    data_map[stnm][year][jday].setdefault(chnm, full_path_to_file)
             
     return data_map
 
