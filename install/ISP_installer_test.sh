@@ -79,12 +79,7 @@ else
   
 fi
 echo installing requirements 
-conda install sqlalchemy owslib Cython deprecated obspy pandas cartopy pywavelets dill numba mtspec
-pip install nitime
-pip install tensorflow
-pip install keras==2.3.1
-
-
+conda install -c conda-forge sqlalchemy owslib Cython deprecated obspy pandas cartopy pywavelets dill numba mtspec nitime tensorflow keras=2.3.1 pyqt pyqtwebengine
 
 ###
 # User instructions
@@ -102,3 +97,5 @@ fi
 cd ..
 python setup.py build_ext --inplace
 
+# when testing on a ubuntu system libXss.so.1 was missing. This was fixed by installing the libxss1 package
+# example: apt install libxss1
