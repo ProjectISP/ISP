@@ -11,7 +11,7 @@ echo "Identified OS as $OS"
 WORKING_DIR=`mktemp -d`
 if (( $? )); then
   # Probably no mktemp, generate a time-based directory name
-  WORKING_DIR=`date "+/tmp/isp_test.%s"`
+  WORKING_DIR=`date "+/tmp/isp_standard.%s"`
 fi
 echo "Working in $WORKING_DIR"
 mkdir -p "$WORKING_DIR"
@@ -20,7 +20,7 @@ cd "$WORKING_DIR"
 export ARCH=`uname -m`
 
 # Where to install conda if it's not there already
-CONDA_INSTALL_PATH="$HOME/isp_test/miniconda"
+CONDA_INSTALL_PATH="$HOME/isp_standard/miniconda"
 
 ###
 # Install Anaconda if not found
@@ -68,24 +68,32 @@ else
 fi
 
 ###
+# Update conda
+conda update --all
+
 # Create/update the isp conda environment
 
-conda env list | grep '^isp_test\s' > /dev/null
+conda env list | grep '^isp_standard\s' > /dev/null
 if (( $? )); then
   echo "No isp environment found. Creating one."
-  conda create -n isp_test python=3.8
+  conda create -n isp_standard python=3.6.10
 else
   echo "Found a isp environment. Trying to update."
   
 fi
 echo installing requirements 
-conda install -c conda-forge sqlalchemy owslib Cython deprecated obspy pandas cartopy pywavelets dill numba mtspec nitime tensorflow keras=2.3.1 pyqt pyqtwebengine
+#conda install -c conda-forge sqlalchemy owslib Cython deprecated obspy pandas cartopy pywavelets dill numba mtspec nitime keras=2.3.1 pyqt pyqtwebengine
+conda install -c anaconda hdf5 h5py graphviz pydot
+conda install -c conda-forge obspy
+conda install -c anaconda keras=2.3.1
+conda install tensorflow=2.0.0
+conda install -c conda-forge owslib Cython deprecated pandas cartopy pywavelets dill numba mtspec nitime pyqt pyqtwebengine
 
 ###
 # User instructions
 
-$ACTIVATE_CMD activate isp_test
-BIN=`command -v isp_test`
+$ACTIVATE_CMD activate isp_standard
+BIN=`command -v isp_standard`
 if [[ $BIN != '' ]]; then
   echo "
 You can launch ISP from the command line by calling:
