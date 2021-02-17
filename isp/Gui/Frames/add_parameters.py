@@ -26,4 +26,10 @@ class AdditionalParameters(pw.QDialog, UiAdditionalParameters):
 
         return data
 
+    def setData(self, data):
+        for i in range(len(data)):
+            self.on_add_button_clicked()
+            self.tableWidget.cellWidget(i,0).setValue(data[i][0])
+            self.tableWidget.cellWidget(i,1).setValue(data[i][1])
+
 
