@@ -8,6 +8,7 @@ RESOURCE_PATH = os.path.join(ROOT_DIR, 'resources')
 IMAGES_PATH = os.path.join(RESOURCE_PATH, 'images')
 UIS_PATH = os.path.join(RESOURCE_PATH, 'designer_uis')
 FOC_MEC_PATH = os.path.join(ROOT_DIR, 'FOCMEC/bin')
+MACROS_PATH = os.path.join(ROOT_DIR,'macros')
 
 def create_logger():
 

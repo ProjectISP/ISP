@@ -1,10 +1,8 @@
 import os
 from typing import Dict, List
-
 import numpy as np
 from obspy import Stream, Trace, UTCDateTime
 from obspy.signal.trigger import trigger_onset
-
 import keras
 import tensorflow as tf
 #from tensorflow.keras import Sequential
