@@ -236,7 +236,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                 stream_stack, self.time, self.stats = wavenumber.stack_stream(st2, Sxpow, Sypow, coord)
                 # stack the traces
                 self.stack = wavenumber.stack(stream_stack, stack_type = self.stackCB.currentText())
-                self.canvas_stack.plot(self.time, self.stack, axes_index = 0)
+                self.canvas_stack.plot(self.time, self.stack, axes_index = 0, linewidth = 0.75)
                 self.canvas_stack.set_xlabel(0, " Time [s] ")
                 self.canvas_stack.set_ylabel(0, "Stack Amplitude")
 

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1680</width>
-    <height>949</height>
+    <height>928</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -635,7 +635,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>1129</width>
-                  <height>755</height>
+                  <height>732</height>
                  </rect>
                 </property>
                </widget>
@@ -715,7 +715,7 @@
      <x>0</x>
      <y>0</y>
      <width>1680</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -745,6 +745,7 @@
      <addaction name="actionOnly_a_folder"/>
      <addaction name="actionAll_tree"/>
     </widget>
+    <addaction name="actionOpen_picks"/>
     <addaction name="actionGet_Stations_Info"/>
     <addaction name="actionSet_Parameters"/>
     <addaction name="actionRun_picker"/>
@@ -1010,6 +1011,14 @@
   <action name="actionAll_tree">
    <property name="text">
     <string>All tree</string>
+   </property>
+  </action>
+  <action name="actionOpen_picks">
+   <property name="text">
+    <string>Open picks</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
  </widget>

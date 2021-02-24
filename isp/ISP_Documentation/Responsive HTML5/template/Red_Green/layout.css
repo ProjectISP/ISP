@@ -477,7 +477,8 @@ div.searchresults {
         margin-bottom: .25em;
         word-wrap: break-word; }
     div.searchresults .wSearchResultItem div.wSearchContext {
-      font-size: 1em; }
+      font-size: 1em;
+      overflow-wrap: break-word; }
     div.searchresults .wSearchResultItem div.wSearchURL {
       margin-top: .5em;
       font-size: .75em;
@@ -1172,7 +1173,8 @@ div.searchresults {
   div.searchresults a {
     color: #1268b8; }
   div.searchresults span.wSearchContext {
-    color: #414042; }
+    color: #414042;
+    overflow-wrap: break-word; }
   div.searchresults span.wSearchURL {
     color: #1268b8; }
   div.searchresults label.wSearchAndLabelResults {

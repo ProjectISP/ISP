@@ -6,91 +6,109 @@
   
     <url>
       <loc>Home/Introduction.htm</loc>
-      <lastmod>2020-12-16</lastmod>
-      <changefreq></changefreq>
-    </url>
-  
-    <url>
-      <loc>ISPcontent/Main_Menu/Data_Base.htm</loc>
-      <lastmod>2020-12-16</lastmod>
+      <lastmod>2021-02-24</lastmod>
       <changefreq></changefreq>
     </url>
   
     <url>
       <loc>ISPcontent/Main_Menu/Main_Menu.htm</loc>
-      <lastmod>2020-12-16</lastmod>
+      <lastmod>2021-02-24</lastmod>
+      <changefreq></changefreq>
+    </url>
+  
+    <url>
+      <loc>ISPcontent/Main_Menu/Data_Base.htm</loc>
+      <lastmod>2021-02-24</lastmod>
       <changefreq></changefreq>
     </url>
   
     <url>
       <loc>ISPcontent/Main_Menu/Synthetics_generator.htm</loc>
-      <lastmod>2020-12-16</lastmod>
-      <changefreq></changefreq>
-    </url>
-  
-    <url>
-      <loc>ISPcontent/Earthquake_Location/3C_component.htm</loc>
-      <lastmod>2020-12-16</lastmod>
-      <changefreq></changefreq>
-    </url>
-  
-    <url>
-      <loc>ISPcontent/Earthquake_Location/Earth_Model_Viwer.htm</loc>
-      <lastmod>2020-12-16</lastmod>
-      <changefreq></changefreq>
-    </url>
-  
-    <url>
-      <loc>ISPcontent/Earthquake_Location/Location_Event_and_Focal_Mechanism_(First_Polarity).htm</loc>
-      <lastmod>2020-12-16</lastmod>
-      <changefreq></changefreq>
-    </url>
-  
-    <url>
-      <loc>ISPcontent/Earthquake_Location/Magnitudes.htm</loc>
-      <lastmod>2020-12-16</lastmod>
+      <lastmod>2021-02-24</lastmod>
       <changefreq></changefreq>
     </url>
   
     <url>
       <loc>ISPcontent/Earthquake_Location/Pick_Event.htm</loc>
-      <lastmod>2020-12-16</lastmod>
+      <lastmod>2021-02-24</lastmod>
+      <changefreq></changefreq>
+    </url>
+  
+    <url>
+      <loc>ISPcontent/Earthquake_Location/3C_component.htm</loc>
+      <lastmod>2021-02-24</lastmod>
+      <changefreq></changefreq>
+    </url>
+  
+    <url>
+      <loc>ISPcontent/Earthquake_Location/Location_Event_and_Focal_Mechanism_(First_Polarity).htm</loc>
+      <lastmod>2021-02-24</lastmod>
+      <changefreq></changefreq>
+    </url>
+  
+    <url>
+      <loc>ISPcontent/Earthquake_Location/Magnitudes.htm</loc>
+      <lastmod>2021-02-24</lastmod>
+      <changefreq></changefreq>
+    </url>
+  
+    <url>
+      <loc>ISPcontent/Earthquake_Location/Earth_Model_Viwer.htm</loc>
+      <lastmod>2021-02-24</lastmod>
       <changefreq></changefreq>
     </url>
   
     <url>
       <loc>ISPcontent/Earthquake_Location/Shortcuts.htm</loc>
-      <lastmod>2020-12-16</lastmod>
+      <lastmod>2021-02-24</lastmod>
       <changefreq></changefreq>
     </url>
   
     <url>
       <loc>ISPcontent/Time-Frequency_Analysis/Time-Frequency_Analysis.htm</loc>
-      <lastmod>2020-12-16</lastmod>
-      <changefreq></changefreq>
-    </url>
-  
-    <url>
-      <loc>ISPcontent/Moment_Tensor_Inversion/Bayesian_Inversion.htm</loc>
-      <lastmod>2020-12-16</lastmod>
-      <changefreq></changefreq>
-    </url>
-  
-    <url>
-      <loc>ISPcontent/Array_Anlysis/ARF.htm</loc>
-      <lastmod>2020-12-16</lastmod>
+      <lastmod>2021-02-24</lastmod>
       <changefreq></changefreq>
     </url>
   
     <url>
       <loc>ISPcontent/Array_Anlysis/FK_and_Vespagram.htm</loc>
-      <lastmod>2020-12-16</lastmod>
+      <lastmod>2021-02-24</lastmod>
+      <changefreq></changefreq>
+    </url>
+  
+    <url>
+      <loc>ISPcontent/Array_Anlysis/ARF.htm</loc>
+      <lastmod>2021-02-24</lastmod>
+      <changefreq></changefreq>
+    </url>
+  
+    <url>
+      <loc>ISPcontent/Moment_Tensor_Inversion/Bayesian_Inversion.htm</loc>
+      <lastmod>2021-02-24</lastmod>
+      <changefreq></changefreq>
+    </url>
+  
+    <url>
+      <loc>ISPcontent/Receiver_Functions/Receiver_Functions.htm</loc>
+      <lastmod>2021-02-24</lastmod>
+      <changefreq></changefreq>
+    </url>
+  
+    <url>
+      <loc>ISPcontent/Receiver_Functions/Back_Tracing_and_CCP_stack.htm</loc>
+      <lastmod>2021-02-24</lastmod>
+      <changefreq></changefreq>
+    </url>
+  
+    <url>
+      <loc>ISPcontent/Macros.htm</loc>
+      <lastmod>2021-02-24</lastmod>
       <changefreq></changefreq>
     </url>
   
     <url>
       <loc>ISPcontent/References.htm</loc>
-      <lastmod>2020-12-16</lastmod>
+      <lastmod>2021-02-24</lastmod>
       <changefreq></changefreq>
     </url>
   

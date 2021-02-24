@@ -6,7 +6,6 @@
 """
 
 import numpy as np
-from obspy.core import read
 from obspy.core import UTCDateTime
 from obspy.core.util import AttribDict
 from obspy.signal.array_analysis import array_processing
@@ -175,7 +174,6 @@ class array:
         fs = 1 / delta
         fn = fs / 2
         freq = np.arange(0, fn, fn / nfft)
-
         value1, freq1 = find_nearest(freq, linf)
         value2, freq2 = find_nearest(freq, lsup)
         df = value2 - value1
@@ -220,25 +218,21 @@ class array:
                     cxcohe = s[value1:value2]
                     Cx[i, j, :] = cxcohe
 
-        ####Calculates Conventional FK-power  ##without normalization
+        # Calculates Conventional FK-power
         if method == "FK":
             for i in range(nr):
                 for j in range(nr):
                     A = np.fft.rfft(m[:, i])
                     B = np.fft.rfft(m[:, j])
-                    #Power
-                    #out = A * np.conjugate(B)
-
                     #Relative Power
                     den=np.absolute(A)*np.absolute(np.conjugate(B))
                     out = (A * np.conjugate(B))/den
-
                     cxcohe = out[value1:value2]
                     Cx[i, j, :] = cxcohe
 
-        r = np.zeros((nr, 2))
-        S = np.zeros((1, 2))
-        Pow = np.zeros((len(Sx[0]), len(Sy[0])))
+        r = np.zeros((nr, 2),dtype=np.complex128)
+        S = np.zeros((1, 2),dtype=np.complex128)
+        Pow = np.zeros((len(Sx[0]), len(Sy[0]), df))
         for n in range(nr):
             r[n, :] = coord[n][0:2]
 
@@ -252,14 +246,14 @@ class array:
                 K = np.sum(k, axis=1)
                 n = 0
                 for f in freq:
-                    A = np.exp(-1j * 2 * pi * f) ** K
+                    A = np.exp(-1j * 2 * pi * f * K)
                     B = np.conjugate(np.transpose(A))
                     D = np.matmul(B, Cx[:, :, n]) / nr
                     P = np.matmul(D, A) / nr
-                    Pow[i, j] += np.abs(P)
+                    Pow[i, j, n] = np.abs(P)
                     n = n + 1
-
-        Pow = Pow / len(freq)
+        Pow =np.mean(Pow, axis = 2)
+        #Pow = Pow / len(freq)
         Pow = np.fliplr(Pow)
         x = y = np.linspace(smin, smax, nx)
 
@@ -276,9 +270,6 @@ class array:
         sx = -1*sx
         sy = -1*sy
         s = np.array([sx, sy, 0])
-        #st = read(path+ "/"+"*.*")
-        x = []
-        y = []
         r = []
         for i in range(len(coord) - 1):
             r.append(coord[i])
@@ -385,9 +376,14 @@ class vespagram_util:
         self.lsup = lsup
         self.win_len = win_len
         self.slow = slow
-        self.baz = baz
         self.res = res
         self.selection = selection
+
+        if baz <= 180:
+            self.baz = baz + 180
+        elif baz > 180:
+            self.baz = baz - 180
+
 
 
     def azimuth2mathangle(self, azimuth):
@@ -435,15 +431,16 @@ class vespagram_util:
             vespa_spec[:, j] = slow_spectrum
             j = j + 1
 
-        log_vespa_spectrogram = 10. * np.log(vespa_spec / np.max(vespa_spec))
-        t = np.linspace(0, self.t2-self.t1, log_vespa_spectrogram.shape[1])
+        #log_vespa_spectrogram = 10. * np.log(vespa_spec / np.max(vespa_spec))
+
+        t = np.linspace(0, self.t2-self.t1, vespa_spec.shape[1])
 
         if self.selection == "Slowness":
-            x, y = np.meshgrid(t, np.linspace(0, 360, log_vespa_spectrogram.shape[0]))
+            x, y = np.meshgrid(t, np.linspace(0, 360, vespa_spec.shape[0]))
         else:
-            x, y = np.meshgrid(t, np.linspace(-1*self.slow, self.slow, log_vespa_spectrogram.shape[0]))
+            x, y = np.meshgrid(t, np.linspace(0, self.slow, vespa_spec.shape[0]))
 
-        return x, y, log_vespa_spectrogram
+        return x, y, vespa_spec
 
 
     def __vespa_slow(self, st):
@@ -453,16 +450,6 @@ class vespagram_util:
             idx, val = min(enumerate(array), key=lambda x: abs(x[1] - value))
             return idx, val
 
-        def azimuth2mathangle(azimuth):
-            if azimuth <= 90:
-                mathangle = 90 - azimuth
-            elif 90 < azimuth <= 180:
-                mathangle = 270 + (180 - azimuth)
-            elif 180 < azimuth <= 270:
-                mathangle = 180 + (270 - azimuth)
-            else:
-                mathangle = 90 + (360 - azimuth)
-            return mathangle
 
         sides = 'onesided'
         pi = math.pi
@@ -545,30 +532,31 @@ class vespagram_util:
 
         r = np.zeros((nr, 2))
         S = np.zeros((1, 2))
-        Pow = np.zeros(360)
+        Pow = np.zeros((360, df))
         for n in range(nr):
             r[n, :] = coord[n][0:2]
 
         freq = freq[value1:value2]
-
         rad = np.pi/180
+
         for j in range(360):
-            j = azimuth2mathangle(j)
-            S[0, 0] = self.slow*np.cos(rad * (j))
-            S[0, 1] = self.slow*np.sin(rad * (j))
+
+            ang = self.azimuth2mathangle(j)
+            S[0, 0] = self.slow*np.cos(rad * (ang+180))
+            S[0, 1] = self.slow*np.sin(rad * (ang+180))
             k = (S * r)
             K = np.sum(k, axis=1)
             n = 0
+
             for f in freq:
-                A = np.exp(-1j * 2 * pi * f) ** K
+                A = np.exp(-1j * 2 * pi * f * K)
                 B = np.conjugate(np.transpose(A))
                 D = np.matmul(B, Cx[:, :, n]) / nr
                 P = np.matmul(D, A) / nr
-                Pow[j] += np.abs(P)
+                Pow[j, n] = np.abs(P)
                 n = n + 1
 
-
-        Pow = Pow / len(freq)
+        Pow = np.mean(Pow, axis=1)
 
         return Pow
 
@@ -580,17 +568,6 @@ class vespagram_util:
             idx, val = min(enumerate(array), key=lambda x: abs(x[1] - value))
             return idx, val
 
-        def azimuth2mathangle(azimuth):
-            if azimuth <= 90:
-                mathangle = 90 - azimuth
-            elif 90 < azimuth <= 180:
-                mathangle = 270 + (180 - azimuth)
-            elif 180 < azimuth <= 270:
-                mathangle = 180 + (270 - azimuth)
-            else:
-                mathangle = 90 + (360 - azimuth)
-            return mathangle
-
         sides = 'onesided'
         pi = math.pi
         st.sort()
@@ -671,32 +648,33 @@ class vespagram_util:
 
         r = np.zeros((nr, 2))
         S = np.zeros((1, 2))
-        Pow = np.zeros(360)
+        Pow = np.zeros((360, df))
         for n in range(nr):
             r[n, :] = coord[n][0:2]
 
         freq = freq[value1:value2]
 
         rad = np.pi/180
-        #slow_range = np.arange(-1*self.slow, self.slow, self.slow/360)
-        slow_range = np.linspace(-1*self.slow, self.slow, 360)
+
+        slow_range = np.linspace(0, self.slow, 360)
 
         for j in range(360):
 
-            S[0, 0] = slow_range[j]*np.cos(rad * self.baz)
-            S[0, 1] = slow_range[j]*np.sin(rad * self.baz)
+            ang = self.azimuth2mathangle(self.baz)
+            S[0, 0] = slow_range[j] * np.cos(rad * ang)
+            S[0, 1] = slow_range[j] * np.sin(rad * ang)
+
             k = (S * r)
             K = np.sum(k, axis=1)
             n = 0
             for f in freq:
-                A = np.exp(-1j * 2 * pi * f) ** K
+                A = np.exp(-1j * 2 * pi * f * K)
                 B = np.conjugate(np.transpose(A))
                 D = np.matmul(B, Cx[:, :, n]) / nr
                 P = np.matmul(D, A) / nr
-                Pow[j] += np.abs(P)
+                Pow[j, n] = np.abs(P)
                 n = n + 1
 
-
-        Pow = Pow / len(freq)
+        Pow = np.mean(Pow, axis=1)
 
         return Pow

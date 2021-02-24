@@ -58,9 +58,9 @@ class Vespagram(pw.QFrame, UiVespagram):
     def __plot_vespa_slow(self):
         base_line = self.base_lineDB.value()
         colour = self.colourCB.currentText()
-        vespagram = np.clip(self.log_vespa_spectrogram, a_min=base_line, a_max=0)
-
-        self.canvas_vespagram.plot_contour(self.x, self.y, vespagram, axes_index=0, clabel="Power [dB]",
+        #vespagram = np.clip(self.log_vespa_spectrogram, a_min=base_line, a_max=0)
+        vespagram = np.clip(self.log_vespa_spectrogram, a_min=0, a_max=1)
+        self.canvas_vespagram.plot_contour(self.x, self.y, vespagram, axes_index=0, clabel="Rel. Power",
                                            cmap=plt.get_cmap(colour))
         self.canvas_vespagram.set_xlabel(0, "Time (s)")
         self.canvas_vespagram.set_ylabel(0, "Azimuth")
@@ -68,9 +68,9 @@ class Vespagram(pw.QFrame, UiVespagram):
     def __plot_vespa_az(self):
         base_line = self.base_lineDB.value()
         colour = self.colourCB.currentText()
-        vespagram = np.clip(self.log_vespa_spectrogram, a_min=base_line, a_max=0)
-
-        self.canvas_vespagram.plot_contour(self.x, self.y, vespagram, axes_index=1, clabel="Power [dB]",
+        #vespagram = np.clip(self.log_vespa_spectrogram, a_min=base_line, a_max=0)
+        vespagram = np.clip(self.log_vespa_spectrogram, a_min=0, a_max=1)
+        self.canvas_vespagram.plot_contour(self.x, self.y, vespagram, axes_index=1, clabel="Rel Power",
                                            cmap=plt.get_cmap(colour))
         self.canvas_vespagram.set_xlabel(1, "Time (s)")
         self.canvas_vespagram.set_ylabel(1, "Slowness (s/km)")

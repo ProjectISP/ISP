@@ -27,6 +27,7 @@ from isp.arrayanalysis import array_analysis
 from isp.earthquakeAnalisysis import PickerManager
 import numpy as np
 import os
+from isp.Utils.subprocess_utils import exc_cmd
 from isp import ROOT_DIR
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
@@ -117,7 +118,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRun_picker.triggered.connect(self._picker_thread)
         self.actionRun_Event_Detector.triggered.connect(self.detect_events)
         self.actionOpen_Settings.triggered.connect(lambda : self.settings_dialog.show())
-        self.actionAllSeismograms.triggered.connect(lambda : self.plot_all_seismograms())
         self.actionStack.triggered.connect(lambda: self.stack_all_seismograms())
         self.actionSpectral_Entropy.triggered.connect(lambda : self.spectral_entropy())
         self.actionRemove_all_selections.triggered.connect(lambda : self.clean_all_chop())
@@ -127,6 +127,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.actionOnly_a_folder.triggered.connect(lambda: self.availability())
         self.actionAll_tree.triggered.connect(lambda: self.availability_all_tree())
+        self.actionOpen_picks.triggered.connect(lambda: self.open_solutions())
 
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
@@ -142,10 +143,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.help = HelpDoc()
 
         # shortcuts
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'), self)
+        self.shortcut_open.activated.connect(self.open_solutions)
+
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+L'), self)
         self.shortcut_open.activated.connect(self.open_parameters_settings)
 
-        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'),self)
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+I'),self)
         self.shortcut_open.activated.connect(self.clean_chop_at_page)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+C'), self)
@@ -893,7 +897,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         stream_stack, t, stats, time = wavenumber.stack_seismograms(self.st)
         stack = wavenumber.stack(stream_stack, stack_type= 'Linear Stack')
 
-        self.canvas.plot_date(time, stack, index, clear_plot=True, color='steelblue', fmt='-',linewidth=0.5)
+        self.canvas.plot_date(time, stack, index, clear_plot=True, color='steelblue', fmt='-', linewidth=0.5)
         info = "{}".format(stats['station'])
         self.canvas.set_plot_label(index, info)
         try:
@@ -1328,6 +1332,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if isinstance(origin, Origin):
             self._magnitude_calc = MagnitudeCalc(origin, self.inventory, self.chop)
             self._magnitude_calc.show()
+
+    def open_solutions(self):
+        output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
+        try:
+            command = "{} {}".format('open', output_path)
+            exc_cmd(command, cwd = ROOT_DIR)
+        except:
+            md = MessageDialog(self)
+            md.set_error_message("Coundn't open solutions file")
 
     def open_array_analysis(self):
         self.controller().open_array_window()

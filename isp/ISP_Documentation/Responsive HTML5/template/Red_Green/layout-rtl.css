@@ -495,7 +495,8 @@ div.searchresults {
         margin-bottom: .25em;
         word-wrap: break-word; }
     div.searchresults .wSearchResultItem div.wSearchContext {
-      font-size: 1em; }
+      font-size: 1em;
+      overflow-wrap: break-word; }
     div.searchresults .wSearchResultItem div.wSearchURL {
       margin-top: .5em;
       font-size: .75em;
@@ -1190,7 +1191,8 @@ div.searchresults {
   div.searchresults a {
     color: var(--search_results_title_color); }
   div.searchresults span.wSearchContext {
-    color: var(--search_result_preview_color); }
+    color: var(--search_result_preview_color);
+    overflow-wrap: break-word; }
   div.searchresults span.wSearchURL {
     color: var(--search_results_breadcrumb_color); }
   div.searchresults label.wSearchAndLabelResults {
