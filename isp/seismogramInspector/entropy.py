@@ -1,7 +1,7 @@
 import numpy as np
-#from numba import jit
+# from numba import jit
 from scipy.signal import periodogram, welch
-import numba
+# import numba
 
 
 #@numba.jit(nopython=True, parallel=True)
