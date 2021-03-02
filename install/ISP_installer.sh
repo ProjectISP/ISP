@@ -25,7 +25,12 @@ conda install -c conda-forge obspy
 conda install -c anaconda keras=2.3.1
 conda install tensorflow=2.0.0
 conda install -c conda-forge owslib Cython deprecated pandas cartopy pywavelets dill numba mtspec nitime pillow
-pip install nitime PyQt5 PyQtWebEngine
+
+# Install Qt
+conda install -c conda-forge pyqt pyqtwebengine
+
+# second option with pip
+#pip install nitime PyQt5 PyQtWebEngine
 
 # Compile packages
 cd ..

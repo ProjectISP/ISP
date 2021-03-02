@@ -1,43 +1,11 @@
-# ISP (Integrated Seismic Program)
-
-Software for making analysis of seismic waves. 
-
-### For Developers:
-
-Please install [pyqt5](https://pypi.org/project/PyQt5/) in your python env. Make sure you 
-also have installed qt designer. 
-
-* Rebuilding resources.
+ ![ALT](https://github.com/rcabdia/ISP/tree/master/isp/resources/images/LOGO.png) *A Python GUI for earthquake seismology and seismic signal processing*
  
-After any change in the resource file *resources/resources.qrc* run the following command to 
-regenerate the file *resources_rc.py*:
-    
-    pyrcc5 -o resources_rc.py resources.qrc
+ Integrated Seismic Program is an amenable toolbox that joins functionality and standard algorithms commonly used in seismology
 
-* Compiling C code. 
+# Reference Web
 
-Make sure you have the right python venv activated:
+[ISP web](https://rcabdia.github.io/ISP_tutorial.github.io/).
 
-    source path/venv/bin/activate 
+# Licence
 
-Then just go to the project folder and run: 
-
-    python setup.py build_ext --inplace
-    
-* Cartopy installation guide:
-    
-    Before pip install Cartopy you must satisfy some system requirements:
-
-    Ubuntu:
-    
-        sudo apt-get install libproj-dev proj-data proj-bin  
-        sudo apt-get install libgeos-dev
-        
-     Mac: 
-     
-        brew install geos
-        brew install proj
-     
-    After installing the requirements above you can install cartopy:
-    
-        pip install Cartopy
+ISP is licensed under the GNU Lesser General Public License (LGPL) v3.0.
