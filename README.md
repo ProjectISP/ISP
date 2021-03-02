@@ -1,4 +1,4 @@
- ![ALT](https://github.com/rcabdia/ISP/tree/master/isp/resources/images/LOGO.png) *A Python GUI for earthquake seismology and seismic signal processing*
+ ![Screenshot](/isp/resources/images/LOGO.png)*A Python GUI for earthquake seismology and seismic signal processing*
  
  Integrated Seismic Program is an amenable toolbox that joins functionality and standard algorithms commonly used in seismology
 
