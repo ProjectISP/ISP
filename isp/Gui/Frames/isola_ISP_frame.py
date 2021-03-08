@@ -10,11 +10,10 @@ from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
-import os
-
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.mti.mti_utilities import MTIManager
 from isp.mti.class_isola_new import *
+from isp.Gui.Frames.help_frame import HelpDoc
 import pandas as pd
 
 @add_save_load()
@@ -49,6 +48,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.actionWrite.triggered.connect(self.write)
         self.actionEarth_Model.triggered.connect(lambda: self.open_earth_model())
         self.actionFrom_File.triggered.connect(lambda: self.load_event_from_isolapath())
+        self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.stationsBtn.clicked.connect(self.stationsInfo)
         self.run_inversionBtn.clicked.connect(lambda: self.run_inversion())
         self.stations_mapBtn.clicked.connect(lambda: self.plot_map_stations())
@@ -57,6 +57,9 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         # Parameters settings
         self.parameters = ParametersSettings()
         self.earth_model = CrustalModelParametersFrame()
+        # help Documentation
+
+        self.help = HelpDoc()
 
     def open_parameters_settings(self):
         self.parameters.show()
@@ -354,6 +357,8 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.map_stations = StationsMap(map_dict)
         self.map_stations.plot_stations_map(latitude = self.latDB.value(),longitude=self.lonDB.value())
 
+    def open_help(self):
+        self.help.show()
 
 
 

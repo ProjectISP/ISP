@@ -11,7 +11,7 @@ from isp.Gui import pyqt, pqg, pw, pyc, qt
 import isp.receiverfunctions.rf_dialogs as dialogs
 import isp.receiverfunctions.rf_main_window_utils as mwu
 from isp.Gui.Frames.uis_frames import UiReceiverFunctions
-
+from isp.Gui.Frames.help_frame import HelpDoc
 # other imports
 import io
 import os
@@ -80,7 +80,11 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         # Connect GUI elements
         self.connect_rf_analysis_gui_elements()
         self.connect_ccp_stack_gui_elements()
-    
+        self.actionOpen_Help.triggered.connect(lambda: self.open_help())
+
+        # help Documentation
+        self.help = HelpDoc()
+
     def connect_rf_analysis_gui_elements(self):
         # Menu actions
         self.actionRead_waveforms.triggered.connect(self.read_waveforms)
@@ -996,4 +1000,6 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
                                           preferred_xlabel, preferred_ylabel, preferred_fname)
         dialog.exec_()
         return
-        
+
+    def open_help(self):
+        self.help.show()

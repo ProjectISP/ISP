@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<odb>
-  <odbtype type="html5" />
-  <language name="en" />
-  <files>
-    <file url="whxdata\synonym.xml" />
-    <file url="whxdata\topictable_xml.js" />
-  </files>
-</odb>

@@ -15,7 +15,7 @@ from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.seismogramInspector.MTspectrogram import MTspectrogram, WignerVille
 import matplotlib.pyplot as plt
 import numpy as np
-
+from isp.Gui.Frames.help_frame import HelpDoc
 
 
 @add_save_load()
@@ -51,11 +51,17 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.datalessBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         # Action Buttons
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
+        self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.actionOpen_Spectral_Analysis.triggered.connect(self.time_frequency_advance)
         self.plotBtn.clicked.connect(self.plot_seismogram)
         self.stationsBtn.clicked.connect(self.stations_info)
+
+        # help Documentation
+        self.help = HelpDoc()
+
         # Parameters settings
         self.parameters = ParametersSettings()
+
         # Time Frequency Advance
         #self.time_frequency_advance = TimeFrequencyAdvance()
 
@@ -351,3 +357,6 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
         else:
             pass
+
+    def open_help(self):
+        self.help.show()

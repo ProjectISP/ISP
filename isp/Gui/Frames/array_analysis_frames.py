@@ -19,6 +19,7 @@ from isp.Utils import MseedUtil, AsycTime
 from isp.arrayanalysis import array_analysis
 from isp import ROOT_DIR
 from isp.Utils.subprocess_utils import exc_cmd
+from isp.Gui.Frames.help_frame import HelpDoc
 
 class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
@@ -82,7 +83,10 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.actionRunVespagram.triggered.connect(self.open_vespagram)
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'), self)
         self.shortcut_open.activated.connect(self.open_solutions)
+        self.actionOpen_Help.triggered.connect(lambda: self.open_help())
+        # help Documentation
 
+        self.help = HelpDoc()
         # Parameters settings
         self.__parameters = ParametersSettings()
 
@@ -360,3 +364,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         except:
             md = MessageDialog(self)
             md.set_error_message("Coundn't open solutions file")
+
+    def open_help(self):
+        self.help.show()

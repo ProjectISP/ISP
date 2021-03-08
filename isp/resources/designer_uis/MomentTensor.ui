@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1469</width>
-    <height>952</height>
+    <height>930</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -440,7 +440,7 @@
      <x>0</x>
      <y>0</y>
      <width>1469</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -467,10 +467,17 @@
     </property>
     <addaction name="actionFrom_File"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionOpen_Help"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuParameters"/>
    <addaction name="menuBuild"/>
    <addaction name="menuRead_Event"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionWrite">
@@ -531,6 +538,11 @@
   <action name="actionFrom_File">
    <property name="text">
     <string>From File</string>
+   </property>
+  </action>
+  <action name="actionOpen_Help">
+   <property name="text">
+    <string>Open Help</string>
    </property>
   </action>
  </widget>

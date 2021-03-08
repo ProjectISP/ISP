@@ -3149,7 +3149,7 @@ class ISOLA:
 			' components)<br />\n    ' + 
 			{1:'with the <strong>data covariance matrix</strong> based on real noise', 0:'without the covariance matrix'}[bool(self.Cd_inv)] + 
 			{1:'<br />\n    with <strong>crosscovariance</strong> between components', 0:''}[bool(self.LT3)] + 
-			'.</dd>\n  <dt>Reference</dt>\n  <dd>Vackář, Gallovič, Burjánek, Zahradník, and Clinton. Bayesian ISOLA: new tool for automated centroid moment tensor inversion, <em>in preparation</em>, <a href="http://geo.mff.cuni.cz/~vackar/papers/isola-obspy.pdf">PDF</a></dd>\n</dl>\n\n')
+			'.</dd>\n  <dt>Reference</dt>\n  <dd>Vackář, J., Burjánek, J., Gallovič, F., Zahradník, J., & Clinton, J. (2017). Bayesian ISOLA: New tool for automated centroid moment tensor inversion. Geophysical Journal International, 210(2), 693-705., <a href="https://academic.oup.com/gji/article/210/2/693/3747443?login=true">PDF</a></dd>\n</dl>\n\n')
         out.write('''
 <h2>Hypocenter location</h2>
 

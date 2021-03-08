@@ -2,7 +2,7 @@
 from isp.Gui.Frames import MainFrame, TimeFrequencyFrame, EarthquakeAnalysisFrame, ArrayAnalysisFrame, MTIFrame,\
     RecfFrame, EventLocationFrame, SyntheticsAnalisysFrame, DataDownloadFrame
 from isp.Gui.Frames.ppsds_frame import PPSDFrame
-
+from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Utils import Singleton
 
 
@@ -19,6 +19,9 @@ class Controller:
         self.synthetics_frame = None
         self.data_download_frame = None
         self.ppds_frame = None
+        self.help = HelpDoc()
+
+
     def open_main_window(self):
         # Start the ui designer
         self.main_frame = MainFrame()
@@ -32,6 +35,7 @@ class Controller:
         self.main_frame.actionCreate_new_Project.triggered.connect(self.create_project)
         self.main_frame.actionRetrieve_data.triggered.connect(self.retrieve_data)
         self.main_frame.actionPPSDs.triggered.connect(self.ppsds)
+        self.main_frame.actionOpen_Help.triggered.connect(lambda: self.open_help())
         # show frame
         self.main_frame.show()
 
@@ -88,3 +92,5 @@ class Controller:
             self.ppds_frame = PPSDFrame()
         self.ppds_frame.show()
 
+    def open_help(self):
+        self.help.show()
