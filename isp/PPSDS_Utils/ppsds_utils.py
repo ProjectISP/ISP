@@ -45,7 +45,13 @@ class ppsdsISP(pyc.QObject):
         sta_list = kwargs.pop('sta_list').split(',')
         chn_list = kwargs.pop('chn_list').split(',')
 
-        obsfiles = [f for f in listdir(self.files_path) if isfile(join(self.files_path, f))]
+        obsfiles = []
+        for top_dir, sub_dir, files in os.walk(self.files_path):
+            for file in files:
+                obsfiles.append(os.path.join(top_dir, file))
+
+        #obsfiles = [f for f in listdir(self.files_path) if isfile(join(self.files_path, f))]
+
         obsfiles.sort()
         data_map = {}
         data_map['nets'] = {}
@@ -177,7 +183,12 @@ class ppsdsISP(pyc.QObject):
         net_list = kwargs.pop('net_list').split(',')
         sta_list = kwargs.pop('sta_list').split(',')
         chn_list = kwargs.pop('chn_list').split(',')
-        obsfiles = [f for f in listdir(self.files_path) if isfile(join(self.files_path, f))]
+
+        obsfiles = []
+        for top_dir, sub_dir, files in os.walk(self.files_path):
+            for file in files:
+                obsfiles.append(os.path.join(top_dir, file))
+        #obsfiles = [f for f in listdir(self.files_path) if isfile(join(self.files_path, f))]
         obsfiles.sort()
 
         size = 0

@@ -48,15 +48,18 @@ class PPSDFrame(BaseFrame, UiPPSDs):
 
     
     def populate_list_widget(self):
-         self.ppsd_db = self.ppsds_dialog.db
-         for network in self.ppsd_db['nets'].keys():
-             for station in self.ppsd_db['nets'][network].keys():
-                 for channel in self.ppsd_db['nets'][network][station].keys():
-                     self.tableWidget.insertRow(self.tableWidget.rowCount())
-                     self.tableWidget.setItem(self.tableWidget.rowCount() - 1,0,QtWidgets.QTableWidgetItem(network))
-                     self.tableWidget.setItem(self.tableWidget.rowCount() - 1,1,QtWidgets.QTableWidgetItem(station))
-                     self.tableWidget.setItem(self.tableWidget.rowCount() - 1,2,QtWidgets.QTableWidgetItem(channel))
-    
+        try:
+             self.ppsd_db = self.ppsds_dialog.db
+             for network in self.ppsd_db['nets'].keys():
+                 for station in self.ppsd_db['nets'][network].keys():
+                     for channel in self.ppsd_db['nets'][network][station].keys():
+                         self.tableWidget.insertRow(self.tableWidget.rowCount())
+                         self.tableWidget.setItem(self.tableWidget.rowCount() - 1,0,QtWidgets.QTableWidgetItem(network))
+                         self.tableWidget.setItem(self.tableWidget.rowCount() - 1,1,QtWidgets.QTableWidgetItem(station))
+                         self.tableWidget.setItem(self.tableWidget.rowCount() - 1,2,QtWidgets.QTableWidgetItem(channel))
+        except:
+            pass
+
     def change_page_index(self, change):
         
         if change == "decrease_index":

@@ -20,7 +20,7 @@ from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.settings_dialog import SettingsDialog
 from isp.Gui.Utils import map_polarity_from_pressed_key
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.arrayanalysis import array_analysis
@@ -33,7 +33,6 @@ import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
     correlate_maxlag, get_lags
-
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
@@ -83,7 +82,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.register_on_select(self.on_select, rectprops = dict(alpha=0.2, facecolor='red'))
         self.canvas.mpl_connect('key_press_event', self.key_pressed)
         self.canvas.mpl_connect('axes_enter_event', self.enter_axes)
-
         self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
         self.event_info.register_plot_arrivals_click(self.on_click_plot_arrivals)
 
@@ -127,8 +125,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.actionOnly_a_folder.triggered.connect(lambda: self.availability())
         self.actionAll_tree.triggered.connect(lambda: self.availability_all_tree())
-        self.actionOpen_picks.triggered.connect(lambda: self.open_solutions())
-
+        self.actionOpen_picksnew.triggered.connect(lambda: self.open_solutions())
+        self.actionRemove_picks.triggered.connect(lambda: self.remove_picks())
+        self.actionNew_location.triggered.connect(lambda: self.start_location())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -172,6 +171,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+J'), self)
         self.shortcut_open.activated.connect(self.clean_all_chop)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('W'), self)
+        self.shortcut_open.activated.connect(self.plot_seismogram)
 
     def open_help(self):
         self.help.show()
@@ -401,7 +403,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         diff = end_time - start_time
-        if len(self.canvas.axes) != len(files_at_page):
+        if len(self.canvas.axes) != len(files_at_page) or self.autorefreshCB.isChecked():
             self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
         last_index = 0
         min_starttime = []
@@ -434,11 +436,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                        ax.tick_params(bottom=False)
 
 
-
-                self.redraw_pickers(file_path, index)
-                #redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
-                self.redraw_chop(tr, s, index)
-                self.redraw_event_times(index)
+                try:
+                    self.redraw_pickers(file_path, index)
+                    #redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
+                    self.redraw_chop(tr, s, index)
+                    self.redraw_event_times(index)
+                except:
+                    print("It couldn't plot chop data")
 
                 last_index = index
 
@@ -495,6 +499,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     # Rotate to GAC #
     def rotate(self):
+
         if self.st:
             self.canvas.clear()
             all_traces_rotated = []
@@ -502,17 +507,31 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
             end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             for k in range(len(stations)):
-                st1 = self.st.copy()
-                #print("Computing", stations[k])
-                st2 = st1.select(station=stations[k])
+
                 try:
-                    maxstart = np.max([tr.stats.starttime for tr in st2])
-                    minend = np.min([tr.stats.endtime for tr in st2])
-                    st2.trim(maxstart, minend)
-                    tr = st2[0]
-                    coordinates = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
-                    [azim, bazim, inci] = ObspyUtil.coords2azbazinc(coordinates.Latitude,coordinates.Longitude,
-                    coordinates.Elevation,self.event_info.latitude, self.event_info.longitude, self.event_info.event_depth)
+
+
+                    if self.angCB.isChecked():
+
+                        # Process the data
+                        self.plot_seismogram()
+                        st1 = self.st.copy()
+                        st2 = st1.select(station=stations[k])
+                        maxstart = np.max([tr.stats.starttime for tr in st2])
+                        minend = np.min([tr.stats.endtime for tr in st2])
+                        st2.trim(maxstart, minend)
+                        bazim = self.rot_ang.value()
+
+                    else:
+
+                        st1 = self.st.copy()
+                        st2 = st1.select(station=stations[k])
+                        maxstart = np.max([tr.stats.starttime for tr in st2])
+                        minend = np.min([tr.stats.endtime for tr in st2])
+                        st2.trim(maxstart, minend)
+                        coordinates = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
+                        [azim, bazim, inci] = ObspyUtil.coords2azbazinc(coordinates.Latitude,coordinates.Longitude,
+                        coordinates.Elevation,self.event_info.latitude, self.event_info.longitude, self.event_info.event_depth)
 
                     st2.rotate(method='NE->RT', back_azimuth=bazim)
                 except:
@@ -551,6 +570,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                     self.chop[key][id_new] = self.chop[key].pop(id_old)
                         except:
                             pass
+
                     self.canvas.plot_date(t, s, index, color="steelblue", fmt='-', linewidth=0.5)
                     info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
                     self.canvas.set_plot_label(index, info)
@@ -1006,7 +1026,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             phase = self.comboBox_phases.currentText()
             click_at_index = event.inaxes.rowNum
             x1, y1 = event.xdata, event.ydata
-            x2, y2 = event.x, event.y
+            #x2, y2 = event.x, event.y
             stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
             # Get amplitude from index
             #x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
@@ -1022,6 +1042,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             # Add pick data to file.
             self.pm.add_data(t, amplitude, stats.Station, phase, Component = stats.Channel,  First_Motion=polarity)
             self.pm.save()  # maybe we can move this to when you press locate.
+
 
     def on_pick(self, event):
         line = event.artist
@@ -1208,6 +1229,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def key_pressed(self, event):
 
+        if event.key == 'q':
+            files_at_page = self.get_files_at_page()
+            x1, y1 = event.xdata, event.ydata
+            tt = UTCDateTime(mdt.num2date(x1))
+            set_qdatetime(tt, self.dateTimeEdit_1)
+            for index, file_path in enumerate(files_at_page):
+                self.canvas.draw_arrow(x1, index, arrow_label="st", color="purple", linestyles='--', picker=False)
+
+        if event.key == 'e':
+            files_at_page = self.get_files_at_page()
+            x1, y1 = event.xdata, event.ydata
+            tt = UTCDateTime(mdt.num2date(x1))
+            set_qdatetime(tt, self.dateTimeEdit_2)
+            for index, file_path in enumerate(files_at_page):
+                self.canvas.draw_arrow(x1, index, arrow_label= "et", color="purple", linestyles='--', picker=False)
+
+
         if event.key == 'd':
            self.kind_wave = self.ChopCB.currentText()
            [identified_chop, id] = self.find_chop_by_ax(self.ax_num)
@@ -1334,13 +1372,63 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self._magnitude_calc.show()
 
     def open_solutions(self):
+        md = MessageDialog(self)
         output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
         try:
             command = "{} {}".format('open', output_path)
             exc_cmd(command, cwd = ROOT_DIR)
         except:
+
+            md.set_error_message("Coundn't open pick file")
+
+    def remove_picks(self):
+        md = MessageDialog(self)
+        output_path = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
+        try:
+            command = "{} {}".format('rm', output_path)
+            exc_cmd(command, cwd=ROOT_DIR)
+            md.set_info_message("Removed picks from file")
+        except:
+
+            md.set_error_message("Coundn't remove pick file")
+
+    def start_location(self):
+        import glob
+
+        md = MessageDialog(self)
+        output_path = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
+
+        try:
+            try:
+                command = "{} {}".format('rm', output_path)
+                exc_cmd(command, cwd=ROOT_DIR)
+            except:
+                pass
+
+            output_path = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'loc')
+
+            try:
+                files = glob.glob(os.path.join(output_path,"*"))
+                for f in files:
+                    os.remove(f)
+            except:
+                pass
+
+            output_path = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'first_polarity')
+            try:
+
+                os.remove(os.path.join(output_path,"test.inp"))
+                os.remove(os.path.join(output_path, "mechanism.out"))
+                os.remove(os.path.join(output_path, "focmec.lst"))
+
+            except:
+                pass
+
+            md.set_info_message("Ready for new location")
+        except:
             md = MessageDialog(self)
-            md.set_error_message("Coundn't open solutions file")
+            md.set_error_message("Coundn't remove location, please review ", output_path)
+
 
     def open_array_analysis(self):
         self.controller().open_array_window()

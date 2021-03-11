@@ -109,35 +109,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="14" column="2">
-                <widget class="QPushButton" name="rotateBtn">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Rotate</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="16" column="0" colspan="4">
-                <widget class="QPushButton" name="updateBtn">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Process and Plot</string>
-                 </property>
-                </widget>
-               </item>
                <item row="1" column="0" colspan="2">
                 <widget class="QPushButton" name="selectDirBtn">
                  <property name="text">
@@ -393,26 +364,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="14" column="1">
-                <widget class="QPushButton" name="mapBtn">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Stations Map</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="14" column="0">
-                <widget class="QPushButton" name="locateBtn">
-                 <property name="text">
-                  <string>Locate</string>
-                 </property>
-                </widget>
-               </item>
                <item row="15" column="0">
                 <widget class="QPushButton" name="crossBtn">
                  <property name="text">
@@ -619,6 +570,72 @@
                  </property>
                 </widget>
                </item>
+               <item row="5" column="3">
+                <widget class="QPushButton" name="mapBtn">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Stations Map</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="14" column="0">
+                <widget class="QPushButton" name="rotateBtn">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Rotate</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="14" column="1">
+                <widget class="QDoubleSpinBox" name="rot_ang">
+                 <property name="decimals">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <double>360.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="14" column="2">
+                <widget class="QCheckBox" name="angCB">
+                 <property name="text">
+                  <string>Use this Ang</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="16" column="0" colspan="3">
+                <widget class="QPushButton" name="updateBtn">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Process and Plot</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="16" column="3">
+                <widget class="QCheckBox" name="autorefreshCB">
+                 <property name="text">
+                  <string>Auto-Refresh</string>
+                 </property>
+                </widget>
+               </item>
               </layout>
              </item>
              <item>
@@ -634,7 +651,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>1129</width>
+                  <width>1148</width>
                   <height>732</height>
                  </rect>
                 </property>
@@ -745,7 +762,14 @@
      <addaction name="actionOnly_a_folder"/>
      <addaction name="actionAll_tree"/>
     </widget>
-    <addaction name="actionOpen_picks"/>
+    <widget class="QMenu" name="menuPicks">
+     <property name="title">
+      <string>Picks</string>
+     </property>
+     <addaction name="actionOpen_picksnew"/>
+     <addaction name="actionRemove_picks"/>
+    </widget>
+    <addaction name="menuPicks"/>
     <addaction name="actionGet_Stations_Info"/>
     <addaction name="actionSet_Parameters"/>
     <addaction name="actionRun_picker"/>
@@ -1013,12 +1037,14 @@
     <string>All tree</string>
    </property>
   </action>
-  <action name="actionOpen_picks">
+  <action name="actionOpen_picksnew">
    <property name="text">
     <string>Open picks</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+O</string>
+  </action>
+  <action name="actionRemove_picks">
+   <property name="text">
+    <string>Remove picks</string>
    </property>
   </action>
  </widget>

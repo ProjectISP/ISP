@@ -1,11 +1,11 @@
  Output file name (for plotting) [focmec.out]....:  Comment - up to 80 characters...................:  Input filespec..................................:  Input filespec..................................:  
- Correct file?...[Y].............................:  Input:  17 P    0 SV and    0 SH polarities and,   0 ratios
+ Correct file?...[Y].............................:  Input:  28 P    0 SV and    0 SH polarities and,   0 ratios
   Can have relative weighting for polarity errors
    for which weight = theor. rad. factor (0 to 1)
  Relative weighting?..[Y]........................:  Allowed P polarity errors..[0]..................:  Exit after this many acceptable sols...[100]....:  Minimum search value B trend..[0]...............:  Increment for B trend..[5 degree]...............:  Maximum B trend..[360-btdel]....................:  Minimum search value B plunge..[0]..............:  Increment for B plunge..[5 degree]..............:  Maximum B plunge..[90 degrees]..................:  "Angle" in vertical plane of B trend)
  Minimum search value Angle..[0].................:  Increment for Angle..[5 degree].................:  Maximum Angle..[180-aadel]......................:     Dip   Strike   Rake    Pol: P     SV    SH
  
-   21.09    4.01  -44.01       1.00  0.00  0.00
+   28.90   17.62  -29.03       1.00  0.00  0.00
  Reached chosen maximum of    1 solutions
 
  There are   1 acceptable solutions

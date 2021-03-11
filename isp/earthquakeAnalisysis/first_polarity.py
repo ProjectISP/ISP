@@ -126,6 +126,7 @@ class FirstPolarity:
             p.communicate(input=string.encode())
         shutil.move('mechanism.out',os.path.join(output_path, 'mechanism.out'))
         shutil.move('focmec.lst', os.path.join(output_path, 'focmec.lst'))
+        shutil.move('./log.txt', os.path.join(output_path, 'log.txt'))
 
     def extract_focmec_info(self):
         catalog: Catalog = focmecobspy._read_focmec(os.path.join(self.get_foc_dir,'focmec.lst'))

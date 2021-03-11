@@ -60,6 +60,7 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         if dir_path:
             bind.value = dir_path
 
+
     def load_metadata(self):
         if self.dataless_path_bind.value is not "":
             try:
@@ -113,8 +114,6 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
             md.set_info_message("No data to add and process")
 
 
-
-
     def saveDB(self):
         if self.db:
             params = self.db
@@ -122,34 +121,45 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
                                   self.smoothingSB.value(),self.periodSB.value()]
             path = pw.QFileDialog.getExistingDirectory(self,'Select Directory', self.root_path_bind.value)
             ppsdsISP.save_PPSDs(params, path, self.nameForm.text())
+            md = MessageDialog(self)
+            md.set_info_message("DB saved successfully")
         else:
             md = MessageDialog(self)
             md.set_info_message("No data to save in DB")
 
 
     def load_ppsd_db(self):
+        selected = []
         file_path = self.root_path_bind.value
         selected = pw.QFileDialog.getOpenFileName(self, "Select DB file")
-        head_tail = os.path.split(selected[0])
-        params = ppsdsISP.load_PPSDs(head_tail[0], head_tail[1])
-        self.db = {'nets' : params['nets']}
-        self.lenghtSB.setValue(params['parameters'][0])
-        self.overlapSB.setValue(params['parameters'][1])
-        self.smoothingSB.setValue(params['parameters'][2])
-        self.periodSB.setValue(params['parameters'][3])
-        self.lenghtSB.setEnabled(False)
-        self.overlapSB.setEnabled(False)
-        self.smoothingSB.setEnabled(False)
-        self.periodSB.setEnabled(False)
-        self.processBtn.setEnabled(False)
-        self.continueBtn.setEnabled(True)
-        self.add_dataBtn.setEnabled(True)
-        self.saveBtn.setEnabled(True)
-        self.ppsds = ppsdsISP(file_path, self.inventory, self.lenghtSB.value(), self.overlapSB.value(),
-                              self.smoothingSB.value(), self.periodSB.value())
-        self.ppsds.fileProcessed.connect(self.progressbar.setValue)
-        md = MessageDialog(self)
-        md.set_info_message("PPSDs DB loaded")
+        if isinstance(selected[0], str):
+            try:
+                head_tail = os.path.split(selected[0])
+                params = ppsdsISP.load_PPSDs(head_tail[0], head_tail[1])
+                self.db = {'nets' : params['nets']}
+                self.lenghtSB.setValue(params['parameters'][0])
+                self.overlapSB.setValue(params['parameters'][1])
+                self.smoothingSB.setValue(params['parameters'][2])
+                self.periodSB.setValue(params['parameters'][3])
+                self.lenghtSB.setEnabled(False)
+                self.overlapSB.setEnabled(False)
+                self.smoothingSB.setEnabled(False)
+                self.periodSB.setEnabled(False)
+                self.processBtn.setEnabled(False)
+                self.continueBtn.setEnabled(True)
+                self.add_dataBtn.setEnabled(True)
+                self.saveBtn.setEnabled(True)
+                self.ppsds = ppsdsISP(file_path, self.inventory, self.lenghtSB.value(), self.overlapSB.value(),
+                                      self.smoothingSB.value(), self.periodSB.value())
+                self.ppsds.fileProcessed.connect(self.progressbar.setValue)
+                md = MessageDialog(self)
+                md.set_info_message("PPSDs DB loaded")
+
+            except:
+                md = MessageDialog(self)
+                md.set_error_message("PPSDs DB cannot be loaded")
+        else:
+            pass
 
 
 

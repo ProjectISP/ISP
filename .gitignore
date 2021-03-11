@@ -107,12 +107,13 @@ venv.bak/
 # remove this dir or file from git
 /isp/NLL7/
 /isp/FOCMEC/
-/isp/mti/green/
-/isp/mti/output/
-/isp/mti/input/
+/isp/mti/green/**
+/isp/mti/output/**
+/isp/mti/input/**
 *.hdr
 *.buf
 
 # remove the db file
 *.db
+*.DS_Store
 
