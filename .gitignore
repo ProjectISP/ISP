@@ -109,7 +109,6 @@ venv.bak/
 /isp/FOCMEC/
 /isp/mti/green/**
 /isp/mti/output/**
-/isp/mti/input/**
 
 !/isp/mti/green/info.txt
 !/isp/mti/output/info.txt

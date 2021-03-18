@@ -11,5 +11,6 @@ model3D/**
 !model/info.txt
 !stations/info.txt
 !temp/info.txt
+!time/info.txt
 !obs/info.txt
 !model3D/info.txt
