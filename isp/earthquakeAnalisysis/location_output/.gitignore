@@ -5,3 +5,11 @@ temp/**
 time/**
 obs/**
 model3D/**
+
+!loc/info.txt
+!model/info.txt
+!stations/info.txt
+!temp/info.txt
+!time/info.txt
+!obs/info.txt
+!model3D/info.txt
