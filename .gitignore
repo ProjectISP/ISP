@@ -110,8 +110,7 @@ venv.bak/
 /isp/mti/green/**
 /isp/mti/output/**
 /isp/mti/input/**
-*.hdr
-*.buf
+
 
 # remove the db file
 *.db
