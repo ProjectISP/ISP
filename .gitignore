@@ -111,7 +111,9 @@ venv.bak/
 /isp/mti/output/**
 /isp/mti/input/**
 
-
+!/isp/mti/green/info.txt
+!/isp/mti/output/info.txt
+!/isp/mti/input/info.txt
 # remove the db file
 *.db
 *.DS_Store
