@@ -508,34 +508,35 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             for k in range(len(stations)):
 
-                try:
 
 
-                    if self.angCB.isChecked():
 
-                        # Process the data
-                        self.plot_seismogram()
-                        st1 = self.st.copy()
-                        st2 = st1.select(station=stations[k])
-                        maxstart = np.max([tr.stats.starttime for tr in st2])
-                        minend = np.min([tr.stats.endtime for tr in st2])
-                        st2.trim(maxstart, minend)
-                        bazim = self.rot_ang.value()
+                if self.angCB.isChecked():
 
-                    else:
+                    # Process the data
+                    self.plot_seismogram()
+                    st1 = self.st.copy()
+                    st2 = st1.select(station=stations[k])
+                    maxstart = np.max([tr.stats.starttime for tr in st2])
+                    minend = np.min([tr.stats.endtime for tr in st2])
+                    st2.trim(maxstart, minend)
+                    bazim = self.rot_ang.value()
 
-                        st1 = self.st.copy()
-                        st2 = st1.select(station=stations[k])
-                        maxstart = np.max([tr.stats.starttime for tr in st2])
-                        minend = np.min([tr.stats.endtime for tr in st2])
-                        st2.trim(maxstart, minend)
-                        coordinates = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
-                        [azim, bazim, inci] = ObspyUtil.coords2azbazinc(coordinates.Latitude,coordinates.Longitude,
-                        coordinates.Elevation,self.event_info.latitude, self.event_info.longitude, self.event_info.event_depth)
+                else:
 
-                    st2.rotate(method='NE->RT', back_azimuth=bazim)
-                except:
-                    print("The GAC Rotation is not posible for",stations[k])
+                    st1 = self.st.copy()
+                    st2 = st1.select(station=stations[k])
+                    maxstart = np.max([tr.stats.starttime for tr in st2])
+                    minend = np.min([tr.stats.endtime for tr in st2])
+                    st2.trim(maxstart, minend)
+                    tr = st2[0]
+                    coordinates = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
+                    [azim, bazim, inci] = ObspyUtil.coords2azbazinc(coordinates.Latitude,coordinates.Longitude,
+                    coordinates.Elevation,self.event_info.latitude, self.event_info.longitude, self.event_info.event_depth)
+                    print(bazim)
+                st2.rotate(method='NE->RT', back_azimuth=bazim)
+
+                print("The GAC Rotation is not posible for",stations[k])
                 for tr in st2:
                     all_traces_rotated.append(tr)
 
@@ -935,6 +936,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def plot_all_seismograms(self):
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=1, ncols=1)
+        ax = self.canvas.get_axe(0)
         index = 0
         colors = ['black','indianred','chocolate','darkorange','olivedrab','lightseagreen',
                   'royalblue','darkorchid','magenta']
@@ -950,7 +952,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     s = tr.data
                     if len(self.st)<10:
                         self.canvas.plot_date(t, s, index, clear_plot=False, color=colors[i], fmt='-', alpha = 0.5,
-                                          linewidth=0.5)
+                                          linewidth=0.5, label= tr.id)
+
                     else:
                         self.canvas.plot_date(t, s, index, clear_plot=False, color='black', fmt='-', alpha=0.5,
                                               linewidth=0.5)
@@ -964,6 +967,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
             ax.xaxis.set_major_formatter(formatter)
             self.canvas.set_xlabel(0, "Date")
+            ax.legend()
         except:
             pass
 

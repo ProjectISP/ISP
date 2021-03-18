@@ -6,790 +6,707 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>852</width>
-    <height>627</height>
+    <width>1614</width>
+    <height>899</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Earthquakes Data Base</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_3">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QTabWidget" name="tabWidget">
-      <property name="currentIndex">
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <property name="leftMargin">
        <number>0</number>
       </property>
-      <widget class="QWidget" name="tab">
-       <attribute name="title">
-        <string>Time series</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
-          <item>
-           <widget class="QGroupBox" name="groupBox_3">
-            <property name="title">
-             <string>Data provider</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_8">
-             <item>
-              <layout class="QVBoxLayout" name="verticalLayout_9">
-               <item>
-                <widget class="QCheckBox" name="checkBox_4">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>FDSN Service</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="Line" name="line_4">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <layout class="QGridLayout" name="gridLayout_5">
-                 <item row="0" column="0">
-                  <widget class="QLabel" name="label_13">
-                   <property name="text">
-                    <string>URL</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="1">
-                  <widget class="QLineEdit" name="lineEdit_7">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-              </layout>
+      <item>
+       <widget class="QGroupBox" name="groupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Data provider</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QCheckBox" name="FDSN_CB">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>FDSN Service</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QGridLayout" name="gridLayout_4">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_16">
+               <property name="text">
+                <string>URL</string>
+               </property>
+              </widget>
              </item>
-             <item>
-              <layout class="QVBoxLayout" name="verticalLayout_10">
-               <item>
-                <widget class="QCheckBox" name="checkBox_5">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Earthworm Wave Server</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="Line" name="line_2">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <layout class="QGridLayout" name="gridLayout_6">
-                 <item row="2" column="1">
-                  <widget class="QLineEdit" name="lineEdit_8">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="readOnly">
-                    <bool>false</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="0">
-                  <widget class="QLabel" name="label_14">
-                   <property name="text">
-                    <string>IP Address</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="0">
-                  <widget class="QLabel" name="label_15">
-                   <property name="text">
-                    <string>Port</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="1">
-                  <widget class="QLineEdit" name="lineEdit_9">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="frame">
-                    <bool>true</bool>
-                   </property>
-                   <property name="readOnly">
-                    <bool>false</bool>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-              </layout>
+             <item row="1" column="0" colspan="2">
+              <widget class="Line" name="line_3">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
              </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="groupBox_4">
-            <property name="title">
-             <string>Data request options</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_11">
-             <item>
-              <layout class="QGridLayout" name="gridLayout_7">
-               <item row="3" column="4">
-                <widget class="QPushButton" name="pushButton_8">
-                 <property name="text">
-                  <string>Download StationXML</string>
-                 </property>
-                </widget>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="URL_CB">
+               <item>
+                <property name="text">
+                 <string>BGR</string>
+                </property>
                </item>
-               <item row="1" column="1">
-                <widget class="QLineEdit" name="lineEdit_11">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>EMSC</string>
+                </property>
                </item>
-               <item row="2" column="1">
-                <widget class="QLineEdit" name="lineEdit_10">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>ETH</string>
+                </property>
                </item>
-               <item row="2" column="0">
-                <widget class="QLabel" name="label_17">
-                 <property name="text">
-                  <string>Channels</string>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>GEONET</string>
+                </property>
                </item>
-               <item row="0" column="1">
-                <widget class="QLineEdit" name="lineEdit_12">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>GFZ</string>
+                </property>
                </item>
-               <item row="0" column="3">
-                <widget class="QLabel" name="label_22">
-                 <property name="text">
-                  <string>Start time</string>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>ICGC</string>
+                </property>
                </item>
-               <item row="1" column="0">
-                <widget class="QLabel" name="label_16">
-                 <property name="text">
-                  <string>Stations</string>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>INGV</string>
+                </property>
                </item>
-               <item row="2" column="2">
-                <widget class="QPushButton" name="pushButton_11">
-                 <property name="maximumSize">
-                  <size>
-                   <width>20</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>...</string>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>IPGP</string>
+                </property>
                </item>
-               <item row="1" column="2">
-                <widget class="QPushButton" name="pushButton_10">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>20</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>...</string>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>IRIS</string>
+                </property>
                </item>
-               <item row="1" column="3">
-                <widget class="QLabel" name="label_21">
-                 <property name="text">
-                  <string>End time</string>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>ISC</string>
+                </property>
                </item>
-               <item row="0" column="2">
-                <widget class="QPushButton" name="pushButton_9">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>20</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>...</string>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>KNMI</string>
+                </property>
                </item>
-               <item row="0" column="0">
-                <widget class="QLabel" name="label_20">
-                 <property name="text">
-                  <string>Networks</string>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>KOERI</string>
+                </property>
                </item>
-               <item row="3" column="5">
-                <widget class="QPushButton" name="pushButton_7">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Download data</string>
-                 </property>
-                </widget>
+               <item>
+                <property name="text">
+                 <string>LMU</string>
+                </property>
                </item>
-               <item row="1" column="4">
-                <widget class="QDateTimeEdit" name="dateTimeEdit_4"/>
+               <item>
+                <property name="text">
+                 <string>NCEDC</string>
+                </property>
                </item>
-               <item row="0" column="4">
-                <widget class="QDateTimeEdit" name="dateTimeEdit_3"/>
+               <item>
+                <property name="text">
+                 <string>NIEP</string>
+                </property>
                </item>
-              </layout>
+               <item>
+                <property name="text">
+                 <string>NOA</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ODC</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ORFEUS</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>RASPISHAKE</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>RESIF</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>SCEDC</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>TEXNET</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>USGS</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>USP</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QPushButton" name="LoadBtn">
+               <property name="text">
+                <string>Load</string>
+               </property>
+              </widget>
              </item>
             </layout>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QCheckBox" name="Earthworm_CB">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Earthworm Wave Server</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QGridLayout" name="gridLayout_3">
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_11">
+               <property name="text">
+                <string>Port</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_10">
+               <property name="text">
+                <string>IP Address</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLineEdit" name="IP_LE">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="frame">
+                <bool>true</bool>
+               </property>
+               <property name="readOnly">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLineEdit" name="portLE">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="readOnly">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBox_2">
+        <property name="title">
+         <string>Data request options</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <item>
+          <layout class="QGridLayout" name="gridLayout">
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_8">
+             <property name="text">
+              <string>Time before (s)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Networks</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_9">
+             <property name="text">
+              <string>Time after (s)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QPushButton" name="pushButton_2">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Download event data</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="stationsLE">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="networksLE">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="channelsLE">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximum">
+              <double>10000.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>Stations</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_7">
+             <property name="text">
+              <string>Channels</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximum">
+              <double>10000.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QPushButton" name="pushButton_3">
+             <property name="text">
+              <string>Download StationXML</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="2" column="3">
+         <widget class="QDoubleSpinBox" name="depth_maxCB">
+          <property name="decimals">
+           <number>1</number>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>336</height>
-           </size>
+          <property name="maximum">
+           <double>800.000000000000000</double>
           </property>
-         </spacer>
+         </widget>
         </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_2">
-       <attribute name="title">
-        <string>Download events</string>
-       </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <item>
-           <layout class="QGridLayout" name="gridLayout_2">
-            <item row="0" column="3">
-             <widget class="QDoubleSpinBox" name="doubleSpinBox"/>
-            </item>
-            <item row="0" column="2">
-             <widget class="QLabel" name="label_2">
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Max. Magnitude</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3">
+         <widget class="QDoubleSpinBox" name="depth_minCB">
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <double>800.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QLabel" name="label_13">
+          <property name="text">
+           <string>Max. Depth (km)</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QDoubleSpinBox" name="max_magnitudeCB">
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <double>10.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0" colspan="4">
+         <widget class="QGroupBox" name="groupBox_3">
+          <property name="title">
+           <string>Plotting options</string>
+          </property>
+          <widget class="QWidget" name="gridLayoutWidget">
+           <property name="geometry">
+            <rect>
+             <x>90</x>
+             <y>40</y>
+             <width>431</width>
+             <height>55</height>
+            </rect>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_5">
+            <item row="1" column="1">
+             <widget class="QCheckBox" name="netsCB">
               <property name="text">
-               <string>Min. Magnitude</string>
+               <string>just specific nets</string>
               </property>
              </widget>
             </item>
             <item row="1" column="0">
-             <widget class="QLabel" name="label_3">
+             <widget class="QCheckBox" name="namesCB">
               <property name="text">
-               <string>Start time</string>
+               <string>Station names</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
-             <widget class="QDateTimeEdit" name="dateTimeEdit"/>
+            <item row="0" column="0" colspan="2">
+             <widget class="QPushButton" name="plotstationsBtn">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Plot stations map</string>
+              </property>
+             </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="QComboBox" name="comboBox">
+            <item row="0" column="2" rowspan="2" colspan="2">
+             <widget class="QComboBox" name="typeCB">
               <item>
                <property name="text">
-                <string>IRIS</string>
+                <string>Natural Earth</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Blue Marble</string>
                </property>
               </item>
              </widget>
             </item>
-            <item row="0" column="0">
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>Catalog</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="2">
-             <widget class="QLabel" name="label_4">
-              <property name="text">
-               <string>End time</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="3">
-             <widget class="QDateTimeEdit" name="dateTimeEdit_2"/>
-            </item>
            </layout>
-          </item>
-          <item>
-           <widget class="QTableWidget" name="tableWidget">
-            <property name="selectionMode">
-             <enum>QAbstractItemView::ExtendedSelection</enum>
-            </property>
-            <property name="selectionBehavior">
-             <enum>QAbstractItemView::SelectRows</enum>
-            </property>
-            <column>
-             <property name="text">
-              <string>otime</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>lat</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>lon</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>depth</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>mag</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>mag type</string>
-             </property>
-            </column>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout">
-            <item>
-             <widget class="QCheckBox" name="checkBox">
-              <property name="text">
-               <string>Select all</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton">
-              <property name="text">
-               <string>Download catalog</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
+          </widget>
+         </widget>
         </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
-          <item>
-           <widget class="QGroupBox" name="groupBox">
-            <property name="title">
-             <string>Data provider</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_6">
-             <item>
-              <layout class="QVBoxLayout" name="verticalLayout_5">
-               <item>
-                <widget class="QCheckBox" name="checkBox_3">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>FDSN Service</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="Line" name="line_3">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <layout class="QGridLayout" name="gridLayout_4">
-                 <item row="0" column="0">
-                  <widget class="QLabel" name="label_12">
-                   <property name="text">
-                    <string>URL</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="1">
-                  <widget class="QLineEdit" name="lineEdit_6">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QVBoxLayout" name="verticalLayout_4">
-               <item>
-                <widget class="QCheckBox" name="checkBox_2">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Earthworm Wave Server</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="Line" name="line">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <layout class="QGridLayout" name="gridLayout_3">
-                 <item row="2" column="1">
-                  <widget class="QLineEdit" name="lineEdit_5">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="readOnly">
-                    <bool>false</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="0">
-                  <widget class="QLabel" name="label_10">
-                   <property name="text">
-                    <string>IP Address</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="0">
-                  <widget class="QLabel" name="label_11">
-                   <property name="text">
-                    <string>Port</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="1">
-                  <widget class="QLineEdit" name="lineEdit_4">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="frame">
-                    <bool>true</bool>
-                   </property>
-                   <property name="readOnly">
-                    <bool>false</bool>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-              </layout>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="groupBox_2">
-            <property name="title">
-             <string>Data request options</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_7">
-             <item>
-              <layout class="QGridLayout" name="gridLayout">
-               <item row="2" column="1">
-                <widget class="QLineEdit" name="lineEdit_3">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="QLineEdit" name="lineEdit_2">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-               <item row="6" column="1">
-                <widget class="QPushButton" name="pushButton_2">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Download event data</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="1">
-                <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <widget class="QLabel" name="label_6">
-                 <property name="text">
-                  <string>Stations</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="0">
-                <widget class="QLabel" name="label_7">
-                 <property name="text">
-                  <string>Channels</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="1">
-                <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="0">
-                <widget class="QLabel" name="label_8">
-                 <property name="text">
-                  <string>Time before (s)</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QLineEdit" name="lineEdit">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="0">
-                <widget class="QLabel" name="label_9">
-                 <property name="text">
-                  <string>Time after (s)</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="0">
-                <widget class="QLabel" name="label_5">
-                 <property name="text">
-                  <string>Networks</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="1">
-                <widget class="QPushButton" name="pushButton_3">
-                 <property name="text">
-                  <string>Download StationXML</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="2">
-                <widget class="QPushButton" name="pushButton_4">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>20</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>...</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="2">
-                <widget class="QPushButton" name="pushButton_5">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>20</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>...</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="2">
-                <widget class="QPushButton" name="pushButton_6">
-                 <property name="maximumSize">
-                  <size>
-                   <width>20</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>...</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
+        <item row="3" column="3">
+         <widget class="QDateTimeEdit" name="end_dateTimeEdit">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>60</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
+          </property>
+          <property name="currentSection">
+           <enum>QDateTimeEdit::YearSection</enum>
+          </property>
+          <property name="displayFormat">
+           <string>yyyy/M/d h:mm:ss UTC</string>
+          </property>
+          <property name="calendarPopup">
+           <bool>true</bool>
+          </property>
+          <property name="timeSpec">
+           <enum>Qt::LocalTime</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QDateTimeEdit" name="start_dateTimeEdit">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>60</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
+          </property>
+          <property name="currentSection">
+           <enum>QDateTimeEdit::YearSection</enum>
+          </property>
+          <property name="displayFormat">
+           <string>yyyy/M/d h:mm:ss UTC</string>
+          </property>
+          <property name="calendarPopup">
+           <bool>true</bool>
+          </property>
+          <property name="timeSpec">
+           <enum>Qt::LocalTime</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Start time</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="2">
+         <widget class="QLabel" name="label_12">
+          <property name="text">
+           <string>End time</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QDoubleSpinBox" name="min_magnitudeCB">
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <double>10.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Min. Magnitude</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Min. Depth (km)</string>
+          </property>
+         </widget>
         </item>
        </layout>
-      </widget>
-     </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="catalogBtn">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Download catalog</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="2,0">
+      <item>
+       <widget class="QWidget" name="map" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>57</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTableWidget" name="tableWidget">
+        <property name="selectionMode">
+         <enum>QAbstractItemView::ExtendedSelection</enum>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <property name="sortingEnabled">
+         <bool>true</bool>
+        </property>
+        <attribute name="horizontalHeaderStretchLastSection">
+         <bool>true</bool>
+        </attribute>
+        <column>
+         <property name="text">
+          <string>otime</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>lat</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>lon</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>depth</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>mag</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>mag type</string>
+         </property>
+        </column>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
@@ -798,46 +715,31 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>852</width>
-     <height>21</height>
+     <width>1614</width>
+     <height>24</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionRead_hyp_folder"/>
+    <addaction name="actionRead_last_location"/>
+   </widget>
+   <addaction name="menuFile"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionRead_hyp_folder">
+   <property name="text">
+    <string>Read hyp folder</string>
+   </property>
+  </action>
+  <action name="actionRead_last_location">
+   <property name="text">
+    <string>Read last location</string>
+   </property>
+  </action>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>checkBox_3</sender>
-   <signal>clicked()</signal>
-   <receiver>checkBox_2</receiver>
-   <slot>toggle()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>481</x>
-     <y>72</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>488</x>
-     <y>138</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_2</sender>
-   <signal>clicked()</signal>
-   <receiver>checkBox_3</receiver>
-   <slot>toggle()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>542</x>
-     <y>136</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>551</x>
-     <y>72</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

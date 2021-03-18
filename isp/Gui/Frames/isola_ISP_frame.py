@@ -23,7 +23,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         super(MTIFrame, self).__init__()
         self.setupUi(self)
 
-        super(MTIFrame, self).__init__()
+        #super(MTIFrame, self).__init__()
         self.setupUi(self)
         self.__stations_dir = None
         self.__metadata_manager = None

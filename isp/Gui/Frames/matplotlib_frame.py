@@ -101,7 +101,7 @@ class BasePltPyqtCanvas(FigureCanvas):
         self.register_on_pick()  # Register the pick events for the draws.
 
     def __del__(self):
-        print("disconnect")
+
         self.disconnect_events()
         plt.close(self.figure)
 
@@ -988,6 +988,89 @@ class CartopyCanvas(BasePltPyqtCanvas):
             self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, orientation='horizontal', fraction=0.05,
                                                          extend='both', pad=0.15)
             self.__cbar.ax.set_ylabel("Depth [m]")
+        self.draw()
+
+    def global_map(self, axes_index, plot_earthquakes = False, show_colorbar = False, clear_plot = True,
+                   show_stations = False, show_station_names = False, **kwargs):
+        import numpy as np
+        from isp import ROOT_DIR
+        import os
+
+        os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
+        lon = kwargs.pop('lon', [])
+        lat = kwargs.pop('lat', [])
+        depth = kwargs.pop('depth', [])
+        mag = kwargs.pop('magnitude', [])
+        coordinates = kwargs.pop('coordinates', [])
+        resolution = kwargs.pop('resolution', 'high')
+
+        if resolution == "Natural Earth":
+
+            resolution = "low"
+
+        else:
+
+            resolution = "high"
+
+        ax = self.get_axe(axes_index)
+        geodetic_transform = ccrs.PlateCarree()._as_mpl_transform(ax)
+        text_transform = offset_copy(geodetic_transform, units='dots', x=-25)
+        depth = np.array(depth) / 1000
+        mag = np.array(mag)
+        mag = 0.25 * np.exp(mag)
+
+        if clear_plot:
+            ax.clear()
+
+        ax.background_img(name='ne_shaded', resolution= resolution)
+        if show_stations:
+            lat = []
+            lon = []
+            sta_ids = []
+            for key in coordinates.keys():
+                for j in range(len(coordinates[key][0][:])-1):
+                    sta_ids.append(coordinates[key][1][j])
+                    lat.append(coordinates[key][2][j])
+                    lon.append(coordinates[key][3][j])
+                    if show_station_names:
+                        ax.text(coordinates[key][3][j], coordinates[key][2][j], key + "." + coordinates[key][1][j], verticalalignment='center',
+                                horizontalalignment='right', transform=text_transform,
+                                bbox=dict(facecolor='sandybrown', alpha=0.5, boxstyle='round'))
+                    else:
+                        pass
+
+                ax.scatter(lon, lat, s=8, marker="^", color ="red", alpha=0.7, transform=ccrs.PlateCarree())
+
+        if plot_earthquakes:
+            color_map = plt.cm.get_cmap('rainbow')
+            reversed_color_map = color_map.reversed()
+            cs = ax.scatter(lon, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map, vmin = 0,
+                            vmax = 600)
+
+            kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color="red", alpha=0.3, func=lambda s: np.log(s / 0.25))
+            ax.legend(*cs.legend_elements(**kw), loc="lower right", title="Magnitudes")
+
+            if show_colorbar:
+                try:
+                    self.__cbar.ax.clear()
+                except:
+                    pass
+                self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, orientation='horizontal', fraction=0.05,
+                                                              extend='both', pad=0.08)
+                self.__cbar.ax.set_ylabel("Depth [km]")
+                # magnitude legend
+
+
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                                          linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
+
+        gl.top_labels = False
+        gl.left_labels = False
+        gl.xlines = False
+        gl.ylines = False
+        gl.xformatter = LONGITUDE_FORMATTER
+        gl.yformatter = LATITUDE_FORMATTER
+
         self.draw()
 
 class FocCanvas(BasePltPyqtCanvas):
