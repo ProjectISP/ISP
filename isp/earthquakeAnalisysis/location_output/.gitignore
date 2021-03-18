@@ -1,7 +1,7 @@
-loc/
-model/
-stations/
-temp/
-time/
-obs/
-model3D/
+loc/**
+model/**
+stations/**
+temp/**
+time/**
+obs/**
+model3D/**
