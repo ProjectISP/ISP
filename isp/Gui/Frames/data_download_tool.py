@@ -5,7 +5,6 @@ Created on Sun Jun 21 00:39:39 2020
 @author: Cabieces & Olivar
 """
 
-# isp imports
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, CartopyCanvas, MessageDialog
 from isp.Gui.Frames.uis_frames import UiDataDownloadFrame
@@ -14,11 +13,9 @@ import os
 import obspy
 import obspy.clients.fdsn
 import obspy.taup
-from functools import partial
-
 from isp.Gui.Utils.pyqt_utils import convert_qdatetime_utcdatetime
 from isp.retrieve_events import retrieve
-
+from isp.Gui.Frames.help_frame import HelpDoc
 
 class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
     def __init__(self):
@@ -28,9 +25,10 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         self.network_list = []
         self.stations_list = []
         self.catalogBtn.clicked.connect(self.get_catalog)
-        self.pushButton_2.clicked.connect(self.download_events)
+        self.event_dataBtn.clicked.connect(self.download_events)
         self.plotstationsBtn.clicked.connect(self.stations)
-        self.pushButton_3.clicked.connect(partial(self.download_stationxml, "events"))
+        self.TimeBtn.clicked.connect(self.download_time_series)
+        self.MetadataBtn.clicked.connect(self.download_stations_xml)
         self.LoadBtn.clicked.connect(self.load_inventory)
         # Map
         self.cartopy_canvas = CartopyCanvas(self.map)
@@ -38,10 +36,13 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         self.cartopy_canvas.figure.subplots_adjust(left=0.00, bottom=0.055, right=0.97, top=0.920, wspace=0.0,
                                                    hspace=0.0)
         self.activated_colorbar = True
-        #self.pushButton_8.clicked.connect(partial(self.download_stationxml, "time_series"))
         self.cartopy_canvas.on_double_click(self.on_click_matplotlib)
         self.cartopy_canvas.mpl_connect('key_press_event', self.key_pressed)
         self.cartopy_canvas.mpl_connect('button_press_event', self.press_right)
+        self.actionOpen_Help.triggered.connect(lambda: self.open_help())
+        # help Documentation
+
+        self.help = HelpDoc()
 
     def get_catalog(self):
 
@@ -55,11 +56,9 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         maxmagnitude = self.max_magnitudeCB.value()
         mindepth = self.depth_minCB.value()
         maxdepth = self.depth_maxCB.value()
-        # catalog = self.client.get_events(starttime=starttime, endtime=endtime, minmagnitude= self.min_magnitudeCB.value(),
-        #          maxmagnitude = self.max_magnitudeCB.value(), mindepth = ,
-        #                                  )
-        catalog = self.client.get_events(starttime=starttime, endtime=endtime,
-                                         minmagnitude=minmagnitude, maxmagnitude = maxmagnitude)
+
+        catalog = self.client.get_events(starttime=starttime, endtime=endtime, mindepth = mindepth,
+                                         maxdepth = maxdepth, minmagnitude=minmagnitude, maxmagnitude = maxmagnitude)
 
         for event in catalog:
             otime = event.origins[0].time
@@ -102,6 +101,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                                        resolution = self.typeCB.currentText() )
 
         self.activated_colorbar = False
+        self.event_dataBtn.setEnabled(True)
         #obspy.clients.fdsn.client.Client
 
 
@@ -109,7 +109,6 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         starttime = convert_qdatetime_utcdatetime(self.start_dateTimeEdit)
         endtime = convert_qdatetime_utcdatetime(self.end_dateTimeEdit)
-
         selected_items = self.tableWidget.selectedItems()
         event_dict = {}
 
@@ -126,26 +125,24 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         # Get stations
 
-        #if self.FDSN_CB.isChecked():
-        #    url = self.URL_CB.currentText()
-        #    client = obspy.clients.fdsn.Client(url)
         networks = self.networksLE.text()
         stations = self.stationsLE.text()
         channels = self.channelsLE.text()
-        inventory = self.client.get_stations(network=networks, station=stations, starttime=starttime,
-                                            endtime=endtime)
 
-        # elif self.Earthworm_CB.isChecked():
-        #     ip_address = self.IP_LE.text()
-        #     port = self.portLE.text()
-        #     client = obspy.clients.earthworm.Client(ip_address, int(port))
-        #     networks = self.networksLE.text()
-        #     stations = self.stationsLE.text()
-        #     channels = self.channelsLE.text()
-        #     inventory = client.get_stations(network=networks, station=stations, starttime=starttime,
-        #                                     endtime=endtime)
+        if self.Earthworm_CB.isChecked():
+           ip_address = self.IP_LE.text()
+           port = self.portLE.text()
+           client_earthworm = obspy.clients.earthworm.Client(ip_address, int(port))
+           inventory = client_earthworm.get_stations(network=networks, station=stations, starttime=starttime,
+                                             endtime=endtime)
+        else:
+
+           inventory = self.client.get_stations(network=networks, station=stations, starttime=starttime,
+                                                      endtime=endtime)
+
         
         model = obspy.taup.TauPyModel(model="iasp91")
+
         for event in event_dict.keys():
             otime = obspy.UTCDateTime(event_dict[event]['otime'])
             evla = float(event_dict[event]['lat'])
@@ -159,8 +156,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                     stla = stn.latitude
                     stlo = stn.longitude
                     #stev = stn.elevation
-                     
-                     
+
                     # Distance, azimuth and back_azimuth for event:
                     m_dist, az, back_az = obspy.geodetics.base.gps2dist_azimuth(evla, evlo,
                                                                                 stla, stlo)
@@ -169,70 +165,63 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                                                    receiver_depth_in_km=0.0)
 
                     p_onset = otime + atime[0].time
-                    start = p_onset - self.doubleSpinBox_2.value()
-                    end = p_onset + self.doubleSpinBox_3.value()
+                    start = p_onset - self.timebeforeCB.value()
+                    end = p_onset + self.timeafterCB.value()
 
                     try:
-                        st = self.client.get_waveforms(ntwknm, stnm, "*", self.channelsLE.text(), start, end)
+
+                        st = self.client.get_waveforms(ntwknm, stnm, "*", channels, start, end)
                         print(st)
-                    except:
-                        continue
-                    try:
                         self.write(st)
                         md = MessageDialog(self)
                         md.set_info_message("Download completed")
+
                     except:
-                        pass
 
+                        md = MessageDialog(self)
+                        md.set_error_message("Couldn't download data")
 
-    def download_stationxml(self, tab):
+    def download_stations_xml(self):
+
         fname = QtWidgets.QFileDialog.getSaveFileName()[0]
+        starttime = convert_qdatetime_utcdatetime(self.start_dateTimeEdit)
+        endtime = convert_qdatetime_utcdatetime(self.end_dateTimeEdit)
+        networks = self.networksLE.text()
+        stations = self.stationsLE.text()
+        channels = self.channelsLE.text()
 
-        # if tab == "time_series":
-        #     # datetimeEdits
-        #     starttime = obspy.UTCDateTime(self.dateTimeEdit_3.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz000Z"))
-        #     endtime = obspy.UTCDateTime(self.dateTimeEdit_4.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz000Z"))
-        #     # checkboxes
-        #     fdsn_checkbox = self.checkBox_4
-        #     earthworm_checkbox = self.checkBox_5
-        #     # lineEdits
-        #     fdsn_url_line = self.lineEdit_7
-        #     earthworm_ip_line = self.lineEdit_9
-        #     earthworm_port_line = self.lineEdit_9
-        #     networks_line = self.lineEdit_12
-        #     stations_line = self.lineEdit_11
-        #     channels_line = self.lineEdit_10
-        #elif tab == "events":
+        inventory = self.client.get_stations(network=networks, station=stations, starttime=starttime,
+                                            endtime=endtime, level="response")
+        try:
+            print("Gettinf metadata from ", networks, stations, channels, starttime, endtime)
+            inventory.write(fname, format="STATIONXML")
+            md = MessageDialog(self)
+            md.set_info_message("Download completed")
+        except:
 
-        starttime = obspy.UTCDateTime(self.dateTimeEdit.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz000Z"))
-        endtime = obspy.UTCDateTime(self.dateTimeEdit_2.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz000Z"))
-        fdsn_checkbox = self.checkBox_3
-        earthworm_checkbox = self.checkBox_2
-        # lineEdits
-        fdsn_url_line = self.lineEdit_6
-        earthworm_ip_line = self.lineEdit_4
-        earthworm_port_line = self.lineEdit_5
-        networks_line = self.lineEdit
-        stations_line = self.lineEdit_2
-        channels_line = self.lineEdit_3
+            md = MessageDialog(self)
+            md.set_error_message("Metadata coudn't be downloaded")
 
-        networks = networks_line.text()
-        stations = stations_line.text()
+    def download_time_series(self):
 
-        if fdsn_checkbox.isChecked():
-            url = fdsn_url_line.text()
-            client = obspy.clients.fdsn.Client(url)
-        elif earthworm_checkbox.isChecked():
-            ip_address = self.lineEdit_4.text()
-            port = self.lineEdit_5.text()
-            client = obspy.clients.earthworm.Client(ip_address, int(port))
+        starttime = convert_qdatetime_utcdatetime(self.start_dateTimeEdit)
+        endtime = convert_qdatetime_utcdatetime(self.end_dateTimeEdit)
+        networks = self.networksLE.text()
+        stations = self.stationsLE.text()
+        channels = self.channelsLE.text()
 
-        inventory = client.get_stations(network=networks, station=stations, starttime=starttime,
-                                        endtime=endtime, level="response")
+        try:
 
-        inventory.write(fname, format="STATIONXML")
+            print("Gettinf data from ", networks, stations, channels, starttime, endtime)
+            st = self.client.get_waveforms(networks, stations, "*", channels, starttime, endtime)
+            print(st)
+
+        except:
+            md = MessageDialog(self)
+            md.set_info_message("Couldn't download time series")
 
     def write(self, st):
+
         root_path = os.path.dirname(os.path.abspath(__file__))
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         if dir_path:
@@ -245,6 +234,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                     print(tr.id, "Writing data processed")
                     path_output = os.path.join(dir_path, id)
                     tr.write(path_output, format="MSEED")
+
             except:
                     md = MessageDialog(self)
                     md.set_info_message("Nothing to write")
@@ -318,8 +308,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                         self.stations_list.remove(data[1])
                         self.stationsLE.setText(",".join(self.stations_list))
 
+    def open_help(self):
+        self.help.show()
 
-if __name__ == "__main__":
-    app = QtWidgets.QApplication([])
-    #window = DataDownloadTool()
-    app.exec_()
+
