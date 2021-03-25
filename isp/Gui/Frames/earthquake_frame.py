@@ -20,7 +20,7 @@ from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.settings_dialog import SettingsDialog
 from isp.Gui.Utils import map_polarity_from_pressed_key
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime, parallel_progress_run
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.arrayanalysis import array_analysis
@@ -36,6 +36,8 @@ from isp.seismogramInspector.signal_processing_advanced import spectrumelement, 
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
+    value_entropy_init = pyc.pyqtSignal(int)
+
     def __init__(self):
         super(EarthquakeAnalysisFrame, self).__init__()
         self.setupUi(self)
@@ -47,6 +49,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         except:
             print("Neural Network cannot be loaded")
 
+        self.cancelled = False
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('Neural Network Running')
         self.progressbar.setLabelText(" Computing Auto-Picking ")
@@ -117,7 +120,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRun_Event_Detector.triggered.connect(self.detect_events)
         self.actionOpen_Settings.triggered.connect(lambda : self.settings_dialog.show())
         self.actionStack.triggered.connect(lambda: self.stack_all_seismograms())
-        self.actionSpectral_Entropy.triggered.connect(lambda : self.spectral_entropy())
+        #self.actionSpectral_Entropy.triggered.connect(lambda : self.spectral_entropy())
+        self.actionSpectral_Entropy.triggered.connect(lambda: self.spectral_entropy_progress())
         self.actionRemove_all_selections.triggered.connect(lambda : self.clean_all_chop())
         self.actionClean_selection.triggered.connect(lambda : self.clean_chop_at_page())
         self.actionClean_Events_Detected.triggered.connect(lambda : self.clean_events_detected())
@@ -174,6 +178,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('W'), self)
         self.shortcut_open.activated.connect(self.plot_seismogram)
+
+    def cancelled_callback(self):
+        self.cancelled = True
+
 
     def open_help(self):
         self.help.show()
@@ -774,19 +782,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.cf = Stream(traces=cfs)
 
-    @AsycTime.run_async()
     def spectral_entropy(self):
+
         params = self.settings_dialog.getParameters()
         win = params["win_entropy"]
 
         self.cf = []
         cfs = []
         files_at_page = self.get_files_at_page()
+
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         for index, file_path in enumerate(files_at_page):
+            if self.cancelled:
+                return
+
             tr = self.st[index]
             t = tr.times("matplotlib")
 
@@ -809,6 +821,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             tr_cf.data = cf
             tr_cf.times = t_entropy
             cfs.append(tr_cf)
+            # TODO: hay que checkear el rango de valores. No son len(self.st), sino que viene de self.get_files_at_page()
+            # Habria que comprobar si el rango va de 0 a n, o si es de x a n, siendo x > 0. Al final, hay que pasarle
+            # al dialogo el rango correcto y que este entre 0 y n, para que el porcentaje se haga bien.
+            # si el index inicial no es 0, habria que restarselo para desplazarlo hasta el 0. En el ultimo envio de esta
+            # signal tiene que enviarse el valor marcado como maximo para que el dialogo se cierre y continue la ejecucion
+            self.value_entropy_init.emit(index + 1)
         ax = self.canvas.get_axe(last_index)
         try:
             if self.trimCB.isChecked():
@@ -1351,7 +1369,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
         if os.path.isdir(dir_path):
             try:
+
                 MseedUtil.data_availability(dir_path)
+
             except:
                 md = MessageDialog(self)
                 md.set_warning_message("No data available")
@@ -1449,3 +1469,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def controller(self):
         from isp.Gui.controllers import Controller
         return Controller()
+
+    ######### Progress Bar #############
+
+    def spectral_entropy_progress(self):
+        self.cancelled = False
+        parallel_progress_run("Current progress: ", 0, len(self.st), self,
+                              self.spectral_entropy, self.cancelled_callback,
+                              signalValue= self.value_entropy_init)
+
+
+    # señal = pyc.pyQtSignal()
+    #def spectral_entropy_progress(self):
+        #def cancelled_callback(self):
+        #    self.cancelled = True
+    #    self.cancelled = False
+    #    parallel_progress_run("Current progress: ", 0, 0, self,
+    #                          "metodo", self.cancelled_callback,
+    #                          signalExit= self.señal)
+
+

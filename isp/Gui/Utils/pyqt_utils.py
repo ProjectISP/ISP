@@ -1,11 +1,9 @@
 import os
 from contextlib import suppress
 from datetime import datetime
-
-
+from concurrent.futures.thread import ThreadPoolExecutor
 from PyQt5 import uic
 from obspy import UTCDateTime
-
 from isp import UIS_PATH
 from isp.Gui import pyc, pw, user_preferences, pqg
 
@@ -136,6 +134,23 @@ def convert_qdatetime_utcdatetime(q_datetime_edit: pw.QDateTimeEdit):
     py_time = q_datetime_edit.dateTime().toPyDateTime()
     return UTCDateTime(py_time)
 
+def parallel_progress_run(text, min_val, max_val, parent, callback, cancel_callback=None, **kwargs):
+    pgbar = pw.QProgressDialog(text, "Cancel", min_val, max_val, parent)
+    pgbar.setValue(min_val)
+    if (min_val == 0 and max_val == 0 and 'signalExit' in kwargs
+            and hasattr(kwargs['signalExit'], 'connect')):
+        kwargs['signalExit'].connect(pgbar.accept)
+    elif ('signalValue' in kwargs and
+          hasattr(kwargs['signalValue'], 'connect')):
+        kwargs['signalValue'].connect(pgbar.setValue)
+    else:
+        raise Exception
+    with ThreadPoolExecutor(1) as executor:
+        f = executor.submit(callback)
+        pgbar.exec()
+        f.cancel()
+        if cancel_callback is not None:
+            cancel_callback()
 
 class BindPyqtObject(pyc.QObject):
     """
@@ -241,3 +256,4 @@ class BindPyqtObject(pyc.QObject):
         :return:
         """
         self.pyqt_obj.setVisible(is_visible)
+
