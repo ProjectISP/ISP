@@ -212,7 +212,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="newGuiButton">
+            <widget class="QPushButton" name="realTimeButton">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -226,7 +226,7 @@
               </size>
              </property>
              <property name="text">
-              <string>New GUI</string>
+              <string>Real Time </string>
              </property>
             </widget>
            </item>
