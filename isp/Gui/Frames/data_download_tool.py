@@ -40,9 +40,21 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         self.cartopy_canvas.mpl_connect('key_press_event', self.key_pressed)
         self.cartopy_canvas.mpl_connect('button_press_event', self.press_right)
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
+        # signal doubleclick
+        self.tableWidget.cellDoubleClicked.connect(self.get_coordinates)
+
         # help Documentation
 
         self.help = HelpDoc()
+
+
+    def get_coordinates(self, row, column):
+        lat = self.tableWidget.item(row,1).data(0)
+        lon = self.tableWidget.item(row, 2).data(0)
+        lat30, lon30, lat90, lon90  = retrieve.get_circle(lat,lon)
+        print(lat30, lon30, lat90, lon90)
+        self.cartopy_canvas.plot(lon30,lat30,axes_index = 0, color='white', linestyle='--')
+        self.cartopy_canvas.plot(lon90, lat90,axes_index = 0, color='white', linestyle='--')
 
     def get_catalog(self):
 

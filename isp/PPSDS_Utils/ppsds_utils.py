@@ -57,9 +57,9 @@ class ppsdsISP(pyc.QObject):
         data_map['nets'] = {}
         size = 0
 
-        for i in obsfiles:
+        for paths in obsfiles:
 
-            paths = os.path.join(self.files_path, i)
+            #paths = os.path.join(self.files_path, i)
             if _is_mseed(paths):
 
                 header = read(paths, headlonly=True)
@@ -192,9 +192,9 @@ class ppsdsISP(pyc.QObject):
         obsfiles.sort()
 
         size = 0
-        for i in obsfiles:
+        for paths in obsfiles:
 
-            paths = os.path.join(self.files_path, i)
+            #paths = os.path.join(self.files_path, i)
             if _is_mseed(paths):
 
                 header = read(paths, headlonly=True)

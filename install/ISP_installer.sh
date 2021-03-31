@@ -28,7 +28,7 @@ conda install -c anaconda hdf5 h5py graphviz pydot
 conda install -c conda-forge obspy
 conda install -c anaconda keras=2.3.1
 conda install tensorflow=2.0.0
-conda install -c conda-forge owslib Cython deprecated pandas cartopy pywavelets dill numba mtspec nitime pillow
+conda install -c conda-forge owslib Cython deprecated pandas cartopy pywavelets dill mtspec nitime pillow
 
 # Install Qt
 #conda install -c conda-forge pyqt pyqtwebengine

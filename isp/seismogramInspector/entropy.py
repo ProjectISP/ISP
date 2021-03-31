@@ -1,10 +1,7 @@
 import numpy as np
-# from numba import jit
 from scipy.signal import periodogram, welch
-# import numba
 
 
-#@numba.jit(nopython=True, parallel=True)
 def spectral_entropy(x, sf, method='fft', nperseg=None, normalize=False):
     """
 

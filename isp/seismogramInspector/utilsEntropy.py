@@ -7,8 +7,6 @@ Created on Sun Sep  1 23:22:07 2019
 """
 
 import numpy as np
-#from numba import jit
-from math import log, floor
 
 all = ['_embed', '_linear_regression', '_log_n']
 
