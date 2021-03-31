@@ -34,6 +34,7 @@ conda install -c conda-forge owslib Cython deprecated pandas cartopy pywavelets 
 #conda install -c conda-forge pyqt pyqtwebengine
 
 # second option with pip
+pip install nvector
 pip install PyQt5 PyQtWebEngine
 
 # Compile packages
