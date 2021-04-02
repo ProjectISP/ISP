@@ -130,7 +130,6 @@ class retrieve:
     def get_circle(lat1,lon1):
         lat1 = float(lat1)
         lon1 = float(lon1)
-        print(lat1,lon1)
         lat30 = []
         lon30 = []
         lat90 = []
@@ -138,12 +137,13 @@ class retrieve:
 
         frame = nv.FrameE(a=6371e3)
         pointA = frame.GeoPoint(latitude=lat1, longitude=lon1, degrees=True)
+
         for az in range(360):
 
-            pointB, _azimuthb = pointA.displace(distance=30, azimuth=az, degrees=True)
-            pointC, _azimuthC = pointA.displace(distance=30, azimuth=az, degrees=True)
+            pointB, _azimuthb = pointA.displace(distance=30*112000, azimuth=az, degrees=True)
+            pointC, _azimuthC = pointA.displace(distance=90*112000, azimuth=az, degrees=True)
             lat2, lon2 = pointB.latitude_deg, pointB.longitude_deg
-            lat3, lon3 = pointB.latitude_deg, pointB.longitude_deg
+            lat3, lon3 = pointC.latitude_deg, pointC.longitude_deg
 
             lat30.append(lat2)
             lat90.append(lat3)

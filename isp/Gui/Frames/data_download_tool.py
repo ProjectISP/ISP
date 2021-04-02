@@ -52,9 +52,17 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         lat = self.tableWidget.item(row,1).data(0)
         lon = self.tableWidget.item(row, 2).data(0)
         lat30, lon30, lat90, lon90  = retrieve.get_circle(lat,lon)
-        print(lat30, lon30, lat90, lon90)
-        self.cartopy_canvas.plot(lon30,lat30,axes_index = 0, color='white', linestyle='--')
-        self.cartopy_canvas.plot(lon90, lat90,axes_index = 0, color='white', linestyle='--')
+        #self.cartopy_canvas.global_map(0, clear_plot = False, show_distance_circles = True, lon30 = lon30, lat30 = lat30,
+        #                               lon90 = lon90, lat90 = lat90)
+
+        ax = self.cartopy_canvas.get_axe(0)
+        self.line1 = ax.scatter(lon30, lat30, s=8, c="white")
+        self.line2 = ax.scatter(lon90, lat90, s=8, c="white")
+
+
+
+
+
 
     def get_catalog(self):
 
@@ -110,7 +118,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         # plot earthquakes
         self.cartopy_canvas.global_map(0, plot_earthquakes= True, show_colorbar = self.activated_colorbar,
                                        lat=latitudes, lon=longitudes, depth=depths, magnitude = magnitudes,
-                                       resolution = self.typeCB.currentText() )
+                                       resolution = self.typeCB.currentText())
 
         self.activated_colorbar = False
         self.event_dataBtn.setEnabled(True)

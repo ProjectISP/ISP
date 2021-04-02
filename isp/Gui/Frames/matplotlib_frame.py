@@ -991,7 +991,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         self.draw()
 
     def global_map(self, axes_index, plot_earthquakes = False, show_colorbar = False, clear_plot = True,
-                   show_stations = False, show_station_names = False, **kwargs):
+                   show_stations = False, show_station_names = False, show_distance_circles = False,  **kwargs):
         import numpy as np
         from isp import ROOT_DIR
         import os
@@ -1003,7 +1003,12 @@ class CartopyCanvas(BasePltPyqtCanvas):
         mag = kwargs.pop('magnitude', [])
         coordinates = kwargs.pop('coordinates', [])
         resolution = kwargs.pop('resolution', 'high')
-
+        lon30 = kwargs.pop('lon30', [])
+        lat30 = kwargs.pop('lat30', [])
+        lon90 = kwargs.pop('lon90', [])
+        lat90 = kwargs.pop('lat90', [])
+        #line1 = []
+        #line2 = []
         if resolution == "Natural Earth":
 
             resolution = "low"
@@ -1060,6 +1065,22 @@ class CartopyCanvas(BasePltPyqtCanvas):
                 self.__cbar.ax.set_ylabel("Depth [km]")
                 # magnitude legend
 
+        if show_distance_circles:
+           #if len(line1)>0 and len(line2)>0:
+           try:
+               l1 = line1.pop(0)
+               l2 = line2.pop(0)
+               l1.remove()
+               l2.remove()
+               del l1
+               del l2
+
+           except:
+                pass
+
+           line1 =  ax.scatter(lon30, lat30, s=8, c="white")
+           line2 =  ax.scatter(lon90, lat90, s=8, c="white")
+            #ax.plot(lon30, lat30, color='white', linestyle='--',transform=ccrs.PlateCarree())
 
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
