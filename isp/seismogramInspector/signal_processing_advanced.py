@@ -6,7 +6,6 @@ Created on Tue Jul  9 18:15:16 2019
 @author: robertocabieces
 """
 from signal import signal
-
 from mtspec import mtspec
 import numpy as np
 import math
@@ -16,6 +15,7 @@ from isp.seismogramInspector.entropy import spectral_entropy
 import copy
 from obspy.signal.trigger import classic_sta_lta
 import obspy.signal
+
 def find_nearest(array, value):
     idx,val = min(enumerate(array), key=lambda x: abs(x[1]-value))
     return idx,val
@@ -425,70 +425,80 @@ def normalize(tr, clip_factor=6, clip_weight=10, norm_win=None, norm_method="1bi
 
 # Denoise Section
 
-def denoise(tr, type='mean', k=4, fwhm=1):
+def smoothing(tr, type='gaussian', k=5, fwhm=0.05):
     # k window size in seconds
 
     n = len(tr.data)
+
     if type == 'mean':
-        k = k/tr.stats.sampling_rate
+        k = int(k * tr.stats.sampling_rate)
 
         # initialize filtered signal vector
         filtsig = np.zeros(n)
         for i in range(k, n - k - 1):
             # each point is the average of k surrounding points
-            filtsig[i] = np.mean(signal[i - k:i + k])
+            # print(i - k,i + k)
+            filtsig[i] = np.mean(tr.data[i - k:i + k])
+
         tr.data = filtsig
 
     if type == 'gaussian':
         ## create Gaussian kernel
         # full-width half-maximum: the key Gaussian parameter in seconds
         # normalized time vector in seconds
+        k = int(k * tr.stats.sampling_rate)
+        fwhm = int(fwhm * tr.stats.sampling_rate)
         gtime = np.arange(-k, k)
         # create Gaussian window
         gauswin = np.exp(-(4 * np.log(2) * gtime ** 2) / fwhm ** 2)
         # compute empirical FWHM
+
         pstPeakHalf = k + np.argmin((gauswin[k:] - .5) ** 2)
         prePeakHalf = np.argmin((gauswin - .5) ** 2)
-        empFWHM = gtime[pstPeakHalf] - gtime[prePeakHalf]
+        # empFWHM = gtime[pstPeakHalf] - gtime[prePeakHalf]
+        # show the Gaussian
+        # plt.plot(gtime/tr.stats.sampling_rate,gauswin)
+        # plt.plot([gtime[prePeakHalf],gtime[pstPeakHalf]],[gauswin[prePeakHalf],gauswin[pstPeakHalf]],'m')
         # then normalize Gaussian to unit energy
         gauswin = gauswin / np.sum(gauswin)
         # implement the filter
         # initialize filtered signal vector
-        filtsigG = copy.deepcopy(signal)
+        filtsigG = copy.deepcopy(tr.data)
         # implement the running mean filter
         for i in range(k + 1, n - k - 1):
             # each point is the weighted average of k surrounding points
-            filtsigG[i] = np.sum(signal[i - k:i + k] * gauswin)
+            filtsigG[i] = np.sum(tr.data[i - k:i + k] * gauswin)
+
         tr.data = filtsigG
 
     if type == 'tkeo':
-
         # extract needed variables
-        emgtime = tr.times()
+
         emg = tr.data
 
         # initialize filtered signal
         emgf = copy.deepcopy(emg)
 
         # the loop version for interpretability
-        for i in range(1, len(emgf) - 1):
-            emgf[i] = emg[i] ** 2 - emg[i - 1] * emg[i + 1]
+        # for i in range(1, len(emgf) - 1):
+        #    emgf[i] = emg[i] ** 2 - emg[i - 1] * emg[i + 1]
 
         # the vectorized version for speed and elegance
-        emgf2 = copy.deepcopy(emg)
-        emgf2[1:-1] = emg[1:-1] ** 2 - emg[0:-2] * emg[2:]
+
+        emgf[1:-1] = emg[1:-1] ** 2 - emg[0:-2] * emg[2:]
 
         ## convert both signals to zscore
 
         # find timepoint zero
-        time0 = np.argmin(emgtime ** 2)
+        # time0 = np.argmin(emgtime ** 2)
 
         # convert original EMG to z-score from time-zero
-        emgZ = (emg - np.mean(emg[0:time0])) / np.std(emg[0:time0])
+        # emgZ = (emg - np.mean(emg[0:time0])) / np.std(emg[0:time0])
 
         # same for filtered EMG energy
-        emgZf = (emgf - np.mean(emgf[0:time0])) / np.std(emgf[0:time0])
-        tr.data = emgZf
+        # emgZf = (emgf - np.mean(emgf[0:time0])) / np.std(emgf[0:time0])
+        # tr.data = emgZf
+        tr.data = emgf
 
     return tr
 

@@ -2,7 +2,6 @@ from isp.Gui import pw
 from isp.Gui.Frames.add_parameters import AdditionalParameters
 from isp.Gui.Frames.uis_frames import UiParametersFrame
 from isp import MACROS_PATH
-import copy
 import enum
 import pickle
 
@@ -22,6 +21,7 @@ class ActionEnum (enum.Enum):
     WHITENING = "whitening"
     TNOR = "time normalization"
     WAVELET_DENOISE = "wavelet denoise"
+    SMOOTHING = "smoothing"
 
     def __str__(self):
         return str(self.value)
@@ -153,7 +153,6 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             param_layout.addWidget(spin_param)
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2,  param_widget)
 
-        # TODO: control there is only one shift or use differente Additional PArameters widget
         elif action is ActionEnum.SHIFT:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.SHIFT.value))
@@ -418,6 +417,38 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             param_layout.addWidget(combo_param)
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
+        elif action is ActionEnum.SMOOTHING:
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1,
+                                     pw.QTableWidgetItem(ActionEnum.SMOOTHING.value))
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+            method_label = pw.QLabel("method")
+            combo_param = pw.QComboBox()
+            combo_param.addItems(['mean', 'gaussian', 'tkeo'])
+            k_label = pw.QLabel("k value")
+
+            k_value = pw.QDoubleSpinBox()
+            k_value.setMinimum(0.0)
+            k_value.setSingleStep(0.1)
+            fwhm_label = pw.QLabel("fwhm [s]")
+            param_layout.addWidget(k_label)
+            fwhm = pw.QDoubleSpinBox()
+            fwhm.setMinimum(0.00)
+            fwhm.setSingleStep(0.01)
+
+            if len(params) > 0:
+                combo_param.setCurrentText(params[0])
+                k_value.setValue(params[1])
+                fwhm.setValue(params[2])
+
+            param_layout.addWidget(method_label)
+            param_layout.addWidget(combo_param)
+            param_layout.addWidget(k_label)
+            param_layout.addWidget(k_value)
+            param_layout.addWidget(fwhm_label)
+            param_layout.addWidget(fwhm)
+
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
     def removeRow(self, order_widget):
         current_row = self.orderWidgetsList.index(order_widget)
@@ -553,5 +584,11 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             elif (action == ActionEnum.FILL_GAPS.value):
                  combo_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().currentText()
                  parameters.append([action, combo_value1])
+
+            elif (action == ActionEnum.SMOOTHING.value):
+                 combo_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().currentText()
+                 spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(3).widget().value()
+                 spin_value2 = self.tableWidget.cellWidget(i, 2).layout().itemAt(5).widget().value()
+                 parameters.append([action, combo_value1, spin_value1, spin_value2])
 
         return parameters

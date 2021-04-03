@@ -821,12 +821,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             tr_cf.data = cf
             tr_cf.times = t_entropy
             cfs.append(tr_cf)
-            # TODO: hay que checkear el rango de valores. No son len(self.st), sino que viene de self.get_files_at_page()
-            # Habria que comprobar si el rango va de 0 a n, o si es de x a n, siendo x > 0. Al final, hay que pasarle
-            # al dialogo el rango correcto y que este entre 0 y n, para que el porcentaje se haga bien.
-            # si el index inicial no es 0, habria que restarselo para desplazarlo hasta el 0. En el ultimo envio de esta
-            # signal tiene que enviarse el valor marcado como maximo para que el dialogo se cierre y continue la ejecucion
             self.value_entropy_init.emit(index + 1)
+
         ax = self.canvas.get_axe(last_index)
         try:
             if self.trimCB.isChecked():

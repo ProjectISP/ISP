@@ -5,8 +5,8 @@ from obspy.taup import TauPyModel
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, Filters
 import numpy as np
-from isp.DataProcessing.dataless_manager import DatalessManager
-from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise
+from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise, \
+    smoothing
 
 
 @unique
@@ -104,9 +104,6 @@ class SeismogramDataAdvanced:
 
             self.__tracer = self.st[0]
             self.stats = TracerStats.from_dict(self.tracer.stats)
-
-
-
 
 
     @classmethod
@@ -230,9 +227,14 @@ class SeismogramDataAdvanced:
 
             if parameters[j][0] == 'resample':
                 tr.resample(sampling_rate=parameters[j][1],window='hanning',no_filter=parameters[j][2])
+
             if parameters[j][0] == 'fill gaps':
                 st = Stream(tr)
                 st.merge(fill_value=parameters[j][1])
                 tr = st[0]
+
+            if parameters[j][0] == 'smoothing':
+
+                tr = smoothing(tr, type=parameters[j][1], k=parameters[j][2], fwhm=parameters[j][3])
 
         return tr
