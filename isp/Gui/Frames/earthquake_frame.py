@@ -417,6 +417,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         min_starttime = []
         max_endtime = []
         parameters = self.parameters.getParameters()
+
         for index, file_path in enumerate(files_at_page):
 
             sd = SeismogramDataAdvanced(file_path)

@@ -6,7 +6,7 @@ from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, Filters
 import numpy as np
 from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise, \
-    smoothing
+    smoothing, wiener_filter
 
 
 @unique
@@ -172,6 +172,14 @@ class SeismogramDataAdvanced:
                                                           "smaller than Upper frequency {}".format(f_min, f_max))
                 except ValueError as e:
                     self.__send_filter_error_callback(filter_error_callback, str(e))
+
+            if parameters[j][0] == "wiener filter":
+                print("applying wiener filter")
+                time_window = parameters[j][1]
+                noise_power = parameters[j][2]
+                print(time_window,noise_power)
+                tr = wiener_filter(tr, time_window=time_window,noise_power=noise_power)
+
 
             if parameters[j][0] == 'shift':
                 shifts = parameters[j][1]

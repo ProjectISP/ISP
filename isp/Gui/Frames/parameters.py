@@ -11,6 +11,7 @@ class ActionEnum (enum.Enum):
     TAPER = "taper"
     NORMALIZE = "normalize"
     FILTER = "filter"
+    WIENER = "wiener filter"
     RESAMPLE = "resample"
     FILL_GAPS = "fill gaps"
     DIFFERENTIATE = "differentiate"
@@ -425,12 +426,12 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             method_label = pw.QLabel("method")
             combo_param = pw.QComboBox()
             combo_param.addItems(['mean', 'gaussian', 'tkeo'])
-            k_label = pw.QLabel("k value")
+            k_label = pw.QLabel("Time window [s]")
 
             k_value = pw.QDoubleSpinBox()
             k_value.setMinimum(0.0)
             k_value.setSingleStep(0.1)
-            fwhm_label = pw.QLabel("fwhm [s]")
+            fwhm_label = pw.QLabel("FWHM [s]")
             param_layout.addWidget(k_label)
             fwhm = pw.QDoubleSpinBox()
             fwhm.setMinimum(0.00)
@@ -447,6 +448,35 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             param_layout.addWidget(k_value)
             param_layout.addWidget(fwhm_label)
             param_layout.addWidget(fwhm)
+
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
+
+        elif action is ActionEnum.WIENER:
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1,
+                                     pw.QTableWidgetItem(ActionEnum.WIENER.value))
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+
+            time_window_label = pw.QLabel("Time window [s]")
+
+            time_window = pw.QDoubleSpinBox()
+            time_window.setMinimum(0.0)
+            time_window.setSingleStep(0.1)
+            noise_label = pw.QLabel("Noise power [number of std]")
+            param_layout.addWidget(time_window_label)
+            noise = pw.QSpinBox()
+            noise.setMinimum(0)
+            noise.setSingleStep(1)
+
+            if len(params) > 0:
+
+                time_window.setValue(params[1])
+                noise.setValue(params[2])
+
+            param_layout.addWidget(time_window_label)
+            param_layout.addWidget(time_window)
+            param_layout.addWidget(noise_label)
+            param_layout.addWidget(noise)
 
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
@@ -539,6 +569,11 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
                 check_box = self.tableWidget.cellWidget(i, 2).layout().itemAt(5).widget().isChecked()
                 spin_value3 = self.tableWidget.cellWidget(i, 2).layout().itemAt(7).widget().value()
                 parameters.append([action, combo_value1, spin_value1, spin_value2, check_box, spin_value3])
+
+            elif (action == ActionEnum.WIENER.value):
+                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
+                spin_value2 = self.tableWidget.cellWidget(i, 2).layout().itemAt(3).widget().value()
+                parameters.append([action, spin_value1, spin_value2])
 
             elif (action == ActionEnum.REMOVE_RESPONSE.value):
                 spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()

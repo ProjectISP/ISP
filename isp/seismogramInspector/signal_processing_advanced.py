@@ -516,4 +516,32 @@ def wavelet_denoise(tr, threshold = 0.04, dwt = 'sym4' ):
     tr.data = datarec
     return tr
 
+def wiener_filter(tr, time_window, noise_power):
+    data = tr.data
 
+
+    if time_window == 0 and noise_power == 0:
+
+       denoise = scipy.signal.wiener(data, mysize=None, noise=None)
+       tr.data = denoise
+
+    elif time_window!= 0 and noise_power == 0:
+
+        denoise = scipy.signal.wiener(data, mysize= int(time_window*tr.stats.sampling_rate), noise=None)
+        tr.data = denoise
+
+    elif time_window == 0 and noise_power !=0:
+
+         noise = noise_power * np.std(data)
+         noise = int(noise)
+         denoise = scipy.signal.wiener(data, mysize=None, noise=noise)
+         tr.data = denoise
+
+    elif time_window != 0 and noise_power != 0:
+
+         noise = noise_power * np.std(data)
+         noise = int(noise)
+         denoise = scipy.signal.wiener(data, mysize=int(time_window * tr.stats.sampling_rate), noise=noise)
+         tr.data = denoise
+
+    return tr
