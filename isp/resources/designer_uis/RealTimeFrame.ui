@@ -62,19 +62,6 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="0" rowspan="2" colspan="5">
-       <widget class="QPushButton" name="updateBtn">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Process and Plot</string>
-        </property>
-       </widget>
-      </item>
       <item row="3" column="0">
        <widget class="QLineEdit" name="netForm">
         <property name="sizePolicy">
@@ -85,6 +72,13 @@
         </property>
        </widget>
       </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Output Path</string>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="0" colspan="2">
        <widget class="QPushButton" name="stations_infoBtn">
         <property name="text">
@@ -92,7 +86,47 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="0" colspan="4">
+      <item row="6" column="3" colspan="2">
+       <widget class="QSpinBox" name="timewindowSB">
+        <property name="minimum">
+         <number>5</number>
+        </property>
+        <property name="maximum">
+         <number>30</number>
+        </property>
+        <property name="singleStep">
+         <number>5</number>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="2">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Time Window (min)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Server Address</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2" colspan="3">
+       <widget class="QLineEdit" name="channelForm"/>
+      </item>
+      <item row="6" column="1">
+       <widget class="QSpinBox" name="numTracesCB"/>
+      </item>
+      <item row="5" column="0">
+       <widget class="QPushButton" name="stopBtn">
+        <property name="text">
+         <string>Stop</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0" colspan="4">
        <widget class="QWidget" name="pagination_widget" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Maximum" vsizetype="MinimumExpanding">
@@ -134,19 +168,36 @@
         </layout>
        </widget>
       </item>
-      <item row="3" column="2" colspan="3">
-       <widget class="QLineEdit" name="channelForm"/>
+      <item row="6" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Max Num Traces</string>
+        </property>
+       </widget>
       </item>
-      <item row="2" column="2" colspan="3">
-       <widget class="QLabel" name="label_6">
+      <item row="8" column="0" colspan="5">
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="5" column="1" colspan="4">
+       <widget class="QPushButton" name="RetrieveBtn">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="text">
-         <string>Channel</string>
+         <string>Retrieve Data</string>
         </property>
        </widget>
       </item>
@@ -162,6 +213,22 @@
          <string>Station</string>
         </property>
        </widget>
+      </item>
+      <item row="2" column="2" colspan="3">
+       <widget class="QLabel" name="label_6">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Channel</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1" colspan="4">
+       <widget class="QLineEdit" name="serverAddressForm"/>
       </item>
       <item row="3" column="1">
        <widget class="QLineEdit" name="stationForm">
@@ -180,18 +247,15 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="0" colspan="5">
-       <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
+      <item row="7" column="2" colspan="3">
+       <widget class="QLineEdit" name="outputPathLE"/>
+      </item>
+      <item row="7" column="1">
+       <widget class="QCheckBox" name="saveDataCB">
+        <property name="text">
+         <string>Save Data</string>
         </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
+       </widget>
       </item>
      </layout>
     </item>
@@ -208,8 +272,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1214</width>
-         <height>825</height>
+         <width>1180</width>
+         <height>813</height>
         </rect>
        </property>
       </widget>
@@ -223,7 +287,7 @@
      <x>0</x>
      <y>0</y>
      <width>1680</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
