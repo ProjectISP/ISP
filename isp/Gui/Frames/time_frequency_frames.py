@@ -1,4 +1,4 @@
-import os
+
 import math
 from matplotlib.colors import Normalize
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
@@ -10,7 +10,7 @@ from isp.Gui.Frames import BaseFrame, UiTimeFrequencyFrame, FilesView, \
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.time_frequency_advance_frame import TimeFrequencyAdvance
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime, set_qdatetime
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.seismogramInspector.MTspectrogram import MTspectrogram, WignerVille
 import matplotlib.pyplot as plt
@@ -40,6 +40,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
        # self.canvas_plot2.set_ylabel(0, "Amplitude ")
        # self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
         # Binding
+        self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
+        self.canvas_plot2.mpl_connect('key_press_event', self.key_pressed)
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
@@ -357,6 +359,44 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
         else:
             pass
+
+    def key_pressed(self, event):
+        selection = self.selectCB.currentText()
+
+        if event.key == 'w':
+            self.plot_seismogram()
+
+        if event.key == 'q':
+            if selection == "Seismogram 1":
+                [tr, t] = self.get_data()
+                x1, y1 = event.xdata, event.ydata
+                tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.starttime_date)
+                self.canvas_plot1.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
+            elif selection == "Seismogram 2":
+                [tr, t] = self.get_data()
+                x1, y1 = event.xdata, event.ydata
+                tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.starttime_date)
+                self.canvas_plot2.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
+
+        if event.key == 'e':
+
+            if selection == "Seismogram 1":
+                [tr, t] = self.get_data()
+                x1, y1 = event.xdata, event.ydata
+                tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.endtime_date)
+                self.canvas_plot1.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--',
+                                              picker=False)
+            elif selection == "Seismogram 2":
+                [tr, t] = self.get_data()
+                x1, y1 = event.xdata, event.ydata
+                tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.endtime_date)
+                self.canvas_plot2.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--',
+                                              picker=False)
+
 
     def open_help(self):
         self.help.show()
