@@ -3,11 +3,29 @@
 Created on Fri Apr  3 14:45:54 2020
 
 @author: olivar
+
+Rfun, a toolbox for the analysis of teleseismic receiver functions
+Copyright (C) 2020-2021 Andrés Olivar-Castaño
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+For questions, bug reports, or to suggest new features, please contact me at
+olivar.ac@gmail.com.
 """
 
 # isp imports
 from isp.Gui.Frames import BaseFrame
-from isp.Gui import pyqt, pqg, pw, pyc, qt
 import isp.receiverfunctions.rf_dialogs as dialogs
 import isp.receiverfunctions.rf_main_window_utils as mwu
 from isp.Gui.Frames.uis_frames import UiReceiverFunctions
@@ -16,27 +34,19 @@ from isp.Gui.Frames.help_frame import HelpDoc
 import io
 import os
 import math
-import obspy
-import copy
 import pickle
-import pathlib
-import cartopy
 import cartopy.crs as ccrs
 from cartopy.io.img_tiles import Stamen
-from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import numpy as np
 from functools import partial
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import matplotlib.gridspec as gridspec
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.backend_bases
 import matplotlib.patches as mpatches
 from owslib.wms import WebMapService
-from PyQt5 import uic, QtGui, QtCore, QtWidgets
-
-
+from PyQt5 import QtWidgets
 
 class RecfFrame(BaseFrame, UiReceiverFunctions):
     
@@ -80,17 +90,14 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         # Connect GUI elements
         self.connect_rf_analysis_gui_elements()
         self.connect_ccp_stack_gui_elements()
-        self.actionOpen_Help.triggered.connect(lambda: self.open_help())
-
-        # help Documentation
-        self.help = HelpDoc()
-
+    
     def connect_rf_analysis_gui_elements(self):
         # Menu actions
         self.actionRead_waveforms.triggered.connect(self.read_waveforms)
         self.actionRead_metadata.triggered.connect(self.read_metadata)
         self.actionCompute_source_functions.triggered.connect(self.compute_srcfs)
         self.actionCut_earthquakes_from_raw_data.triggered.connect(self.cut_earthquakes_dialog)
+        self.actionAbout_2.triggered.connect(self.about_dialog)
         # Pushbuttons
         self.pushButton.clicked.connect(self.compute_rfs)
         self.pushButton_2.clicked.connect(self.save_rfs)
@@ -248,7 +255,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             self.mplwidget.figure.axes[i].fill_between(t, rf, color='black',
                                                        linewidth=0.5)            
             self.mplwidget.figure.axes[i].fill_between(t, np.zeros(len(t)),
-                                                       rf, where=(rf > 0), color='darkblue')
+                                                       rf, where=(rf > 0), color='black')
             self.mplwidget.figure.axes[i].fill_between(t, np.zeros(len(t)),
                                                        rf, where=(rf < 0), color='red')
             
@@ -361,7 +368,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         stack, bin_stacks, bins, ymin, ymax = mwu.compute_stack(self.rfs, bin_size=self.spinBox.value(),
                                                                   overlap=self.spinBox_2.value(),
                                                                   stack_by=self.comboBox_2.currentText(),
-                                                                  moveout_correction=self.comboBox_4.currentText())
+                                                                  moveout_phase=self.comboBox_4.currentText())
         self.setup_rf_stack_axes()
         
         t = self.rfs[0][1]
@@ -369,7 +376,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.mplwidget_2.figure.axes[0].plot(t, stack, color='black', linewidth=0.5)
         self.mplwidget_2.figure.axes[0].fill_between(t, 0, stack,
                                                      where=(stack > 0),
-                                                     color='darkblue')
+                                                     color='black')
         self.mplwidget_2.figure.axes[0].fill_between(t, 0, stack,
                                                      where=(stack < 0),
                                                      color='red')
@@ -380,7 +387,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             self.mplwidget_2.figure.axes[1].plot(t, bstack, color='black', linewidth=0.5, zorder=zorder)
             self.mplwidget_2.figure.axes[1].fill_between(t, height, bstack,
                                                          where=(bstack > b),
-                                                         color='darkblue', zorder=zorder)
+                                                         color='black', zorder=zorder)
             self.mplwidget_2.figure.axes[1].fill_between(t, height, bstack,
                                                          where=(bstack < b),
                                                          color='red', zorder=zorder)
@@ -453,7 +460,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.Ps, self.PpPs, self.PpSs_PsPs = mwu.compute_theoretical_arrival_times(H, k)
 
         N_stacked = len([rf for rf in self.rfs if rf[5]]) # NOT VERY EFFICIENT! JUST TESTING
-        a, error_area, k_95, H_95, error_contour_level = mwu.determine_error_region(matrix, H_arr, k_arr, N_stacked)     
+        a, error_area, k_95, H_95, error_contour_level = mwu.determine_error_region(matrix, H_arr, k_arr, N_stacked)
 
         self.hk_result = {"H_arr":H_arr,
                           "k_arr":k_arr,
@@ -465,7 +472,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
                           "k_95":k_95}
 
         self.setup_hk_stack_axes()        
-        self.mplwidget_3.figure.axes[0].pcolormesh(H_arr, k_arr, matrix, cmap="inferno")
+        self.mplwidget_3.figure.axes[0].contourf(H_arr, k_arr,  matrix/np.max(np.abs(matrix)), levels=100, vmin=0, vmax=np.max(matrix/np.max(np.abs(matrix))), cmap='viridis')
         self.mplwidget_3.figure.axes[0].contour(H_arr, k_arr, matrix, levels=[np.max(matrix) - error_contour_level], colors=["green"])
         self.mplwidget_3.figure.axes[0].set_xlim(minH, maxH)
         self.mplwidget_3.figure.axes[0].set_ylim(mink, maxk)
@@ -529,6 +536,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
 
         self.mplwidget_4.figure.axes[0].add_patch(mpatches.Circle(xy=[lon, lat], radius=r1, fill=False, edgecolor='darkblue', alpha=1, transform=proj, zorder=30))
         self.mplwidget_4.figure.axes[0].add_patch(mpatches.Circle(xy=[lon, lat], radius=r2, fill=False, edgecolor='darkblue', alpha=1, transform=proj, zorder=30))
+        self.mplwidget_4.figure.axes[0].stock_img()
         self.mplwidget_4.figure.axes[0].coastlines()
     
     def plot_map(self):
@@ -643,9 +651,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             start = (self.ccp_cross_section['y0'], self.ccp_cross_section['x0'])
             end = (self.ccp_cross_section['y1'], self.ccp_cross_section['x1'])
             self.doubleSpinBox_17.setValue(start[0])
-            self.doubleSpinBox_18.setValue(start[1])
+            self.doubleSpinBox_20.setValue(start[1])
             self.doubleSpinBox_19.setValue(end[0])
-            self.doubleSpinBox_20.setValue(end[1])
+            self.doubleSpinBox_18.setValue(end[1])
     
     def ccp_stack_read_rfs(self):
         """Read receiver functions and plot stations on the map
@@ -755,8 +763,8 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             # Remove previous gridlines if necessary
             self.mplwidget_5_gridlines.remove()
             
-            if spacing == 0:
-                return
+        if spacing == 0:
+            return
         
         # Updates to cartopy objects are never shown on already displayed
         # axes, so we create a new axis for the basemaps, to be placed on top
@@ -835,15 +843,18 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
 
             self.ccp_map_axes_gridlines()
 
-    
+    def about_dialog(self):
+        dialog = dialogs.AboutDialog()
+        dialog.exec_()
+
     def cross_section_dialog(self):
         
         if self.istack == None:
             self.istack = mwu.interpolate_ccp_stack(self.stack_x, self.stack_y, self.stack)
         
-        start = (self.doubleSpinBox_18.value(), self.doubleSpinBox_17.value())
-        end = (self.doubleSpinBox_20.value(), self.doubleSpinBox_19.value())
-        newlats, newlons, dist_arr = mwu.compute_intermediate_points(start, end, 100)
+        start = (self.doubleSpinBox_20.value(), self.doubleSpinBox_17.value())
+        end = (self.doubleSpinBox_18.value(), self.doubleSpinBox_19.value())
+        newlats, newlons, dist_arr = mwu.compute_intermediate_points(start, end, self.spinBox_9.value())
 
         matrix = []
         for i, stack in enumerate(self.istack):

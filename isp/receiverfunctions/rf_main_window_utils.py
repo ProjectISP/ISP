@@ -3,6 +3,26 @@
 Created on Fri Apr  3 15:04:08 2020
 
 @author: olivar
+
+This file is part of Rfun, a toolbox for the analysis of teleseismic receiver
+functions.
+Copyright (C) 2020-2021 Andrés Olivar-Castaño
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+For questions, bug reports, or to suggest new features, please contact me at
+olivar.ac@gmail.com.
 """
 
 import os
@@ -12,6 +32,7 @@ import math
 import scipy.interpolate as scint
 import dill as pickle
 import cartopy.crs as ccrs
+import copy
 
 def map_earthquakes(eq_dir="earthquakes"):
     earthquake_map = {}
@@ -26,36 +47,8 @@ def map_earthquakes(eq_dir="earthquakes"):
     
     return earthquake_map
 
-def compute_source_functions(data_map, scmpn="L", filter_=True, corner_freqs=(0.2, 20),
-                             normalize=False):
-    srfs = {}
-    for stnm in data_map.keys():
-        for event_id in data_map[stnm]:
-            st = obspy.read(data_map[stnm][event_id], format="MSEED")
-            st = st.select(component=scmpn)
-            
-            if filter_:
-                st.filter('bandpass', freqmin=min(corner_freqs),
-                          freqmax=max(corner_freqs))
-            
-            srfs.setdefault(event_id, [])
-            
-            try:
-                if normalize:
-                    srfs[event_id].append(st[0].data/np.max(np.abs(st[0].data)))
-                else:
-                    srfs[event_id].append(st[0].data)
-            except IndexError:
-                print("Warning: No data found for station {}, channel {},".format(stnm, scmpn) +
-                      "event id: {}".format(event_id))
-    
-    for event_id in srfs.keys():
-        #srfs[event_id] = np.sum(np.array(srfs[event_id]), axis=0)/len(srfs[event_id])
-        srfs[event_id] = np.median(np.array(srfs[event_id]), axis=0)
-    
-    return srfs
-
-def waterlevel_deconvolution(dcmp, scmp, delta, a, c, tshift, w0=0.2*2*np.pi):
+def waterlevel_deconvolution(dcmp, scmp, delta, a, c, tshift, w0=0):
+    w0 = w0*2*np.pi
     max_len = np.maximum(len(dcmp), len(scmp))
     next_pow2 = 2**math.ceil(math.log(max_len, 2))
 
@@ -68,17 +61,14 @@ def waterlevel_deconvolution(dcmp, scmp, delta, a, c, tshift, w0=0.2*2*np.pi):
     sfft = np.fft.rfft(pscmp)
     freq = np.fft.rfftfreq(len(pdcmp), d=delta)
     
-    waterlevel = c * np.max(np.abs(sfft * np.conj(sfft)))
-    abs_sfft = np.abs(sfft * np.conj(sfft))
-    subs_indexes = np.where(abs_sfft < waterlevel)[0]
-    Z_p = sfft * np.conj(sfft)
-    Z_p[subs_indexes] = waterlevel
-    
-    rf = np.fft.irfft((dfft * np.conj(sfft) / Z_p) * np.exp(-0.5*(2*np.pi*freq-w0)**2/(a**2)) * np.exp(-1j * tshift * 2 * np.pi * freq))
+    # Langston, 1979
+    num = dfft * np.conj(sfft)
+    deno = np.maximum(sfft*np.conj(sfft), c*np.max(sfft*np.conj(sfft)))
+    rf = np.fft.irfft((num/deno)* np.exp(-0.5*(2*np.pi*freq-w0)**2/(a**2)) * np.exp(-1j * tshift * 2 * np.pi * freq))
+
     rf = rf / np.max(np.abs(rf))
         
     return rf[:len(dcmp)]
-            
 
 def compute_rfs(stnm, data_map, arrivals, srfs={}, dcmpn="Q", scmpn="L",
                 filter_=True, corner_freqs=(0.2, 20), a=2.5, c=0.01):
@@ -115,7 +105,7 @@ def compute_rfs(stnm, data_map, arrivals, srfs={}, dcmpn="Q", scmpn="L",
         
         if filter_:
             dcmp = st.select(component=dcmpn).filter('bandpass', freqmin=min(corner_freqs),
-                                                     freqmax=max(corner_freqs))
+                                                     freqmax=max(corner_freqs), zerophase=True)
             dcmp = dcmp[0].data
         else:
             dcmp = st.select(component=dcmpn)[0].data
@@ -125,7 +115,7 @@ def compute_rfs(stnm, data_map, arrivals, srfs={}, dcmpn="Q", scmpn="L",
         else:
             if filter_:
                 scmp = st.select(component=scmpn).filter('bandpass', freqmin=min(corner_freqs),
-                                                         freqmax=max(corner_freqs))
+                                                         freqmax=max(corner_freqs), zerophase=True)
                 scmp = scmp[0].data
             else:
                 scmp = st.select(component=scmpn)[0].data
@@ -147,10 +137,16 @@ def compute_rfs(stnm, data_map, arrivals, srfs={}, dcmpn="Q", scmpn="L",
         ray_param = arrivals['events'][event_id]['arrivals'][stnm]['ray_parameter']/EARTH_RADIUS
         distance = arrivals['events'][event_id]['arrivals'][stnm]['distance']
         
-        # Pad data and perform deconvolution
-        #rf = np.require(deconvf(dcmp, -scmp, 100, waterlevel=c, gauss=a), dtype='float64')
-        rf = waterlevel_deconvolution(dcmp, -scmp, st[0].stats.delta, a, c, 5)        
+        rf = waterlevel_deconvolution(dcmp, -scmp, st[0].stats.delta, a, c, 5, corner_freqs[0])
+
         t = np.arange(-5, -5+delta*len(dcmp), delta)
+        
+        # It can happen that t and rf differ in length by 1 sample due to rounding
+        # errors. This if block prevents that from happening.
+        if len(rf) > len(t):
+            rf = rf[:len(t)]
+        elif len(t) > len(rf):
+            t = t[:len(rf)]
         
         rfs.append([rf, t, baz, distance, ray_param, 1, event_id, eq_magnitude,
                     eq_file]) # int 1 = accept this rf; 0 = discard (for use in the gui)
@@ -194,23 +190,36 @@ def bin_rfs(rfs, sort_param=2, min_=0, max_=360, bin_size=10, overlap=5):
 
     return rf_bin_indexes, bin_plot_ycoords
 
-def compute_stack(rfs, bin_size=0, overlap=0, moveout_correction="Ps",
+def moveout_correction(rfs, phase='Ps', p_ref=6.4):
+    
+    # Moveout correction uses a single crustal layer of vp = 6.3 and vp/vs = 1.73
+    avg_vp = 6.3
+    avg_vs = avg_vp/1.73
+    depths = np.arange(0, 1000, 0.01)
+    dz = np.diff(depths)
+    p_ref = p_ref/111.2
+
+    tref = np.concatenate((np.zeros(1), np.cumsum((np.sqrt(1/avg_vs**2 - p_ref**2) - np.sqrt(1/avg_vp**2 - p_ref**2)) * dz)))
+    
+    for i, rf in enumerate(rfs):
+        p = rf[4]
+        tps = np.concatenate((np.zeros(1), np.cumsum((np.sqrt(1/avg_vs**2 - p**2) - np.sqrt(1/avg_vp**2 - p**2)) * dz)))
+        corrected_time = scint.interp1d(tps, tref, bounds_error=False, fill_value=0)(rf[1])
+        corrected_time[corrected_time == 0] = rf[1][rf[1] <= 0]
+        t = np.linspace(np.min(rf[1]), np.max(rf[1]), len(rf[1]))
+        corrected_rf = scint.interp1d(corrected_time, rf[0], bounds_error=False, fill_value=0)(t)
+        
+        rfs[i][0] = corrected_rf
+        rfs[i][1] = t
+    
+    return rfs
+
+def compute_stack(rfs, bin_size=0, overlap=0, moveout_phase="Ps",
                   avg_vp=6.3, vpvs=1.73, ref_slowness=6.4, stack_by="Back az.",
                   normalize=True, min_dist=30, max_dist=90):
     
     # Moveout correction is performed using a single-layer model with
-    # P velocity avg_vp. This could be changed to a global model, i.e.
-    # iasp91 or something
-    
-    # Compute reference time
-    avg_vs = avg_vp/vpvs
-    p_ref = ref_slowness/111.2
-    depths = np.arange(0, 500, 0.1)
-    dz = np.diff(depths)
-    t_ref = np.cumsum((np.sqrt(1/avg_vs**2 - p_ref**2) - np.sqrt(1/avg_vp**2 - p_ref**2)) * dz)
-    t_ref = np.hstack((-t_ref[:][::-1], t_ref))
-
-    # Determine sort index
+    # P velocity avg_vp
     if stack_by == "Back az.":
         sort_index = 2
         min_ = 0
@@ -227,22 +236,14 @@ def compute_stack(rfs, bin_size=0, overlap=0, moveout_correction="Ps",
     bin_stacks = np.zeros((len(rfs[0][0]), len(bin_plot_ycoords)))
     stack = np.zeros(len(rfs[0][0]))
     
-    for i, rf in enumerate(rfs):
-        try: # sometimes rf arrays have different len; skip them
+    moveout_corrected_rfs = moveout_correction(copy.deepcopy(rfs))
+    
+    for i, rf in enumerate(moveout_corrected_rfs):
+        try:
             if rf[5]:
                 bin_index = rf_bin_indexes[i]
-                if moveout_correction == "Ps":
-                    p = rf[4]
-                    t_p = np.cumsum((np.sqrt(1/avg_vs**2 - p**2) - np.sqrt(1/avg_vp**2 - p**2)) * dz)
-                    t_p = np.hstack((-t_p[:][::-1], t_p))
-                    t_corr = np.interp(rf[1], t_p, t_ref, left=0, right=None)
-                    corr_rf = np.interp(rf[1], t_corr, rf[0], left=None, right=0)
-                    
-                    bin_stacks[:,bin_index] += corr_rf
-                    stack += corr_rf
-                else:
-                    bin_stacks[:,bin_index] += rf[0]
-                    stack += rf[0]
+                bin_stacks[:,bin_index] += rf[0]
+                stack += rf[0]
         except ValueError:
             continue
 
@@ -297,7 +298,6 @@ def compute_hk_stack(rfs, avg_vp=6.3, H_range=(25, 55), H_values=100, k_range=(1
             tps = np.einsum('i,j->ji', H_arr, (np.sqrt(1/(vs**2) - p**2) - np.sqrt(1/(avg_vp**2) - p**2)))
             tppps = np.einsum('i,j->ji', H_arr, (np.sqrt(1/(vs**2) - p**2) + np.sqrt(1/(avg_vp**2) - p**2)))
             tpsps = np.einsum('i,j->ji', H_arr, 2 * (np.sqrt(1/(vs**2) - p**2)))
-            #rf_sum = w1 * rf(tps) + w2 * rf(tppps) - w3 * rf(tpsps)
             
             matrix1 += w1 * rf(tps)
             matrix2 += w2 * rf(tppps)
@@ -311,31 +311,12 @@ def compute_hk_stack(rfs, avg_vp=6.3, H_range=(25, 55), H_values=100, k_range=(1
         
             S3_num += rf(tpsps)
             S3_deno += rf(tpsps)**2
-            
-            #matrix += rf_sum
-
-            """S1_num += w1 * rf(tps)
-            S1_deno += (w1 * rf(tps))**2
-        
-            S2_num += w2 * rf(tppps)
-            S2_deno += (w2 * rf(tppps)**2)
-        
-            S3_num = w3 * rf(tpsps)
-            S3_deno += (w3 * rf(tpsps))**2"""
     
     S1 = S1_num**2 / S1_deno
     S2 = S2_num**2 / S2_deno
     S3 = S3_num**2 / S3_deno
     
-    #matrix = matrix1 + matrix2 + matrix3
-    
     matrix = S1 * matrix1 + S2 * matrix2 + S3 * matrix3
-    
-    #matrix = scale(matrix, -1, 1)
-    
-    #S = S1 + S2 + S3
-    #S = w1*S1 + w2*S2 + w3*S3
-    #matrix = S * matrix
     
     maxy = np.where(matrix == np.max(matrix))[0][0]
     maxx = np.where(matrix == np.max(matrix))[1][0]
@@ -382,16 +363,13 @@ def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx, dy, dz, max_depth
     y = np.arange(min_y, max_y, dy)
     x = np.arange(min_x, max_x, dx)
     z = np.arange(0, max_depth, dz)
-
-    #stack = np.zeros((len(x), len(y), len(z)))
-    #counts = np.zeros((len(x), len(y), len(z)))
     
     stack = [[[[] for i in range(len(z))] for i in range(len(y))] for i in range(len(x))]
+
+    stack = np.zeros((len(x), len(y), len(z)))
+    hits = np.zeros((len(x), len(y), len(z)))    
     
-    print(np.shape(stack))
-    print(np.shape(np.zeros((len(x), len(y), len(z)))))
     
-    # Read earth model:
     path_model=os.path.join(os.path.dirname(os.path.abspath(__file__)), "earth_models")
     with open(path_model+"/{}.csv".format(model), 'r') as f:
         model_lines = f.readlines()
@@ -411,7 +389,6 @@ def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx, dy, dz, max_depth
     
     r_earth = float(model_lines[0].split(',')[1])
     
-    # Read receiver functions and perform stacking
     for stnm in rfs_map.keys():
         rfs = pickle.load(open(rfs_map[stnm], "rb"))
         stla = evdata["stations"][stnm]["lat"]
@@ -422,6 +399,9 @@ def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx, dy, dz, max_depth
             eq_id = rf_arr[6]
             p = rf_arr[4]
             p_sph = p*r_earth
+            
+            p_h = p/111.2
+            
             t = rf_arr[1]
             rf = rf_arr[0]/np.max(np.abs(rf_arr[0]))
             intp_rf = scint.interp1d(t, rf)
@@ -445,58 +425,46 @@ def ccp_stack(rfs_map, evdata, min_x, max_x, min_y, max_y, dx, dy, dz, max_depth
 
                 vs = ivs(H)
                 vp = ivp(H)
-        
-                ddist = (r0-r) / np.sqrt(r**2/(p_sph**2*vs**2)-1) / r
-                theta = 360*(ddist/(2*np.pi*r))
-                ddist = 2*np.pi*r_earth*(theta/360)
-                #dist += ddist
-                #theta = 360*(ddist/(2*np.pi*r))
-                #dist += 2*np.pi*r_earth*(theta/360)
+
+                dist =  p_h * (r - r0) / np.sqrt(vs**-2 - p_h**2)
+                rdist = math.radians(dist)
 
                 dt = (np.sqrt(vs**-2 - p**2) - np.sqrt(vp**-2 - p**2)) * dz
                 tps += dt
-                fzone = np.sqrt(H * (vs*T0))/111.2
+                
+                fzone_x = np.sqrt(H * (vs*T0))/111.2
+                fzone_y = np.sqrt(H * (vs*T0))/111.2
     
-                nlat = np.arcsin(np.sin(lat) * np.cos(ddist) + np.cos(lat) * np.sin(ddist) * np.cos(baz))
-                nlon = lon + np.arctan2(np.sin(baz) * np.sin(ddist) * np.cos(lat), np.cos(ddist) - np.sin(lat) * np.sin(nlat))
+                nlat = np.arcsin(np.sin(lat) * np.cos(rdist) + np.cos(lat) * np.sin(rdist) * np.cos(baz))
+                nlon = lon + np.arctan2(np.sin(baz) * np.sin(rdist) * np.cos(lat), np.cos(rdist) - np.sin(lat) * np.sin(nlat))
                 
                 lat = nlat
                 lon = nlon
                 amp = intp_rf(tps)
-                
-                # stack
-                # Determine cells using fresnell zone
+
                 deglat = math.degrees(nlat)
                 deglon = math.degrees(nlon)
                 
-                smthx = np.floor(fzone/dx)
-                smthy = np.floor(fzone/dy)         
-
-                ix = np.floor((deglon-x[0])/dx)
-                iy = np.floor((deglat-y[0])/dy)
-                for ix2 in range(int(ix-smthx), int(ix+smthx)):
-                  if ix2 > 0 and ix2 < len(x):
-                    for iy2 in range(int(iy-smthy), int(iy+smthy)):
-                      if iy2 > 0 and iy2 < len(y):
-                        stack[ix2][iy2][k].append(amp)
-                        #stack[ix2,iy2,k] += amp
-                        #counts[ix2,iy2,k] += 1
-
+                x_index = int((deglon-x[0])/dx)
+                y_index = int((deglat-y[0])/dy)
                 
-                r0 = r 
-    
-    #counts[counts == 0] = 1
-    #stack_average = stack/counts
-    for i in range(len(x)):
-        for j in range(len(y)):
-            for k in range(len(z)):
-                if stack[i][j][k]:
-                    stack[i][j][k] = np.median(stack[i][j][k])
-                else:
-                    stack[i][j][k] = 0
-     
-    stack_average = np.array(stack)
-
+                fzone_x_size = int(fzone_x/dx)
+                fzone_y_size = int(fzone_y/dy)
+                
+                x_cells = np.arange(x_index - fzone_x_size, x_index + fzone_x_size, 1)
+                y_cells = np.arange(y_index - fzone_y_size, y_index + fzone_y_size, 1)
+                
+                x_mask = (x_cells >= 0) & (x_cells < len(x))
+                y_mask = (y_cells >= 0) & (y_cells < len(y))
+                x_cells = x_cells[x_mask]
+                y_cells = y_cells[y_mask]
+                
+                for i in x_cells:
+                    for j in y_cells:
+                        stack[i,j,k] += amp
+                        hits[i,j,k] += 1
+                        
+    stack_average = np.divide(stack, hits, where=(stack != 0))
 
     return stack_average, np.arange(0, max_depth, dz)
 
@@ -554,6 +522,10 @@ def point_inside_polygon(x, y, poly, include_edges=True):
     Geometrical idea: point is inside polygon if horisontal beam
     to the right from point crosses polygon even number of times. 
     Works fine for non-convex polygons.
+    
+    Source: 
+    https://stackoverflow.com/questions/39660851/deciding-if-a-point-is-inside-a-polygon
+    (last checked 2021-04-26)
     '''
     n = len(poly)
     inside = False
@@ -664,15 +636,6 @@ def compute_radius(ortho, lat, lon, radius_degrees):
     phi1 = lat + radius_degrees if lat <= 0 else lat - radius_degrees
     _, y1 = ortho.transform_point(lon, phi1, ccrs.PlateCarree())
     return abs(y1)
-        
-        
-"""if __name__ == "__main__":
-    eqs = map_earthquakes()
-    rfs = compute_rfs("SC01", eqs, pickle.load(open("event_metadata", 'rb')))
-    save_rfs("SC01", 2.5, 0.01, rfs)
-    rfs_map = map_rfs()
-    stack = ccp_stack(rfs_map, pickle.load(open("event_metadata", 'rb')),
-                      -4.5, -4.0, 43.17, 43.57)"""
     
     
     

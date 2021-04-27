@@ -3,6 +3,26 @@
 Created on Tue Apr  7 04:06:28 2020
 
 @author: olivar
+
+This file is part of Rfun, a toolbox for the analysis of teleseismic receiver
+functions.
+Copyright (C) 2020-2021 Andrés Olivar-Castaño
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+For questions, bug reports, or to suggest new features, please contact me at
+olivar.ac@gmail.com.
 """
 
 import io
@@ -13,10 +33,42 @@ import obspy
 import pickle
 from functools import partial
 import isp.receiverfunctions.rf_dialogs_utils as du
-from isp.Gui.Frames import UiReceiverFunctionsCut, UiReceiverFunctionsSaveFigure, UiReceiverFunctionsCrossSection, BaseFrame
+from isp.Gui.Frames import UiReceiverFunctionsCut, UiReceiverFunctionsSaveFigure, \
+                           UiReceiverFunctionsCrossSection, UiReceiverFunctionsAbout, \
+                           UiReceiverFunctionsShowEarthquake, BaseFrame
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.pyplot as plt
 from isp.Gui import pyqt, pqg, pw, pyc, qt
+
+import numpy as np
+
+class ShowEarthquakeDialog(QtWidgets.QDialog, UiReceiverFunctionsShowEarthquake):
+    def __init__(self, file, bandpass):
+        super(ShowEarthquakeDialog, self).__init__()
+        self.setupUi(self)
+        
+        # Button connections
+        self.pushButton_2.clicked.connect(self.close)
+        
+        self.mplwidget.figure.subplots(nrows=3)
+        st = obspy.read(file)
+        st.filter('bandpass', freqmin=bandpass[0], freqmax=bandpass[1])
+        
+        try:
+            l = st.select(component="L")
+            maxy = np.max(l[0].data)
+            miny = np.min(l[0].data)
+        except IndexError: # If this happens there is no L component, so there should be a Z component
+            z = st.select(component="Z")
+            maxy = np.max(z[0].data)
+            miny = np.min(z[0].data)
+        
+        for i, tr in enumerate(st):
+            self.mplwidget.figure.axes[i].plot(tr.times("matplotlib"), tr.data, color="black")
+            self.mplwidget.figure.axes[i].set_ylim(miny, maxy)
+    
+    def close(self):
+        self.done(0)
 
 class CutEarthquakesDialog(QtWidgets.QDialog, UiReceiverFunctionsCut):
     def __init__(self):
@@ -63,7 +115,7 @@ class CutEarthquakesDialog(QtWidgets.QDialog, UiReceiverFunctionsCut):
                                             min_distance_degrees=min_dist,
                                             max_distance_degrees=max_dist)
         pickle.dump(arrivals, open(event_metadata_output_path, "wb"))
-        data_map = du.map_data(data_path)
+        data_map = du.map_data(data_path, quick=self.checkBox.isChecked())
         
         time_before = self.doubleSpinBox_5.value()
         time_after = self.doubleSpinBox_6.value()
@@ -154,3 +206,8 @@ class CrossSectionDialog(QtWidgets.QDialog, UiReceiverFunctionsCrossSection):
     
     def close(self):
         self.done(0)
+
+class AboutDialog(QtWidgets.QDialog, UiReceiverFunctionsAbout):
+    def __init__(self):
+        super(AboutDialog, self).__init__()
+        self.setupUi(self)

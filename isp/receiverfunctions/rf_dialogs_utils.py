@@ -3,7 +3,28 @@
 Created on Tue Apr  7 12:42:41 2020
 
 @author: olivar
+
+This file is part of Rfun, a toolbox for the analysis of teleseismic receiver
+functions.
+Copyright (C) 2020-2021 Andrés Olivar-Castaño
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+For questions, bug reports, or to suggest new features, please contact me at
+olivar.ac@gmail.com.
 """
+
 import os
 import math
 import pickle
@@ -15,6 +36,7 @@ import obspy.core
 import obspy.taup
 import obspy.clients.fdsn
 import obspy.geodetics.base
+import obspy.io.mseed.util
 
 def map_data(path, quick=True):
     
@@ -22,16 +44,19 @@ def map_data(path, quick=True):
     
     for top_dir, sub_dir, files in os.walk(path):
         for file in files:
-            if file.endswith('.mseed'):
                 full_path_to_file = os.path.join(top_dir, file)
                 
                 if quick:
-                    year = int(file.split('.')[0])
-                    jday = int(file.split('.')[1])
-                    stnm = file.split('.')[3]
-                    chnm = file.split('.')[5]
+                    if file.endswith('.mseed'):
+                        year = int(file.split('.')[0])
+                        jday = int(file.split('.')[1])
+                        stnm = file.split('.')[3]
+                        chnm = file.split('.')[5]
                 else:
-                    record_info = obspy.io.mseed.util.get_record_information(full_path_to_file)
+                    try:
+                        record_info = obspy.io.mseed.util.get_record_information(full_path_to_file)
+                    except:
+                        continue
                     year = record_info['starttime'].year
                     jday = record_info['starttime'].julday
                     stnm = record_info['station']
@@ -61,8 +86,7 @@ def taup_arrival_times(catalog, stationxml, phase="P", earth_model="iasp91",
                        min_distance_degrees=30, max_distance_degrees=90):
     
     EARTH_RADIUS = 6378137.0
-    
-    # Read station latitude, longitude and elevation from the xml file
+
     inv = obspy.core.inventory.read_inventory(stationxml)
     stations = {}
     for ntwk in inv:
@@ -73,8 +97,7 @@ def taup_arrival_times(catalog, stationxml, phase="P", earth_model="iasp91",
             stev = stn.elevation
             stations.setdefault(stnm, {'latitude':stla, 'longitude':stlo,
                                        'elevation':stev})
-    
-    # Compute arrival times using TauPy
+
     arrivals = {}
     arrivals["stations"] = {}
     arrivals["events"] = {}
@@ -86,20 +109,34 @@ def taup_arrival_times(catalog, stationxml, phase="P", earth_model="iasp91",
         evlo = ev_origin_info.longitude
         evla = ev_origin_info.latitude
         
+        mag_list = []
+        for mag in event['magnitudes']:
+            
+            if mag['magnitude_type'] == None:
+                continue
+            
+            if mag['magnitude_type'].lower() == "mw":
+                magnitude = mag['mag']
+                mag_list = []
+                break
+            else:
+                mag_list.append(mag['mag'])
+        
+        if len(mag_list) > 0:
+            magnitude = np.min(mag_list)
+                
+        
         for stnm in stations.keys():
             stlo = stations[stnm]['longitude']
             stla = stations[stnm]['latitude']
             stev = stations[stnm]['elevation']
-            
-            # Distance, azimuth and back_azimuth for event:
+
             m_dist, az, back_az = obspy.geodetics.base.gps2dist_azimuth(evla, evlo,
                                                                         stla, stlo)
-            #deg_dist = math.degrees(m_dist/EARTH_RADIUS)
             deg_dist = obspy.geodetics.base.kilometers2degrees(m_dist/1000)
             
             arrivals["stations"][stnm] = {"lon":stlo, "lat":stla, "elev":stev}
-            
-            # Check that deg_dist is inside the desired distance range
+
             if deg_dist >= min_distance_degrees and deg_dist <= max_distance_degrees:
                 atime = model.get_travel_times(source_depth_in_km=evdp,
                                                distance_in_degree=deg_dist,
@@ -107,7 +144,7 @@ def taup_arrival_times(catalog, stationxml, phase="P", earth_model="iasp91",
                                                receiver_depth_in_km=0.0)
                 arrivals["events"].setdefault(i, {})
                 arrivals["events"][i].setdefault('event_info', {'latitude':evla, 'longitude':evlo,
-                                                      'depth':evdp, 'origin_time':otime})
+                                                      'depth':evdp, 'origin_time':otime, 'magnitude':magnitude})
                 arrivals["events"][i].setdefault('arrivals', {})
                 arrivals["events"][i]['arrivals'].setdefault(stnm, {})
                 arrivals["events"][i]['arrivals'][stnm]["arrival_time"] = atime[0].time
@@ -167,7 +204,7 @@ def cut_earthquakes(data_map, arrivals, time_before, time_after, min_snr,
                     stream += obspy.read(channels1[chn])
                 for chn in channels2.keys():
                     stream += obspy.read(channels2[chn])
-            
+
             stream.merge(fill_value=0)
             noise = stream.copy()
             
@@ -183,9 +220,12 @@ def cut_earthquakes(data_map, arrivals, time_before, time_after, min_snr,
             stream.detrend(type="linear")
             
             # Compute variance and check if the SNR criterium is fulfilled
-            noise_var = np.var(noise.select(component="Z")[0].data)
-            signal_var = np.var(stream.select(component="Z")[0].data)
-            snr = (signal_var - noise_var)/noise_var
+            try:
+                noise_var = np.var(noise.select(component="Z")[0].data)
+                signal_var = np.var(stream.select(component="Z")[0].data)
+                snr = (signal_var - noise_var)/noise_var
+            except IndexError:
+                continue
             
             if snr < min_snr:
                 continue
