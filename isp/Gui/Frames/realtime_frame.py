@@ -1,6 +1,5 @@
 import os
-
-from obspy import UTCDateTime
+from obspy import UTCDateTime, Stream
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
@@ -16,6 +15,7 @@ from isp.Utils import AsycTime
 from obspy.clients.seedlink.easyseedlink import create_client
 import matplotlib.dates as mdt
 from datetime import datetime
+import numpy as np
 
 class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
@@ -24,6 +24,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.setupUi(self)
         self.setWindowIcon(pqg.QIcon(':\\icons\\map-icon.png'))
 
+        self.k = -2*3600
         self.settings_dialog = SettingsDialog(self)
         self.inventory = {}
         self.files = []
@@ -37,14 +38,16 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.stations_available = []
         self.data_dict = {}
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
-
-        self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
         self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=self.numTracesCB.value(), constrained_layout=False)
+        self.canvas.figure.tight_layout()
         # Bind buttons
+        self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
+        self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
-        self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
+        #self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.actionArray_Anlysis.triggered.connect(self.open_array_analysis)
         self.actionMoment_Tensor_Inversion.triggered.connect(self.open_moment_tensor)
@@ -80,9 +83,29 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
         self.dataless_not_found.clear()
 
-    def onChange_dataless_path(self, value):
-        self.__dataless_manager = DatalessManager(value)
-        self.earthquake_location_frame.set_dataless_dir(value)
+    def subprocess_feedback(self, err_msg: str, set_default_complete=True):
+        """
+        This method is used as a subprocess feedback. It runs when a raise expect is detected.
+
+        :param err_msg: The error message from the except.
+        :param set_default_complete: If True it will set a completed successfully message. Otherwise nothing will
+            be displayed.
+        :return:
+        """
+        if err_msg:
+            md = MessageDialog(self)
+            if "Error code" in err_msg:
+                md.set_error_message("Click in show details detail for more info.", err_msg)
+            else:
+                md.set_warning_message("Click in show details for more info.", err_msg)
+        else:
+            if set_default_complete:
+                md = MessageDialog(self)
+                md.set_info_message("Loaded Metadata Successfully.")
+
+    def open_parameters_settings(self):
+        self.parameters.show()
+
 
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     @AsycTime.run_async()
@@ -92,6 +115,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
             self.inventory = self.__metadata_manager.get_inventory()
         except:
             raise FileNotFoundError("The metadata is not valid")
+
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
@@ -134,13 +158,9 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         start_time = UTCDateTime(now) - self.timewindowSB.value()*60
 
         if key in self.data_dict.keys():
-            # Update
-            #if tr.stats.starttime-start_time<0:
-                #Update and write after deadline
-            #self.data_dict[key] = tr
-            #if self.saveDataCB.isChecked():
-            #        self.write_trace(tr)
 
+            slice = tr.data.astype(np.float64)
+            tr.data = slice
 
             self.data_dict[key] = self.data_dict[key] + tr
 
@@ -148,7 +168,6 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         else:
             # insert New Key
             self.data_dict[key]= tr
-            #self.data_dict[key].trim(starttime=tr.stats.starttime, endtime=tr.stats.endtime)
 
         self.plot_seismogram()
 
@@ -157,7 +176,10 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
         self.client = create_client(self.serverAddressForm.text(), on_data=self.handle_data)
 
-        self.client.select_stream(self.netForm.text(), self.stationForm.text(), self.channelForm.text())
+        for net in self.netForm.text().split(","):
+            for sta in self.stationForm.text().split(","):
+                for chn in self.channelForm.text().split(","):
+                    self.client.select_stream(net, sta, chn)
 
         self.client.run()
 
@@ -166,31 +188,30 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
     def plot_seismogram(self):
 
         now = datetime.now()
-        start_time = UTCDateTime(now)-self.timewindowSB.value()
-        end_time = UTCDateTime(now)
+        start_time = (UTCDateTime(now)-self.timewindowSB.value()*60) + self.k
+        end_time = (UTCDateTime(now)+30)+self.k
         self.canvas.set_new_subplot(nrows=self.numTracesCB.value(), ncols=1)
         self.canvas.set_xlabel(self.numTracesCB.value()-1, "Date")
-        ax = self.canvas.get_axe(self.numTracesCB.value()-1)
-        ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
         index = 0
+        parameters = self.parameters.getParameters()
         for key, tr in self.data_dict.items():
+            sd = SeismogramDataAdvanced(file_path = None, stream=Stream(traces=tr), realtime =True)
+            tr = sd.get_waveform_advanced(parameters, self.inventory)
 
             t = tr.times("matplotlib")
             s = tr.data
             info = "{}.{}.{}".format(tr.stats.network, tr.stats.station, tr.stats.channel)
-            self.canvas.plot_date(t, s, index, color="black",  fmt = '-', linewidth=0.5)
+            self.canvas.plot_date(t, s, index, clear_plot=False, color="black",  fmt = '-', linewidth=0.5)
             self.canvas.set_plot_label(index, info)
             ax = self.canvas.get_axe(index)
 
+            if index == self.numTracesCB.value()-1:
+                ax.set_xlim(mdt.num2date(start_time.matplotlib_date), mdt.num2date(end_time.matplotlib_date))
 
-            #if index == self.numTracesCB.value()-1:
-            #   ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             index = index + 1
 
-        formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
-        ax.xaxis.set_major_formatter(formatter)
-
-
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
+            ax.xaxis.set_major_formatter(formatter)
 
         #pyc.QCoreApplication.instance().processEvents()
 

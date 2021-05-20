@@ -273,7 +273,7 @@
          <x>0</x>
          <y>0</y>
          <width>1180</width>
-         <height>813</height>
+         <height>857</height>
         </rect>
        </property>
       </widget>
@@ -294,68 +294,15 @@
     <property name="title">
      <string>File</string>
     </property>
-    <widget class="QMenu" name="menuWrite_Files">
-     <property name="title">
-      <string>Write Files</string>
-     </property>
-     <addaction name="actionWrite_Current_Page"/>
-    </widget>
-    <addaction name="actionNew_location"/>
     <addaction name="separator"/>
-    <addaction name="menuWrite_Files"/>
     <addaction name="separator"/>
-    <addaction name="actionOpen_Settings"/>
    </widget>
    <widget class="QMenu" name="menuActions">
     <property name="title">
      <string>Actions</string>
     </property>
-    <widget class="QMenu" name="menuData_Availability">
-     <property name="title">
-      <string>Data Availability</string>
-     </property>
-     <addaction name="actionOnly_a_folder"/>
-     <addaction name="actionAll_tree"/>
-    </widget>
-    <widget class="QMenu" name="menuPicks">
-     <property name="title">
-      <string>Picks</string>
-     </property>
-     <addaction name="actionOpen_picksnew"/>
-     <addaction name="actionRemove_picks"/>
-    </widget>
-    <addaction name="menuPicks"/>
     <addaction name="actionGet_Stations_Info"/>
     <addaction name="actionSet_Parameters"/>
-    <addaction name="actionRun_picker"/>
-    <addaction name="actionRun_Event_Detector"/>
-    <addaction name="actionClean_selection"/>
-    <addaction name="actionRemove_all_selections"/>
-    <addaction name="actionClean_Events_Detected"/>
-    <addaction name="actionOpen_Magnitudes_Calculator"/>
-    <addaction name="actionOpen_Earth_Model_Viewer"/>
-    <addaction name="menuData_Availability"/>
-   </widget>
-   <widget class="QMenu" name="menuGo">
-    <property name="title">
-     <string>Go</string>
-    </property>
-    <addaction name="actionArray_Anlysis"/>
-    <addaction name="actionMoment_Tensor_Inversion"/>
-    <addaction name="actionTime_Frequency_Analysis"/>
-    <addaction name="actionReceiver_Functions"/>
-   </widget>
-   <widget class="QMenu" name="menuCompute">
-    <property name="title">
-     <string>Compute</string>
-    </property>
-    <addaction name="actionSTA_LTA"/>
-    <addaction name="actionCWT_CF"/>
-    <addaction name="actionEnvelope"/>
-    <addaction name="actionSpectral_Entropy"/>
-    <addaction name="actionAllSeismograms"/>
-    <addaction name="actionStack"/>
-    <addaction name="actionPlot_All_Seismograms"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -365,26 +312,9 @@
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
-   <addaction name="menuGo"/>
-   <addaction name="menuCompute"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QToolBar" name="toolBar">
-   <property name="windowTitle">
-    <string>toolBar</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-   <addaction name="actionArray_Anlysis"/>
-   <addaction name="actionMoment_Tensor_Inversion"/>
-   <addaction name="actionTime_Frequency_Analysis"/>
-   <addaction name="actionReceiver_Functions"/>
-  </widget>
   <action name="actionWhatever">
    <property name="text">
     <string>Whatever</string>

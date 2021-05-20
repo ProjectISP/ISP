@@ -92,18 +92,25 @@ class SeismogramData:
 
 class SeismogramDataAdvanced:
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, stream, realtime = False):
+
         if file_path:
             self.st = read(file_path)
 
-            gaps = self.st.get_gaps()
 
-            if len(gaps) > 0:
-                self.st.print_gaps()
-                self.st.merge(fill_value = "interpolate")
+        if realtime:
+           self.st = stream
 
-            self.__tracer = self.st[0]
-            self.stats = TracerStats.from_dict(self.tracer.stats)
+        self.st = stream
+
+        gaps = self.st.get_gaps()
+
+        if len(gaps) > 0:
+            self.st.print_gaps()
+            self.st.merge(fill_value = "interpolate")
+
+        self.__tracer = self.st[0]
+        self.stats = TracerStats.from_dict(self.tracer.stats)
 
 
 

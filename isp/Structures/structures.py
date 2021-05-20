@@ -81,8 +81,10 @@ class TracerStats(NamedTuple):
             from isp.Structures.obspy_stats_keys import ObspyStatsKeys
             if "processing" in dictionary:
                 del dictionary['processing']
-            file_format = dictionary.pop(ObspyStatsKeys.FORMAT)
-            new_d = validate_dictionary(cls, dictionary)
+            #file_format = dictionary.pop(ObspyStatsKeys.FORMAT)
+            file_format = "mseed"
+            #new_d = validate_dictionary(cls, dictionary)
+            new_d = {}
             new_d["Format"] = file_format
             dictionary[ObspyStatsKeys.FORMAT] = file_format
             return cls(**new_d)

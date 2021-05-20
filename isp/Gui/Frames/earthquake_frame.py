@@ -488,6 +488,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             if self.trimCB.isChecked():
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             else:
+                print(auto_start,auto_end, mdt.num2date(auto_start), mdt.num2date(auto_end))
                 ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
             formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
             ax.xaxis.set_major_formatter(formatter)
