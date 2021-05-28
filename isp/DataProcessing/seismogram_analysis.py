@@ -5,8 +5,9 @@ from obspy.taup import TauPyModel
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, Filters
 import numpy as np
+
 from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise, \
-    smoothing, wiener_filter
+    smoothing, wiener_filter, hampel
 
 
 @unique
@@ -124,6 +125,7 @@ class SeismogramDataAdvanced:
         if func:
             func(msg)
 
+
     def get_waveform_advanced(self, parameters, inventory, filter_error_callback=None, **kwargs):
 
         start_time = kwargs.get("start_time", self.stats.StartTime)
@@ -225,10 +227,14 @@ class SeismogramDataAdvanced:
                 tr = add_white_noise(tr,parameters[j][1])
 
             if parameters[j][0] == 'whitening':
-                tr = whiten(tr,parameters[j][1], parameters[j][2])
+                #tr = whiten(tr,parameters[j][1], parameters[j][2])
+                tr = whiten(tr, parameters[j][1])
+
+            if parameters[j][0] == 'remove spikes':
+                tr = hampel(tr, parameters[j][1])
 
             if parameters[j][0] == 'time normalization':
-                tr = normalize(tr, norm_win=parameters[j][1],norm_method=parameters[j][2])
+                tr = normalize(tr, norm_win=parameters[j][1], norm_method=parameters[j][2])
 
             if parameters[j][0] == 'wavelet denoise':
                 tr = wavelet_denoise(tr, dwt = parameters[j][1], threshold=parameters[j][2])

@@ -5,7 +5,7 @@ Created on Tue Jul  9 18:15:16 2019
 
 @author: robertocabieces
 """
-from signal import signal
+
 from mtspec import mtspec
 import numpy as np
 import math
@@ -15,6 +15,15 @@ from isp.seismogramInspector.entropy import spectral_entropy
 import copy
 from obspy.signal.trigger import classic_sta_lta
 import obspy.signal
+import pandas as pd
+
+def median_absolute_deviation(x):
+    """
+    Returns the median absolute deviation from the window's median
+    :param x: Values in the window
+    :return: MAD
+    """
+    return np.median(np.abs(x - np.median(x)))
 
 def find_nearest(array, value):
     idx,val = min(enumerate(array), key=lambda x: abs(x[1]-value))
@@ -334,7 +343,74 @@ def add_white_noise(tr, SNR_dB):
     return tr
 
 
-def whiten(tr, freqmin, freqmax):
+def whiten(tr, freq_width=0.05, taper_edge=False):
+
+    """"
+    freq_width: Frequency smoothing windows [Hz] / both sides
+    taper_edge: taper with cosine window  the low frequencies
+
+    return: whithened trace (Phase is not modified)
+    """""
+
+    fs = tr.stats.sampling_rate
+    N = tr.count()
+    D = 2 ** math.ceil(math.log2(N))
+    freq_res = 1 / (D / fs)
+    # N_smooth = int(freq_width / (2 * freq_res))
+    N_smooth = int(freq_width / (freq_res))
+
+    if N_smooth % 2 == 0:  # To have a central point
+        N_smooth = N_smooth + 1
+    else:
+        pass
+
+    # avarage_window_width = (2 * N_smooth + 1) #Denominador
+    avarage_window_width = (N_smooth + 1)  # Denominador
+    half_width = int((N_smooth + 1) / 2)  # midpoint
+    half_width_pos = half_width - 1
+
+    # Prefilt
+    tr.detrend(type='simple')
+    tr.taper(max_percentage=0.05)
+
+    # ready to whiten
+    data = tr.data
+    data_f = np.fft.rfft(data, D)
+    freq = np.fft.rfftfreq(D, 1. / fs)
+    N_rfft = len(data_f)
+    data_f_whiten = data_f.copy()
+    index = np.arange(0, N_rfft - half_width, 1)
+
+    for j in index:
+        den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
+        # den = np.mean(np.abs(data_f[j:j + 2 * half_width]))
+        data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
+
+    # Taper (optional) and remove mean diffs in edges of the frequency domain
+
+    wf = (np.cos(np.linspace(np.pi / 2, np.pi, half_width)) ** 2)
+
+    if taper_edge:
+
+        diff_mean = np.abs(np.mean(np.abs(data_f[0:half_width])) - np.mean(np.abs(data_f_whiten[half_width:])) * wf)
+
+    else:
+
+        diff_mean = np.abs(np.mean(np.abs(data_f[0:half_width])) - np.mean(np.abs(data_f_whiten[half_width:])))
+
+    diff_mean2 = np.abs(
+        np.mean(np.abs(data_f[(N_rfft - half_width):])) - np.mean(np.abs(data_f_whiten[(N_rfft - half_width):])))
+
+    data_f_whiten[0:half_width] = ((data_f[0:half_width]) / diff_mean)  # First part of spectrum
+    data_f_whiten[(N_rfft - half_width):] = (data_f[(N_rfft - half_width):]) / diff_mean2  # end of spectrum
+    data = np.fft.irfft(data_f_whiten)
+    data = data[0:N]
+    tr.data = data
+
+    return tr
+
+
+def whiten_old(tr, freqmin, freqmax):
     nsamp = tr.stats.sampling_rate
 
     n = len(tr.data)
@@ -543,5 +619,41 @@ def wiener_filter(tr, time_window, noise_power):
          noise = int(noise)
          denoise = scipy.signal.wiener(data, mysize=int(time_window * tr.stats.sampling_rate), noise=noise)
          tr.data = denoise
+
+    return tr
+
+
+def hampel(tr, window_size=5, n=3, imputation=True):
+
+    """
+    Median absolute deviation (MAD) outlier in Time Series
+    :param ts: a pandas Series object representing the timeseries
+    :param window_size: total window size will be computed as 2*window_size + 1
+    :param n: threshold, default is 3 (Pearson's rule)
+    :param imputation: If set to False, then the algorithm will be used for outlier detection.
+        If set to True, then the algorithm will also imput the outliers with the rolling median.
+    :return: Returns the outlier indices if imputation=False and the corrected timeseries if imputation=True
+    """
+
+
+    window_size = int(window_size*tr.stats.sampling_rate)
+
+    # Copy the Series object. This will be the cleaned timeserie
+    ts = pd.Series(tr.data)
+    ts_cleaned = ts.copy()
+
+    # Constant scale factor, which depends on the distribution
+    # In this case, we assume normal distribution
+    k = 1.4826
+
+    rolling_ts = ts_cleaned.rolling(window_size * 2, center=True)
+    rolling_median = rolling_ts.median().fillna(method='bfill').fillna(method='ffill')
+    rolling_sigma = k * (rolling_ts.apply(median_absolute_deviation).fillna(method='bfill').fillna(method='ffill'))
+
+    outlier_indices = list(np.array(np.where(np.abs(ts_cleaned - rolling_median) >= (n * rolling_sigma))).flatten())
+
+    if imputation:
+        ts_cleaned[outlier_indices] = rolling_median[outlier_indices]
+        tr.data = ts_cleaned.array.to_numpy()
 
     return tr

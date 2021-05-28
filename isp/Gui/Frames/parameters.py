@@ -23,6 +23,7 @@ class ActionEnum (enum.Enum):
     TNOR = "time normalization"
     WAVELET_DENOISE = "wavelet denoise"
     SMOOTHING = "smoothing"
+    REMOVE_SPIKES = "remove spikes"
 
     def __str__(self):
         return str(self.value)
@@ -312,23 +313,42 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1,
                                      pw.QTableWidgetItem(ActionEnum.WHITENING.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
-            label_freq_min = pw.QLabel("Freq min")
-            label_freq_max = pw.QLabel("Freq max")
-            freq_max = pw.QDoubleSpinBox()
-            freq_max.setMinimum(0)
-            freq_max.setSingleStep(0.01)
+            label_freq_min = pw.QLabel("Spectral Width [Hz]")
+            #label_freq_max = pw.QLabel("Freq max")
+            #freq_max = pw.QDoubleSpinBox()
+            #freq_max.setMinimum(0)
+            #freq_max.setSingleStep(0.01)
             freq_min = pw.QDoubleSpinBox()
             freq_min.setMinimum(0)
             freq_min.setSingleStep(0.01)
 
             if len(params) > 1:
                 freq_min.setValue(params[0])
-                freq_max.setValue(params[1])
+                #freq_max.setValue(params[1])
 
             param_layout.addWidget(label_freq_min)
             param_layout.addWidget(freq_min)
-            param_layout.addWidget(label_freq_max)
-            param_layout.addWidget(freq_max)
+            #param_layout.addWidget(label_freq_max)
+            #param_layout.addWidget(freq_max)
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
+
+        elif action is ActionEnum.REMOVE_SPIKES:
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1,
+                                     pw.QTableWidgetItem(ActionEnum.REMOVE_SPIKES.value))
+            self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+            label_time = pw.QLabel("Temporal Window [s]")
+
+            time_window = pw.QSpinBox()
+            time_window.setMinimum(0)
+            time_window.setSingleStep(1)
+
+            if len(params) > 1:
+                time_window.setValue(params[0])
+
+            param_layout.addWidget(label_time)
+            param_layout.addWidget(time_window)
+
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
         elif action is ActionEnum.TNOR:
@@ -598,8 +618,13 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
 
             elif (action == ActionEnum.WHITENING.value):
                 spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
-                spin_value2 = self.tableWidget.cellWidget(i, 2).layout().itemAt(3).widget().value()
-                parameters.append([action, spin_value1,spin_value2])
+                #spin_value2 = self.tableWidget.cellWidget(i, 2).layout().itemAt(3).widget().value()
+                #parameters.append([action, spin_value1,spin_value2])
+                parameters.append([action, spin_value1])
+
+            elif (action == ActionEnum.REMOVE_SPIKES.value):
+                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
+                parameters.append([action, spin_value1])
 
             elif (action == ActionEnum.TNOR.value):
                 spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
