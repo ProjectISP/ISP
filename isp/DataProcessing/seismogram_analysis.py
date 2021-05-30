@@ -231,7 +231,7 @@ class SeismogramDataAdvanced:
                 tr = whiten(tr, parameters[j][1])
 
             if parameters[j][0] == 'remove spikes':
-                tr = hampel(tr, parameters[j][1])
+                tr = hampel(tr, parameters[j][1], parameters[j][2])
 
             if parameters[j][0] == 'time normalization':
                 tr = normalize(tr, norm_win=parameters[j][1], norm_method=parameters[j][2])

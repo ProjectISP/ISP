@@ -623,7 +623,35 @@ def wiener_filter(tr, time_window, noise_power):
     return tr
 
 
-def hampel(tr, window_size=5, n=3, imputation=True):
+def hampel(tr, window_size, n_sigmas=3):
+
+    """
+        Median absolute deviation (MAD) outlier in Time Series
+        :param ts: a trace obspy object representing the timeseries
+        :param window_size: total window size in seconds
+        :param n: threshold, default is 3 (Pearson's rule)
+        :return: Returns the corrected timeseries
+        """
+
+    n = tr.count()
+    input_series = tr.data
+    window_size = int(window_size*tr.stats.sampling_rate)
+    new_series = input_series.copy()
+    k = 1.4826  # scale factor for Gaussian distribution
+
+    indices = []
+
+    # possibly use np.nanmedian
+    for i in range((window_size), (n - window_size)):
+        x0 = np.median(input_series[(i - window_size):(i + window_size)])
+        S0 = k * np.median(np.abs(input_series[(i - window_size):(i + window_size)] - x0))
+        if (np.abs(input_series[i] - x0) > n_sigmas * S0):
+            new_series[i] = x0
+            indices.append(i)
+    tr.data = new_series
+    return tr
+
+def hampel_old(tr, window_size=5, n=3, imputation=True):
 
     """
     Median absolute deviation (MAD) outlier in Time Series
