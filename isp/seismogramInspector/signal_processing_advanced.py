@@ -15,7 +15,7 @@ from isp.seismogramInspector.entropy import spectral_entropy
 import copy
 from obspy.signal.trigger import classic_sta_lta
 import obspy.signal
-import pandas as pd
+from numba import jit
 
 def median_absolute_deviation(x):
     """
@@ -296,6 +296,10 @@ def spectrumelement(data,delta,sta):
     Return the amplitude spectrum using multitaper aproach
 
     """
+    N = len(data)
+    D = 2 ** math.ceil(math.log2(N))
+    z = np.zeros(D - N)
+    data = np.concatenate((data, z), axis=0)
 
     spec, freq, jackknife_errors, _, _ = mtspec(data, delta=delta , time_bandwidth=3.5, statistics=True)
     spec = np.sqrt(spec) #mtspec Amplitude spectrum
@@ -343,7 +347,7 @@ def add_white_noise(tr, SNR_dB):
     return tr
 
 
-def whiten(tr, freq_width=0.05, taper_edge=False):
+def whiten(tr, freq_width=0.05, taper_edge=True):
 
     """"
     freq_width: Frequency smoothing windows [Hz] / both sides
@@ -383,7 +387,6 @@ def whiten(tr, freq_width=0.05, taper_edge=False):
 
     for j in index:
         den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
-        # den = np.mean(np.abs(data_f[j:j + 2 * half_width]))
         data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
 
     # Taper (optional) and remove mean diffs in edges of the frequency domain
@@ -401,7 +404,14 @@ def whiten(tr, freq_width=0.05, taper_edge=False):
     diff_mean2 = np.abs(
         np.mean(np.abs(data_f[(N_rfft - half_width):])) - np.mean(np.abs(data_f_whiten[(N_rfft - half_width):])))
 
-    data_f_whiten[0:half_width] = ((data_f[0:half_width]) / diff_mean)  # First part of spectrum
+    if taper_edge:
+
+        data_f_whiten[0:half_width] = ((data_f[0:half_width]) / diff_mean)*wf  # First part of spectrum tapered
+    else:
+
+        data_f_whiten[0:half_width] = ((data_f[0:half_width]) / diff_mean)
+
+
     data_f_whiten[(N_rfft - half_width):] = (data_f[(N_rfft - half_width):]) / diff_mean2  # end of spectrum
     data = np.fft.irfft(data_f_whiten)
     data = data[0:N]
@@ -410,40 +420,40 @@ def whiten(tr, freq_width=0.05, taper_edge=False):
     return tr
 
 
-def whiten_old(tr, freqmin, freqmax):
-    nsamp = tr.stats.sampling_rate
-
-    n = len(tr.data)
-    if n == 1:
-        return tr
-    else:
-        frange = float(freqmax) - float(freqmin)
-        nsmo = int(np.fix(min(0.01, 0.5 * (frange)) * float(n) / nsamp))
-        f = np.arange(n) * nsamp / (n - 1.)
-        JJ = ((f > float(freqmin)) & (f < float(freqmax))).nonzero()[0]
-
-        # signal FFT
-        FFTs = np.fft.fft(tr.data)
-        FFTsW = np.zeros(n) + 1j * np.zeros(n)
-
-        # Apodization to the left with cos^2 (to smooth the discontinuities)
-        smo1 = (np.cos(np.linspace(np.pi / 2, np.pi, nsmo + 1)) ** 2)
-        FFTsW[JJ[0]:JJ[0] + nsmo + 1] = smo1 * np.exp(1j * np.angle(FFTs[JJ[0]:JJ[0] + nsmo + 1]))
-
-        # boxcar
-        FFTsW[JJ[0] + nsmo + 1:JJ[-1] - nsmo] = np.ones(len(JJ) - 2 * (nsmo + 1)) \
-                                                * np.exp(1j * np.angle(FFTs[JJ[0] + nsmo + 1:JJ[-1] - nsmo]))
-
-        # Apodization to the right with cos^2 (to smooth the discontinuities)
-        smo2 = (np.cos(np.linspace(0, np.pi / 2, nsmo + 1)) ** 2)
-        espo = np.exp(1j * np.angle(FFTs[JJ[-1] - nsmo:JJ[-1] + 1]))
-        FFTsW[JJ[-1] - nsmo:JJ[-1] + 1] = smo2 * espo
-
-        whitedata = 2. * np.fft.ifft(FFTsW).real
-
-        tr.data = np.require(whitedata, dtype="float32")
-
-        return tr
+# def whiten_old(tr, freqmin, freqmax):
+#     nsamp = tr.stats.sampling_rate
+#
+#     n = len(tr.data)
+#     if n == 1:
+#         return tr
+#     else:
+#         frange = float(freqmax) - float(freqmin)
+#         nsmo = int(np.fix(min(0.01, 0.5 * (frange)) * float(n) / nsamp))
+#         f = np.arange(n) * nsamp / (n - 1.)
+#         JJ = ((f > float(freqmin)) & (f < float(freqmax))).nonzero()[0]
+#
+#         # signal FFT
+#         FFTs = np.fft.fft(tr.data)
+#         FFTsW = np.zeros(n) + 1j * np.zeros(n)
+#
+#         # Apodization to the left with cos^2 (to smooth the discontinuities)
+#         smo1 = (np.cos(np.linspace(np.pi / 2, np.pi, nsmo + 1)) ** 2)
+#         FFTsW[JJ[0]:JJ[0] + nsmo + 1] = smo1 * np.exp(1j * np.angle(FFTs[JJ[0]:JJ[0] + nsmo + 1]))
+#
+#         # boxcar
+#         FFTsW[JJ[0] + nsmo + 1:JJ[-1] - nsmo] = np.ones(len(JJ) - 2 * (nsmo + 1)) \
+#                                                 * np.exp(1j * np.angle(FFTs[JJ[0] + nsmo + 1:JJ[-1] - nsmo]))
+#
+#         # Apodization to the right with cos^2 (to smooth the discontinuities)
+#         smo2 = (np.cos(np.linspace(0, np.pi / 2, nsmo + 1)) ** 2)
+#         espo = np.exp(1j * np.angle(FFTs[JJ[-1] - nsmo:JJ[-1] + 1]))
+#         FFTsW[JJ[-1] - nsmo:JJ[-1] + 1] = smo2 * espo
+#
+#         whitedata = 2. * np.fft.ifft(FFTsW).real
+#
+#         tr.data = np.require(whitedata, dtype="float32")
+#
+#         return tr
 
 
 # Functions Noise Processing
@@ -622,6 +632,21 @@ def wiener_filter(tr, time_window, noise_power):
 
     return tr
 
+@jit(nopython=True)
+def hampel_aux(input_series, window_size, size, n_sigmas):
+
+    k = 1.4826  # scale factor for Gaussian distribution
+    indices = []
+    new_series = input_series.copy()
+    # possibly use np.nanmedian
+    for i in range((window_size), (size - window_size)):
+        x0 = np.median(input_series[(i - window_size):(i + window_size)])
+        S0 = k * np.median(np.abs(input_series[(i - window_size):(i + window_size)] - x0))
+        if (np.abs(input_series[i] - x0) > n_sigmas * S0):
+            new_series[i] = x0
+            indices.append(i)
+
+    return new_series
 
 def hampel(tr, window_size, n_sigmas=3):
 
@@ -633,55 +658,44 @@ def hampel(tr, window_size, n_sigmas=3):
         :return: Returns the corrected timeseries
         """
 
-    n = tr.count()
+    size = tr.count()
     input_series = tr.data
     window_size = int(window_size*tr.stats.sampling_rate)
-    new_series = input_series.copy()
-    k = 1.4826  # scale factor for Gaussian distribution
-
-    indices = []
-
-    # possibly use np.nanmedian
-    for i in range((window_size), (n - window_size)):
-        x0 = np.median(input_series[(i - window_size):(i + window_size)])
-        S0 = k * np.median(np.abs(input_series[(i - window_size):(i + window_size)] - x0))
-        if (np.abs(input_series[i] - x0) > n_sigmas * S0):
-            new_series[i] = x0
-            indices.append(i)
-    tr.data = new_series
-    return tr
-
-def hampel_old(tr, window_size=5, n=3, imputation=True):
-
-    """
-    Median absolute deviation (MAD) outlier in Time Series
-    :param ts: a pandas Series object representing the timeseries
-    :param window_size: total window size will be computed as 2*window_size + 1
-    :param n: threshold, default is 3 (Pearson's rule)
-    :param imputation: If set to False, then the algorithm will be used for outlier detection.
-        If set to True, then the algorithm will also imput the outliers with the rolling median.
-    :return: Returns the outlier indices if imputation=False and the corrected timeseries if imputation=True
-    """
-
-
-    window_size = int(window_size*tr.stats.sampling_rate)
-
-    # Copy the Series object. This will be the cleaned timeserie
-    ts = pd.Series(tr.data)
-    ts_cleaned = ts.copy()
-
-    # Constant scale factor, which depends on the distribution
-    # In this case, we assume normal distribution
-    k = 1.4826
-
-    rolling_ts = ts_cleaned.rolling(window_size * 2, center=True)
-    rolling_median = rolling_ts.median().fillna(method='bfill').fillna(method='ffill')
-    rolling_sigma = k * (rolling_ts.apply(median_absolute_deviation).fillna(method='bfill').fillna(method='ffill'))
-
-    outlier_indices = list(np.array(np.where(np.abs(ts_cleaned - rolling_median) >= (n * rolling_sigma))).flatten())
-
-    if imputation:
-        ts_cleaned[outlier_indices] = rolling_median[outlier_indices]
-        tr.data = ts_cleaned.array.to_numpy()
+    tr.data = hampel_aux(input_series, window_size, size, n_sigmas)
 
     return tr
+
+# def hampel_old(tr, window_size=5, n=3, imputation=True):
+#
+#     """
+#     Median absolute deviation (MAD) outlier in Time Series
+#     :param ts: a pandas Series object representing the timeseries
+#     :param window_size: total window size will be computed as 2*window_size + 1
+#     :param n: threshold, default is 3 (Pearson's rule)
+#     :param imputation: If set to False, then the algorithm will be used for outlier detection.
+#         If set to True, then the algorithm will also imput the outliers with the rolling median.
+#     :return: Returns the outlier indices if imputation=False and the corrected timeseries if imputation=True
+#     """
+#
+#
+#     window_size = int(window_size*tr.stats.sampling_rate)
+#
+#     # Copy the Series object. This will be the cleaned timeserie
+#     ts = pd.Series(tr.data)
+#     ts_cleaned = ts.copy()
+#
+#     # Constant scale factor, which depends on the distribution
+#     # In this case, we assume normal distribution
+#     k = 1.4826
+#
+#     rolling_ts = ts_cleaned.rolling(window_size * 2, center=True)
+#     rolling_median = rolling_ts.median().fillna(method='bfill').fillna(method='ffill')
+#     rolling_sigma = k * (rolling_ts.apply(median_absolute_deviation).fillna(method='bfill').fillna(method='ffill'))
+#
+#     outlier_indices = list(np.array(np.where(np.abs(ts_cleaned - rolling_median) >= (n * rolling_sigma))).flatten())
+#
+#     if imputation:
+#         ts_cleaned[outlier_indices] = rolling_median[outlier_indices]
+#         tr.data = ts_cleaned.array.to_numpy()
+#
+#     return tr

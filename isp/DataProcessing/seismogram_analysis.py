@@ -227,9 +227,8 @@ class SeismogramDataAdvanced:
                 tr = add_white_noise(tr,parameters[j][1])
 
             if parameters[j][0] == 'whitening':
-                #tr = whiten(tr,parameters[j][1], parameters[j][2])
-                tr = whiten(tr, parameters[j][1])
-
+                tr = whiten(tr, parameters[j][1], taper_edge = parameters[j][2])
+                print(parameters[j][2])
             if parameters[j][0] == 'remove spikes':
                 tr = hampel(tr, parameters[j][1], parameters[j][2])
 

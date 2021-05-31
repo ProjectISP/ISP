@@ -314,15 +314,21 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
                                      pw.QTableWidgetItem(ActionEnum.WHITENING.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
             label_freq_min = pw.QLabel("Spectral Width [Hz]")
+            label_taper = pw.QLabel("Taper Spectrum")
             freq_min = pw.QDoubleSpinBox()
             freq_min.setMinimum(0)
             freq_min.setSingleStep(0.01)
+            taper = pw.QComboBox()
+            taper.addItems(['True', 'False'])
 
             if len(params) > 1:
                 freq_min.setValue(params[0])
+                taper.setCurrentText(params[1])
 
             param_layout.addWidget(label_freq_min)
             param_layout.addWidget(freq_min)
+            param_layout.addWidget(label_taper)
+            param_layout.addWidget(taper)
 
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
@@ -620,10 +626,10 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
                 parameters.append([action, spin_value1])
 
             elif (action == ActionEnum.WHITENING.value):
-                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
-                #spin_value2 = self.tableWidget.cellWidget(i, 2).layout().itemAt(3).widget().value()
-                #parameters.append([action, spin_value1,spin_value2])
-                parameters.append([action, spin_value1])
+                spin_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
+                combo_box = self.tableWidget.cellWidget(i, 2).layout().itemAt(3).widget().currentText()
+                parameters.append([action, spin_value, combo_box])
+
 
             elif (action == ActionEnum.REMOVE_SPIKES.value):
                 spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()

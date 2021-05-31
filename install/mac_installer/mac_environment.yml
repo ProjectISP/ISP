@@ -134,3 +134,4 @@ dependencies:
     - pyqt5-sip==12.9.0
     - pyqtwebengine==5.15.4
     - pyqtwebengine-qt5==5.15.2
+    - numba==0.52.0
