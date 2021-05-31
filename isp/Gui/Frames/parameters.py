@@ -346,7 +346,7 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
 
             sigma_window = pw.QSpinBox()
             sigma_window.setMinimum(1)
-            sigma_window.setMinimum(3)
+            sigma_window.setMaximum(3)
             sigma_window.setSingleStep(1)
 
             if len(params) > 1:

@@ -346,6 +346,12 @@ def add_white_noise(tr, SNR_dB):
     tr.data = tr.data+ n
     return tr
 
+@jit(nopython=True, parallel=True)
+def whiten_aux(data_f,data_f_whiten, index, half_width, avarage_window_width, half_width_pos):
+    for j in index:
+        den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
+        data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
+    return data_f_whiten
 
 def whiten(tr, freq_width=0.05, taper_edge=True):
 
@@ -385,9 +391,7 @@ def whiten(tr, freq_width=0.05, taper_edge=True):
     data_f_whiten = data_f.copy()
     index = np.arange(0, N_rfft - half_width, 1)
 
-    for j in index:
-        den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
-        data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
+    data_f_whiten = whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos)
 
     # Taper (optional) and remove mean diffs in edges of the frequency domain
 
@@ -632,11 +636,11 @@ def wiener_filter(tr, time_window, noise_power):
 
     return tr
 
-@jit(nopython=True)
+@jit(nopython=True, parallel=True)
 def hampel_aux(input_series, window_size, size, n_sigmas):
 
     k = 1.4826  # scale factor for Gaussian distribution
-    indices = []
+    #indices = []
     new_series = input_series.copy()
     # possibly use np.nanmedian
     for i in range((window_size), (size - window_size)):
@@ -644,7 +648,7 @@ def hampel_aux(input_series, window_size, size, n_sigmas):
         S0 = k * np.median(np.abs(input_series[(i - window_size):(i + window_size)] - x0))
         if (np.abs(input_series[i] - x0) > n_sigmas * S0):
             new_series[i] = x0
-            indices.append(i)
+            #indices.append(i)
 
     return new_series
 
