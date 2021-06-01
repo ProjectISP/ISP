@@ -238,7 +238,10 @@ def cut_earthquakes(data_map, arrivals, time_before, time_after, min_snr,
                     continue
 
             stream.rotate('->ZNE', inventory=inv)
-            stream.rotate('ZNE->{}'.format(rotation), back_azimuth=baz, inclination=inc)
+            if rotation == 'LQT':
+                stream.rotate('ZNE->{}'.format(rotation), back_azimuth=baz, inclination=inc)
+            else:
+                stream.rotate('NE->RT'.format(rotation), back_azimuth=baz)
             
             # Write file to disk
             stn_output_dir = os.path.join(output_dir, stnm)
