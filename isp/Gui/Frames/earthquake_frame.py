@@ -938,6 +938,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         info = "{}".format(stats['station'])
         self.canvas.set_plot_label(index, info)
         try:
+
+            self.cf = Stream([Trace(data=stack, header=stats)])
             ax = self.canvas.get_axe(0)
             if self.trimCB.isChecked():
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
