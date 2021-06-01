@@ -305,20 +305,22 @@ class BasePltPyqtCanvas(FigureCanvas):
         x_min, x_max = ax.get_xbound()
         return x_min <= x <= x_max
 
-    def set_new_subplot(self, nrows, ncols, **kwargs):
+    def set_new_subplot(self, nrows, ncols, update=True, **kwargs):
         sharex = kwargs.pop("sharex", "all")
         self.figure.clf()
         plt.close(self.figure)
         nrows = max(nrows, 1)  # avoid zero rows.
         self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex=sharex, **kwargs)
         self.__flat_axes()
-        self.draw()
+        if update:
+            self.draw()
 
-    def set_xlabel(self, axe_index, value):
+    def set_xlabel(self, axe_index, value, update=True):
         ax = self.get_axe(axe_index)
         if ax:
             ax.set_xlabel(value)
-            self.draw()  # force to update label
+            if update:
+                self.draw()  # force to update label
 
     def set_ylabel(self, axe_index, value):
         ax = self.get_axe(axe_index)
@@ -501,17 +503,20 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             artist.remove()
             return None
 
-    def __plot_date(self, x, y, ax, clear_plot=True, **kwargs):
+    def __plot_date(self, x, y, ax, clear_plot=True, update=True, **kwargs):
         if clear_plot:
             ax.cla()
         artist, = ax.plot_date(x, y, **kwargs)
-        try:
-            # Draw can raise ValueError
-            self.draw_idle()
+        if update:
+            try:
+                # Draw can raise ValueError
+                self.draw_idle()
+                return artist
+            except ValueError:
+                artist.remove()
+                return None
+        else:
             return artist
-        except ValueError:
-            artist.remove()
-            return None
 
     def __plot_3d(self, x, y, z, ax, plot_type, clear_plot=True, show_colorbar=True, **kwargs):
         """
@@ -588,7 +593,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             else:
                 return self.__plot(x, y, ax, clear_plot=clear_plot, **kwargs)
 
-    def plot_date(self, x, y, axes_index, clear_plot=True, is_twinx=False, **kwargs):
+    def plot_date(self, x, y, axes_index, clear_plot=True, is_twinx=False, update=True, **kwargs):
         """
         Wrapper for matplotlib plot.
 
@@ -606,12 +611,12 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             ax = self.get_axe(axes_index)
             if is_twinx:
                 tw_ax = self.__add_twinx_ax(axes_index)
-                artist = self.__plot_date(x, y, tw_ax, clear_plot=True, **kwargs)
+                artist = self.__plot_date(x, y, tw_ax, clear_plot=True, update=update, **kwargs)
                 if artist:
                     self.set_yaxis_color(tw_ax, artist.get_color())
                 return artist
             else:
-                return self.__plot_date(x, y, ax, clear_plot=clear_plot, **kwargs)
+                return self.__plot_date(x, y, ax, clear_plot=clear_plot, update=update, **kwargs)
 
     def plot_contour(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """

@@ -101,7 +101,8 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
 
     # Function added for 3C Components
     def on_click_select_directory_3C(self):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind_3C.value)
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind_3C.value,
+                                                       pw.QFileDialog.Option.DontUseNativeDialog)
 
         if dir_path:
             self.root_path_bind_3C.value = dir_path
@@ -195,7 +196,8 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
     def save_rotated(self):
         import os
         root_path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                       pw.QFileDialog.Option.DontUseNativeDialog)
         if self._st:
             n = len(self._st)
             for j in range(n):

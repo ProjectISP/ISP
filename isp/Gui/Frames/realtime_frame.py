@@ -1,4 +1,6 @@
 import os
+import tempfile
+
 from obspy import UTCDateTime, Stream
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -118,7 +120,8 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
 
     def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                       pw.QFileDialog.Option.DontUseNativeDialog)
 
         if dir_path:
             bind.value = dir_path
@@ -158,18 +161,20 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         start_time = UTCDateTime(now) - self.timewindowSB.value()*60
 
         if key in self.data_dict.keys():
-
-            slice = tr.data.astype(np.float64)
-            tr.data = slice
+            # TODO: this is necessary? types are correct without this
+            #slice = tr.data.astype(np.float64)
+            #tr.data = slice
 
             self.data_dict[key] = self.data_dict[key] + tr
 
-
         else:
             # insert New Key
-            self.data_dict[key]= tr
+            self.data_dict[key] = tr
 
         self.plot_seismogram()
+
+        if self.saveDataCB.isChecked():
+            self.write_trace(tr)
 
     @AsycTime.run_async()
     def retrieve_data(self, e):
@@ -183,25 +188,23 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
         self.client.run()
 
-
-
     def plot_seismogram(self):
-
+        # TODO: y axis should be independent for each subplot
         now = datetime.now()
         start_time = (UTCDateTime(now)-self.timewindowSB.value()*60) + self.k
         end_time = (UTCDateTime(now)+30)+self.k
-        self.canvas.set_new_subplot(nrows=self.numTracesCB.value(), ncols=1)
-        self.canvas.set_xlabel(self.numTracesCB.value()-1, "Date")
+        self.canvas.set_new_subplot(nrows=self.numTracesCB.value(), ncols=1, update=False)
+        self.canvas.set_xlabel(self.numTracesCB.value()-1, "Date", update=False)
         index = 0
         parameters = self.parameters.getParameters()
         for key, tr in self.data_dict.items():
-            sd = SeismogramDataAdvanced(file_path = None, stream=Stream(traces=tr), realtime =True)
+            sd = SeismogramDataAdvanced(file_path=None, stream=Stream(traces=tr), realtime=True)
             tr = sd.get_waveform_advanced(parameters, self.inventory)
 
             t = tr.times("matplotlib")
             s = tr.data
             info = "{}.{}.{}".format(tr.stats.network, tr.stats.station, tr.stats.channel)
-            self.canvas.plot_date(t, s, index, clear_plot=False, color="black",  fmt = '-', linewidth=0.5)
+            self.canvas.plot_date(t, s, index, clear_plot=False, update=False, color="black",  fmt='-', linewidth=0.5)
             self.canvas.set_plot_label(index, info)
             ax = self.canvas.get_axe(index)
 
@@ -212,11 +215,12 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
             formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
-
+        self.canvas.draw()
         #pyc.QCoreApplication.instance().processEvents()
 
 
     def stop(self):
+        # TODO: not working. Maybe subclassing is necessary
         self.client.close()
 
     def write_trace(self, tr):
@@ -226,7 +230,15 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         id = tr.id + "." + "D" + "." + str(t1.year) + "." + str(t1.julday)
         print(tr.id, "Writing data processed")
         path_output = os.path.join(self.outputPathLE.text(), id)
-        tr.write(path_output, format="MSEED")
+        if os.path.exists(path_output):
+            temp = tempfile.mkstemp()
+            tr.write(temp[1], format="MSEED")
+            with open(path_output, 'ab') as current:
+                with open(temp[1], 'rb') as temp_bin:
+                    current.write(temp_bin.read())
+            os.remove(temp[1])
+        else:
+            tr.write(path_output, format="MSEED")
 
     # TODO: this should be generic to be invoked from other windows
     def open_array_analysis(self):

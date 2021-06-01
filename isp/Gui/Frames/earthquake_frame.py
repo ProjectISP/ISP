@@ -343,7 +343,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                       pw.QFileDialog.Option.DontUseNativeDialog)
 
         if dir_path:
             bind.value = dir_path
