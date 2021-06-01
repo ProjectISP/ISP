@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>644</width>
-    <height>492</height>
+    <height>525</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,6 +23,9 @@
        </property>
       </widget>
      </item>
+     <item row="8" column="1">
+      <widget class="QDoubleSpinBox" name="ncyclesDB"/>
+     </item>
      <item row="5" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
@@ -30,23 +33,23 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
-      <widget class="QDoubleSpinBox" name="ncyclesDB"/>
-     </item>
      <item row="9" column="1">
       <widget class="QDoubleSpinBox" name="fminDB"/>
-     </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>Win lenght (s)</string>
-       </property>
-      </widget>
      </item>
      <item row="8" column="0">
       <widget class="QLabel" name="label_9">
        <property name="text">
         <string>Num Cycles</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QDoubleSpinBox" name="fmaxDB"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>STA</string>
        </property>
       </widget>
      </item>
@@ -57,37 +60,15 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
-      <widget class="QDoubleSpinBox" name="fmaxDB"/>
-     </item>
-     <item row="4" column="1">
-      <widget class="QDoubleSpinBox" name="tapersDB"/>
-     </item>
-     <item row="5" column="1">
-      <widget class="QDoubleSpinBox" name="twDB"/>
-     </item>
-     <item row="6" column="1">
-      <widget class="QDoubleSpinBox" name="winDB"/>
-     </item>
-     <item row="7" column="1">
-      <widget class="QLabel" name="label_7">
-       <property name="text">
-        <string>Wavelet Detector</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="0">
-      <widget class="QLabel" name="label_11">
-       <property name="text">
-        <string>Fmax</string>
-       </property>
-      </widget>
-     </item>
      <item row="2" column="1">
       <widget class="QDoubleSpinBox" name="ltaDB"/>
      </item>
-     <item row="1" column="1">
-      <widget class="QDoubleSpinBox" name="staDB"/>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>LTA</string>
+       </property>
+      </widget>
      </item>
      <item row="3" column="1">
       <widget class="QLabel" name="label_6">
@@ -96,17 +77,19 @@
        </property>
       </widget>
      </item>
+     <item row="4" column="1">
+      <widget class="QDoubleSpinBox" name="tapersDB"/>
+     </item>
+     <item row="12" column="1">
+      <widget class="QDoubleSpinBox" name="win_entropyDB"/>
+     </item>
+     <item row="1" column="1">
+      <widget class="QDoubleSpinBox" name="staDB"/>
+     </item>
      <item row="0" column="1">
       <widget class="QLabel" name="label_5">
        <property name="text">
         <string>STA/LTA</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>STA</string>
        </property>
       </widget>
      </item>
@@ -117,21 +100,71 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>LTA</string>
-       </property>
-      </widget>
-     </item>
-     <item row="12" column="1">
-      <widget class="QDoubleSpinBox" name="win_entropyDB"/>
+     <item row="6" column="1">
+      <widget class="QDoubleSpinBox" name="winDB"/>
      </item>
      <item row="12" column="0">
       <widget class="QLabel" name="label_13">
        <property name="text">
         <string>Win length (s)</string>
        </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Wavelet Detector</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QDoubleSpinBox" name="twDB"/>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>Fmax</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Win lenght (s)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="13" column="1">
+      <widget class="QLabel" name="label_14">
+       <property name="text">
+        <string>Stack</string>
+       </property>
+      </widget>
+     </item>
+     <item row="14" column="0">
+      <widget class="QLabel" name="label_15">
+       <property name="text">
+        <string>Stack  type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="14" column="1">
+      <widget class="QComboBox" name="typestackCB">
+       <item>
+        <property name="text">
+         <string>Linear Stack</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Phase Weigth Stack</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>root</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>

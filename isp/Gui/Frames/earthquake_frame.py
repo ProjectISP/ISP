@@ -922,6 +922,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 tr.write(path_output, format="MSEED")
 
     def stack_all_seismograms(self):
+        params = self.settings_dialog.getParameters()
 
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=1, ncols=1)
@@ -931,7 +932,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         wavenumber = array_analysis.array()
         stream_stack, t, stats, time = wavenumber.stack_seismograms(self.st)
-        stack = wavenumber.stack(stream_stack, stack_type= 'Linear Stack')
+        stack = wavenumber.stack(stream_stack,stack_type=params["stack type"])
 
         self.canvas.plot_date(time, stack, index, clear_plot=True, color='steelblue', fmt='-', linewidth=0.5)
         info = "{}".format(stats['station'])

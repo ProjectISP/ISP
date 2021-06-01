@@ -21,5 +21,6 @@ class SettingsDialog(pw.QDialog, UiSettingsDialog):
         param_dict["Fmin"] = self.fminDB.value()
         param_dict["Fmax"] = self.fminDB.value()
         param_dict["win_entropy"] = self.win_entropyDB.value()
+        param_dict["stack type"] = self.typestackCB.currentText()
         return param_dict
 
