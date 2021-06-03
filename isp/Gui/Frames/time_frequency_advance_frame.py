@@ -56,7 +56,11 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
             ax1.legend()
 
             #plot the phase
-            spectrum = np.fft.rfft(self.tr1.data)
+            N = len(self.tr1.data)
+            D = 2 ** math.ceil(math.log2(N))
+            z = np.zeros(D - N)
+            data = np.concatenate((self.tr1.data, z), axis=0)
+            spectrum = np.fft.rfft(data, D)
             phase = np.angle(spectrum)
             ax3 = self.spectrum_Widget_Canvas.get_axe(2)
             ax3.semilogx(freq1, phase*180/math.pi, color = 'orangered', linewidth=0.5)
@@ -84,7 +88,11 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
             ax2.legend()
 
             # plot the phase
-            spectrum = np.fft.rfft(self.tr2.data)
+            N = len(self.tr2.data)
+            D = 2 ** math.ceil(math.log2(N))
+            z = np.zeros(D - N)
+            data = np.concatenate((self.tr2.data, z), axis=0)
+            spectrum = np.fft.rfft(data, D)
             phase = np.angle(spectrum)
             ax4 = self.spectrum_Widget_Canvas.get_axe(3)
             ax4.semilogx(freq2, phase * 180 / math.pi, color = 'orangered', linewidth=0.5)
