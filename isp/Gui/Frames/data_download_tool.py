@@ -168,7 +168,8 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             evla = float(event_dict[event]['lat'])
             evlo = float(event_dict[event]['lon'])
             evdp = float(event_dict[event]['depth'])
-
+            root_path = os.path.dirname(os.path.abspath(__file__))
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
             for ntwk in inventory:
                 ntwknm = ntwk.code
                 for stn in ntwk:
@@ -192,14 +193,20 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
                         st = self.client.get_waveforms(ntwknm, stnm, "*", channels, start, end)
                         print(st)
-                        self.write(st)
-                        md = MessageDialog(self)
-                        md.set_info_message("Download completed")
+                        self.write(st, dir_path)
+                        #md = MessageDialog(self)
+                        #md.set_info_message("Download completed")
 
                     except:
-
+                        errors = True
                         md = MessageDialog(self)
                         md.set_error_message("Couldn't download data")
+        if errors:
+            md = MessageDialog(self)
+            md.set_info_message("Download completed with some errors")
+        else:
+            md.set_info_message("Download completed")
+
 
     def download_stations_xml(self):
 
@@ -240,10 +247,10 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             md = MessageDialog(self)
             md.set_info_message("Couldn't download time series")
 
-    def write(self, st):
+    def write(self, st, dir_path):
 
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        #root_path = os.path.dirname(os.path.abspath(__file__))
+        #dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         if dir_path:
             n=len(st)
             try:
