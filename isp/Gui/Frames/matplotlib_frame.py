@@ -996,7 +996,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         self.draw()
 
     def global_map(self, axes_index, plot_earthquakes = False, show_colorbar = False, clear_plot = True,
-                   show_stations = False, show_station_names = False, **kwargs):
+                   show_stations = False, show_station_names = False, real_time = False, **kwargs):
         import numpy as np
         from isp import ROOT_DIR
         import os
@@ -1008,6 +1008,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         mag = kwargs.pop('magnitude', [])
         coordinates = kwargs.pop('coordinates', [])
         resolution = kwargs.pop('resolution', 'high')
+        extent = kwargs.pop("extent", [])
 
         if resolution == "Natural Earth":
 
@@ -1018,6 +1019,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
             resolution = "high"
 
         ax = self.get_axe(axes_index)
+
         geodetic_transform = ccrs.PlateCarree()._as_mpl_transform(ax)
         text_transform = offset_copy(geodetic_transform, units='dots', x=-25)
         depth = np.array(depth) / 1000
@@ -1026,8 +1028,11 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         if clear_plot:
             ax.clear()
-
+        if len(extent)>=0:
+            ax.set_extent(extent)
         ax.background_img(name='ne_shaded', resolution= resolution)
+
+
         if show_stations:
             lat = []
             lon = []
@@ -1044,7 +1049,11 @@ class CartopyCanvas(BasePltPyqtCanvas):
                     else:
                         pass
 
+
                 ax.scatter(lon, lat, s=8, marker="^", color ="red", alpha=0.7, transform=ccrs.PlateCarree())
+
+                if real_time:
+                    ax.scatter(lon, lat, s=8, marker="^", color="green", alpha=0.7, transform=ccrs.PlateCarree())
 
         if plot_earthquakes:
             color_map = plt.cm.get_cmap('rainbow')

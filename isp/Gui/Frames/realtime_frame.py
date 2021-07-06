@@ -5,9 +5,10 @@ from obspy import UTCDateTime, Stream
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
-from isp.Gui import pw, pqg, pyc
+from isp.Gui import pw, pqg
 from isp.Gui.Frames import BaseFrame, UiRealTimeFrame, MessageDialog, MatplotlibCanvas
 from isp.Gui.Frames.help_frame import HelpDoc
+from isp.Gui.Frames.map_realtime_frame import MapRealTime
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
@@ -25,8 +26,8 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         super(RealTimeFrame, self).__init__()
         self.setupUi(self)
         self.setWindowIcon(pqg.QIcon(':\\icons\\map-icon.png'))
-
-        self.k = -2*3600
+        self.widget_map = None
+        self.k = -1*3600
         self.settings_dialog = SettingsDialog(self)
         self.inventory = {}
         self.files = []
@@ -48,6 +49,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
 
+        self.mapBtn.clicked.connect(self.show_map)
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
         #self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
@@ -115,6 +117,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         try:
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
+
         except:
             raise FileNotFoundError("The metadata is not valid")
 
@@ -172,6 +175,11 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
             self.data_dict[key] = tr
 
         self.plot_seismogram()
+
+        if self.widget_map is not None:
+            station_list = self.get_station_info(tr)
+            self.widget_map.plot_set_stations(station_list)
+
 
         if self.saveDataCB.isChecked():
             self.write_trace(tr)
@@ -239,6 +247,31 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
             os.remove(temp[1])
         else:
             tr.write(path_output, format="MSEED")
+
+    def show_map(self):
+       if self.inventory:
+           self.widget_map = MapRealTime(self.inventory)
+           try:
+                self.widget_map.show()
+           except:
+               pass
+
+    def get_station_info(self, tr):
+        net_ids = []
+        sta_ids = []
+        latitude = []
+        longitude = []
+        net_ids.append(tr.stats.network)
+        sta_ids.append(tr.stats.station)
+        coordinates = self.inventory.get_coordinates(tr.id)
+        latitude.append(coordinates['latitude'])
+        longitude.append(coordinates['longitude'])
+        net_content = [net_ids, sta_ids, latitude, longitude]
+        # coordinates.update(net.code,net_content)
+        coordinates[tr.stats.network] = net_content
+
+        return coordinates
+
 
     # TODO: this should be generic to be invoked from other windows
     def open_array_analysis(self):
