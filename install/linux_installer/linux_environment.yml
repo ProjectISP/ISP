@@ -129,6 +129,8 @@ dependencies:
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.4.4=h0b5b093_3
   - pip:
+    - geographiclib==1.50
+    - nvector==0.7.6
     - pyqt5==5.13.0
     - pyqt5-sip==12.8.1
     - pyqtwebengine==5.13.0p
