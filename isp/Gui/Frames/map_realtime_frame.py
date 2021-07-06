@@ -18,12 +18,12 @@ class MapRealTime(BaseFrame, UiMapRealTime):
 
         self.retrivetool = retrieve()
         coordinates = self.retrivetool.get_inventory_coordinates(self.metadata)
+
         self.cartopy_canvas.global_map(0, plot_earthquakes=False, show_colorbar=False, show_stations=True,
-             show_station_names=False, clear_plot=False, coordinates=coordinates)
+                                       show_station_names=False, clear_plot=False, coordinates=coordinates, color = "red")
 
     def plot_set_stations(self, stations_list):
-        extent = [min(stations_list[3]), max(stations_list[3]), min(stations_list[2]), max(stations_list[2])]
-        #print(extent)
+
         self.cartopy_canvas.global_map(0, plot_earthquakes=False, show_colorbar=False, show_stations=True,
-             show_station_names=False, clear_plot=False,real_time=True, coordinates=stations_list, extent = extent)
+             show_station_names=False, clear_plot=False, update=False, coordinates=stations_list, color = "green")
 

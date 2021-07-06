@@ -257,17 +257,17 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
                pass
 
     def get_station_info(self, tr):
+        coordinates = {}
         net_ids = []
         sta_ids = []
         latitude = []
         longitude = []
         net_ids.append(tr.stats.network)
         sta_ids.append(tr.stats.station)
-        coordinates = self.inventory.get_coordinates(tr.id)
-        latitude.append(coordinates['latitude'])
-        longitude.append(coordinates['longitude'])
+        coords = self.inventory.get_coordinates(tr.id)
+        latitude.append(coords['latitude'])
+        longitude.append(coords['longitude'])
         net_content = [net_ids, sta_ids, latitude, longitude]
-        # coordinates.update(net.code,net_content)
         coordinates[tr.stats.network] = net_content
 
         return coordinates

@@ -19,7 +19,9 @@ from obspy import Stream
 from owslib.wms import WebMapService
 from isp.Gui import pw, pyc, qt
 from isp.Utils import ObspyUtil, AsycTime
-
+import numpy as np
+from isp import ROOT_DIR
+import os
 
 class MatplotlibWidget(pw.QWidget):
 
@@ -960,10 +962,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         # print(self.MAP_SERVICE_URL)
         wms = WebMapService(self.MAP_SERVICE_URL)
         layer = 'GEBCO_08 Hillshade'
-        #xmin = int(min(x) - 5)
-        #xmax = int(max(x) + 5)
-        #ymin = int(min(y) - 5)
-        #ymax = int(max(y) + 5)
+
         xmin = -150
         xmax = -140
         ymin = 60
@@ -995,19 +994,19 @@ class CartopyCanvas(BasePltPyqtCanvas):
             self.__cbar.ax.set_ylabel("Depth [m]")
         self.draw()
 
-    def global_map(self, axes_index, plot_earthquakes = False, show_colorbar = False, clear_plot = True,
-                   show_stations = False, show_station_names = False, real_time = False, **kwargs):
-        import numpy as np
-        from isp import ROOT_DIR
-        import os
+    def global_map(self, axes_index, plot_earthquakes = False, update = True, show_colorbar = False, clear_plot = True,
+                   show_stations = False, show_station_names = False, **kwargs):
+
 
         os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
         lon = kwargs.pop('lon', [])
         lat = kwargs.pop('lat', [])
         depth = kwargs.pop('depth', [])
         mag = kwargs.pop('magnitude', [])
-        coordinates = kwargs.pop('coordinates', [])
+        coordinates = kwargs.pop('coordinates', {})
         resolution = kwargs.pop('resolution', 'high')
+        color = kwargs.pop('color', 'red')
+
         extent = kwargs.pop("extent", [])
 
         if resolution == "Natural Earth":
@@ -1028,9 +1027,16 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         if clear_plot:
             ax.clear()
-        if len(extent)>=0:
-            ax.set_extent(extent)
-        ax.background_img(name='ne_shaded', resolution= resolution)
+
+        #if len(extent)>=0:
+        #    try:
+        #        ax.set_extent(extent)
+        #    except:
+        #        pass
+        if update:
+            pass
+        else:
+            ax.background_img(name='ne_shaded', resolution= resolution)
 
 
         if show_stations:
@@ -1038,7 +1044,9 @@ class CartopyCanvas(BasePltPyqtCanvas):
             lon = []
             sta_ids = []
             for key in coordinates.keys():
-                for j in range(len(coordinates[key][0][:])-1):
+
+                for j in range(len(coordinates[key][0][:])):
+
                     sta_ids.append(coordinates[key][1][j])
                     lat.append(coordinates[key][2][j])
                     lon.append(coordinates[key][3][j])
@@ -1049,11 +1057,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
                     else:
                         pass
 
+            ax.scatter(lon, lat, s=8, marker="^", color=color, alpha=0.7, transform=ccrs.PlateCarree())
 
-                ax.scatter(lon, lat, s=8, marker="^", color ="red", alpha=0.7, transform=ccrs.PlateCarree())
-
-                if real_time:
-                    ax.scatter(lon, lat, s=8, marker="^", color="green", alpha=0.7, transform=ccrs.PlateCarree())
 
         if plot_earthquakes:
             color_map = plt.cm.get_cmap('rainbow')
