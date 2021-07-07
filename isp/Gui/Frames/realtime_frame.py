@@ -44,13 +44,19 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
         self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=self.numTracesCB.value(), constrained_layout=False)
         self.canvas.figure.tight_layout()
-        # Bind buttons
-        self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
+
+        # Binding
+        self.root_path_bind = BindPyqtObject(self.rootPathForm)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
+
+        # Bind
+
+        self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
+
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
 
+        self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.mapBtn.clicked.connect(self.show_map)
-        self.stations_infoBtn.clicked.connect(self.stationsInfo)
         #self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.actionArray_Anlysis.triggered.connect(self.open_array_analysis)
@@ -69,6 +75,11 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.help = HelpDoc()
 
         # shortcuts
+
+    def on_click_select_directory(self, bind: BindPyqtObject):
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        if dir_path:
+            bind.value = dir_path
 
     @property
     def dataless_manager(self):
@@ -129,32 +140,6 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         if dir_path:
             bind.value = dir_path
 
-    def stationsInfo(self):
-
-        files_path = self.get_files(self.root_path_bind.value)
-        if self.sortCB.isChecked():
-            if self.comboBox_sort.currentText() == "Distance":
-                files_path.sort(key=self.sort_by_distance_advance)
-                self.message_dataless_not_found()
-
-            elif self.comboBox_sort.currentText() == "Back Azimuth":
-                files_path.sort(key=self.sort_by_baz_advance)
-                self.message_dataless_not_found()
-
-        files_at_page = self.get_files_at_page()
-        sd = []
-
-        for file in files_at_page:
-            st = SeismogramDataAdvanced(file)
-
-            station = [st.stats.Network, st.stats.Station, st.stats.Location, st.stats.Channel, st.stats.StartTime,
-                       st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
-
-            sd.append(station)
-
-        self._stations_info = StationsInfo(sd)
-        self._stations_info.show()
-
 
     def handle_data(self, tr):
 
@@ -164,9 +149,6 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         start_time = UTCDateTime(now) - self.timewindowSB.value()*60
 
         if key in self.data_dict.keys():
-            # TODO: this is necessary? types are correct without this
-            #slice = tr.data.astype(np.float64)
-            #tr.data = slice
 
             self.data_dict[key] = self.data_dict[key] + tr
 
@@ -184,10 +166,20 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         if self.saveDataCB.isChecked():
             self.write_trace(tr)
 
+    def seedlink_error(self, tr):
+
+        print("seedlink_error")
+
+    def terminate_data(self, tr):
+
+        print("terminate_data")
+
+
     @AsycTime.run_async()
     def retrieve_data(self, e):
 
-        self.client = create_client(self.serverAddressForm.text(), on_data=self.handle_data)
+        self.client = create_client(self.serverAddressForm.text(), on_data = self.handle_data,
+            on_seedlink_error = self.seedlink_error, on_terminate =  self.terminate_data)
 
         for net in self.netForm.text().split(","):
             for sta in self.stationForm.text().split(","):
@@ -237,7 +229,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         t1 = tr.stats.starttime
         id = tr.id + "." + "D" + "." + str(t1.year) + "." + str(t1.julday)
         print(tr.id, "Writing data processed")
-        path_output = os.path.join(self.outputPathLE.text(), id)
+        path_output = os.path.join(self.rootPathForm.text(), id)
         if os.path.exists(path_output):
             temp = tempfile.mkstemp()
             tr.write(temp[1], format="MSEED")

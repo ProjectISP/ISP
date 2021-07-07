@@ -1006,6 +1006,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         coordinates = kwargs.pop('coordinates', {})
         resolution = kwargs.pop('resolution', 'high')
         color = kwargs.pop('color', 'red')
+        size = kwargs.pop('size',8)
 
         extent = kwargs.pop("extent", [])
 
@@ -1034,9 +1035,9 @@ class CartopyCanvas(BasePltPyqtCanvas):
         #    except:
         #        pass
         if update:
-            pass
+            ax.background_img(name='ne_shaded', resolution=resolution)
         else:
-            ax.background_img(name='ne_shaded', resolution= resolution)
+            pass
 
 
         if show_stations:
@@ -1057,7 +1058,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
                     else:
                         pass
 
-            ax.scatter(lon, lat, s=8, marker="^", color=color, alpha=0.7, transform=ccrs.PlateCarree())
+            ax.scatter(lon, lat, s=size, marker="^", color=color, alpha=0.7, transform=ccrs.PlateCarree())
 
 
         if plot_earthquakes:
