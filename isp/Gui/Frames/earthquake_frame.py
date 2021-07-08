@@ -193,6 +193,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+T'), self)
         self.shortcut_open.activated.connect(self._picker_thread)
 
+        # test #
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+F'), self)
+        self.shortcut_open.activated.connect(self.picker_all)
+        #######
 
     def cancelled_callback(self):
         self.cancelled = True
@@ -278,6 +282,26 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             f = executor.submit(self._run_picker)
             self.progressbar.exec()
             f.cancel()
+
+    # TODO Move output file last.hyp >>> another fixed folder
+    def picker_all(self, delta = 50):
+        # delta is the trim of the data
+        st_detect_all = self.st.copy()
+        self.detect_events()
+        events_path = self.path_detection
+        with open(events_path, 'rb') as handle:
+            events = json.load(handle)
+
+        for k in range(len(events)):
+
+            self.st.trim(starttime = events[k]-delta, endtime = events[k]+delta)
+            self._run_picker()
+            # Locate #
+            std_out = self.nll_manager.run_nlloc(0, 0, 0, transform = "GLOBAL")
+            #
+            # TODO Move output file "last.hyp" >>> another fixed folder
+            # restore it
+            self.st = st_detect_all
 
     @property
     def dataless_manager(self):
