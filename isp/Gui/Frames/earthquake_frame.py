@@ -875,10 +875,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             tr_cf.data = cf
             all_traces.append(tr_cf)
         max_threshold = 3*np.max(standard_deviations)
-        min_threshold = np.mean(standard_deviations)
+        min_threshold = 1*np.mean(standard_deviations)
+        print(max_threshold,min_threshold)
         self.st = Stream(traces=all_traces)
-        trigger =coincidence_trigger(trigger_type=None, thr_on = max_threshold, thr_off = min_threshold,
-                                     trigger_off_extension = 30, thr_coincidence_sum = 4, stream=self.st, details=True)
+        trigger = coincidence_trigger(trigger_type=None, thr_on = max_threshold, thr_off = min_threshold,
+                                     trigger_off_extension = 0, thr_coincidence_sum = 6, stream=self.st, similarity_threshold = 0.8,
+                                      details=True)
 
 
         for k in range(len(trigger)):
@@ -888,6 +890,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 if key == 'time':
                     time = detection[key]
                     self.events_times.append(time)
+        # calling for 1D clustering more than one detection per earthquake //eps seconds span
+        self.events_times = MseedUtil.cluster_events(self.events_times, eps=20.0)
 
         md = MessageDialog(self)
         md.set_info_message("Events Detection done")

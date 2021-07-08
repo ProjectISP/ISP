@@ -404,3 +404,27 @@ class MseedUtil:
         hax.set_xlabel("Date")
         hax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
         cls.mpf.show()
+
+    @classmethod
+    def cluster_events(cls, times, eps=20.0):
+        from obspy import UTCDateTime
+        points = []
+        for j in range(len(times)):
+            points.append(times[j].timestamp)
+
+        clusters = []
+        points_sorted = sorted(points)
+        curr_point = points_sorted[0]
+        curr_cluster = [curr_point]
+        for point in points_sorted[1:]:
+            if point <= curr_point + eps:
+                curr_cluster.append(point)
+            else:
+                clusters.append(curr_cluster)
+                curr_cluster = [point]
+            curr_point = point
+        clusters.append(curr_cluster)
+        new_times = []
+        for k  in  range(len(clusters)):
+            new_times.append(UTCDateTime(clusters[k][0]))
+        return new_times
