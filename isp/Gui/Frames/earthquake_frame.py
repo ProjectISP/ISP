@@ -34,6 +34,7 @@ import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
     correlate_maxlag, get_lags
+from sys import platform
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
@@ -55,6 +56,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.progressbar.setWindowTitle('Neural Network Running')
         self.progressbar.setLabelText(" Computing Auto-Picking ")
         self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
+        self.path_phases = os.path.join(AUTOMATIC_PHASES, "phases_autodetected.txt")
+        self.path_detection = os.path.join(EVENTS_DETECTED, "event_autodetects.txt")
         self.progressbar.close()
         self.settings_dialog = SettingsDialog(self)
         self.inventory = {}
@@ -147,8 +150,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.help = HelpDoc()
 
         # shortcuts
-        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'), self)
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+U'), self)
         self.shortcut_open.activated.connect(self.open_solutions)
+
+        # shortcuts
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+Y'), self)
+        self.shortcut_open.activated.connect(self.open_events)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+L'), self)
         self.shortcut_open.activated.connect(self.open_parameters_settings)
@@ -208,7 +215,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def _process_station(self, station, index):
         st2 = self.st.select(station=station)
-        path = os.path.join(AUTOMATIC_PHASES,"phases_autodetected.txt")
+
         try:
             maxstart = np.max([tr.stats.starttime for tr in st2])
             minend = np.min([tr.stats.endtime for tr in st2])
@@ -221,7 +228,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     if k == "p":
                         self.canvas.draw_arrow(t.matplotlib_date, index + 2,
                                                "P", color="blue", linestyles='--', picker=False)
-                        with open(path, "a+") as f:
+                        with open(self.path_phases, "a+") as f:
                             f.write(station + " " + k.upper() + " " + t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
 
                         self.pm.add_data(t, 0, st2[2].stats.station,"P", Component=st2[2].stats.channel,
@@ -229,15 +236,18 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                         self.pm.save()
 
                     if k == "s":
+
                         self.canvas.draw_arrow(t.matplotlib_date, index + 0,
                                                "S", color="purple", linestyles='--', picker=False)
                         self.canvas.draw_arrow(t.matplotlib_date, index + 1,
                                                "S", color="purple", linestyles='--', picker=False)
-                        with open(path, "a+") as f:
+
+                        with open(self.path_phases, "a+") as f:
                                 f.write(station+" "+k.upper()+" "+t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
                         self.pm.add_data(t, 0, st2[1].stats.station, "P", Component=st2[1].stats.channel,
                                          First_Motion="?")
                         self.pm.save()
+
         except ValueError as e:
             # TODO: summarize errors and show eventually
             # md = MessageDialog(self)
@@ -247,6 +257,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def _run_picker(self):
         os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+        # Creates a new file
+        with open(self.path_phases, 'w') as fp:
+            pass
         if self.st:
             stations = ObspyUtil.get_stations_from_stream(self.st)
             N = len(stations)
@@ -899,7 +912,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             all_traces.append(tr_cf)
         max_threshold = threshold*np.max(standard_deviations)
         min_threshold = 1*np.mean(standard_deviations)
-        print(max_threshold,min_threshold)
+
         self.st = Stream(traces=all_traces)
 
         trigger = coincidence_trigger(trigger_type=None, thr_on = max_threshold, thr_off = min_threshold,
@@ -917,9 +930,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # calling for 1D clustering more than one detection per earthquake //eps seconds span
         self.events_times,str_times = MseedUtil.cluster_events(self.events_times, eps=cluster)
 
-        path = os.path.join(EVENTS_DETECTED,"event_autodetects.txt")
-
-        with open(path, "w") as fp:
+        with open(self.path_detection, "w") as fp:
             json.dump(str_times, fp)
 
         md = MessageDialog(self)
@@ -1429,13 +1440,45 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self._magnitude_calc.show()
 
     def open_solutions(self):
-        md = MessageDialog(self)
+
         output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
+
         try:
-            command = "{} {}".format('open', output_path)
+
+            if platform == "darwin":
+
+                command = "{} {}".format('open', output_path)
+
+            else:
+
+                command = "{} {}".format('xdg - open', output_path)
+
             exc_cmd(command, cwd = ROOT_DIR)
+
         except:
 
+            md = MessageDialog(self)
+            md.set_error_message("Coundn't open pick file")
+
+    def open_events(self):
+
+        output_path = os.path.join(EVENTS_DETECTED,'event_autodetects.txt')
+
+        try:
+
+            if platform == "darwin":
+
+                command = "{} {}".format('open', output_path)
+            else:
+
+                command = "{} {}".format('xdg - open', output_path)
+
+
+            exc_cmd(command, cwd = ROOT_DIR)
+
+        except:
+
+            md = MessageDialog(self)
             md.set_error_message("Coundn't open pick file")
 
     def remove_picks(self):
