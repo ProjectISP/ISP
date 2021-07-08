@@ -425,6 +425,8 @@ class MseedUtil:
             curr_point = point
         clusters.append(curr_cluster)
         new_times = []
+        string_times = []
         for k  in  range(len(clusters)):
             new_times.append(UTCDateTime(clusters[k][0]))
-        return new_times
+            string_times.append(UTCDateTime(clusters[k][0]).strftime(format="%Y-%m-%dT%H:%M:%S.%f"))
+        return new_times,string_times

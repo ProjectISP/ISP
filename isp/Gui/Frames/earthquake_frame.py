@@ -27,8 +27,9 @@ from isp.arrayanalysis import array_analysis
 from isp.earthquakeAnalisysis import PickerManager
 import numpy as np
 import os
+import json
 from isp.Utils.subprocess_utils import exc_cmd
-from isp import ROOT_DIR
+from isp import ROOT_DIR, EVENTS_DETECTED, AUTOMATIC_PHASES
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
@@ -179,6 +180,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('W'), self)
         self.shortcut_open.activated.connect(self.plot_seismogram)
 
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+R'), self)
+        self.shortcut_open.activated.connect(self.detect_events)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+T'), self)
+        self.shortcut_open.activated.connect(self._picker_thread)
+
+
     def cancelled_callback(self):
         self.cancelled = True
 
@@ -200,6 +208,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def _process_station(self, station, index):
         st2 = self.st.select(station=station)
+        path = os.path.join(AUTOMATIC_PHASES,"phases_autodetected.txt")
         try:
             maxstart = np.max([tr.stats.starttime for tr in st2])
             minend = np.min([tr.stats.endtime for tr in st2])
@@ -212,12 +221,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     if k == "p":
                         self.canvas.draw_arrow(t.matplotlib_date, index + 2,
                                                "P", color="blue", linestyles='--', picker=False)
+                        with open(path, "a+") as f:
+                            f.write(station + " " + k.upper() + " " + t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
+
+                        self.pm.add_data(t, 0, st2[2].stats.station,"P", Component=st2[2].stats.channel,
+                                         First_Motion="?")
+                        self.pm.save()
+
                     if k == "s":
                         self.canvas.draw_arrow(t.matplotlib_date, index + 0,
                                                "S", color="purple", linestyles='--', picker=False)
                         self.canvas.draw_arrow(t.matplotlib_date, index + 1,
                                                "S", color="purple", linestyles='--', picker=False)
-
+                        with open(path, "a+") as f:
+                                f.write(station+" "+k.upper()+" "+t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
+                        self.pm.add_data(t, 0, st2[1].stats.station, "P", Component=st2[1].stats.channel,
+                                         First_Motion="?")
+                        self.pm.save()
         except ValueError as e:
             # TODO: summarize errors and show eventually
             # md = MessageDialog(self)
@@ -516,9 +536,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
             end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             for k in range(len(stations)):
-
-
-
 
                 if self.angCB.isChecked():
 
@@ -841,6 +858,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     # @AsycTime.run_async()
     def detect_events(self):
+
+        params = self.settings_dialog.getParameters()
+        threshold = params["ThresholdDetect"]
+        coincidences = params["Coincidences"]
+        cluster  = params["Cluster"]
+
         standard_deviations = []
         all_traces = []
 
@@ -874,13 +897,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             tr_cf = tr.copy()
             tr_cf.data = cf
             all_traces.append(tr_cf)
-        max_threshold = 3*np.max(standard_deviations)
+        max_threshold = threshold*np.max(standard_deviations)
         min_threshold = 1*np.mean(standard_deviations)
         print(max_threshold,min_threshold)
         self.st = Stream(traces=all_traces)
+
         trigger = coincidence_trigger(trigger_type=None, thr_on = max_threshold, thr_off = min_threshold,
-                                     trigger_off_extension = 0, thr_coincidence_sum = 6, stream=self.st, similarity_threshold = 0.8,
-                                      details=True)
+                                     trigger_off_extension = 0, thr_coincidence_sum = coincidences, stream=self.st,
+                                      similarity_threshold = 0.8, details=True)
 
 
         for k in range(len(trigger)):
@@ -891,7 +915,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     time = detection[key]
                     self.events_times.append(time)
         # calling for 1D clustering more than one detection per earthquake //eps seconds span
-        self.events_times = MseedUtil.cluster_events(self.events_times, eps=20.0)
+        self.events_times,str_times = MseedUtil.cluster_events(self.events_times, eps=cluster)
+
+        path = os.path.join(EVENTS_DETECTED,"event_autodetects.txt")
+
+        with open(path, "w") as fp:
+            json.dump(str_times, fp)
 
         md = MessageDialog(self)
         md.set_info_message("Events Detection done")

@@ -772,8 +772,8 @@
     <addaction name="menuPicks"/>
     <addaction name="actionGet_Stations_Info"/>
     <addaction name="actionSet_Parameters"/>
-    <addaction name="actionRun_picker"/>
     <addaction name="actionRun_Event_Detector"/>
+    <addaction name="actionRun_picker"/>
     <addaction name="actionClean_selection"/>
     <addaction name="actionRemove_all_selections"/>
     <addaction name="actionClean_Events_Detected"/>
@@ -956,10 +956,16 @@
    <property name="text">
     <string>Run picker</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
+   </property>
   </action>
   <action name="actionRun_Event_Detector">
    <property name="text">
     <string>Run Event Detector</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
    </property>
   </action>
   <action name="actionOpen_Settings">
