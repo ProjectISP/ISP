@@ -266,19 +266,36 @@ class MseedUtil:
          return []
 
     @classmethod
-    def get_tree_mseed_files(cls, root_dir: str):
+    def get_tree_mseed_files(cls, root_dir: str, **kwargs):
         """
         Get a list of valid mseed files inside all folder tree from the the root_dir.
         If root_dir doesn't exists it returns a empty list.
         :param root_dir: The full path of the dir or a file.
         :return: A list of full path of mseed files.
         """
-
+        start = kwargs.pop('starttime', [])
+        end = kwargs.pop('endtime', [])
         obsfiles = []
         for top_dir, sub_dir, files in os.walk(root_dir):
             for file in files:
-                if cls.is_valid_mseed(os.path.join(top_dir, file)):
-                    obsfiles.append(os.path.join(top_dir, file))
+                pos_file = os.path.join(top_dir, file)
+                if cls.is_valid_mseed(pos_file):
+
+                    if isinstance(start, UTCDateTime):
+                        header = read(pos_file, headlonly=True)
+                        #check times as a filter
+                        check1 = start-header[0].stats.starttime >= 0
+                        check2 = end-header[0].stats.endtime <= 0
+                        if check1 and check2:
+                            obsfiles.append(os.path.join(top_dir, pos_file))
+                        else:
+                            pass
+
+                    else:
+
+                        obsfiles.append(os.path.join(top_dir, pos_file))
+
+
         obsfiles.sort()
 
         return obsfiles

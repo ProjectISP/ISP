@@ -371,8 +371,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         if self.scan.isChecked():
 
-            files_path = MseedUtil.get_tree_mseed_files(dir_path)
-
+            if self.trimCB.isChecked():
+                start = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+                end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+                diff = end-start
+                if diff > 0:
+                    files_path = MseedUtil.get_tree_mseed_files(dir_path, starttime = start, endtime = end)
+            else:
+                files_path = MseedUtil.get_tree_mseed_files(dir_path)
         else:
 
             files_path = MseedUtil.get_mseed_files(dir_path)
