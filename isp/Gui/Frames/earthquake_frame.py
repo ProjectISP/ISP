@@ -24,7 +24,7 @@ from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdateti
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.arrayanalysis import array_analysis
-from isp.earthquakeAnalisysis import PickerManager
+from isp.earthquakeAnalisysis import PickerManager, NllManager
 import numpy as np
 import os
 import json
@@ -219,7 +219,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def _process_station(self, station, index):
         st2 = self.st.select(station=station)
-
         try:
             maxstart = np.max([tr.stats.starttime for tr in st2])
             minend = np.min([tr.stats.endtime for tr in st2])
@@ -235,7 +234,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                         with open(self.path_phases, "a+") as f:
                             f.write(station + " " + k.upper() + " " + t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
 
-                        self.pm.add_data(t, 0, st2[2].stats.station,"P", Component=st2[2].stats.channel,
+                        self.pm.add_data(t, 1, st2[2].stats.station, "P", Component=st2[2].stats.channel,
                                          First_Motion="?")
                         self.pm.save()
 
@@ -248,7 +247,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                         with open(self.path_phases, "a+") as f:
                                 f.write(station+" "+k.upper()+" "+t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
-                        self.pm.add_data(t, 0, st2[1].stats.station, "P", Component=st2[1].stats.channel,
+                        self.pm.add_data(t, 0, st2[1].stats.station, "S", Component=st2[1].stats.channel,
                                          First_Motion="?")
                         self.pm.save()
 
@@ -286,15 +285,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     # TODO Move output file last.hyp >>> another fixed folder
     def picker_all(self, delta = 50):
         # delta is the trim of the data
+        OBS_OUTPUT_PATH = os.path.join(ROOT_DIR, 'earthquakeAnalisysis/location_output/obs')
+        pick_output_path = PickerManager.get_default_output_path()
+        self.nll_manager = NllManager(pick_output_path, self.dataless_path_bind.value)
         st_detect_all = self.st.copy()
+
         self.detect_events()
         events_path = self.path_detection
         with open(events_path, 'rb') as handle:
             events = json.load(handle)
 
         for k in range(len(events)):
-
-            self.st.trim(starttime = events[k]-delta, endtime = events[k]+delta)
+            start = UTCDateTime(events[k]) - delta
+            end = UTCDateTime(events[k]) + delta
+            self.st.trim(starttime = start , endtime = end)
             self._run_picker()
             # Locate #
             std_out = self.nll_manager.run_nlloc(0, 0, 0, transform = "GLOBAL")
@@ -302,6 +306,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             # TODO Move output file "last.hyp" >>> another fixed folder
             # restore it
             self.st = st_detect_all
+            md = MessageDialog(self)
+            md.set_info_message("Location complete. Check details for earthquake located at "+events[k]
+                                , std_out)
+
 
     @property
     def dataless_manager(self):
@@ -773,14 +781,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.redraw_chop(tr, tr.data, index)
             cf = cw.cf_lowpass()
             # Normalize
-            cf = cf / max(cf)
+            #cf = cf / max(cf)
             t=t[0:len(cf)]
             #self.canvas.plot(t, cf, index, is_twinx=True, color="red",linewidth=0.5)
             #self.canvas.set_ylabel_twinx(index, "CWT (CF)")
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
             ax2.plot(t, cf, color="red", linewidth=0.5, alpha = 0.5)
-            ax2.set_ylim(-1.05, 1.05)
+            #ax2.set_ylim(-1.05, 1.05)
             last_index = index
             tr_cf = tr.copy()
             tr_cf.data = cf
@@ -929,14 +937,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             cf = cw.cf_lowpass()
             # Normalize
-            standard_deviations.append(np.std(cf))
             #cf = cf / max(cf)
+            standard_deviations.append(np.std(cf))
+
             tr_cf = tr.copy()
             tr_cf.data = cf
             all_traces.append(tr_cf)
-        max_threshold = threshold*np.max(standard_deviations)
-        min_threshold = 1*np.mean(standard_deviations)
 
+        max_threshold = threshold*np.mean(standard_deviations)
+        min_threshold = 1*np.mean(standard_deviations)
+        print(max_threshold,min_threshold)
         self.st = Stream(traces=all_traces)
 
         trigger = coincidence_trigger(trigger_type=None, thr_on = max_threshold, thr_off = min_threshold,
@@ -952,14 +962,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     time = detection[key]
                     self.events_times.append(time)
         # calling for 1D clustering more than one detection per earthquake //eps seconds span
-        self.events_times,str_times = MseedUtil.cluster_events(self.events_times, eps=cluster)
+        try:
+            self.events_times,str_times = MseedUtil.cluster_events(self.events_times, eps=cluster)
 
-        with open(self.path_detection, "w") as fp:
-            json.dump(str_times, fp)
+            with open(self.path_detection, "w") as fp:
+                json.dump(str_times, fp)
 
-        md = MessageDialog(self)
-        md.set_info_message("Events Detection done")
-        self.plot_seismogram()
+            self.plot_seismogram()
+            md = MessageDialog(self)
+            md.set_info_message("Events Detection done")
+        except:
+            md = MessageDialog(self)
+            md.set_info_message("No Detections")
+
+
 
 
     def write_files_page(self):

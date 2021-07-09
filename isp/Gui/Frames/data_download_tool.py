@@ -60,10 +60,6 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         self.line2 = ax.scatter(lon90, lat90, s=8, c="white")
 
 
-
-
-
-
     def get_catalog(self):
 
         latitudes = []
@@ -162,14 +158,14 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         
         model = obspy.taup.TauPyModel(model="iasp91")
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
 
         for event in event_dict.keys():
             otime = obspy.UTCDateTime(event_dict[event]['otime'])
             evla = float(event_dict[event]['lat'])
             evlo = float(event_dict[event]['lon'])
             evdp = float(event_dict[event]['depth'])
-            root_path = os.path.dirname(os.path.abspath(__file__))
-            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
             for ntwk in inventory:
                 ntwknm = ntwk.code
                 for stn in ntwk:
@@ -220,7 +216,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         inventory = self.client.get_stations(network=networks, station=stations, starttime=starttime,
                                             endtime=endtime, level="response")
         try:
-            print("Gettinf metadata from ", networks, stations, channels, starttime, endtime)
+            print("Getting metadata from ", networks, stations, channels, starttime, endtime)
             inventory.write(fname, format="STATIONXML")
             md = MessageDialog(self)
             md.set_info_message("Download completed")
@@ -239,9 +235,13 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         try:
 
-            print("Gettinf data from ", networks, stations, channels, starttime, endtime)
+            print("Getting data from ", networks, stations, channels, starttime, endtime)
             st = self.client.get_waveforms(networks, stations, "*", channels, starttime, endtime)
-            print(st)
+            if len(st)>0:
+
+                root_path = os.path.dirname(os.path.abspath(__file__))
+                dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+                self.write(st, dir_path)
 
         except:
             md = MessageDialog(self)
@@ -249,8 +249,6 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
     def write(self, st, dir_path):
 
-        #root_path = os.path.dirname(os.path.abspath(__file__))
-        #dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         if dir_path:
             n=len(st)
             try:

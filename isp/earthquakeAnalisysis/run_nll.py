@@ -342,7 +342,7 @@ class NllManager:
 
         elif transform == "GLOBAL":
 
-            self.stations_to_nll_v2(transform="GLOBAL")
+            self.stations_to_nll_v2(latitude, longitude, depth, limit = 20000, transform="GLOBAL")
             stations_path = os.path.join(self.get_stations_template_file_path)
             temp_path = self.get_temp_dir
             shutil.copy(stations_path, temp_path)
@@ -353,7 +353,7 @@ class NllManager:
         return exc_cmd(command, cwd=output_path.parent)
 
 
-    def stations_to_nll_v2(self, latitude_f, longitude_f, depth_f, limit, transform="SIMPLE"):
+    def stations_to_nll_v2(self, latitude_f, longitude_f, depth, limit, transform="SIMPLE"):
 
         try:
             metadata_manager = MetadataManager(self.__dataless_dir)
