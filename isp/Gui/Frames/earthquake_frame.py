@@ -369,7 +369,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def get_files(self, dir_path):
 
-        files_path = MseedUtil.get_mseed_files(dir_path)
+        if self.scan.isChecked():
+
+            files_path = MseedUtil.get_tree_mseed_files(dir_path)
+
+        else:
+
+            files_path = MseedUtil.get_mseed_files(dir_path)
 
         if self.selectCB.isChecked():
 
