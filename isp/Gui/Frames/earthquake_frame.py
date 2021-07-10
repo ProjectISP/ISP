@@ -916,6 +916,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     # @AsycTime.run_async()
     def detect_events(self):
 
+        #to make a detection it is needed to trim the data otherwise,
+        # is going to take the starttime and endtime of the file
+
         params = self.settings_dialog.getParameters()
         threshold = params["ThresholdDetect"]
         coincidences = params["Coincidences"]
@@ -924,27 +927,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         standard_deviations = []
         all_traces = []
 
-        parameters = self.parameters.getParameters()
         starttime = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         endtime = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-        diff = endtime - starttime
-        obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
-        obsfiles.sort()
 
-        for file in obsfiles:
-            sd = SeismogramDataAdvanced(file)
-            if self.trimCB.isChecked() and diff >= 0:
-                tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                              filter_error_callback=self.filter_error_message,
-                                              start_time=starttime, end_time=endtime)
-                cw = ConvolveWaveletScipy(tr)
-                cw.setup_wavelet(starttime, endtime, wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
-                                 decimate=False)
+
+        for tr in self.st:
+            cw = ConvolveWaveletScipy(tr)
+            if self.trimCB.isChecked():
+                cw.setup_wavelet(starttime, endtime, wmin=5, wmax=5, tt=10, fmin=0.5, fmax=10, nf=40, use_rfft=False,
+                             decimate=False)
             else:
-                tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                              filter_error_callback=self.filter_error_message)
-                cw = ConvolveWaveletScipy(tr)
-                cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
+                cw.setup_wavelet(wmin=5, wmax=5, tt=10, fmin=0.5, fmax=10, nf=40, use_rfft=False,
                                  decimate=False)
 
             cf = cw.cf_lowpass()
@@ -958,7 +951,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         max_threshold = threshold*np.mean(standard_deviations)
         min_threshold = 1*np.mean(standard_deviations)
-        print(max_threshold,min_threshold)
+
         self.st = Stream(traces=all_traces)
 
         trigger = coincidence_trigger(trigger_type=None, thr_on = max_threshold, thr_off = min_threshold,

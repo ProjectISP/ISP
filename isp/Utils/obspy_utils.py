@@ -279,9 +279,9 @@ class MseedUtil:
         for top_dir, sub_dir, files in os.walk(root_dir):
             for file in files:
                 pos_file = os.path.join(top_dir, file)
-                if cls.is_valid_mseed(pos_file):
 
-                    if isinstance(start, UTCDateTime):
+                if isinstance(start, UTCDateTime):
+                    try:
                         header = read(pos_file, headlonly=True)
                         #check times as a filter
                         check1 = start-header[0].stats.starttime >= 0
@@ -290,9 +290,11 @@ class MseedUtil:
                             obsfiles.append(os.path.join(top_dir, pos_file))
                         else:
                             pass
+                    except:
+                        pass
 
-                    else:
-
+                else:
+                    if cls.is_valid_mseed(pos_file):
                         obsfiles.append(os.path.join(top_dir, pos_file))
 
 
