@@ -284,9 +284,17 @@ class MseedUtil:
                     try:
                         header = read(pos_file, headlonly=True)
                         #check times as a filter
-                        check1 = start-header[0].stats.starttime >= 0
-                        check2 = end-header[0].stats.endtime <= 0
-                        if check1 and check2:
+                        #check1 = start-header[0].stats.starttime >= 0
+                        #check2 = end-header[0].stats.endtime <= 0
+                        st0 = header[0].stats.starttime
+                        st1 = start
+                        et0 = header[0].stats.endtime
+                        et1 = end
+                        if st1>=st0 and et1>et0 and (st1-st0) <= 86400:
+                            obsfiles.append(os.path.join(top_dir, pos_file))
+                        elif st1<=st0 and et1>=et0:
+                            obsfiles.append(os.path.join(top_dir, pos_file))
+                        elif st1<=st0 and et1<=et0 and (et0-et1) <= 86400:
                             obsfiles.append(os.path.join(top_dir, pos_file))
                         else:
                             pass
