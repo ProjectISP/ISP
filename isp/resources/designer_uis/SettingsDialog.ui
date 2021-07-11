@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>399</width>
-    <height>713</height>
+    <height>816</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,94 +16,13 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout_2">
-     <item row="8" column="0" colspan="2">
-      <widget class="Line" name="line_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+     <item row="23" column="1">
+      <widget class="QDoubleSpinBox" name="ClusterSB">
+       <property name="maximum">
+        <double>10800.000000000000000</double>
        </property>
-      </widget>
-     </item>
-     <item row="17" column="0" colspan="2" alignment="Qt::AlignHCenter">
-      <widget class="QLabel" name="label_14">
-       <property name="text">
-        <string>Stack</string>
-       </property>
-      </widget>
-     </item>
-     <item row="20" column="0" colspan="2" alignment="Qt::AlignHCenter">
-      <widget class="QLabel" name="label_16">
-       <property name="text">
-        <string>Detection Trigger</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="0" colspan="2" alignment="Qt::AlignHCenter">
-      <widget class="QLabel" name="label_7">
-       <property name="text">
-        <string>Wavelet Detector</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>LTA</string>
-       </property>
-      </widget>
-     </item>
-     <item row="13" column="0" colspan="2">
-      <widget class="Line" name="line_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="1">
-      <widget class="QDoubleSpinBox" name="fminDB">
        <property name="value">
-        <double>1.000000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="21" column="0">
-      <widget class="QLabel" name="label_17">
-       <property name="text">
-        <string>Theshold (std units)</string>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="0">
-      <widget class="QLabel" name="label_10">
-       <property name="text">
-        <string>Fmin</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="0">
-      <widget class="QLabel" name="label_9">
-       <property name="text">
-        <string>Num Cycles</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="1">
-      <widget class="QDoubleSpinBox" name="ncyclesDB">
-       <property name="value">
-        <double>5.000000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>TW</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>STA</string>
+        <double>40.000000000000000</double>
        </property>
       </widget>
      </item>
@@ -114,59 +33,78 @@
        </property>
       </widget>
      </item>
-     <item row="15" column="1">
-      <widget class="QDoubleSpinBox" name="win_entropyDB">
+     <item row="27" column="1">
+      <widget class="QSpinBox" name="WindowPickSB">
+       <property name="minimum">
+        <number>5</number>
+       </property>
+       <property name="maximum">
+        <number>3600</number>
+       </property>
        <property name="value">
-        <double>3.000000000000000</double>
+        <number>50</number>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
-      <widget class="QDoubleSpinBox" name="tapersDB">
-       <property name="value">
-        <double>4.000000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="12" column="1">
-      <widget class="QDoubleSpinBox" name="fmaxDB">
-       <property name="value">
-        <double>8.000000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="16" column="0" colspan="2">
-      <widget class="Line" name="line_4">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="12" column="0">
-      <widget class="QLabel" name="label_11">
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_8">
        <property name="text">
-        <string>Fmax</string>
+        <string>N Tapers</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
-      <widget class="QLabel" name="label_5">
-       <property name="text">
-        <string>STA/LTA</string>
-       </property>
+     <item row="26" column="1">
+      <widget class="QComboBox" name="transformCB">
+       <item>
+        <property name="text">
+         <string>GLOBAL</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>SIMPLE</string>
+        </property>
+       </item>
       </widget>
      </item>
-     <item row="4" column="0" colspan="2" alignment="Qt::AlignHCenter">
-      <widget class="QLabel" name="label_6">
-       <property name="text">
-        <string>Multitaper Spectrogram</string>
+     <item row="21" column="1">
+      <widget class="QSpinBox" name="ThresholdSB">
+       <property name="minimum">
+        <number>2</number>
        </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QDoubleSpinBox" name="ltaDB">
+       <property name="maximum">
+        <number>5</number>
+       </property>
        <property name="value">
-        <double>40.000000000000000</double>
+        <number>3</number>
+       </property>
+      </widget>
+     </item>
+     <item row="17" column="0" colspan="2" alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="label_14">
+       <property name="text">
+        <string>Stack</string>
+       </property>
+      </widget>
+     </item>
+     <item row="25" column="0" colspan="2" alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="label_20">
+       <property name="text">
+        <string>Autoloc Preferences</string>
+       </property>
+      </widget>
+     </item>
+     <item row="27" column="0">
+      <widget class="QLabel" name="label_22">
+       <property name="text">
+        <string>Window Pick</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="0">
+      <widget class="QLabel" name="label_10">
+       <property name="text">
+        <string>Fmin</string>
        </property>
       </widget>
      </item>
@@ -183,10 +121,38 @@
        </property>
       </widget>
      </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Win lenght (s)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="1">
+      <widget class="QDoubleSpinBox" name="fmaxDB">
+       <property name="value">
+        <double>8.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>STA</string>
+       </property>
+      </widget>
+     </item>
      <item row="14" column="0" colspan="2" alignment="Qt::AlignHCenter">
       <widget class="QLabel" name="label_12">
        <property name="text">
         <string>Entropy</string>
+       </property>
+      </widget>
+     </item>
+     <item row="13" column="0" colspan="2">
+      <widget class="Line" name="line_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -204,33 +170,136 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="label_8">
+     <item row="26" column="0">
+      <widget class="QLabel" name="label_21">
        <property name="text">
-        <string>N Tapers</string>
+        <string>Transform</string>
        </property>
       </widget>
      </item>
-     <item row="23" column="1">
-      <widget class="QDoubleSpinBox" name="ClusterSB">
-       <property name="maximum">
-        <double>10800.000000000000000</double>
-       </property>
-       <property name="value">
-        <double>40.000000000000000</double>
+     <item row="9" column="0" colspan="2" alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Wavelet Detector</string>
        </property>
       </widget>
      </item>
-     <item row="21" column="1">
-      <widget class="QSpinBox" name="ThresholdSB">
-       <property name="minimum">
-        <number>2</number>
+     <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>STA/LTA</string>
        </property>
-       <property name="maximum">
-        <number>5</number>
-       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QDoubleSpinBox" name="winDB">
        <property name="value">
-        <number>3</number>
+        <double>3.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="18" column="0">
+      <widget class="QLabel" name="label_15">
+       <property name="text">
+        <string>Stack  type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="19" column="0" colspan="2">
+      <widget class="Line" name="line_5">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="21" column="0">
+      <widget class="QLabel" name="label_17">
+       <property name="text">
+        <string>Theshold (std units)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="0" colspan="2">
+      <widget class="Line" name="line_4">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0" colspan="2" alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Multitaper Spectrogram</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0" colspan="2">
+      <widget class="Line" name="line">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QDoubleSpinBox" name="tapersDB">
+       <property name="value">
+        <double>4.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0" colspan="2">
+      <widget class="Line" name="line_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="1">
+      <widget class="QDoubleSpinBox" name="fminDB">
+       <property name="value">
+        <double>1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>LTA</string>
+       </property>
+      </widget>
+     </item>
+     <item row="15" column="1">
+      <widget class="QDoubleSpinBox" name="win_entropyDB">
+       <property name="value">
+        <double>3.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>TW</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QDoubleSpinBox" name="ncyclesDB">
+       <property name="value">
+        <double>5.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="label_9">
+       <property name="text">
+        <string>Num Cycles</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QDoubleSpinBox" name="twDB">
+       <property name="value">
+        <double>4.000000000000000</double>
        </property>
       </widget>
      </item>
@@ -253,17 +322,17 @@
        </item>
       </widget>
      </item>
-     <item row="7" column="1">
-      <widget class="QDoubleSpinBox" name="winDB">
-       <property name="value">
-        <double>3.000000000000000</double>
+     <item row="12" column="0">
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>Fmax</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>Win lenght (s)</string>
+     <item row="2" column="1">
+      <widget class="QDoubleSpinBox" name="ltaDB">
+       <property name="value">
+        <double>40.000000000000000</double>
        </property>
       </widget>
      </item>
@@ -274,29 +343,15 @@
        </property>
       </widget>
      </item>
-     <item row="18" column="0">
-      <widget class="QLabel" name="label_15">
+     <item row="20" column="0" colspan="2" alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="label_16">
        <property name="text">
-        <string>Stack  type</string>
+        <string>Detection Trigger</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
-      <widget class="QDoubleSpinBox" name="twDB">
-       <property name="value">
-        <double>4.000000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0" colspan="2">
-      <widget class="Line" name="line">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="19" column="0" colspan="2">
-      <widget class="Line" name="line_5">
+     <item row="24" column="0" colspan="2">
+      <widget class="Line" name="line_6">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>

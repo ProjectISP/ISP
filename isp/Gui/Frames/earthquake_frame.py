@@ -1,3 +1,4 @@
+import shutil
 from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
 from obspy import UTCDateTime, Stream, Trace
@@ -136,6 +137,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionOpen_picksnew.triggered.connect(lambda: self.open_solutions())
         self.actionRemove_picks.triggered.connect(lambda: self.remove_picks())
         self.actionNew_location.triggered.connect(lambda: self.start_location())
+        self.actionRun_autoloc.triggered.connect(lambda: self.picker_all())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -193,7 +195,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+T'), self)
         self.shortcut_open.activated.connect(self._picker_thread)
 
-        # test #
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+F'), self)
         self.shortcut_open.activated.connect(self.picker_all)
         #######
@@ -282,16 +283,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.progressbar.exec()
             f.cancel()
 
-    # TODO Move output file last.hyp >>> another fixed folder
-    def picker_all(self, delta = 50):
+
+    def picker_all(self):
         # delta is the trim of the data
-        OBS_OUTPUT_PATH = os.path.join(ROOT_DIR, 'earthquakeAnalisysis/location_output/obs')
+        IND_OUTPUT_PATH = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'loc', 'last.hyp')
+        LOC_OUTPUT_PATH = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'all_locations')
+        params = self.settings_dialog.getParameters()
+        delta = params["window pick"]
+        transform =params["transform"]
         pick_output_path = PickerManager.get_default_output_path()
         self.nll_manager = NllManager(pick_output_path, self.dataless_path_bind.value)
         st_detect_all = self.st.copy()
 
         self.detect_events()
         events_path = self.path_detection
+        picks_path = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
+
+
         with open(events_path, 'rb') as handle:
             events = json.load(handle)
 
@@ -299,16 +307,24 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             start = UTCDateTime(events[k]) - delta
             end = UTCDateTime(events[k]) + delta
             self.st.trim(starttime = start , endtime = end)
+            # clean previous picks
+            os.remove(picks_path)
+            # Picking on detected event
             self._run_picker()
-            # Locate #
-            std_out = self.nll_manager.run_nlloc(0, 0, 0, transform = "GLOBAL")
-            #
-            # TODO Move output file "last.hyp" >>> another fixed folder
+            # Locate based on prevous detected and picked event
+            std_out = self.nll_manager.run_nlloc(0, 0, 0, transform = transform)
+
             # restore it
             self.st = st_detect_all
-            md = MessageDialog(self)
-            md.set_info_message("Location complete. Check details for earthquake located at "+events[k]
-                                , std_out)
+            # copy output to /location_output/all_locations
+            LOC_OUTPUT_PATH_TEMP  = os.path.join(LOC_OUTPUT_PATH,events[k]+".hyp")
+            shutil.copyfile(IND_OUTPUT_PATH, LOC_OUTPUT_PATH_TEMP)
+
+            #md = MessageDialog(self)
+            #md.set_info_message("Location complete. Check details for earthquake located at "+events[k]
+            #                    , std_out)
+        md = MessageDialog(self)
+        md.set_info_message("Location complete. Check details for earthquake located in "+LOC_OUTPUT_PATH)
 
 
     @property

@@ -25,5 +25,7 @@ class SettingsDialog(pw.QDialog, UiSettingsDialog):
         param_dict["ThresholdDetect"] = self.ThresholdSB.value()
         param_dict["Coincidences"] = self.ConcidencesSB.value()
         param_dict["Cluster"] = self.ClusterSB.value()
+        param_dict["transform"] = self.transformCB.currentText()
+        param_dict["window pick"] = self.WindowPickSB.value()
         return param_dict
 

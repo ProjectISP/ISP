@@ -781,6 +781,7 @@
     <addaction name="actionSet_Parameters"/>
     <addaction name="actionRun_Event_Detector"/>
     <addaction name="actionRun_picker"/>
+    <addaction name="actionRun_autoloc"/>
     <addaction name="actionClean_selection"/>
     <addaction name="actionRemove_all_selections"/>
     <addaction name="actionClean_Events_Detected"/>
@@ -1058,6 +1059,14 @@
   <action name="actionRemove_picks">
    <property name="text">
     <string>Remove picks</string>
+   </property>
+  </action>
+  <action name="actionRun_autoloc">
+   <property name="text">
+    <string>Run autoloc</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F</string>
    </property>
   </action>
  </widget>
