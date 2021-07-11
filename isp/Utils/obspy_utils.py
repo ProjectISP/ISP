@@ -284,8 +284,6 @@ class MseedUtil:
                     try:
                         header = read(pos_file, headlonly=True)
                         #check times as a filter
-                        #check1 = start-header[0].stats.starttime >= 0
-                        #check2 = end-header[0].stats.endtime <= 0
                         st0 = header[0].stats.starttime
                         st1 = start
                         et0 = header[0].stats.endtime

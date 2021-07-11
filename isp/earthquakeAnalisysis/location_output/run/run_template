@@ -1,6 +1,6 @@
 CONTROL 1 54321
 TRANS SIMPLE 35 -12 -1.0
-LOCSIG Integrated Seismic Programs
+LOCSIG Integrated Seismic Program
 LOCFILES ./obs/output.txt NLLOC_OBS  ./time/layer  ./loc/location
 LOCHYPOUT SAVE_NLLOC_ALL
 LOCSEARCH  OCT 10 10 1 0.01 25000 5000 0 1
