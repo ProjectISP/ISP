@@ -11,13 +11,18 @@ from datetime import datetime, timedelta
 from isp.Utils import ObspyUtil
 from obspy.core.event import Origin
 #from sqlalchemy import Column
-import matplotlib.pyplot as plt
 from obspy.imaging.beachball import beach
 from isp import LOCATION_OUTPUT_PATH, MOMENT_TENSOR_OUTPUT, ROOT_DIR
 from isp.mti.read_log import read_log
-#import matplotlib.image as mpimg
-from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from PIL import Image
+import numpy as np
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+from owslib.wms import WebMapService
+import os
+
 
 class DateTimeFormatDelegate(pw.QStyledItemDelegate):
     def __init__(self, date_format, parent=None):
@@ -406,15 +411,11 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
     def plot_map(self, map_service = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?',
                  layer = 'GEBCO_2019_Grid'):
 
-        #self.map_widget.fig.clf()
-        import numpy as np
-        import cartopy.crs as ccrs
-        import matplotlib.pyplot as plt
-        from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-        from owslib.wms import WebMapService
 
         if self.cb:
             self.cb.remove()
+
+            #self.map_widget.fig.delaxes(self.map_widget.fig.axes[1])
 
         MAP_SERVICE_URL = map_service
         try:
@@ -443,19 +444,20 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
 
         mag = np.array(mag)
         mag = 0.5*np.exp(mag)
-        min_lon = -16
-        max_lon = -3
-        min_lat = 33
-        max_lat = 39
+        min_lon = min(lon) - 0.5
+        max_lon = max(lon) + 0.5
+        min_lat = min(lat) - 0.5
+        max_lat = max(lat) + 0.5
         extent = [min_lon, max_lon, min_lat, max_lat]
+
         self.map_widget.ax.set_extent(extent, crs=ccrs.PlateCarree())
 
         try:
-               #self.map_widget.ax.coastlines()
-               #self.map_widget.ax.stock_img()
                self.map_widget.ax.add_wms(wms, layer)
         except:
-               self.map_widget.ax.coastlines()
+               os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
+               self.map_widget.ax.background_img(name='ne_shaded', resolution="high")
+
 
         lon = np.array(lon)
         lat = np.array(lat)
@@ -463,7 +465,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         color_map = plt.cm.get_cmap('rainbow')
         reversed_color_map = color_map.reversed()
         cs = self.map_widget.ax.scatter(lon, lat, s=mag, c=depth ,edgecolors= "black",cmap=reversed_color_map,transform =ccrs.PlateCarree())
-        self.cb = self.map_widget.fig.colorbar(cs, orientation='horizontal', fraction=0.05, extend='both', pad=0.15, label ='Depth (km)')
+        self.cb = self.map_widget.fig.colorbar(cs, ax = self.map_widget.ax, orientation='horizontal', fraction=0.05, extend='both', pad=0.15, label ='Depth (km)')
         self.map_widget.lat.scatter(depth, lat, s=mag, c=depth ,edgecolors= "black",cmap=reversed_color_map)
         self.map_widget.lat.set_ylim((min_lat, max_lat))
         self.map_widget.lon.scatter(lon, depth, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map)

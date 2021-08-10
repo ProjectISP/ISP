@@ -41,7 +41,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Minimum Latitude</string>
+         <string>Min Latitude</string>
         </property>
        </widget>
       </item>
@@ -54,7 +54,7 @@
          </sizepolicy>
         </property>
         <property name="decimals">
-         <number>5</number>
+         <number>4</number>
         </property>
         <property name="minimum">
          <double>-90.000000000000000</double>
@@ -67,7 +67,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Maximum Latitude</string>
+         <string>Max Latitude</string>
         </property>
        </widget>
       </item>
@@ -80,7 +80,7 @@
          </sizepolicy>
         </property>
         <property name="decimals">
-         <number>5</number>
+         <number>4</number>
         </property>
         <property name="minimum">
          <double>-90.000000000000000</double>
@@ -93,7 +93,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>Minimum Longitude</string>
+         <string>Min Longitude</string>
         </property>
        </widget>
       </item>
@@ -106,7 +106,7 @@
          </sizepolicy>
         </property>
         <property name="decimals">
-         <number>5</number>
+         <number>4</number>
         </property>
         <property name="minimum">
          <double>-180.000000000000000</double>
@@ -119,7 +119,7 @@
       <item row="3" column="0">
        <widget class="QLabel" name="label_5">
         <property name="text">
-         <string>Maximum Longitude</string>
+         <string>Max Longitude</string>
         </property>
        </widget>
       </item>
@@ -132,7 +132,7 @@
          </sizepolicy>
         </property>
         <property name="decimals">
-         <number>5</number>
+         <number>4</number>
         </property>
         <property name="minimum">
          <double>-180.000000000000000</double>
@@ -145,7 +145,7 @@
       <item row="4" column="0">
        <widget class="QLabel" name="label_6">
         <property name="text">
-         <string>Minimum Depth</string>
+         <string>Min Depth (m)</string>
         </property>
        </widget>
       </item>
@@ -158,7 +158,7 @@
          </sizepolicy>
         </property>
         <property name="decimals">
-         <number>3</number>
+         <number>2</number>
         </property>
         <property name="minimum">
          <double>-2000.000000000000000</double>
@@ -171,7 +171,7 @@
       <item row="5" column="0">
        <widget class="QLabel" name="label_7">
         <property name="text">
-         <string>Maximum Depth</string>
+         <string>Max Depth (m)</string>
         </property>
        </widget>
       </item>
@@ -187,7 +187,7 @@
          <string notr="true"/>
         </property>
         <property name="decimals">
-         <number>3</number>
+         <number>2</number>
         </property>
         <property name="minimum">
          <double>-2000.000000000000000</double>
@@ -203,7 +203,7 @@
       <item row="6" column="0">
        <widget class="QLabel" name="label_8">
         <property name="text">
-         <string>Minimum Magnitude</string>
+         <string>Min Magnitude</string>
         </property>
        </widget>
       </item>
@@ -223,7 +223,7 @@
       <item row="7" column="0">
        <widget class="QLabel" name="label_9">
         <property name="text">
-         <string>Maximum Magnitude</string>
+         <string>Max Magnitude</string>
         </property>
        </widget>
       </item>
@@ -243,7 +243,7 @@
       <item row="8" column="0">
        <widget class="QLabel" name="label_10">
         <property name="text">
-         <string>Minimum Event Time</string>
+         <string>Min Event Time</string>
         </property>
        </widget>
       </item>
@@ -263,7 +263,7 @@
       <item row="9" column="0">
        <widget class="QLabel" name="label_11">
         <property name="text">
-         <string>Maximum Event Time</string>
+         <string>Max Event Time</string>
         </property>
        </widget>
       </item>
@@ -345,7 +345,7 @@
       <item row="15" column="0">
        <widget class="QLabel" name="label_13">
         <property name="text">
-         <string>Focal Mecanism</string>
+         <string>Focal Mechanism</string>
         </property>
        </widget>
       </item>
@@ -439,7 +439,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
