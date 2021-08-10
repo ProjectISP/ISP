@@ -29,7 +29,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Main Menu</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="autoFillBackground">
@@ -69,7 +69,7 @@
        </font>
       </property>
       <property name="title">
-       <string>Main Menu</string>
+       <string/>
       </property>
       <property name="alignment">
        <set>Qt::AlignBottom|Qt::AlignHCenter</set>
@@ -226,7 +226,17 @@
               </size>
              </property>
              <property name="text">
-              <string>Real Time </string>
+              <string>Ambient Noise Tomography</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../resources.qrc">
+               <normaloff>:/icons/ANT.png</normaloff>:/icons/ANT.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>50</width>
+               <height>50</height>
+              </size>
              </property>
             </widget>
            </item>
@@ -342,7 +352,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -379,6 +389,7 @@
    <addaction name="actionCreate_new_Project"/>
    <addaction name="actionRetrieve_data"/>
    <addaction name="actionPPSDs"/>
+   <addaction name="actionReal_Time"/>
   </widget>
   <action name="actionOpen_Project">
    <property name="icon">
@@ -433,6 +444,22 @@
   <action name="actionOpen_Help">
    <property name="text">
     <string>Open Help</string>
+   </property>
+  </action>
+  <action name="actionReal_Time">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/realtime.png</normaloff>
+     <normalon>:/icons/balcony-icon.png</normalon>:/icons/realtime.png</iconset>
+   </property>
+   <property name="text">
+    <string>Real Time</string>
    </property>
   </action>
  </widget>

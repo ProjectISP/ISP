@@ -5,7 +5,7 @@ from obspy import UTCDateTime, Stream
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
-from isp.Gui import pw, pqg
+from isp.Gui import pw, pqg, pyc
 from isp.Gui.Frames import BaseFrame, UiRealTimeFrame, MessageDialog, MatplotlibCanvas
 from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.map_realtime_frame import MapRealTime
@@ -17,9 +17,8 @@ from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Utils import AsycTime
 from obspy.clients.seedlink.easyseedlink import create_client
 import matplotlib.dates as mdt
-from datetime import datetime
+#from datetime import datetime
 import numpy as np
-
 class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
     def __init__(self):
@@ -27,7 +26,6 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.setupUi(self)
         self.setWindowIcon(pqg.QIcon(':\\icons\\map-icon.png'))
         self.widget_map = None
-        self.k = -1*3600
         self.settings_dialog = SettingsDialog(self)
         self.inventory = {}
         self.files = []
@@ -44,6 +42,9 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
         self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=self.numTracesCB.value(), constrained_layout=False)
         self.canvas.figure.tight_layout()
+        self.timer_outdated = pyc.QTimer()
+        self.timer_outdated.setInterval(1000) # 1 second
+        self.timer_outdated.timeout.connect(self.outdated_stations)
 
         # Binding
         self.root_path_bind = BindPyqtObject(self.rootPathForm)
@@ -145,11 +146,10 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
         s = [tr.stats.network, tr.stats.station, tr.stats.channel]
         key = ".".join(s)
-        now = datetime.now()
-        start_time = UTCDateTime(now) - self.timewindowSB.value()*60
 
         if key in self.data_dict.keys():
-
+            if tr:
+                tr.data = np.float64(tr.data)
             self.data_dict[key] = self.data_dict[key] + tr
 
         else:
@@ -166,6 +166,16 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         if self.saveDataCB.isChecked():
             self.write_trace(tr)
 
+    def outdated_stations(self):
+        # this method is run every t seconds to check and plot which stations do not send data
+        outdated_stations = []
+        for trace in self.data_dict.values():
+            if trace.stats.endtime + 60 < UTCDateTime.now():
+                outdated_stations.append(self.get_station_info(trace))
+
+        if outdated_stations:
+            self.widget_map.plot_unset_stations(outdated_stations)
+
     def seedlink_error(self, tr):
 
         print("seedlink_error")
@@ -181,18 +191,23 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.client = create_client(self.serverAddressForm.text(), on_data = self.handle_data,
             on_seedlink_error = self.seedlink_error, on_terminate =  self.terminate_data)
 
+        pyc.QMetaObject.invokeMethod(self.timer_outdated, 'start')
+
         for net in self.netForm.text().split(","):
             for sta in self.stationForm.text().split(","):
                 for chn in self.channelForm.text().split(","):
                     self.client.select_stream(net, sta, chn)
 
+        #self.client.on_data()
         self.client.run()
+        #self.client.get_info(level="ALL")
 
     def plot_seismogram(self):
         # TODO: y axis should be independent for each subplot
-        now = datetime.now()
-        start_time = (UTCDateTime(now)-self.timewindowSB.value()*60) + self.k
-        end_time = (UTCDateTime(now)+30)+self.k
+
+        now = UTCDateTime.now()
+        start_time = now - self.timewindowSB.value()*60
+        end_time = now + 30
         self.canvas.set_new_subplot(nrows=self.numTracesCB.value(), ncols=1, update=False)
         self.canvas.set_xlabel(self.numTracesCB.value()-1, "Date", update=False)
         index = 0
@@ -222,6 +237,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
     def stop(self):
         # TODO: not working. Maybe subclassing is necessary
         self.client.close()
+        pyc.QMetaObject.invokeMethod(self.timer_outdated, 'stop')
 
     def write_trace(self, tr):
 

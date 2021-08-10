@@ -26,6 +26,11 @@ class MapRealTime(BaseFrame, UiMapRealTime):
     def plot_set_stations(self, stations_list):
 
         self.cartopy_canvas.global_map(0, plot_earthquakes=False, show_colorbar=False, show_stations=True,
-             show_station_names=False, clear_plot=False, update=False, coordinates=stations_list,size = 14,
+             show_station_names=False, clear_plot=False, update=False, coordinates=stations_list,size = 18,
                                        color = "green")
 
+    def plot_unset_stations(self, stations_list):
+
+            self.cartopy_canvas.global_map(0, plot_earthquakes=False, show_colorbar=False, show_stations=True,
+             show_station_names=False, clear_plot=False, update=False, coordinates=stations_list,size = 18,
+                                       color = "black")

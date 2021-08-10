@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icons">
+    <file alias="ANT.png">images/icons/ANT.png</file>
+    <file alias="realtime.png">images/icons/realtime.png</file>
     <file alias="rf-icon.png">images/icons/rf.png</file>
     <file alias="manage-icon.png">images/icons/manage.png</file>
     <file alias="seosmogram-icon.png">images/icons/seismogram.png</file>

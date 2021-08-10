@@ -32,7 +32,7 @@ class Controller:
         self.main_frame.arrayAnalysisButton.clicked.connect(self.open_array_window)
         self.main_frame.momentTensorButton.clicked.connect(self.open_momentTensor_window)
         self.main_frame.receiverFunctionsButton.clicked.connect(self.open_receiverFunctions)
-        self.main_frame.realTimeButton.clicked.connect(self.open_realtime_window)
+        self.main_frame.actionReal_Time.triggered.connect(self.open_realtime_window)
         self.main_frame.actionOpen_Project.triggered.connect(self.open_project)
         self.main_frame.actionCreate_new_Project.triggered.connect(self.create_project)
         self.main_frame.actionRetrieve_data.triggered.connect(self.retrieve_data)
