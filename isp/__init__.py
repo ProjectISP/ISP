@@ -10,6 +10,8 @@ UIS_PATH = os.path.join(RESOURCE_PATH, 'designer_uis')
 FOC_MEC_PATH = os.path.join(ROOT_DIR, 'FOCMEC/bin')
 MACROS_PATH = os.path.join(ROOT_DIR,'macros')
 HELP_PATH = os.path.join(ROOT_DIR,'ISP_Documentation')
+EVENTS_DETECTED = os.path.join(ROOT_DIR,'earthquakeAnalisysis/auto_detect/events')
+AUTOMATIC_PHASES = os.path.join(ROOT_DIR,'earthquakeAnalisysis/auto_detect/phases')
 
 def create_logger():
 

@@ -21,5 +21,11 @@ class SettingsDialog(pw.QDialog, UiSettingsDialog):
         param_dict["Fmin"] = self.fminDB.value()
         param_dict["Fmax"] = self.fminDB.value()
         param_dict["win_entropy"] = self.win_entropyDB.value()
+        param_dict["stack type"] = self.typestackCB.currentText()
+        param_dict["ThresholdDetect"] = self.ThresholdSB.value()
+        param_dict["Coincidences"] = self.ConcidencesSB.value()
+        param_dict["Cluster"] = self.ClusterSB.value()
+        param_dict["transform"] = self.transformCB.currentText()
+        param_dict["window pick"] = self.WindowPickSB.value()
         return param_dict
 

@@ -5,8 +5,9 @@ from obspy.taup import TauPyModel
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, Filters
 import numpy as np
-from isp.DataProcessing.dataless_manager import DatalessManager
-from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise
+
+from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise, \
+    smoothing, wiener_filter, hampel
 
 
 @unique
@@ -101,19 +102,19 @@ class SeismogramDataAdvanced:
             self.st = read(file_path)
 
         if realtime:
-           self.st = stream
+            self.__tracer = stream
 
-        gaps = self.st.get_gaps()
+        else:
+            gaps = self.st.get_gaps()
 
-        if len(gaps) > 0:
-            self.st.print_gaps()
-            self.st.merge(fill_value = "interpolate")
+            if len(gaps) > 0:
+                self.st.print_gaps()
+                self.st.merge(fill_value="interpolate")
 
-        self.__tracer = self.st[0]
+            self.__tracer = self.st[0]
+
+
         self.stats = TracerStats.from_dict(self.tracer.stats)
-
-
-
 
 
     @classmethod
@@ -133,6 +134,7 @@ class SeismogramDataAdvanced:
     def __send_filter_error_callback(self, func, msg):
         if func:
             func(msg)
+
 
     def get_waveform_advanced(self, parameters, inventory, filter_error_callback=None, **kwargs):
 
@@ -183,6 +185,14 @@ class SeismogramDataAdvanced:
                 except ValueError as e:
                     self.__send_filter_error_callback(filter_error_callback, str(e))
 
+            if parameters[j][0] == "wiener filter":
+                print("applying wiener filter")
+                time_window = parameters[j][1]
+                noise_power = parameters[j][2]
+                print(time_window,noise_power)
+                tr = wiener_filter(tr, time_window=time_window,noise_power=noise_power)
+
+
             if parameters[j][0] == 'shift':
                 shifts = parameters[j][1]
                 for c, value in enumerate(shifts, 1):
@@ -227,19 +237,27 @@ class SeismogramDataAdvanced:
                 tr = add_white_noise(tr,parameters[j][1])
 
             if parameters[j][0] == 'whitening':
-                tr = whiten(tr,parameters[j][1], parameters[j][2])
+                tr = whiten(tr, parameters[j][1], taper_edge = parameters[j][2])
+                
+            if parameters[j][0] == 'remove spikes':
+                tr = hampel(tr, parameters[j][1], parameters[j][2])
 
             if parameters[j][0] == 'time normalization':
-                tr = normalize(tr, norm_win=parameters[j][1],norm_method=parameters[j][2])
+                tr = normalize(tr, norm_win=parameters[j][1], norm_method=parameters[j][2])
 
             if parameters[j][0] == 'wavelet denoise':
                 tr = wavelet_denoise(tr, dwt = parameters[j][1], threshold=parameters[j][2])
 
             if parameters[j][0] == 'resample':
                 tr.resample(sampling_rate=parameters[j][1],window='hanning',no_filter=parameters[j][2])
+
             if parameters[j][0] == 'fill gaps':
                 st = Stream(tr)
                 st.merge(fill_value=parameters[j][1])
                 tr = st[0]
+
+            if parameters[j][0] == 'smoothing':
+
+                tr = smoothing(tr, type=parameters[j][1], k=parameters[j][2], fwhm=parameters[j][3])
 
         return tr

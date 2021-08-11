@@ -320,7 +320,7 @@
               </sizepolicy>
              </property>
              <property name="maximum">
-              <double>10000.000000000000000</double>
+              <double>100000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -333,7 +333,7 @@
               </sizepolicy>
              </property>
              <property name="maximum">
-              <double>10000.000000000000000</double>
+              <double>100000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -672,6 +672,9 @@
       </item>
       <item>
        <widget class="QTableWidget" name="tableWidget">
+        <property name="editTriggers">
+         <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked</set>
+        </property>
         <property name="selectionMode">
          <enum>QAbstractItemView::ExtendedSelection</enum>
         </property>
@@ -726,7 +729,7 @@
      <x>0</x>
      <y>0</y>
      <width>1614</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

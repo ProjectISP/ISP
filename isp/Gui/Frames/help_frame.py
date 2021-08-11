@@ -7,7 +7,7 @@ class HelpDoc(pw.QFrame, UiHelp):
     def __init__(self):
         super(HelpDoc, self).__init__()
         self.setupUi(self)
-        url = "https://rcabdia.github.io/ISP_tutorial.github.io/"
+        url = "https://projectisp.github.io/ISP_tutorial.github.io/"
         #path = os.path.join(HELP_PATH,"Responsive HTML5","index.htm")
         url = pyc.QUrl(url)
         #url = pyc.QUrl.fromLocalFile(path)

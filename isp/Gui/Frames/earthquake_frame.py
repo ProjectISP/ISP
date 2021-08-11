@@ -1,3 +1,4 @@
+import shutil
 from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
 from obspy import UTCDateTime, Stream, Trace
@@ -20,21 +21,25 @@ from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.settings_dialog import SettingsDialog
 from isp.Gui.Utils import map_polarity_from_pressed_key
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime, parallel_progress_run
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.arrayanalysis import array_analysis
-from isp.earthquakeAnalisysis import PickerManager
+from isp.earthquakeAnalisysis import PickerManager, NllManager
 import numpy as np
 import os
+import json
 from isp.Utils.subprocess_utils import exc_cmd
-from isp import ROOT_DIR
+from isp import ROOT_DIR, EVENTS_DETECTED, AUTOMATIC_PHASES
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
     correlate_maxlag, get_lags
+from sys import platform
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
+
+    value_entropy_init = pyc.pyqtSignal(int)
 
     def __init__(self):
         super(EarthquakeAnalysisFrame, self).__init__()
@@ -47,10 +52,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         except:
             print("Neural Network cannot be loaded")
 
+        self.cancelled = False
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('Neural Network Running')
         self.progressbar.setLabelText(" Computing Auto-Picking ")
         self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
+        self.path_phases = os.path.join(AUTOMATIC_PHASES, "phases_autodetected.txt")
+        self.path_detection = os.path.join(EVENTS_DETECTED, "event_autodetects.txt")
         self.progressbar.close()
         self.settings_dialog = SettingsDialog(self)
         self.inventory = {}
@@ -117,7 +125,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRun_Event_Detector.triggered.connect(self.detect_events)
         self.actionOpen_Settings.triggered.connect(lambda : self.settings_dialog.show())
         self.actionStack.triggered.connect(lambda: self.stack_all_seismograms())
-        self.actionSpectral_Entropy.triggered.connect(lambda : self.spectral_entropy())
+        #self.actionSpectral_Entropy.triggered.connect(lambda : self.spectral_entropy())
+        self.actionSpectral_Entropy.triggered.connect(lambda: self.spectral_entropy_progress())
         self.actionRemove_all_selections.triggered.connect(lambda : self.clean_all_chop())
         self.actionClean_selection.triggered.connect(lambda : self.clean_chop_at_page())
         self.actionClean_Events_Detected.triggered.connect(lambda : self.clean_events_detected())
@@ -128,6 +137,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionOpen_picksnew.triggered.connect(lambda: self.open_solutions())
         self.actionRemove_picks.triggered.connect(lambda: self.remove_picks())
         self.actionNew_location.triggered.connect(lambda: self.start_location())
+        self.actionRun_autoloc.triggered.connect(lambda: self.picker_all())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -142,8 +152,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.help = HelpDoc()
 
         # shortcuts
-        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'), self)
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+U'), self)
         self.shortcut_open.activated.connect(self.open_solutions)
+
+        # shortcuts
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+Y'), self)
+        self.shortcut_open.activated.connect(self.open_events)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+L'), self)
         self.shortcut_open.activated.connect(self.open_parameters_settings)
@@ -175,6 +189,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('W'), self)
         self.shortcut_open.activated.connect(self.plot_seismogram)
 
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+R'), self)
+        self.shortcut_open.activated.connect(self.detect_events)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+T'), self)
+        self.shortcut_open.activated.connect(self._picker_thread)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+F'), self)
+        self.shortcut_open.activated.connect(self.picker_all)
+        #######
+
+    def cancelled_callback(self):
+        self.cancelled = True
+
+
     def open_help(self):
         self.help.show()
 
@@ -204,11 +232,25 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     if k == "p":
                         self.canvas.draw_arrow(t.matplotlib_date, index + 2,
                                                "P", color="blue", linestyles='--', picker=False)
+                        with open(self.path_phases, "a+") as f:
+                            f.write(station + " " + k.upper() + " " + t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
+
+                        self.pm.add_data(t, 1, st2[2].stats.station, "P", Component=st2[2].stats.channel,
+                                         First_Motion="?")
+                        self.pm.save()
+
                     if k == "s":
+
                         self.canvas.draw_arrow(t.matplotlib_date, index + 0,
                                                "S", color="purple", linestyles='--', picker=False)
                         self.canvas.draw_arrow(t.matplotlib_date, index + 1,
                                                "S", color="purple", linestyles='--', picker=False)
+
+                        with open(self.path_phases, "a+") as f:
+                                f.write(station+" "+k.upper()+" "+t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
+                        self.pm.add_data(t, 0, st2[1].stats.station, "S", Component=st2[1].stats.channel,
+                                         First_Motion="?")
+                        self.pm.save()
 
         except ValueError as e:
             # TODO: summarize errors and show eventually
@@ -219,6 +261,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def _run_picker(self):
         os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+        # Creates a new file
+        with open(self.path_phases, 'w') as fp:
+            pass
         if self.st:
             stations = ObspyUtil.get_stations_from_stream(self.st)
             N = len(stations)
@@ -237,6 +282,50 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             f = executor.submit(self._run_picker)
             self.progressbar.exec()
             f.cancel()
+
+
+    def picker_all(self):
+        # delta is the trim of the data
+        IND_OUTPUT_PATH = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'loc', 'last.hyp')
+        LOC_OUTPUT_PATH = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'all_locations')
+        params = self.settings_dialog.getParameters()
+        delta = params["window pick"]
+        transform =params["transform"]
+        pick_output_path = PickerManager.get_default_output_path()
+        self.nll_manager = NllManager(pick_output_path, self.dataless_path_bind.value)
+        st_detect_all = self.st.copy()
+
+        self.detect_events()
+        events_path = self.path_detection
+        picks_path = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
+
+
+        with open(events_path, 'rb') as handle:
+            events = json.load(handle)
+
+        for k in range(len(events)):
+            start = UTCDateTime(events[k]) - delta
+            end = UTCDateTime(events[k]) + delta
+            self.st.trim(starttime = start , endtime = end)
+            # clean previous picks
+            os.remove(picks_path)
+            # Picking on detected event
+            self._run_picker()
+            # Locate based on prevous detected and picked event
+            std_out = self.nll_manager.run_nlloc(0, 0, 0, transform = transform)
+
+            # restore it
+            self.st = st_detect_all
+            # copy output to /location_output/all_locations
+            LOC_OUTPUT_PATH_TEMP  = os.path.join(LOC_OUTPUT_PATH,events[k]+".hyp")
+            shutil.copyfile(IND_OUTPUT_PATH, LOC_OUTPUT_PATH_TEMP)
+
+            #md = MessageDialog(self)
+            #md.set_info_message("Location complete. Check details for earthquake located at "+events[k]
+            #                    , std_out)
+        md = MessageDialog(self)
+        md.set_info_message("Location complete. Check details for earthquake located in "+LOC_OUTPUT_PATH)
+
 
     @property
     def dataless_manager(self):
@@ -296,7 +385,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def get_files(self, dir_path):
 
-        files_path = MseedUtil.get_mseed_files(dir_path)
+        if self.scan.isChecked():
+
+            if self.trimCB.isChecked():
+                start = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+                end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+                diff = end-start
+                if diff > 0:
+                    files_path = MseedUtil.get_tree_mseed_files(dir_path, starttime = start, endtime = end)
+            else:
+                files_path = MseedUtil.get_tree_mseed_files(dir_path)
+        else:
+
+            files_path = MseedUtil.get_mseed_files(dir_path)
 
         if self.selectCB.isChecked():
 
@@ -410,6 +511,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         min_starttime = []
         max_endtime = []
         parameters = self.parameters.getParameters()
+
         for index, file_path in enumerate(files_at_page):
 
             sd = SeismogramDataAdvanced(file_path)
@@ -509,9 +611,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
             end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             for k in range(len(stations)):
-
-
-
 
                 if self.angCB.isChecked():
 
@@ -712,14 +811,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.redraw_chop(tr, tr.data, index)
             cf = cw.cf_lowpass()
             # Normalize
-            cf = cf / max(cf)
+            #cf = cf / max(cf)
             t=t[0:len(cf)]
             #self.canvas.plot(t, cf, index, is_twinx=True, color="red",linewidth=0.5)
             #self.canvas.set_ylabel_twinx(index, "CWT (CF)")
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
             ax2.plot(t, cf, color="red", linewidth=0.5, alpha = 0.5)
-            ax2.set_ylim(-1.05, 1.05)
+            #ax2.set_ylim(-1.05, 1.05)
             last_index = index
             tr_cf = tr.copy()
             tr_cf.data = cf
@@ -776,19 +875,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.cf = Stream(traces=cfs)
 
-    @AsycTime.run_async()
     def spectral_entropy(self):
+
         params = self.settings_dialog.getParameters()
         win = params["win_entropy"]
 
         self.cf = []
         cfs = []
         files_at_page = self.get_files_at_page()
+
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         for index, file_path in enumerate(files_at_page):
+            if self.cancelled:
+                return
+
             tr = self.st[index]
             t = tr.times("matplotlib")
 
@@ -811,6 +914,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             tr_cf.data = cf
             tr_cf.times = t_entropy
             cfs.append(tr_cf)
+            self.value_entropy_init.emit(index + 1)
+
         ax = self.canvas.get_axe(last_index)
         try:
             if self.trimCB.isChecked():
@@ -828,44 +933,48 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     # @AsycTime.run_async()
     def detect_events(self):
+
+        #to make a detection it is needed to trim the data otherwise,
+        # is going to take the starttime and endtime of the file
+
+        params = self.settings_dialog.getParameters()
+        threshold = params["ThresholdDetect"]
+        coincidences = params["Coincidences"]
+        cluster  = params["Cluster"]
+
         standard_deviations = []
         all_traces = []
 
-        parameters = self.parameters.getParameters()
         starttime = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         endtime = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-        diff = endtime - starttime
-        obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
-        obsfiles.sort()
 
-        for file in obsfiles:
-            sd = SeismogramDataAdvanced(file)
-            if self.trimCB.isChecked() and diff >= 0:
-                tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                              filter_error_callback=self.filter_error_message,
-                                              start_time=starttime, end_time=endtime)
-                cw = ConvolveWaveletScipy(tr)
-                cw.setup_wavelet(starttime, endtime, wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
-                                 decimate=False)
+
+        for tr in self.st:
+            cw = ConvolveWaveletScipy(tr)
+            if self.trimCB.isChecked():
+                cw.setup_wavelet(starttime, endtime, wmin=5, wmax=5, tt=10, fmin=0.5, fmax=10, nf=40, use_rfft=False,
+                             decimate=False)
             else:
-                tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                              filter_error_callback=self.filter_error_message)
-                cw = ConvolveWaveletScipy(tr)
-                cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
+                cw.setup_wavelet(wmin=5, wmax=5, tt=10, fmin=0.5, fmax=10, nf=40, use_rfft=False,
                                  decimate=False)
 
             cf = cw.cf_lowpass()
             # Normalize
-            standard_deviations.append(np.std(cf))
             #cf = cf / max(cf)
+            standard_deviations.append(np.std(cf))
+
             tr_cf = tr.copy()
             tr_cf.data = cf
             all_traces.append(tr_cf)
-        max_threshold = 3*np.max(standard_deviations)
-        min_threshold = np.mean(standard_deviations)
+
+        max_threshold = threshold*np.mean(standard_deviations)
+        min_threshold = 1*np.mean(standard_deviations)
+
         self.st = Stream(traces=all_traces)
-        trigger =coincidence_trigger(trigger_type=None, thr_on = max_threshold, thr_off = min_threshold,
-                                     trigger_off_extension = 30, thr_coincidence_sum = 4, stream=self.st, details=True)
+
+        trigger = coincidence_trigger(trigger_type=None, thr_on = max_threshold, thr_off = min_threshold,
+                                     trigger_off_extension = 0, thr_coincidence_sum = coincidences, stream=self.st,
+                                      similarity_threshold = 0.8, details=True)
 
 
         for k in range(len(trigger)):
@@ -875,10 +984,21 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 if key == 'time':
                     time = detection[key]
                     self.events_times.append(time)
+        # calling for 1D clustering more than one detection per earthquake //eps seconds span
+        try:
+            self.events_times,str_times = MseedUtil.cluster_events(self.events_times, eps=cluster)
 
-        md = MessageDialog(self)
-        md.set_info_message("Events Detection done")
-        self.plot_seismogram()
+            with open(self.path_detection, "w") as fp:
+                json.dump(str_times, fp)
+
+            self.plot_seismogram()
+            md = MessageDialog(self)
+            md.set_info_message("Events Detection done")
+        except:
+            md = MessageDialog(self)
+            md.set_info_message("No Detections")
+
+
 
 
     def write_files_page(self):
@@ -909,6 +1029,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 tr.write(path_output, format="MSEED")
 
     def stack_all_seismograms(self):
+        params = self.settings_dialog.getParameters()
 
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=1, ncols=1)
@@ -918,12 +1039,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         wavenumber = array_analysis.array()
         stream_stack, t, stats, time = wavenumber.stack_seismograms(self.st)
-        stack = wavenumber.stack(stream_stack, stack_type= 'Linear Stack')
+        stack = wavenumber.stack(stream_stack,stack_type=params["stack type"])
 
         self.canvas.plot_date(time, stack, index, clear_plot=True, color='steelblue', fmt='-', linewidth=0.5)
         info = "{}".format(stats['station'])
         self.canvas.set_plot_label(index, info)
         try:
+
+            self.cf = Stream([Trace(data=stack, header=stats)])
             ax = self.canvas.get_axe(0)
             if self.trimCB.isChecked():
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
@@ -1353,7 +1476,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
         if os.path.isdir(dir_path):
             try:
+
                 MseedUtil.data_availability(dir_path)
+
             except:
                 md = MessageDialog(self)
                 md.set_warning_message("No data available")
@@ -1378,13 +1503,45 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self._magnitude_calc.show()
 
     def open_solutions(self):
-        md = MessageDialog(self)
+
         output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
+
         try:
-            command = "{} {}".format('open', output_path)
+
+            if platform == "darwin":
+
+                command = "{} {}".format('open', output_path)
+
+            else:
+
+                command = "{} {}".format('xdg - open', output_path)
+
             exc_cmd(command, cwd = ROOT_DIR)
+
         except:
 
+            md = MessageDialog(self)
+            md.set_error_message("Coundn't open pick file")
+
+    def open_events(self):
+
+        output_path = os.path.join(EVENTS_DETECTED,'event_autodetects.txt')
+
+        try:
+
+            if platform == "darwin":
+
+                command = "{} {}".format('open', output_path)
+            else:
+
+                command = "{} {}".format('xdg - open', output_path)
+
+
+            exc_cmd(command, cwd = ROOT_DIR)
+
+        except:
+
+            md = MessageDialog(self)
             md.set_error_message("Coundn't open pick file")
 
     def remove_picks(self):
@@ -1451,3 +1608,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def controller(self):
         from isp.Gui.controllers import Controller
         return Controller()
+
+    ######### Progress Bar #############
+
+    def spectral_entropy_progress(self):
+        self.cancelled = False
+        parallel_progress_run("Current progress: ", 0, len(self.st), self,
+                              self.spectral_entropy, self.cancelled_callback,
+                              signalValue= self.value_entropy_init)
+
+
+    # señal = pyc.pyQtSignal()
+    #def spectral_entropy_progress(self):
+        #def cancelled_callback(self):
+        #    self.cancelled = True
+    #    self.cancelled = False
+    #    parallel_progress_run("Current progress: ", 0, 0, self,
+    #                          "metodo", self.cancelled_callback,
+    #                          signalExit= self.señal)
+
+

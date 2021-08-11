@@ -266,6 +266,51 @@ class MseedUtil:
          return []
 
     @classmethod
+    def get_tree_mseed_files(cls, root_dir: str, **kwargs):
+        """
+        Get a list of valid mseed files inside all folder tree from the the root_dir.
+        If root_dir doesn't exists it returns a empty list.
+        :param root_dir: The full path of the dir or a file.
+        :return: A list of full path of mseed files.
+        """
+        start = kwargs.pop('starttime', [])
+        end = kwargs.pop('endtime', [])
+        obsfiles = []
+        for top_dir, sub_dir, files in os.walk(root_dir):
+            for file in files:
+                pos_file = os.path.join(top_dir, file)
+
+                if isinstance(start, UTCDateTime):
+                    try:
+                        header = read(pos_file, headlonly=True)
+                        #check times as a filter
+                        st0 = header[0].stats.starttime
+                        st1 = start
+                        et0 = header[0].stats.endtime
+                        et1 = end
+                        if st1>=st0 and et1>et0 and (st1-st0) <= 86400:
+                            obsfiles.append(os.path.join(top_dir, pos_file))
+                        elif st1<=st0 and et1>=et0:
+                            obsfiles.append(os.path.join(top_dir, pos_file))
+                        elif st1<=st0 and et1<=et0 and (et0-et1) <= 86400:
+                            obsfiles.append(os.path.join(top_dir, pos_file))
+                        else:
+                            pass
+                    except:
+                        pass
+
+                else:
+                    if cls.is_valid_mseed(pos_file):
+                        obsfiles.append(os.path.join(top_dir, pos_file))
+
+
+        obsfiles.sort()
+
+        return obsfiles
+
+
+
+    @classmethod
     def get_selected_files(cls, files, selection):
         new_list = []
         for file in files:
@@ -404,3 +449,29 @@ class MseedUtil:
         hax.set_xlabel("Date")
         hax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
         cls.mpf.show()
+
+    @classmethod
+    def cluster_events(cls, times, eps=20.0):
+        from obspy import UTCDateTime
+        points = []
+        for j in range(len(times)):
+            points.append(times[j].timestamp)
+
+        clusters = []
+        points_sorted = sorted(points)
+        curr_point = points_sorted[0]
+        curr_cluster = [curr_point]
+        for point in points_sorted[1:]:
+            if point <= curr_point + eps:
+                curr_cluster.append(point)
+            else:
+                clusters.append(curr_cluster)
+                curr_cluster = [point]
+            curr_point = point
+        clusters.append(curr_cluster)
+        new_times = []
+        string_times = []
+        for k  in  range(len(clusters)):
+            new_times.append(UTCDateTime(clusters[k][0]))
+            string_times.append(UTCDateTime(clusters[k][0]).strftime(format="%Y-%m-%dT%H:%M:%S.%f"))
+        return new_times,string_times

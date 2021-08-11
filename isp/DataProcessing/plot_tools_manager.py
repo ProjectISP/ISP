@@ -46,7 +46,7 @@ class PlotToolsManager:
             sta = seismogram[0][1]
             [spec, freq, jackknife_errors] = spectrumelement(data, delta, sta)
             info = "{}.{}.{}".format(seismogram[0][0], seismogram[0][1], seismogram[0][3])
-            ax1.loglog(freq, spec, linewidth=1.0, label=info)
+            ax1.loglog(freq, spec, linewidth=1.0, alpha = 0.5, label=info)
             ax1.frequencies = freq
             ax1.spectrum = spec
             ax1.set_ylim(spec.min() / 10.0, spec.max() * 100.0)

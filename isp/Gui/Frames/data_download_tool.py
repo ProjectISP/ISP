@@ -40,9 +40,25 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         self.cartopy_canvas.mpl_connect('key_press_event', self.key_pressed)
         self.cartopy_canvas.mpl_connect('button_press_event', self.press_right)
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
+        # signal doubleclick
+        self.tableWidget.cellDoubleClicked.connect(self.get_coordinates)
+
         # help Documentation
 
         self.help = HelpDoc()
+
+
+    def get_coordinates(self, row, column):
+        lat = self.tableWidget.item(row,1).data(0)
+        lon = self.tableWidget.item(row, 2).data(0)
+        lat30, lon30, lat90, lon90  = retrieve.get_circle(lat,lon)
+        #self.cartopy_canvas.global_map(0, clear_plot = False, show_distance_circles = True, lon30 = lon30, lat30 = lat30,
+        #                               lon90 = lon90, lat90 = lat90)
+
+        ax = self.cartopy_canvas.get_axe(0)
+        self.line1 = ax.scatter(lon30, lat30, s=8, c="white")
+        self.line2 = ax.scatter(lon90, lat90, s=8, c="white")
+
 
     def get_catalog(self):
 
@@ -98,7 +114,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         # plot earthquakes
         self.cartopy_canvas.global_map(0, plot_earthquakes= True, show_colorbar = self.activated_colorbar,
                                        lat=latitudes, lon=longitudes, depth=depths, magnitude = magnitudes,
-                                       resolution = self.typeCB.currentText() )
+                                       resolution = self.typeCB.currentText())
 
         self.activated_colorbar = False
         self.event_dataBtn.setEnabled(True)
@@ -142,13 +158,14 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         
         model = obspy.taup.TauPyModel(model="iasp91")
+        root_path = os.path.dirname(os.path.abspath(__file__))
+        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
 
         for event in event_dict.keys():
             otime = obspy.UTCDateTime(event_dict[event]['otime'])
             evla = float(event_dict[event]['lat'])
             evlo = float(event_dict[event]['lon'])
             evdp = float(event_dict[event]['depth'])
-
             for ntwk in inventory:
                 ntwknm = ntwk.code
                 for stn in ntwk:
@@ -172,14 +189,20 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
                         st = self.client.get_waveforms(ntwknm, stnm, "*", channels, start, end)
                         print(st)
-                        self.write(st)
-                        md = MessageDialog(self)
-                        md.set_info_message("Download completed")
+                        self.write(st, dir_path)
+                        #md = MessageDialog(self)
+                        #md.set_info_message("Download completed")
 
                     except:
-
+                        errors = True
                         md = MessageDialog(self)
                         md.set_error_message("Couldn't download data")
+        if errors:
+            md = MessageDialog(self)
+            md.set_info_message("Download completed with some errors")
+        else:
+            md.set_info_message("Download completed")
+
 
     def download_stations_xml(self):
 
@@ -193,7 +216,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         inventory = self.client.get_stations(network=networks, station=stations, starttime=starttime,
                                             endtime=endtime, level="response")
         try:
-            print("Gettinf metadata from ", networks, stations, channels, starttime, endtime)
+            print("Getting metadata from ", networks, stations, channels, starttime, endtime)
             inventory.write(fname, format="STATIONXML")
             md = MessageDialog(self)
             md.set_info_message("Download completed")
@@ -212,18 +235,20 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         try:
 
-            print("Gettinf data from ", networks, stations, channels, starttime, endtime)
+            print("Getting data from ", networks, stations, channels, starttime, endtime)
             st = self.client.get_waveforms(networks, stations, "*", channels, starttime, endtime)
-            print(st)
+            if len(st)>0:
+
+                root_path = os.path.dirname(os.path.abspath(__file__))
+                dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+                self.write(st, dir_path)
 
         except:
             md = MessageDialog(self)
             md.set_info_message("Couldn't download time series")
 
-    def write(self, st):
+    def write(self, st, dir_path):
 
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         if dir_path:
             n=len(st)
             try:

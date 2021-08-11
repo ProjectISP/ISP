@@ -154,6 +154,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
         else:
             # insert New Key
+            tr.data = np.float64(tr.data)
             self.data_dict[key] = tr
 
         self.plot_seismogram()
@@ -213,7 +214,8 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         index = 0
         parameters = self.parameters.getParameters()
         for key, tr in self.data_dict.items():
-            sd = SeismogramDataAdvanced(file_path=None, stream=Stream(traces=tr), realtime=True)
+            #sd = SeismogramDataAdvanced(file_path=None, stream=Stream(traces=tr), realtime=True)
+            sd = SeismogramDataAdvanced(file_path=None, stream=tr, realtime=True)
             tr = sd.get_waveform_advanced(parameters, self.inventory)
 
             t = tr.times("matplotlib")

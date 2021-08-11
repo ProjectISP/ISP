@@ -306,7 +306,7 @@ class array:
         serial_time = st[0].times("matplotlib")
         mat = np.zeros([len(st), len(st[0].data)])
         N = len(st)
-        for i in range(N - 1):
+        for i in range(N):
             mat[i, :] = st[i].data
 
         stats = {'network': st[0].stats.station, 'station': 'STACK', 'location': '',

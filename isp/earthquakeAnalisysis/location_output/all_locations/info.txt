@@ -1,0 +1,2 @@
+In this folder will be saved all automatic locations.
+You can save in the database all of the *.hyp files at once!!! 

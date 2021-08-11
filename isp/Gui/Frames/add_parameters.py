@@ -15,6 +15,9 @@ class AdditionalParameters(pw.QDialog, UiAdditionalParameters):
         sb = pw.QSpinBox()
         self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, sb)
         dsb = pw.QDoubleSpinBox()
+        dsb.setMinimum(-9999);
+        dsb.setMaximum(9999);
+        dsb.setSingleStep(0.01)
         self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 1, dsb)
 
     def getData(self):
