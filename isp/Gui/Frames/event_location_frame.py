@@ -6,29 +6,34 @@ from isp.Gui.Frames.uis_frames import UiEventLocationFrame
 from isp.Gui.Models.sql_alchemy_model import SQLAlchemyModel
 from isp.db.models import EventLocationModel, FirstPolarityModel, MomentTensorModel
 from isp.db import generate_id
-#from sqlalchemy.sql.sqltypes import DateTime
+# from sqlalchemy.sql.sqltypes import DateTime
 from datetime import datetime, timedelta
 from isp.Utils import ObspyUtil
 from obspy.core.event import Origin
-#from sqlalchemy import Column
-import matplotlib.pyplot as plt
+# from sqlalchemy import Column
 from obspy.imaging.beachball import beach
 from isp import LOCATION_OUTPUT_PATH, MOMENT_TENSOR_OUTPUT, ROOT_DIR
 from isp.mti.read_log import read_log
-#import matplotlib.image as mpimg
-from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from PIL import Image
+import numpy as np
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+from owslib.wms import WebMapService
+import os
+
 
 class DateTimeFormatDelegate(pw.QStyledItemDelegate):
     def __init__(self, date_format, parent=None):
-        super().__init__(parent)        
+        super().__init__(parent)
         self.date_format = date_format
 
     def displayText(self, value, locale):
         return value.toString(self.date_format)
 
-class MinMaxValidator(pyc.QObject):
 
+class MinMaxValidator(pyc.QObject):
     validChanged = pyc.pyqtSignal(bool)
 
     def __init__(self, min, max, signal='valueChanged', value='value', parent=None):
@@ -40,8 +45,8 @@ class MinMaxValidator(pyc.QObject):
         if not hasattr(min, signal) or not hasattr(max, signal):
             raise AttributeError(f'min and max have no {signal} signal')
 
-        def has_method(c, m): 
-            return hasattr(c,m) and callable(getattr(c,m))
+        def has_method(c, m):
+            return hasattr(c, m) and callable(getattr(c, m))
 
         if not has_method(min, value) or not has_method(max, value):
             raise AttributeError(f'min and max have no {value} method')
@@ -68,7 +73,7 @@ class MinMaxValidator(pyc.QObject):
         return getattr(object, self._value)()
 
     def _validate(self):
-        if self.valid in (None, True) and self._get_value(self._min) > self._get_value(self._max) :
+        if self.valid in (None, True) and self._get_value(self._min) > self._get_value(self._max):
             self._min_tooltip = self._min.toolTip()
             self._max_tooltip = self._max.toolTip()
             self._min_style = self._min.styleSheet()
@@ -80,13 +85,14 @@ class MinMaxValidator(pyc.QObject):
             self._valid = False
             self.validChanged.emit(False)
 
-        elif self.valid in (None, False) and self._get_value(self._min) <= self._get_value(self._max) :
+        elif self.valid in (None, False) and self._get_value(self._min) <= self._get_value(self._max):
             self._min.setStyleSheet(self._min_style)
             self._max.setStyleSheet(self._max_style)
             self._min.setToolTip(self._min_tooltip)
             self._max.setToolTip(self._max_tooltip)
             self._valid = True
             self.validChanged.emit(True)
+
 
 class EventLocationFrame(BaseFrame, UiEventLocationFrame):
     def __init__(self):
@@ -95,30 +101,31 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.setWindowTitle('Events Location')
         self.setWindowIcon(pqg.QIcon(':\icons\compass-icon.png'))
         self.cb = None
-        el_columns = [getattr(EventLocationModel, c) 
+        el_columns = [getattr(EventLocationModel, c)
                       for c in EventLocationModel.__table__.columns.keys()[1:]]
 
-        fp_columns = [getattr(FirstPolarityModel, c) 
+        fp_columns = [getattr(FirstPolarityModel, c)
                       for c in FirstPolarityModel.__table__.columns.keys()[2:]]
 
         mti_columns = [getattr(MomentTensorModel, c)
-                      for c in MomentTensorModel.__table__.columns.keys()[2:]]
+                       for c in MomentTensorModel.__table__.columns.keys()[2:]]
 
         columns = [*el_columns, *fp_columns, *mti_columns]
 
-        col_names = ['Origin Time', 'Transformation', 'RMS', 
-                     'Latitude', 'Longitude', 'Depth', 'Uncertainty', 
+        col_names = ['Origin Time', 'Transformation', 'RMS',
+                     'Latitude', 'Longitude', 'Depth', 'Uncertainty',
                      'Max. Hor. Error', 'Min. Hor. Error', 'Ellipse Az.',
                      'No. Phases', 'Az. Gap', 'Max. Dist.', 'Min. Dist.',
                      'Mb', 'Mb Error', 'Ms', 'Ms Error', 'Ml', 'Ml Error',
                      'Mw', 'Mw Error', 'Mc', 'Mc Error', 'Strike', 'Dip',
-                     'Rake', 'Misfit', 'Az. Gap', 'Stat. Pol. Count', 'Latitude_mti','Longitude_mti', 'Depth_mti',
-                     'VR','CN','dc', 'clvd','iso','Mw_mt', 'Mo', 'Strike_mt', 'dip_mt', 'rake_mt', 'mrr','mtt', 'mpp',
+                     'Rake', 'Misfit', 'Az. Gap', 'Stat. Pol. Count', 'Latitude_mti', 'Longitude_mti', 'Depth_mti',
+                     'VR', 'CN', 'dc', 'clvd', 'iso', 'Mw_mt', 'Mo', 'Strike_mt', 'dip_mt', 'rake_mt', 'mrr', 'mtt',
+                     'mpp',
                      'mrt', 'mrp', 'mtp']
 
         entities = [EventLocationModel, FirstPolarityModel, MomentTensorModel]
         self.model = SQLAlchemyModel(entities, columns, col_names, self)
-        self.model.addJoinArguments(EventLocationModel.first_polarity, isouter = True)
+        self.model.addJoinArguments(EventLocationModel.first_polarity, isouter=True)
         self.model.addJoinArguments(EventLocationModel.moment_tensor, isouter=True)
         self.model.revertAll()
         sortmodel = pyc.QSortFilterProxyModel()
@@ -145,7 +152,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
             validator.validChanged.connect(self._checkQueryParameters)
         self.minOrig.setDisplayFormat('dd/MM/yyyy hh:mm:ss.zzz')
         self.maxOrig.setDisplayFormat('dd/MM/yyyy hh:mm:ss.zzz')
-        
+
         self.actionRead_hyp_folder.triggered.connect(self._readHypFolder)
         self.actionRead_last_location.triggered.connect(self._readLastLocation)
         self.btnRefreshQuery.clicked.connect(self._refreshQuery)
@@ -172,49 +179,50 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
 
     def _plot_foc_mec(self, index):
 
-         # Plot Focal Mechanism
-         model = self.tableView.model()
-         check = False
-         if self.methodCB.currentText() == "First Polarity":
+        # Plot Focal Mechanism
+        model = self.tableView.model()
+        check = False
+        if self.methodCB.currentText() == "First Polarity":
 
             strike = model.data(model.index(index.row(), 24))
             dip = model.data(model.index(index.row(), 25))
             rake = model.data(model.index(index.row(), 26))
             if None not in [strike, dip, rake]:
-                self.plot_foc_mec(method = self.methodCB.currentText(), strike = strike, dip = dip, rake = rake)
+                self.plot_foc_mec(method=self.methodCB.currentText(), strike=strike, dip=dip, rake=rake)
                 check = True
 
-         if self.methodCB.currentText() == "MTI":
-             mrr = model.data(model.index(index.row(), 43))
-             mtt = model.data(model.index(index.row(), 44))
-             mpp = model.data(model.index(index.row(), 45))
-             mrt = model.data(model.index(index.row(), 46))
-             mrp = model.data(model.index(index.row(), 47))
-             mtp = model.data(model.index(index.row(), 48))
+        if self.methodCB.currentText() == "MTI":
+            mrr = model.data(model.index(index.row(), 43))
+            mtt = model.data(model.index(index.row(), 44))
+            mpp = model.data(model.index(index.row(), 45))
+            mrt = model.data(model.index(index.row(), 46))
+            mrp = model.data(model.index(index.row(), 47))
+            mtp = model.data(model.index(index.row(), 48))
 
-             if None not in [mrr, mtt, mpp, mrt, mrp, mtp]:
-                self.plot_foc_mec(method=self.methodCB.currentText(), mrr=mrr, mtt=mtt, mpp=mpp, mrt=mrt, mrp=mrp,mtp=mtp)
+            if None not in [mrr, mtt, mpp, mrt, mrp, mtp]:
+                self.plot_foc_mec(method=self.methodCB.currentText(), mrr=mrr, mtt=mtt, mpp=mpp, mrt=mrt, mrp=mrp,
+                                  mtp=mtp)
                 check = True
 
+        if check:
+            # plot in the map
+            lat = model.data(model.index(index.row(), 3))
+            lon = model.data(model.index(index.row(), 4))
+            print(lat, lon)
+            file = os.path.join(ROOT_DIR, 'db/map_class/foc_mec.png')
 
-         if check:
-             # plot in the map
-             lat = model.data(model.index(index.row(), 3))
-             lon = model.data(model.index(index.row(), 4))
-             print(lat,lon)
-             file = os.path.join(ROOT_DIR, 'db/map_class/foc_mec.png')
+            img = Image.open(file)
+            imagebox = OffsetImage(img, zoom=0.08)
+            imagebox.image.axes = self.map_widget.ax
+            ab = AnnotationBbox(imagebox, [lon + 0.3, lat + 0.3], frameon=False)
+            self.map_widget.ax.add_artist(ab)
 
-             img = Image.open(file)
-             imagebox = OffsetImage(img, zoom=0.08)
-             imagebox.image.axes = self.map_widget.ax
-             ab = AnnotationBbox(imagebox, [lon+0.3, lat+0.3], frameon=False)
-             self.map_widget.ax.add_artist(ab)
+            self.map_widget.ax.annotate('', xy=(lon, lat), xycoords='data',
+                                        xytext=(lon + 0.3, lat + 0.3), textcoords='data',
+                                        arrowprops=dict(arrowstyle="->",
+                                                        connectionstyle="arc3,rad=.2"))
 
-             self.map_widget.ax.annotate('', xy=(lon, lat), xycoords='data',
-             xytext=(lon+0.3, lat+0.3), textcoords='data',arrowprops=dict(arrowstyle="->",
-                               connectionstyle="arc3,rad=.2"))
-
-             self.map_widget.fig.canvas.draw()
+            self.map_widget.fig.canvas.draw()
 
     def refreshLimits(self):
         entities = self.model.getEntities()
@@ -222,7 +230,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         for t in entities:
             events.append(t[0])
 
-        if events :
+        if events:
             max_lat = -math.inf
             min_lat = math.inf
             max_lon = -math.inf
@@ -231,7 +239,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
             min_dep = math.inf
             min_orig = datetime.max
             max_orig = datetime.min
-            
+
             for event in events:
                 if event.latitude > max_lat: max_lat = event.latitude
                 if event.latitude < min_lat: min_lat = event.latitude
@@ -239,8 +247,8 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
                 if event.longitude < min_lon: min_lon = event.longitude
                 if event.depth > max_dep: max_dep = event.depth
                 if event.depth < min_dep: min_dep = event.depth
-                if event.origin_time < min_orig : min_orig = event.origin_time
-                if event.origin_time > max_orig : max_orig = event.origin_time
+                if event.origin_time < min_orig: min_orig = event.origin_time
+                if event.origin_time > max_orig: max_orig = event.origin_time
 
             self.maxLat.setValue(math.ceil(max_lat))
             self.minLat.setValue(math.floor(min_lat))
@@ -249,8 +257,8 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
             self.maxDepth.setValue(math.ceil(max_dep))
             self.minDepth.setValue(math.floor(min_dep))
             # TODO magnitude
-            #self.maxMag.setValue(max_mag)
-            #self.minMag.setValue(min_mag)
+            # self.maxMag.setValue(max_mag)
+            # self.minMag.setValue(min_mag)
             self.maxOrig.setDateTime(max_orig + timedelta(seconds=1))
             self.minOrig.setDateTime(min_orig - timedelta(seconds=1))
 
@@ -258,7 +266,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         selected_rowindexes = self.tableView.selectionModel().selectedRows()
         # If table's model is a proxy model, map to source indexes
         if isinstance(self.tableView.model(), pyc.QAbstractProxyModel):
-            selected_rowindexes = [self.tableView.model().mapToSource(i) 
+            selected_rowindexes = [self.tableView.model().mapToSource(i)
                                    for i in selected_rowindexes]
 
         selected_rows = [r.row() for r in selected_rowindexes]
@@ -271,23 +279,23 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.btnRefreshQuery.setEnabled(all(v.valid for v in self._validators))
 
     def _readHypFile(self, file_abs_path):
-        origin : Origin = ObspyUtil.reads_hyp_to_origin(file_abs_path)
+        origin: Origin = ObspyUtil.reads_hyp_to_origin(file_abs_path)
         try:
             event_model = EventLocationModel.create_from_origin(origin)
             event_model.save()
         except AttributeError:
             # TODO: what to do if it is already inserted?
             event_model = EventLocationModel.find_by(latitude=origin.latitude, longitude=origin.longitude,
-                depth=origin.depth, origin_time=origin.time.datetime)
+                                                     depth=origin.depth, origin_time=origin.time.datetime)
 
         return event_model
-        
+
     def _readHypFolder(self):
         dir = pw.QFileDialog.getExistingDirectory(self, "Get directory to read .hyp files from")
-        
+
         # If user cancels selecting folder, return
         if not dir:
-            return 
+            return
 
         files = [f for f in os.listdir(dir) if f.endswith('.hyp')]
         errors = []
@@ -297,10 +305,10 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
                 self._readHypFile(file_abs)
             except Exception as e:
                 errors.append(str(e))
-        
+
         if errors:
             m = pw.QMessageBox(pw.QMessageBox.Warning, self.windowTitle(),
-                           'Some errors ocurred while processing files. See detailed.', parent=self)
+                               'Some errors ocurred while processing files. See detailed.', parent=self)
             m.setDetailedText('\n'.join(errors))
             m.exec()
 
@@ -337,7 +345,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         # Update first polarity data
         # TODO: this could be improved by updating instead of removing the
         # existing one
-        fp = FirstPolarityModel.find_by(event_info_id = event.id)
+        fp = FirstPolarityModel.find_by(event_info_id=event.id)
         if fp:
             fp.delete()
 
@@ -346,10 +354,10 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
             with open(fp_file) as f:
                 next(f)
                 fp_dict = {}
-                fp_fields = {'Strike' : 'strike_fp', 'Dip' : 'dip_fp',
-                             'Rake' : 'rake_fp', 'misfit_first_polarity' : 'misfit_fp',
-                             'azimuthal_gap' : 'azimuthal_fp_Gap', 
-                             'number_of_polarities' : 'station_fp_polarities_count'  }
+                fp_fields = {'Strike': 'strike_fp', 'Dip': 'dip_fp',
+                             'Rake': 'rake_fp', 'misfit_first_polarity': 'misfit_fp',
+                             'azimuthal_gap': 'azimuthal_fp_Gap',
+                             'number_of_polarities': 'station_fp_polarities_count'}
                 for line in f:
                     key, value = line.split()
                     try:
@@ -393,28 +401,22 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.model.setFilter()
         self.model.revertAll()
 
-
     def __plot_map(self):
 
         URL = self.wmsLE.text()
         layer = self.layerLE.text()
         if URL is not "" and layer is not "":
-            self.plot_map(map_service = URL, layer = layer)
+            self.plot_map(map_service=URL, layer=layer)
         else:
             self.plot_map()
 
-    def plot_map(self, map_service = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?',
-                 layer = 'GEBCO_2019_Grid'):
-
-        #self.map_widget.fig.clf()
-        import numpy as np
-        import cartopy.crs as ccrs
-        import matplotlib.pyplot as plt
-        from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
-        from owslib.wms import WebMapService
+    def plot_map(self, map_service='https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?',
+                 layer='GEBCO_2019_Grid'):
 
         if self.cb:
             self.cb.remove()
+
+            # self.map_widget.fig.delaxes(self.map_widget.fig.axes[1])
 
         MAP_SERVICE_URL = map_service
         try:
@@ -438,48 +440,48 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
 
             mag.append(j[0].mw)
 
-
-        #print(entities)
+        # print(entities)
 
         mag = np.array(mag)
-        mag = 0.5*np.exp(mag)
-        min_lon = -16
-        max_lon = -3
-        min_lat = 33
-        max_lat = 39
+        mag = 0.5 * np.exp(mag)
+        min_lon = min(lon) - 0.5
+        max_lon = max(lon) + 0.5
+        min_lat = min(lat) - 0.5
+        max_lat = max(lat) + 0.5
         extent = [min_lon, max_lon, min_lat, max_lat]
+
         self.map_widget.ax.set_extent(extent, crs=ccrs.PlateCarree())
 
         try:
-               #self.map_widget.ax.coastlines()
-               #self.map_widget.ax.stock_img()
-               self.map_widget.ax.add_wms(wms, layer)
+            self.map_widget.ax.add_wms(wms, layer)
         except:
-               self.map_widget.ax.coastlines()
+            os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
+            self.map_widget.ax.background_img(name='ne_shaded', resolution="high")
 
         lon = np.array(lon)
         lat = np.array(lat)
-        depth = np.array(depth)/1000
+        depth = np.array(depth) / 1000
         color_map = plt.cm.get_cmap('rainbow')
         reversed_color_map = color_map.reversed()
-        cs = self.map_widget.ax.scatter(lon, lat, s=mag, c=depth ,edgecolors= "black",cmap=reversed_color_map,transform =ccrs.PlateCarree())
-        self.cb = self.map_widget.fig.colorbar(cs, orientation='horizontal', fraction=0.05, extend='both', pad=0.15, label ='Depth (km)')
-        self.map_widget.lat.scatter(depth, lat, s=mag, c=depth ,edgecolors= "black",cmap=reversed_color_map)
+        cs = self.map_widget.ax.scatter(lon, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map,
+                                        transform=ccrs.PlateCarree())
+        self.cb = self.map_widget.fig.colorbar(cs, ax=self.map_widget.ax, orientation='horizontal', fraction=0.05,
+                                               extend='both', pad=0.15, label='Depth (km)')
+        self.map_widget.lat.scatter(depth, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map)
         self.map_widget.lat.set_ylim((min_lat, max_lat))
         self.map_widget.lon.scatter(lon, depth, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map)
         self.map_widget.lon.xaxis.tick_top()
         self.map_widget.lon.yaxis.tick_right()
         self.map_widget.lon.invert_yaxis()
-        #self.map_widget.lon.set(xlabel='Longitude', ylabel='Depth (km)')
+        # self.map_widget.lon.set(xlabel='Longitude', ylabel='Depth (km)')
         self.map_widget.lon.set_xlim((min_lon, max_lon))
 
-        #magnitude legend
-        kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color = "red", func=lambda s: np.log(s / 0.5))
-        self.map_widget.ax.legend(*cs.legend_elements(**kw),loc="lower right", title="Magnitudes")
-
+        # magnitude legend
+        kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color="red", func=lambda s: np.log(s / 0.5))
+        self.map_widget.ax.legend(*cs.legend_elements(**kw), loc="lower right", title="Magnitudes")
 
         gl = self.map_widget.ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
-                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
+                                          linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
 
         gl.top_labels = False
         gl.left_labels = False
@@ -488,7 +490,6 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
         self.map_widget.fig.canvas.draw()
-
 
     def plot_foc_mec(self, method, **kwargs):
 
@@ -523,6 +524,6 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
             beach2 = beach(fm, facecolor='b', linewidth=1., alpha=0.8, width=80)
         ax.add_collection(beach2)
         outfile = os.path.join(ROOT_DIR, 'db/map_class/foc_mec.png')
-        plt.savefig(outfile, bbox_inches='tight', pad_inches=0, transparent=True,edgecolor='none')
+        plt.savefig(outfile, bbox_inches='tight', pad_inches=0, transparent=True, edgecolor='none')
         plt.clf()
         plt.close()
