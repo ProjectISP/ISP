@@ -127,7 +127,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         endtime = convert_qdatetime_utcdatetime(self.end_dateTimeEdit)
         selected_items = self.tableWidget.selectedItems()
         event_dict = {}
-
+        errors = False
         row = 0
         column = 0
         for i, item in enumerate(selected_items):
@@ -196,7 +196,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                     except:
                         errors = True
                         md = MessageDialog(self)
-                        md.set_error_message("Couldn't download data")
+                        md.set_error_message(ntwknm + "." + stnm + "." + channels + "   " + "Couldn't download data")
         if errors:
             md = MessageDialog(self)
             md.set_info_message("Download completed with some errors")
