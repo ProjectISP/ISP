@@ -395,6 +395,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     files_path = MseedUtil.get_tree_mseed_files(dir_path, starttime = start, endtime = end)
             else:
                 files_path = MseedUtil.get_tree_mseed_files(dir_path)
+
         else:
 
             files_path = MseedUtil.get_mseed_files(dir_path)

@@ -294,6 +294,8 @@ class MseedUtil:
                             obsfiles.append(os.path.join(top_dir, pos_file))
                         elif st1<=st0 and et1<=et0 and (et0-et1) <= 86400:
                             obsfiles.append(os.path.join(top_dir, pos_file))
+                        elif st1 >= st0 and et1 <= et0:
+                            obsfiles.append(os.path.join(top_dir, pos_file))
                         else:
                             pass
                     except:
