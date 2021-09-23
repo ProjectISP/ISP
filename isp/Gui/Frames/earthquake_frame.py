@@ -361,7 +361,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         files_at_page = self.get_files_at_page()
         return files_at_page[index]
 
-    def onChange_page(self):
+    def onChange_page(self, page):
         self.plot_seismogram()
 
     def onChange_items_per_page(self, items_per_page):
