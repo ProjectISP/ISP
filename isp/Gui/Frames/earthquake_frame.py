@@ -54,7 +54,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.cancelled = False
         self.progressbar = pw.QProgressDialog(self)
-        self.progressbar.setWindowTitle('Neural Network Running')
+        self.progressbar.setWindowTitle('Earthquake Location')
         self.progressbar.setLabelText(" Computing Auto-Picking ")
         self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
         self.path_phases = os.path.join(AUTOMATIC_PHASES, "phases_autodetected.txt")
@@ -103,6 +103,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
+        self.readFilesBtn.clicked.connect(lambda: self.get_now_files())
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
         self.updateBtn.clicked.connect(self.plot_seismogram)
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
@@ -197,6 +198,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+F'), self)
         self.shortcut_open.activated.connect(self.picker_all)
+
+        #######
+        # test
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+W'), self)
+        self.shortcut_open.activated.connect(self.get_now_files)
         #######
 
     def cancelled_callback(self):
@@ -278,6 +284,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def _picker_thread(self):
         self.progressbar.reset()
+        self.progressbar.setLabelText(" Computing Auto-Picking ")
         with ThreadPoolExecutor(1) as executor:
             f = executor.submit(self._run_picker)
             self.progressbar.exec()
@@ -354,12 +361,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         files_at_page = self.get_files_at_page()
         return files_at_page[index]
 
-    def onChange_page(self, page):
+    def onChange_page(self):
         self.plot_seismogram()
 
     def onChange_items_per_page(self, items_per_page):
         self.items_per_page = items_per_page
-        self.plot_seismogram()
+        #self.plot_seismogram()
 
     def filter_error_message(self, msg):
         md = MessageDialog(self)
@@ -373,8 +380,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         :return:
         """
-        files_path = self.get_files(value)
-        self.set_pagination_files(files_path)
+        pass
+        #self.get_now_files()
+        #self.set_pagination_files(self.files_path)
 
         # self.plot_seismogram()
 
@@ -382,6 +390,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.files = files_path
         self.total_items = len(self.files)
         self.pagination.set_total_items(self.total_items)
+
 
     def get_files(self, dir_path):
 
@@ -392,9 +401,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
                 diff = end-start
                 if diff > 0:
-                    files_path = MseedUtil.get_tree_mseed_files(dir_path, starttime = start, endtime = end)
+                    files_path = MseedUtil.get_tree_mseed_files(dir_path, starttime = start, endtime = end, robust = self.robustCB.isChecked())
             else:
-                files_path = MseedUtil.get_tree_mseed_files(dir_path)
+                files_path = MseedUtil.get_tree_mseed_files(dir_path, robust = self.robustCB.isChecked())
 
         else:
 
@@ -406,7 +415,36 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             files_path = MseedUtil.get_selected_files(files_path, selection)
 
+        #print(files_path)
+        pyc.QMetaObject.invokeMethod(self.progressbar, 'accept', qt.AutoConnection)
         return files_path
+
+    def get_now_files(self):
+
+        md = MessageDialog(self)
+        md.hide()
+        try:
+
+            self.progressbar.reset()
+            self.progressbar.setLabelText(" Reading Files ")
+            self.progressbar.setRange(0,0)
+            with ThreadPoolExecutor(1) as executor:
+                f = executor.submit(lambda : self.get_files(self.root_path_bind.value))
+                self.progressbar.exec()
+                self.files_path = f.result()
+                f.cancel()
+
+            #self.files_path = self.get_files(self.root_path_bind.value)
+
+            md.set_info_message("Readed data files Successfully")
+
+        except:
+
+            md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
+
+        md.show()
+
+
 
 
     def onChange_dataless_path(self, value):
@@ -488,18 +526,21 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         ##
         self.nums_clicks = 0
         all_traces = []
-        files_path = self.get_files(self.root_path_bind.value)
+        if self.trimCB.isChecked():
+           self.get_now_files()
+        #files_path = self.get_files(self.root_path_bind.value)
+        #self.files_path = self.get_files(self.root_path_bind.value)
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":
-                files_path.sort(key=self.sort_by_distance_advance)
+                self.files_path.sort(key=self.sort_by_distance_advance)
                 self.message_dataless_not_found()
 
         #
             elif self.comboBox_sort.currentText() == "Back Azimuth":
-                files_path.sort(key=self.sort_by_baz_advance)
+                self.files_path.sort(key=self.sort_by_baz_advance)
                 self.message_dataless_not_found()
 
-        self.set_pagination_files(files_path)
+        self.set_pagination_files(self.files_path)
         files_at_page = self.get_files_at_page()
         ##
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
@@ -518,6 +559,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
             if self.trimCB.isChecked() and diff >= 0:
+
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                               filter_error_callback=self.filter_error_message,
                                               start_time=start_time, end_time=end_time, trace_number=index)
