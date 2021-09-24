@@ -415,6 +415,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             files_path = MseedUtil.get_selected_files(files_path, selection)
 
+        self.set_pagination_files(files_path)
         #print(files_path)
         pyc.QMetaObject.invokeMethod(self.progressbar, 'accept', qt.AutoConnection)
         return files_path
