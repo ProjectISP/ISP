@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from isp.DataProcessing import DatalessManager
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
@@ -11,13 +13,16 @@ from isp.Utils import AsycTime
 from isp.Gui.Frames.setting_dialog_noise import SettingsDialogNoise
 from isp.ant.ambientnoise import noise_organize
 
-
 class NoiseFrame(BaseFrame, UiNoise):
 
     def __init__(self):
         super(NoiseFrame, self).__init__()
         self.setupUi(self)
-
+        self.progressbar = pw.QProgressDialog(self)
+        self.progressbar.setWindowTitle('Ambient Noise Tomography')
+        self.progressbar.setLabelText(" Computing Auto-Picking ")
+        self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
+        self.progressbar.close()
         self.setWindowTitle('Seismic Ambient Noise')
         self.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
         self.settings_dialog = SettingsDialogNoise(self)
@@ -31,7 +36,6 @@ class NoiseFrame(BaseFrame, UiNoise):
         self.output = None
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.output_bind = BindPyqtObject(self.outPathForm, self.onChange_root_path)
-        self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
 
@@ -41,12 +45,12 @@ class NoiseFrame(BaseFrame, UiNoise):
 
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
-        self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+        self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
+        self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.metadata_path_bind))
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.outputBtn.clicked.connect(lambda: self.on_click_select_directory(self.output_bind))
 
         # actions
-        #self.readfilesBtn.clicked.connect(self.read_files)
         self.preprocessBtn.clicked.connect(self.run_preprocess)
 
         self.actionOpen_Settings.triggered.connect(lambda: self.settings_dialog.show())
@@ -63,6 +67,9 @@ class NoiseFrame(BaseFrame, UiNoise):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+L'), self)
         self.shortcut_open.activated.connect(self.open_parameters_settings)
 
+    @pyc.Slot()
+    def _increase_progress(self):
+        self.progressbar.setValue(self.progressbar.value() + 1)
 
     def open_parameters_settings(self):
         self.parameters.show()
@@ -83,23 +90,14 @@ class NoiseFrame(BaseFrame, UiNoise):
         #self.read_files(value)
         pass
 
-    def set_dataless_dir(self, dir_path):
-        self.__dataless_dir = dir_path
-        self.output.set_dataless_dir(dir_path)
 
-
-    def onChange_dataless_path(self, value):
-        self.__dataless_manager = DatalessManager(value)
-        self.set_dataless_dir(value)
-
-    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     @AsycTime.run_async()
     def onChange_metadata_path(self, value):
         try:
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
         except:
-            raise FileNotFoundError("The metadata is not valid")
+            pass
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
@@ -109,9 +107,27 @@ class NoiseFrame(BaseFrame, UiNoise):
             bind.value = dir_path
 
     def read_files(self, dir_path, out_path):
-        self.ant = noise_organize(dir_path, out_path, self.inventory, self.params)
+        md = MessageDialog(self)
+        md.hide()
+        try:
+            self.progressbar.reset()
+            self.progressbar.setLabelText(" Reading Files ")
+            self.progressbar.setRange(0,0)
+            with ThreadPoolExecutor(1) as executor:
+                self.ant = noise_organize(dir_path, out_path, self.inventory, self.params)
+                f = executor.submit(lambda: self.ant.create_dict())
+                self.progressbar.exec()
+                self.results = f.result()
+                f.cancel()
+
+            self.ant.test()
+            md.set_info_message("Readed data files Successfully")
+        except:
+            md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
         self.ant.send_message.connect(self.receive_messages)
-        self.ant.test()
+        md.show()
+        #data_map, size, info = self.ant.create_dict()
+        #print(self.results)
 
     def run_preprocess(self):
         self.params = self.settings_dialog.getParameters()

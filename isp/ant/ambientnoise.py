@@ -91,7 +91,7 @@ class noise_organize(pyc.QObject):
     #    return inv
 
     def create_dict(self, **kwargs):
-
+        print("creating Dictionary")
         net_list = kwargs.pop('net_list', "").split(',')
         sta_list = kwargs.pop('sta_list', "").split(',')
         chn_list = kwargs.pop('chn_list', "").split(',')
@@ -184,7 +184,7 @@ class noise_organize(pyc.QObject):
 
                 except:
                     pass
-
+        print("ending Dictionary")
         return data_map, size, info
 
     def fftzeropad(self, data):
