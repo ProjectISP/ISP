@@ -1,6 +1,6 @@
 # Singleton/SingletonDecorator.py
 from isp.Gui.Frames import MainFrame, TimeFrequencyFrame, EarthquakeAnalysisFrame, ArrayAnalysisFrame, MTIFrame,\
-    RecfFrame, EventLocationFrame, SyntheticsAnalisysFrame, DataDownloadFrame, RealTimeFrame
+    RecfFrame, EventLocationFrame, SyntheticsAnalisysFrame, DataDownloadFrame, RealTimeFrame, NoiseFrame
 from isp.Gui.Frames.ppsds_frame import PPSDFrame
 from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Utils import Singleton
@@ -20,6 +20,7 @@ class Controller:
         self.data_download_frame = None
         self.ppds_frame = None
         self.realtime_frame = None
+        self.noise_frame = None
         self.help = HelpDoc()
 
 
@@ -32,6 +33,7 @@ class Controller:
         self.main_frame.arrayAnalysisButton.clicked.connect(self.open_array_window)
         self.main_frame.momentTensorButton.clicked.connect(self.open_momentTensor_window)
         self.main_frame.receiverFunctionsButton.clicked.connect(self.open_receiverFunctions)
+        self.main_frame.noiseButton.clicked.connect(self.open_noise)
         self.main_frame.actionReal_Time.triggered.connect(self.open_realtime_window)
         self.main_frame.actionOpen_Project.triggered.connect(self.open_project)
         self.main_frame.actionCreate_new_Project.triggered.connect(self.create_project)
@@ -71,11 +73,15 @@ class Controller:
             self.moment_tensor_frame = MTIFrame()
         self.moment_tensor_frame.show()
 
-
     def open_receiverFunctions(self):
         if not self.receiver_functions_frame:
             self.receiver_functions_frame = RecfFrame()
         self.receiver_functions_frame.show()
+
+    def open_noise(self):
+        if not self.noise_frame:
+            self.noise_frame = NoiseFrame()
+        self.noise_frame.show()
 
     def open_project(self):
         if not self.project_frame:

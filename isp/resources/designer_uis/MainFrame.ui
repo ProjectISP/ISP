@@ -212,7 +212,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="realTimeButton">
+            <widget class="QPushButton" name="noiseButton">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                <horstretch>0</horstretch>

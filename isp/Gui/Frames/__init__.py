@@ -4,7 +4,7 @@ from isp.Gui.Frames.uis_frames import UiMainFrame, UiTimeFrequencyFrame, UiEarth
     UiArrayAnalysisFrame, UiMomentTensor, UiReceiverFunctions, UiReceiverFunctionsCut, UiReceiverFunctionsSaveFigure, \
     UiReceiverFunctionsCrossSection, UiReceiverFunctionsAbout, UiReceiverFunctionsShowEarthquake, UiTimeFrequencyWidget, \
     UiSyntheticsAnalisysFrame, UiSyntheticsGeneratorDialog, UiDataDownloadFrame, UiPPSDs, UiPPSDs_dialog, UiVespagram, \
-    UiEarth_model_viewer, UiHelp, UiRealTimeFrame, UiMapRealTime
+    UiEarth_model_viewer, UiHelp, UiRealTimeFrame, UiMapRealTime, UiNoise
 
 from isp.Gui.Frames.qt_components import FilesView, Pagination, MessageDialog, FilterBox, TimeSelectorBox, \
     EventInfoBox, SpectrumBox, StationInfoBox
@@ -19,5 +19,6 @@ from isp.Gui.Frames.event_location_frame import EventLocationFrame
 from isp.Gui.Frames.synthetics_analysis_frame import SyntheticsAnalisysFrame
 from isp.Gui.Frames.data_download_tool import DataDownloadFrame
 from isp.Gui.Frames.realtime_frame import RealTimeFrame
+from isp.Gui.Frames.noise_frame import NoiseFrame
 #from isp.Gui.Frames.time_frequency_advance_frame import TimeFrequencyAdvance
 
