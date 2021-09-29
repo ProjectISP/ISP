@@ -13,7 +13,7 @@ from isp.Utils import AsycTime
 from isp.Gui.Frames.setting_dialog_noise import SettingsDialogNoise
 from isp.ant.ambientnoise import noise_organize
 from isp.ant.process_ant import process_ant
-
+from isp.ant.cross_stack import cross_stack
 
 class NoiseFrame(BaseFrame, UiNoise):
 
@@ -180,6 +180,8 @@ class NoiseFrame(BaseFrame, UiNoise):
         #self.process_ant.send_message.connect(self.receive_messages)
         list_raw = self.process_ant.get_all_values(self.data_map)
         dict_matrix_list = self.process_ant.create_all_dict_matrix(list_raw, self.channels)
+        #post = self.cross_stack(self.output_bind.value, self.output_bind.value)
+        #post.run_cross_stack()
 
     @pyc.pyqtSlot(str)
     def receive_messages(self, message):
