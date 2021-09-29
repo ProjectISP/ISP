@@ -12,6 +12,8 @@ from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Utils import AsycTime
 from isp.Gui.Frames.setting_dialog_noise import SettingsDialogNoise
 from isp.ant.ambientnoise import noise_organize
+from isp.ant.process_ant import process_ant
+
 
 class NoiseFrame(BaseFrame, UiNoise):
 
@@ -114,24 +116,70 @@ class NoiseFrame(BaseFrame, UiNoise):
             self.progressbar.setLabelText(" Reading Files ")
             self.progressbar.setRange(0,0)
             with ThreadPoolExecutor(1) as executor:
-                self.ant = noise_organize(dir_path, out_path, self.inventory, self.params)
-                f = executor.submit(lambda: self.ant.create_dict())
+                self.ant = noise_organize(dir_path, self.inventory)
+                self.ant.send_message.connect(self.receive_messages)
+                def read_files_callback():
+                    data_map, size, channels = self.ant.create_dict()
+
+                    pyc.QMetaObject.invokeMethod(self.progressbar, 'accept')
+                    return data_map, size, channels
+
+                f = executor.submit(read_files_callback)
                 self.progressbar.exec()
-                self.results = f.result()
+                self.data_map,self.size,self.channels = f.result()
                 f.cancel()
 
-            self.ant.test()
+            #self.ant.test()
             md.set_info_message("Readed data files Successfully")
         except:
             md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
-        self.ant.send_message.connect(self.receive_messages)
+
         md.show()
-        #data_map, size, info = self.ant.create_dict()
-        #print(self.results)
+
+
+
+    # def process(self):
+    #     md = MessageDialog(self)
+    #     md.hide()
+    #     try:
+    #         self.progressbar.reset()
+    #         self.progressbar.setLabelText(" Processing ")
+    #         self.progressbar.setRange(0,0)
+    #         with ThreadPoolExecutor(1) as executor:
+    #
+    #             self.ant.send_message.connect(self.receive_messages)
+    #
+    #             def read_files_callback():
+    #                 list_raw = self.ant.get_all_values(self.results[0])
+    #                 dict_matrix_list = self.ant.create_all_dict_matrix(list_raw, self.result[2])
+    #
+    #                 pyc.QMetaObject.invokeMethod(self.progressbar, 'accept')
+    #                 return dict_matrix_list
+    #
+    #             f = executor.submit(read_files_callback)
+    #             self.progressbar.exec()
+    #             self.dict_matrix_list = f.dict_matrix_list()
+    #             f.cancel()
+    #
+    #             #self.ant.test()
+    #             md.set_info_message("Proceess Done, Please check the outout folder")
+    #     except:
+    #         md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
+    #
+    #     md.show()
 
     def run_preprocess(self):
         self.params = self.settings_dialog.getParameters()
         self.read_files(self.root_path_bind.value, self.output_bind.value)
+        self.process()
+
+
+    def process(self):
+        #
+        self.process_ant = process_ant(self.output_bind.value, self.params, self.inventory)
+        #self.process_ant.send_message.connect(self.receive_messages)
+        list_raw = self.process_ant.get_all_values(self.data_map)
+        dict_matrix_list = self.process_ant.create_all_dict_matrix(list_raw, self.channels)
 
     @pyc.pyqtSlot(str)
     def receive_messages(self, message):
