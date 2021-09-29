@@ -1,8 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-
-from isp.DataProcessing import DatalessManager
 from isp.DataProcessing.metadata_manager import MetadataManager
-from isp.Exceptions import parse_excepts
 from isp.Gui import pqg, pw, pyc
 from isp.Gui.Frames import BaseFrame, Pagination, MatplotlibCanvas, MessageDialog
 from isp.Gui.Frames.help_frame import HelpDoc
@@ -13,7 +10,7 @@ from isp.Utils import AsycTime
 from isp.Gui.Frames.setting_dialog_noise import SettingsDialogNoise
 from isp.ant.ambientnoise import noise_organize
 from isp.ant.process_ant import process_ant
-from isp.ant.cross_stack import cross_stack
+from isp.ant.crossstack import noisestack
 
 class NoiseFrame(BaseFrame, UiNoise):
 
@@ -54,7 +51,7 @@ class NoiseFrame(BaseFrame, UiNoise):
 
         # actions
         self.preprocessBtn.clicked.connect(self.run_preprocess)
-
+        self.cross_stackBtn.clicked.connect(self.stack)
         self.actionOpen_Settings.triggered.connect(lambda: self.settings_dialog.show())
         # Parameters settings
 
@@ -137,7 +134,6 @@ class NoiseFrame(BaseFrame, UiNoise):
         md.show()
 
 
-
     # def process(self):
     #     md = MessageDialog(self)
     #     md.hide()
@@ -168,20 +164,21 @@ class NoiseFrame(BaseFrame, UiNoise):
     #
     #     md.show()
 
+
     def run_preprocess(self):
         self.params = self.settings_dialog.getParameters()
         self.read_files(self.root_path_bind.value, self.output_bind.value)
         self.process()
 
-
     def process(self):
         #
         self.process_ant = process_ant(self.output_bind.value, self.params, self.inventory)
-        #self.process_ant.send_message.connect(self.receive_messages)
         list_raw = self.process_ant.get_all_values(self.data_map)
         dict_matrix_list = self.process_ant.create_all_dict_matrix(list_raw, self.channels)
-        #post = self.cross_stack(self.output_bind.value, self.output_bind.value)
-        #post.run_cross_stack()
+
+    def stack(self):
+        stack = noisestack(self.output_bind.value)
+        stack.run_cross_stack()
 
     @pyc.pyqtSlot(str)
     def receive_messages(self, message):

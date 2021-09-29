@@ -10,9 +10,9 @@ import pickle
 import os
 
 
-class cross_stack:
+class noisestack:
 
-    def __init__(self, output_files_path, stack_files_path):
+    def __init__(self, output_files_path):
 
         """
                 Process ANT, Cross + Stack
@@ -23,27 +23,27 @@ class cross_stack:
         """
 
         self.output_files_path = output_files_path
-        self.stack_files_path = stack_files_path
-        self.channel = "BHZ, BHN, BHE"
+        self.channel = "BHZ"
         self.year = 2000
         check_nan = True
 
+    def check_path(self):
     # Se crea la carpeta si no existe:
-    #if not os.path.exists(stack_files_path):
-    #    os.makedirs(stack_files_path)
+        self.stack_files_path = os.path.join(self.output_files_path, "stack")
+        if not os.path.exists(self.stack_files_path):
+           os.makedirs(self.stack_files_path)
 
     # Ficheros de datos
-        pickle_files = [pickle_file for pickle_file in os.listdir(self.output_files_path) if self.channel in pickle_file]
-
+        self.pickle_files = [pickle_file for pickle_file in os.listdir(self.output_files_path) if self.channel in pickle_file]
+        print(self.pickle_files)
     # Para cada pareja de ficheros, se cargan los ficheros y se multiplican las matrices de datos que contienen, sólo en los días comunes
     # Indices i,j: se refieren a ficheros de datos file_i, file_j que contiene las matrices que se multiplicarán.
 
     # Sólo hacer si i>= j, para hacer sólo triangular superior
     # y reducir el número de operaciones
     def run_cross_stack(self):
-
+        self.check_path()
         for i, file_i in enumerate(self.pickle_files):
-
             for j, file_j in enumerate(self.pickle_files):
 
                 print("(i=" + str(i) + ",j=" + str(j) + ") -> (" + file_i + "," + file_j + ")")
@@ -105,7 +105,6 @@ class cross_stack:
                             # 7-7-2021, importante 2n - 1
                             size_3d = 2 * corr_ij_freq.shape[2] - 1
 
-                            corr_ij_time = np.zeros((size_1d, size_2d, size_3d), dtype=np.float64)
                             corr_ij_time = np.zeros((size_1d, size_2d, size_3d), dtype=np.float64)
 
                             # Se rellena la matriz en el dominio del tiempo
