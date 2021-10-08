@@ -5,7 +5,7 @@ import numpy as np
 import math
 from multiprocessing import Pool
 import obspy
-from isp.ant.signal_processing_tools import noise_processing
+from isp.ant.signal_processing_tools import noise_processing, noise_processing_horizontals
 from obspy import Stream
 
 class process_ant:
@@ -51,12 +51,57 @@ class process_ant:
         self.water_level = param_dict["waterlevel"]
 
     def create_all_dict_matrix(self, list_raw, info):
+        """
+        :Description: Method that sort data Vertical / horizontals and send to create_dict_matrix to create the matrix
+        with the spectrums rady to make later cross correlations
+
+        :param list_raw: List with inside a header with the reference and the list with the files corresponding to
+
+        :param info: Dictionary {'NETSTATIONCHANNEL'}:[[ST,ET],INVENTORY]
+
+        :return:
+        """
         all_dict_matrix = []
+        check_N = False
+        check_E = False
+        list_item_horizontals = {"North": [], "East": []}
 
         for list_item in list_raw:
-            key_info = list_item[0][0] + list_item[0][1] + list_item[0][2]  # 'XTCAPCBHE', ...
-            dict_matrix = self.create_dict_matrix(list_item, info[key_info])
-            all_dict_matrix.append(dict_matrix)
+
+            channels = []
+            station = list_item[0][1]
+            station_check = station
+            channel = list_item[0][2]
+
+            if channel[2] == "Z":
+                channels.append(list_item[0][2])
+                key_info = list_item[0][0] + list_item[0][1] + list_item[0][2]  # Data, Metadata, dates 'XTCAPCBHE', ...
+                self.create_dict_matrix(list_item, info[key_info])
+
+            else:
+
+                # check both channels belongs to the same station
+                if channel[2] in ["N", "E", "1", "2", "Y","X"] and station_check == station:
+
+                    #channels.append(list_item[0][2])
+
+                    if channel[2] in ["N", "1", "Y"]:
+                        key_info = list_item[0][0] + list_item[0][1] + list_item[0][2]
+                        info_N = info[key_info]
+                        list_item_horizontals["North"] = list_item
+                        check_N = True
+
+                    elif channel[2] in ["E", "2", "X"]:
+                        key_info = list_item[0][0] + list_item[0][1] + list_item[0][2]
+                        info_E = info[key_info]
+                        list_item_horizontals["East"] = list_item
+                        check_E = True
+
+                    if check_N and check_E:
+                        self.create_dict_matrix_horizontals(list_item_horizontals, info_N, info_E)
+                        check_N = False
+                        check_E = False
+
 
         return all_dict_matrix
 
@@ -73,13 +118,17 @@ class process_ant:
 
         # 2.- dict_matrix['metadata_list']
         self.dict_matrix['metadata_list'] = info_item[1]
+        # update the sampling_rate
+        sampling_rate = info_item[1][0][0][0].sample_rate
+        sampling_rate_new = sampling_rate / self.factor
+        self.dict_matrix['metadata_list'][0][0][0].sample_rate = sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
 
         num_minutes = self.num_minutes_dict_matrix  # 15min 96 incrementos
         self.num_rows = int((24 * 60) / num_minutes)
         num_columns = len(list_item) - 1
-        N = num_minutes * 60 * 5 + 1  # segundos*fs
+        N = num_minutes * 60 * sampling_rate_new + 1  # segundos*fs
         DD = 2 ** math.ceil(math.log2(N))
         self.list_item = list_item
         # ······
@@ -112,7 +161,93 @@ class process_ant:
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix, file_to_store)
 
-        print(self.dict_matrix)
+        return self.dict_matrix
+
+    def create_dict_matrix_horizontals(self, list_item_horizonrals, info_N, info_E):
+        # create an object to compress
+
+        self.dict_matrix_N = {'data_matrix_N': [], 'metadata_list_N': [], 'date_list_N': []}
+        self.dict_matrix_E = {'data_matrix_E': [], 'metadata_list_E': [], 'date_list_E': []}
+        print(" -- Matrix: " + list_item_horizonrals["North"][0][0] + list_item_horizonrals["North"][0][1] + list_item_horizonrals["North"][0][2])
+        print(" -- Matrix: " + list_item_horizonrals["East"][0][0] + list_item_horizonrals["East"][0][1] +
+              list_item_horizonrals["East"][0][2])
+
+        # 1.- dict_matrix['date_list']
+        date_ini_N = info_N[0][0].julday
+        date_ini_E = info_E[0][0].julday
+        date_end_N = info_N[0][1].julday
+        date_end_E = info_E[0][1].julday
+        self.dict_matrix_N['date_list_N'] = [date_ini_N + d for d in range(date_end_N - date_ini_N + 1)]
+        self.dict_matrix_E['date_list_E'] = [date_ini_E + d for d in range(date_end_E - date_ini_E + 1)]
+
+        # 2.- dict_matrix['metadata_list']
+        self.dict_matrix_N['metadata_list_N'] = info_N[1]
+        self.dict_matrix_E['metadata_list_E'] = info_E[1]
+
+        # update the sampling_rate
+
+        sampling_rate = info_N[1][0][0][0].sample_rate
+        sampling_rate_new = sampling_rate/self.factor
+        self.dict_matrix_N['metadata_list_N'][0][0][0].sample_rate = sampling_rate_new
+        self.dict_matrix_E['metadata_list_E'][0][0][0].sample_rate = sampling_rate_new
+        #self.info_N[1].net.sampling_rate = sampling_rate_new
+        #self.info_E[1].sampling_rate = sampling_rate_new
+
+        # 3.- dict_matrix['data_matrix']
+
+        num_minutes = self.num_minutes_dict_matrix  # 15min 96 incrementos
+        self.num_rows = int((24 * 60) / num_minutes)
+        num_columns_N = len(list_item_horizonrals["North"]) - 1
+        num_columns_E = len(list_item_horizonrals["East"]) - 1
+        N = num_minutes * 60 * sampling_rate_new + 1  # segundos*fs
+
+        DD = 2 ** math.ceil(math.log2(N))
+        self.list_item_N = list_item_horizonrals["North"]
+        self.list_item_E = list_item_horizonrals["East"]
+        # ······
+        # f = [0, 1, ..., n / 2 - 1, n / 2] / (d * n) if n is even
+        # f = [0, 1, ..., (n - 1) / 2 - 1, (n - 1) / 2] / (d * n) if n is odd
+        # ······
+        DD_half_point = int(((DD) / 2) + 1)
+        self.dict_matrix_N['data_matrix_N'] = np.zeros((self.num_rows, num_columns_N, DD_half_point), dtype=np.complex64)
+        self.dict_matrix_E['data_matrix_E'] = np.zeros((self.num_rows, num_columns_E, DD_half_point), dtype=np.complex64)
+        self.inc_time = [i * 60 * num_minutes for i in range(self.num_rows + 1)]
+        num_columns = min(num_columns_N, num_columns_E)
+        with Pool(processes=6) as pool:
+            r = pool.map(self.process_col_matrix_horizontals, range(num_columns))
+
+        j = 0
+        for pair in r:
+            i = 0
+            for N,E in zip(pair[0],pair[1]):
+                if N is not None and N.size == DD_half_point and E is not None and E.size == DD_half_point:
+                    self.dict_matrix_N['data_matrix_N'][i, j, :] = N
+                    self.dict_matrix_E['data_matrix_E'][i, j, :] = E
+                i += 1
+            j += 1
+
+        # compressing matrix
+        # dict_matrix['data_matrix']=xr.DataArray(dictmatrix)
+        if self.save_files:
+
+            print(" -- File: " + self.output_files_path + '/' + list_item_horizonrals["North"][0][0] +
+                  list_item_horizonrals["North"][0][1] + list_item_horizonrals["North"][0][2])
+
+            path = self.output_files_path + '/' + list_item_horizonrals["North"][0][0] + \
+                   list_item_horizonrals["North"][0][1] + list_item_horizonrals["North"][0][2]
+            print("Saving to ", path)
+            file_to_store = open(path, "wb")
+            pickle.dump(self.dict_matrix_N, file_to_store)
+
+            print(" -- File: " + self.output_files_path + '/' + list_item_horizonrals["East"][0][0] +
+                  list_item_horizonrals["East"][0][1] + list_item_horizonrals["East"][0][2])
+
+            path = self.output_files_path + '/' + list_item_horizonrals["East"][0][0] + \
+                   list_item_horizonrals["East"][0][1] + list_item_horizonrals["East"][0][2]
+            print("Saving to ", path)
+            file_to_store = open(path, "wb")
+            pickle.dump(self.dict_matrix_E, file_to_store)
+
         return self.dict_matrix
 
     def fftzeropad(self, data):
@@ -181,6 +316,86 @@ class process_ant:
                 res.append(None)
 
         return res
+
+
+    def process_col_matrix_horizontals(self, j, fill_gaps=True):
+
+        res_N = []
+        res_E = []
+        tr_N = obspy.read(self.list_item_N[1 + j])[0]
+        tr_E = obspy.read(self.list_item_E[1 + j])[0]
+        if tr_N.stats.starttime.julday == tr_E.stats.starttime.julday:
+
+            if self.remove_responseCB:
+                print("removing response ", tr_N.id, tr_E.id)
+                tr_N = self.__remove_response(tr_N, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
+                tr_E = self.__remove_response(tr_E, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
+
+            if self.decimationCB:
+                print("decimating ", tr_N.id, tr_E.id)
+                tr_N.decimate(factor=self.factor, no_filter = False)
+                tr_E.decimate(factor=self.factor, no_filter = False)
+
+            # Prepare Matrix for North Component
+            print("Starting hard process ", tr_N.id, tr_E.id)
+            for i in range(len(self.inc_time) - 1):
+                tr_test_N = tr_N.copy()
+                tr_test_E = tr_E.copy()
+                maxstart = np.max([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
+                #minend = np.min([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
+
+                tr_test_N.trim(starttime = maxstart + self.inc_time[i],
+                             endtime = maxstart + self.inc_time[i + 1])
+
+                tr_test_E.trim(starttime=maxstart + self.inc_time[i],
+                               endtime=maxstart + self.inc_time[i + 1])
+
+                if fill_gaps:
+                    st_N = self.fill_gaps(Stream(traces=tr_test_N), tol=self.gaps_tol)
+                    st_E = self.fill_gaps(Stream(traces=tr_test_E), tol=self.gaps_tol)
+
+                    if st_N == []:
+                        tr_test_N.data = np.zeros(len(tr_test_N.data), dtype=np.complex64)
+                    elif st_E == []:
+                        tr_test_E.data = np.zeros(len(tr_test_E.data), dtype=np.complex64)
+                    else:
+                        tr_test_N = st_N[0]
+                        tr_test_E = st_E[0]
+
+                if (self.data_domain == "frequency") and len(tr_N[:]) and len(tr_E[:]) > 0:
+                    n = tr_test_N.count()
+                    if n > 0:
+                        D = 2 ** math.ceil(math.log2(n))
+                        print(tr_test_N, tr_test_E)
+                        # tr_test.plot()
+                        # Prefilt
+                        tr_test_N.detrend(type='simple')
+                        tr_test_E.detrend(type='simple')
+                        tr_test_N.taper(max_percentage=0.05)
+                        tr_test_E.taper(max_percentage=0.05)
+                        process_horizontals = noise_processing_horizontals(tr_test_N, tr_test_E)
+                        if self.time_normalizationCB:
+                            process_horizontals.normalize(norm_win=3, norm_method='ramn')
+                        if self.whitheningCB:
+                            process_horizontals.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+                        try:
+                            # self.dict_matrix['data_matrix'][i, j, :] = np.fft.rfft(process.tr.data, D)
+                            res_N.append(np.fft.rfft(process_horizontals.tr_N.data, D))
+                            res_E.append(np.fft.rfft(process_horizontals.tr_E.data, D))
+                        except:
+                            res_N.append(None)
+                            res_E.append(None)
+                            print("dimensions does not agree")
+                    else:
+                        res_N.append(None)
+                        res_E.append(None)
+            else:
+                res_N.append(None)
+                res_E.append(None)
+
+        res = [res_N, res_E]
+        return res
+
 
     def get_all_values(self, nested_dictionary):
         list_raw = []

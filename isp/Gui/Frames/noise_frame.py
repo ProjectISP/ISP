@@ -133,38 +133,6 @@ class NoiseFrame(BaseFrame, UiNoise):
 
         md.show()
 
-
-    # def process(self):
-    #     md = MessageDialog(self)
-    #     md.hide()
-    #     try:
-    #         self.progressbar.reset()
-    #         self.progressbar.setLabelText(" Processing ")
-    #         self.progressbar.setRange(0,0)
-    #         with ThreadPoolExecutor(1) as executor:
-    #
-    #             self.ant.send_message.connect(self.receive_messages)
-    #
-    #             def read_files_callback():
-    #                 list_raw = self.ant.get_all_values(self.results[0])
-    #                 dict_matrix_list = self.ant.create_all_dict_matrix(list_raw, self.result[2])
-    #
-    #                 pyc.QMetaObject.invokeMethod(self.progressbar, 'accept')
-    #                 return dict_matrix_list
-    #
-    #             f = executor.submit(read_files_callback)
-    #             self.progressbar.exec()
-    #             self.dict_matrix_list = f.dict_matrix_list()
-    #             f.cancel()
-    #
-    #             #self.ant.test()
-    #             md.set_info_message("Proceess Done, Please check the outout folder")
-    #     except:
-    #         md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
-    #
-    #     md.show()
-
-
     def run_preprocess(self):
         self.params = self.settings_dialog.getParameters()
         self.read_files(self.root_path_bind.value, self.output_bind.value)
@@ -174,7 +142,7 @@ class NoiseFrame(BaseFrame, UiNoise):
         #
         self.process_ant = process_ant(self.output_bind.value, self.params, self.inventory)
         list_raw = self.process_ant.get_all_values(self.data_map)
-        dict_matrix_list = self.process_ant.create_all_dict_matrix(list_raw, self.channels)
+        self.process_ant.create_all_dict_matrix(list_raw, self.channels)
 
     def stack(self):
         stack = noisestack(self.output_bind.value)

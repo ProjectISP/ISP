@@ -25,7 +25,6 @@ class noisestack:
         self.output_files_path = output_files_path
         self.channel = "BHZ"
         self.year = 2000
-        check_nan = True
 
     def check_path(self):
     # Se crea la carpeta si no existe:
@@ -59,6 +58,17 @@ class noisestack:
                     data_matrix_file_j = dict_matrix_file_j['data_matrix']
                     metadata_list_file_i = dict_matrix_file_i['metadata_list']
                     metadata_list_file_j = dict_matrix_file_j['metadata_list']
+
+                    # coordinates
+                    # net_i = metadata_list_file_i[0]
+                    # net_j = metadata_list_file_j[0]
+                    # sta_i = net_i[0]
+                    # sta_j = net_j[0]
+                    # lat_i = sta_i.latitude
+                    # lon_i = sta_i.longitude
+                    # lat_j = sta_j.latitude
+                    # lon_j = sta_j.longitude
+
                     date_list_file_i = dict_matrix_file_i['date_list']
                     date_list_file_j = dict_matrix_file_j['date_list']
 
