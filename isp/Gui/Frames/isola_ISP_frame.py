@@ -317,33 +317,26 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
 
     def plot_map_stations(self):
-        stations = []
-        obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
-        obsfiles.sort()
+        md = MessageDialog(self)
+        md.hide()
         try:
-            if len(self.stream)>0:
-                stations = ObspyUtil.get_stations_from_stream(self.stream)
-        except:
-            pass
+            stations = []
+            obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
+            obsfiles.sort()
+            try:
+                if len(self.stream)>0:
+                    stations = ObspyUtil.get_stations_from_stream(self.stream)
+            except:
+                pass
 
-        map_dict={}
-        sd = []
+            map_dict={}
+            sd = []
 
-        for file in obsfiles:
-            if len(stations) == 0:
-                st = SeismogramDataAdvanced(file)
+            for file in obsfiles:
+                if len(stations) == 0:
+                    st = SeismogramDataAdvanced(file)
 
-                name = st.stats.Network+"."+st.stats.Station
-
-                sd.append(name)
-
-                st_coordinates = self.__metadata_manager.extract_coordinates(self.inventory, file)
-
-                map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
-            else:
-                st = SeismogramDataAdvanced(file)
-                if st.stats.Station in stations:
-                    name = st.stats.Network + "." + st.stats.Station
+                    name = st.stats.Network+"."+st.stats.Station
 
                     sd.append(name)
 
@@ -351,11 +344,27 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
                     map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
                 else:
-                    pass
+                    st = SeismogramDataAdvanced(file)
+                    if st.stats.Station in stations:
+                        name = st.stats.Network + "." + st.stats.Station
 
+                        sd.append(name)
 
-        self.map_stations = StationsMap(map_dict)
-        self.map_stations.plot_stations_map(latitude = self.latDB.value(),longitude=self.lonDB.value())
+                        st_coordinates = self.__metadata_manager.extract_coordinates(self.inventory, file)
+
+                        map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
+                    else:
+                        pass
+
+            self.map_stations = StationsMap(map_dict)
+            self.map_stations.plot_stations_map(latitude=self.latDB.value(), longitude=self.lonDB.value())
+
+            md.set_error_message("Stations OK!! ")
+        except:
+            md.set_info_message(" Please check you have process and plot seismograms and opened stations info,"
+                                 "Please additionally check that your metada fits with your mseed files")
+
+        md.show()
 
     def open_help(self):
         self.help.show()
