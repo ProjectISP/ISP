@@ -22,17 +22,17 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
 
         # Binding
         self.root_path_bind = BindPyqtObject(self.rootPathForm)
-        self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
+        self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
-        self.datalessBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+        self.datalessBtn.clicked.connect(lambda: self.on_click_select_metadata_file(self.dataless_path_bind))
 
         # Action Buttons
         self.processBtn.clicked.connect(lambda: self._ppsd_thread(self.process_ppsds))
         self.continueBtn.clicked.connect(lambda: self._ppsd_thread(self.ppsd_continue))
         self.saveBtn.clicked.connect(lambda: self.saveDB())
         self.loadBtn.clicked.connect(lambda: self.load_ppsd_db())
-        self.load_metadataBtn.clicked.connect(lambda: self.load_metadata())
+        #self.load_metadataBtn.clicked.connect(lambda: self.load_metadata())
         self.add_dataBtn.clicked.connect(lambda: self.add_data())
 
     def _stopBtnCallback(self):
@@ -60,15 +60,31 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         if dir_path:
             bind.value = dir_path
 
+    def onChange_metadata_path(self, value):
+        md = MessageDialog(self)
+        try:
+            self.__metadata_manager = MetadataManager(value)
+            self.inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
+            md.set_info_message("Loaded Metadata, please check your terminal for further details")
+        except:
+            md.set_error_message("Something went wrong. Please check your metada file is a correct one")
 
-    def load_metadata(self):
-        if self.dataless_path_bind.value is not "":
-            try:
-                self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
-                self.inventory = self.__metadata_manager.get_inventory()
+    def on_click_select_metadata_file(self, bind: BindPyqtObject):
+        selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            bind.value = selected[0]
 
-            except:
-                pass
+    # def load_metadata(self):
+    #     md = MessageDialog(self)
+    #     if self.dataless_path_bind.value is not "":
+    #         try:
+    #             self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
+    #             self.inventory = self.__metadata_manager.get_inventory()
+    #             print(self.inventory)
+    #             md.set_info_message("Loaded Metadata, please check your terminal for further details")
+    #         except:
+    #             md.set_error_message("Something went wrong. Please check your metada file is a correct one")
 
     def process_ppsds(self):
         file_path = self.root_path_bind.value

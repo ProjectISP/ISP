@@ -12,6 +12,7 @@ from obspy import Stream, read, Trace, UTCDateTime, read_events
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth
 from obspy.io.mseed.core import _is_mseed
+from obspy.io.stationxml.core import _is_stationxml
 #from obspy.io.sac.core import _is_sac
 from obspy.io.xseed.parser import Parser
 
@@ -380,22 +381,43 @@ class MseedUtil:
             return False
 
     @classmethod
-    def get_dataless_files(cls, root_dir: str):
+    def get_metadata_files(cls, file):
+        from obspy import read_inventory
+        try:
+
+            inv = read_inventory(file)
+
+            return inv
+
+        except IOError:
+
+           return []
+
+    @classmethod
+    def get_dataless_files(cls, root_dir):
         """
         Get a list of valid dataless files inside the root_dir. If root_dir doesn't exists it returns a empty list.
 
         :param root_dir: The full path of the dir or a file.
-
         :return: A list of full path of dataless files.
         """
 
         #if os.path.isfile(root_dir) and cls.is_valid_dataless(root_dir):
-        if os.path.isfile(root_dir):
+
+        if os.path.isfile(root_dir) and _is_stationxml(root_dir) and cls.is_valid_dataless(root_dir):
+        #if os.path.isfile(root_dir):
             return [root_dir]
         elif os.path.isdir(root_dir):
-            files = [os.path.join(root_dir, file) for file in os.listdir(root_dir)
-                     if os.path.isfile(os.path.join(root_dir, file))]
-                     #and cls.is_valid_dataless(os.path.join(root_dir, file))]
+            files = []
+            for file in os.listdir(root_dir):
+                if _is_stationxml(os.path.join(root_dir, file)):
+                    files.append(file)
+                if cls.is_valid_dataless(root_dir):
+                    files.append(file)
+
+            #files = [os.path.join(root_dir, file) for file in os.listdir(root_dir)
+            #         if os.path.isfile(os.path.join(root_dir, file)) and os.path.isfile(os.path.join(root_dir, file))
+            #         != ".DS_Store" and cls.is_valid_dataless(os.path.join(root_dir, file)) and _is_stationxml(os.path.join(root_dir, file))]
             files.sort()
             return files
         return []

@@ -9,11 +9,13 @@ class MetadataManager:
         self.__root_path = root_path
         self.__dataless_files = []
         self.__stations_stats = None
-        self.__dataless_file = MseedUtil.get_dataless_files(self.__root_path)
+        #self.__dataless_file = MseedUtil.get_dataless_files(self.__root_path)
+        self.__metadata_file = MseedUtil.get_metadata_files(self.__root_path)
 
     def get_inventory(self):
-        inv = read_inventory(self.__dataless_file[0])
-        return inv
+        #inv = read_inventory(self.__dataless_file[0])
+        #inv  = read_inventory(self.__metadata_file)
+        return self.__metadata_file
 
     def get_station_stats_by_mseed_file(self, file_path: str):
         mseed_stats = ObspyUtil.get_stats(file_path)
@@ -24,6 +26,7 @@ class MetadataManager:
         stats = self.get_station_stats_by_mseed_file(file_path=file_path)
         selected_inv = inventory.select(network=stats.Network, station=stats.Station, channel=stats.Channel,
                                         starttime = stats.StartTime, endtime = stats.EndTime)
+        #selected_inv = inventory.select(network=stats.Network, station=stats.Station, channel=stats.Channel)
         cont = selected_inv.get_contents()
         coords = selected_inv.get_coordinates(cont['channels'][0])
 
