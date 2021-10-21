@@ -1,10 +1,9 @@
-from obspy import Stream, UTCDateTime
 from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
 from isp.Gui import pw, pyc
-from isp.Gui.Frames import BaseFrame, MatplotlibCanvas, MessageDialog, UiMomentTensor, MatplotlibFrame
+from isp.Gui.Frames import BaseFrame, MessageDialog, UiMomentTensor, MatplotlibFrame
 from isp.Gui.Frames.crustal_model_parameters_frame import CrustalModelParametersFrame
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
@@ -247,7 +246,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
                     if parameters['covariance']:
                         self.infoTx.appendPlainText("Calculating Covariance Matrix")
-                        isola.covariance_matrix(crosscovariance=True, save_non_inverted=True)
+                        isola.covariance_matrix(crosscovariance=True, save_non_inverted=True, save_covariance_function=True)
                 except:
                     md = MessageDialog(self)
                     md.set_error_message("No Possible calculate covariance matrix, "

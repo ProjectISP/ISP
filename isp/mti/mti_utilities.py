@@ -109,6 +109,8 @@ class MTIManager:
 
         stream_sorted = [x for _, x in sorted(zip(dist1, stream))]
         # reverse from E N Z --> Z N E
+        # reverse from 1 2 Z --> Z 2 1
+
         for stream_sort in stream_sorted:
             stream_sorted_order.append(stream_sort.reverse())
 

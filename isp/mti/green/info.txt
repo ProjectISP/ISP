@@ -1,0 +1,1 @@
+# This folder keeps the GFs generated before run inversion.
