@@ -8,6 +8,10 @@ from obspy.core import UTCDateTime
 import numpy as np
 import pickle
 import os
+from obspy import read
+from obspy.io.mseed.core import _is_mseed
+from isp.DataProcessing.metadata_manager import MetadataManager
+from isp.Utils import ObspyUtil
 
 
 class noisestack:
@@ -21,9 +25,10 @@ class noisestack:
 
                 :param No params required to initialize the class
         """
-
+        self.__metadata_manager = None
         self.output_files_path = output_files_path
-        self.channel = "BHZ"
+        self.channel = ["BHZ", "BHN", "BHE"]
+
         self.year = 2000
 
     def check_path(self):
@@ -33,7 +38,12 @@ class noisestack:
            os.makedirs(self.stack_files_path)
 
     # Ficheros de datos
-        self.pickle_files = [pickle_file for pickle_file in os.listdir(self.output_files_path) if self.channel in pickle_file]
+        #self.pickle_files = [pickle_file for pickle_file in os.listdir(self.output_files_path) if self.channel in pickle_file]
+        self.pickle_files = []
+        for pickle_file in os.listdir(self.output_files_path):
+            for jj in range(len(self.channel)):
+                if self.channel[jj] in pickle_file:
+                    self.pickle_files.append(pickle_file)
         print(self.pickle_files)
     # Para cada pareja de ficheros, se cargan los ficheros y se multiplican las matrices de datos que contienen, sólo en los días comunes
     # Indices i,j: se refieren a ficheros de datos file_i, file_j que contiene las matrices que se multiplicarán.
@@ -43,7 +53,25 @@ class noisestack:
     def run_cross_stack(self):
         self.check_path()
         for i, file_i in enumerate(self.pickle_files):
+            if file_i[-1] in ["N", "E", "X", "Y", "1","2"]:
+                key1_i = "data_matrix" + "_" + file_i[-1]
+                key2_i = 'metadata_list' + "_" + file_i[-1]
+                key3_i = 'date_list' + "_" + file_i[-1]
+            else:
+                key1_i = "data_matrix"
+                key2_i = 'metadata_list'
+                key3_i = 'date_list'
+
             for j, file_j in enumerate(self.pickle_files):
+
+                if file_j[-1] in ["N", "E", "X", "Y", "1", "2"]:
+                    key1_j = "data_matrix" + "_" + file_j[-1]
+                    key2_j = 'metadata_list' + "_" + file_j[-1]
+                    key3_j = 'date_list' + "_" + file_j[-1]
+                else:
+                    key1_j = "data_matrix"
+                    key2_j = 'metadata_list'
+                    key3_j = 'date_list'
 
                 print("(i=" + str(i) + ",j=" + str(j) + ") -> (" + file_i + "," + file_j + ")")
 
@@ -54,10 +82,11 @@ class noisestack:
                     # dict_matrix ={ 'data_matrix': [] , 'metadata_list': [], 'date_list': []}
                     dict_matrix_file_i = pickle.load(h_i)
                     dict_matrix_file_j = pickle.load(h_j)
-                    data_matrix_file_i = dict_matrix_file_i['data_matrix']
-                    data_matrix_file_j = dict_matrix_file_j['data_matrix']
-                    metadata_list_file_i = dict_matrix_file_i['metadata_list']
-                    metadata_list_file_j = dict_matrix_file_j['metadata_list']
+
+                    data_matrix_file_i = dict_matrix_file_i[key1_i]
+                    data_matrix_file_j = dict_matrix_file_j[key1_j]
+                    metadata_list_file_i = dict_matrix_file_i[key2_i]
+                    metadata_list_file_j = dict_matrix_file_j[key2_j]
 
                     # coordinates
                     # net_i = metadata_list_file_i[0]
@@ -69,8 +98,8 @@ class noisestack:
                     # lat_j = sta_j.latitude
                     # lon_j = sta_j.longitude
 
-                    date_list_file_i = dict_matrix_file_i['date_list']
-                    date_list_file_j = dict_matrix_file_j['date_list']
+                    date_list_file_i = dict_matrix_file_i[key3_i]
+                    date_list_file_j = dict_matrix_file_j[key3_j]
 
                     # Lista de días de cada fichero
                     print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
@@ -140,18 +169,98 @@ class noisestack:
                             stats = {}
                             stats['network'] = file_i[:2]
                             stats['station'] = file_i[2:6] + "_" + file_j[2:6]
-                            stats['channel'] = self.channel
+                            stats['channel'] = file_i[-1]
                             stats['sampling_rate'] = 5.0
                             stats['npts'] = len(c_stack)
                             stats['mseed'] = {'dataquality': 'D'}
                             stats['starttime'] = UTCDateTime(year=self.year, julday=common_dates_list[0], hour=0, minute=0)
+                            stats['baz'] = 280.0
                             st = Stream([Trace(data=c_stack, header=stats)])
                             # Nombre del fichero = XT.STA1_STA2.BHZ
-                            filename = file_i[:2] + "." + file_i[2:6] + "_" + file_j[2:6] + "." + self.channel
-                            st.write(os.path.join(self.stack_files_path, filename), format='MSEED')
+                            filename = file_i[:2] + "." + file_i[2:6] + "_" + file_j[2:6] + "." + file_i[-1]+file_j[-1]
+                            path_name = os.path.join(self.stack_files_path, filename)
+                            print(path_name)
+                            st.write(path_name, format='MSEED')
+                            #
 
-                    else:
-                        print("Empty date_list.")
-                    print("-----")
+                        else:
+                            print("Empty date_list.")
+                        print("-----")
+
+    def list_directory(self):
+        obsfiles = []
+        for top_dir, sub_dir, files in os.walk(self.data_path):
+            for file in files:
+                obsfiles.append(os.path.join(top_dir, file))
+        obsfiles.sort()
+        return obsfiles
+
+    # def rotate_horizontals(self, path_files, path_inventory):
+    #
+    #     obsfiles = self.list_directory(path_files)
+    #
+    #     self.__metadata_manager = MetadataManager(path_inventory)
+    #
+    #     for path in obsfiles:
+    #
+    #         if _is_mseed(path):
+    #             net, sta1, sta2, channels = self.info_extract_name(path)
+    #
+    #             st = read(path)
+    #             tr = st[0]
+    #
+    #             inv1 = inv.select(station = sta1)
+    #             inv1 = inv.select(station=sta2)
+    #
+    #             coordinates = self.__metadata_manager.extrac_coordinates_from_inventory(inv1, inv2)
+    #
+    #             # [azim, bazim, inci] = ObspyUtil.coords2azbazinc(coordinates1.Latitude, coordinates1.Longitude,
+    #             #                                                coordinates1.Elevation, self.event_info.latitude,
+    #             #                                                self.event_info.longitude, self.event_info.event_depth)
+    #
+    #             if chn in ["N", "E", "1", "2", "Y", "X"] and station_check == sta:
+    #
+    #                 #channels.append(list_item[0][2])
+    #                 Nc = 0
+    #                 Ec = 0
+    #                 if chn in ["N", "1", "Y"]:
+    #                     # check for autocorrelation:
+    #                     if os.path.basename(path) != "A":
+    #                         tr_N = tr.copy()
+    #                     else:
+    #                         tr_NN = tr.copy()
+    #
+    #                     Nc = Nc + 1
+    #                     if Nc == 1:
+    #                         check_N = True
+    #
+    #                 elif chn in ["E", "2", "X"]:
+    #                     # check for autocorrelation:
+    #                     if os.path.basename(path) != "A":
+    #                         tr_E = tr.copy()
+    #                     else:
+    #                         tr_EE = tr.copy()
+    #
+    #                     Ec = Ec + 1
+    #                     if Ec == 1:
+    #
+    #                         check_E = True
+    #
+    #                 if check_N and check_E:
+    #                     # tr_NE  = tr_EN.copy()
+    #                     # tr_NE.data = np.roll(tr_NE.data, int(len(tr_NE.data) / 2))
+    #                     # st = Stream([tr_EE,tr_E,tr_NN, tr_NE])
+    #                     check_N = False
+    #                     check_E = False
 
 
+    def info_extract_name(self,path):
+        name = os.path.basename(path)
+        info = name.split("_")
+        list1 = info[0].split(".")
+        list2 = info[1].split(".")
+        net = list1[0]
+        sta1 = list1[1]
+        sta2 = list2[0]
+        channels = list2[1]
+        return net,sta1,sta2,channels
