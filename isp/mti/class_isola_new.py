@@ -1291,6 +1291,7 @@ class ISOLA:
         print("Noise Window", noise_starttime, noise_endtime)
         for st in self.data_raw:
             stats = st[0].stats
+            stats.location = ''
             fmax = self.stations_index['_'.join([stats.network, stats.station, stats.location, stats.channel[0:2]])][
                 'fmax']
             # self.data_unfiltered.append(st.slice(starttime, endtime))
@@ -1298,6 +1299,7 @@ class ISOLA:
             self.data.append(st.copy())
         for st in self.data:
             stats = st[0].stats
+            stats.location = ''
             fmin = self.stations_index['_'.join([stats.network, stats.station, stats.location, stats.channel[0:2]])][
                 'fmin']
             fmax = self.stations_index['_'.join([stats.network, stats.station, stats.location, stats.channel[0:2]])][
@@ -1380,6 +1382,7 @@ class ISOLA:
                          fill_value=0.)  # short records are not inverted, but they should by padded because of plotting
                 st2.decimate(decimate, no_filter=True)
                 stats = st2[0].stats
+                stats.location = ''
                 fmin = \
                     self.stations_index['_'.join([stats.network, stats.station, stats.location, stats.channel[0:2]])][
                         'fmin']

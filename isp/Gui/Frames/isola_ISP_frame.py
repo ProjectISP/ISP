@@ -264,25 +264,41 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                 self.infoTx.appendPlainText("Plotting Solutions")
                 if len(isola.grid) > len(isola.depths):
                     isola.plot_maps()
+                    self.infoTx.appendPlainText("plot_maps")
                 if len(isola.depths) > 1:
                    isola.plot_slices()
+                   self.infoTx.appendPlainText("plot_slices")
                 if len(isola.grid) > len(isola.depths) and len(isola.depths) > 1:
                     isola.plot_maps_sum()
+                    self.infoTx.appendPlainText("plot_maps_sum")
 
                 try:
 
                     isola.plot_MT()
+                    self.infoTx.appendPlainText("plot_MT")
                     isola.plot_uncertainty(n=400)
+                    self.infoTx.appendPlainText("plot_uncertainty")
                     #plot_MT_uncertainty_centroid()
                     isola.plot_seismo('seismo.png')
                     isola.plot_seismo('seismo_sharey.png', sharey=True)
-                    isola.plot_seismo('seismo_cova.png', cholesky=True)
-                    isola.plot_noise()
-                    isola.plot_spectra()
+                    self.infoTx.appendPlainText("plot_seismo")
+
+                    if self.covarianceCB.isChecked():
+                        isola.plot_seismo('plot_seismo.png', cholesky=True)
+                        self.infoTx.appendPlainText("plot_seismo_cova")
+                        isola.plot_noise()
+                        self.infoTx.appendPlainText("plot_noise")
+                        isola.plot_spectra()
+                        self.infoTx.appendPlainText("plot_spectra")
+
                     isola.plot_stations()
+                    self.infoTx.appendPlainText("plot_stations")
+
                 except:
                     print("Couldn't Plot")
-                    isola.plot_covariance_matrix(colorbar=True)
+
+                if self.covarianceCB.isChecked():
+                   isola.plot_covariance_matrix(colorbar=True)
                     #isola.plot_3D()
 
 
@@ -297,8 +313,14 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                                    plot_slices='slice.png',
                                    plot_maps_sum='map_sum.png')
                 except:
-
-                    print("Couldn't load url")
+                    self.infoTx.appendPlainText("Couldn't load url")
+                try:
+                    isola.html_log(h1='ISP Moment Tensor inversion', plot_MT='centroid.png',
+                                   plot_uncertainty='uncertainty.png', plot_stations='stations.png',
+                                   plot_seismo_sharey='seismo_sharey.png', plot_maps='map.png',
+                                   plot_slices='slice.png')
+                except:
+                    self.infoTx.appendPlainText("Couldn't load url")
 
 
                 self.infoTx.appendPlainText("Moment Tensor Inversion Successfully done !!!, please plot last solution")
@@ -308,6 +330,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
 
     def plot_solution(self):
+
         path = os.path.join(ROOT_DIR, 'mti/output/index.html')
         url = pyc.QUrl.fromLocalFile(path)
         self.widget.load(url)
