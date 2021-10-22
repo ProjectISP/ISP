@@ -147,6 +147,7 @@ class NoiseFrame(BaseFrame, UiNoise):
     def stack(self):
         stack = noisestack(self.output_bind.value)
         stack.run_cross_stack()
+        stack.rotate_horizontals()
 
     @pyc.pyqtSlot(str)
     def receive_messages(self, message):

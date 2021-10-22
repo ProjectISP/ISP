@@ -9,9 +9,7 @@ import numpy as np
 import pickle
 import os
 from obspy import read
-from obspy.io.mseed.core import _is_mseed
-from isp.DataProcessing.metadata_manager import MetadataManager
-from isp.Utils import ObspyUtil
+from obspy.geodetics import gps2dist_azimuth
 
 
 class noisestack:
@@ -89,14 +87,15 @@ class noisestack:
                     metadata_list_file_j = dict_matrix_file_j[key2_j]
 
                     # coordinates
-                    # net_i = metadata_list_file_i[0]
-                    # net_j = metadata_list_file_j[0]
-                    # sta_i = net_i[0]
-                    # sta_j = net_j[0]
-                    # lat_i = sta_i.latitude
-                    # lon_i = sta_i.longitude
-                    # lat_j = sta_j.latitude
-                    # lon_j = sta_j.longitude
+                    net_i = metadata_list_file_i[0]
+                    net_j = metadata_list_file_j[0]
+                    sta_i = net_i[0]
+                    sta_j = net_j[0]
+                    lat_i = sta_i.latitude
+                    lon_i = sta_i.longitude
+                    lat_j = sta_j.latitude
+                    lon_j = sta_j.longitude
+                    dist, bazim, azim = self.__coords2azbazinc(lat_i, lon_i, lat_j, lon_j)
 
                     date_list_file_i = dict_matrix_file_i[key3_i]
                     date_list_file_j = dict_matrix_file_j[key3_j]
@@ -172,89 +171,169 @@ class noisestack:
                             stats['channel'] = file_i[-1]
                             stats['sampling_rate'] = 5.0
                             stats['npts'] = len(c_stack)
-                            stats['mseed'] = {'dataquality': 'D'}
+                            stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim], 'cross_channels':file_i[-1]+file_j[-1]}
                             stats['starttime'] = UTCDateTime(year=self.year, julday=common_dates_list[0], hour=0, minute=0)
-                            stats['baz'] = 280.0
+                            #stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
                             st = Stream([Trace(data=c_stack, header=stats)])
-                            # Nombre del fichero = XT.STA1_STA2.BHZ
+                            # Nombre del fichero = XT.STA1_STA2.BHZE
                             filename = file_i[:2] + "." + file_i[2:6] + "_" + file_j[2:6] + "." + file_i[-1]+file_j[-1]
                             path_name = os.path.join(self.stack_files_path, filename)
                             print(path_name)
-                            st.write(path_name, format='MSEED')
+                            st.write(path_name, format='H5')
                             #
 
                         else:
                             print("Empty date_list.")
                         print("-----")
 
-    def list_directory(self):
+
+
+    def list_directory(self, path):
         obsfiles = []
-        for top_dir, sub_dir, files in os.walk(self.data_path):
+        for top_dir, sub_dir, files in os.walk(path):
             for file in files:
                 obsfiles.append(os.path.join(top_dir, file))
         obsfiles.sort()
         return obsfiles
 
-    # def rotate_horizontals(self, path_files, path_inventory):
-    #
-    #     obsfiles = self.list_directory(path_files)
-    #
-    #     self.__metadata_manager = MetadataManager(path_inventory)
-    #
-    #     for path in obsfiles:
-    #
-    #         if _is_mseed(path):
-    #             net, sta1, sta2, channels = self.info_extract_name(path)
-    #
-    #             st = read(path)
-    #             tr = st[0]
-    #
-    #             inv1 = inv.select(station = sta1)
-    #             inv1 = inv.select(station=sta2)
-    #
-    #             coordinates = self.__metadata_manager.extrac_coordinates_from_inventory(inv1, inv2)
-    #
-    #             # [azim, bazim, inci] = ObspyUtil.coords2azbazinc(coordinates1.Latitude, coordinates1.Longitude,
-    #             #                                                coordinates1.Elevation, self.event_info.latitude,
-    #             #                                                self.event_info.longitude, self.event_info.event_depth)
-    #
-    #             if chn in ["N", "E", "1", "2", "Y", "X"] and station_check == sta:
-    #
-    #                 #channels.append(list_item[0][2])
-    #                 Nc = 0
-    #                 Ec = 0
-    #                 if chn in ["N", "1", "Y"]:
-    #                     # check for autocorrelation:
-    #                     if os.path.basename(path) != "A":
-    #                         tr_N = tr.copy()
-    #                     else:
-    #                         tr_NN = tr.copy()
-    #
-    #                     Nc = Nc + 1
-    #                     if Nc == 1:
-    #                         check_N = True
-    #
-    #                 elif chn in ["E", "2", "X"]:
-    #                     # check for autocorrelation:
-    #                     if os.path.basename(path) != "A":
-    #                         tr_E = tr.copy()
-    #                     else:
-    #                         tr_EE = tr.copy()
-    #
-    #                     Ec = Ec + 1
-    #                     if Ec == 1:
-    #
-    #                         check_E = True
-    #
-    #                 if check_N and check_E:
-    #                     # tr_NE  = tr_EN.copy()
-    #                     # tr_NE.data = np.roll(tr_NE.data, int(len(tr_NE.data) / 2))
-    #                     # st = Stream([tr_EE,tr_E,tr_NN, tr_NE])
-    #                     check_N = False
-    #                     check_E = False
+
+    def rotate_horizontals(self):
+
+        obsfiles = self.list_directory(self.stack_files_path)
+        station_list = self.list_stations(self.stack_files_path)
+        channel_check = ["EE", "EN", "NN", "NE"]
+        matrix_data = {}
+
+        for station_pair in station_list:
+
+            for file in obsfiles:
+
+                try:
+                    st  = read(file)
+                    tr = st[0]
+                    station_i = tr.stats.station
+                    chn = tr.stats.mseed['cross_channels']
+
+                    if station_i == station_pair and chn in channel_check > 0:
+
+                        data = tr.data
+                        matrix_data[chn] = data
+                        matrix_data['geodetic'] = tr.stats.mseed['geodetic']
+                        # method to rotate the dictionary
+                except:
+                    pass
+
+            rotated = self.__rotate(matrix_data)
+            print(station_pair, rotated)
+            station_list.remove(station_pair)
 
 
-    def info_extract_name(self,path):
+    def __validation(self, data_matrix):
+
+        # First is needed to  check that there is 4 keys and have data inside
+
+        del data_matrix['geodetic']
+
+        validation = True
+
+        if len(data_matrix) < 4:
+             validation = False
+
+        dims = []
+        if len(data_matrix) == 4:
+            for key in data_matrix:
+                if len(data_matrix[key]) == 0:
+                    validation = False
+                elif len(data_matrix[key]) != 0:
+                    dims.append(len(data_matrix[key]))
+
+            if all(x == dims[0] for x in dims):
+                validation = True
+            else:
+                validation = False
+
+        return  validation, dims
+
+
+    def __rotate(self, data_matrix):
+
+        validation, dim = self.__validation((data_matrix))
+
+        if validation:
+            data_array_ne = np.zeros([4, 1, dim[0]])
+            data_array_ne[1, 1,:] = data_matrix["EE"]
+            data_array_ne[2, 1, :] = data_matrix["EN"]
+            data_array_ne[3, 1, :] = data_matrix["NN"]
+            data_array_ne[4, 1, :] = data_matrix["NE"]
+
+            rotate_matrix = self.__generate_matrix_rotate(data_matrix['geodetic'], dim)
+
+            rotated = rotate_matrix*data_array_ne
+
+        return rotated
+
+
+    def __generate_matrix_rotate(self, geodetic, dim):
+
+        baz = geodetic[1]*np.pi/180
+        az = geodetic[2]*np.pi/180
+
+        rotate_matrix = np.zeros([4,4])
+        rotate_matrix[0, 0] = -1*np.cos(az)*np.cos(baz)
+        rotate_matrix[0, 1] = np.cos(az)*np.sin(baz)
+        rotate_matrix[0, 2] = -1*np.sin(az)*np.sin(baz)
+        rotate_matrix[0, 3] = np.sin(az)*np.cos(baz)
+
+        rotate_matrix[1, 0] = -1*np.sin(az)*np.sin(baz)
+        rotate_matrix[1, 1] = -1*np.sin(az)*np.cos(baz)
+        rotate_matrix[1, 2] = -1*np.cos(az)*np.cos(baz)
+        rotate_matrix[1, 3] = -1*np.cos(az)*np.sin(baz)
+
+        rotate_matrix[1, 0] = -1 * np.cos(az)*np.sin(baz)
+        rotate_matrix[1, 1] = -1 * np.cos(az)*np.cos(baz)
+        rotate_matrix[1, 2] = np.sin(az)*np.cos(baz)
+        rotate_matrix[1, 3] = np.sin(az)*np.sin(baz)
+
+        rotate_matrix[1, 0] = -1 * np.sin(az) * np.cos(baz)
+        rotate_matrix[1, 1] = np.sin(az) * np.sin(baz)
+        rotate_matrix[1, 2] = np.cos(az) * np.sin(baz)
+        rotate_matrix[1, 3] = -1 * np.cos(az) * np.cos(baz)
+
+        rotate_matrix = np.repeat(rotate_matrix[:, :, np.newaxis], dim[0], axis=2)
+
+        return rotate_matrix
+
+
+    def list_stations(self, path):
+        stations =[]
+        files = self.list_directory(path)
+        for file in files:
+            try:
+                st = read(file)
+                if st[0].stats.station not in stations:
+                    stations.append(st[0].stats.station)
+            except:
+                pass
+
+        return stations
+
+    def __coords2azbazinc(self, station1_latitude, station1_longitude, station2_latitude,
+                        station2_longitude):
+
+        """
+        Returns azimuth, backazimuth and incidence angle from station coordinates
+        given in first trace of stream and from event location specified in origin
+        dictionary.
+        """
+
+        dist, bazim, azim = gps2dist_azimuth(station1_latitude, station1_longitude, station2_latitude,
+                                             station2_longitude)
+
+
+        return dist, bazim, azim
+
+
+    def info_extract_name(self, path):
         name = os.path.basename(path)
         info = name.split("_")
         list1 = info[0].split(".")
