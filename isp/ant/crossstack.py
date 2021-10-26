@@ -31,9 +31,18 @@ class noisestack:
 
     def check_path(self):
     # Se crea la carpeta si no existe:
+
         self.stack_files_path = os.path.join(self.output_files_path, "stack")
+        self.stack_rotated_files_path = os.path.join(self.output_files_path, "stack_rotated")
+
         if not os.path.exists(self.stack_files_path):
            os.makedirs(self.stack_files_path)
+
+        if not os.path.exists(self.stack_rotated_files_path):
+
+            os.makedirs(self.stack_rotated_files_path)
+
+
 
     # Ficheros de datos
         #self.pickle_files = [pickle_file for pickle_file in os.listdir(self.output_files_path) if self.channel in pickle_file]
@@ -95,6 +104,12 @@ class noisestack:
                     lon_i = sta_i.longitude
                     lat_j = sta_j.latitude
                     lon_j = sta_j.longitude
+
+                    # sampling rate
+
+                    self.sampling_rate = metadata_list_file_i[0][0][0].sample_rate
+
+
                     dist, bazim, azim = self.__coords2azbazinc(lat_i, lon_i, lat_j, lon_j)
 
                     date_list_file_i = dict_matrix_file_i[key3_i]
@@ -133,58 +148,58 @@ class noisestack:
                         # ###########
                         # Correlación: multiplicación de matrices elemento a elemento
                         # ###########
-                        if j >= i:
-                            corr_ij_freq = data_matrix_file_i_corr * np.conj(data_matrix_file_j_corr)
+                        #if j >= i:
+                        corr_ij_freq = data_matrix_file_i_corr * np.conj(data_matrix_file_j_corr)
 
-                            # La matriz resultante se pasa al dominio del tiempo
-                            # Se reserva el espacio para la matriz de correlaciones en el dominio del tiempo
-                            size_1d = corr_ij_freq.shape[0]
-                            size_2d = corr_ij_freq.shape[1]
-                            # 7-7-2021, importante 2n - 1
-                            size_3d = 2 * corr_ij_freq.shape[2] - 1
+                        # La matriz resultante se pasa al dominio del tiempo
+                        # Se reserva el espacio para la matriz de correlaciones en el dominio del tiempo
+                        size_1d = corr_ij_freq.shape[0]
+                        size_2d = corr_ij_freq.shape[1]
+                        # 7-7-2021, importante 2n - 1
+                        size_3d = 2 * corr_ij_freq.shape[2] - 1
 
-                            corr_ij_time = np.zeros((size_1d, size_2d, size_3d), dtype=np.float64)
+                        corr_ij_time = np.zeros((size_1d, size_2d, size_3d), dtype=np.float64)
 
-                            # Se rellena la matriz en el dominio del tiempo
-                            for m in range(corr_ij_freq.shape[0]):
-                                for n in range(corr_ij_freq.shape[1]):
-                                    # irfft para pasar al dominio del tiempo
+                        # Se rellena la matriz en el dominio del tiempo
+                        for m in range(corr_ij_freq.shape[0]):
+                            for n in range(corr_ij_freq.shape[1]):
+                                # irfft para pasar al dominio del tiempo
 
-                                    corr_ij_time[m, n, :] = np.fft.irfft(corr_ij_freq[m, n, :], size_3d)
+                                corr_ij_time[m, n, :] = np.fft.irfft(corr_ij_freq[m, n, :], size_3d)
 
-                            # Stack: se suman los intervalos de la matriz
-                            c_stack = np.zeros(size_3d, dtype=np.float64)  # y si hubo reshape?
-                            for m in range(corr_ij_time.shape[0]):
-                                for n in range(corr_ij_time.shape[1]):
-                                    c_stack = c_stack + corr_ij_time[m, n, :]
-                            # c_stack par, impar ...
-                            c_stack = np.roll(c_stack, int(len(c_stack) / 2))
-                            print("stack[" + str(i) + "," + str(j) + "]:")
-                            print(c_stack)
+                        # Stack: se suman los intervalos de la matriz
+                        c_stack = np.zeros(size_3d, dtype=np.float64)  # y si hubo reshape?
+                        for m in range(corr_ij_time.shape[0]):
+                            for n in range(corr_ij_time.shape[1]):
+                                c_stack = c_stack + corr_ij_time[m, n, :]
+                        # c_stack par, impar ...
+                        c_stack = np.roll(c_stack, int(len(c_stack) / 2))
+                        print("stack[" + str(i) + "," + str(j) + "]:")
+                        print(c_stack)
 
-                            # Guardar fichero
-                            # print(metadata_list_file_i)
-                            # print(metadata_list_file_j)
-                            stats = {}
-                            stats['network'] = file_i[:2]
-                            stats['station'] = file_i[2:6] + "_" + file_j[2:6]
-                            stats['channel'] = file_i[-1]
-                            stats['sampling_rate'] = 5.0
-                            stats['npts'] = len(c_stack)
-                            stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim], 'cross_channels':file_i[-1]+file_j[-1]}
-                            stats['starttime'] = UTCDateTime(year=self.year, julday=common_dates_list[0], hour=0, minute=0)
-                            #stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
-                            st = Stream([Trace(data=c_stack, header=stats)])
-                            # Nombre del fichero = XT.STA1_STA2.BHZE
-                            filename = file_i[:2] + "." + file_i[2:6] + "_" + file_j[2:6] + "." + file_i[-1]+file_j[-1]
-                            path_name = os.path.join(self.stack_files_path, filename)
-                            print(path_name)
-                            st.write(path_name, format='H5')
-                            #
+                        # Guardar fichero
+                        # print(metadata_list_file_i)
+                        # print(metadata_list_file_j)
+                        stats = {}
+                        stats['network'] = file_i[:2]
+                        stats['station'] = file_i[2:6] + "_" + file_j[2:6]
+                        stats['channel'] = file_i[-1]
+                        stats['sampling_rate'] = self.sampling_rate
+                        stats['npts'] = len(c_stack)
+                        stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim], 'cross_channels':file_i[-1]+file_j[-1]}
+                        stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
+                        #stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
+                        st = Stream([Trace(data=c_stack, header=stats)])
+                        # Nombre del fichero = XT.STA1_STA2.BHZE
+                        filename = file_i[:2] + "." + file_i[2:6] + "_" + file_j[2:6] + "." + file_i[-1]+file_j[-1]
+                        path_name = os.path.join(self.stack_files_path, filename)
+                        print(path_name)
+                        st.write(path_name, format='H5')
+                        #
 
-                        else:
-                            print("Empty date_list.")
-                        print("-----")
+                    else:
+                        print("Empty date_list.")
+                    print("-----")
 
 
 
@@ -206,69 +221,91 @@ class noisestack:
 
         for station_pair in station_list:
 
-            for file in obsfiles:
+            def_rotated = {}
+            info = station_pair.split("_")
+            sta1 = info[0]
+            sta2 = info[1]
 
-                try:
-                    st  = read(file)
-                    tr = st[0]
-                    station_i = tr.stats.station
-                    chn = tr.stats.mseed['cross_channels']
+            if sta1 != sta2:
+                for file in obsfiles:
 
-                    if station_i == station_pair and chn in channel_check > 0:
+                    try:
+                        st  = read(file)
+                        tr = st[0]
+                        station_i = tr.stats.station
 
-                        data = tr.data
-                        matrix_data[chn] = data
-                        matrix_data['geodetic'] = tr.stats.mseed['geodetic']
-                        # method to rotate the dictionary
-                except:
-                    pass
+                        chn = tr.stats.mseed['cross_channels']
 
-            rotated = self.__rotate(matrix_data)
-            print(station_pair, rotated)
+                        if station_i == station_pair and chn in channel_check :
+
+                            data = tr.data
+                            matrix_data["net"] = tr.stats.network
+                            matrix_data[chn] = data
+                            matrix_data['geodetic'] = tr.stats.mseed['geodetic']
+                            # method to rotate the dictionary
+                    except:
+                        pass
+
+            def_rotated["rotated_matrix"] = self.__rotate(matrix_data)
+
+            if len(matrix_data) > 0 and def_rotated["rotated_matrix"] is not None:
+
+                def_rotated["geodetic"] = matrix_data['geodetic']
+                def_rotated["net"] = matrix_data["net"]
+                def_rotated["station_pair"] = station_pair
+                print(station_pair, "rotated")
+                self.save_rotated(def_rotated)
+                print(station_pair, "saved")
+
+
             station_list.remove(station_pair)
-
 
     def __validation(self, data_matrix):
 
-        # First is needed to  check that there is 4 keys and have data inside
-
-        del data_matrix['geodetic']
-
-        validation = True
-
-        if len(data_matrix) < 4:
-             validation = False
-
+        channel_check = ["EE", "EN", "NN", "NE"]
+        check1 = False
+        check2 = True
+        check = False
         dims = []
-        if len(data_matrix) == 4:
-            for key in data_matrix:
-                if len(data_matrix[key]) == 0:
-                    validation = False
-                elif len(data_matrix[key]) != 0:
-                    dims.append(len(data_matrix[key]))
 
-            if all(x == dims[0] for x in dims):
-                validation = True
+        for j in channel_check:
+            if j in data_matrix:
+                check1 = True
+                dims.append(len(data_matrix[j]))
             else:
-                validation = False
+                check1 = False
 
-        return  validation, dims
+        try:
+            ele = dims[0]
+            for item in dims:
+                if ele != item:
+                    check2 = False
+                    break
+        except:
+            check2 = False
+
+        if check1 and check2:
+            check = True
+
+        return check, dims
 
 
     def __rotate(self, data_matrix):
 
+        rotated = None
+
         validation, dim = self.__validation((data_matrix))
 
         if validation:
-            data_array_ne = np.zeros([4, 1, dim[0]])
-            data_array_ne[1, 1,:] = data_matrix["EE"]
-            data_array_ne[2, 1, :] = data_matrix["EN"]
-            data_array_ne[3, 1, :] = data_matrix["NN"]
-            data_array_ne[4, 1, :] = data_matrix["NE"]
+            data_array_ne = np.zeros((dim[0], 4, 1))
+            data_array_ne[:, 0, 0] = data_matrix["EE"][:]
+            data_array_ne[:, 1, 0] = data_matrix["EN"][:]
+            data_array_ne[:, 2, 0] = data_matrix["NN"][:]
+            data_array_ne[:, 3, 0] = data_matrix["NE"][:]
 
             rotate_matrix = self.__generate_matrix_rotate(data_matrix['geodetic'], dim)
 
-            rotated = rotate_matrix*data_array_ne
+            rotated = np.matmul(rotate_matrix, data_array_ne)
 
         return rotated
 
@@ -278,7 +315,7 @@ class noisestack:
         baz = geodetic[1]*np.pi/180
         az = geodetic[2]*np.pi/180
 
-        rotate_matrix = np.zeros([4,4])
+        rotate_matrix = np.zeros((4,4))
         rotate_matrix[0, 0] = -1*np.cos(az)*np.cos(baz)
         rotate_matrix[0, 1] = np.cos(az)*np.sin(baz)
         rotate_matrix[0, 2] = -1*np.sin(az)*np.sin(baz)
@@ -289,17 +326,17 @@ class noisestack:
         rotate_matrix[1, 2] = -1*np.cos(az)*np.cos(baz)
         rotate_matrix[1, 3] = -1*np.cos(az)*np.sin(baz)
 
-        rotate_matrix[1, 0] = -1 * np.cos(az)*np.sin(baz)
-        rotate_matrix[1, 1] = -1 * np.cos(az)*np.cos(baz)
-        rotate_matrix[1, 2] = np.sin(az)*np.cos(baz)
-        rotate_matrix[1, 3] = np.sin(az)*np.sin(baz)
+        rotate_matrix[2, 0] = -1 * np.cos(az)*np.sin(baz)
+        rotate_matrix[2, 1] = -1 * np.cos(az)*np.cos(baz)
+        rotate_matrix[2, 2] = np.sin(az)*np.cos(baz)
+        rotate_matrix[2, 3] = np.sin(az)*np.sin(baz)
 
-        rotate_matrix[1, 0] = -1 * np.sin(az) * np.cos(baz)
-        rotate_matrix[1, 1] = np.sin(az) * np.sin(baz)
-        rotate_matrix[1, 2] = np.cos(az) * np.sin(baz)
-        rotate_matrix[1, 3] = -1 * np.cos(az) * np.cos(baz)
+        rotate_matrix[3, 0] = -1 * np.sin(az) * np.cos(baz)
+        rotate_matrix[3, 1] = np.sin(az) * np.sin(baz)
+        rotate_matrix[3, 2] = np.cos(az) * np.sin(baz)
+        rotate_matrix[3, 3] = -1 * np.cos(az) * np.cos(baz)
 
-        rotate_matrix = np.repeat(rotate_matrix[:, :, np.newaxis], dim[0], axis=2)
+        rotate_matrix = np.repeat(rotate_matrix[np.newaxis, :, :], dim[0], axis=0)
 
         return rotate_matrix
 
@@ -328,8 +365,6 @@ class noisestack:
 
         dist, bazim, azim = gps2dist_azimuth(station1_latitude, station1_longitude, station2_latitude,
                                              station2_longitude)
-
-
         return dist, bazim, azim
 
 
@@ -343,3 +378,27 @@ class noisestack:
         sta2 = list2[0]
         channels = list2[1]
         return net,sta1,sta2,channels
+
+    def save_rotated(self, def_rotated):
+        stats = {}
+        channels = ["TT", "RR", "TR", "RT"]
+        stats['network'] = def_rotated["net"]
+        stats['station'] = def_rotated["station_pair"]
+        stats['sampling_rate'] = self.sampling_rate
+
+        j = 0
+        for chn in channels:
+
+            stats['channel'] = chn
+            stats['npts'] = len(def_rotated["rotated_matrix"][:,j,0])
+            stats['mseed'] = {'dataquality': 'D', 'geodetic': def_rotated["geodetic"],
+                              'cross_channels': def_rotated["station_pair"]}
+            stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
+            # stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
+            st = Stream([Trace(data=def_rotated["rotated_matrix"][:,j,0], header=stats)])
+            # Nombre del fichero = XT.STA1_STA2.BHZE
+            filename = def_rotated["net"] + "." + def_rotated["station_pair"] + "." + chn
+            path_name = os.path.join(self.stack_rotated_files_path, filename)
+            print(path_name)
+            st.write(path_name, format='H5')
+            j = j+1
