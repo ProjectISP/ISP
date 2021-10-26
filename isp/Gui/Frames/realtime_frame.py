@@ -17,8 +17,10 @@ from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Utils import AsycTime
 from obspy.clients.seedlink.easyseedlink import create_client
 import matplotlib.dates as mdt
-#from datetime import datetime
+import datetime
 import numpy as np
+
+
 class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
     def __init__(self):
@@ -43,7 +45,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=self.numTracesCB.value(), constrained_layout=False)
         self.canvas.figure.tight_layout()
         self.timer_outdated = pyc.QTimer()
-        self.timer_outdated.setInterval(1000) # 1 second
+        self.timer_outdated.setInterval(1000)  # 1 second
         self.timer_outdated.timeout.connect(self.outdated_stations)
 
         # Binding
@@ -58,7 +60,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.mapBtn.clicked.connect(self.show_map)
-        #self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
+        # self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.actionArray_Anlysis.triggered.connect(self.open_array_analysis)
         self.actionMoment_Tensor_Inversion.triggered.connect(self.open_moment_tensor)
@@ -122,7 +124,6 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
     def open_parameters_settings(self):
         self.parameters.show()
 
-
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     @AsycTime.run_async()
     def onChange_metadata_path(self, value):
@@ -133,7 +134,6 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         except:
             raise FileNotFoundError("The metadata is not valid")
 
-
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
                                                        pw.QFileDialog.Option.DontUseNativeDialog)
@@ -141,16 +141,34 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         if dir_path:
             bind.value = dir_path
 
-
     def handle_data(self, tr):
+        # If tr is not valid, discard it
+        if not tr:
+            return
 
         s = [tr.stats.network, tr.stats.station, tr.stats.channel]
         key = ".".join(s)
+        outdated_tr = None
 
         if key in self.data_dict.keys():
-            if tr:
-                tr.data = np.float64(tr.data)
-            self.data_dict[key] = self.data_dict[key] + tr
+            tr.data = np.float64(tr.data)
+            current_tr = self.data_dict[key]
+            # If received trace is in the same day as current, append received to current
+            if current_tr.stats.endtime.julday == tr.stats.endtime.julday:
+                self.data_dict[key] = self.data_dict[key] + tr
+
+            else:
+                # TODO: maybe the trace should have all the info and the save file only saves current day
+                # TODO: so that way data is not erased on day change
+                # If received trace has a part within current day, add it to current trace and save as outdated and
+                # trim the trace to contain only next day's data
+                if current_tr.stats.endtime.julday == tr.stats.starttime.julday:
+                    day_start = datetime.datetime.combine(tr.stats.endtime.date, datetime.time())
+                    last_day = day_start - datetime.timedelta(microseconds=1)
+                    outdated_tr = current_tr + tr.slice(tr.stats.starttime, UTCDateTime(last_day), False)
+                    tr.trim(UTCDateTime(day_start), tr.stats.endtime)
+                # Set new day's trace as current
+                self.data_dict[key] = tr
 
         else:
             # insert New Key
@@ -163,19 +181,28 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
             station_list = self.get_station_info(tr)
             self.widget_map.plot_set_stations(station_list)
 
-
         if self.saveDataCB.isChecked():
+            if outdated_tr is not None:
+                self.write_trace(outdated_tr)
             self.write_trace(tr)
 
     def outdated_stations(self):
         # this method is run every t seconds to check and plot which stations do not send data
         outdated_stations = []
-        for trace in self.data_dict.values():
-            if trace.stats.endtime + 60 < UTCDateTime.now():
-                outdated_stations.append(self.get_station_info(trace))
+        outdated_traces = []
+        # Outdated stations' traces will be erased from current list
+        for key in list(self.data_dict.keys()):
+            if self.data_dict[key].stats.endtime + 60 < UTCDateTime.now():
+                outdated_traces.append(self.data_dict[key])
+                outdated_stations.append(self.get_station_info(outdated_traces[-1]))
+                del self.data_dict[key]
 
         if outdated_stations:
             self.widget_map.plot_unset_stations(outdated_stations)
+
+        if self.saveDataCB.isChecked():
+            for tr in outdated_traces:
+                self.write_trace(tr)
 
     def seedlink_error(self, tr):
 
@@ -185,12 +212,11 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
         print("terminate_data")
 
-
     @AsycTime.run_async()
     def retrieve_data(self, e):
 
-        self.client = create_client(self.serverAddressForm.text(), on_data = self.handle_data,
-            on_seedlink_error = self.seedlink_error, on_terminate =  self.terminate_data)
+        self.client = create_client(self.serverAddressForm.text(), on_data=self.handle_data,
+                                    on_seedlink_error=self.seedlink_error, on_terminate=self.terminate_data)
 
         pyc.QMetaObject.invokeMethod(self.timer_outdated, 'start')
 
@@ -199,33 +225,33 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
                 for chn in self.channelForm.text().split(","):
                     self.client.select_stream(net, sta, chn)
 
-        #self.client.on_data()
+        # self.client.on_data()
         self.client.run()
-        #self.client.get_info(level="ALL")
+        # self.client.get_info(level="ALL")
 
     def plot_seismogram(self):
         # TODO: y axis should be independent for each subplot
 
         now = UTCDateTime.now()
-        start_time = now - self.timewindowSB.value()*60
+        start_time = now - self.timewindowSB.value() * 60
         end_time = now + 30
         self.canvas.set_new_subplot(nrows=self.numTracesCB.value(), ncols=1, update=False)
-        self.canvas.set_xlabel(self.numTracesCB.value()-1, "Date", update=False)
+        self.canvas.set_xlabel(self.numTracesCB.value() - 1, "Date", update=False)
         index = 0
         parameters = self.parameters.getParameters()
         for key, tr in self.data_dict.items():
-            #sd = SeismogramDataAdvanced(file_path=None, stream=Stream(traces=tr), realtime=True)
+            # sd = SeismogramDataAdvanced(file_path=None, stream=Stream(traces=tr), realtime=True)
             sd = SeismogramDataAdvanced(file_path=None, stream=tr, realtime=True)
             tr = sd.get_waveform_advanced(parameters, self.inventory)
 
             t = tr.times("matplotlib")
             s = tr.data
             info = "{}.{}.{}".format(tr.stats.network, tr.stats.station, tr.stats.channel)
-            self.canvas.plot_date(t, s, index, clear_plot=False, update=False, color="black",  fmt='-', linewidth=0.5)
+            self.canvas.plot_date(t, s, index, clear_plot=False, update=False, color="black", fmt='-', linewidth=0.5)
             self.canvas.set_plot_label(index, info)
             ax = self.canvas.get_axe(index)
 
-            if index == self.numTracesCB.value()-1:
+            if index == self.numTracesCB.value() - 1:
                 ax.set_xlim(mdt.num2date(start_time.matplotlib_date), mdt.num2date(end_time.matplotlib_date))
 
             index = index + 1
@@ -233,8 +259,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
             formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
         self.canvas.draw()
-        #pyc.QCoreApplication.instance().processEvents()
-
+        # pyc.QCoreApplication.instance().processEvents()
 
     def stop(self):
         # TODO: not working. Maybe subclassing is necessary
@@ -242,12 +267,9 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         pyc.QMetaObject.invokeMethod(self.timer_outdated, 'stop')
 
     def write_trace(self, tr):
-
-        # TODO: this should append miniseed not to overwrite cat file1 file2 > file3
         t1 = tr.stats.starttime
-        id = tr.id + "." + "D" + "." + str(t1.year) + "." + str(t1.julday)
-        print(tr.id, "Writing data processed")
-        path_output = os.path.join(self.rootPathForm.text(), id)
+        file_name = tr.id + "." + "D" + "." + str(t1.year) + "." + str(t1.julday)
+        path_output = os.path.join(self.rootPathForm.text(), file_name)
         if os.path.exists(path_output):
             temp = tempfile.mkstemp()
             tr.write(temp[1], format="MSEED")
@@ -259,12 +281,12 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
             tr.write(path_output, format="MSEED")
 
     def show_map(self):
-       if self.inventory:
-           self.widget_map = MapRealTime(self.inventory)
-           try:
+        if self.inventory:
+            self.widget_map = MapRealTime(self.inventory)
+            try:
                 self.widget_map.show()
-           except:
-               pass
+            except:
+                pass
 
     def get_station_info(self, tr):
         coordinates = {}
@@ -281,7 +303,6 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         coordinates[tr.stats.network] = net_content
 
         return coordinates
-
 
     # TODO: this should be generic to be invoked from other windows
     def open_array_analysis(self):
