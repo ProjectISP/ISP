@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1469</width>
-    <height>930</height>
+    <height>928</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -264,7 +264,11 @@
           </widget>
          </item>
          <item row="6" column="3">
-          <widget class="QDoubleSpinBox" name="freq_max_DB"/>
+          <widget class="QDoubleSpinBox" name="freq_max_DB">
+           <property name="decimals">
+            <number>3</number>
+           </property>
+          </widget>
          </item>
          <item row="2" column="3">
           <widget class="QDoubleSpinBox" name="location_uncDB">
@@ -318,7 +322,11 @@
           </widget>
          </item>
          <item row="6" column="1">
-          <widget class="QDoubleSpinBox" name="freq_min_DB"/>
+          <widget class="QDoubleSpinBox" name="freq_min_DB">
+           <property name="decimals">
+            <number>3</number>
+           </property>
+          </widget>
          </item>
          <item row="3" column="3">
           <widget class="QDoubleSpinBox" name="depth_uncDB">

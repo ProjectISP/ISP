@@ -458,6 +458,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
             os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
             self.map_widget.ax.background_img(name='ne_shaded', resolution="high")
 
+
         lon = np.array(lon)
         lat = np.array(lat)
         depth = np.array(depth) / 1000

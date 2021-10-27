@@ -1,6 +1,7 @@
 import math
 import os
 from enum import unique, Enum
+from multiprocessing import Pool
 from os import listdir
 from os.path import isfile, join
 from typing import List
@@ -11,6 +12,7 @@ from obspy import Stream, read, Trace, UTCDateTime, read_events
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth
 from obspy.io.mseed.core import _is_mseed
+from obspy.io.stationxml.core import _is_stationxml
 #from obspy.io.sac.core import _is_sac
 from obspy.io.xseed.parser import Parser
 
@@ -266,47 +268,68 @@ class MseedUtil:
          return []
 
     @classmethod
-    def get_tree_mseed_files(cls, root_dir: str, **kwargs):
+    def get_tree_mseed_files(cls, root_dir: str, robust = True, **kwargs):
         """
         Get a list of valid mseed files inside all folder tree from the the root_dir.
         If root_dir doesn't exists it returns a empty list.
         :param root_dir: The full path of the dir or a file.
         :return: A list of full path of mseed files.
         """
-        start = kwargs.pop('starttime', [])
-        end = kwargs.pop('endtime', [])
-        obsfiles = []
+        cls.start = kwargs.pop('starttime', [])
+        cls.end = kwargs.pop('endtime', [])
+        cls.obsfiles = []
+        cls.pos_file = []
+        cls.robust = robust
+
         for top_dir, sub_dir, files in os.walk(root_dir):
             for file in files:
-                pos_file = os.path.join(top_dir, file)
+                cls.pos_file.append(os.path.join(top_dir, file))
 
-                if isinstance(start, UTCDateTime):
-                    try:
-                        header = read(pos_file, headlonly=True)
-                        #check times as a filter
-                        st0 = header[0].stats.starttime
-                        st1 = start
-                        et0 = header[0].stats.endtime
-                        et1 = end
-                        if st1>=st0 and et1>et0 and (st1-st0) <= 86400:
-                            obsfiles.append(os.path.join(top_dir, pos_file))
-                        elif st1<=st0 and et1>=et0:
-                            obsfiles.append(os.path.join(top_dir, pos_file))
-                        elif st1<=st0 and et1<=et0 and (et0-et1) <= 86400:
-                            obsfiles.append(os.path.join(top_dir, pos_file))
-                        else:
-                            pass
-                    except:
-                        pass
+        with Pool(processes=6) as pool:
+            r =  pool.map(cls.loop_tree, range(len(cls.pos_file)))
 
+        r = list(filter(None, r))
+        r.sort()
+
+        return r
+
+    @classmethod
+    def loop_tree(cls, i):
+        result = None
+        if isinstance(cls.start, UTCDateTime):
+            try:
+                header = read(cls.pos_file[i], headlonly=True)
+                #check times as a filter
+                st0 = header[0].stats.starttime
+                st1 = cls.start
+                et0 = header[0].stats.endtime
+                et1 = cls.end
+                if st1>=st0 and et1>et0 and (st1-st0) <= 86400:
+                    result = cls.pos_file[i]
+                elif st1<=st0 and et1>=et0:
+                    result = cls.pos_file[i]
+                elif st1<=st0 and et1<=et0 and (et0-et1) <= 86400:
+                    result = cls.pos_file[i]
+                elif st1 >= st0 and et1 <= et0:
+                    result = cls.pos_file[i]
                 else:
-                    if cls.is_valid_mseed(pos_file):
-                        obsfiles.append(os.path.join(top_dir, pos_file))
+                    pass
+            except:
+                pass
+
+        else:
+
+            if cls.robust and cls.is_valid_mseed(cls.pos_file[i]):
+
+                result = cls.pos_file[i]
+
+            elif not cls.robust:
+
+                result = cls.pos_file[i]
 
 
-        obsfiles.sort()
+        return result
 
-        return obsfiles
 
 
 
@@ -358,22 +381,43 @@ class MseedUtil:
             return False
 
     @classmethod
-    def get_dataless_files(cls, root_dir: str):
+    def get_metadata_files(cls, file):
+        from obspy import read_inventory
+        try:
+
+            inv = read_inventory(file)
+
+            return inv
+
+        except IOError:
+
+           return []
+
+    @classmethod
+    def get_dataless_files(cls, root_dir):
         """
         Get a list of valid dataless files inside the root_dir. If root_dir doesn't exists it returns a empty list.
 
         :param root_dir: The full path of the dir or a file.
-
         :return: A list of full path of dataless files.
         """
 
         #if os.path.isfile(root_dir) and cls.is_valid_dataless(root_dir):
-        if os.path.isfile(root_dir):
+
+        if os.path.isfile(root_dir) and _is_stationxml(root_dir) and cls.is_valid_dataless(root_dir):
+        #if os.path.isfile(root_dir):
             return [root_dir]
         elif os.path.isdir(root_dir):
-            files = [os.path.join(root_dir, file) for file in os.listdir(root_dir)
-                     if os.path.isfile(os.path.join(root_dir, file))]
-                     #and cls.is_valid_dataless(os.path.join(root_dir, file))]
+            files = []
+            for file in os.listdir(root_dir):
+                if _is_stationxml(os.path.join(root_dir, file)):
+                    files.append(file)
+                if cls.is_valid_dataless(root_dir):
+                    files.append(file)
+
+            #files = [os.path.join(root_dir, file) for file in os.listdir(root_dir)
+            #         if os.path.isfile(os.path.join(root_dir, file)) and os.path.isfile(os.path.join(root_dir, file))
+            #         != ".DS_Store" and cls.is_valid_dataless(os.path.join(root_dir, file)) and _is_stationxml(os.path.join(root_dir, file))]
             files.sort()
             return files
         return []

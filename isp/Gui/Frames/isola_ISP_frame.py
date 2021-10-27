@@ -1,10 +1,9 @@
-from obspy import Stream, UTCDateTime
 from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
 from isp.Gui import pw, pyc
-from isp.Gui.Frames import BaseFrame, MatplotlibCanvas, MessageDialog, UiMomentTensor, MatplotlibFrame
+from isp.Gui.Frames import BaseFrame, MessageDialog, UiMomentTensor, MatplotlibFrame
 from isp.Gui.Frames.crustal_model_parameters_frame import CrustalModelParametersFrame
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
@@ -32,13 +31,13 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.stream = None
         # Binding
         self.root_path_bind = BindPyqtObject(self.rootPathForm)
-        self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
+        #self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
         self.earth_path_bind =  BindPyqtObject(self.earth_modelPathForm)
 
         # Binds
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
-        self.datalessBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+        self.datalessBtn.clicked.connect(lambda: self.on_click_select_metadata_file(self.metadata_path_bind))
         self.earthmodelBtn.clicked.connect(lambda: self.on_click_select_file(self.earth_path_bind))
 
         # Action Buttons
@@ -98,13 +97,22 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         if file_path:
             bind.value = file_path
 
-    @AsycTime.run_async()
+    def on_click_select_metadata_file(self, bind: BindPyqtObject):
+        selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            bind.value = selected[0]
+
+
     def onChange_metadata_path(self, value):
+        md = MessageDialog(self)
         try:
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
+            md.set_info_message("Loaded Metadata, please check your terminal for further details")
         except:
-            pass
+            md.set_error_message("Something went wrong. Please check your metada file is a correct one")
+
 
     # def read_earth_model(self):
     #     model = self.earth_model.getParametersWithFormat()
@@ -238,7 +246,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
                     if parameters['covariance']:
                         self.infoTx.appendPlainText("Calculating Covariance Matrix")
-                        isola.covariance_matrix(crosscovariance=True, save_non_inverted=True)
+                        isola.covariance_matrix(crosscovariance=True, save_non_inverted=True, save_covariance_function=True)
                 except:
                     md = MessageDialog(self)
                     md.set_error_message("No Possible calculate covariance matrix, "
@@ -255,25 +263,41 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                 self.infoTx.appendPlainText("Plotting Solutions")
                 if len(isola.grid) > len(isola.depths):
                     isola.plot_maps()
+                    self.infoTx.appendPlainText("plot_maps")
                 if len(isola.depths) > 1:
                    isola.plot_slices()
+                   self.infoTx.appendPlainText("plot_slices")
                 if len(isola.grid) > len(isola.depths) and len(isola.depths) > 1:
                     isola.plot_maps_sum()
+                    self.infoTx.appendPlainText("plot_maps_sum")
 
                 try:
 
                     isola.plot_MT()
+                    self.infoTx.appendPlainText("plot_MT")
                     isola.plot_uncertainty(n=400)
+                    self.infoTx.appendPlainText("plot_uncertainty")
                     #plot_MT_uncertainty_centroid()
                     isola.plot_seismo('seismo.png')
                     isola.plot_seismo('seismo_sharey.png', sharey=True)
-                    isola.plot_seismo('seismo_cova.png', cholesky=True)
-                    isola.plot_noise()
-                    isola.plot_spectra()
+                    self.infoTx.appendPlainText("plot_seismo")
+
+                    if self.covarianceCB.isChecked():
+                        isola.plot_seismo('plot_seismo.png', cholesky=True)
+                        self.infoTx.appendPlainText("plot_seismo_cova")
+                        isola.plot_noise()
+                        self.infoTx.appendPlainText("plot_noise")
+                        isola.plot_spectra()
+                        self.infoTx.appendPlainText("plot_spectra")
+
                     isola.plot_stations()
+                    self.infoTx.appendPlainText("plot_stations")
+
                 except:
                     print("Couldn't Plot")
-                    isola.plot_covariance_matrix(colorbar=True)
+
+                if self.covarianceCB.isChecked():
+                   isola.plot_covariance_matrix(colorbar=True)
                     #isola.plot_3D()
 
 
@@ -288,8 +312,14 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                                    plot_slices='slice.png',
                                    plot_maps_sum='map_sum.png')
                 except:
-
-                    print("Couldn't load url")
+                    self.infoTx.appendPlainText("Couldn't load url")
+                try:
+                    isola.html_log(h1='ISP Moment Tensor inversion', plot_MT='centroid.png',
+                                   plot_uncertainty='uncertainty.png', plot_stations='stations.png',
+                                   plot_seismo_sharey='seismo_sharey.png', plot_maps='map.png',
+                                   plot_slices='slice.png')
+                except:
+                    self.infoTx.appendPlainText("Couldn't load url")
 
 
                 self.infoTx.appendPlainText("Moment Tensor Inversion Successfully done !!!, please plot last solution")
@@ -299,6 +329,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
 
     def plot_solution(self):
+
         path = os.path.join(ROOT_DIR, 'mti/output/index.html')
         url = pyc.QUrl.fromLocalFile(path)
         self.widget.load(url)
@@ -317,33 +348,26 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
 
     def plot_map_stations(self):
-        stations = []
-        obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
-        obsfiles.sort()
+        md = MessageDialog(self)
+        md.hide()
         try:
-            if len(self.stream)>0:
-                stations = ObspyUtil.get_stations_from_stream(self.stream)
-        except:
-            pass
+            stations = []
+            obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
+            obsfiles.sort()
+            try:
+                if len(self.stream)>0:
+                    stations = ObspyUtil.get_stations_from_stream(self.stream)
+            except:
+                pass
 
-        map_dict={}
-        sd = []
+            map_dict={}
+            sd = []
 
-        for file in obsfiles:
-            if len(stations) == 0:
-                st = SeismogramDataAdvanced(file)
+            for file in obsfiles:
+                if len(stations) == 0:
+                    st = SeismogramDataAdvanced(file)
 
-                name = st.stats.Network+"."+st.stats.Station
-
-                sd.append(name)
-
-                st_coordinates = self.__metadata_manager.extract_coordinates(self.inventory, file)
-
-                map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
-            else:
-                st = SeismogramDataAdvanced(file)
-                if st.stats.Station in stations:
-                    name = st.stats.Network + "." + st.stats.Station
+                    name = st.stats.Network+"."+st.stats.Station
 
                     sd.append(name)
 
@@ -351,11 +375,27 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
                     map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
                 else:
-                    pass
+                    st = SeismogramDataAdvanced(file)
+                    if st.stats.Station in stations:
+                        name = st.stats.Network + "." + st.stats.Station
 
+                        sd.append(name)
 
-        self.map_stations = StationsMap(map_dict)
-        self.map_stations.plot_stations_map(latitude = self.latDB.value(),longitude=self.lonDB.value())
+                        st_coordinates = self.__metadata_manager.extract_coordinates(self.inventory, file)
+
+                        map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
+                    else:
+                        pass
+
+            self.map_stations = StationsMap(map_dict)
+            self.map_stations.plot_stations_map(latitude=self.latDB.value(), longitude=self.lonDB.value())
+
+            md.set_info_message("Station Map OK !!! ")
+        except:
+            md.set_error_message(" Please check you have process and plot seismograms and opened stations info,"
+                                 "Please additionally check that your metada fits with your mseed files")
+
+        md.show()
 
     def open_help(self):
         self.help.show()

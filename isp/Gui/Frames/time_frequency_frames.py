@@ -16,7 +16,7 @@ from isp.seismogramInspector.MTspectrogram import MTspectrogram, WignerVille
 import matplotlib.pyplot as plt
 import numpy as np
 from isp.Gui.Frames.help_frame import HelpDoc
-
+import os
 
 @add_save_load()
 class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
@@ -50,7 +50,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                                        on_change_file_callback=lambda file_path: self.onChange_file(file_path))
         # Binds
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
-        self.datalessBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+        self.datalessBtn.clicked.connect(lambda: self.on_click_select_file(self.dataless_path_bind))
         # Action Buttons
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
@@ -117,12 +117,20 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         if dir_path:
             bind.value = dir_path
 
+    def on_click_select_file(self, bind: BindPyqtObject):
+        selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            bind.value = selected[0]
+
+
     def onChange_metadata_path(self, value):
+        md = MessageDialog(self)
         try:
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
+            md.set_info_message("Loaded Metadata, please check your terminal for further details")
         except:
-            pass
+            md.set_error_message("Something went wrong. Please check your metada file is a correct one")
 
     @property
     def trace(self):

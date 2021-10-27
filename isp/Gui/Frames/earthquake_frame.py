@@ -54,7 +54,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.cancelled = False
         self.progressbar = pw.QProgressDialog(self)
-        self.progressbar.setWindowTitle('Neural Network Running')
+        self.progressbar.setWindowTitle('Earthquake Location')
         self.progressbar.setLabelText(" Computing Auto-Picking ")
         self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
         self.path_phases = os.path.join(AUTOMATIC_PHASES, "phases_autodetected.txt")
@@ -63,6 +63,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.settings_dialog = SettingsDialog(self)
         self.inventory = {}
         self.files = []
+        self.files_path = []
         self.events_times = []
         self.total_items = 0
         self.items_per_page = 1
@@ -97,19 +98,22 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.earthquake_location_frame = EarthquakeLocationFrame(self.parentWidgetLocation)
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
-        self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
+        #self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
 
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
 
         # Bind buttons
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
-        self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+        self.readFilesBtn.clicked.connect(lambda: self.get_now_files())
+        #self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+        self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_file(self.metadata_path_bind))
         self.updateBtn.clicked.connect(self.plot_seismogram)
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
         self.rotateBtn.clicked.connect(self.rotate)
         self.mapBtn.clicked.connect(self.plot_map_stations)
         self.crossBtn.clicked.connect(self.cross)
-        self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
+        #self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
+        self.__metadata_manager = MetadataManager(self.metadata_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.actionOpen_Earth_Model_Viewer.triggered.connect(lambda: self.open_earth_model_viewer())
         self.actionWrite_Current_Page.triggered.connect(self.write_files_page)
@@ -197,6 +201,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+F'), self)
         self.shortcut_open.activated.connect(self.picker_all)
+
+        #######
+        # test
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+W'), self)
+        self.shortcut_open.activated.connect(self.get_now_files)
         #######
 
     def cancelled_callback(self):
@@ -278,6 +287,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def _picker_thread(self):
         self.progressbar.reset()
+        self.progressbar.setLabelText(" Computing Auto-Picking ")
         with ThreadPoolExecutor(1) as executor:
             f = executor.submit(self._run_picker)
             self.progressbar.exec()
@@ -359,7 +369,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def onChange_items_per_page(self, items_per_page):
         self.items_per_page = items_per_page
-        self.plot_seismogram()
+        #self.plot_seismogram()
 
     def filter_error_message(self, msg):
         md = MessageDialog(self)
@@ -373,8 +383,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         :return:
         """
-        files_path = self.get_files(value)
-        self.set_pagination_files(files_path)
+        pass
+        #self.get_now_files()
+        #self.set_pagination_files(self.files_path)
 
         # self.plot_seismogram()
 
@@ -382,6 +393,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.files = files_path
         self.total_items = len(self.files)
         self.pagination.set_total_items(self.total_items)
+
 
     def get_files(self, dir_path):
 
@@ -392,9 +404,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
                 diff = end-start
                 if diff > 0:
-                    files_path = MseedUtil.get_tree_mseed_files(dir_path, starttime = start, endtime = end)
+                    files_path = MseedUtil.get_tree_mseed_files(dir_path, starttime = start, endtime = end, robust = self.robustCB.isChecked())
             else:
-                files_path = MseedUtil.get_tree_mseed_files(dir_path)
+                files_path = MseedUtil.get_tree_mseed_files(dir_path, robust = self.robustCB.isChecked())
+
         else:
 
             files_path = MseedUtil.get_mseed_files(dir_path)
@@ -405,21 +418,56 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             files_path = MseedUtil.get_selected_files(files_path, selection)
 
+        self.set_pagination_files(files_path)
+        #print(files_path)
+        pyc.QMetaObject.invokeMethod(self.progressbar, 'accept', qt.AutoConnection)
         return files_path
 
+    def get_now_files(self):
 
-    def onChange_dataless_path(self, value):
-        self.__dataless_manager = DatalessManager(value)
-        self.earthquake_location_frame.set_dataless_dir(value)
+        md = MessageDialog(self)
+        md.hide()
+        try:
+
+            self.progressbar.reset()
+            self.progressbar.setLabelText(" Reading Files ")
+            self.progressbar.setRange(0,0)
+            with ThreadPoolExecutor(1) as executor:
+                f = executor.submit(lambda : self.get_files(self.root_path_bind.value))
+                self.progressbar.exec()
+                self.files_path = f.result()
+                f.cancel()
+
+            #self.files_path = self.get_files(self.root_path_bind.value)
+
+            md.set_info_message("Readed data files Successfully")
+
+        except:
+
+            md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
+
+        md.show()
+
+
+    # def onChange_dataless_path(self, value):
+    #     try:
+    #         self.__dataless_manager = DatalessManager(value)
+    #         self.earthquake_location_frame.set_dataless_dir(value)
+    #     except:
+    #         pass
+
 
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     @AsycTime.run_async()
     def onChange_metadata_path(self, value):
+
         try:
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
         except:
             raise FileNotFoundError("The metadata is not valid")
+
 
 
     def subprocess_feedback(self, err_msg: str, set_default_complete=True):
@@ -440,7 +488,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         else:
             if set_default_complete:
                 md = MessageDialog(self)
-                md.set_info_message("Loaded Metadata Successfully.")
+                md.set_info_message("Loaded Metadata, please check your terminal for further details")
 
 
     def on_click_select_directory(self, bind: BindPyqtObject):
@@ -449,6 +497,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         if dir_path:
             bind.value = dir_path
+
+    def on_click_select_file(self, bind: BindPyqtObject):
+        selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            bind.value = selected[0]
 
     def sort_by_distance_advance(self, file):
 
@@ -488,18 +541,21 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         ##
         self.nums_clicks = 0
         all_traces = []
-        files_path = self.get_files(self.root_path_bind.value)
+        if self.trimCB.isChecked():
+           self.get_now_files()
+        #files_path = self.get_files(self.root_path_bind.value)
+        #self.files_path = self.get_files(self.root_path_bind.value)
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":
-                files_path.sort(key=self.sort_by_distance_advance)
+                self.files_path.sort(key=self.sort_by_distance_advance)
                 self.message_dataless_not_found()
 
         #
             elif self.comboBox_sort.currentText() == "Back Azimuth":
-                files_path.sort(key=self.sort_by_baz_advance)
+                self.files_path.sort(key=self.sort_by_baz_advance)
                 self.message_dataless_not_found()
 
-        self.set_pagination_files(files_path)
+        self.set_pagination_files(self.files_path)
         files_at_page = self.get_files_at_page()
         ##
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
@@ -518,6 +574,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
             if self.trimCB.isChecked() and diff >= 0:
+
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                               filter_error_callback=self.filter_error_message,
                                               start_time=start_time, end_time=end_time, trace_number=index)
@@ -1098,27 +1155,31 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def plot_map_stations(self):
-        [lat,lon] = [self.event_info.latitude, self.event_info.longitude]
-        obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
-        obsfiles.sort()
 
-        #files_at_page = self.get_files_at_page()
-        map_dict={}
-        sd = []
+        try:
+            [lat,lon] = [self.event_info.latitude, self.event_info.longitude]
+            obsfiles = self.files_path
 
-        for file in obsfiles:
-            st = SeismogramDataAdvanced(file)
+            map_dict={}
+            sd = []
 
-            name = st.stats.Network+"."+st.stats.Station
+            for file in obsfiles:
+                st = SeismogramDataAdvanced(file)
 
-            sd.append(name)
+                name = st.stats.Network+"."+st.stats.Station
 
-            st_coordinates = self.__metadata_manager.extract_coordinates(self.inventory, file)
+                sd.append(name)
 
-            map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
+                st_coordinates = self.__metadata_manager.extract_coordinates(self.inventory, file)
 
-        self.map_stations = StationsMap(map_dict)
-        self.map_stations.plot_stations_map(latitude = lat, longitude=lon)
+                map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
+
+            self.map_stations = StationsMap(map_dict)
+            self.map_stations.plot_stations_map(latitude = lat, longitude=lon)
+
+        except:
+            md = MessageDialog(self)
+            md.set_error_message("couldn't plot stations map, please check your metadata and the trace headers")
 
     def redraw_pickers(self, file_name, axe_index):
 

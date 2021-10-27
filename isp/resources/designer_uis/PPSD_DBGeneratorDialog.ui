@@ -29,13 +29,6 @@
          <item row="13" column="1" colspan="2">
           <widget class="QLineEdit" name="stationsTx"/>
          </item>
-         <item row="2" column="0">
-          <widget class="QPushButton" name="datalessBtn">
-           <property name="text">
-            <string>Set Metadata Directory</string>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="2" colspan="2">
           <widget class="QLineEdit" name="rootPathForm"/>
          </item>
@@ -151,13 +144,6 @@
          <item row="13" column="0">
           <widget class="QLineEdit" name="netsTx"/>
          </item>
-         <item row="2" column="1">
-          <widget class="QPushButton" name="load_metadataBtn">
-           <property name="text">
-            <string>Load Metadata</string>
-           </property>
-          </widget>
-         </item>
          <item row="7" column="2">
           <widget class="QSpinBox" name="overlapSB">
            <property name="sizePolicy">
@@ -253,6 +239,13 @@
           <widget class="QPushButton" name="loadBtn">
            <property name="text">
             <string>Load DB</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QPushButton" name="datalessBtn">
+           <property name="text">
+            <string>Set Metadata Directory</string>
            </property>
           </widget>
          </item>

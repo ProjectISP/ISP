@@ -44,186 +44,6 @@
             <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,10">
              <item>
               <layout class="QGridLayout" name="gridLayout_2">
-               <item row="1" column="4">
-                <widget class="QCheckBox" name="scan">
-                 <property name="text">
-                  <string>Scan Folder Tree</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="17" column="0" colspan="4">
-                <widget class="QPushButton" name="updateBtn">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Process and Plot</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="17" column="4">
-                <widget class="QCheckBox" name="autorefreshCB">
-                 <property name="text">
-                  <string>Auto-Refresh</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="15" column="1">
-                <widget class="QDoubleSpinBox" name="rot_ang">
-                 <property name="decimals">
-                  <number>1</number>
-                 </property>
-                 <property name="maximum">
-                  <double>360.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="15" column="0">
-                <widget class="QPushButton" name="rotateBtn">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Rotate</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="6" column="1" colspan="3">
-                <widget class="QDateTimeEdit" name="dateTimeEdit_2">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>60</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
-                 </property>
-                 <property name="currentSection">
-                  <enum>QDateTimeEdit::YearSection</enum>
-                 </property>
-                 <property name="displayFormat">
-                  <string>yyyy/M/d h:mm:ss UTC</string>
-                 </property>
-                 <property name="calendarPopup">
-                  <bool>true</bool>
-                 </property>
-                 <property name="timeSpec">
-                  <enum>Qt::LocalTime</enum>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="1" colspan="3">
-                <widget class="QDateTimeEdit" name="dateTimeEdit_1">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>60</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
-                 </property>
-                 <property name="currentSection">
-                  <enum>QDateTimeEdit::YearSection</enum>
-                 </property>
-                 <property name="displayFormat">
-                  <string>yyyy/M/d h:mm:ss UTC</string>
-                 </property>
-                 <property name="calendarPopup">
-                  <bool>true</bool>
-                 </property>
-                 <property name="timeSpec">
-                  <enum>Qt::LocalTime</enum>
-                 </property>
-                </widget>
-               </item>
-               <item row="13" column="3">
-                <widget class="QLineEdit" name="channelForm"/>
-               </item>
-               <item row="12" column="3" alignment="Qt::AlignHCenter">
-                <widget class="QLabel" name="label_6">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Channel</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="16" column="0">
-                <widget class="QPushButton" name="crossBtn">
-                 <property name="text">
-                  <string>Cross</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="12" column="1" alignment="Qt::AlignHCenter">
-                <widget class="QLabel" name="label_5">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Station</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="13" column="1">
-                <widget class="QLineEdit" name="stationForm">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-               <item row="3" column="0" colspan="2">
-                <widget class="QPushButton" name="selectDatalessDirBtn">
-                 <property name="text">
-                  <string>metadata</string>
-                 </property>
-                </widget>
-               </item>
                <item row="0" column="0" colspan="7">
                 <layout class="QHBoxLayout" name="horizontalLayout_5">
                  <property name="spacing">
@@ -288,6 +108,126 @@
                   </widget>
                  </item>
                 </layout>
+               </item>
+               <item row="13" column="1">
+                <widget class="QLineEdit" name="stationForm">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                </widget>
+               </item>
+               <item row="12" column="1" alignment="Qt::AlignHCenter">
+                <widget class="QLabel" name="label_5">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Station</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="16" column="0">
+                <widget class="QPushButton" name="crossBtn">
+                 <property name="text">
+                  <string>Cross</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="12" column="3" alignment="Qt::AlignHCenter">
+                <widget class="QLabel" name="label_6">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Channel</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="13" column="3">
+                <widget class="QLineEdit" name="channelForm"/>
+               </item>
+               <item row="5" column="1" colspan="3">
+                <widget class="QDateTimeEdit" name="dateTimeEdit_1">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>60</width>
+                   <height>30</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
+                 </property>
+                 <property name="currentSection">
+                  <enum>QDateTimeEdit::YearSection</enum>
+                 </property>
+                 <property name="displayFormat">
+                  <string>yyyy/M/d h:mm:ss UTC</string>
+                 </property>
+                 <property name="calendarPopup">
+                  <bool>true</bool>
+                 </property>
+                 <property name="timeSpec">
+                  <enum>Qt::LocalTime</enum>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="1" colspan="3">
+                <widget class="QDateTimeEdit" name="dateTimeEdit_2">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>60</width>
+                   <height>30</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
+                 </property>
+                 <property name="currentSection">
+                  <enum>QDateTimeEdit::YearSection</enum>
+                 </property>
+                 <property name="displayFormat">
+                  <string>yyyy/M/d h:mm:ss UTC</string>
+                 </property>
+                 <property name="calendarPopup">
+                  <bool>true</bool>
+                 </property>
+                 <property name="timeSpec">
+                  <enum>Qt::LocalTime</enum>
+                 </property>
+                </widget>
                </item>
                <item row="16" column="1">
                 <widget class="QComboBox" name="crossCB">
@@ -643,6 +583,101 @@
                  </item>
                 </widget>
                </item>
+               <item row="1" column="0" colspan="2">
+                <widget class="QPushButton" name="readFilesBtn">
+                 <property name="text">
+                  <string>Read Files</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="17" column="4">
+                <widget class="QCheckBox" name="autorefreshCB">
+                 <property name="text">
+                  <string>Auto-Refresh</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="17" column="0" colspan="4">
+                <widget class="QPushButton" name="updateBtn">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Process and Plot</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="15" column="0">
+                <widget class="QPushButton" name="rotateBtn">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Rotate</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0" colspan="2">
+                <widget class="QPushButton" name="selectDatalessDirBtn">
+                 <property name="text">
+                  <string>metadata</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="15" column="1">
+                <widget class="QDoubleSpinBox" name="rot_ang">
+                 <property name="decimals">
+                  <number>1</number>
+                 </property>
+                 <property name="maximum">
+                  <double>360.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="2" colspan="2">
+                <widget class="QCheckBox" name="robustCB">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Robust</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="4">
+                <widget class="QCheckBox" name="scan">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>107</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Scan</string>
+                 </property>
+                </widget>
+               </item>
               </layout>
              </item>
              <item>
@@ -658,7 +693,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>1143</width>
+                  <width>1133</width>
                   <height>732</height>
                  </rect>
                 </property>

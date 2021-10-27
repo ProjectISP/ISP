@@ -66,7 +66,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         # Bind buttons
 
         self.selectDirBtnFK.clicked.connect(lambda: self.on_click_select_directory(self.root_pathFK_bind))
-        self.datalessBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+        self.datalessBtn.clicked.connect(lambda: self.on_click_select_metadata_file(self.metadata_path_bind))
 
         #Action Buttons
         self.arfBtn.clicked.connect(lambda: self.arf())
@@ -115,11 +115,23 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
     @AsycTime.run_async()
     def onChange_metadata_path(self, value):
+
+        md = MessageDialog(self)
         try:
+
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
+            md.set_info_message("Loaded Metadata, please check your terminal for further details")
+
         except:
-            pass
+
+            md.set_error_message("Something went wrong. Please check your metada file is a correct one")
+
+
+    def on_click_select_metadata_file(self, bind: BindPyqtObject):
+        selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            bind.value = selected[0]
 
     def load_path(self):
         selected_file = pw.QFileDialog.getOpenFileName(self, "Select Stations Coordinates file")

@@ -182,11 +182,13 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
 
             freq_minDB = pw.QDoubleSpinBox()
             freq_minDB.setMinimum(0)
-            freq_minDB.setSingleStep(0.01)
+            freq_minDB.setDecimals(3)
+            freq_minDB.setSingleStep(0.001)
 
             freq_maxDB = pw.QDoubleSpinBox()
             freq_maxDB.setMinimum(0)
-            freq_maxDB.setSingleStep(0.01)
+            freq_maxDB.setDecimals(3)
+            freq_maxDB.setSingleStep(0.001)
 
             zero_phaseCB = pw.QCheckBox("zero phase")
 
