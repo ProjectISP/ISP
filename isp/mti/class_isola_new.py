@@ -847,10 +847,10 @@ class ISOLA:
             checked = i[2]
             for j in range(len(self.stations)):
                 if self.stations[j]['code'] == station_name:
-                    if ch == 'E' or "2" or "X":
+                    if ch == 'E' or "1" or "X":
                         self.stations[j]['useE'] = checked
 
-                    elif  ch == 'N' or "1" or "Y":
+                    elif  ch == 'N' or "2" or "Y":
                         self.stations[j]['useN'] = checked
 
                     elif ch == 'Z':
