@@ -44,6 +44,23 @@
             <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,10">
              <item>
               <layout class="QGridLayout" name="gridLayout_2">
+               <item row="1" column="0" colspan="2">
+                <widget class="QPushButton" name="outputBtn">
+                 <property name="text">
+                  <string>output</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="2" colspan="3">
+                <widget class="QLineEdit" name="outPathForm"/>
+               </item>
+               <item row="5" column="0" colspan="4">
+                <widget class="QPushButton" name="preprocessBtn">
+                 <property name="text">
+                  <string>Run pre-processing</string>
+                 </property>
+                </widget>
+               </item>
                <item row="6" column="0" colspan="4">
                 <widget class="QPushButton" name="cross_stackBtn">
                  <property name="text">
@@ -51,10 +68,16 @@
                  </property>
                 </widget>
                </item>
-               <item row="5" column="0" colspan="4">
-                <widget class="QPushButton" name="preprocessBtn">
+               <item row="3" column="0" colspan="5">
+                <widget class="QPushButton" name="mapBtn">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
                  <property name="text">
-                  <string>Run pre-processing</string>
+                  <string>Stations Map</string>
                  </property>
                 </widget>
                </item>
@@ -90,14 +113,14 @@
                  </property>
                 </widget>
                </item>
-               <item row="11" column="4">
+               <item row="10" column="4">
                 <widget class="QCheckBox" name="autorefreshCB">
                  <property name="text">
                   <string>Auto-Refresh</string>
                  </property>
                 </widget>
                </item>
-               <item row="11" column="0" colspan="4">
+               <item row="10" column="0" colspan="4">
                 <widget class="QPushButton" name="updateBtn">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -110,20 +133,7 @@
                  </property>
                 </widget>
                </item>
-               <item row="3" column="0" colspan="5">
-                <widget class="QPushButton" name="mapBtn">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Stations Map</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="12" column="0" colspan="5">
+               <item row="11" column="0" colspan="5">
                 <widget class="QWidget" name="pagination_widget" native="true">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Maximum" vsizetype="MinimumExpanding">
@@ -191,14 +201,42 @@
                  </property>
                 </widget>
                </item>
-               <item row="1" column="2" colspan="3">
-                <widget class="QLineEdit" name="outPathForm"/>
-               </item>
-               <item row="1" column="0" colspan="2">
-                <widget class="QPushButton" name="outputBtn">
+               <item row="8" column="3">
+                <widget class="QPushButton" name="selectDirBtn2">
                  <property name="text">
-                  <string>output</string>
+                  <string>Set Path</string>
                  </property>
+                </widget>
+               </item>
+               <item row="8" column="0" colspan="3">
+                <widget class="QPushButton" name="readFilesBtn">
+                 <property name="text">
+                  <string>Read files</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="8" column="4">
+                <widget class="QLineEdit" name="rootPathForm2"/>
+               </item>
+               <item row="9" column="0">
+                <widget class="QCheckBox" name="sortCB">
+                 <property name="text">
+                  <string>Sort</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="9" column="1">
+                <widget class="QComboBox" name="comboBox_sort">
+                 <item>
+                  <property name="text">
+                   <string>Distance</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Back Azimuth</string>
+                  </property>
+                 </item>
                 </widget>
                </item>
               </layout>
@@ -216,8 +254,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>1274</width>
-                  <height>778</height>
+                  <width>1148</width>
+                  <height>776</height>
                  </rect>
                 </property>
                </widget>
@@ -241,7 +279,7 @@
      <x>0</x>
      <y>0</y>
      <width>1680</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

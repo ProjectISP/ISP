@@ -330,6 +330,43 @@ class MseedUtil:
 
         return result
 
+    @classmethod
+    def get_tree_hd5_files(cls, root_dir: str, robust=True, **kwargs):
+        """
+        Get a list of valid mseed files inside all folder tree from the the root_dir.
+        If root_dir doesn't exists it returns a empty list.
+        :param root_dir: The full path of the dir or a file.
+        :return: A list of full path of mseed files.
+        """
+        cls.start = kwargs.pop('starttime', [])
+        cls.end = kwargs.pop('endtime', [])
+        cls.obsfiles = []
+        cls.pos_file = []
+        cls.robust = robust
+
+        for top_dir, sub_dir, files in os.walk(root_dir):
+            for file in files:
+                cls.pos_file.append(os.path.join(top_dir, file))
+
+        with Pool(processes=6) as pool:
+            r = pool.map(cls.loop_tree_h5, range(len(cls.pos_file)))
+
+        r = list(filter(None, r))
+        r.sort()
+
+        return r
+
+    @classmethod
+    def loop_tree_h5(cls, i):
+        result = None
+        try:
+            header = read(cls.pos_file[i], headlonly=True)
+            result = cls.pos_file[i]
+        except:
+            pass
+
+        return result
+
 
 
 
