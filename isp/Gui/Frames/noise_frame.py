@@ -4,6 +4,7 @@ import matplotlib.dates as mdt
 from obspy import Stream
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
+from isp.Exceptions import parse_excepts
 from isp.Gui import pqg, pw, pyc, qt
 from isp.Gui.Frames import BaseFrame, Pagination, MatplotlibCanvas, MessageDialog
 from isp.Gui.Frames.help_frame import HelpDoc
@@ -39,6 +40,7 @@ class NoiseFrame(BaseFrame, UiNoise):
         self.output = None
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.root_path_bind2 = BindPyqtObject(self.rootPathForm2, self.onChange_root_path)
+        self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
         self.updateBtn.clicked.connect(self.plot_egfs)
         self.output_bind = BindPyqtObject(self.outPathForm, self.onChange_root_path)
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
@@ -54,7 +56,7 @@ class NoiseFrame(BaseFrame, UiNoise):
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.selectDirBtn2.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind2))
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
-        self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.metadata_path_bind))
+        self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_file(self.metadata_path_bind))
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.outputBtn.clicked.connect(lambda: self.on_click_select_directory(self.output_bind))
 
@@ -98,14 +100,41 @@ class NoiseFrame(BaseFrame, UiNoise):
         #self.read_files(value)
         pass
 
+    def on_click_select_file(self, bind: BindPyqtObject):
+        selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            bind.value = selected[0]
 
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     @AsycTime.run_async()
     def onChange_metadata_path(self, value):
+
         try:
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
         except:
-            pass
+            raise FileNotFoundError("The metadata is not valid")
+
+    def subprocess_feedback(self, err_msg: str, set_default_complete=True):
+        """
+        This method is used as a subprocess feedback. It runs when a raise expect is detected.
+
+        :param err_msg: The error message from the except.
+        :param set_default_complete: If True it will set a completed successfully message. Otherwise nothing will
+            be displayed.
+        :return:
+        """
+        if err_msg:
+            md = MessageDialog(self)
+            if "Error code" in err_msg:
+                md.set_error_message("Click in show details detail for more info.", err_msg)
+            else:
+                md.set_warning_message("Click in show details for more info.", err_msg)
+        else:
+            if set_default_complete:
+                md = MessageDialog(self)
+                md.set_info_message("Loaded Metadata, please check your terminal for further details")
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
@@ -126,7 +155,7 @@ class NoiseFrame(BaseFrame, UiNoise):
                 self.ant.send_message.connect(self.receive_messages)
                 def read_files_callback():
                     data_map, size, channels = self.ant.create_dict()
-
+                    print(channels)
                     pyc.QMetaObject.invokeMethod(self.progressbar, 'accept')
                     return data_map, size, channels
 
