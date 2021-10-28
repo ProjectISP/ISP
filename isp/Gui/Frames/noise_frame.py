@@ -145,7 +145,7 @@ class NoiseFrame(BaseFrame, UiNoise):
 
     def run_preprocess(self):
         self.params = self.settings_dialog.getParameters()
-        self.read_files(self.root_path_bind.value, self.output_bind.value)
+        self.read_files(self.root_path_bind.value)
         self.process()
 
     ####################################################################################################################
@@ -239,15 +239,13 @@ class NoiseFrame(BaseFrame, UiNoise):
         ##
         self.nums_clicks = 0
         all_traces = []
-        # if self.sortCB.isChecked():
-        #     if self.comboBox_sort.currentText() == "Distance":
-        #         self.files_path.sort(key=self.sort_by_distance_advance)
-        #         self.message_dataless_not_found()
-        #
-        #     #
-        #     elif self.comboBox_sort.currentText() == "Back Azimuth":
-        #         self.files_path.sort(key=self.sort_by_baz_advance)
-        #         self.message_dataless_not_found()
+        if self.sortCB.isChecked():
+            if self.comboBox_sort.currentText() == "Distance":
+                self.files_path.sort(key=self.sort_by_distance_advance)
+
+        elif self.comboBox_sort.currentText() == "Back Azimuth":
+             self.files_path.sort(key=self.sort_by_baz_advance)
+
 
         self.set_pagination_files(self.files_path)
         files_at_page = self.get_files_at_page()
@@ -278,14 +276,6 @@ class NoiseFrame(BaseFrame, UiNoise):
                         ax.tick_params(labeltop=False)
                         if index != (self.pagination.items_per_page - 1):
                             ax.tick_params(bottom=False)
-
-                    try:
-                        self.redraw_pickers(file_path, index)
-                        # redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
-                        self.redraw_chop(tr, s, index)
-                        self.redraw_event_times(index)
-                    except:
-                        print("It couldn't plot chop data")
 
                     last_index = index
 
@@ -335,3 +325,26 @@ class NoiseFrame(BaseFrame, UiNoise):
             self.canvas.set_xlabel(last_index, "Date")
         except:
             pass
+
+
+    def sort_by_distance_advance(self, file):
+
+        geodetic = MseedUtil.get_geodetic(file)
+
+        if geodetic[0] is not None:
+
+            return geodetic[0]
+        else:
+            return 0.
+
+    def sort_by_baz_advance(self, file):
+
+        geodetic = MseedUtil.get_geodetic(file)
+
+        if geodetic[1] is not None:
+
+            return geodetic[0]
+        else:
+            return 0.
+
+

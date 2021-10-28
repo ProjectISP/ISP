@@ -367,8 +367,20 @@ class MseedUtil:
 
         return result
 
+    @classmethod
+    def get_geodetic(cls,file):
+        dist  = None
+        bazim = None
+        azim = None
+        geodetic = [dist, bazim, azim]
 
+        try:
+            st = read(file)
+            geodetic = st[0].stats.mseed['geodetic']
+        except:
+            pass
 
+        return geodetic
 
     @classmethod
     def get_selected_files(cls, files, selection):
