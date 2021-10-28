@@ -3607,11 +3607,11 @@ class ISOLA:
   <dt>vertical step</dt>
   <dd>{z:5.0f} m</dd>
   <dt>grid radius</dt>
-  <dd>{radius:6.3f} km</dd>
+  <dd>{radius:6.3f} m</dd>
   <dt>minimal depth</dt>
-  <dd>{dmin:6.3f} km</dd>
+  <dd>{dmin:6.3f} m</dd>
   <dt>maximal depth</dt>
-  <dd>{dmax:6.3f} km</dd>
+  <dd>{dmax:6.3f} m</dd>
 </dl>
 
 <h3>Grid-search over time</h3>
