@@ -10,7 +10,6 @@ from obspy import read
 from obspy.io.mseed.core import _is_mseed
 from isp.Gui import pyc
 
-# @numba.jitclass([('width', numba.float64), ('height', numba.float64)])
 class noise_organize(pyc.QObject):
 
     send_message = pyc.pyqtSignal(str)

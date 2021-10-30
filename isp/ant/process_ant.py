@@ -112,9 +112,13 @@ class process_ant:
         print(" -- Matrix: " + list_item[0][0] + list_item[0][1] + list_item[0][2])
 
         # 1.- dict_matrix['date_list']
+        # taking account changes of yars
+        year_ini = info_item[0][0].year
+        year_end = info_item[0][1].year
         date_ini = info_item[0][0].julday
         date_end = info_item[0][1].julday
-        self.dict_matrix['date_list'] = [date_ini + d for d in range(date_end - date_ini + 1)]
+        self.dict_matrix['date_list'] = self.__list_days(year_ini, year_end, date_ini, date_end)
+
 
         # 2.- dict_matrix['metadata_list']
         self.dict_matrix['metadata_list'] = info_item[1]
@@ -174,11 +178,20 @@ class process_ant:
 
         # 1.- dict_matrix['date_list']
         date_ini_N = info_N[0][0].julday
+        year_ini_N = info_N[0][0].year
+
         date_ini_E = info_E[0][0].julday
+        year_ini_E = info_E[0][0].year
+
         date_end_N = info_N[0][1].julday
+        year_end_N = info_N[0][1].year
+
         date_end_E = info_E[0][1].julday
-        self.dict_matrix_N['date_list_N'] = [date_ini_N + d for d in range(date_end_N - date_ini_N + 1)]
-        self.dict_matrix_E['date_list_E'] = [date_ini_E + d for d in range(date_end_E - date_ini_E + 1)]
+        year_end_E = info_E[0][1].year
+
+
+        self.dict_matrix_N['date_list_N'] = self.__list_days(year_ini_N, year_end_N, date_ini_N, date_end_N)
+        self.dict_matrix_E['date_list_E'] = self.__list_days(year_ini_E, year_end_E, date_ini_E, date_end_E)
 
         # 2.- dict_matrix['metadata_list']
         self.dict_matrix_N['metadata_list_N'] = info_N[1]
@@ -479,3 +492,31 @@ class process_ant:
             print("Coudn't deconvolve", tr.stats)
 
         return tr
+
+    def __isleapyear(self, year):
+        if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0):
+            return True
+        return False
+
+    def __list_days(self, year_ini,year_end, date_ini, date_end):
+
+        year_list = [year for year in range(year_ini, year_end)]
+        bi = []
+        no_bi = []
+
+        for year_ckeck in year_list:
+
+            if self.__isleapyear(year_ckeck):
+
+                bi.append(1)
+
+            else:
+
+                no_bi.append(1)
+
+        n1 = len(no_bi)
+        n2 = len(bi)
+        date_end2 = date_end + 365 * n1 + 366 * n2 + 1
+        def_list = [d for d in range(date_ini, date_end2)]
+
+        return def_list
