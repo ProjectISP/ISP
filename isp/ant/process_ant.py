@@ -117,8 +117,7 @@ class process_ant:
         year_end = info_item[0][1].year
         date_ini = info_item[0][0].julday
         date_end = info_item[0][1].julday
-        self.dict_matrix['date_list'] = self.__list_days(year_ini, year_end, date_ini, date_end)
-
+        #self.dict_matrix['date_list'] = self.__list_days(year_ini, year_end, date_ini, date_end)
 
         # 2.- dict_matrix['metadata_list']
         self.dict_matrix['metadata_list'] = info_item[1]
@@ -148,11 +147,15 @@ class process_ant:
         j = 0
         for col in r:
             i = 0
-            for row in col:
-                if row is not None and row.size == DD_half_point:
+            for row in col[0]:
+                if row is not None and len(row) == DD_half_point:
                     self.dict_matrix['data_matrix'][i, j, :] = row
+
                 i += 1
             j += 1
+
+            self.dict_matrix['date_list'].append(col[1])
+
 
         print("Finalizado", info_item)
 
@@ -162,6 +165,7 @@ class process_ant:
             print(" -- File: " + self.output_files_path + '/' + list_item[0][0] + list_item[0][1] + list_item[0][2])
             path = self.output_files_path + '/' + list_item[0][0] + list_item[0][1] + list_item[0][2]
             print("Saving to ", path)
+            print("Saving Days", self.dict_matrix['date_list'])
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix, file_to_store)
 
@@ -177,6 +181,7 @@ class process_ant:
               list_item_horizonrals["East"][0][2])
 
         # 1.- dict_matrix['date_list']
+
         date_ini_N = info_N[0][0].julday
         year_ini_N = info_N[0][0].year
 
@@ -190,8 +195,9 @@ class process_ant:
         year_end_E = info_E[0][1].year
 
 
-        self.dict_matrix_N['date_list_N'] = self.__list_days(year_ini_N, year_end_N, date_ini_N, date_end_N)
-        self.dict_matrix_E['date_list_E'] = self.__list_days(year_ini_E, year_end_E, date_ini_E, date_end_E)
+        #self.dict_matrix_N['date_list_N'] = self.__list_days(year_ini_N, year_end_N, date_ini_N, date_end_N)
+        #self.dict_matrix_E['date_list_E'] = self.__list_days(year_ini_E, year_end_E, date_ini_E, date_end_E)
+
 
         # 2.- dict_matrix['metadata_list']
         self.dict_matrix_N['metadata_list_N'] = info_N[1]
@@ -237,9 +243,12 @@ class process_ant:
                     self.dict_matrix_N['data_matrix_N'][i, j, :] = N
                     self.dict_matrix_E['data_matrix_E'][i, j, :] = E
                 i += 1
-            j += 1
 
-        # compressing matrix
+            j += 1
+            self.dict_matrix_N['date_list_N'].append(pair[2])
+            self.dict_matrix_E['date_list_E'].append(pair[3])
+
+            # compressing matrix
         # dict_matrix['data_matrix']=xr.DataArray(dictmatrix)
         if self.save_files:
 
@@ -249,6 +258,8 @@ class process_ant:
             path = self.output_files_path + '/' + list_item_horizonrals["North"][0][0] + \
                    list_item_horizonrals["North"][0][1] + list_item_horizonrals["North"][0][2]
             print("Saving to ", path)
+            print("Saving Days", self.dict_matrix['date_list_N'])
+            print("Saving Days", self.dict_matrix['date_list_E'])
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix_N, file_to_store)
 
@@ -281,7 +292,9 @@ class process_ant:
 
         res = []
         tr = obspy.read(self.list_item[1 + j])[0]
-
+        list_day = str(tr.stats.starttime.julday)+"."+str(tr.stats.starttime.year)
+        print("Processing", str(tr.stats.starttime.julday)+"."+str(tr.stats.starttime.year))
+        #print(self.dict_matrix['date_list'])
         if self.remove_responseCB:
             print("removing response ", tr.id)
             tr = self.__remove_response(tr, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
@@ -307,7 +320,7 @@ class process_ant:
                 n = tr_test.count()
                 if n > 0:
                     D = 2 ** math.ceil(math.log2(n))
-                    print(tr_test)
+                    #print(tr_test)
                     # tr_test.plot()
                     # Prefilt
                     tr_test.detrend(type='simple')
@@ -328,15 +341,23 @@ class process_ant:
             else:
                 res.append(None)
 
-        return res
+        return res, list_day
 
 
     def process_col_matrix_horizontals(self, j, fill_gaps=True):
-
+        list_days_N = []
+        list_days_E = []
         res_N = []
         res_E = []
         tr_N = obspy.read(self.list_item_N[1 + j])[0]
         tr_E = obspy.read(self.list_item_E[1 + j])[0]
+
+        list_days_N = str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year)
+        list_days_E = str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year)
+
+        print("Processing", str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year))
+        print("Processing", str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year))
+
         if tr_N.stats.starttime.julday == tr_E.stats.starttime.julday:
 
             if self.remove_responseCB:
@@ -379,7 +400,7 @@ class process_ant:
                     n = tr_test_N.count()
                     if n > 0:
                         D = 2 ** math.ceil(math.log2(n))
-                        print(tr_test_N, tr_test_E)
+                        #print(tr_test_N, tr_test_E)
                         # tr_test.plot()
                         # Prefilt
                         tr_test_N.detrend(type='simple')
@@ -406,7 +427,7 @@ class process_ant:
                 res_N.append(None)
                 res_E.append(None)
 
-        res = [res_N, res_E]
+        res = [res_N, res_E, list_days_N, list_days_E]
         return res
 
 
