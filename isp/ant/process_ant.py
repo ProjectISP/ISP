@@ -1,4 +1,4 @@
-
+import multiprocessing
 import pickle
 from obspy import read
 import numpy as np
@@ -138,17 +138,17 @@ class process_ant:
         # f = [0, 1, ..., n / 2 - 1, n / 2] / (d * n) if n is even
         # f = [0, 1, ..., (n - 1) / 2 - 1, (n - 1) / 2] / (d * n) if n is odd
         # ······
-        DD_half_point = int(((DD) / 2) + 1)
-        self.dict_matrix['data_matrix'] = np.zeros((self.num_rows, num_columns, DD_half_point), dtype=np.complex64)
+        self.DD_half_point = int(((DD) / 2) + 1)
+        self.dict_matrix['data_matrix'] = np.zeros((self.num_rows, num_columns, self.DD_half_point), dtype=np.complex64)
         self.inc_time = [i * 60 * num_minutes for i in range(self.num_rows + 1)]
-        with Pool(processes=6) as pool:
+        with Pool(processes = multiprocessing.cpu_count()) as pool:
             r = pool.map(self.process_col_matrix, range(num_columns))
 
         j = 0
         for col in r:
             i = 0
             for row in col[0]:
-                if row is not None and len(row) == DD_half_point:
+                if row is not None and len(row) == self.DD_half_point:
                     self.dict_matrix['data_matrix'][i, j, :] = row
 
                 i += 1
@@ -165,7 +165,7 @@ class process_ant:
             print(" -- File: " + self.output_files_path + '/' + list_item[0][0] + list_item[0][1] + list_item[0][2])
             path = self.output_files_path + '/' + list_item[0][0] + list_item[0][1] + list_item[0][2]
             print("Saving to ", path)
-            print("Saving Days", self.dict_matrix['date_list'])
+            #print("Saving Days", self.dict_matrix['date_list'])
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix, file_to_store)
 
@@ -227,9 +227,9 @@ class process_ant:
         # f = [0, 1, ..., n / 2 - 1, n / 2] / (d * n) if n is even
         # f = [0, 1, ..., (n - 1) / 2 - 1, (n - 1) / 2] / (d * n) if n is odd
         # ······
-        DD_half_point = int(((DD) / 2) + 1)
-        self.dict_matrix_N['data_matrix_N'] = np.zeros((self.num_rows, num_columns_N, DD_half_point), dtype=np.complex64)
-        self.dict_matrix_E['data_matrix_E'] = np.zeros((self.num_rows, num_columns_E, DD_half_point), dtype=np.complex64)
+        self.DD_half_point = int(((DD) / 2) + 1)
+        self.dict_matrix_N['data_matrix_N'] = np.zeros((self.num_rows, num_columns_N, self.DD_half_point), dtype=np.complex64)
+        self.dict_matrix_E['data_matrix_E'] = np.zeros((self.num_rows, num_columns_E, self.DD_half_point), dtype=np.complex64)
         self.inc_time = [i * 60 * num_minutes for i in range(self.num_rows + 1)]
         num_columns = min(num_columns_N, num_columns_E)
         with Pool(processes=6) as pool:
@@ -239,7 +239,7 @@ class process_ant:
         for pair in r:
             i = 0
             for N,E in zip(pair[0],pair[1]):
-                if N is not None and N.size == DD_half_point and E is not None and E.size == DD_half_point:
+                if N is not None and N.size == self.DD_half_point and E is not None and E.size == self.DD_half_point:
                     self.dict_matrix_N['data_matrix_N'][i, j, :] = N
                     self.dict_matrix_E['data_matrix_E'][i, j, :] = E
                 i += 1
@@ -258,8 +258,8 @@ class process_ant:
             path = self.output_files_path + '/' + list_item_horizonrals["North"][0][0] + \
                    list_item_horizonrals["North"][0][1] + list_item_horizonrals["North"][0][2]
             print("Saving to ", path)
-            print("Saving Days", self.dict_matrix['date_list_N'])
-            print("Saving Days", self.dict_matrix['date_list_E'])
+            #print("Saving Days", self.dict_matrix['date_list_N'])
+            #print("Saving Days", self.dict_matrix['date_list_E'])
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix_N, file_to_store)
 
@@ -290,63 +290,84 @@ class process_ant:
 
     def process_col_matrix(self, j, fill_gaps=True):
 
+        check_process = True
         res = []
         tr = obspy.read(self.list_item[1 + j])[0]
         list_day = str(tr.stats.starttime.julday)+"."+str(tr.stats.starttime.year)
         print("Processing", str(tr.stats.starttime.julday)+"."+str(tr.stats.starttime.year))
-        #print(self.dict_matrix['date_list'])
-        if self.remove_responseCB:
-            print("removing response ", tr.id)
-            tr = self.__remove_response(tr, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
 
-        if self.decimationCB:
-            print("decimating ", tr.id)
-            tr.decimate(factor=self.factor, no_filter = False)
+        st = self.fill_gaps(Stream(traces=tr), tol=5*self.gaps_tol)
+
+        if st == []:
+
+            check_process = False
+        else:
+
+            tr = st[0]
+
+        if self.remove_responseCB and check_process:
+            #print("removing response ", tr.id)
+            tr, check_process = self.__remove_response(tr, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
+
+        if self.decimationCB and check_process:
+            #print("decimating ", tr.id)
+            try:
+                tr.decimate(factor=self.factor, no_filter = False)
+            except:
+                check_process = False
+                print("Couldn't decimate")
 
         # for i in range(self.num_rows):
-        print("Starting hard process ", tr.id)
+        #print("Starting hard process ", tr.id)
+
         for i in range(len(self.inc_time) - 1):
+
             tr_test = tr.copy()
-            tr_test.trim(starttime=tr.stats.starttime + self.inc_time[i],
-                         endtime=tr.stats.starttime + self.inc_time[i + 1])
-            # TODO IMPLEMENT THE DECONVOLUTION AND THE CORRECT QUALITY CONTROL --> SEND TO BLACKLIST
-            if fill_gaps:
-                st = self.fill_gaps(Stream(traces=tr_test), tol=self.gaps_tol)
-                if st == []:
-                    tr_test.data = np.zeros(len(tr_test.data),dtype=np.complex64)
+
+            if check_process:
+
+                tr_test.trim(starttime=tr.stats.starttime + self.inc_time[i],
+                                 endtime=tr.stats.starttime + self.inc_time[i + 1])
+
+                if fill_gaps:
+                    st = self.fill_gaps(Stream(traces=tr_test), tol=self.gaps_tol)
+                    if st == []:
+                        tr_test.data = np.zeros(len(tr_test.data), dtype=np.complex64)
+                    else:
+                        tr_test = st[0]
+                if (self.data_domain == "frequency") and len(tr[:]) > 0:
+                    n = tr_test.count()
+                    if n > 0:
+                        D = 2 ** math.ceil(math.log2(n))
+                        #print(tr_test)
+                        # tr_test.plot()
+                        # Prefilt
+                        tr_test.detrend(type='simple')
+                        tr_test.taper(max_percentage=0.05)
+                        process = noise_processing(tr_test)
+                        if self.time_normalizationCB:
+                            process.normalize(norm_win=3, norm_method='ramn')
+                        if self.whitheningCB:
+                            process.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+                        try:
+                            # self.dict_matrix['data_matrix'][i, j, :] = np.fft.rfft(process.tr.data, D)
+                            res.append(np.fft.rfft(process.tr.data, D))
+                        except:
+                            res.append(np.zeros(self.DD_half_point, dtype=np.complex64))
+                            print("dimensions does not agree")
+                    else:
+                        res.append(np.zeros(self.DD_half_point, dtype=np.complex64))
                 else:
-                    tr_test = st[0]
-            if (self.data_domain == "frequency") and len(tr[:]) > 0:
-                n = tr_test.count()
-                if n > 0:
-                    D = 2 ** math.ceil(math.log2(n))
-                    #print(tr_test)
-                    # tr_test.plot()
-                    # Prefilt
-                    tr_test.detrend(type='simple')
-                    tr_test.taper(max_percentage=0.05)
-                    process = noise_processing(tr_test)
-                    if self.time_normalizationCB:
-                        process.normalize(norm_win=3, norm_method='ramn')
-                    if self.whitheningCB:
-                        process.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
-                    try:
-                        # self.dict_matrix['data_matrix'][i, j, :] = np.fft.rfft(process.tr.data, D)
-                        res.append(np.fft.rfft(process.tr.data, D))
-                    except:
-                        res.append(None)
-                        print("dimensions does not agree")
-                else:
-                    res.append(None)
+                    res.append(np.zeros(self.DD_half_point, dtype=np.complex64))
             else:
-                res.append(None)
+                res.append(np.zeros(self.DD_half_point, dtype=np.complex64))
 
         return res, list_day
 
 
     def process_col_matrix_horizontals(self, j, fill_gaps=True):
-        list_days_N = []
-        list_days_E = []
+
+        check_process = True
         res_N = []
         res_E = []
         tr_N = obspy.read(self.list_item_N[1 + j])[0]
@@ -358,74 +379,90 @@ class process_ant:
         print("Processing", str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year))
         print("Processing", str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year))
 
+        st1 = self.fill_gaps(Stream(traces=tr_N), tol=5 * self.gaps_tol)
+        st2 = self.fill_gaps(Stream(traces=tr_E), tol=5 * self.gaps_tol)
+
+        if st1 == [] or st2 == []:
+            check_process = False
+        else:
+
+            tr_N = st1[0]
+            tr_E = st2[0]
+
         if tr_N.stats.starttime.julday == tr_E.stats.starttime.julday:
 
-            if self.remove_responseCB:
-                print("removing response ", tr_N.id, tr_E.id)
-                tr_N = self.__remove_response(tr_N, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
-                tr_E = self.__remove_response(tr_E, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
+            if self.remove_responseCB and check_process:
+                #print("removing response ", tr_N.id, tr_E.id)
+                tr_N, check_process = self.__remove_response(tr_N, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
+                tr_E, check_process = self.__remove_response(tr_E, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
 
-            if self.decimationCB:
-                print("decimating ", tr_N.id, tr_E.id)
-                tr_N.decimate(factor=self.factor, no_filter = False)
-                tr_E.decimate(factor=self.factor, no_filter = False)
+            if self.decimationCB and check_process:
+                #print("decimating ", tr_N.id, tr_E.id)
+                try :
+                    tr_N.decimate(factor=self.factor, no_filter = False)
+                    tr_E.decimate(factor=self.factor, no_filter = False)
+                except:
+                    check_process = False
+                    print("Couldn't Decimate")
 
             # Prepare Matrix for North Component
-            print("Starting hard process ", tr_N.id, tr_E.id)
+            #print("Starting hard process ", tr_N.id, tr_E.id)
+
             for i in range(len(self.inc_time) - 1):
-                tr_test_N = tr_N.copy()
-                tr_test_E = tr_E.copy()
-                maxstart = np.max([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
-                #minend = np.min([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
+                if check_process:
+                    tr_test_N = tr_N.copy()
+                    tr_test_E = tr_E.copy()
+                    maxstart = np.max([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
+                    #minend = np.min([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
 
-                tr_test_N.trim(starttime = maxstart + self.inc_time[i],
-                             endtime = maxstart + self.inc_time[i + 1])
+                    tr_test_N.trim(starttime = maxstart + self.inc_time[i],
+                                 endtime = maxstart + self.inc_time[i + 1])
 
-                tr_test_E.trim(starttime=maxstart + self.inc_time[i],
-                               endtime=maxstart + self.inc_time[i + 1])
+                    tr_test_E.trim(starttime=maxstart + self.inc_time[i],
+                                   endtime=maxstart + self.inc_time[i + 1])
 
-                if fill_gaps:
-                    st_N = self.fill_gaps(Stream(traces=tr_test_N), tol=self.gaps_tol)
-                    st_E = self.fill_gaps(Stream(traces=tr_test_E), tol=self.gaps_tol)
+                    if fill_gaps:
+                        st_N = self.fill_gaps(Stream(traces=tr_test_N), tol=self.gaps_tol)
+                        st_E = self.fill_gaps(Stream(traces=tr_test_E), tol=self.gaps_tol)
 
-                    if st_N == []:
-                        tr_test_N.data = np.zeros(len(tr_test_N.data), dtype=np.complex64)
-                    elif st_E == []:
-                        tr_test_E.data = np.zeros(len(tr_test_E.data), dtype=np.complex64)
-                    else:
-                        tr_test_N = st_N[0]
-                        tr_test_E = st_E[0]
+                        if st_N == []:
+                            tr_test_N.data = np.zeros(len(tr_test_N.data), dtype=np.complex64)
+                        elif st_E == []:
+                            tr_test_E.data = np.zeros(len(tr_test_E.data), dtype=np.complex64)
+                        else:
+                            tr_test_N = st_N[0]
+                            tr_test_E = st_E[0]
 
-                if (self.data_domain == "frequency") and len(tr_N[:]) and len(tr_E[:]) > 0:
-                    n = tr_test_N.count()
-                    if n > 0:
-                        D = 2 ** math.ceil(math.log2(n))
-                        #print(tr_test_N, tr_test_E)
-                        # tr_test.plot()
-                        # Prefilt
-                        tr_test_N.detrend(type='simple')
-                        tr_test_E.detrend(type='simple')
-                        tr_test_N.taper(max_percentage=0.05)
-                        tr_test_E.taper(max_percentage=0.05)
-                        process_horizontals = noise_processing_horizontals(tr_test_N, tr_test_E)
-                        if self.time_normalizationCB:
-                            process_horizontals.normalize(norm_win=3, norm_method='ramn')
-                        if self.whitheningCB:
-                            process_horizontals.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
-                        try:
-                            # self.dict_matrix['data_matrix'][i, j, :] = np.fft.rfft(process.tr.data, D)
-                            res_N.append(np.fft.rfft(process_horizontals.tr_N.data, D))
-                            res_E.append(np.fft.rfft(process_horizontals.tr_E.data, D))
-                        except:
-                            res_N.append(None)
-                            res_E.append(None)
-                            print("dimensions does not agree")
-                    else:
-                        res_N.append(None)
-                        res_E.append(None)
-            else:
-                res_N.append(None)
-                res_E.append(None)
+                    if (self.data_domain == "frequency") and len(tr_N[:]) and len(tr_E[:]) > 0:
+                        n = tr_test_N.count()
+                        if n > 0:
+                            D = 2 ** math.ceil(math.log2(n))
+                            #print(tr_test_N, tr_test_E)
+                            # tr_test.plot()
+                            # Prefilt
+                            tr_test_N.detrend(type='simple')
+                            tr_test_E.detrend(type='simple')
+                            tr_test_N.taper(max_percentage=0.05)
+                            tr_test_E.taper(max_percentage=0.05)
+                            process_horizontals = noise_processing_horizontals(tr_test_N, tr_test_E)
+                            if self.time_normalizationCB:
+                                process_horizontals.normalize(norm_win=3, norm_method='ramn')
+                            if self.whitheningCB:
+                                process_horizontals.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+                            try:
+                                # self.dict_matrix['data_matrix'][i, j, :] = np.fft.rfft(process.tr.data, D)
+                                res_N.append(np.fft.rfft(process_horizontals.tr_N.data, D))
+                                res_E.append(np.fft.rfft(process_horizontals.tr_E.data, D))
+                            except:
+                                res_N.append(np.zeros(self.DD_half_point, dtype=np.complex64))
+                                res_E.append(np.zeros(self.DD_half_point, dtype=np.complex64))
+                                print("dimensions does not agree")
+                        else:
+                            res_N.append(np.zeros(self.DD_half_point, dtype=np.complex64))
+                            res_E.append(np.zeros(self.DD_half_point, dtype=np.complex64))
+                else:
+                    res_N.append(np.zeros(self.DD_half_point, dtype=np.complex64))
+                    res_E.append(np.zeros(self.DD_half_point, dtype=np.complex64))
 
         res = [res_N, res_E, list_days_N, list_days_E]
         return res
@@ -504,6 +541,8 @@ class process_ant:
 
     def __remove_response(self, tr, f1, f2, f3, f4, water_level, units):
 
+        done = True
+
         try:
 
             tr.remove_response(inventory=self.inventory, pre_filt=(f1, f2, f3, f4), output=units, water_level=water_level)
@@ -511,8 +550,9 @@ class process_ant:
         except:
 
             print("Coudn't deconvolve", tr.stats)
+            done = False
 
-        return tr
+        return tr, done
 
     def __isleapyear(self, year):
         if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0):
