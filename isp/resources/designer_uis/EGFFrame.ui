@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>EGFFrame</class>
+ <widget class="QWidget" name="EGFFrame">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1680</width>
+    <height>928</height>
+   </rect>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,3">
+   <item>
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="1" column="0" colspan="2">
+      <widget class="QPushButton" name="outputBtn">
+       <property name="text">
+        <string>output</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2" colspan="3">
+      <widget class="QLineEdit" name="outPathForm"/>
+     </item>
+     <item row="5" column="0" colspan="4">
+      <widget class="QPushButton" name="preprocessBtn">
+       <property name="text">
+        <string>Run pre-processing</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0" colspan="4">
+      <widget class="QPushButton" name="cross_stackBtn">
+       <property name="text">
+        <string>Cross &amp; Stack</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0" colspan="5">
+      <widget class="QPushButton" name="mapBtn">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Stations Map</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0" colspan="5">
+      <widget class="QListWidget" name="listWidget"/>
+     </item>
+     <item row="0" column="0" colspan="2">
+      <widget class="QPushButton" name="selectDirBtn">
+       <property name="text">
+        <string>files</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2" colspan="3">
+      <widget class="QLineEdit" name="rootPathForm">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777202</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="4">
+      <widget class="QCheckBox" name="autorefreshCB">
+       <property name="text">
+        <string>Auto-Refresh</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0" colspan="4">
+      <widget class="QPushButton" name="updateBtn">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Process and Plot</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="0" colspan="5">
+      <widget class="QWidget" name="pagination_widget" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>400</width>
+         <height>80</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+       </layout>
+      </widget>
+     </item>
+     <item row="2" column="0" colspan="2">
+      <widget class="QPushButton" name="selectDatalessDirBtn">
+       <property name="text">
+        <string>metadata</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="2" colspan="3">
+      <widget class="QLineEdit" name="datalessPathForm">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777202</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="3">
+      <widget class="QPushButton" name="selectDirBtn2">
+       <property name="text">
+        <string>Set Path</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0" colspan="3">
+      <widget class="QPushButton" name="readFilesBtn">
+       <property name="text">
+        <string>Read files</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="4">
+      <widget class="QLineEdit" name="rootPathForm2"/>
+     </item>
+     <item row="9" column="0">
+      <widget class="QCheckBox" name="sortCB">
+       <property name="text">
+        <string>Sort</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="1">
+      <widget class="QComboBox" name="comboBox_sort">
+       <item>
+        <property name="text">
+         <string>Distance</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Back Azimuth</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QScrollArea" name="plotMatWidget">
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(255, 255, 255);</string>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents_2">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>1240</width>
+        <height>908</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+  <action name="actionWhatever">
+   <property name="text">
+    <string>Whatever</string>
+   </property>
+  </action>
+  <action name="actionNew_location">
+   <property name="text">
+    <string>New Location</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionGet_Stations_Info">
+   <property name="text">
+    <string>Get Stations Info</string>
+   </property>
+  </action>
+  <action name="actionSet_Parameters">
+   <property name="text">
+    <string>Macro</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="actionTrim">
+   <property name="text">
+    <string>Trim</string>
+   </property>
+  </action>
+  <action name="actionTrim_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Trim</string>
+   </property>
+  </action>
+  <action name="actionArray_Anlysis">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/signal-icon.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Array Anlysis</string>
+   </property>
+  </action>
+  <action name="actionMoment_Tensor_Inversion">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/tensor-icon.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Moment Tensor Inversion</string>
+   </property>
+  </action>
+  <action name="actionTime_Frequency_Analysis">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/seosmogram-icon.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Time-Frequency Analysis</string>
+   </property>
+  </action>
+  <action name="actionReceiver_Functions">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/rf-icon.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Receiver Functions</string>
+   </property>
+  </action>
+  <action name="actionSTA_LTA">
+   <property name="text">
+    <string>STA/LTA</string>
+   </property>
+  </action>
+  <action name="actionCWT_CF">
+   <property name="text">
+    <string>CWT (CFs)</string>
+   </property>
+  </action>
+  <action name="actionWrite_Current_Page">
+   <property name="text">
+    <string>Write Current Page</string>
+   </property>
+  </action>
+  <action name="actionWrite_All">
+   <property name="text">
+    <string>Write All</string>
+   </property>
+  </action>
+  <action name="actionEnvelope">
+   <property name="text">
+    <string>Envelope</string>
+   </property>
+  </action>
+  <action name="actionClean_selection">
+   <property name="text">
+    <string>Clean selection</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionOpen_Magnitudes_Calculator">
+   <property name="text">
+    <string>Open Magnitudes Calculator</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
+   </property>
+  </action>
+  <action name="actionRun_picker">
+   <property name="text">
+    <string>Run picker</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actionRun_Event_Detector">
+   <property name="text">
+    <string>Run Event Detector</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionOpen_Settings">
+   <property name="text">
+    <string>Open Settings</string>
+   </property>
+  </action>
+  <action name="actionAllSeismograms">
+   <property name="text">
+    <string>All Seismograms</string>
+   </property>
+   <property name="shortcut">
+    <string/>
+   </property>
+  </action>
+  <action name="actionSpectral_Entropy">
+   <property name="text">
+    <string>Spectral Entropy</string>
+   </property>
+  </action>
+  <action name="actionRemove_all_selections">
+   <property name="text">
+    <string>Remove all selections</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+J</string>
+   </property>
+  </action>
+  <action name="actionStack">
+   <property name="text">
+    <string>Stack</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
+   </property>
+  </action>
+  <action name="actionEarth_Model_Viewer">
+   <property name="text">
+    <string>Earth Model Viewer</string>
+   </property>
+  </action>
+  <action name="actionOpen_Earth_Model_Viewer">
+   <property name="text">
+    <string>Open Earth Model Viewer</string>
+   </property>
+  </action>
+  <action name="actionOpen_Help">
+   <property name="text">
+    <string>Open Help</string>
+   </property>
+  </action>
+  <action name="actionClean_Events_Detected">
+   <property name="text">
+    <string>Clean Events Detected</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionPlot_All_Seismograms">
+   <property name="text">
+    <string>Plot All Seismograms</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionOnly_a_folder">
+   <property name="text">
+    <string>Only a folder</string>
+   </property>
+  </action>
+  <action name="actionAll_tree">
+   <property name="text">
+    <string>All tree</string>
+   </property>
+  </action>
+  <action name="actionOpen_picksnew">
+   <property name="text">
+    <string>Open picks</string>
+   </property>
+  </action>
+  <action name="actionRemove_picks">
+   <property name="text">
+    <string>Remove picks</string>
+   </property>
+  </action>
+  <action name="actionRun_autoloc">
+   <property name="text">
+    <string>Run autoloc</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

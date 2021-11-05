@@ -43,5 +43,6 @@ UiEarth_model_viewer = load_ui_designers("EarthModelWidget.ui")
 UiHelp = load_ui_designers("help.ui")
 UiRealTimeFrame = load_ui_designers("RealTimeFrame.ui")
 UiMapRealTime = load_ui_designers("map_realtime.ui")
+UiEGFFrame = load_ui_designers("EGFFrame.ui")
 UiNoise = load_ui_designers("NoiseFrame.ui")
 
