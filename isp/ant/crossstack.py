@@ -134,16 +134,25 @@ class noisestack:
                         # >arr refers to the input array,
                         # >obj refers to which sub-arrays (e.g. column/row no. or slice of the array) and
                         # >axis refers to either column wise (axis = 1) or row-wise (axis = 0) delete operation
+                        elements_i_to_delete = []
+                        elements_j_to_delete = []
 
                         for date_i in date_list_file_i:
                             if (not date_i in common_dates_list):
                                 print("Delete day: " + str(date_i) + " from " + file_i)
-                                data_matrix_file_i_corr = np.delete(data_matrix_file_i, date_list_file_i.index(date_i), 1)
+                                elements_i_to_delete.append(date_list_file_i.index(date_i))
+
+                        if len(elements_i_to_delete)>0:
+
+                            data_matrix_file_i_corr = np.delete(data_matrix_file_i, elements_i_to_delete, 1)
 
                         for date_j in date_list_file_j:
                             if (not date_j in common_dates_list):
                                 print("Delete day: " + str(date_j) + " from " + file_j)
-                                data_matrix_file_j_corr = np.delete(data_matrix_file_j, date_list_file_j.index(date_j), 1)
+                                elements_j_to_delete.append(date_list_file_j.index(date_j))
+
+                        if len(elements_j_to_delete) > 0:
+                            data_matrix_file_j_corr = np.delete(data_matrix_file_j, elements_j_to_delete, 1)
 
                         # ###########
                         # Correlación: multiplicación de matrices elemento a elemento
