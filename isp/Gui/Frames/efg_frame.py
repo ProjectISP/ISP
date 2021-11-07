@@ -7,28 +7,31 @@ from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
 from isp.Gui import pqg, pw, pyc, qt
 from isp.Gui.Frames import Pagination, MatplotlibCanvas, MessageDialog
-from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.uis_frames import UiEGFFrame
-from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Utils import AsycTime, MseedUtil, ObspyUtil
-from isp.Gui.Frames.setting_dialog_noise import SettingsDialogNoise
 from isp.ant.ambientnoise import noise_organize
 from isp.ant.process_ant import process_ant
 from isp.ant.crossstack import noisestack
 
 
+from isp.Gui.Utils.pyqt_utils import add_save_load
+@add_save_load()
 class EGFFrame(pw.QWidget, UiEGFFrame):
 
-    def __init__(self):
+    def __init__(self, parameters, settings):
         super(EGFFrame, self).__init__()
         self.setupUi(self)
+
+        self.parameters = parameters
+        self.settings_dialog = settings
+
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('Ambient Noise Tomography')
         self.progressbar.setLabelText(" Computing ")
         self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
         self.progressbar.close()
-        self.settings_dialog = SettingsDialogNoise(self)
+
         self.inventory = {}
         self.files = []
         self.total_items = 0
@@ -56,32 +59,16 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.selectDirBtn2.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind2))
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_file(self.metadata_path_bind))
-        self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.outputBtn.clicked.connect(lambda: self.on_click_select_directory(self.output_bind))
-
-        # actions
         self.preprocessBtn.clicked.connect(self.run_preprocess)
         self.cross_stackBtn.clicked.connect(self.stack)
-        self.actionOpen_Settings.triggered.connect(lambda: self.settings_dialog.show())
-        # Parameters settings
 
-        self.parameters = ParametersSettings()
 
-        # help Documentation
-
-        self.help = HelpDoc()
-
-        # shortcuts
-
-        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+L'), self)
-        self.shortcut_open.activated.connect(self.open_parameters_settings)
 
     @pyc.Slot()
     def _increase_progress(self):
         self.progressbar.setValue(self.progressbar.value() + 1)
 
-    def open_parameters_settings(self):
-        self.parameters.show()
 
     def filter_error_message(self, msg):
         md = MessageDialog(self)
@@ -96,7 +83,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
         :return:
         """
-        #self.read_files(value)
+        # self.read_files(value)
         pass
 
     def on_click_select_file(self, bind: BindPyqtObject):
@@ -148,10 +135,11 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         try:
             self.progressbar.reset()
             self.progressbar.setLabelText(" Reading Files ")
-            self.progressbar.setRange(0,0)
+            self.progressbar.setRange(0, 0)
             with ThreadPoolExecutor(1) as executor:
                 self.ant = noise_organize(dir_path, self.inventory)
                 self.ant.send_message.connect(self.receive_messages)
+
                 def read_files_callback():
                     data_map, size, channels = self.ant.create_dict()
                     print(channels)
@@ -160,16 +148,15 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
                 f = executor.submit(read_files_callback)
                 self.progressbar.exec()
-                self.data_map,self.size,self.channels = f.result()
+                self.data_map, self.size, self.channels = f.result()
                 f.cancel()
 
-            #self.ant.test()
+            # self.ant.test()
             md.set_info_message("Readed data files Successfully")
         except:
             md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
 
         md.show()
-
 
     def run_preprocess(self):
         self.params = self.settings_dialog.getParameters()
@@ -178,61 +165,51 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
     ####################################################################################################################
 
-
     def process(self):
         #
         self.process_ant = process_ant(self.output_bind.value, self.params, self.inventory)
         list_raw = self.process_ant.get_all_values(self.data_map)
         self.process_ant.create_all_dict_matrix(list_raw, self.channels)
 
-
     def stack(self):
         stack = noisestack(self.output_bind.value)
         stack.run_cross_stack()
         stack.rotate_horizontals()
 
-
     @pyc.pyqtSlot(str)
     def receive_messages(self, message):
         self.listWidget.addItem(message)
-
 
     def get_files_at_page(self):
         n_0 = (self.pagination.current_page - 1) * self.pagination.items_per_page
         n_f = n_0 + self.pagination.items_per_page
         return self.files[n_0:n_f]
 
-
     def get_file_at_index(self, index):
         files_at_page = self.get_files_at_page()
         return files_at_page[index]
 
-
     def onChange_items_per_page(self, items_per_page):
         self.items_per_page = items_per_page
-
 
     def filter_error_message(self, msg):
         md = MessageDialog(self)
         md.set_info_message(msg)
-
 
     def set_pagination_files(self, files_path):
         self.files = files_path
         self.total_items = len(self.files)
         self.pagination.set_total_items(self.total_items)
 
-
     def get_files(self, dir_path):
 
-        files_path = MseedUtil.get_tree_hd5_files(dir_path, robust = False)
+        files_path = MseedUtil.get_tree_hd5_files(dir_path, robust=False)
         print(files_path)
         self.set_pagination_files(files_path)
-        #print(files_path)
+        # print(files_path)
         pyc.QMetaObject.invokeMethod(self.progressbar, 'accept', qt.AutoConnection)
 
         return files_path
-
 
     def get_now_files(self):
 
@@ -242,14 +219,14 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
             self.progressbar.reset()
             self.progressbar.setLabelText(" Reading Files ")
-            self.progressbar.setRange(0,0)
+            self.progressbar.setRange(0, 0)
             with ThreadPoolExecutor(1) as executor:
-                f = executor.submit(lambda : self.get_files(self.root_path_bind2.value))
+                f = executor.submit(lambda: self.get_files(self.root_path_bind2.value))
                 self.progressbar.exec()
                 self.files_path = f.result()
                 f.cancel()
 
-            #self.files_path = self.get_files(self.root_path_bind.value)
+            # self.files_path = self.get_files(self.root_path_bind.value)
 
             md.set_info_message("Readed data files Successfully")
 
@@ -272,8 +249,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 self.files_path.sort(key=self.sort_by_distance_advance)
 
         elif self.comboBox_sort.currentText() == "Back Azimuth":
-             self.files_path.sort(key=self.sort_by_baz_advance)
-
+            self.files_path.sort(key=self.sort_by_baz_advance)
 
         self.set_pagination_files(self.files_path)
         files_at_page = self.get_files_at_page()
@@ -335,7 +311,6 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                     except:
                         print("Empty traces")
 
-
                 all_traces.append(tr)
 
         self.st = Stream(traces=all_traces)
@@ -353,7 +328,6 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             self.canvas.set_xlabel(last_index, "Date")
         except:
             pass
-
 
     def sort_by_distance_advance(self, file):
 
@@ -374,5 +348,3 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             return geodetic[0]
         else:
             return 0.
-
-
