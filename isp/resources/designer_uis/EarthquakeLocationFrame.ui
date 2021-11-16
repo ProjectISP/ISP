@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1121</width>
-    <height>859</height>
+    <height>861</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -499,7 +499,7 @@ background-color: rgb(233, 233, 233);</string>
            </item>
           </widget>
          </item>
-         <item row="2" column="0" colspan="3">
+         <item row="3" column="0" colspan="3">
           <widget class="QPushButton" name="grdtimeBtn">
            <property name="text">
             <string>Grid to Time</string>
@@ -519,6 +519,16 @@ background-color: rgb(233, 233, 233);</string>
             <string>Distance limit (km)</string>
            </property>
           </widget>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QPushButton" name="stationsBtn">
+           <property name="text">
+            <string>Set Stations File Path</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLineEdit" name="stationsPath"/>
          </item>
         </layout>
        </widget>

@@ -245,6 +245,7 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.grdtimeBtn.clicked.connect(lambda: self.on_click_run_grid_to_time())
         self.runlocBtn.clicked.connect(lambda: self.on_click_run_loc())
         self.plotmapBtn.clicked.connect(lambda: self.on_click_plot_map())
+        self.stationsBtn.clicked.connect(lambda: self.on_click_select_metadata_file())
         self.firstpolarityBtn.clicked.connect(self.first_polarity)
         self.plotpdfBtn.clicked.connect(self.plot_pdf)
 
@@ -259,6 +260,12 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         if not self.__first_polarity:
             self.__first_polarity = FirstPolarity()
         return self.__first_polarity
+
+    def on_click_select_metadata_file(self):
+        selected = pw.QFileDialog.getOpenFileName(self, "Select metadata/stations coordinates file")
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            self.stationsPath.setText(selected[0])
+            self.set_dataless_dir(self.stationsPath.text())
 
     def set_dataless_dir(self, dir_path):
         self.__dataless_dir = dir_path

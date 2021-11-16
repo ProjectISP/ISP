@@ -446,7 +446,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
 
-        md.show()
+        if not self.trimCB.isChecked():
+           md.show()
 
 
     # def onChange_dataless_path(self, value):
