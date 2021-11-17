@@ -44,7 +44,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         #Binding
 
         self.root_pathFK_bind = BindPyqtObject(self.rootPathFormFK)
-        self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
+        #self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
         self.fmin_bind = BindPyqtObject(self.fminSB)
         self.fmax_bind = BindPyqtObject(self.fmaxSB)
@@ -113,7 +113,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         if dir_path:
             bind.value = dir_path
 
-    @AsycTime.run_async()
+
     def onChange_metadata_path(self, value):
 
         md = MessageDialog(self)
@@ -121,6 +121,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
             md.set_info_message("Loaded Metadata, please check your terminal for further details")
 
         except:

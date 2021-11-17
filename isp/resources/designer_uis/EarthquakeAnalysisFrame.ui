@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1680</width>
-    <height>928</height>
+    <height>924</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -694,7 +694,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>1133</width>
-                  <height>732</height>
+                  <height>728</height>
                  </rect>
                 </property>
                </widget>
@@ -812,7 +812,6 @@
      <addaction name="actionRemove_picks"/>
     </widget>
     <addaction name="menuPicks"/>
-    <addaction name="actionGet_Stations_Info"/>
     <addaction name="actionSet_Parameters"/>
     <addaction name="actionRun_Event_Detector"/>
     <addaction name="actionRun_picker"/>
