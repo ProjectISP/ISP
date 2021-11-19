@@ -190,9 +190,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                         st = self.client.get_waveforms(ntwknm, stnm, "*", channels, start, end)
                         print(st)
                         self.write(st, dir_path)
-                        #md = MessageDialog(self)
-                        #md.set_info_message("Download completed")
-
+                        
                     except:
                         errors = True
                         md = MessageDialog(self)
@@ -201,6 +199,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             md = MessageDialog(self)
             md.set_info_message("Download completed with some errors")
         else:
+            md = MessageDialog(self)
             md.set_info_message("Download completed")
 
 
