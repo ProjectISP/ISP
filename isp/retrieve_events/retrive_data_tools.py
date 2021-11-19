@@ -21,7 +21,8 @@ class retrieve:
 
     def get_inventory(self, url, starttime, endtime, networks, stations, FDSN=True, use_networks = False,
                       use_stations = False, **kwargs):
-
+        inventory = None
+        client = None
         print(FDSN, use_networks, starttime, endtime, networks)
         try:
 
@@ -59,8 +60,10 @@ class retrieve:
                                                     endtime=endtime)
         except:
 
-            md = MessageDialog(self)
-            md.set_info_message("Please check your internet conection")
+
+
+            print("Coundn't be conected, Please check your internet connection and try another time")
+
         return inventory, client
 
 

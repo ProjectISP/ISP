@@ -87,17 +87,27 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
     #             md.set_error_message("Something went wrong. Please check your metada file is a correct one")
 
     def process_ppsds(self):
+
         file_path = self.root_path_bind.value
 
-        self.ppsds = ppsdsISP(file_path, self.inventory, self.lenghtSB.value(), self.overlapSB.value(),
-                         self.smoothingSB.value(), self.periodSB.value())
+        try:
+            self.ppsds = ppsdsISP(file_path, self.inventory, self.lenghtSB.value(), self.overlapSB.value(),
+                             self.smoothingSB.value(), self.periodSB.value())
 
-        self.ppsds.fileProcessed.connect(self.progressbar.setValue)
-        ini_dict, size = self.ppsds.create_dict(net_list = self.netsTx.text(),sta_list = self.stationsTx.text(),chn_list = self.chnTx.text())
-        pyc.QMetaObject.invokeMethod(self.progressbar, 'setMaximum', qt.AutoConnection, pyc.Q_ARG(int, size))
-        pyc.QMetaObject.invokeMethod(self.progressbar, 'setValue', qt.AutoConnection, pyc.Q_ARG(int, 0))
-        self.db = self.ppsds.get_all_values(ini_dict)
-        self.saveBtn.setEnabled(True)
+            self.ppsds.fileProcessed.connect(self.progressbar.setValue)
+            ini_dict, size = self.ppsds.create_dict(net_list = self.netsTx.text(),sta_list = self.stationsTx.text(),chn_list = self.chnTx.text())
+            pyc.QMetaObject.invokeMethod(self.progressbar, 'setMaximum', qt.AutoConnection, pyc.Q_ARG(int, size))
+            pyc.QMetaObject.invokeMethod(self.progressbar, 'setValue', qt.AutoConnection, pyc.Q_ARG(int, 0))
+            self.db = self.ppsds.get_all_values(ini_dict)
+            self.saveBtn.setEnabled(True)
+            md = MessageDialog(self)
+            md.set_info_message("PPSDs DB ready, now you can save your progress!!!")
+
+        except:
+            md = MessageDialog(self)
+            md.set_error_message("PPSDs DB  couldn't be created, please check your metadata and "
+                                 "the data files directory")
+
 
 
     def ppsd_continue(self):

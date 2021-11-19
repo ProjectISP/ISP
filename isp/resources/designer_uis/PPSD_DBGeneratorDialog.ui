@@ -245,7 +245,7 @@
          <item row="2" column="0" colspan="2">
           <widget class="QPushButton" name="datalessBtn">
            <property name="text">
-            <string>Set Metadata Directory</string>
+            <string>Set Metadata File </string>
            </property>
           </widget>
          </item>
