@@ -47,6 +47,12 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         self.help = HelpDoc()
 
+        #
+        self.latitudes = []
+        self.longitudes = []
+        self.depths = []
+        self.magnitudes = []
+
     def get_coordinates(self, row, column):
         lat = self.tableWidget.item(row,1).data(0)
         lon = self.tableWidget.item(row, 2).data(0)
@@ -109,6 +115,10 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             selection_range = QtWidgets.QTableWidgetSelectionRange(0,0,self.tableWidget.rowCount() - 1, self.tableWidget.columnCount() - 1)
             #print(selection_range.bottomRow())
 
+            self.longitudes = longitudes
+            self.latitudes = latitudes
+            self.depths = depths
+            self.magnitudes = magnitudes
             self.tableWidget.setRangeSelected(selection_range, True)
             #print(selection_range)
             self.catalog_out=[latitudes, longitudes, depths, magnitudes]
@@ -187,7 +197,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                     m_dist, az, back_az = obspy.geodetics.base.gps2dist_azimuth(evla, evlo,
                                                                                 stla, stlo)
                     deg_dist = obspy.geodetics.base.kilometers2degrees(m_dist/1000)
-                    atime = model.get_travel_times(source_depth_in_km=evdp,distance_in_degree=deg_dist,
+                    atime = model.get_travel_times(source_depth_in_km=evdp, distance_in_degree=deg_dist,
                                                    receiver_depth_in_km=0.0)
 
                     p_onset = otime + atime[0].time
@@ -304,6 +314,11 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         self.cartopy_canvas.global_map(0, plot_earthquakes=False, show_colorbar=False,
            show_stations = True, show_station_names = self.namesCB.isChecked(), clear_plot = True,
                                        coordinates = coordinates, resolution = self.typeCB.currentText())
+        if len(self.latitudes)>0 and len(self.longitudes) and len(self.depths) and len(self.magnitudes)>0:
+
+            self.cartopy_canvas.global_map(0, plot_earthquakes=True, show_colorbar=self.activated_colorbar, clear_plot = False,
+                                           lat=self.latitudes, lon=self.longitudes, depth=self.depths, magnitude=self.magnitudes,
+                                           resolution=self.typeCB.currentText())
 
     def on_click_matplotlib(self, event, canvas):
         self.retrivetool = retrieve()
