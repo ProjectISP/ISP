@@ -47,7 +47,6 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         self.help = HelpDoc()
 
-
     def get_coordinates(self, row, column):
         lat = self.tableWidget.item(row,1).data(0)
         lon = self.tableWidget.item(row, 2).data(0)
@@ -274,7 +273,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                     md.set_info_message("Nothing to write")
 
     def load_inventory(self):
-        self.networksLE.setText("")
+        #self.networksLE.setText("")
         self.stationsLE.setText("")
         self.channelsLE.setText("")
         starttime = convert_qdatetime_utcdatetime(self.start_dateTimeEdit)
@@ -292,7 +291,9 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                 self.catalogBtn.setEnabled(True)
             else:
                 md = MessageDialog(self)
-                md.set_info_message("The current client does not have a station service")
+                md.set_info_message("The current client does not have a station service. "
+                                    "Please check that you do not have selected -just specific nets- and the net "
+                                    "field provide a net name that is not expected in this service")
         except:
             md = MessageDialog(self)
             md.set_info_message("The current client does not have a station service")
@@ -301,7 +302,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         coordinates = self.retrivetool.get_inventory_coordinates(self.inventory)
         self.cartopy_canvas.global_map(0, plot_earthquakes=False, show_colorbar=False,
-           show_stations = True, show_station_names = self.namesCB.isChecked(), clear_plot = False,
+           show_stations = True, show_station_names = self.namesCB.isChecked(), clear_plot = True,
                                        coordinates = coordinates, resolution = self.typeCB.currentText())
 
     def on_click_matplotlib(self, event, canvas):

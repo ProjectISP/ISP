@@ -1076,7 +1076,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
             cs = ax.scatter(lon, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map, vmin = 0,
                             vmax = 600)
 
-            kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color="red", alpha=0.3, func=lambda s: np.log(s / 0.25))
+            kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color="red", alpha=0.5, func=lambda s: np.log(s / 0.25))
             ax.legend(*cs.legend_elements(**kw), loc="lower right", title="Magnitudes")
 
             if show_colorbar:

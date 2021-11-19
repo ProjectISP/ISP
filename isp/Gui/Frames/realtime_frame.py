@@ -1,6 +1,5 @@
 import os
 import tempfile
-
 from obspy import UTCDateTime, Stream
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -56,7 +55,10 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
 
-        self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+        #self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+
+        self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
+        self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_metadata_file(self.metadata_path_bind))
 
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.mapBtn.clicked.connect(self.show_map)
@@ -124,15 +126,19 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
     def open_parameters_settings(self):
         self.parameters.show()
 
-    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
-    @AsycTime.run_async()
     def onChange_metadata_path(self, value):
+
+        md = MessageDialog(self)
         try:
+
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
+            md.set_info_message("Loaded Metadata, please check your terminal for further details")
 
         except:
-            raise FileNotFoundError("The metadata is not valid")
+
+            md.set_error_message("Something went wrong. Please check your metada file is a correct one")
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
@@ -140,6 +146,11 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
         if dir_path:
             bind.value = dir_path
+
+    def on_click_select_metadata_file(self, bind: BindPyqtObject):
+        selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            bind.value = selected[0]
 
     def handle_data(self, tr):
         # If tr is not valid, discard it

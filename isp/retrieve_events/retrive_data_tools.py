@@ -60,8 +60,6 @@ class retrieve:
                                                     endtime=endtime)
         except:
 
-
-
             print("Coundn't be conected, Please check your internet connection and try another time")
 
         return inventory, client
