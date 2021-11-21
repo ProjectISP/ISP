@@ -832,7 +832,7 @@ class MatplotlibFrame(pw.QMainWindow):
 class CartopyCanvas(BasePltPyqtCanvas):
 
     #MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
-    MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
+    MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2020/mapserv?'
     #MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/etopo1/MapServer/WMSServer'
     def __init__(self, parent, **kwargs):
         """
@@ -889,7 +889,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         wms = WebMapService(self.MAP_SERVICE_URL)
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
         #layer = 'GEBCO_08 Hillshade'
-        layer ='GEBCO_2019_Grid'
+        layer ='GEBCO_2020_Grid'
         #layer = 'shaded_relief'
         xmin = int(x-6)
         xmax = int(x+6)

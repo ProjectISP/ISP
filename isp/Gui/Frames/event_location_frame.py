@@ -1,7 +1,7 @@
 import math
 import os
 from isp.Gui import pw, pyc, qt, pqg
-from isp.Gui.Frames import BaseFrame
+from isp.Gui.Frames import BaseFrame, MessageDialog
 from isp.Gui.Frames.uis_frames import UiEventLocationFrame
 from isp.Gui.Models.sql_alchemy_model import SQLAlchemyModel
 from isp.db.models import EventLocationModel, FirstPolarityModel, MomentTensorModel
@@ -410,87 +410,92 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         else:
             self.plot_map()
 
-    def plot_map(self, map_service='https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?',
-                 layer='GEBCO_2019_Grid'):
-
-        if self.cb:
-            self.cb.remove()
-
-            # self.map_widget.fig.delaxes(self.map_widget.fig.axes[1])
-
-        MAP_SERVICE_URL = map_service
-        try:
-            wms = WebMapService(MAP_SERVICE_URL)
-        except:
-            pass
-        layer = layer
-
-        entities = self.model.getEntities()
-        lat = []
-        lon = []
-        depth = []
-        mag = []
-        for j in entities:
-            lat.append(j[0].latitude)
-            lon.append(j[0].longitude)
-            depth.append(j[0].depth)
-
-            if j[0].mw == None:
-                j[0].mw = 3.0
-
-            mag.append(j[0].mw)
-
-        # print(entities)
-
-        mag = np.array(mag)
-        mag = 0.5 * np.exp(mag)
-        min_lon = min(lon) - 0.5
-        max_lon = max(lon) + 0.5
-        min_lat = min(lat) - 0.5
-        max_lat = max(lat) + 0.5
-        extent = [min_lon, max_lon, min_lat, max_lat]
-
-        self.map_widget.ax.set_extent(extent, crs=ccrs.PlateCarree())
+    def plot_map(self, map_service='https://www.gebco.net/data_and_products/gebco_web_services/2020/mapserv?',
+                 layer='GEBCO_2020_Grid'):
 
         try:
-            self.map_widget.ax.add_wms(wms, layer)
+            if self.cb:
+                self.cb.remove()
+
+                # self.map_widget.fig.delaxes(self.map_widget.fig.axes[1])
+
+            MAP_SERVICE_URL = map_service
+            try:
+                wms = WebMapService(MAP_SERVICE_URL)
+            except:
+                pass
+            layer = layer
+
+            entities = self.model.getEntities()
+            lat = []
+            lon = []
+            depth = []
+            mag = []
+            for j in entities:
+                lat.append(j[0].latitude)
+                lon.append(j[0].longitude)
+                depth.append(j[0].depth)
+
+                if j[0].mw == None:
+                    j[0].mw = 3.0
+
+                mag.append(j[0].mw)
+
+            # print(entities)
+
+            mag = np.array(mag)
+            mag = 0.5 * np.exp(mag)
+            min_lon = min(lon) - 0.5
+            max_lon = max(lon) + 0.5
+            min_lat = min(lat) - 0.5
+            max_lat = max(lat) + 0.5
+            extent = [min_lon, max_lon, min_lat, max_lat]
+
+            self.map_widget.ax.set_extent(extent, crs=ccrs.PlateCarree())
+
+            try:
+                self.map_widget.ax.add_wms(wms, layer)
+            except:
+                os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
+                self.map_widget.ax.background_img(name='ne_shaded', resolution="high")
+
+
+            lon = np.array(lon)
+            lat = np.array(lat)
+            depth = np.array(depth) / 1000
+            color_map = plt.cm.get_cmap('rainbow')
+            reversed_color_map = color_map.reversed()
+            cs = self.map_widget.ax.scatter(lon, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map,
+                                            transform=ccrs.PlateCarree())
+            self.cb = self.map_widget.fig.colorbar(cs, ax=self.map_widget.ax, orientation='horizontal', fraction=0.05,
+                                                   extend='both', pad=0.15, label='Depth (km)')
+            self.map_widget.lat.scatter(depth, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map)
+            self.map_widget.lat.set_ylim((min_lat, max_lat))
+            self.map_widget.lon.scatter(lon, depth, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map)
+            self.map_widget.lon.xaxis.tick_top()
+            self.map_widget.lon.yaxis.tick_right()
+            self.map_widget.lon.invert_yaxis()
+            # self.map_widget.lon.set(xlabel='Longitude', ylabel='Depth (km)')
+            self.map_widget.lon.set_xlim((min_lon, max_lon))
+
+            # magnitude legend
+            kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color="red", func=lambda s: np.log(s / 0.5))
+            self.map_widget.ax.legend(*cs.legend_elements(**kw), loc="lower right", title="Magnitudes")
+
+            gl = self.map_widget.ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                                              linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
+
+            gl.top_labels = False
+            gl.left_labels = False
+            gl.xlines = False
+            gl.ylines = False
+            gl.xformatter = LONGITUDE_FORMATTER
+            gl.yformatter = LATITUDE_FORMATTER
+            self.map_widget.fig.canvas.draw()
         except:
-            os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
-            self.map_widget.ax.background_img(name='ne_shaded', resolution="high")
-
-
-        lon = np.array(lon)
-        lat = np.array(lat)
-        depth = np.array(depth) / 1000
-        color_map = plt.cm.get_cmap('rainbow')
-        reversed_color_map = color_map.reversed()
-        cs = self.map_widget.ax.scatter(lon, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map,
-                                        transform=ccrs.PlateCarree())
-        self.cb = self.map_widget.fig.colorbar(cs, ax=self.map_widget.ax, orientation='horizontal', fraction=0.05,
-                                               extend='both', pad=0.15, label='Depth (km)')
-        self.map_widget.lat.scatter(depth, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map)
-        self.map_widget.lat.set_ylim((min_lat, max_lat))
-        self.map_widget.lon.scatter(lon, depth, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map)
-        self.map_widget.lon.xaxis.tick_top()
-        self.map_widget.lon.yaxis.tick_right()
-        self.map_widget.lon.invert_yaxis()
-        # self.map_widget.lon.set(xlabel='Longitude', ylabel='Depth (km)')
-        self.map_widget.lon.set_xlim((min_lon, max_lon))
-
-        # magnitude legend
-        kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color="red", func=lambda s: np.log(s / 0.5))
-        self.map_widget.ax.legend(*cs.legend_elements(**kw), loc="lower right", title="Magnitudes")
-
-        gl = self.map_widget.ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
-                                          linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
-
-        gl.top_labels = False
-        gl.left_labels = False
-        gl.xlines = False
-        gl.ylines = False
-        gl.xformatter = LONGITUDE_FORMATTER
-        gl.yformatter = LATITUDE_FORMATTER
-        self.map_widget.fig.canvas.draw()
+            md = MessageDialog(self)
+            md.set_error_message("Couldn't extract info from the DB, please check that your database "
+                             "is loaded and is not empty")
 
     def plot_foc_mec(self, method, **kwargs):
 

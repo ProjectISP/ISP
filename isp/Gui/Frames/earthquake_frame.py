@@ -1159,20 +1159,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         try:
             [lat,lon] = [self.event_info.latitude, self.event_info.longitude]
-            obsfiles = self.files_path
+            #obsfiles = self.files_path
 
             map_dict={}
             sd = []
 
-            for file in obsfiles:
-                st = SeismogramDataAdvanced(file)
+            for tr in self.st:
+                #st = SeismogramDataAdvanced(file)
 
-                name = st.stats.Network+"."+st.stats.Station
-
+                #name = st.stats.Network+"."+st.stats.Station
+                name = tr.stats.network+"."+tr.stats.station
                 sd.append(name)
 
-                st_coordinates = self.__metadata_manager.extract_coordinates(self.inventory, file)
-
+                #st_coordinates = self.__metadata_manager.extract_coordinates(self.inventory, file)
+                st_coordinates = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
                 map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
 
             self.map_stations = StationsMap(map_dict)

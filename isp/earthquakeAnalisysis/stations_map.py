@@ -17,21 +17,22 @@ class StationsMap:
     def plot_stations_map(self, **kwargs):
         from matplotlib.transforms import offset_copy
         import cartopy.crs as ccrs
-        import cartopy.io.img_tiles as cimgt
-        import matplotlib.pyplot as plt
         from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
         from owslib.wms import WebMapService
         from matplotlib.patheffects import Stroke
         import cartopy.feature as cfeature
         import shapely.geometry as sgeom
         from matplotlib import pyplot as plt
+        from isp import ROOT_DIR
+        import os
+        os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
         # MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
-        MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
+        MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2020/mapserv?'
         # MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/etopo1/MapServer/WMSServer'
-        wms = WebMapService(MAP_SERVICE_URL)
+
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
         #layer = 'GEBCO_08 Hillshade'
-        layer ='GEBCO_2019_Grid'
+        layer ='GEBCO_2020_Grid'
         #layer = 'shaded_relief'
 
         epi_lat = kwargs.pop('latitude')
@@ -58,13 +59,14 @@ class StationsMap:
         ax.set_extent(extent, crs=ccrs.PlateCarree())
 
         try:
+
+            wms = WebMapService(MAP_SERVICE_URL)
             ax.add_wms(wms, layer)
+
         except:
-            coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
-                                                                edgecolor='k', alpha=0.6, linewidth=0.5,
-                                                                facecolor=cartopy.feature.COLORS['land'])
-            ax.stock_img()
-            ax.add_feature(coastline_10m)
+
+            ax.background_img(name='ne_shaded', resolution="high")
+
 
         #geodetic_transform = ccrs.Geodetic()._as_mpl_transform(ax)
         geodetic_transform = ccrs.PlateCarree()._as_mpl_transform(ax)
