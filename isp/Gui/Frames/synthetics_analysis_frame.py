@@ -10,8 +10,8 @@ from isp.Gui.Frames.qt_components import ParentWidget, FilesView, MessageDialog
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.synthetics_generator_dialog import SyntheticsGeneratorDialog
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
-
 import pickle
+from sys import platform
 
 @add_save_load()
 class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
@@ -126,7 +126,12 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
     # Function added for 3C Components
     def on_click_select_directory_3C(self):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind_3C.value)
+
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind_3C.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind_3C.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
 
         if dir_path:
             self.root_path_bind_3C.value = dir_path

@@ -14,6 +14,7 @@ from isp.mti.mti_utilities import MTIManager
 from isp.mti.class_isola_new import *
 from isp.Gui.Frames.help_frame import HelpDoc
 import pandas as pd
+from sys import platform
 
 @add_save_load()
 class MTIFrame(BaseFrame, UiMomentTensor):
@@ -86,7 +87,11 @@ class MTIFrame(BaseFrame, UiMomentTensor):
             raise InvalidFile(msg)
 
     def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if dir_path:
             bind.value = dir_path
 
@@ -173,16 +178,21 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self._stations_info = StationsInfo(sd, check = True)
         self._stations_info.show()
 
-
-
     def write(self):
         root_path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
-        n=len(self.st)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                           pw.QFileDialog.DontUseNativeDialog)
+        if not dir_path:
+            return
+
+        n = len(self.st)
         for j in range(n):
-            tr=self.st[j]
+            tr = self.st[j]
             print(tr.id, "Writing data processed")
-            path_output =  os.path.join(dir_path, tr.id)
+            path_output = os.path.join(dir_path, tr.id)
             tr.write(path_output, format="MSEED")
 
     ##In progress##

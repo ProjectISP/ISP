@@ -2,6 +2,7 @@ import os
 
 from isp.Gui import pw
 from isp.Gui.Frames.uis_frames import UiCrustalModelParametersFrame
+from sys import platform
 
 
 class CrustalModelParametersFrame(pw.QDialog, UiCrustalModelParametersFrame):
@@ -74,7 +75,11 @@ class CrustalModelParametersFrame(pw.QDialog, UiCrustalModelParametersFrame):
 
     def save_model(self):
         root_path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                           pw.QFileDialog.DontUseNativeDialog)
         print("Writing data Model ", dir_path)
         model = self.getParametersWithFormat()
         print(model)

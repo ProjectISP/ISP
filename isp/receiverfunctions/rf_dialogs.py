@@ -41,6 +41,7 @@ import matplotlib.pyplot as plt
 from isp.Gui import pyqt, pqg, pw, pyc, qt
 
 import numpy as np
+from sys import platform
 
 class ShowEarthquakeDialog(QtWidgets.QDialog, UiReceiverFunctionsShowEarthquake):
     def __init__(self, file, bandpass):
@@ -84,13 +85,21 @@ class CutEarthquakesDialog(QtWidgets.QDialog, UiReceiverFunctionsCut):
     
     def get_path(self, pushButton):
         if pushButton == 2:
-            path = QtWidgets.QFileDialog.getExistingDirectory()
+            if "darwin" == platform:
+                path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', '')
+            else:
+                path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', '',
+                                                           pw.QFileDialog.DontUseNativeDialog)
             self.lineEdit.setText(path)
         elif pushButton == 3:
             path = QtWidgets.QFileDialog.getOpenFileName()[0]
             self.lineEdit_3.setText(path)
         elif pushButton == 4:
-            path = QtWidgets.QFileDialog.getExistingDirectory()
+            if "darwin" == platform:
+                path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', '')
+            else:
+                path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', '',
+                                                           pw.QFileDialog.DontUseNativeDialog)
             self.lineEdit_2.setText(path)
         elif pushButton == 5:
             path = QtWidgets.QFileDialog.getSaveFileName()[0]

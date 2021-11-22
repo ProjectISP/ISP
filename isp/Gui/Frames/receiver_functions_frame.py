@@ -47,6 +47,7 @@ import matplotlib.backend_bases
 import matplotlib.patches as mpatches
 from owslib.wms import WebMapService
 from PyQt5 import QtWidgets
+from sys import platform
 
 class RecfFrame(BaseFrame, UiReceiverFunctions):
     
@@ -152,7 +153,12 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         """Map the mseed files inside the given directory, return a dict
         
         """
-        dir_ = QtWidgets.QFileDialog.getExistingDirectory()
+
+        if "darwin" == platform:
+            dir_ = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Directory', "")
+        else:
+            dir_ = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Directory', "",
+                                                              QtWidgets.QFileDialog.DontUseNativeDialog)
         
         if dir_:
             self.data_map = mwu.map_earthquakes(eq_dir=dir_)
@@ -340,7 +346,12 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         """Save the current receiver functions to disk
         
         """
-        outdir = QtWidgets.QFileDialog.getExistingDirectory()
+
+        if "darwin" == platform:
+            outdir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Directory', '')
+        else:
+            outdir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Directory', '',
+                                                                  QtWidgets.QFileDialog.DontUseNativeDialog)
         stnm = self.comboBox.currentText()
         a = self.doubleSpinBox.value()
         c = self.doubleSpinBox_2.value()
@@ -659,7 +670,12 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         """Read receiver functions and plot stations on the map
         
         """
-        dir_ = QtWidgets.QFileDialog.getExistingDirectory()
+
+        if "darwin" == platform:
+            dir_ = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Directory', '')
+        else:
+            dir_ = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Directory', '',
+                                                              QtWidgets.QFileDialog.DontUseNativeDialog)
         self.rfs_dicts = mwu.map_rfs(rfs_dir=dir_)
         
         self.setup_ccp_map_axes()

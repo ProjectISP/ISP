@@ -4,6 +4,8 @@ import pandas as pd
 from isp import ROOT_DIR
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 import os
+from sys import platform
+
 
 class StationsCoords(pw.QFrame, UiStationCoords):
     def __init__(self):
@@ -45,23 +47,30 @@ class StationsCoords(pw.QFrame, UiStationCoords):
         return coordinates
 
     def save_stations_coordinates(self):
-         folder = pw.QFileDialog.getExistingDirectory(self, 'Select a directory', ROOT_DIR)
-         file_path = os.path.join(folder, self.rootPathForm.text())
-         station_names = []
-         station_latitudes = []
-         station_longitudes = []
-         station_depths = []
-         coordinates = self.__getCoordinates()
+        if "darwin" == platform:
+            folder = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', ROOT_DIR)
+        else:
+            folder = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', ROOT_DIR,
+                                                         pw.QFileDialog.DontUseNativeDialog)
+        if not folder:
+            return
 
-         for j in range(len(coordinates)):
-             station_names.append(coordinates[j][0])
-             station_latitudes.append(coordinates[j][1])
-             station_longitudes.append(coordinates[j][2])
-             station_depths.append(coordinates[j][3])
+        file_path = os.path.join(folder, self.rootPathForm.text())
+        station_names = []
+        station_latitudes = []
+        station_longitudes = []
+        station_depths = []
+        coordinates = self.__getCoordinates()
 
-         coord = {'Name': station_names, 'Lat': station_latitudes, 'Lon': station_longitudes, 'Depth': station_depths}
-         df = pd.DataFrame(coord, columns=['Name', 'Lat', 'Lon', 'Depth'])
-         df.to_csv(file_path, sep=' ', index=False)
+        for j in range(len(coordinates)):
+            station_names.append(coordinates[j][0])
+            station_latitudes.append(coordinates[j][1])
+            station_longitudes.append(coordinates[j][2])
+            station_depths.append(coordinates[j][3])
+
+        coord = {'Name': station_names, 'Lat': station_latitudes, 'Lon': station_longitudes, 'Depth': station_depths}
+        df = pd.DataFrame(coord, columns=['Name', 'Lat', 'Lon', 'Depth'])
+        df.to_csv(file_path, sep=' ', index=False)
 
 
 

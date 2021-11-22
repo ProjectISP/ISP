@@ -14,6 +14,7 @@ from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.earthquakeAnalisysis import NllManager, PolarizationAnalyis, PickerManager, FirstPolarity, PDFmanger
 import numpy as np
+from sys import platform
 
 @add_save_load()
 class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
@@ -101,7 +102,12 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
 
     # Function added for 3C Components
     def on_click_select_directory_3C(self):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind_3C.value)
+
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind_3C.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind_3C.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
 
         if dir_path:
             self.root_path_bind_3C.value = dir_path
@@ -195,7 +201,12 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
     def save_rotated(self):
         import os
         root_path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if self._st:
             n = len(self._st)
             for j in range(n):

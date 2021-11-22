@@ -490,9 +490,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 md = MessageDialog(self)
                 md.set_info_message("Loaded Metadata, please check your terminal for further details")
 
-
     def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
 
         if dir_path:
             bind.value = dir_path
@@ -1053,13 +1057,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             md = MessageDialog(self)
             md.set_info_message("No Detections")
 
-
-
-
     def write_files_page(self):
 
         root_path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if self.st:
             n = len(self.st)
             for j in range(n):
@@ -1072,7 +1077,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def save_cf(self):
         root_path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if self.cf:
             n = len(self.cf)
             for j in range(n):
@@ -1532,7 +1541,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def availability(self):
 
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', "",
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if os.path.isdir(dir_path):
             try:
 
@@ -1542,17 +1555,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 md = MessageDialog(self)
                 md.set_warning_message("No data available")
 
-
     def availability_all_tree(self):
 
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', "",
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if os.path.isdir(dir_path):
             try:
                 MseedUtil.data_availability(dir_path, only_this = False)
             except:
                 md = MessageDialog(self)
                 md.set_warning_message("No data available")
-
 
     def open_magnitudes_calculator(self):
         hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")
