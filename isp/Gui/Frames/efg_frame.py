@@ -13,7 +13,7 @@ from isp.Utils import AsycTime, MseedUtil, ObspyUtil
 from isp.ant.ambientnoise import noise_organize
 from isp.ant.process_ant import process_ant
 from isp.ant.crossstack import noisestack
-
+from sys import platform
 
 from isp.Gui.Utils.pyqt_utils import add_save_load
 @add_save_load()
@@ -123,9 +123,11 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 md.set_info_message("Loaded Metadata, please check your terminal for further details")
 
     def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
-                                                       pw.QFileDialog.Option.DontUseNativeDialog)
-
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if dir_path:
             bind.value = dir_path
 

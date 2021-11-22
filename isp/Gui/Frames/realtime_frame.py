@@ -18,6 +18,7 @@ from obspy.clients.seedlink.easyseedlink import create_client
 import matplotlib.dates as mdt
 import datetime
 import numpy as np
+from sys import platform
 
 
 class RealTimeFrame(BaseFrame, UiRealTimeFrame):
@@ -81,11 +82,6 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
         # shortcuts
 
-    def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
-        if dir_path:
-            bind.value = dir_path
-
     @property
     def dataless_manager(self):
         if not self.__dataless_manager:
@@ -141,8 +137,11 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
             md.set_error_message("Something went wrong. Please check your metada file is a correct one")
 
     def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
-                                                       pw.QFileDialog.Option.DontUseNativeDialog)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
 
         if dir_path:
             bind.value = dir_path
