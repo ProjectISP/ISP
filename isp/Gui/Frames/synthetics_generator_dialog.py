@@ -7,6 +7,7 @@ from obspy.clients.syngine import Client
 from concurrent.futures.thread import ThreadPoolExecutor
 import os
 import pickle
+from sys import platform
 from datetime import datetime
 
 @add_save_load()
@@ -152,10 +153,16 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
                                            "Synthetics generator request failed.")
                         return
 
-                    dir_path = pw.QFileDialog.getExistingDirectory(
-                        self, 'Select Output Directory')
+                    if "darwin" == platform:
+                        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
+                    else:
+                        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', '',
+                                                                       pw.QFileDialog.DontUseNativeDialog)
+                    if not dir_path:
+                        return
+
                     for tr in st:
-                        path_output =  os.path.join(dir_path, tr.id)
+                        path_output = os.path.join(dir_path, tr.id)
                         tr.write(path_output, format="MSEED")
                     current = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
                     name = 'generation_params' + current + '.pkl'

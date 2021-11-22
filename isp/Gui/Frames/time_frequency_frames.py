@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from isp.Gui.Frames.help_frame import HelpDoc
 import os
+from sys import platform
 
 @add_save_load()
 class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
@@ -113,7 +114,11 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         pass
 
     def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if dir_path:
             bind.value = dir_path
 

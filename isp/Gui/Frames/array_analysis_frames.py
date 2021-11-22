@@ -20,6 +20,7 @@ from isp.arrayanalysis import array_analysis
 from isp import ROOT_DIR
 from isp.Utils.subprocess_utils import exc_cmd
 from isp.Gui.Frames.help_frame import HelpDoc
+from sys import platform
 
 class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
@@ -32,6 +33,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.inventory = {}
         self._stations_info = {}
         self._stations_coords = {}
+        self.stack = None
         self.canvas = MatplotlibCanvas(self.responseMatWidget)
         self.canvas_fk = MatplotlibCanvas(self.widget_fk,nrows=4)
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
@@ -109,7 +111,11 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
 
     def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if dir_path:
             bind.value = dir_path
 
@@ -312,7 +318,11 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
     def write(self):
         root_path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if dir_path:
             n=len(self.st)
             try:
@@ -331,16 +341,20 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                 pass
 
     def write_stack(self):
-            if len(self.stack)>0:
-                root_path = os.path.dirname(os.path.abspath(__file__))
+        if self.stack is not None and len(self.stack) > 0:
+            root_path = os.path.dirname(os.path.abspath(__file__))
+            if "darwin" == platform:
                 dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
-                if dir_path:
-                    tr = Trace(data=self.stack, header=self.stats)
-                    file = os.path.join(dir_path,tr.id)
-                    tr.write(file, format="MSEED")
             else:
-                md = MessageDialog(self)
-                md.set_info_message("Nothing to write")
+                dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                               pw.QFileDialog.DontUseNativeDialog)
+            if dir_path:
+                tr = Trace(data=self.stack, header=self.stats)
+                file = os.path.join(dir_path,tr.id)
+                tr.write(file, format="MSEED")
+        else:
+            md = MessageDialog(self)
+            md.set_info_message("Nothing to write")
 
 
 
