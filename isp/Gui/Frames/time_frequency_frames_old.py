@@ -19,6 +19,7 @@ from isp.seismogramInspector.MTspectrogram import MTspectrogram
 from isp.seismogramInspector.ccwt import ccwt
 from isp.seismogramInspector.ba_fast import ccwt_ba_fast
 from isp.seismogramInspector.CWT_fast import cwt_fast
+from sys import platform
 
 @unique
 class Phases(Enum):
@@ -289,7 +290,11 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             raise InvalidFile(msg)
 
     def on_click_select_directory(self):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
 
         if dir_path:
             self.root_path_bind.value = dir_path

@@ -16,6 +16,7 @@ import obspy.taup
 from isp.Gui.Utils.pyqt_utils import convert_qdatetime_utcdatetime
 from isp.retrieve_events import retrieve
 from isp.Gui.Frames.help_frame import HelpDoc
+from sys import platform
 
 class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
     def __init__(self):
@@ -142,6 +143,16 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
     def download_events(self):
 
+        root_path = os.path.dirname(os.path.abspath(__file__))
+
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                           pw.QFileDialog.DontUseNativeDialog)
+        if not dir_path:
+            return
+
         starttime = convert_qdatetime_utcdatetime(self.start_dateTimeEdit)
         endtime = convert_qdatetime_utcdatetime(self.end_dateTimeEdit)
         selected_items = self.tableWidget.selectedItems()
@@ -177,8 +188,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         
         model = obspy.taup.TauPyModel(model="iasp91")
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+
 
         for event in event_dict.keys():
             otime = obspy.UTCDateTime(event_dict[event]['otime'])
@@ -258,7 +268,11 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             if len(st)>0:
 
                 root_path = os.path.dirname(os.path.abspath(__file__))
-                dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+                if "darwin" == platform:
+                    dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+                else:
+                    dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                                   pw.QFileDialog.DontUseNativeDialog)
                 self.write(st, dir_path)
 
         except:

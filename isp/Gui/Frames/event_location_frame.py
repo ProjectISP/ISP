@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from owslib.wms import WebMapService
 import os
+from sys import platform
 
 
 class DateTimeFormatDelegate(pw.QStyledItemDelegate):
@@ -291,16 +292,21 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         return event_model
 
     def _readHypFolder(self):
-        dir = pw.QFileDialog.getExistingDirectory(self, "Get directory to read .hyp files from")
+
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Get directory to read .hyp files from')
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', "",
+                                                           pw.QFileDialog.DontUseNativeDialog)
 
         # If user cancels selecting folder, return
-        if not dir:
+        if not dir_path:
             return
 
-        files = [f for f in os.listdir(dir) if f.endswith('.hyp')]
+        files = [f for f in os.listdir(dir_path) if f.endswith('.hyp')]
         errors = []
         for file in files:
-            file_abs = os.path.abspath(os.path.join(dir, file))
+            file_abs = os.path.abspath(os.path.join(dir_path, file))
             try:
                 self._readHypFile(file_abs)
             except Exception as e:

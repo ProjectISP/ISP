@@ -1,4 +1,5 @@
 import os
+from sys import platform
 from isp.Gui import pw, pqg, qt, pyc
 from isp.Gui.Frames import UiPPSDs_dialog, MessageDialog
 from isp.Gui.Utils.pyqt_utils import add_save_load
@@ -6,6 +7,7 @@ from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.PPSDS_Utils.ppsds_utils import ppsdsISP
 from concurrent.futures.thread import ThreadPoolExecutor
+
 
 @add_save_load()
 class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
@@ -56,7 +58,13 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         md.set_info_message(msg)
 
     def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
+
         if dir_path:
             bind.value = dir_path
 
@@ -143,9 +151,16 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
     def saveDB(self):
         if self.db:
             params = self.db
-            params['parameters']=[self.lenghtSB.value(),self.overlapSB.value(),
-                                  self.smoothingSB.value(),self.periodSB.value()]
-            path = pw.QFileDialog.getExistingDirectory(self,'Select Directory', self.root_path_bind.value)
+            params['parameters'] = [self.lenghtSB.value(), self.overlapSB.value(),
+                                    self.smoothingSB.value(), self.periodSB.value()]
+            if "darwin" == platform:
+                path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value)
+            else:
+                path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
+            if not path:
+                return
+
             ppsdsISP.save_PPSDs(params, path, self.nameForm.text())
             md = MessageDialog(self)
             md.set_info_message("DB saved successfully")
