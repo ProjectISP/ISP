@@ -1,6 +1,8 @@
 # Singleton/SingletonDecorator.py
-from isp.Gui.Frames import MainFrame, TimeFrequencyFrame, EarthquakeAnalysisFrame, ArrayAnalysisFrame, MTIFrame,\
-    RecfFrame, EventLocationFrame, SyntheticsAnalisysFrame, DataDownloadFrame, RealTimeFrame, NoiseFrame
+import traceback
+
+from isp.Gui.Frames import MainFrame, TimeFrequencyFrame, EarthquakeAnalysisFrame, ArrayAnalysisFrame, MTIFrame, \
+    RecfFrame, EventLocationFrame, SyntheticsAnalisysFrame, DataDownloadFrame, RealTimeFrame, NoiseFrame, MessageDialog
 from isp.Gui.Frames.ppsds_frame import PPSDFrame
 from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Utils import Singleton
@@ -108,3 +110,10 @@ class Controller:
 
     def open_help(self):
         self.help.show()
+
+    def exception_parse(self, error_cls, exception, exc_traceback):
+        md = MessageDialog(self.main_frame)
+        detail_error = "".join(traceback.format_exception(error_cls, exception, exc_traceback))
+        md.set_error_message(message="{}:{}".format(error_cls.__name__, exception), detailed_message=detail_error)
+        md.show()
+

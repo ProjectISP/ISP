@@ -49,7 +49,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         try:
             self.cnn = CNNPicker()
-        except:
+        finally:
             print("Neural Network cannot be loaded")
 
         self.cancelled = False

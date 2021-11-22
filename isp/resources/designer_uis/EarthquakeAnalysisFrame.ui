@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1680</width>
-    <height>961</height>
+    <height>963</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -241,6 +241,12 @@
                </item>
                <item row="3" column="0" colspan="2">
                 <widget class="QPushButton" name="selectDirBtn">
+                 <property name="toolTip">
+                  <string extracomment="Select the folder where you have the seismogram files">Select the folder where you have the seismogram files</string>
+                 </property>
+                 <property name="toolTipDuration">
+                  <number>-1</number>
+                 </property>
                  <property name="text">
                   <string>Files Directory</string>
                  </property>
@@ -802,7 +808,7 @@
      <x>0</x>
      <y>0</y>
      <width>1680</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

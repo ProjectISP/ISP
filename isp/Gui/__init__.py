@@ -1,3 +1,4 @@
+import sys
 import PyQt5 as PyQt
 from PyQt5 import QtGui, QtWebEngineWidgets
 from PyQt5 import QtWidgets
@@ -29,9 +30,13 @@ def get_settings_file():
 
 
 def start_isp():
-    import sys
     from isp.Gui.StyleLib import set_isp_mpl_style_file
     from isp import app_logger
+
+    # Initializa DB
+    dir_path = os.path.dirname(os.path.abspath(__file__))
+    db.set_db_url("sqlite:///{}/isp_test.db".format(dir_path))
+    db.start()
 
     # print(user_preferences.fileName())
     app = QtWidgets.QApplication(sys.argv)
@@ -44,12 +49,14 @@ def start_isp():
     sys.exit(app.exec_())
 
 
-dir_path = os.path.dirname(os.path.abspath(__file__))
-db.set_db_url("sqlite:///{}/isp_test.db".format(dir_path))
-db.start()
+def except_hook(cls, exception, exc_traceback):
+    sys.__excepthook__(cls, exception, exc_traceback)
+    controller().exception_parse(cls, exception, exc_traceback)
 
+    #print(str(exception))
 
 
 if __name__ == '__main__':
+    sys.excepthook = except_hook
     start_isp()
 
