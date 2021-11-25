@@ -1,5 +1,6 @@
 import os
 import matplotlib.dates as mdt
+from obspy import Stream
 from obspy.core.event import Origin
 from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
@@ -112,9 +113,25 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         if dir_path:
             self.root_path_bind_3C.value = dir_path
 
+
+    def set_times(self, st):
+
+        maxstart = np.max([tr.stats.starttime for tr in st])
+        minend = np.min([tr.stats.endtime for tr in st])
+
+        return [minend, maxstart]
+
     def on_click_rotate(self, canvas):
+
         time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
         time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
+
+        #self.st = Stream(traces=[self.vertical_component_file, self.north_component_file, self.east_component_file])
+        #try:
+
+        #except:
+        #    pass
+
         angle = self.degreeSB.value()
         incidence_angle= self.incidenceSB.value()
         method = self.methodCB.currentText()

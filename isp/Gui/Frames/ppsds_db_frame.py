@@ -108,13 +108,15 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
             pyc.QMetaObject.invokeMethod(self.progressbar, 'setValue', qt.AutoConnection, pyc.Q_ARG(int, 0))
             self.db = self.ppsds.get_all_values(ini_dict)
             self.saveBtn.setEnabled(True)
-            md = MessageDialog(self)
-            md.set_info_message("PPSDs DB ready, now you can save your progress!!!")
+            print("PPSDs DB ready, now you can save your progress!!!")
+            #md = MessageDialog(self)
+            #md.set_info_message("PPSDs DB ready, now you can save your progress!!!")
 
         except:
-            md = MessageDialog(self)
-            md.set_error_message("PPSDs DB  couldn't be created, please check your metadata and "
-                                 "the data files directory")
+            print("PPSDs DB  couldn't be created, please check your metadata and the data files directory")
+            #md = MessageDialog(self)
+            #md.set_error_message("PPSDs DB  couldn't be created, please check your metadata and "
+            #                     "the data files directory")
 
 
 
