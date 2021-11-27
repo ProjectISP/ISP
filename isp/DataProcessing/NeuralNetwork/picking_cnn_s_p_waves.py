@@ -3,18 +3,15 @@ from typing import Dict, List
 import numpy as np
 from obspy import Stream, Trace, UTCDateTime
 from obspy.signal.trigger import trigger_onset
-import keras
+
 import tensorflow as tf
-#from tensorflow.keras import Sequential
-from keras import Sequential
-from keras.models import model_from_json
 
 
 class CNNPicker:
 
     def __init__(self, show_model_summary=False):
 
-        keras.backend.set_learning_phase(0)
+        tf.keras.backend.set_learning_phase(0)
 
         # private parameters.
         root_path = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +28,7 @@ class CNNPicker:
         self.n_shift = 10  # Number of samples to shift the sliding window at a time
         self.prob_s, self.prob_p, self.prob_n = [], [], []
 
-    def ___load_model(self, show_summary=False) -> Sequential:
+    def ___load_model(self, show_summary=False) -> tf.keras.Sequential:
         """
         Load  CNN model and its weights.
 
@@ -40,7 +37,7 @@ class CNNPicker:
         :return: The loaded model.
         """
         with open(self.__model_path, 'r') as file:
-            model = model_from_json(file.read(), custom_objects={'tf': tf})
+            model = tf.keras.models.model_from_json(file.read(), custom_objects={'tf': tf})
             # load weights into new model
             model.load_weights(self.__weight_path)
             if show_summary:
@@ -67,7 +64,7 @@ class CNNPicker:
         return None
 
     @property
-    def model(self) -> Sequential:
+    def model(self) -> tf.keras.Sequential:
         """
         :return: The loaded CNN model.
         """

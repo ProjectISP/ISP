@@ -10,12 +10,18 @@ from mtspec import mtspec
 import numpy as np
 import math
 import scipy.signal
-import pywt
+import pywt  # this should be added on requirements.txt if is a necessary package
 from isp.seismogramInspector.entropy import spectral_entropy
 import copy
 from obspy.signal.trigger import classic_sta_lta
 import obspy.signal
-from numba import jit
+
+try:
+    # use numba as optional for improve performance
+    from numba import jit
+    __use_numba = True
+except ImportError:
+    __use_numba = False
 
 def median_absolute_deviation(x):
     """
@@ -346,12 +352,22 @@ def add_white_noise(tr, SNR_dB):
     tr.data = tr.data+ n
     return tr
 
-@jit(nopython=True, parallel=True)
-def whiten_aux(data_f,data_f_whiten, index, half_width, avarage_window_width, half_width_pos):
+
+def __whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos):
     for j in index:
         den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
         data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
     return data_f_whiten
+
+
+# override function with jit decorator if numba is installed
+if __use_numba:
+    __whiten_aux = jit(nopython=True, parallel=True)(__whiten_aux)
+
+
+def whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos):
+    return __whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos)
+
 
 def whiten(tr, freq_width=0.05, taper_edge=True):
 
@@ -636,8 +652,8 @@ def wiener_filter(tr, time_window, noise_power):
 
     return tr
 
-@jit(nopython=True, parallel=True)
-def hampel_aux(input_series, window_size, size, n_sigmas):
+
+def __hampel_aux(input_series, window_size, size, n_sigmas):
 
     k = 1.4826  # scale factor for Gaussian distribution
     #indices = []
@@ -651,6 +667,14 @@ def hampel_aux(input_series, window_size, size, n_sigmas):
             #indices.append(i)
 
     return new_series
+
+
+if __use_numba:
+    __hampel_aux = jit(nopython=True, parallel=True)(__hampel_aux)
+
+
+def hampel_aux(input_series, window_size, size, n_sigmas):
+    return __hampel_aux(input_series, window_size, size, n_sigmas)
 
 def hampel(tr, window_size, n_sigmas=3):
 
