@@ -47,10 +47,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.setWindowTitle('Earthquake Location')
         self.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
 
-        try:
-            self.cnn = CNNPicker()
-        finally:
-            print("Neural Network cannot be loaded")
+        #try:
+        self.cnn = CNNPicker()
+        #finally:
+        #print("Neural Network cannot be loaded")
 
         self.cancelled = False
         self.progressbar = pw.QProgressDialog(self)

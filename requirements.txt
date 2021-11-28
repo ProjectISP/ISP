@@ -16,4 +16,5 @@ pillow
 PyWavelets
 dill
 nvector
+numba
 Tensorflow>=2.3.0
