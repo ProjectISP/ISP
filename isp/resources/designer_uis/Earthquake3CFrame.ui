@@ -137,6 +137,9 @@
            <property name="text">
             <string>Plot Polarization</string>
            </property>
+           <property name="shortcut">
+            <string>Ctrl+S</string>
+           </property>
           </widget>
          </item>
          <item row="3" column="0">
@@ -202,6 +205,9 @@
           <widget class="QPushButton" name="rotateplotBtn">
            <property name="text">
             <string>Rotate</string>
+           </property>
+           <property name="shortcut">
+            <string>R</string>
            </property>
           </widget>
          </item>

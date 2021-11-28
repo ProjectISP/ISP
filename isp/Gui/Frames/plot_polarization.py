@@ -1,5 +1,4 @@
 from obspy import Stream
-
 from isp.Gui.Frames import MatplotlibCanvas
 from isp.Gui.Frames.uis_frames import UiPlotPolarization
 from isp.Gui import pw
@@ -15,7 +14,7 @@ class PlotPolarization(pw.QFrame, UiPlotPolarization ):
         self._r = r-np.mean(r)
         self._t = t-np.mean(t)
         all_traces = [self._z, self._r, self._t]
-        self.st =Stream(traces=all_traces)
+        self.st = Stream(traces=all_traces)
         self._r_max = max(r)
         self._t_max = max(t)
         self._z_max=max(z)
@@ -23,7 +22,6 @@ class PlotPolarization(pw.QFrame, UiPlotPolarization ):
         self.canvas = MatplotlibCanvas(self.plotMatWidget_polarization)
         self.canvas2D = MatplotlibCanvas(self.plotMatWidget_polarization2, nrows=2, ncols=2, constrained_layout=True)
         self.canvas.figure.gca(projection='3d')
-
         self.plotBtn.clicked.connect(lambda: self.plot_particle())
 
 
@@ -33,8 +31,8 @@ class PlotPolarization(pw.QFrame, UiPlotPolarization ):
         self.canvas.plot_projection(self._r,self._t,self._z, axes_index=0)
         self.canvas.set_xlabel(0, "Radial")
         self.canvas.set_ylabel(0, "Transversal")
+        #self.canvas.set_zlabel(0, "Vertical")
 
-        #ax.set_zlim(-100, 100)
         self.canvas2D.plot(self._r, self._z, 0, clear_plot=True, linewidth=0.5)
         self.canvas2D.set_xlabel(0, "Radial")
         self.canvas2D.set_ylabel(0, "Vertical")

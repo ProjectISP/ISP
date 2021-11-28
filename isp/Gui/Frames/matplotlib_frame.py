@@ -15,6 +15,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patheffects import Stroke
 from matplotlib.transforms import offset_copy
 from matplotlib.widgets import SpanSelector
+from mpl_toolkits.mplot3d import Axes3D
 from obspy import Stream
 from owslib.wms import WebMapService
 from isp.Gui import pw, pyc, qt
@@ -656,7 +657,8 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             if clear_plot:
                 ax.cla()
 
-            ax = self.figure.gca(projection='3d')
+            #ax = self.figure.gca(projection='3d')
+            ax = Axes3D(self.figure)
             ax.plot(x, y, z, **kwargs)
 
     def scatter3d(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):

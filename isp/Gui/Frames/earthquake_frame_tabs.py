@@ -1,10 +1,9 @@
 import os
 import matplotlib.dates as mdt
-from obspy import Stream
+from obspy import UTCDateTime
 from obspy.core.event import Origin
 from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
-from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile, parse_excepts
 from isp.Gui import pw, pqg
 from isp.Gui.Frames import UiEarthquake3CFrame, MatplotlibCanvas, UiEarthquakeLocationFrame, CartopyCanvas, FocCanvas
@@ -12,7 +11,7 @@ from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.plot_polarization import PlotPolarization
 from isp.Gui.Frames.qt_components import ParentWidget, FilterBox, FilesView, MessageDialog
 from isp.Gui.Frames.stations_info import StationsInfo
-from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
+from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime
 from isp.earthquakeAnalisysis import NllManager, PolarizationAnalyis, PickerManager, FirstPolarity, PDFmanger
 import numpy as np
 from sys import platform
@@ -39,7 +38,7 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         self.canvas = MatplotlibCanvas(self.plotMatWidget_3C)
         self.canvas.set_new_subplot(3, ncols=1)
         self.canvas_pol = MatplotlibCanvas(self.Widget_polarization)
-
+        self.canvas.mpl_connect('key_press_event', self.key_pressed)
         # binds
         self.root_path_bind_3C = BindPyqtObject(self.rootPathForm_3C, self.onChange_root_path_3C)
         self.degreeSB_bind = BindPyqtObject(self.degreeSB)
@@ -116,25 +115,15 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
 
     def set_times(self, st):
 
-        maxstart = np.max([tr.stats.starttime for tr in st])
-        minend = np.min([tr.stats.endtime for tr in st])
+        max_start = np.max([tr.stats.starttime for tr in st])
+        min_end = np.min([tr.stats.endtime for tr in st])
 
-        return minend, maxstart
+        return min_end, max_start
 
     def on_click_rotate(self, canvas):
 
         time1 = convert_qdatetime_utcdatetime(self.dateTimeEdit_4)
         time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
-
-        #self.st = Stream(traces=[self.vertical_component_file, self.north_component_file, self.east_component_file])
-        #minend, maxstart = self.set_times(self.st)
-
-        #if time1 < minend:
-        #    time1=minend
-        #if time2 > maxstart:
-        #    time2 = maxstart
-        #try:
-
         angle = self.degreeSB.value()
         incidence_angle= self.incidenceSB.value()
         method = self.methodCB.currentText()
@@ -142,6 +131,7 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
 
         try:
             sd = PolarizationAnalyis(self.vertical_component_file, self.north_component_file, self.east_component_file)
+
             time, z, r, t, st = sd.rotate(self.inventory, time1, time2, angle, incidence_angle, method = method, parameters = parameters,
                                           trim = True)
             self._z = z
@@ -154,8 +144,8 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
                 info = "{}.{}.{}".format(self._st[index].stats.network, self._st[index].stats.station,
                                          self._st[index].stats.channel)
                 ax = self.canvas.get_axe(0)
-                ax.set_xlim(time1.matplotlib_date, time2.matplotlib_date)
-                formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+                ax.set_xlim(sd.t1.matplotlib_date, sd.t2.matplotlib_date)
+                formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
                 ax.xaxis.set_major_formatter(formatter)
                 self.canvas.set_plot_label(index, info)
 
@@ -237,6 +227,24 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
                 print(tr.id, "Writing data processed")
                 path_output = os.path.join(dir_path, id)
                 tr.write(path_output, format="MSEED")
+
+    def key_pressed(self, event):
+
+        if event.key == 'q':
+            x1, y1 = event.xdata, event.ydata
+            tt = UTCDateTime(mdt.num2date(x1))
+            set_qdatetime(tt, self.dateTimeEdit_4)
+            self.canvas.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
+            self.canvas.draw_arrow(x1, 1, arrow_label="st", color="purple", linestyles='--', picker=False)
+            self.canvas.draw_arrow(x1, 2, arrow_label="st", color="purple", linestyles='--', picker=False)
+
+        if event.key == 'e':
+            x1, y1 = event.xdata, event.ydata
+            tt = UTCDateTime(mdt.num2date(x1))
+            set_qdatetime(tt, self.dateTimeEdit_5)
+            self.canvas.draw_arrow(x1, 0, arrow_label= "et", color="purple", linestyles='--', picker=False)
+            self.canvas.draw_arrow(x1, 1, arrow_label="st", color="purple", linestyles='--', picker=False)
+            self.canvas.draw_arrow(x1, 2, arrow_label="st", color="purple", linestyles='--', picker=False)
 
 
 @add_save_load()

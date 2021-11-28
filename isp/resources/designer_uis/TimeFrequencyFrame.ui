@@ -182,6 +182,9 @@
             <property name="text">
              <string>Process and Plot</string>
             </property>
+            <property name="shortcut">
+             <string>W</string>
+            </property>
            </widget>
           </item>
           <item row="0" column="0" alignment="Qt::AlignHCenter">

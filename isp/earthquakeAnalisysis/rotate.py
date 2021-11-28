@@ -18,6 +18,8 @@ class PolarizationAnalyis:
 
         :param obs_file_path: The file path of pick observations.
         """
+        self.start_time = None
+        self.end_time = None
         self.path_z = path_z
         self.path_n = path_n
         self.path_e = path_e
@@ -27,46 +29,24 @@ class PolarizationAnalyis:
 
         st = ObspyUtil.merge_files_to_stream([self.path_z, self.path_n, self.path_e])
         ObspyUtil.trim_stream(st, start_time, end_time)
+        self.start_time = st[0].stats.starttime
+        self.end_time = st[0].stats.endtime
         return st
 
     def filter_error_message(self, msg):
         md = MessageDialog(self)
         md.set_info_message(msg)
 
-    # def rotate(self, t1: UTCDateTime, t2: UTCDateTime, angle, incidence_angle, method="NE->RT",  **kwargs):
-    #      #read seismograms
-    #      st = self.__get_stream(t1, t2)
-    #      #needs to implement an advance process
-    #
-    #
-    #
-    #      #
-    #      sampling_rate=st[0].stats.sampling_rate
-    #      #time = np.arange(0, len(st[0].data) / sampling_rate, 1. / sampling_rate)
-    #      time = st[0].times("matplotlib")
-    #      # rotate
-    #      if method == "NE->RT":
-    #         st.rotate(method=method, back_azimuth=angle)
-    #      elif method == 'ZNE->LQT':
-    #          st.rotate(method=method, back_azimuth=angle, inclination=incidence_angle)
-    #
-    #      #filter
-    #      filter_value = kwargs.get("filter_value", Filters.Default)
-    #      f_min = kwargs.get("f_min", 0.)
-    #      f_max = kwargs.get("f_max", 0.)
-    #      n=len(st)
-    #      data=[]
-    #      for i in range(n):
-    #
-    #          tr=st[i]
-    #
-    #          ObspyUtil.filter_trace(tr, filter_value, f_min, f_max)
-    #          data.append(tr.data)
-    #
-    #      return time, data[0], data[1], data[2], st
-
     def rotate(self, inventory, t1: UTCDateTime, t2: UTCDateTime, angle, incidence_angle, method="NE->RT", **kwargs):
         all_traces = []
+        self.__get_stream(t1, t2)
+        self.t1 = t1
+        self.t2 = t2
+        # Automatic trim to the starttime and endtime
+        if t1 < self.start_time:
+            self.t1 = self.start_time
+        if t2 > self.end_time:
+            self.t2 = self.end_time
         # Process advance
         parameters = kwargs.get("parameters")
         trim = kwargs.get("trim")
@@ -76,8 +56,8 @@ class PolarizationAnalyis:
             sd = SeismogramDataAdvanced(file_path)
 
             if trim:
-                tr = sd.get_waveform_advanced(parameters, inventory,filter_error_callback=self.filter_error_message,
-                                              start_time=t1, end_time=t2)
+                tr = sd.get_waveform_advanced(parameters, inventory, filter_error_callback=self.filter_error_message,
+                                              start_time=self.t1, end_time=self.t2)
             else:
                 tr = sd.get_waveform_advanced(parameters, inventory, filter_error_callback=self.filter_error_message)
 
@@ -86,7 +66,7 @@ class PolarizationAnalyis:
             st = Stream(traces=all_traces)
 
         #
-        sampling_rate = st[0].stats.sampling_rate
+        #sampling_rate = st[0].stats.sampling_rate
         # time = np.arange(0, len(st[0].data) / sampling_rate, 1. / sampling_rate)
         time = st[0].times("matplotlib")
         # rotate
