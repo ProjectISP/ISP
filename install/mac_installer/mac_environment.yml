@@ -1,4 +1,4 @@
-name: isp
+name: isp_test
 channels:
   - conda-forge
   - anaconda

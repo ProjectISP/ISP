@@ -119,7 +119,7 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         maxstart = np.max([tr.stats.starttime for tr in st])
         minend = np.min([tr.stats.endtime for tr in st])
 
-        return [minend, maxstart]
+        return minend, maxstart
 
     def on_click_rotate(self, canvas):
 
@@ -127,18 +127,22 @@ class Earthquake3CFrame(pw.QFrame, UiEarthquake3CFrame):
         time2 = convert_qdatetime_utcdatetime(self.dateTimeEdit_5)
 
         #self.st = Stream(traces=[self.vertical_component_file, self.north_component_file, self.east_component_file])
-        #try:
+        #minend, maxstart = self.set_times(self.st)
 
-        #except:
-        #    pass
+        #if time1 < minend:
+        #    time1=minend
+        #if time2 > maxstart:
+        #    time2 = maxstart
+        #try:
 
         angle = self.degreeSB.value()
         incidence_angle= self.incidenceSB.value()
         method = self.methodCB.currentText()
         parameters = self.parameters.getParameters()
+
         try:
             sd = PolarizationAnalyis(self.vertical_component_file, self.north_component_file, self.east_component_file)
-            time, z, r, t, st = sd.rotate(self.inventory,time1, time2, angle, incidence_angle, method = method, parameters = parameters,
+            time, z, r, t, st = sd.rotate(self.inventory, time1, time2, angle, incidence_angle, method = method, parameters = parameters,
                                           trim = True)
             self._z = z
             self._r = r
