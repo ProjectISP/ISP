@@ -1472,7 +1472,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.spectrum = PlotToolsManager(id)
             self.spectrum.plot_spectrum(freq, spec, jackknife_errors)
 
-        if event.key == 's':
+        if event.key == 'f':
             self.kind_wave = self.ChopCB.currentText()
             id = ""
             self.spectrum = PlotToolsManager(id)
