@@ -1,5 +1,4 @@
 import math
-import os
 from isp.Gui import pw, pyc, qt, pqg
 from isp.Gui.Frames import BaseFrame, MessageDialog
 from isp.Gui.Frames.uis_frames import UiEventLocationFrame
