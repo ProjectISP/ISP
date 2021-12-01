@@ -262,7 +262,7 @@
               </size>
              </property>
              <property name="text">
-              <string>  Earthquake Location</string>
+              <string>  Earthquake Analysis</string>
              </property>
              <property name="icon">
               <iconset>
