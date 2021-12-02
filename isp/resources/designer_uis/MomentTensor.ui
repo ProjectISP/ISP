@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1469</width>
-    <height>928</height>
+    <height>924</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -31,7 +31,7 @@
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <item row="1" column="1" rowspan="5">
-     <widget class="QWebEngineView" name="widget"/>
+     <widget class="QWebEngineView" name="widget" native="true"/>
     </item>
     <item row="1" column="0">
      <widget class="QSplitter" name="splitter_3">
@@ -50,8 +50,11 @@
          <layout class="QGridLayout" name="gridLayout_4">
           <item row="1" column="0">
            <widget class="QPushButton" name="selectDirBtn">
+            <property name="toolTip">
+             <string>Select the folder where you have the seismogram files</string>
+            </property>
             <property name="text">
-             <string>Files</string>
+             <string>Files Directory</string>
             </property>
            </widget>
           </item>
@@ -76,15 +79,21 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Set the Metadata File (*.dlsv or *.xml)</string>
+            </property>
             <property name="text">
-             <string>Metadata</string>
+             <string>Metadata File</string>
             </property>
            </widget>
           </item>
           <item row="2" column="0">
            <widget class="QPushButton" name="earthmodelBtn">
+            <property name="toolTip">
+             <string>Select the folder where you have the 1D earth model. You can create one in Build --&gt;  Earth Model</string>
+            </property>
             <property name="text">
-             <string>Earth Model</string>
+             <string>Earth Model File</string>
             </property>
            </widget>
           </item>
@@ -95,6 +104,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="stationsBtn">
+          <property name="toolTip">
+           <string>Click to view header information of the loaded seismogram files</string>
+          </property>
           <property name="text">
            <string>Station Info</string>
           </property>
@@ -124,6 +136,9 @@
           </item>
           <item row="2" column="0">
            <widget class="QCheckBox" name="trimCB">
+            <property name="toolTip">
+             <string>Checkd if you want trim the seismograms according to StartTime &amp; EndTime</string>
+            </property>
             <property name="text">
              <string>Trim</string>
             </property>
@@ -151,6 +166,9 @@
           </item>
           <item row="5" column="1">
            <widget class="QPushButton" name="run_inversionBtn">
+            <property name="toolTip">
+             <string>Click to run the MTI over the &quot;Process and Plot&quot; Seismograms. Please fill carefully the Parameters section</string>
+            </property>
             <property name="text">
              <string>Run Inversion</string>
             </property>
@@ -158,15 +176,21 @@
           </item>
           <item row="5" column="0">
            <widget class="QPushButton" name="stations_mapBtn">
+            <property name="toolTip">
+             <string>Plot stations map from the metadata and plot seismograms</string>
+            </property>
             <property name="text">
-             <string>Plot Stations Map</string>
+             <string>Stations Map</string>
             </property>
            </widget>
           </item>
           <item row="2" column="1">
            <widget class="QPushButton" name="plotBtn">
+            <property name="toolTip">
+             <string>Process the methods set in the Macro and Plot</string>
+            </property>
             <property name="text">
-             <string>Process and Plot Seismograms</string>
+             <string>Process and Plot</string>
             </property>
            </widget>
           </item>
@@ -225,6 +249,9 @@
          </item>
          <item row="6" column="0" alignment="Qt::AlignHCenter">
           <widget class="QLabel" name="label_4">
+           <property name="toolTip">
+            <string>Minimum frequency to be consider in the inversions</string>
+           </property>
            <property name="text">
             <string>Freq Min</string>
            </property>
@@ -289,6 +316,9 @@
          </item>
          <item row="6" column="2" alignment="Qt::AlignHCenter">
           <widget class="QLabel" name="label_5">
+           <property name="toolTip">
+            <string>Minimum frequency to be consider in the inversions</string>
+           </property>
            <property name="text">
             <string>Freq Max</string>
            </property>
@@ -316,6 +346,9 @@
          </item>
          <item row="7" column="0" alignment="Qt::AlignHCenter">
           <widget class="QLabel" name="label_10">
+           <property name="toolTip">
+            <string>Minimum epicentral distance to be consider in the inversions</string>
+           </property>
            <property name="text">
             <string>Dist Min (km)</string>
            </property>
@@ -386,6 +419,9 @@
          </item>
          <item row="7" column="2" alignment="Qt::AlignHCenter">
           <widget class="QLabel" name="label_11">
+           <property name="toolTip">
+            <string>Maximum epicentral distance to be consider in the inversions</string>
+           </property>
            <property name="text">
             <string>Dist Max (km)</string>
            </property>
@@ -520,7 +556,7 @@
   </action>
   <action name="actionSettings">
    <property name="text">
-    <string>Set Parameters</string>
+    <string>Macro</string>
    </property>
   </action>
   <action name="actionImport_from_EA">

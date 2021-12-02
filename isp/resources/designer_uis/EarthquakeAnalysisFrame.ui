@@ -44,13 +44,6 @@
             <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,10">
              <item>
               <layout class="QGridLayout" name="gridLayout_2">
-               <item row="22" column="0" colspan="5">
-                <widget class="Line" name="line_3">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
                <item row="19" column="4">
                 <widget class="QCheckBox" name="sortCB">
                  <property name="sizePolicy">
@@ -712,20 +705,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="9" column="0" colspan="5">
-                <widget class="Line" name="line_2">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="0" colspan="5">
-                <widget class="Line" name="line_4">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
                <item row="6" column="4">
                 <widget class="QCheckBox" name="selectCB">
                  <property name="enabled">
@@ -738,13 +717,34 @@
                   </sizepolicy>
                  </property>
                  <property name="toolTip">
-                  <string>Checked to fileter readed files by NET/STA/CHN.</string>
+                  <string>Checked to fileter readed files by NET/STA/CHN</string>
                  </property>
                  <property name="text">
                   <string>Select Files</string>
                  </property>
                  <property name="checked">
                   <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0" colspan="6">
+                <widget class="Line" name="line_4">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                </widget>
+               </item>
+               <item row="9" column="0" colspan="6">
+                <widget class="Line" name="line_2">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                </widget>
+               </item>
+               <item row="22" column="0" colspan="6">
+                <widget class="Line" name="line_3">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
                  </property>
                 </widget>
                </item>
@@ -763,7 +763,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>1129</width>
+                  <width>1131</width>
                   <height>767</height>
                  </rect>
                 </property>
