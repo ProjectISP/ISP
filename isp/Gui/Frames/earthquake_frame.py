@@ -304,7 +304,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         delta = params["window pick"]
         transform =params["transform"]
         pick_output_path = PickerManager.get_default_output_path()
-        self.nll_manager = NllManager(pick_output_path, self.dataless_path_bind.value)
+        self.nll_manager = NllManager(pick_output_path, self.metadata_path_bind.value)
         st_detect_all = self.st.copy()
 
         self.detect_events()
