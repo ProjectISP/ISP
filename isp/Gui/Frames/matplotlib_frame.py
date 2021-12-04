@@ -873,9 +873,12 @@ class CartopyCanvas(BasePltPyqtCanvas):
         :param kwargs:
         :return:
         """
+        from isp import ROOT_DIR
+        import os
+
         resolution = kwargs.pop('resolution')
         stations = kwargs.pop('stations')
-
+        os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
         name_stations = []
         lat = []
         lon = []
@@ -888,7 +891,6 @@ class CartopyCanvas(BasePltPyqtCanvas):
         ax = self.get_axe(axes_index)
 
 
-        wms = WebMapService(self.MAP_SERVICE_URL)
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
         #layer = 'GEBCO_08 Hillshade'
         layer ='GEBCO_2020_Grid'
@@ -904,13 +906,23 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         if resolution is "high":
             try:
+
+                wms = WebMapService(self.MAP_SERVICE_URL)
                 ax.add_wms(wms, layer)
+
             except:
-                pass
+
+                coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
+                                                                    edgecolor='k', alpha=0.6, linewidth=0.5,
+                                                                    facecolor=cartopy.feature.COLORS['land'])
+                ax.background_img(name='ne_shaded', resolution=resolution)
+                ax.add_feature(coastline_10m)
+
         elif resolution is "low":
+
                 coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
                     edgecolor='k', alpha=0.6, linewidth=0.5, facecolor=cartopy.feature.COLORS['land'])
-                #ax.stock_img()
+                ax.background_img(name='ne_shaded', resolution=resolution)
                 ax.add_feature(coastline_10m)
 
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,

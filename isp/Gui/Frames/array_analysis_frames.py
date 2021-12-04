@@ -176,12 +176,11 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             n = len(df)
             self.coords = np.zeros([n, 3])
             for i in range(n):
-                 coords[df['Name'][i]]=[df['Lon'][i], df['Lat'][i]]
-        try:
-            self.cartopy_canvas.plot_map(df['Lon'][0], df['Lat'][0], 0, 0, 0, 0, resolution = "low",
-                                     stations = coords)
-        except:
-            pass
+                 coords[df['Name'][i]]=[df['Lat'][i], df['Lon'][i],]
+        #try:
+            self.cartopy_canvas.plot_map(df['Lat'][0], df['Lon'][0], 0, 0, 0, 0, resolution = "low", stations = coords)
+        #except:
+        #    pass
 
     def FK_plot(self):
         self.canvas_stack.set_new_subplot(nrows=1, ncols=1)
