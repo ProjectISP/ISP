@@ -912,11 +912,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
             except:
 
-                coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
-                                                                    edgecolor='k', alpha=0.6, linewidth=0.5,
-                                                                    facecolor=cartopy.feature.COLORS['land'])
                 ax.background_img(name='ne_shaded', resolution=resolution)
-                ax.add_feature(coastline_10m)
 
         elif resolution is "low":
 
