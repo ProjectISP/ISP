@@ -3,7 +3,7 @@ owslib
 Cython
 deprecated
 matplotlib
-numpy
+numpy<1.21, >=1.17
 scipy >= 1.4.1
 obspy
 pandas
@@ -11,7 +11,7 @@ PyQt5
 PyQtWebEngine
 mtspec
 nitime
-Cartopy
+Cartopy==0.19.post1
 pillow
 PyWavelets
 dill
