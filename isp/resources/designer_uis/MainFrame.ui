@@ -31,6 +31,10 @@
   <property name="windowTitle">
    <string>Main Menu</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../resources.qrc">
+    <normaloff>:/logo/logo-image.png</normaloff>:/logo/logo-image.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <property name="autoFillBackground">
     <bool>false</bool>
@@ -262,7 +266,7 @@
               </size>
              </property>
              <property name="text">
-              <string>  Earthquake Location</string>
+              <string>  Earthquake Analysis</string>
              </property>
              <property name="icon">
               <iconset>
@@ -352,7 +356,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1680</width>
-    <height>928</height>
+    <height>924</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -133,7 +133,11 @@
        <widget class="QLineEdit" name="channelForm"/>
       </item>
       <item row="7" column="1">
-       <widget class="QSpinBox" name="numTracesCB"/>
+       <widget class="QSpinBox" name="numTracesCB">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+       </widget>
       </item>
       <item row="5" column="0">
        <widget class="QPushButton" name="stopBtn">
@@ -266,7 +270,7 @@
          <x>0</x>
          <y>0</y>
          <width>1178</width>
-         <height>857</height>
+         <height>853</height>
         </rect>
        </property>
       </widget>

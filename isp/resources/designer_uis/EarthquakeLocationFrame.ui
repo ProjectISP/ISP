@@ -419,6 +419,9 @@ background-color: rgb(233, 233, 233);</string>
          </item>
          <item row="6" column="0" colspan="4">
           <widget class="QPushButton" name="genvelBtn">
+           <property name="toolTip">
+            <string>Click to Generate the velocity grid</string>
+           </property>
            <property name="text">
             <string>Generate Velocity Grid</string>
            </property>
@@ -501,6 +504,9 @@ background-color: rgb(233, 233, 233);</string>
          </item>
          <item row="3" column="0" colspan="3">
           <widget class="QPushButton" name="grdtimeBtn">
+           <property name="toolTip">
+            <string>Click to generate the Travel Times for the previously genrated velocity grid</string>
+           </property>
            <property name="text">
             <string>Grid to Time</string>
            </property>
@@ -522,6 +528,9 @@ background-color: rgb(233, 233, 233);</string>
          </item>
          <item row="2" column="0" colspan="2">
           <widget class="QPushButton" name="stationsBtn">
+           <property name="toolTip">
+            <string>Set the metadata file whre the algorithm wil extract the stations coordinates to locate the event.</string>
+           </property>
            <property name="text">
             <string>Set Stations File Path</string>
            </property>

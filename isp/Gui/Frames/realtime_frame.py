@@ -42,8 +42,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.data_dict = {}
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
-        #self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=self.numTracesCB.value(), constrained_layout=False)
-        self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=1, constrained_layout=False)
+        self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=self.numTracesCB.value(), constrained_layout=False)
         self.canvas.figure.tight_layout()
         self.timer_outdated = pyc.QTimer()
         self.timer_outdated.setInterval(1000)  # 1 second

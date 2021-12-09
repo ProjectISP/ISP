@@ -44,13 +44,6 @@
             <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,10">
              <item>
               <layout class="QGridLayout" name="gridLayout_2">
-               <item row="22" column="0" colspan="5">
-                <widget class="Line" name="line_3">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
                <item row="19" column="4">
                 <widget class="QCheckBox" name="sortCB">
                  <property name="sizePolicy">
@@ -99,6 +92,9 @@
                </item>
                <item row="14" column="0">
                 <widget class="QPushButton" name="stations_infoBtn">
+                 <property name="toolTip">
+                  <string>Click to view header information of the loaded seismogram files</string>
+                 </property>
                  <property name="text">
                   <string>Stations Info</string>
                  </property>
@@ -162,6 +158,9 @@
                </item>
                <item row="23" column="4">
                 <widget class="QCheckBox" name="autorefreshCB">
+                 <property name="toolTip">
+                  <string>Checked to clean the plot every time Process and Plot is cklicked</string>
+                 </property>
                  <property name="text">
                   <string>Auto-Refresh</string>
                  </property>
@@ -174,6 +173,9 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Process the methods set in the Macro and Plot</string>
                  </property>
                  <property name="text">
                   <string>Process and Plot</string>
@@ -188,6 +190,9 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="toolTip">
+                  <string>Rotate to the GAC and if &quot;Use this Ang checked&quot; to the angle sleected.</string>
+                 </property>
                  <property name="text">
                   <string>Rotate</string>
                  </property>
@@ -198,6 +203,9 @@
                </item>
                <item row="8" column="0" colspan="2">
                 <widget class="QPushButton" name="selectDatalessDirBtn">
+                 <property name="toolTip">
+                  <string>Set the Metadata File (*.dlsv or *.xml)</string>
+                 </property>
                  <property name="text">
                   <string>Metadata File</string>
                  </property>
@@ -311,6 +319,9 @@
                </item>
                <item row="21" column="0">
                 <widget class="QPushButton" name="crossBtn">
+                 <property name="toolTip">
+                  <string>Cross correlate the waveform of the reference (Ref) with the rest. Trim waveforms first</string>
+                 </property>
                  <property name="text">
                   <string>Cross</string>
                  </property>
@@ -518,6 +529,9 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="toolTip">
+                  <string>Checkd if you want trim the seismograms according to StartTime [kw &quot;Q&quot;] &amp; EndTime  [kw &quot;E&quot;] </string>
+                 </property>
                  <property name="text">
                   <string>Trim Time</string>
                  </property>
@@ -551,6 +565,9 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="toolTip">
+                  <string>Checked to test valid seismogram files in your folder</string>
+                 </property>
                  <property name="text">
                   <string>Robust</string>
                  </property>
@@ -576,6 +593,9 @@
                    <height>20</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>checked if you want scan the whole folder tree </string>
+                 </property>
                  <property name="text">
                   <string>Scan</string>
                  </property>
@@ -583,6 +603,9 @@
                </item>
                <item row="4" column="0" colspan="2">
                 <widget class="QPushButton" name="readFilesBtn">
+                 <property name="toolTip">
+                  <string>Read the files and create a database for Processing and Plotting Seismograms</string>
+                 </property>
                  <property name="text">
                   <string>Read Files</string>
                  </property>
@@ -674,22 +697,11 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="toolTip">
+                  <string>Click to plot the stations map from the ploted seismograms. Warning, needs the correct metadata alreadt loaded</string>
+                 </property>
                  <property name="text">
                   <string>Stations Map</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="9" column="0" colspan="5">
-                <widget class="Line" name="line_2">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="0" colspan="5">
-                <widget class="Line" name="line_4">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
                  </property>
                 </widget>
                </item>
@@ -704,11 +716,35 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="toolTip">
+                  <string>Checked to fileter readed files by NET/STA/CHN</string>
+                 </property>
                  <property name="text">
                   <string>Select Files</string>
                  </property>
                  <property name="checked">
                   <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0" colspan="6">
+                <widget class="Line" name="line_4">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                </widget>
+               </item>
+               <item row="9" column="0" colspan="6">
+                <widget class="Line" name="line_2">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                </widget>
+               </item>
+               <item row="22" column="0" colspan="6">
+                <widget class="Line" name="line_3">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
                  </property>
                 </widget>
                </item>
@@ -727,7 +763,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>1129</width>
+                  <width>1131</width>
                   <height>767</height>
                  </rect>
                 </property>

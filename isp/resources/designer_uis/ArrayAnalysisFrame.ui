@@ -44,6 +44,9 @@
          <layout class="QGridLayout" name="gridLayout_2">
           <item row="3" column="2" colspan="2" alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_5">
+            <property name="toolTip">
+             <string>Maximum Slowness of the ARF to be computed</string>
+            </property>
             <property name="text">
              <string>Smax (s/km)</string>
             </property>
@@ -55,7 +58,7 @@
           <item row="1" column="0" colspan="2" alignment="Qt::AlignLeft">
            <widget class="QLabel" name="label">
             <property name="text">
-             <string>F min</string>
+             <string>Min Frequency</string>
             </property>
             <property name="buddy">
              <cstring>label</cstring>
@@ -65,7 +68,7 @@
           <item row="1" column="2" colspan="2" alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_2">
             <property name="text">
-             <string>F max</string>
+             <string>Max Frequency</string>
             </property>
             <property name="buddy">
              <cstring>fmaxSB</cstring>
@@ -74,6 +77,9 @@
           </item>
           <item row="3" column="0" colspan="2" alignment="Qt::AlignLeft">
            <widget class="QLabel" name="label_3">
+            <property name="toolTip">
+             <string>Resolution of the ARF Slowness Map</string>
+            </property>
             <property name="text">
              <string>Grid Size (s/km)</string>
             </property>
@@ -120,6 +126,9 @@
           </item>
           <item row="5" column="0" colspan="4">
            <widget class="QPushButton" name="arfBtn">
+            <property name="toolTip">
+             <string>Plot the Array Response Funtion of the loaded coordinates [go to File -&gt; Stations Coordinates -&gt; Load Stations File]</string>
+            </property>
             <property name="text">
              <string>ARF</string>
             </property>
@@ -339,8 +348,11 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="toolTip">
+                 <string>Select the folder where you have the seismogram files</string>
+                </property>
                 <property name="text">
-                 <string>Files path</string>
+                 <string>Files Directory</string>
                 </property>
                </widget>
               </item>
@@ -362,6 +374,9 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="toolTip">
+                 <string>Set the Metadata File (*.dlsv or *.xml)</string>
+                </property>
                 <property name="text">
                  <string>Metadata file</string>
                 </property>
@@ -381,6 +396,9 @@
             </item>
             <item>
              <widget class="QPushButton" name="stationsBtn">
+              <property name="toolTip">
+               <string>Click to view header information of the loaded seismogram files</string>
+              </property>
               <property name="text">
                <string>Stations Info</string>
               </property>
@@ -426,6 +444,9 @@
               </item>
               <item row="2" column="1">
                <widget class="QCheckBox" name="trimCB">
+                <property name="toolTip">
+                 <string>Checkd if you want trim the seismograms according to StartTime</string>
+                </property>
                 <property name="text">
                  <string>Trim</string>
                 </property>
@@ -439,8 +460,11 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="toolTip">
+                 <string>Process the methods set in the Macro and Plot</string>
+                </property>
                 <property name="text">
-                 <string>Plot</string>
+                 <string>Process and Plot</string>
                 </property>
                </widget>
               </item>
@@ -470,8 +494,11 @@
               </item>
               <item row="2" column="0">
                <widget class="QCheckBox" name="selectCB">
+                <property name="toolTip">
+                 <string>Checked to fileter readed files by STA/CHN</string>
+                </property>
                 <property name="text">
-                 <string>select</string>
+                 <string>Select Files</string>
                 </property>
                </widget>
               </item>
@@ -520,8 +547,11 @@
             </item>
             <item row="1" column="2">
              <widget class="QLabel" name="label_8">
+              <property name="toolTip">
+               <string>Sliding temporal window</string>
+              </property>
               <property name="text">
-               <string>Time Window</string>
+               <string>Time Win [s]</string>
               </property>
              </widget>
             </item>
@@ -538,7 +568,7 @@
             <item row="3" column="2">
              <widget class="QLabel" name="label_15">
               <property name="text">
-               <string>Slowness Grid</string>
+               <string>Slow Grid</string>
               </property>
              </widget>
             </item>
@@ -546,19 +576,6 @@
              <widget class="QLabel" name="label_14">
               <property name="text">
                <string>Method</string>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="2" colspan="2">
-             <widget class="QPushButton" name="runFKBtn">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Run F-K</string>
               </property>
              </widget>
             </item>
@@ -621,6 +638,9 @@
             </item>
             <item row="3" column="0" alignment="Qt::AlignHCenter">
              <widget class="QLabel" name="label_9">
+              <property name="toolTip">
+               <string>Sliding step = (Overlap*Time Win)</string>
+              </property>
               <property name="text">
                <string>Overlap</string>
               </property>
@@ -628,13 +648,19 @@
             </item>
             <item row="1" column="0" alignment="Qt::AlignHCenter">
              <widget class="QLabel" name="label_7">
+              <property name="toolTip">
+               <string>Maximum Slowness Map to be analyzed</string>
+              </property>
               <property name="text">
-               <string>Slowness Max</string>
+               <string>Slow Max [s/km]</string>
               </property>
              </widget>
             </item>
             <item row="8" column="0">
              <widget class="QComboBox" name="phaseCB">
+              <property name="toolTip">
+               <string>Selector for Picks</string>
+              </property>
               <item>
                <property name="text">
                 <string>Phase</string>
@@ -684,6 +710,22 @@
                 <string>Phase Weigth Stack</string>
                </property>
               </item>
+             </widget>
+            </item>
+            <item row="7" column="2" rowspan="2" colspan="2">
+             <widget class="QPushButton" name="runFKBtn">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>Click to run the FK analysis over the &quot;Process and Plot&quot; Seismograms</string>
+              </property>
+              <property name="text">
+               <string>Run F-K</string>
+              </property>
              </widget>
             </item>
            </layout>
@@ -772,7 +814,7 @@
   </action>
   <action name="actionSettings">
    <property name="text">
-    <string>Set Parameters</string>
+    <string>Macro</string>
    </property>
   </action>
   <action name="actionCreate_Stations_File">

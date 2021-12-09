@@ -319,7 +319,7 @@
         <enum>Qt::RightToLeft</enum>
        </property>
        <property name="text">
-        <string>First Polarity</string>
+        <string>Fault Plane</string>
        </property>
        <property name="checked">
         <bool>false</bool>

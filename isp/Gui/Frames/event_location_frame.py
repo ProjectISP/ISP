@@ -427,6 +427,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
             MAP_SERVICE_URL = map_service
             try:
                 wms = WebMapService(MAP_SERVICE_URL)
+                list(wms.contents)
             except:
                 pass
             layer = layer

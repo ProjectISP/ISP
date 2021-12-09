@@ -156,7 +156,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                                          self._st[index].stats.channel)
                 ax = self.canvas.get_axe(0)
                 ax.set_xlim(time1.matplotlib_date, time2.matplotlib_date)
-                formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+                formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
                 ax.xaxis.set_major_formatter(formatter)
                 self.canvas.set_plot_label(index, info)
 

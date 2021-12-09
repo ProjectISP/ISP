@@ -57,6 +57,9 @@
             <height>16700</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Files Selector. Please select the file you want to Process adn plot</string>
+          </property>
          </widget>
         </item>
         <item>
@@ -69,8 +72,11 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Set the Metadata File (*.dlsv or *.xml)</string>
+            </property>
             <property name="text">
-             <string>Metadata</string>
+             <string>Metadata File</string>
             </property>
            </widget>
           </item>
@@ -89,8 +95,11 @@
           </item>
           <item row="1" column="0">
            <widget class="QPushButton" name="selectDirBtn">
+            <property name="toolTip">
+             <string>Select the folder where you have the seismogram files</string>
+            </property>
             <property name="text">
-             <string>File</string>
+             <string>Files Directory</string>
             </property>
            </widget>
           </item>
@@ -98,6 +107,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="stationsBtn">
+          <property name="toolTip">
+           <string>Click to view header information of the loaded seismogram files</string>
+          </property>
           <property name="text">
            <string>Station Info</string>
           </property>
@@ -120,6 +132,9 @@
           </item>
           <item row="4" column="1">
            <widget class="QComboBox" name="time_frequencyCB">
+            <property name="toolTip">
+             <string>Select which signal processing method you want to apply</string>
+            </property>
             <item>
              <property name="text">
               <string>No Time-Frequency Process Selected</string>
@@ -144,6 +159,9 @@
           </item>
           <item row="4" column="0" alignment="Qt::AlignHCenter">
            <widget class="QCheckBox" name="time_frequencyChB">
+            <property name="toolTip">
+             <string>Check is you want to apply a signal processing method</string>
+            </property>
             <property name="text">
              <string>Time-Frequency Analysis</string>
             </property>
@@ -158,6 +176,9 @@
           </item>
           <item row="3" column="1">
            <widget class="QComboBox" name="selectCB">
+            <property name="toolTip">
+             <string>Select Semogram 1 to Process and Plot (Upper Panel), Seismogram 2 (Lower Panel)</string>
+            </property>
             <item>
              <property name="text">
               <string>Seismogram 1</string>
@@ -179,6 +200,9 @@
           </item>
           <item row="3" column="0">
            <widget class="QPushButton" name="plotBtn">
+            <property name="toolTip">
+             <string>Process the methods set in the Macro and Plot. Warning: Be careful, Computationally very demanding (use fow relative small time windows i.e window &lt; 30 min)</string>
+            </property>
             <property name="text">
              <string>Process and Plot</string>
             </property>
@@ -200,7 +224,7 @@
              <double>-900.000000000000000</double>
             </property>
             <property name="maximum">
-             <double>0.000000000000000</double>
+             <double>-180.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -325,10 +349,18 @@
             </widget>
            </item>
            <item row="2" column="1">
-            <widget class="QDoubleSpinBox" name="time_bandwidth_DB"/>
+            <widget class="QDoubleSpinBox" name="time_bandwidth_DB">
+             <property name="value">
+              <double>4.000000000000000</double>
+             </property>
+            </widget>
            </item>
            <item row="3" column="1">
-            <widget class="QDoubleSpinBox" name="freq_min_mtDB"/>
+            <widget class="QDoubleSpinBox" name="freq_min_mtDB">
+             <property name="value">
+              <double>0.500000000000000</double>
+             </property>
+            </widget>
            </item>
            <item row="3" column="0" alignment="Qt::AlignHCenter">
             <widget class="QLabel" name="label_4">
@@ -345,7 +377,11 @@
             </widget>
            </item>
            <item row="3" column="3">
-            <widget class="QDoubleSpinBox" name="freq_max_mtDB"/>
+            <widget class="QDoubleSpinBox" name="freq_max_mtDB">
+             <property name="value">
+              <double>10.000000000000000</double>
+             </property>
+            </widget>
            </item>
            <item row="2" column="2">
             <widget class="QLabel" name="label">
@@ -355,10 +391,18 @@
             </widget>
            </item>
            <item row="2" column="3">
-            <widget class="QSpinBox" name="number_tapers_mtSB"/>
+            <widget class="QSpinBox" name="number_tapers_mtSB">
+             <property name="value">
+              <number>4</number>
+             </property>
+            </widget>
            </item>
            <item row="0" column="2">
-            <widget class="QDoubleSpinBox" name="mt_window_lengthDB"/>
+            <widget class="QDoubleSpinBox" name="mt_window_lengthDB">
+             <property name="value">
+              <double>3.000000000000000</double>
+             </property>
+            </widget>
            </item>
            <item row="0" column="1">
             <widget class="QLabel" name="label_3">
@@ -385,10 +429,18 @@
           </property>
           <layout class="QGridLayout" name="gridLayout_6">
            <item row="1" column="5">
-            <widget class="QSpinBox" name="wmaxSB"/>
+            <widget class="QSpinBox" name="wmaxSB">
+             <property name="value">
+              <number>6</number>
+             </property>
+            </widget>
            </item>
            <item row="1" column="3">
-            <widget class="QSpinBox" name="wminSB"/>
+            <widget class="QSpinBox" name="wminSB">
+             <property name="value">
+              <number>6</number>
+             </property>
+            </widget>
            </item>
            <item row="1" column="4">
             <widget class="QLabel" name="label_7">
@@ -412,7 +464,11 @@
             </widget>
            </item>
            <item row="2" column="3">
-            <widget class="QDoubleSpinBox" name="freq_min_cwtDB"/>
+            <widget class="QDoubleSpinBox" name="freq_min_cwtDB">
+             <property name="minimum">
+              <double>0.500000000000000</double>
+             </property>
+            </widget>
            </item>
            <item row="2" column="4">
             <widget class="QLabel" name="label_10">
@@ -422,7 +478,11 @@
             </widget>
            </item>
            <item row="2" column="5">
-            <widget class="QDoubleSpinBox" name="freq_max_cwtDB"/>
+            <widget class="QDoubleSpinBox" name="freq_max_cwtDB">
+             <property name="value">
+              <double>10.000000000000000</double>
+             </property>
+            </widget>
            </item>
            <item row="0" column="4">
             <widget class="QLabel" name="label_11">
@@ -470,7 +530,11 @@
             </widget>
            </item>
            <item row="0" column="3">
-            <widget class="QSpinBox" name="atomsSB"/>
+            <widget class="QSpinBox" name="atomsSB">
+             <property name="value">
+              <number>40</number>
+             </property>
+            </widget>
            </item>
            <item row="3" column="2">
             <widget class="QLabel" name="label_16">
@@ -480,7 +544,11 @@
             </widget>
            </item>
            <item row="3" column="3">
-            <widget class="QSpinBox" name="wavelets_param"/>
+            <widget class="QSpinBox" name="wavelets_param">
+             <property name="value">
+              <number>30</number>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>

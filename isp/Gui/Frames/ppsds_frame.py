@@ -331,7 +331,7 @@ class PPSDFrame(BaseFrame, UiPPSDs):
                         min(ydata) < ppsd.db_bin_edges[-1]):
                     continue
                 xdata = periods
-                axis.plot(xdata, ydata, '0.4', linewidth=2, color="black")
+                axis.plot(xdata, ydata, linewidth=2, color="black")
                 leftpoint = np.argsort(xdata)[0]
                 if not ydata[leftpoint] < ppsd.db_bin_edges[-1]:
                     continue
