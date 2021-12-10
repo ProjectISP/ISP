@@ -110,7 +110,7 @@ class StationsMap:
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
 
-        plt.savefig("/Users/robertocabieces/Documents/ISPshare/isp/mti/output/stations.png",bbox_inches='tight')
+        #plt.savefig("/Users/robertocabieces/Documents/ISPshare/isp/mti/output/stations.png", bbox_inches='tight')
         self.mpf.show()
 
 

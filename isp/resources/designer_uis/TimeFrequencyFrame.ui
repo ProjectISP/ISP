@@ -220,11 +220,17 @@
           </item>
           <item row="6" column="1">
            <widget class="QDoubleSpinBox" name="minlevelCB">
+            <property name="decimals">
+             <number>0</number>
+            </property>
             <property name="minimum">
              <double>-900.000000000000000</double>
             </property>
             <property name="maximum">
-             <double>-180.000000000000000</double>
+             <double>0.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>1.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -565,7 +571,7 @@
      <x>0</x>
      <y>0</y>
      <width>1501</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
