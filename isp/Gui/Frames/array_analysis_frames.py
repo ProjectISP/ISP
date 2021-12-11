@@ -39,7 +39,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
         self.canvas_fk.on_double_click(self.on_click_matplotlib)
         self.canvas_stack = MatplotlibCanvas(self.widget_stack)
-        self.canvas_stack.figure.subplots_adjust(left=0.080, bottom=0.374, right=0.970, top=0.990, wspace=0.2, hspace=0.0)
+        #self.canvas_stack.figure.subplots_adjust(left=0.080, bottom=0.374, right=0.970, top=0.990, wspace=0.2, hspace=0.0)
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
         self.canvas.set_new_subplot(1, ncols=1)
 
