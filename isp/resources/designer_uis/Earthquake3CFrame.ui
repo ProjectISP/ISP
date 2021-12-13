@@ -213,7 +213,7 @@
             <string>Process, Rotate and Plot</string>
            </property>
            <property name="text">
-            <string>Rotate </string>
+            <string>Rotate + Plot</string>
            </property>
            <property name="shortcut">
             <string>R</string>
