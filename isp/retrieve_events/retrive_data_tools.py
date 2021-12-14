@@ -21,7 +21,8 @@ class retrieve:
 
     def get_inventory(self, url, starttime, endtime, networks, stations, FDSN=True, use_networks = False,
                       use_stations = False, **kwargs):
-
+        inventory = None
+        client = None
         print(FDSN, use_networks, starttime, endtime, networks)
         try:
 
@@ -59,32 +60,37 @@ class retrieve:
                                                     endtime=endtime)
         except:
 
-            md = MessageDialog(self)
-            md.set_info_message("Please check your internet conection")
+            print("Coundn't be conected, Please check your internet connection and try another time")
+
         return inventory, client
 
 
     def get_inventory_coordinates(self, inv):
-        num_nets = len(inv)
-        coordinates = {}
 
-        for net in range(num_nets):
+        try:
+            coordinates = {}
+            num_nets = len(inv)
 
-            net_ids = []
-            sta_ids = []
-            latitude = []
-            longitude = []
-            net = inv[net]
-            num_sta = len(net)
-            for sta in range(num_sta):
-                sta = net[sta]
-                net_ids.append(net.code)
-                sta_ids.append(sta.code)
-                latitude.append(sta.latitude)
-                longitude.append(sta.longitude)
-            net_content = [net_ids,sta_ids,latitude,longitude]
-            # coordinates.update(net.code,net_content)
-            coordinates[net.code] = net_content
+
+            for net in range(num_nets):
+
+                net_ids = []
+                sta_ids = []
+                latitude = []
+                longitude = []
+                net = inv[net]
+                num_sta = len(net)
+                for sta in range(num_sta):
+                    sta = net[sta]
+                    net_ids.append(net.code)
+                    sta_ids.append(sta.code)
+                    latitude.append(sta.latitude)
+                    longitude.append(sta.longitude)
+                net_content = [net_ids,sta_ids,latitude,longitude]
+                # coordinates.update(net.code,net_content)
+                coordinates[net.code] = net_content
+        except:
+            pass
 
         return coordinates
 

@@ -185,7 +185,7 @@
      <item row="0" column="1">
       <widget class="QDoubleSpinBox" name="doubleSBSrcLat">
        <property name="decimals">
-        <number>8</number>
+        <number>5</number>
        </property>
        <property name="minimum">
         <double>-90.000000000000000</double>
@@ -237,7 +237,7 @@
      <item row="1" column="1">
       <widget class="QDoubleSpinBox" name="doubleSBSrcLon">
        <property name="decimals">
-        <number>8</number>
+        <number>5</number>
        </property>
        <property name="minimum">
         <double>-180.000000000000000</double>
@@ -263,7 +263,7 @@
      <item row="2" column="1">
       <widget class="QDoubleSpinBox" name="doubleSBDep">
        <property name="decimals">
-        <number>8</number>
+        <number>1</number>
        </property>
        <property name="minimum">
         <double>-20000.000000000000000</double>
@@ -319,7 +319,7 @@
         <enum>Qt::RightToLeft</enum>
        </property>
        <property name="text">
-        <string>First Polarity</string>
+        <string>Fault Plane</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -550,7 +550,7 @@
            </sizepolicy>
           </property>
           <property name="decimals">
-           <number>7</number>
+           <number>1</number>
           </property>
           <property name="minimum">
            <double>-360.000000000000000</double>
@@ -595,7 +595,7 @@
            </sizepolicy>
           </property>
           <property name="decimals">
-           <number>7</number>
+           <number>1</number>
           </property>
           <property name="minimum">
            <double>-360.000000000000000</double>
@@ -614,7 +614,7 @@
            </sizepolicy>
           </property>
           <property name="decimals">
-           <number>7</number>
+           <number>1</number>
           </property>
           <property name="minimum">
            <double>-360.000000000000000</double>

@@ -18,7 +18,7 @@ echo "Identified OS as $OS"
 
 if ! python3 -c 'import sys; assert sys.version_info >= (3,6)' >/dev/null 2>&1 ; then
   echo "Abort with error."
-  echo "Error: Your Python version is not comptible. Please install python 3.6 or latter versions."
+  echo "Error: Your Python version is not compatible. Please install python 3.6 or latter versions."
   exit 1
 fi
 

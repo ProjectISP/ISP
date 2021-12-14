@@ -1,7 +1,6 @@
 import math
 import numpy as np
 from mtspec import mtspec
-
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement
 
 
@@ -21,13 +20,12 @@ class PlotToolsManager:
         from isp.Gui.Frames import MatplotlibFrame
         fig, ax1 = plt.subplots(figsize=(6, 6))
         self.mpf = MatplotlibFrame(fig)
-        ax1.loglog(freq, spec, '0.1', linewidth=1.0, color='steelblue', label=self.__id)
+        ax1.loglog(freq, spec, linewidth=1.0, color='steelblue', label=self.__id)
         ax1.frequencies = freq
         ax1.spectrum = spec
         ax1.fill_between(freq, jackknife_errors[:, 0], jackknife_errors[:, 1], facecolor="0.75",
                          alpha=0.5, edgecolor="0.5")
         ax1.set_ylim(spec.min() / 10.0, spec.max() * 100.0)
-        # ax1.set_xlim(freq[0], 1/(2*delta))
         plt.ylabel('Amplitude')
         plt.xlabel('Frequency [Hz]')
         plt.grid(True, which="both", ls="-", color='grey')

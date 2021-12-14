@@ -47,10 +47,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.setWindowTitle('Earthquake Location')
         self.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
 
-        try:
-            self.cnn = CNNPicker()
-        except:
-            print("Neural Network cannot be loaded")
+        #try:
+        self.cnn = CNNPicker()
+        #finally:
+        #print("Neural Network cannot be loaded")
 
         self.cancelled = False
         self.progressbar = pw.QProgressDialog(self)
@@ -65,6 +65,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.files = []
         self.files_path = []
         self.events_times = []
+        self.check_start_time = None
+        self.check_end_time = None
         self.total_items = 0
         self.items_per_page = 1
         # dict to keep track of picks-> dict(key: PickerStructure) as key we use the drawn line.
@@ -302,7 +304,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         delta = params["window pick"]
         transform =params["transform"]
         pick_output_path = PickerManager.get_default_output_path()
-        self.nll_manager = NllManager(pick_output_path, self.dataless_path_bind.value)
+        self.nll_manager = NllManager(pick_output_path, self.metadata_path_bind.value)
         st_detect_all = self.st.copy()
 
         self.detect_events()
@@ -446,7 +448,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
 
-        md.show()
+        if not self.trimCB.isChecked():
+           md.show()
 
 
     # def onChange_dataless_path(self, value):
@@ -544,8 +547,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         ##
         self.nums_clicks = 0
         all_traces = []
-        if self.trimCB.isChecked():
-           self.get_now_files()
+        if self.trimCB.isChecked() and self.check_start_time != None and self.check_end_time != None:
+            if self.check_start_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_1) and \
+                    self.check_end_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_2):
+                self.get_now_files()
+
         #files_path = self.get_files(self.root_path_bind.value)
         #self.files_path = self.get_files(self.root_path_bind.value)
         if self.sortCB.isChecked():
@@ -563,6 +569,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         ##
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        self.check_start_time = start_time
+        self.check_end_time = start_time
+
         diff = end_time - start_time
         if len(self.canvas.axes) != len(files_at_page) or self.autorefreshCB.isChecked():
             self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
@@ -652,7 +661,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             else:
                 ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
-            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            #formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
             self.canvas.set_xlabel(last_index, "Date")
         except:
@@ -754,7 +764,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
                 else:
                     ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
-                formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+                formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
                 ax.xaxis.set_major_formatter(formatter)
                 self.canvas.set_xlabel(last_index, "Date")
             except:
@@ -806,7 +816,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             else:
                 ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
-            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
             self.canvas.set_xlabel(last_index, "Date")
         except:
@@ -889,7 +899,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             else:
                 ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
-            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
             self.canvas.set_xlabel(last_index, "Date")
         except:
@@ -926,7 +936,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             else:
                 ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
-            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
             self.canvas.set_xlabel(last_index, "Date")
         except:
@@ -981,7 +991,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             else:
                 ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
-            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
             self.canvas.set_xlabel(last_index, "Date")
         except:
@@ -1116,7 +1126,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             else:
                 ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
-            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
             self.canvas.set_xlabel(0, "Date")
         except:
@@ -1153,7 +1163,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             else:
                 ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
-            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
             self.canvas.set_xlabel(0, "Date")
             ax.legend()
@@ -1165,20 +1175,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         try:
             [lat,lon] = [self.event_info.latitude, self.event_info.longitude]
-            obsfiles = self.files_path
+            #obsfiles = self.files_path
 
             map_dict={}
             sd = []
 
-            for file in obsfiles:
-                st = SeismogramDataAdvanced(file)
+            for tr in self.st:
+                #st = SeismogramDataAdvanced(file)
 
-                name = st.stats.Network+"."+st.stats.Station
-
+                #name = st.stats.Network+"."+st.stats.Station
+                name = tr.stats.network+"."+tr.stats.station
                 sd.append(name)
 
-                st_coordinates = self.__metadata_manager.extract_coordinates(self.inventory, file)
-
+                #st_coordinates = self.__metadata_manager.extract_coordinates(self.inventory, file)
+                st_coordinates = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
                 map_dict[name] = [st_coordinates.Latitude, st_coordinates.Longitude]
 
             self.map_stations = StationsMap(map_dict)
@@ -1462,7 +1472,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.spectrum = PlotToolsManager(id)
             self.spectrum.plot_spectrum(freq, spec, jackknife_errors)
 
-        if event.key == 's':
+        if event.key == 'f':
             self.kind_wave = self.ChopCB.currentText()
             id = ""
             self.spectrum = PlotToolsManager(id)
@@ -1511,16 +1521,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             vmin = -120
             vmax = 0
             cs.set_clim(vmin, vmax)
-            axs = []
-            for j in range(self.items_per_page):
-                axs.append(self.canvas.get_axe(j))
+            # TODO COLORBAR STABLE
+            #axs = []
+            #for j in range(self.items_per_page):
+            #    axs.append(self.canvas.get_axe(j))
 
-            if self.nums_clicks > 0:
-                pass
-            else:
+            #if self.nums_clicks > 0:
+            #    pass
+            #else:
 
-                self.cbar = fig.colorbar(cs, ax=axs[j], extend='both', orientation='horizontal', pad=0.2)
-                self.cbar.ax.set_ylabel("Power [dB]")
+            #    self.cbar = fig.colorbar(cs, ax=axs[j], extend='both', orientation='horizontal', pad=0.2)
+            #    self.cbar.ax.set_ylabel("Power [dB]")
 
             tr=self.st[self.ax_num]
             tt = tr.times("matplotlib")
@@ -1535,7 +1546,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
 
             ax.set_ylim(min(data),max(data))
-            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
             self.nums_clicks = self.nums_clicks+1
 

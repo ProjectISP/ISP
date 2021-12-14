@@ -39,14 +39,14 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
         self.canvas_fk.on_double_click(self.on_click_matplotlib)
         self.canvas_stack = MatplotlibCanvas(self.widget_stack)
-        self.canvas_stack.figure.subplots_adjust(left=0.080, bottom=0.374, right=0.970, top=0.990, wspace=0.2, hspace=0.0)
+        #self.canvas_stack.figure.subplots_adjust(left=0.080, bottom=0.374, right=0.970, top=0.990, wspace=0.2, hspace=0.0)
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
         self.canvas.set_new_subplot(1, ncols=1)
 
         #Binding
 
         self.root_pathFK_bind = BindPyqtObject(self.rootPathFormFK)
-        self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
+        #self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
         self.fmin_bind = BindPyqtObject(self.fminSB)
         self.fmax_bind = BindPyqtObject(self.fmaxSB)
@@ -119,7 +119,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         if dir_path:
             bind.value = dir_path
 
-    @AsycTime.run_async()
+
     def onChange_metadata_path(self, value):
 
         md = MessageDialog(self)
@@ -127,6 +127,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
             self.__metadata_manager = MetadataManager(value)
             self.inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
             md.set_info_message("Loaded Metadata, please check your terminal for further details")
 
         except:
@@ -175,12 +176,11 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             n = len(df)
             self.coords = np.zeros([n, 3])
             for i in range(n):
-                 coords[df['Name'][i]]=[df['Lon'][i], df['Lat'][i]]
-        try:
-            self.cartopy_canvas.plot_map(df['Lon'][0], df['Lat'][0], 0, 0, 0, 0, resolution = "low",
-                                     stations = coords)
-        except:
-            pass
+                 coords[df['Name'][i]]=[df['Lat'][i], df['Lon'][i],]
+        #try:
+            self.cartopy_canvas.plot_map(df['Lat'][0], df['Lon'][0], 0, 0, 0, 0, resolution = "low", stations = coords)
+        #except:
+        #    pass
 
     def FK_plot(self):
         self.canvas_stack.set_new_subplot(nrows=1, ncols=1)

@@ -15,11 +15,11 @@ from matplotlib.lines import Line2D
 from matplotlib.patheffects import Stroke
 from matplotlib.transforms import offset_copy
 from matplotlib.widgets import SpanSelector
+from mpl_toolkits.mplot3d import Axes3D
 from obspy import Stream
 from owslib.wms import WebMapService
 from isp.Gui import pw, pyc, qt
 from isp.Utils import ObspyUtil, AsycTime
-
 
 class MatplotlibWidget(pw.QWidget):
 
@@ -305,20 +305,22 @@ class BasePltPyqtCanvas(FigureCanvas):
         x_min, x_max = ax.get_xbound()
         return x_min <= x <= x_max
 
-    def set_new_subplot(self, nrows, ncols, **kwargs):
+    def set_new_subplot(self, nrows, ncols, update=True, **kwargs):
         sharex = kwargs.pop("sharex", "all")
         self.figure.clf()
         plt.close(self.figure)
         nrows = max(nrows, 1)  # avoid zero rows.
         self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, sharex=sharex, **kwargs)
         self.__flat_axes()
-        self.draw()
+        if update:
+            self.draw()
 
-    def set_xlabel(self, axe_index, value):
+    def set_xlabel(self, axe_index, value, update=True):
         ax = self.get_axe(axe_index)
         if ax:
             ax.set_xlabel(value)
-            self.draw()  # force to update label
+            if update:
+                self.draw()  # force to update label
 
     def set_ylabel(self, axe_index, value):
         ax = self.get_axe(axe_index)
@@ -501,17 +503,20 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             artist.remove()
             return None
 
-    def __plot_date(self, x, y, ax, clear_plot=True, **kwargs):
+    def __plot_date(self, x, y, ax, clear_plot=True, update=True, **kwargs):
         if clear_plot:
             ax.cla()
         artist, = ax.plot_date(x, y, **kwargs)
-        try:
-            # Draw can raise ValueError
-            self.draw_idle()
+        if update:
+            try:
+                # Draw can raise ValueError
+                self.draw_idle()
+                return artist
+            except ValueError:
+                artist.remove()
+                return None
+        else:
             return artist
-        except ValueError:
-            artist.remove()
-            return None
 
     def __plot_3d(self, x, y, z, ax, plot_type, clear_plot=True, show_colorbar=True, **kwargs):
         """
@@ -588,7 +593,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             else:
                 return self.__plot(x, y, ax, clear_plot=clear_plot, **kwargs)
 
-    def plot_date(self, x, y, axes_index, clear_plot=True, is_twinx=False, **kwargs):
+    def plot_date(self, x, y, axes_index, clear_plot=True, is_twinx=False, update=True, **kwargs):
         """
         Wrapper for matplotlib plot.
 
@@ -606,12 +611,12 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             ax = self.get_axe(axes_index)
             if is_twinx:
                 tw_ax = self.__add_twinx_ax(axes_index)
-                artist = self.__plot_date(x, y, tw_ax, clear_plot=True, **kwargs)
+                artist = self.__plot_date(x, y, tw_ax, clear_plot=True, update=update, **kwargs)
                 if artist:
                     self.set_yaxis_color(tw_ax, artist.get_color())
                 return artist
             else:
-                return self.__plot_date(x, y, ax, clear_plot=clear_plot, **kwargs)
+                return self.__plot_date(x, y, ax, clear_plot=clear_plot, update=update, **kwargs)
 
     def plot_contour(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
@@ -649,7 +654,8 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             if clear_plot:
                 ax.cla()
 
-            ax = self.figure.gca(projection='3d')
+            #ax = self.figure.gca(projection='3d')
+            ax = Axes3D(self.figure)
             ax.plot(x, y, z, **kwargs)
 
     def scatter3d(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
@@ -825,7 +831,7 @@ class MatplotlibFrame(pw.QMainWindow):
 class CartopyCanvas(BasePltPyqtCanvas):
 
     #MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
-    MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
+    MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2020/mapserv?'
     #MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/etopo1/MapServer/WMSServer'
     def __init__(self, parent, **kwargs):
         """
@@ -864,9 +870,12 @@ class CartopyCanvas(BasePltPyqtCanvas):
         :param kwargs:
         :return:
         """
+        from isp import ROOT_DIR
+        import os
+
         resolution = kwargs.pop('resolution')
         stations = kwargs.pop('stations')
-
+        os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
         name_stations = []
         lat = []
         lon = []
@@ -879,10 +888,9 @@ class CartopyCanvas(BasePltPyqtCanvas):
         ax = self.get_axe(axes_index)
 
 
-        wms = WebMapService(self.MAP_SERVICE_URL)
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
         #layer = 'GEBCO_08 Hillshade'
-        layer ='GEBCO_2019_Grid'
+        layer ='GEBCO_2020_Grid'
         #layer = 'shaded_relief'
         xmin = int(x-6)
         xmax = int(x+6)
@@ -895,13 +903,19 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         if resolution is "high":
             try:
+
+                wms = WebMapService(self.MAP_SERVICE_URL)
                 ax.add_wms(wms, layer)
+
             except:
-                pass
+
+                ax.background_img(name='ne_shaded', resolution=resolution)
+
         elif resolution is "low":
+
                 coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
                     edgecolor='k', alpha=0.6, linewidth=0.5, facecolor=cartopy.feature.COLORS['land'])
-                #ax.stock_img()
+                ax.background_img(name='ne_shaded', resolution=resolution)
                 ax.add_feature(coastline_10m)
 
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
@@ -955,10 +969,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         # print(self.MAP_SERVICE_URL)
         wms = WebMapService(self.MAP_SERVICE_URL)
         layer = 'GEBCO_08 Hillshade'
-        #xmin = int(min(x) - 5)
-        #xmax = int(max(x) + 5)
-        #ymin = int(min(y) - 5)
-        #ymax = int(max(y) + 5)
+
         xmin = -150
         xmax = -140
         ymin = 60
@@ -990,7 +1001,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
             self.__cbar.ax.set_ylabel("Depth [m]")
         self.draw()
 
-    def global_map(self, axes_index, plot_earthquakes = False, show_colorbar = False, clear_plot = True,
+    def global_map(self, axes_index, plot_earthquakes = False, update = True,  show_colorbar = False, clear_plot = True,
                    show_stations = False, show_station_names = False, show_distance_circles = False,  **kwargs):
         import numpy as np
         from isp import ROOT_DIR
@@ -1001,14 +1012,20 @@ class CartopyCanvas(BasePltPyqtCanvas):
         lat = kwargs.pop('lat', [])
         depth = kwargs.pop('depth', [])
         mag = kwargs.pop('magnitude', [])
-        coordinates = kwargs.pop('coordinates', [])
+        coordinates = kwargs.pop('coordinates', {})
         resolution = kwargs.pop('resolution', 'high')
+        color = kwargs.pop('color', 'red')
+        size = kwargs.pop('size',8)
+
+        extent = kwargs.pop("extent", [])
+
         lon30 = kwargs.pop('lon30', [])
         lat30 = kwargs.pop('lat30', [])
         lon90 = kwargs.pop('lon90', [])
         lat90 = kwargs.pop('lat90', [])
         #line1 = []
         #line2 = []
+        
         if resolution == "Natural Earth":
 
             resolution = "low"
@@ -1018,6 +1035,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
             resolution = "high"
 
         ax = self.get_axe(axes_index)
+
         geodetic_transform = ccrs.PlateCarree()._as_mpl_transform(ax)
         text_transform = offset_copy(geodetic_transform, units='dots', x=-25)
         depth = np.array(depth) / 1000
@@ -1027,13 +1045,25 @@ class CartopyCanvas(BasePltPyqtCanvas):
         if clear_plot:
             ax.clear()
 
-        ax.background_img(name='ne_shaded', resolution= resolution)
+        #if len(extent)>=0:
+        #    try:
+        #        ax.set_extent(extent)
+        #    except:
+        #        pass
+        if update:
+            ax.background_img(name='ne_shaded', resolution=resolution)
+        else:
+            pass
+
+
         if show_stations:
             lat = []
             lon = []
             sta_ids = []
             for key in coordinates.keys():
-                for j in range(len(coordinates[key][0][:])-1):
+
+                for j in range(len(coordinates[key][0][:])):
+
                     sta_ids.append(coordinates[key][1][j])
                     lat.append(coordinates[key][2][j])
                     lon.append(coordinates[key][3][j])
@@ -1044,7 +1074,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
                     else:
                         pass
 
-                ax.scatter(lon, lat, s=8, marker="^", color ="red", alpha=0.7, transform=ccrs.PlateCarree())
+            ax.scatter(lon, lat, s=size, marker="^", color=color, alpha=0.7, transform=ccrs.PlateCarree())
+
 
         if plot_earthquakes:
             color_map = plt.cm.get_cmap('rainbow')
@@ -1052,7 +1083,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
             cs = ax.scatter(lon, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map, vmin = 0,
                             vmax = 600)
 
-            kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color="red", alpha=0.3, func=lambda s: np.log(s / 0.25))
+            kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color="red", alpha=0.5, func=lambda s: np.log(s / 0.25))
             ax.legend(*cs.legend_elements(**kw), loc="lower right", title="Magnitudes")
 
             if show_colorbar:

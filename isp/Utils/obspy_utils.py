@@ -330,8 +330,74 @@ class MseedUtil:
 
         return result
 
+    def get_tree_hd5_files(self, root_dir: str, robust=True, **kwargs):
 
+        self.start = kwargs.pop('starttime', [])
+        self.end = kwargs.pop('endtime', [])
+        self.robust = robust
+        pos_file = []
 
+        for top_dir, sub_dir, files in os.walk(root_dir):
+            for file in files:
+                try:
+                    header = read(os.path.join(top_dir, file), headlonly=True)
+                    pos_file.append(os.path.join(top_dir, file))
+                except:
+                    pass
+
+        return pos_file
+
+    # @classmethod
+    # def get_tree_hd5_files(cls, root_dir: str, robust=True, **kwargs):
+    #     """
+    #     Get a list of valid mseed files inside all folder tree from the the root_dir.
+    #     If root_dir doesn't exists it returns a empty list.
+    #     :param root_dir: The full path of the dir or a file.
+    #     :return: A list of full path of mseed files.
+    #     """
+    #     cls.start = kwargs.pop('starttime', [])
+    #     cls.end = kwargs.pop('endtime', [])
+    #     cls.obsfiles = []
+    #     cls.pos_file = []
+    #     cls.robust = robust
+    #
+    #     for top_dir, sub_dir, files in os.walk(root_dir):
+    #         for file in files:
+    #             cls.pos_file.append(os.path.join(top_dir, file))
+    #
+    #     with Pool(processes=6) as pool:
+    #         r = pool.map(cls.loop_tree_h5, range(len(cls.pos_file)))
+    #
+    #     r = list(filter(None, r))
+    #     r.sort()
+    #
+    #     return r
+
+    # @classmethod
+    # def loop_tree_h5(cls, i):
+    #     result = None
+    #     try:
+    #         header = read(cls.pos_file[i], headlonly=True)
+    #         result = cls.pos_file[i]
+    #     except:
+    #         pass
+    #
+    #     return result
+
+    @classmethod
+    def get_geodetic(cls,file):
+        dist  = None
+        bazim = None
+        azim = None
+        geodetic = [dist, bazim, azim]
+
+        try:
+            st = read(file)
+            geodetic = st[0].stats.mseed['geodetic']
+        except:
+            pass
+
+        return geodetic
 
     @classmethod
     def get_selected_files(cls, files, selection):
@@ -441,7 +507,7 @@ class MseedUtil:
         return []
 
     @classmethod
-    def data_availability(cls, files_path: str,only_this = True):
+    def data_availability(cls, files_path: str, only_this = True):
         import matplotlib.pyplot as plt
         import matplotlib.dates as mdt
         from isp.Gui.Frames import MatplotlibFrame

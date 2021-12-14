@@ -57,6 +57,10 @@ class TracerStats(NamedTuple):
         * Calib = (float) Calibration of instrument.
         * Mseed = (dict) Information of mseed file.
         * Format = (string) File format
+        * Dataquality = (string)
+        * numsamples = 236
+        * samplecnt = (float)
+        * sampletype: (string)
     """
     Network: str = None
     Station: str = None
@@ -70,6 +74,10 @@ class TracerStats(NamedTuple):
     Calib: float = None
     Mseed: dict = None
     Format: str = None
+    Dataquality: str = None
+    numsamples: float = None
+    samplecnt:float = None
+    sampletype: str = None
 
     def to_dict(self):
         return self._asdict()
@@ -81,10 +89,10 @@ class TracerStats(NamedTuple):
             from isp.Structures.obspy_stats_keys import ObspyStatsKeys
             if "processing" in dictionary:
                 del dictionary['processing']
-            file_format = dictionary.pop(ObspyStatsKeys.FORMAT)
-            new_d = validate_dictionary(cls, dictionary)
+            file_format = dictionary.pop(ObspyStatsKeys.FORMAT, "mseed") #ISP 1.0
+            new_d = validate_dictionary(cls, dictionary) #ISP 1.0
             new_d["Format"] = file_format
-            dictionary[ObspyStatsKeys.FORMAT] = file_format
+            #dictionary[ObspyStatsKeys.FORMAT] = file_format
             return cls(**new_d)
 
         except Exception as error:

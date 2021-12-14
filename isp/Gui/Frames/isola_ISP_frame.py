@@ -306,9 +306,12 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                 except:
                     print("Couldn't Plot")
 
-                if self.covarianceCB.isChecked():
-                   isola.plot_covariance_matrix(colorbar=True)
+                try:
+                    if self.covarianceCB.isChecked():
+                       isola.plot_covariance_matrix(colorbar=True)
                     #isola.plot_3D()
+                except:
+                    pass
 
 
 

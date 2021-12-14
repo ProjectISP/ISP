@@ -93,18 +93,28 @@ class SeismogramData:
 
 class SeismogramDataAdvanced:
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, realtime = False, **kwargs):
+
+        stream = kwargs.pop('stream', [])
+
+        # Two option, giving the pathfile or giving directly the obspy trace
         if file_path:
             self.st = read(file_path)
 
+        if realtime:
+            self.__tracer = stream
+
+        else:
             gaps = self.st.get_gaps()
 
             if len(gaps) > 0:
                 self.st.print_gaps()
-                self.st.merge(fill_value = "interpolate")
+                self.st.merge(fill_value="interpolate")
 
             self.__tracer = self.st[0]
-            self.stats = TracerStats.from_dict(self.tracer.stats)
+
+
+        self.stats = TracerStats.from_dict(self.tracer.stats)
 
 
     @classmethod

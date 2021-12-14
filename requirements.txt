@@ -2,8 +2,8 @@ sqlalchemy
 owslib
 Cython
 deprecated
-matplotlib
-numpy
+matplotlib<=3.3.0
+numpy<1.21,>=1.17
 scipy >= 1.4.1
 obspy
 pandas
@@ -11,10 +11,10 @@ PyQt5
 PyQtWebEngine
 mtspec
 nitime
-Cartopy
+Cartopy==0.19.post1
 pillow
 PyWavelets
 dill
 nvector
-Keras==2.3.1
-Tensorflow==2.0.0
+numba
+Tensorflow>=2.3.0

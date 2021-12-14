@@ -48,17 +48,22 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         self.help = HelpDoc()
 
+        #
+        self.latitudes = []
+        self.longitudes = []
+        self.depths = []
+        self.magnitudes = []
 
     def get_coordinates(self, row, column):
         lat = self.tableWidget.item(row,1).data(0)
         lon = self.tableWidget.item(row, 2).data(0)
         lat30, lon30, lat90, lon90  = retrieve.get_circle(lat,lon)
-        #self.cartopy_canvas.global_map(0, clear_plot = False, show_distance_circles = True, lon30 = lon30, lat30 = lat30,
-        #                               lon90 = lon90, lat90 = lat90)
+        self.cartopy_canvas.global_map(0, clear_plot = False, show_distance_circles = True, lon30 = lon30, lat30 = lat30,
+                                      lon90 = lon90, lat90 = lat90)
 
-        ax = self.cartopy_canvas.get_axe(0)
-        self.line1 = ax.scatter(lon30, lat30, s=8, c="white")
-        self.line2 = ax.scatter(lon90, lat90, s=8, c="white")
+        #ax = self.cartopy_canvas.get_axe(0)
+        #self.line1 = ax.scatter(lon30, lat30, s=8, c="white")
+        #self.line2 = ax.scatter(lon90, lat90, s=8, c="white")
 
 
     def get_catalog(self):
@@ -74,51 +79,65 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         mindepth = self.depth_minCB.value()
         maxdepth = self.depth_maxCB.value()
 
-        catalog = self.client.get_events(starttime=starttime, endtime=endtime, mindepth = mindepth,
+        try:
+            md = MessageDialog(self)
+            md.hide()
+            catalog = self.client.get_events(starttime=starttime, endtime=endtime, mindepth = mindepth,
                                          maxdepth = maxdepth, minmagnitude=minmagnitude, maxmagnitude = maxmagnitude)
+            for event in catalog:
+                otime = event.origins[0].time
+                lat = event.origins[0].latitude
+                lon = event.origins[0].longitude
+                depth = event.origins[0].depth
+                magnitude = event.magnitudes[0].mag
+                magnitude_type = event.magnitudes[0].magnitude_type
+                # append results
+                latitudes.append(lat)
+                longitudes.append(lon)
+                depths.append(depth)
+                magnitudes.append(magnitude)
 
-        for event in catalog:
-            otime = event.origins[0].time
-            lat = event.origins[0].latitude
-            lon = event.origins[0].longitude
-            depth = event.origins[0].depth
-            magnitude = event.magnitudes[0].mag
-            magnitude_type = event.magnitudes[0].magnitude_type
-            # append results
-            latitudes.append(lat)
-            longitudes.append(lon)
-            depths.append(depth)
-            magnitudes.append(magnitude)
 
+                self.tableWidget.insertRow(self.tableWidget.rowCount())
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QtWidgets.QTableWidgetItem(str(otime)))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QtWidgets.QTableWidgetItem(str(lat)))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QtWidgets.QTableWidgetItem(str(lon)))
+                try:
 
-            self.tableWidget.insertRow(self.tableWidget.rowCount())
-            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QtWidgets.QTableWidgetItem(str(otime)))
-            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QtWidgets.QTableWidgetItem(str(lat)))
-            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QtWidgets.QTableWidgetItem(str(lon)))
-            try:
+                    self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem(str(depth/1000)))
 
-                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem(str(depth/1000)))
+                except TypeError:
 
-            except TypeError:
+                    self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem("N/A"))
 
-                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem("N/A"))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1,4,QtWidgets.QTableWidgetItem(str(magnitude)))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1,5,QtWidgets.QTableWidgetItem(str(magnitude_type)))
 
-            self.tableWidget.setItem(self.tableWidget.rowCount() - 1,4,QtWidgets.QTableWidgetItem(str(magnitude)))
-            self.tableWidget.setItem(self.tableWidget.rowCount() - 1,5,QtWidgets.QTableWidgetItem(str(magnitude_type)))
+            selection_range = QtWidgets.QTableWidgetSelectionRange(0,0,self.tableWidget.rowCount() - 1, self.tableWidget.columnCount() - 1)
+            #print(selection_range.bottomRow())
 
-        selection_range = QtWidgets.QTableWidgetSelectionRange(0,0,self.tableWidget.rowCount() - 1, self.tableWidget.columnCount() - 1)
-        #print(selection_range.bottomRow())
+            self.longitudes = longitudes
+            self.latitudes = latitudes
+            self.depths = depths
+            self.magnitudes = magnitudes
+            self.tableWidget.setRangeSelected(selection_range, True)
+            #print(selection_range)
+            self.catalog_out=[latitudes, longitudes, depths, magnitudes]
+            # plot earthquakes
+            self.cartopy_canvas.global_map(0, plot_earthquakes= True, show_colorbar = self.activated_colorbar,
+                                           lat=latitudes, lon=longitudes, depth=depths, magnitude = magnitudes,
+                                           resolution = self.typeCB.currentText())
 
-        self.tableWidget.setRangeSelected(selection_range, True)
-        #print(selection_range)
-        self.catalog_out=[latitudes, longitudes, depths, magnitudes]
-        # plot earthquakes
-        self.cartopy_canvas.global_map(0, plot_earthquakes= True, show_colorbar = self.activated_colorbar,
-                                       lat=latitudes, lon=longitudes, depth=depths, magnitude = magnitudes,
-                                       resolution = self.typeCB.currentText())
+            self.activated_colorbar = False
+            self.event_dataBtn.setEnabled(True)
+            md.set_info_message("Catalog generated succesfully!!!")
+            md.show()
+        except:
 
-        self.activated_colorbar = False
-        self.event_dataBtn.setEnabled(True)
+            md.set_error_message("Something wet wrong, Please check that you have: 1- Loaded Inventory, "
+                                 "2- Search Parameters have sense")
+            md.show()
+
         #obspy.clients.fdsn.client.Client
 
 
@@ -188,7 +207,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                     m_dist, az, back_az = obspy.geodetics.base.gps2dist_azimuth(evla, evlo,
                                                                                 stla, stlo)
                     deg_dist = obspy.geodetics.base.kilometers2degrees(m_dist/1000)
-                    atime = model.get_travel_times(source_depth_in_km=evdp,distance_in_degree=deg_dist,
+                    atime = model.get_travel_times(source_depth_in_km=evdp, distance_in_degree=deg_dist,
                                                    receiver_depth_in_km=0.0)
 
                     p_onset = otime + atime[0].time
@@ -200,17 +219,16 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                         st = self.client.get_waveforms(ntwknm, stnm, "*", channels, start, end)
                         print(st)
                         self.write(st, dir_path)
-                        #md = MessageDialog(self)
-                        #md.set_info_message("Download completed")
-
+                        
                     except:
                         errors = True
                         md = MessageDialog(self)
-                        md.set_error_message(ntwknm+"."+stnm+"."+channels+"   "+"Couldn't download data")
+                        md.set_error_message(ntwknm + "." + stnm + "." + channels + "   " + "Couldn't download data")
         if errors:
             md = MessageDialog(self)
             md.set_info_message("Download completed with some errors")
         else:
+            md = MessageDialog(self)
             md.set_info_message("Download completed")
 
 
@@ -290,12 +308,17 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             self.inventory, self.client = self.retrivetool.get_inventory(self.URL_CB.currentText(), starttime, endtime,
             self.networksLE.text(), self.stationsLE.text(), use_networks=self.netsCB.isChecked(), FDSN=self.FDSN_CB.isChecked(),
             ip_address=self.IP_LE.text(), port=self.portLE.text())
-
-            md = MessageDialog(self)
-            md.set_info_message("Loaded Inventory from Address")
-            self.plotstationsBtn.setEnabled(True)
-            self.catalogBtn.setEnabled(True)
-        except ValueError:
+            if self.inventory and self.client is not None:
+                md = MessageDialog(self)
+                md.set_info_message("Loaded Inventory from Address")
+                self.plotstationsBtn.setEnabled(True)
+                self.catalogBtn.setEnabled(True)
+            else:
+                md = MessageDialog(self)
+                md.set_info_message("The current client does not have a station service. "
+                                    "Please check that you do not have selected -just specific nets- and the net "
+                                    "field provide a net name that is not expected in this service")
+        except:
             md = MessageDialog(self)
             md.set_info_message("The current client does not have a station service")
 
@@ -303,8 +326,13 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         coordinates = self.retrivetool.get_inventory_coordinates(self.inventory)
         self.cartopy_canvas.global_map(0, plot_earthquakes=False, show_colorbar=False,
-           show_stations = True, show_station_names = self.namesCB.isChecked(), clear_plot = False,
+           show_stations = True, show_station_names = self.namesCB.isChecked(), clear_plot = True,
                                        coordinates = coordinates, resolution = self.typeCB.currentText())
+        if len(self.latitudes)>0 and len(self.longitudes) and len(self.depths) and len(self.magnitudes)>0:
+
+            self.cartopy_canvas.global_map(0, plot_earthquakes=True, show_colorbar=self.activated_colorbar, clear_plot = False,
+                                           lat=self.latitudes, lon=self.longitudes, depth=self.depths, magnitude=self.magnitudes,
+                                           resolution=self.typeCB.currentText())
 
     def on_click_matplotlib(self, event, canvas):
         self.retrivetool = retrieve()
