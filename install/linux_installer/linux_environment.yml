@@ -109,8 +109,8 @@ dependencies:
   - lxml=4.6.4=py38hf1fe3a4_0
   - lz4-c=1.9.3=h9c3ff4c_1
   - markdown=3.3.6=pyhd8ed1ab_0
-  - matplotlib=3.4.3=py38h06a4308_0
-  - matplotlib-base=3.4.3=py38hbbc1b5f_0
+  - matplotlib=3.3.0=1
+  - matplotlib-base=3.3.0=py38h91b0d89_1
   - mtspec=0.3.2=py38h7eb8c7e_4
   - multidict=5.1.0=py38h497a2fe_1
   - munkres=1.1.4=pyh9f0ad1d_0
