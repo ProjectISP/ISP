@@ -16,6 +16,9 @@ from isp.ant.crossstack import noisestack
 from sys import platform
 
 from isp.Gui.Utils.pyqt_utils import add_save_load
+from isp.earthquakeAnalisysis.stations_map import StationsMap
+
+
 @add_save_load()
 class EGFFrame(pw.QWidget, UiEGFFrame):
 
@@ -62,6 +65,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.outputBtn.clicked.connect(lambda: self.on_click_select_directory(self.output_bind))
         self.preprocessBtn.clicked.connect(self.run_preprocess)
         self.cross_stackBtn.clicked.connect(self.stack)
+        self.mapBtn.clicked.connect(self.map)
 
 
 
@@ -204,9 +208,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.pagination.set_total_items(self.total_items)
 
     def get_files(self, dir_path):
-
-        files_path = MseedUtil.get_tree_hd5_files(dir_path, robust=False)
-        print(files_path)
+        files_path = MseedUtil.get_tree_hd5_files(self, dir_path, robust=False)
         self.set_pagination_files(files_path)
         # print(files_path)
         pyc.QMetaObject.invokeMethod(self.progressbar, 'accept', qt.AutoConnection)
@@ -350,3 +352,24 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             return geodetic[0]
         else:
             return 0.
+
+    def map(self):
+
+        try:
+
+            map_dict = {}
+            sd = []
+
+            for tr in self.st:
+
+                station = tr.stats.station.split("_")[0]
+                name = tr.stats.network+"."+station
+                sd.append(name)
+                map_dict[name] = [tr.stats.mseed['coordinates'][0], tr.stats.mseed['coordinates'][1]]
+
+            self.map_stations = StationsMap(map_dict)
+            self.map_stations.plot_stations_map(latitude = 0, longitude=0)
+
+        except:
+            md = MessageDialog(self)
+            md.set_error_message("couldn't plot stations map, please check your metadata and the trace headers")

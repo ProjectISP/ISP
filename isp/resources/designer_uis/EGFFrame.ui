@@ -37,19 +37,6 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0" colspan="5">
-      <widget class="QPushButton" name="mapBtn">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Stations Map</string>
-       </property>
-      </widget>
-     </item>
      <item row="7" column="0" colspan="5">
       <widget class="QListWidget" name="listWidget"/>
      </item>
@@ -208,6 +195,19 @@
        </item>
       </widget>
      </item>
+     <item row="9" column="2" colspan="2">
+      <widget class="QPushButton" name="mapBtn">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Stations Map</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
@@ -223,8 +223,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1240</width>
-        <height>908</height>
+        <width>1202</width>
+        <height>902</height>
        </rect>
       </property>
      </widget>
