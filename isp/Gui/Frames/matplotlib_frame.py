@@ -20,9 +20,6 @@ from obspy import Stream
 from owslib.wms import WebMapService
 from isp.Gui import pw, pyc, qt
 from isp.Utils import ObspyUtil, AsycTime
-import numpy as np
-from isp import ROOT_DIR
-import os
 
 class MatplotlibWidget(pw.QWidget):
 

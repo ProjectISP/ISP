@@ -99,7 +99,7 @@
              <string>Select the folder where you have the seismogram files</string>
             </property>
             <property name="text">
-             <string>Files Directory</string>
+             <string>File Directory</string>
             </property>
            </widget>
           </item>
@@ -571,7 +571,7 @@
      <x>0</x>
      <y>0</y>
      <width>1501</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

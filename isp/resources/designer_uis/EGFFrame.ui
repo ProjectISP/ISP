@@ -224,7 +224,11 @@
         <x>0</x>
         <y>0</y>
         <width>1202</width>
+<<<<<<< HEAD
         <height>902</height>
+=======
+        <height>898</height>
+>>>>>>> 629ff8d90f4562547cd0d950bfc4f5eb7a6ef8ba
        </rect>
       </property>
      </widget>

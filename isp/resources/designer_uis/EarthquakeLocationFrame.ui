@@ -532,7 +532,7 @@ background-color: rgb(233, 233, 233);</string>
             <string>Set the metadata file whre the algorithm wil extract the stations coordinates to locate the event.</string>
            </property>
            <property name="text">
-            <string>Set Stations File Path</string>
+            <string>Metadata</string>
            </property>
           </widget>
          </item>
