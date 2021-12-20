@@ -64,7 +64,6 @@ class ObspyUtil:
     def get_stats(file_path):
         """
         Reads only the header for the metadata and return a :class:`TracerStats`.
-
         :param file_path: The full file's path for the mseed.
         :return: A TracerStats contain the metadata.
         """
@@ -78,10 +77,8 @@ class ObspyUtil:
 
         """
         Reads only the header for the metadata and return a :class:`TracerStats`.
-
         :param ftrace: obspy trace.
         :return: A Dictionary with TracerStats contain the metadata.
-
         """
         net = tr.stats.network
         station = tr.stats.station
@@ -131,16 +128,13 @@ class ObspyUtil:
     def filter_trace(trace, trace_filter, f_min, f_max, **kwargs):
         """
         Filter a obspy Trace or Stream.
-
         :param trace: The trace or stream to be filter.
         :param trace_filter: The filter name or Filter enum, ie. Filter.BandPass or "bandpass".
         :param f_min: The lower frequency.
         :param f_max: The higher frequency.
-
         :keyword kwargs:
         :keyword corners: The number of poles, default = 4.
         :keyword zerophase: True for keep the phase without shift, false otherwise, Default = True.
-
         :return: False if bad frequency filter, True otherwise.
         """
         if trace_filter != Filters.Default:
@@ -169,13 +163,9 @@ class ObspyUtil:
             -> Stream:
         """
         Reads all files in the list and concatenate in a Stream.
-
         :param files_path: A list of valid mseed files.
-
         :arg args: Valid arguments of obspy.read().
-
         :keyword kwargs: Valid kwargs for obspy.read().
-
         :return: The concatenate stream.
         """
         st = Stream()
@@ -191,11 +181,9 @@ class ObspyUtil:
         """
         This method is a safe wrapper to Stream.trim(). If start_time and end_time don't overlap the
         stream, it will be trimmed by the maximum start time and minimum end time within its tracers .
-
         :param st: The Stream to be trimmed.
         :param start_time: The UTCDatetime for start the trim.
         :param end_time: The UTCDatetime for end the trim.
-
         :return:
         """
         max_start_time = np.max([tr.stats.starttime for tr in st])
@@ -215,9 +203,7 @@ class ObspyUtil:
     def reads_hyp_to_origin(hyp_file_path: str) -> Origin:
         """
         Reads an hyp file and returns the Obspy Origin.
-
         :param hyp_file_path: The file path to the .hyp file
-
         :return: An Obspy Origin
         """
 
@@ -330,42 +316,59 @@ class MseedUtil:
 
         return result
 
-    @classmethod
-    def get_tree_hd5_files(cls, root_dir: str, robust=True, **kwargs):
-        """
-        Get a list of valid mseed files inside all folder tree from the the root_dir.
-        If root_dir doesn't exists it returns a empty list.
-        :param root_dir: The full path of the dir or a file.
-        :return: A list of full path of mseed files.
-        """
-        cls.start = kwargs.pop('starttime', [])
-        cls.end = kwargs.pop('endtime', [])
-        cls.obsfiles = []
-        cls.pos_file = []
-        cls.robust = robust
+    def get_tree_hd5_files(self, root_dir: str, robust=True, **kwargs):
+
+        self.start = kwargs.pop('starttime', [])
+        self.end = kwargs.pop('endtime', [])
+        self.robust = robust
+        pos_file = []
 
         for top_dir, sub_dir, files in os.walk(root_dir):
             for file in files:
-                cls.pos_file.append(os.path.join(top_dir, file))
+                try:
+                    header = read(os.path.join(top_dir, file), headlonly=True)
+                    pos_file.append(os.path.join(top_dir, file))
+                except:
+                    pass
 
-        with Pool(processes=6) as pool:
-            r = pool.map(cls.loop_tree_h5, range(len(cls.pos_file)))
+        return pos_file
 
-        r = list(filter(None, r))
-        r.sort()
+    # @classmethod
+    # def get_tree_hd5_files(cls, root_dir: str, robust=True, **kwargs):
+    #     """
+    #     Get a list of valid mseed files inside all folder tree from the the root_dir.
+    #     If root_dir doesn't exists it returns a empty list.
+    #     :param root_dir: The full path of the dir or a file.
+    #     :return: A list of full path of mseed files.
+    #     """
+    #     cls.start = kwargs.pop('starttime', [])
+    #     cls.end = kwargs.pop('endtime', [])
+    #     cls.obsfiles = []
+    #     cls.pos_file = []
+    #     cls.robust = robust
+    #
+    #     for top_dir, sub_dir, files in os.walk(root_dir):
+    #         for file in files:
+    #             cls.pos_file.append(os.path.join(top_dir, file))
+    #
+    #     with Pool(processes=6) as pool:
+    #         r = pool.map(cls.loop_tree_h5, range(len(cls.pos_file)))
+    #
+    #     r = list(filter(None, r))
+    #     r.sort()
+    #
+    #     return r
 
-        return r
-
-    @classmethod
-    def loop_tree_h5(cls, i):
-        result = None
-        try:
-            header = read(cls.pos_file[i], headlonly=True)
-            result = cls.pos_file[i]
-        except:
-            pass
-
-        return result
+    # @classmethod
+    # def loop_tree_h5(cls, i):
+    #     result = None
+    #     try:
+    #         header = read(cls.pos_file[i], headlonly=True)
+    #         result = cls.pos_file[i]
+    #     except:
+    #         pass
+    #
+    #     return result
 
     @classmethod
     def get_geodetic(cls,file):
@@ -403,7 +406,6 @@ class MseedUtil:
     def is_valid_mseed(file_path):
         """
         Return True if path is an existing regular file and a valid mseed. False otherwise.
-
         :param file_path: The full file's path.
         :return: True if path is an existing regular file and a valid mseed. False otherwise.
         """
@@ -418,7 +420,6 @@ class MseedUtil:
     def is_valid_dataless(file_path):
         """
         Check if is a valid dataless file.
-
         :param file_path: The full file's path.
         :return: True if path is a valid dataless. False otherwise.
         """
@@ -446,7 +447,6 @@ class MseedUtil:
     def get_dataless_files(cls, root_dir):
         """
         Get a list of valid dataless files inside the root_dir. If root_dir doesn't exists it returns a empty list.
-
         :param root_dir: The full path of the dir or a file.
         :return: A list of full path of dataless files.
         """
@@ -475,9 +475,7 @@ class MseedUtil:
     def get_xml_files(cls, root_dir: str):
         """
         Get a list of valid dataless files inside the root_dir. If root_dir doesn't exists it returns a empty list.
-
         :param root_dir: The full path of the dir or a file.
-
         :return: A list of full path of dataless files.
         """
 
@@ -490,7 +488,7 @@ class MseedUtil:
         return []
 
     @classmethod
-    def data_availability(cls, files_path: str,only_this = True):
+    def data_availability(cls, files_path: str, only_this = True):
         import matplotlib.pyplot as plt
         import matplotlib.dates as mdt
         from isp.Gui.Frames import MatplotlibFrame
