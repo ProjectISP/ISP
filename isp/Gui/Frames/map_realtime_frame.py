@@ -1,4 +1,3 @@
-#from isp.Gui import pw, pyc
 from isp.Gui.Frames import BaseFrame, CartopyCanvas
 from isp.Gui.Frames.uis_frames import UiMapRealTime
 from isp.retrieve_events import retrieve

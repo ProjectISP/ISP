@@ -2,8 +2,8 @@ sqlalchemy
 owslib
 Cython
 deprecated
-matplotlib
-numpy<1.21, >=1.17
+matplotlib<=3.3.0
+numpy<1.21,>=1.17
 scipy >= 1.4.1
 obspy
 pandas

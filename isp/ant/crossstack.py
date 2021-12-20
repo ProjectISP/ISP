@@ -177,7 +177,7 @@ class noisestack:
                                 corr_ij_time[m, n, :] = np.fft.irfft(corr_ij_freq[m, n, :], size_3d)
 
                         # Stack: se suman los intervalos de la matriz
-                        c_stack = np.zeros(size_3d, dtype=np.float64)  # y si hubo reshape?
+                        c_stack = np.zeros(size_3d, dtype=np.float64)
                         for m in range(corr_ij_time.shape[0]):
                             for n in range(corr_ij_time.shape[1]):
                                 c_stack = c_stack + corr_ij_time[m, n, :]
@@ -195,7 +195,8 @@ class noisestack:
                         stats['channel'] = file_i[-1]
                         stats['sampling_rate'] = self.sampling_rate
                         stats['npts'] = len(c_stack)
-                        stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim], 'cross_channels':file_i[-1]+file_j[-1]}
+                        stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim], 'cross_channels':file_i[-1]+file_j[-1],
+                                          'coordinates': [lat_i, lon_i, lat_j, lon_j]}
                         stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
                         #stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
                         st = Stream([Trace(data=c_stack, header=stats)])
