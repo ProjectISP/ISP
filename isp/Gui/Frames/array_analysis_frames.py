@@ -1,3 +1,4 @@
+import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 from obspy import Stream, UTCDateTime, Trace
@@ -10,7 +11,9 @@ from isp.Gui.Frames.stations_coordinates import StationsCoords
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.vespagram import Vespagram
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
-from isp.Gui import pw, pqg
+from isp.Gui import pw, pqg, pyc
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtWidgets import QStyle
 import os
 import matplotlib.dates as mdt
 from datetime import date
@@ -21,6 +24,10 @@ from isp import ROOT_DIR
 from isp.Utils.subprocess_utils import exc_cmd
 from isp.Gui.Frames.help_frame import HelpDoc
 from sys import platform
+
+from isp.arrayanalysis.backprojection_tools import back_proj_organize, backproj
+from isp.arrayanalysis.plot_bp import plot_cum, plot_bp
+
 
 class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
@@ -39,25 +46,22 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
         self.canvas_fk.on_double_click(self.on_click_matplotlib)
         self.canvas_stack = MatplotlibCanvas(self.widget_stack)
-        #self.canvas_stack.figure.subplots_adjust(left=0.080, bottom=0.374, right=0.970, top=0.990, wspace=0.2, hspace=0.0)
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
         self.canvas.set_new_subplot(1, ncols=1)
 
         #Binding
-
         self.root_pathFK_bind = BindPyqtObject(self.rootPathFormFK)
-        #self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
+        self.root_pathBP_bind = BindPyqtObject(self.rootPathFormBP)
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
+        self.metadata_path_bindBP = BindPyqtObject(self.datalessPathFormBP, self.onChange_metadata_path)
+        self.output_path_bindBP = BindPyqtObject(self.outputPathFormBP, self.onChange_metadata_path)
         self.fmin_bind = BindPyqtObject(self.fminSB)
         self.fmax_bind = BindPyqtObject(self.fmaxSB)
         self.grid_bind = BindPyqtObject(self.gridSB)
         self.smax_bind = BindPyqtObject(self.smaxSB)
 
         # On select
-
         self.canvas_fk.register_on_select(self.on_select, rectprops=dict(alpha=0.2, facecolor='red'))
-
-
         self.fminFK_bind = BindPyqtObject(self.fminFKSB)
         self.fmaxFK_bind = BindPyqtObject(self.fmaxFKSB)
         self.overlap_bind = BindPyqtObject(self.overlapSB)
@@ -66,36 +70,71 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.slow_grid_bind = BindPyqtObject(self.gridFKSB)
 
         # Bind buttons
-
         self.selectDirBtnFK.clicked.connect(lambda: self.on_click_select_directory(self.root_pathFK_bind))
         self.datalessBtn.clicked.connect(lambda: self.on_click_select_metadata_file(self.metadata_path_bind))
+
+        # Bind buttons BackProjection
+        self.selectDirBtnBP.clicked.connect(lambda: self.on_click_select_directory(self.root_pathBP_bind))
+        self.datalessBtnBP.clicked.connect(lambda: self.on_click_select_metadata_file(self.metadata_path_bindBP))
+        self.outputBtn.clicked.connect(lambda: self.on_click_select_directory(self.output_path_bindBP))
 
         #Action Buttons
         self.arfBtn.clicked.connect(lambda: self.arf())
         self.runFKBtn.clicked.connect(lambda: self.FK_plot())
         self.plotBtn.clicked.connect(lambda: self.plot_seismograms())
+        self.plotBtnBP.clicked.connect(lambda: self.plot_seismograms(FK=False))
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
         self.actionProcessed_Seimograms.triggered.connect(self.write)
         self.actionStacked_Seismograms.triggered.connect(self.write_stack)
-
-        self.stationsBtn.clicked.connect(self.stationsInfo)
+        self.stationsBtn.clicked.connect(lambda: self.stationsInfo())
+        self.stationsBtnBP.clicked.connect(lambda: self.stationsInfo(FK=False))
         self.mapBtn.clicked.connect(self.stations_map)
         self.actionCreate_Stations_File.triggered.connect(self.stations_coordinates)
         self.actionLoad_Stations_File.triggered.connect(self.load_path)
         self.actionRunVespagram.triggered.connect(self.open_vespagram)
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'), self)
         self.shortcut_open.activated.connect(self.open_solutions)
+        self.create_gridBtn.clicked.connect(self.create_grid)
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
-        # help Documentation
+        self.load_videoBtn.clicked.connect(self.loadvideoBP)
 
+        # help Documentation
         self.help = HelpDoc()
+
         # Parameters settings
         self.__parameters = ParametersSettings()
 
         # Stations Coordinates
         self.__stations_coords = StationsCoords()
+
         # picks
         self.picks =  {'Time': [], 'Phase': [], 'BackAzimuth':[], 'Slowness':[], 'Power':[]}
+
+        # video
+        self.player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+        self.player.setVideoOutput(self.backprojection_widget)
+        self.player.stateChanged.connect(self.mediaStateChanged)
+        self.player.positionChanged.connect(self.positionChanged)
+        self.player.durationChanged.connect(self.durationChanged)
+        self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        self.playButton.clicked.connect(self.play_bp)
+        self.positionSlider.sliderMoved.connect(self.setPosition)
+
+
+    def mediaStateChanged(self):
+         if self.player.state() == QMediaPlayer.PlayingState:
+             self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
+         else:
+             self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+
+    def positionChanged(self, position):
+         self.positionSlider.setValue(position)
+
+    def durationChanged(self, duration):
+         self.positionSlider.setRange(0, duration)
+
+    def setPosition(self, position):
+         self.player.setPosition(position)
 
     def open_parameters_settings(self):
         self.__parameters.show()
@@ -268,43 +307,74 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         md = MessageDialog(self)
         md.set_info_message(msg)
 
-    def plot_seismograms(self):
+    def plot_seismograms(self, FK = True):
 
-        starttime = convert_qdatetime_utcdatetime(self.starttime_date)
-        endtime = convert_qdatetime_utcdatetime(self.endtime_date)
+        if FK:
+            starttime = convert_qdatetime_utcdatetime(self.starttime_date)
+            endtime = convert_qdatetime_utcdatetime(self.endtime_date)
+        else:
+            starttime = convert_qdatetime_utcdatetime(self.starttime_date_BP)
+            endtime = convert_qdatetime_utcdatetime(self.endtime_date_BP)
+
         diff = endtime - starttime
-        file_path = self.root_pathFK_bind.value
+
+        if FK:
+            file_path = self.root_pathFK_bind.value
+        else:
+            file_path = self.root_pathBP_bind.value
+
         obsfiles = []
 
         for dirpath, _, filenames in os.walk(file_path):
             for f in filenames:
                  if f != ".DS_Store":
                     obsfiles.append(os.path.abspath(os.path.join(dirpath, f)))
+
         obsfiles.sort()
         parameters = self.__parameters.getParameters()
         all_traces =[]
         trace_number = 0
+
         for file in obsfiles:
             sd = SeismogramDataAdvanced(file)
-            if self.trimCB.isChecked() and diff >= 0:
-                tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
-                    start_time=starttime, end_time=endtime, trace_number=trace_number)
+
+            if FK:
+                if self.trimCB.isChecked() and diff >= 0:
+                    tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
+                        start_time=starttime, end_time=endtime, trace_number=trace_number)
+                else:
+                    tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
+                                                  trace_number=trace_number)
             else:
-                tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
-                                              trace_number=trace_number)
+                if self.trimCB_BP.isChecked() and diff >= 0:
+                    tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
+                        start_time=starttime, end_time=endtime, trace_number=trace_number)
+                else:
+                    tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
+                                                  trace_number=trace_number)
 
             all_traces.append(tr)
             trace_number = trace_number  + 1
 
         self.st = Stream(traces=all_traces)
 
-        if self.selectCB.isChecked():
-            self.st = self.st.select( station=self.stationLE.text(), channel=self.channelLE.text())
+        if FK:
+            if self.selectCB.isChecked():
+                self.st = self.st.select(station=self.stationLE.text(), channel=self.channelLE.text())
+
+        else:
+            if self.selectCB_BP.isChecked():
+                self.st = self.st.select(network=self.stationLE_BP.text(),station=self.stationLE_BP.text(),
+                                         channel=self.channelLE_BP.text())
+
         self.stream_frame = MatplotlibFrame(self.st, type='normal')
         self.stream_frame.show()
 
-    def stationsInfo(self):
-        obsfiles = MseedUtil.get_mseed_files(self.root_pathFK_bind.value)
+    def stationsInfo(self, FK = True):
+        if FK:
+            obsfiles = MseedUtil.get_mseed_files(self.root_pathFK_bind.value)
+        else:
+            obsfiles = MseedUtil.get_mseed_files(self.root_pathBP_bind.value)
         obsfiles.sort()
         sd = []
         for file in obsfiles:
@@ -390,6 +460,70 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         except:
             md = MessageDialog(self)
             md.set_error_message("Coundn't open solutions file")
+
+    ### New part back-projection
+
+    def create_grid(self):
+        area_coords = [self.minLonBP, self.maxLonBP,self.minLatBP, self.maxLatBP]
+        bp = back_proj_organize(self, self.rootPathFormBP, self.datalessPathFormBP, area_coords, self.sxSB.value,
+                                self.sxSB.value, self.depthSB.value)
+
+        mapping = bp.create_dict()
+
+        try:
+            self.path_file = os.path.join(self.output_path_bindBP.value,"mapping.pkl")
+            file_to_store = open(self.path_file, "wb")
+            pickle.dump(mapping, file_to_store)
+            md = MessageDialog(self)
+            md.set_info_message("BackProjection grid created succesfully!!!")
+
+        except:
+            md = MessageDialog(self)
+            md.set_error_message("Coundn't create a BackProjection grid")
+
+
+    def run_bp(self):
+
+        try:
+            if os.path.exists(self.path_file):
+                with open(self.path_file, 'rb') as handle:
+                    mapping = pickle.load(handle)
+        except:
+            md = MessageDialog(self)
+            md.set_error_message("Please you need try to previously create a BackProjection grid")
+
+        power = backproj.run_back(self.st, mapping, self.time_winBP.value, self.stepBP.value,
+                                  window=self.slide_winBP.value, multichannel=self.mcccCB.isChecked(),
+                                  stack_process = self.methodBP.currentText())
+
+        #plot_cum(power, mapping['area_coords'], self.cum_sumBP.value, self.st)
+        plot_bp(power, mapping['area_coords'], self.cum_sumBP.value, self.st)
+
+        fname = os.path.join(self.output_path_bindBP.value, "power.pkl")
+
+        file_to_store = open(fname, "wb")
+        pickle.dump(power, file_to_store)
+
+    def loadvideoBP(self):
+        self.path_video, _ = pw.QFileDialog.getOpenFileName(self, "Choose your BackProjection",
+                                                       ".", "Video Files (*.mp4 *.flv *.ts *.mts *.avi)")
+        if self.path_video != '':
+
+            self.player.setVideoOutput(self.backprojection_widget)
+            self.player.setMedia(QMediaContent(pyc.QUrl.fromLocalFile(self.path_video)))
+            md = MessageDialog(self)
+            md.set_error_message("Video containing BackProjection succesfully loaded")
+        else:
+            md = MessageDialog(self)
+            md.set_error_message("Video containing BackProjection couldn't be loaded")
+
+
+    def play_bp(self):
+
+        if self.player.state() == QMediaPlayer.PlayingState:
+            self.player.pause()
+        else:
+            self.player.play()
 
     def open_help(self):
         self.help.show()
