@@ -512,7 +512,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             self.player.setVideoOutput(self.backprojection_widget)
             self.player.setMedia(QMediaContent(pyc.QUrl.fromLocalFile(self.path_video)))
             md = MessageDialog(self)
-            md.set_error_message("Video containing BackProjection succesfully loaded")
+            md.set_info_message("Video containing BackProjection succesfully loaded")
         else:
             md = MessageDialog(self)
             md.set_error_message("Video containing BackProjection couldn't be loaded")
