@@ -1191,6 +1191,20 @@
            <item row="4" column="3">
             <widget class="QDoubleSpinBox" name="depthSB"/>
            </item>
+           <item row="7" column="0" alignment="Qt::AlignHCenter">
+            <widget class="QLabel" name="label_35">
+             <property name="text">
+              <string>Step [s]</string>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="1">
+            <widget class="QDoubleSpinBox" name="stepBP">
+             <property name="value">
+              <double>1.000000000000000</double>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>
