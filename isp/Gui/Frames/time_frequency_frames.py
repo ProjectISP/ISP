@@ -1,4 +1,3 @@
-
 import math
 from matplotlib.colors import Normalize
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy

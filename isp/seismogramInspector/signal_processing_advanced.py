@@ -326,7 +326,7 @@ def sta_lta(data, sampling_rate, STA = 1, LTA = 40):
     return cft
 
 
-def envelope(data,sampling_rate):
+def envelope(data, sampling_rate):
 
     #from obspy.signal.filter import lowpass
     N = len(data)

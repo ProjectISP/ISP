@@ -1,5 +1,6 @@
 from isp.Gui import pqg, pw
 from isp.Gui.Frames import BaseFrame
+from isp.Gui.Frames.frequencytime import FrequencyTimeFrame
 from isp.Gui.Frames.uis_frames import UiNoise
 from isp.Gui.Frames.efg_frame import EGFFrame
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -26,7 +27,9 @@ class NoiseFrame(BaseFrame, UiNoise):
         # TODO: sharing parameters and settings this way. Should they be shared?
         # Or they are only specific to EGFFrame?
         self.egf_frame = EGFFrame(self.parameters, self.settings_dialog)
+        self.ft_frame = FrequencyTimeFrame()
         self.tabWidget.addTab(self.egf_frame, 'EGFs')
+        self.tabWidget.addTab(self.ft_frame, 'Frequency Time Analysis')
 
         # Help Documentation
         self.help = HelpDoc()

@@ -11,7 +11,7 @@ import scipy.ndimage
 from matplotlib import gridspec
 from isp import ROOT_DIR
 
-def plot_bp(power_matrix, coords, step, st):
+def plot_bp(power_matrix, coords, step, st, output):
 
 
     mpl.rcParams['figure.figsize'] = (10,8)
@@ -97,7 +97,7 @@ def plot_bp(power_matrix, coords, step, st):
 
     im_ani = animation.ArtistAnimation(fig, ims, blit=True)
 
-    im_ani.save('im.mp4', writer=writer)
+    im_ani.save(os.path.join(output,'backproj.mp4'), writer=writer)
     print("end movie maker")
 
 

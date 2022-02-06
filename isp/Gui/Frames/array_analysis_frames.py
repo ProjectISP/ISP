@@ -497,7 +497,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                                   stack_process = self.methodBP.currentText())
 
         #plot_cum(power, mapping['area_coords'], self.cum_sumBP.value, self.st)
-        plot_bp(power, mapping['area_coords'], self.cum_sumBP.value, self.st)
+        plot_bp(power, mapping['area_coords'], self.cum_sumBP.value, self.st, output=self.output_path_bindBP.value)
 
         fname = os.path.join(self.output_path_bindBP.value, "power.pkl")
 

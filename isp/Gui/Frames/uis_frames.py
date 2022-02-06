@@ -45,4 +45,5 @@ UiRealTimeFrame = load_ui_designers("RealTimeFrame.ui")
 UiMapRealTime = load_ui_designers("map_realtime.ui")
 UiEGFFrame = load_ui_designers("EGFFrame.ui")
 UiNoise = load_ui_designers("NoiseFrame.ui")
+UiFrequencyTime = load_ui_designers("EGFsTimeFrequencyFrame.ui")
 
