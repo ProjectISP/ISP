@@ -1,7 +1,6 @@
 from scipy.signal import find_peaks
 
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
-from isp.DataProcessing.ridge_extraction import extract_ridges
 from isp.Gui import pw
 import matplotlib.pyplot as plt
 from isp.Gui.Frames import FilesView, MatplotlibCanvas, MessageDialog
