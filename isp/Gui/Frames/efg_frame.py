@@ -82,9 +82,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
         """
         Fired every time the root_path is changed
-
         :param value: The path of the new directory.
-
         :return:
         """
         # self.read_files(value)
@@ -109,7 +107,6 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
     def subprocess_feedback(self, err_msg: str, set_default_complete=True):
         """
         This method is used as a subprocess feedback. It runs when a raise expect is detected.
-
         :param err_msg: The error message from the except.
         :param set_default_complete: If True it will set a completed successfully message. Otherwise nothing will
             be displayed.

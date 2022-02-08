@@ -536,8 +536,11 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             ax.cla()
 
         cmap = kwargs.pop('cmap', plt.get_cmap('jet'))
+        yscale = kwargs.pop('yscale', 'linear')
+        xscale = kwargs.pop('xscale', 'linear')
         vmin = kwargs.pop('vmin', numpy.amin(z))
         vmax = kwargs.pop('vmax', numpy.amax(z))
+        orientation = kwargs.pop('orientation', 'vertical')
         clabel = kwargs.pop('clabel', '')
         x_label = ax.get_xlabel()
 
@@ -559,11 +562,21 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
 
         self.clear_color_bar()
         if show_colorbar:
-            self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, extend='both', pad=0.0)
+            if orientation == 'horizontal':
+                self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, extend='both',
+                                                             orientation = 'horizontal', pad=0.05)
+            else:
+                self.__cbar: Colorbar = self.figure.colorbar(cs, ax=ax, extend='both', pad=0.0)
             self.__cbar.ax.set_ylabel(clabel)
 
         ax.set_xlim(*self.get_xlim_from_data(ax, 0))
         ax.set_ylim(*self.get_ylim_from_data(ax, 0))
+
+        if xscale != "linear":
+            ax.set_xscale('log')
+        if yscale != "linear":
+            ax.set_yscale('log')
+
         if x_label is not None and len(x_label) != 0:
             self.set_xlabel(1, x_label)
         self.draw_idle()
@@ -901,7 +914,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         ax.set_extent(extent, crs=ccrs.PlateCarree())
 
 
-        if resolution is "high":
+        if resolution == "high":
             try:
 
                 wms = WebMapService(self.MAP_SERVICE_URL)
@@ -911,7 +924,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
                 ax.background_img(name='ne_shaded', resolution=resolution)
 
-        elif resolution is "low":
+        elif resolution == "low":
 
                 coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
                     edgecolor='k', alpha=0.6, linewidth=0.5, facecolor=cartopy.feature.COLORS['land'])

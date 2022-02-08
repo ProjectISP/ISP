@@ -279,6 +279,27 @@ class ConvolveWaveletBase:
         sc = np.abs(self._tf) ** 2
         return 10. * (np.log10(sc / np.max(sc)))
 
+    def scalogram(self):
+        if self._tf is None:
+            self.compute_tf()
+
+        return self._tf
+
+    def phase(self):
+        if self._tf is None:
+            self.compute_tf()
+        phase = np.angle(self._tf)
+
+        x = np.where(phase<0)
+        phase[x] = 2*np.pi + phase[x]
+
+
+        #inst_freq2 = np.abs(np.diff(phase, axis = 1))
+        inst_freq = (np.diff(self._tf, axis=1))/(self._tf[:,1:]*1j)
+        inst_freq = np.abs(inst_freq)
+        ins_freq_hz = (inst_freq*self._sample_rate)/2*np.pi
+        return phase, inst_freq, ins_freq_hz
+
     def get_data_window(self):
         start = int(self._half_wave + 1)
         end = self._npts + int(self._half_wave + 1)
