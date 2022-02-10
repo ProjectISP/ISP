@@ -6,8 +6,13 @@ Created on Sat Mar 10 12:07:15 2018
 
 @author: robertocabieces
 """
+import math
+
 import matplotlib.pyplot as plt
 import numpy as np
+from obspy import read
+from scipy.signal import hilbert
+
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, MseedUtil
@@ -25,7 +30,10 @@ class MTspectrogram:
 
         self.file_path = file_path
         self.__stats = TracerStats()
-        if not MseedUtil.is_valid_mseed(file_path):
+        try:
+            read(file_path)
+        except:
+        #if not MseedUtil.is_valid_mseed(file_path):
             raise InvalidFile
 
     @property
@@ -231,9 +239,64 @@ class cross_spectrogram:
 
 
 
+class hilbert_gauss:
+
+      def __init__(self,tr, f1, f2, df):
+
+          self.tr = tr
+          self.f1 = f1
+          self.f2 = f2
+          self.df = df
+
+
+      def compute_filter_bank(self):
+
+          f = np.arange(self.f1, self.f2, self.df)
+          N = self.tr.stats.npts
+          self.envelope = np.zeros([len(f)-1,N])
+          self.phase = np.zeros([len(f)-1,N])
+          self.inst_freq = np.zeros([len(f)-1,N-1])
+
+          for k in range(len(f)-1):
+
+              tr1 = self.tr.copy()
+              tr1.filter(type= "bandpass", freqmin=f[k], freqmax=f[k+1], corners=4, zerophase=True)
+              data_envelope, phase, inst_freq = self.__envelope(tr1.data)
+              self.envelope[k,:] = data_envelope
+              self.phase[k,:] = phase
+              self.inst_freq[k,:] = np.abs(inst_freq)
+          inst_freq_hz = self.inst_freq*self.tr.stats.sampling_rate/2*np.pi
+          return self.envelope, self.phase, self.inst_freq, inst_freq_hz, f
+
+      def envelope_db(self):
+
+          envelope = 10 *np.log(self.envelope/np.max(self.envelope))
+
+          return envelope
 
 
 
+      def __envelope(self, data):
+          N = len(data)
+          D = 2 ** math.ceil(math.log2(N))
+          z = np.zeros(D - N)
+          data = np.concatenate((data, z), axis=0)
+          ###Necesary padding with zeros
+          analytic = hilbert(data)
+          data_envelope = np.abs(analytic[0:N])
+          phase = np.angle(analytic[0:N])
+          x = np.where(phase < 0)
+          phase[x] = 2 * np.pi + phase[x]
+          inst_freq = np.diff(phase)
+          return data_envelope, phase, inst_freq
+
+
+      def phase(self):
+
+          phase = np.angle(self.map)
+
+          x = np.where(phase < 0)
+          phase[x] = 2 * np.pi + phase[x]
 # def MTspectrogram(ficheros_procesar_path,win,tbp,ntapers,f_min,f_max):
 #     from isp.Structures.structures import TracerStats
 #

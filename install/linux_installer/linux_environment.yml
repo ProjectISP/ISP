@@ -202,5 +202,3 @@ dependencies:
     - numba==0.54.1
     - nvector==0.7.7
     - obspyh5==0.5.0
-prefix: /home/sysop/anaconda3/envs/isp
-
