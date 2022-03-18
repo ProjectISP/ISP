@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>EGFFrame</class>
+ <widget class="QWidget" name="EGFFrame">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1680</width>
+    <height>924</height>
+   </rect>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
+   <item>
+    <widget class="QSplitter" name="splitter_3">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QWidget" name="layoutWidget_4">
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <layout class="QGridLayout" name="gridLayout_7">
+         <item row="10" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Period Step</string>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_5"/>
+         </item>
+         <item row="1" column="2">
+          <widget class="QComboBox" name="wave_typeCB">
+           <item>
+            <property name="text">
+             <string>Vertical</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Transversal</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="4" column="0" colspan="2">
+          <widget class="QPushButton" name="stationsBtn">
+           <property name="toolTip">
+            <string>Click to view header information of the loaded seismogram files</string>
+           </property>
+           <property name="text">
+            <string>Station Info</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" colspan="2">
+          <widget class="QPushButton" name="read_pklBtn">
+           <property name="toolTip">
+            <string>Select the folder where you have the seismogram files</string>
+           </property>
+           <property name="text">
+            <string>File Directory</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="4">
+          <widget class="Line" name="line_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>min / max period [s]</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2" colspan="2">
+          <widget class="QLineEdit" name="rootPathForm"/>
+         </item>
+         <item row="9" column="2">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_4"/>
+         </item>
+         <item row="4" column="2" colspan="2">
+          <widget class="QLineEdit" name="StationsPathForm"/>
+         </item>
+         <item row="6" column="0" colspan="4">
+          <widget class="Line" name="line">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_3"/>
+         </item>
+         <item row="9" column="3">
+          <widget class="QCheckBox" name="checkBox">
+           <property name="text">
+            <string>All periods</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Wave Type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QComboBox" name="disp_typeCB">
+           <item>
+            <property name="text">
+             <string>Group Velocity</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Phase Velocity</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Both</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="10" column="3">
+          <widget class="QCheckBox" name="checkBox_2">
+           <property name="text">
+            <string>Auto</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0" colspan="2">
+          <widget class="QPushButton" name="pushButton">
+           <property name="text">
+            <string>Output Directory</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_12">
+           <property name="text">
+            <string>Dispersion type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="2" colspan="2">
+          <widget class="QLineEdit" name="lineEdit"/>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0">
+        <layout class="QGridLayout" name="gridLayout_8">
+         <item row="2" column="0" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Grid resolution lon (km)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_20">
+           <property name="text">
+            <string>Grid resolution lat (km)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_2"/>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QWidget" name="widget_plot_up" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 255, 255);</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
