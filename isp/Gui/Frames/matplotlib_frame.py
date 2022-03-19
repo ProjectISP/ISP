@@ -65,10 +65,10 @@ class BasePltPyqtCanvas(FigureCanvas):
         self.axes = None
         self.__callback_on_double_click = None
         self.__callback_on_click = None
-        self.__callback_on_select = None
         self.__selected_axe_index = None
         self.__callback_on_pick = None
-        self.__selector = None
+        self.__callback_on_select = None
+        self.__selector = {}  # selector should be a dict where the key is the buttons
         self.pickers = {}
 
         if not obj:
@@ -174,23 +174,23 @@ class BasePltPyqtCanvas(FigureCanvas):
         rectprops = kwargs.pop("rectprops", dict(alpha=0.5, facecolor='red'))
         button = kwargs.pop("button", MouseButton.LEFT)
 
-        # register callback.
-        self.__callback_on_select = func
-        self.__selector = SpanSelector(self.get_axe(0), self.__on_select, direction=direction,
-                                       useblit=useblit, minspan=minspan, rectprops=rectprops,
-                                       button=button, **kwargs)
-
-    def __on_select(self, xmin, xmax):
-        if self.__callback_on_select:
-            self.__callback_on_select(self.__selected_axe_index, xmin, xmax)
+        # register callback at spanSelector in a dict where the key is the button.
+        self.__selector.setdefault(button,
+                                   SpanSelector(self.get_axe(0),
+                                                onselect=lambda x_min, y_min: func(self.__selected_axe_index, x_min,
+                                                                                   y_min),
+                                                direction=direction,
+                                                useblit=useblit, minspan=minspan, rectprops=rectprops,
+                                                button=button, **kwargs)
+                                   )
 
     def __on_enter_axes(self, event):
-        if self.__selector and isinstance(self.__selector, SpanSelector):
+        for selector in self.__selector.values():
             # new way to get axes index from event.
             # event.inaxes.get_subplotspec().rowspan.start
             self.__selected_axe_index = self.get_axe_index(event.inaxes)
-            self.__selector.new_axes(event.inaxes)
-            self.__selector.update_background(event)
+            selector.new_axes(event.inaxes)
+            selector.update_background(event)
 
     def __figure_leave_event(self, event):
         """
@@ -231,6 +231,10 @@ class BasePltPyqtCanvas(FigureCanvas):
         if self.pick_connect:
             self.mpl_disconnect(self.pick_connect)
 
+        for s in self.__selector.values():
+            s: SpanSelector
+            s.disconnect_events()
+
     def __on_pick_event(self, event: PickEvent):
         if self.__callback_on_pick:
             self.__callback_on_pick(event)
@@ -238,7 +242,7 @@ class BasePltPyqtCanvas(FigureCanvas):
     def __on_click_event(self, event: MouseEvent):
         self.is_dlb_click = False
         if event.dblclick and event.button == MouseButton.LEFT:
-            # On double click with left button.
+            # On double-click with left button.
             self.is_dlb_click = True
             if self.__callback_on_double_click:
                 self.__callback_on_double_click(event, self)
@@ -364,7 +368,7 @@ class BasePltPyqtCanvas(FigureCanvas):
 
     def on_double_click(self, func):
         """
-        Register a callback when double click the matplotlib canvas.
+         Register a callback when double-click the matplotlib canvas.
 
         :param func: The callback function. Expect an event and canvas parameters.
         :return:
@@ -1112,6 +1116,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         if show_distance_circles:
            #if len(line1)>0 and len(line2)>0:
            try:
+               # TODO what are line1 and line2? This code will always fail.
+
                l1 = line1.pop(0)
                l2 = line2.pop(0)
                l1.remove()

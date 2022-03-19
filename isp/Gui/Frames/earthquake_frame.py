@@ -1,6 +1,7 @@
 import shutil
 from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
+from matplotlib.backend_bases import MouseButton
 from obspy import UTCDateTime, Stream, Trace
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth
@@ -75,8 +76,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.__metadata_manager = None
         self.st = None
         self.cf = None
-        self.chop = {'Body waves':{}, 'Surf Waves':{}, 'Coda':{}, 'Noise':{}}
-        self.color={'Body waves':'orangered','Surf Waves':'blue','Coda':'purple','Noise':'green'}
+        self.chop = {'Body waves': {}, 'Surf Waves': {}, 'Coda': {}, 'Noise': {}}
+        self.color = {'Body waves': 'orangered', 'Surf Waves': 'blue', 'Coda': 'purple', 'Noise': 'green'}
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
@@ -90,7 +91,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.canvas.on_double_click(self.on_click_matplotlib)
         self.canvas.on_pick(self.on_pick)
-        self.canvas.register_on_select(self.on_select, rectprops = dict(alpha=0.2, facecolor='red'))
+        self.canvas.register_on_select(self.on_select, rectprops=dict(alpha=0.2, facecolor='red'))
+        # That's how you can register a right click selector
+        # self.canvas.register_on_select(self.your_on_select_method,
+        #                                button=MouseButton.RIGHT, rectprops=dict(alpha=0.2, facecolor='red'))
+
         self.canvas.mpl_connect('key_press_event', self.key_pressed)
         self.canvas.mpl_connect('axes_enter_event', self.enter_axes)
         self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
