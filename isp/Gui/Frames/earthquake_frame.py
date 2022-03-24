@@ -93,8 +93,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.on_pick(self.on_pick)
         self.canvas.register_on_select(self.on_select, rectprops=dict(alpha=0.2, facecolor='red'))
         # That's how you can register a right click selector
-        # self.canvas.register_on_select(self.your_on_select_method,
-        #                                button=MouseButton.RIGHT, rectprops=dict(alpha=0.2, facecolor='red'))
+        self.canvas.register_on_select(self.on_multiple_select,
+                                       button=MouseButton.RIGHT, sharex=True, rectprops=dict(alpha=0.2, facecolor='blue'))
 
         self.canvas.mpl_connect('key_press_event', self.key_pressed)
         self.canvas.mpl_connect('axes_enter_event', self.enter_axes)
@@ -1378,7 +1378,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             md = MessageDialog(self)
             md.set_warning_message("Check correlation template and trim time")
 
-
+    # TODO implement your logic here for multiple select
+    def on_multiple_select(self, ax_index, xmin, xmax):
+        pass
 
     def on_select(self, ax_index, xmin, xmax):
         self.kind_wave = self.ChopCB.currentText()

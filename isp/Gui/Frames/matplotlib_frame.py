@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+
 import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -18,8 +19,11 @@ from matplotlib.widgets import SpanSelector
 from mpl_toolkits.mplot3d import Axes3D
 from obspy import Stream
 from owslib.wms import WebMapService
+
 from isp.Gui import pw, pyc, qt
+from isp.Gui.Utils import ExtendSpanSelector, Worker
 from isp.Utils import ObspyUtil, AsycTime
+
 
 class MatplotlibWidget(pw.QWidget):
 
@@ -144,6 +148,8 @@ class BasePltPyqtCanvas(FigureCanvas):
 
         :keyword direction: "horizontal" or "vertical". Default = "horizontal".
 
+        :keyword sharex: Set True to draw SpanSelector in all axes. Default = False
+
         :keyword minspan: float, default is 1E-6. If selection is less than minspan, do not
             call on_select callback.
 
@@ -169,28 +175,32 @@ class BasePltPyqtCanvas(FigureCanvas):
             self.cdi_enter_axes = self.mpl_connect("axes_enter_event", self.__on_enter_axes)
 
         direction = kwargs.pop("direction", "horizontal")
+        sharex = kwargs.pop("sharex", False)
         useblit = kwargs.pop("useblit", True)
         minspan = kwargs.pop("minspan", 1.E-6)
         rectprops = kwargs.pop("rectprops", dict(alpha=0.5, facecolor='red'))
         button = kwargs.pop("button", MouseButton.LEFT)
 
         # register callback at spanSelector in a dict where the key is the button.
-        self.__selector.setdefault(button,
-                                   SpanSelector(self.get_axe(0),
-                                                onselect=lambda x_min, y_min: func(self.__selected_axe_index, x_min,
-                                                                                   y_min),
-                                                direction=direction,
-                                                useblit=useblit, minspan=minspan, rectprops=rectprops,
-                                                button=button, **kwargs)
-                                   )
+        self.__selector.setdefault(
+            button,
+            ExtendSpanSelector(
+                self.get_axe(0),
+                onselect=lambda x_min, x_max: func(self.__selected_axe_index, x_min, x_max, ),
+                direction=direction, sharex=sharex,
+                useblit=useblit, minspan=minspan, props=rectprops, button=button, **kwargs)
+        )
 
     def __on_enter_axes(self, event):
         for selector in self.__selector.values():
+            selector: ExtendSpanSelector
             # new way to get axes index from event.
             # event.inaxes.get_subplotspec().rowspan.start
             self.__selected_axe_index = self.get_axe_index(event.inaxes)
             selector.new_axes(event.inaxes)
             selector.update_background(event)
+            # set all axes to selector. Only has effect if sharex=True
+            selector.set_sub_axes(self.axes)
 
     def __figure_leave_event(self, event):
         """
@@ -1143,6 +1153,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         gl.yformatter = LATITUDE_FORMATTER
 
         self.draw()
+
 
 class FocCanvas(BasePltPyqtCanvas):
 
