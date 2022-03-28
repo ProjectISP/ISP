@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable, List, Set
 
 from matplotlib.axes import Axes
 from matplotlib.widgets import SpanSelector
@@ -46,7 +46,7 @@ class ExtendSpanSelector(SpanSelector):
         self.__kwargs = kwargs
         self.sharex: bool = sharex
         self.__sub_axes: List[Axes] = []
-        self.__sub_selectors: List[SpanSelector] = []
+        self.__sub_selectors: Set[SpanSelector] = set()
 
     def _release(self, event):
         self.clear_subplot()
@@ -58,6 +58,16 @@ class ExtendSpanSelector(SpanSelector):
 
     def clear_subplot(self):
         all([ss.clear() for ss in self.__sub_selectors])
+
+    def create_sub_selectors(self):
+        self.__sub_selectors = {
+            SpanSelector(axe, self.__on_sub_select, self.direction, **self.__kwargs)
+            for axe in self.__sub_axes
+        }
+
+    def remove_sub_selectors(self):
+        all([s.disconnect_events() for s in self.__sub_selectors])
+        self.__sub_selectors.clear()
 
     @staticmethod
     def draw_selector(selector: SpanSelector, vmin, vmax):
@@ -72,10 +82,7 @@ class ExtendSpanSelector(SpanSelector):
 
     def set_sub_axes(self, axes: List[Axes]):
         if self.sharex:
-            all([s.disconnect_events() for s in self.__sub_selectors])
-            self.__sub_selectors.clear()
             self.__sub_axes = [axe for axe in axes if axe != self.ax]
-            self.__sub_selectors = [
-                SpanSelector(axe, self.__on_sub_select, self.direction, **self.__kwargs)
-                for axe in self.__sub_axes
-            ]
+            self.remove_sub_selectors()
+            self.create_sub_selectors()
+            self.canvas.draw()
