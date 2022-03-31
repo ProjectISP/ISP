@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 import pickle
 from obspy import read
 import numpy as np
@@ -7,6 +8,7 @@ from multiprocessing import Pool
 import obspy
 from isp.ant.signal_processing_tools import noise_processing, noise_processing_horizontals
 from obspy import Stream
+from isp import DISP_MAPS
 
 class process_ant:
 
@@ -581,3 +583,58 @@ class process_ant:
         def_list = [d for d in range(date_ini, date_end2)]
 
         return def_list
+
+class disp_maps_tools:
+
+      @classmethod
+      def disp_maps_availables(cls):
+
+          file_to_add = []
+          file_checked = []
+
+          for top_dir, _, files in os.walk(DISP_MAPS):
+              for file in files:
+                  file_to_add.append(os.path.join(top_dir, file))
+
+          for file in file_to_add:
+              if cls.is_valid_dsp_pickle(file):
+                     file_checked.append(file)
+
+
+          return file_checked
+
+
+      @staticmethod
+      def is_valid_file(file_path):
+        """
+        Return True if path is an existing regular file and a valid pickle. False otherwise.
+        :param file_path: The full file's path.
+        :return: True if path is an existing regular file and a valid mseed. False otherwise.
+        """
+
+        return os.path.isfile(file_path)
+
+      @staticmethod
+      def is_valid_dsp_pickle(file_path):
+
+          try:
+
+            dsp_map = pickle.load(open(file_path, "rb"))
+
+
+            items = ['period', 'paths', 'rejected_paths', 'ref_velocity', 'alpha0', 'alpha1', 'beta', 'sigma',
+                       'm_opt_relative',
+                       'm_opt_absolute', 'grid', 'resolution_map', 'cov_map', 'residuals', 'rms']
+
+            check_list = []
+            for key in dsp_map[0].keys():
+                check_list.append(key)
+
+
+            return check_list == items
+
+          except:
+
+            return False
+
+

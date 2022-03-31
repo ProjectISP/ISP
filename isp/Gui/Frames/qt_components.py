@@ -161,6 +161,11 @@ class Pagination(pw.QWidget, UiPaginationWidget):
         self.__onPageChange_callback = None
         self.__onItemPerPageChange_callback = None
 
+    def set_lim_items_per_page(self):
+        #self.itemsPerPagePicker.clear()
+        #self.itemsPerPagePicker.addItems([1,2,3,4])
+        self.itemsPerPagePicker.setEditable(False)
+
     @property
     def number_of_pages(self):
         return math.ceil(self.__total_items / self.__items_per_page)
@@ -168,6 +173,10 @@ class Pagination(pw.QWidget, UiPaginationWidget):
     @property
     def items_per_page(self):
         return self.__items_per_page
+
+    @items_per_page.setter
+    def items_per_page(self, items):
+        self.__items_per_page = items
 
     @property
     def current_page(self):
