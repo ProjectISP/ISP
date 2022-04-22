@@ -86,7 +86,7 @@
           </widget>
          </item>
          <item row="24" column="0">
-          <widget class="QCheckBox" name="checkBox_2">
+          <widget class="QCheckBox" name="reliefCB">
            <property name="text">
             <string>Relief</string>
            </property>
@@ -267,7 +267,15 @@
           </widget>
          </item>
          <item row="24" column="2" colspan="2">
-          <widget class="QComboBox" name="comboBox">
+          <widget class="QComboBox" name="interpCB">
+           <property name="currentText">
+            <string>gaussian</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
            <item>
             <property name="text">
              <string>nearest</string>
@@ -275,18 +283,88 @@
            </item>
            <item>
             <property name="text">
-             <string>cubic</string>
+             <string>gaussian</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>linear</string>
+             <string>bilinear</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>bicubic</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>bessel</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>spline16</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>spline36</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>hanning</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>hamming</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>hermite</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>kaiser</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>quadratic</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>catrom</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>mitchell</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>sinc</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>lanczos</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string/>
             </property>
            </item>
           </widget>
          </item>
          <item row="25" column="2" colspan="2">
-          <widget class="QComboBox" name="comboBox_2">
+          <widget class="QComboBox" name="colorCB">
            <item>
             <property name="text">
              <string>RdBu</string>
@@ -352,13 +430,13 @@
           </widget>
          </item>
          <item row="24" column="1">
-          <widget class="QCheckBox" name="checkBox">
+          <widget class="QLabel" name="label_10">
            <property name="text">
             <string>Interpolate</string>
            </property>
           </widget>
          </item>
-         <item row="26" column="2">
+         <item row="26" column="2" colspan="2">
           <widget class="QPushButton" name="plotMapBtn">
            <property name="text">
             <string>Plot Disp Maps</string>

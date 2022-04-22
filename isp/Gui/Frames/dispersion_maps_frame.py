@@ -184,6 +184,14 @@ class EGFDispersion(pw.QWidget, UiDispersionMaps):
         for k , grid_file in enumerate(files_at_page):
 
              dsp_map = pickle.load(open(grid_file, "rb"))
-             self.cartopy_canvas.plot_disp_map(k, dsp_map)
+             self.cartopy_canvas.plot_disp_map(k, dsp_map, interp = self.interpCB.currentText(),
+                                               color = self.colorCB.currentText(),show_relief = self.reliefCB.isChecked())
+             ax = self.cartopy_canvas.get_axe(k)
+             ax.spines["top"].set_visible(False)
+             ax.spines["bottom"].set_visible(False)
+             ax.spines["right"].set_visible(False)
+             ax.spines["left"].set_visible(False)
+             ax.tick_params(top=False)
+             ax.tick_params(labeltop=False)
 
 
