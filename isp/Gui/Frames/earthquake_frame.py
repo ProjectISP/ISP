@@ -1401,6 +1401,31 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         id = {id: [metadata, t, s, xmin_index, xmax_index]}
         self.chop[self.kind_wave].update(id)
 
+    def on_multiple_select(self, ax_index, xmin, xmax):
+
+        self.kind_wave = self.ChopCB.currentText()
+        self.set_pagination_files(self.files_path)
+        files_at_page = self.get_files_at_page()
+
+        for ax_index, file_path in enumerate(files_at_page):
+            tr = self.st[ax_index]
+            t = self.st[ax_index].times("matplotlib")
+            y = self.st[ax_index].data
+            dic_metadata = ObspyUtil.get_stats_from_trace(tr)
+            metadata = [dic_metadata['net'], dic_metadata['station'], dic_metadata['location'], dic_metadata['channel'],
+                        dic_metadata['starttime'], dic_metadata['endtime'], dic_metadata['sampling_rate'],
+                        dic_metadata['npts']]
+            id = tr.id
+            self.canvas.plot_date(t, y, ax_index, clear_plot=False, color="black", fmt='-', linewidth=0.5)
+            xmin_index = np.max(np.where(t <= xmin))
+            xmax_index = np.min(np.where(t >= xmax))
+            t = t[xmin_index:xmax_index]
+            s = y[xmin_index:xmax_index]
+            self.canvas.plot_date(t, s, ax_index, clear_plot=False, color=self.color[self.kind_wave], fmt='-',
+                                  linewidth=0.5)
+            id = {id: [metadata, t, s, xmin_index, xmax_index]}
+            self.chop[self.kind_wave].update(id)
+
 
     def enter_axes(self, event):
          self.ax_num = self.canvas.figure.axes.index(event.inaxes)
