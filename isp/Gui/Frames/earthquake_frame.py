@@ -1236,21 +1236,26 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if isinstance(canvas, MatplotlibCanvas):
             polarity, color = map_polarity_from_pressed_key(event.key)
             phase = self.comboBox_phases.currentText()
-            click_at_index = event.inaxes.rowNum
+            #click_at_index = event.inaxes.rowNum
+            click_at_index = self.ax_num
             x1, y1 = event.xdata, event.ydata
             #x2, y2 = event.x, event.y
             stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
             # Get amplitude from index
             #x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
             #amplitude = canvas.get_ydata(click_at_index).item(x_index)  # get y-data from index.
-            amplitude = y1
+            #amplitude = y1
             label = "{} {}".format(phase, polarity)
-            line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
             tt = UTCDateTime(mdt.num2date(x1))
             diff = tt - stats.StartTime
             t = stats.StartTime + diff
+            idx_amplitude = int(stats.Sampling_rate*diff)
+            amplitudes = self.st[self.ax_num].data
+            amplitude = amplitudes[idx_amplitude]
+            line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
             self.picked_at[str(line)] = PickerStructure(t, stats.Station, x1, amplitude, color, label,
                                                         self.get_file_at_index(click_at_index))
+            #print(self.picked_at)
             # Add pick data to file.
             self.pm.add_data(t, amplitude, stats.Station, phase, Component = stats.Channel,  First_Motion=polarity)
             self.pm.save()  # maybe we can move this to when you press locate.
