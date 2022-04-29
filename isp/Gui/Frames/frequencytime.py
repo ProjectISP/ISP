@@ -13,6 +13,7 @@ from isp.seismogramInspector.MTspectrogram import MTspectrogram, hilbert_gauss
 import numpy as np
 from obspy import read
 import os
+from isp.Gui.Utils import CollectionLassoSelector
 
 
 @add_save_load()
@@ -284,6 +285,11 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             self.group_vel = group_vel
             self.periods = period[0,:]
+
+            ax = self.canvas_plot1.get_axe(1)
+            pts = ax.scatter(self.periods, self.group_vel[0], s=80)
+
+            self.selector = CollectionLassoSelector(ax, pts)
 
         if selection == "Hilbert-Multiband":
 
