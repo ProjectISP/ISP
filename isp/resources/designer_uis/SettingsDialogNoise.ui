@@ -16,71 +16,99 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout_2">
-     <item row="14" column="0" colspan="2" alignment="Qt::AlignHCenter">
-      <widget class="QLabel" name="label_11">
+     <item row="18" column="0">
+      <widget class="QLabel" name="label_15">
        <property name="text">
-        <string>Spectral Whithening</string>
+        <string>Stack</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
-      <widget class="QLabel" name="label_5">
-       <property name="styleSheet">
-        <string notr="true">font: 13pt &quot;.AppleSystemUIFont&quot;;</string>
-       </property>
-       <property name="text">
-        <string>Remove Instrument</string>
+     <item row="17" column="0" colspan="3">
+      <widget class="Line" name="line_4">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="11" column="0" colspan="2" alignment="Qt::AlignHCenter">
-      <widget class="QLabel" name="label_3">
+     <item row="20" column="0">
+      <widget class="QLabel" name="label_16">
        <property name="text">
-        <string>Time Normalization</string>
+        <string>Components</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="0" colspan="2" alignment="Qt::AlignHCenter">
-      <widget class="QLabel" name="label_6">
-       <property name="text">
-        <string>Decimation</string>
+     <item row="18" column="1" colspan="2">
+      <widget class="QComboBox" name="stackCB">
+       <item>
+        <property name="text">
+         <string>PWS</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Linear</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>nrooth</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="14" column="0" colspan="3">
+      <widget class="Line" name="line_5">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="14" column="2" alignment="Qt::AlignHCenter">
-      <widget class="QCheckBox" name="whitheningCB">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
+     <item row="19" column="0" colspan="3">
+      <widget class="Line" name="line_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="0" column="2" alignment="Qt::AlignHCenter">
-      <widget class="QCheckBox" name="remove_responseCB">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QDoubleSpinBox" name="f1">
+     <item row="2" column="2">
+      <widget class="QDoubleSpinBox" name="f2">
        <property name="value">
-        <double>0.010000000000000</double>
+        <double>0.020000000000000</double>
        </property>
       </widget>
      </item>
-     <item row="11" column="2" alignment="Qt::AlignHCenter">
-      <widget class="QCheckBox" name="time_normalizationCB">
-       <property name="text">
-        <string/>
+     <item row="4" column="2">
+      <widget class="QDoubleSpinBox" name="f4">
+       <property name="value">
+        <double>1.500000000000000</double>
        </property>
-       <property name="checked">
-        <bool>true</bool>
+      </widget>
+     </item>
+     <item row="1" column="0" colspan="2">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>f1</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QDoubleSpinBox" name="f3">
+       <property name="value">
+        <double>1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="2">
+      <widget class="QDoubleSpinBox" name="freqbandwidth">
+       <property name="value">
+        <double>0.020000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="2">
+      <widget class="QSpinBox" name="waterlevelSB">
+       <property name="value">
+        <number>40</number>
        </property>
       </widget>
      </item>
@@ -98,52 +126,71 @@
        </item>
       </widget>
      </item>
-     <item row="5" column="2">
-      <widget class="QSpinBox" name="waterlevelSB">
-       <property name="value">
-        <number>40</number>
-       </property>
-      </widget>
-     </item>
-     <item row="15" column="2">
-      <widget class="QDoubleSpinBox" name="freqbandwidth">
-       <property name="value">
-        <double>0.020000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="2">
-      <widget class="QDoubleSpinBox" name="f3">
-       <property name="value">
-        <double>1.000000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0" colspan="2">
-      <widget class="QLabel" name="label">
+     <item row="11" column="2" alignment="Qt::AlignHCenter">
+      <widget class="QCheckBox" name="time_normalizationCB">
        <property name="text">
-        <string>f1</string>
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
-     <item row="4" column="2">
-      <widget class="QDoubleSpinBox" name="f4">
+     <item row="15" column="2" alignment="Qt::AlignHCenter">
+      <widget class="QCheckBox" name="whitheningCB">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QDoubleSpinBox" name="f1">
        <property name="value">
-        <double>1.500000000000000</double>
+        <double>0.010000000000000</double>
        </property>
       </widget>
      </item>
-     <item row="2" column="2">
-      <widget class="QDoubleSpinBox" name="f2">
-       <property name="value">
-        <double>0.020000000000000</double>
+     <item row="0" column="2" alignment="Qt::AlignHCenter">
+      <widget class="QCheckBox" name="remove_responseCB">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
-     <item row="16" column="0" colspan="3">
-      <widget class="Line" name="line_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+     <item row="11" column="0" colspan="2" alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Time Normalization</string>
+       </property>
+      </widget>
+     </item>
+     <item row="15" column="0" colspan="2" alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>Spectral Whithening</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="label_5">
+       <property name="styleSheet">
+        <string notr="true">font: 13pt &quot;.AppleSystemUIFont&quot;;</string>
+       </property>
+       <property name="text">
+        <string>Remove Instrument</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0" colspan="2" alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Decimation</string>
        </property>
       </widget>
      </item>
@@ -225,17 +272,17 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="0" colspan="2">
-      <widget class="QLabel" name="label_14">
-       <property name="text">
-        <string>Units</string>
-       </property>
-      </widget>
-     </item>
      <item row="9" column="0" colspan="2">
       <widget class="QLabel" name="label_8">
        <property name="text">
         <string>factor</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0" colspan="2">
+      <widget class="QLabel" name="label_14">
+       <property name="text">
+        <string>Units</string>
        </property>
       </widget>
      </item>
@@ -253,7 +300,7 @@
        </property>
       </widget>
      </item>
-     <item row="15" column="0" colspan="2">
+     <item row="16" column="0" colspan="2">
       <widget class="QLabel" name="label_12">
        <property name="text">
         <string>Freq. bandwidth</string>
@@ -267,6 +314,13 @@
        </property>
        <property name="checked">
         <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="20" column="1" colspan="2">
+      <widget class="QLineEdit" name="componentsLE">
+       <property name="text">
+        <string>BHE,BHN,BHZ</string>
        </property>
       </widget>
      </item>

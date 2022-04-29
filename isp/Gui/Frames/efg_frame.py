@@ -175,7 +175,10 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.process_ant.create_all_dict_matrix(list_raw, self.channels)
 
     def stack(self):
-        stack = noisestack(self.output_bind.value)
+        self.params = self.settings_dialog.getParameters()
+        channels = self.params["channels"]
+        stack_method = self.params["stack"]
+        stack = noisestack(self.output_bind.value, channels, stack_method)
         stack.run_cross_stack()
         stack.rotate_horizontals()
 

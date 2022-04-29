@@ -14,7 +14,7 @@ from obspy.geodetics import gps2dist_azimuth
 
 class noisestack:
 
-    def __init__(self, output_files_path):
+    def __init__(self, output_files_path, channels, stack):
 
         """
                 Process ANT, Cross + Stack
@@ -25,7 +25,8 @@ class noisestack:
         """
         self.__metadata_manager = None
         self.output_files_path = output_files_path
-        self.channel = ["BHZ", "BHN", "BHE"]
+        self.channel = channels
+        self.stack = stack
 
         self.year = 2000
 
@@ -164,23 +165,33 @@ class noisestack:
                         # Se reserva el espacio para la matriz de correlaciones en el dominio del tiempo
                         size_1d = corr_ij_freq.shape[0]
                         size_2d = corr_ij_freq.shape[1]
-                        # 7-7-2021, importante 2n - 1
+                        size_2d_all = size_1d+size_2d
+                        # 7-7-2021, important 2n - 1
                         size_3d = 2 * corr_ij_freq.shape[2] - 1
+                        corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, size_3d, axis=2))
 
-                        corr_ij_time = np.zeros((size_1d, size_2d, size_3d), dtype=np.float64)
+                        if self.stack == "PWS":
+                            # estimate the analytic function and then the instantaneous phase matrix
+                            #analytic_signal = np.zeros((size_1d, size_2d, size_3d), dtype=np.complex64)
+                            f,c,d = corr_ij_freq.shape
+                            c = np.zeros((f,c,(d//2)-1), dtype=np.complex64)
+                            signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
+                            signal_rfft_mod[((d // 2)+1):] = signal_rfft_mod[((d // 2)+1):] * 0
+                            signal_rfft_mod[1:d // 2] = 2 * signal_rfft_mod[1:d // 2]
 
-                        # Se rellena la matriz en el dominio del tiempo
-                        for m in range(corr_ij_freq.shape[0]):
-                            for n in range(corr_ij_freq.shape[1]):
-                                # irfft para pasar al dominio del tiempo
+                            #Generate the analytic function matrix
+                            analytic_signal = np.fft.ifft(signal_rfft_mod, size_3d, axis = 2)
 
-                                corr_ij_time[m, n, :] = np.fft.irfft(corr_ij_freq[m, n, :], size_3d)
+                        # Stack: Linear stack
+                        c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0)/size_2d_all
 
-                        # Stack: se suman los intervalos de la matriz
-                        c_stack = np.zeros(size_3d, dtype=np.float64)
-                        for m in range(corr_ij_time.shape[0]):
-                            for n in range(corr_ij_time.shape[1]):
-                                c_stack = c_stack + corr_ij_time[m, n, :]
+                        if self.stack == "PWS":
+                            phase_stack = np.sum(np.sum(analytic_signal, axis=1), axis=0)/size_2d_all
+
+                            # this point proceed to the PWS
+                            phase_stack = (np.abs(phase_stack))**2
+                            c_stack = c_stack*phase_stack
+
                         # c_stack par, impar ...
                         c_stack = np.roll(c_stack, int(len(c_stack) / 2))
                         print("stack[" + str(i) + "," + str(j) + "]:")

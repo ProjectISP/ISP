@@ -9,6 +9,77 @@ class noise_processing:
     def __init__(self, tr):
         self.tr = tr
 
+    def phase_match(self, tr, interp_c, distance, filter_parameter = 0.5):
+
+        signal = tr.data
+        dt = tr.stats.delta
+        n = tr.stats.npts
+        tshift = (n * dt) / 2
+        shifted_fft = np.fft.fftshift(np.fft.fft(signal))
+        shifted_fft_bins = np.fft.fftshift(np.fft.fftfreq(len(signal), d=dt))
+
+        phase_correction = []
+        for bin_ in shifted_fft_bins:
+            try:
+                wavenumber = 2 * np.pi * bin_ / interp_c(np.abs(bin_))  # bin_ contiene el signo de la frecuencia ya, no hace falta meterlo en el paso siguiente
+                phase_correction.append(np.exp(1j * distance * wavenumber))
+            except FloatingPointError:
+                phase_correction.append(np.exp(0))
+
+        frequency_domain_compressed_signal = shifted_fft * np.array(phase_correction) * np.exp(
+            -1j * tshift * 2 * np.pi * shifted_fft_bins)
+        time_domain_compressed_signal = np.fft.ifft(np.fft.ifftshift(frequency_domain_compressed_signal))
+        gauss_window = np.exp(-0.25 * ((np.arange(0, len(signal), 1) - len(signal) / 2)) * 2 / (filter_parameter / dt * 2))
+        tshift = len(signal) * dt / 2
+        #time_domain_decompressed_signal_freq = np.fft(time_domain_compressed_signal*gauss_window)*np.exp(-1j * tshift * 2 * np.pi * fft_bins)
+
+
+        tr.data = time_domain_compressed_signal
+        return tr
+
+    # def phase_matched_filter2(self, signal, dt, reference_c):
+    #     # reference_c es un scipy.interpolate.interp1d
+    #     tshift = (len(signal) * dt) / 2  # We will shift the collapsed Rayleigh waves to the center of the time series
+    #
+    #     fft = np.fft.rfft(signal)
+    #     fft_bins = np.fft.rfftfreq(len(signal), d=dt)
+    #
+    #     # Compute and apply the phase correction and time shifts, return to the time domain
+    #     phase_correction = np.exp(
+    #         1j * 2 * np.pi * fft_bins * np.divide(distance, reference_c(fft_bins), out=np.zeros_like(fft_bins),
+    #                                               where=reference_c(fft_bins) != 0))
+    #     time_shift = np.exp(-1j
+    #     tshift
+    #     2
+    #     np.pi
+    #     fft_bins)
+    #     frequency_domain_compressed_signal = fft * phase_correction * time_shift
+    #     time_domain_compressed_signal = np.fft.irfft(frequency_domain_compressed_signal)
+    #
+    #     # Apply a Gaussian window in the time domain
+    #     sigma = 2 / dt  # standard deviation in seconds divided by dt gives us samples
+    #     gauss_window = np.exp(-0.25 * (
+    #     (np.arange(0, len(time_domain_compressed_signal), 1) - len(time_domain_compressed_signal) / 2)) ** 2 / (
+    #                                       sigma ** 2))
+    #     windowed_compressed_signal = time_domain_compressed_signal * gauss_window
+    #     windowed_compressed_signal[np.abs(windowed_compressed_signal) < 1e-16] = 0
+    #
+    #     # FFT to the frequency domain, disperse the signal and back to the time domain
+    #     fft = np.fft.rfft(windowed_compressed_signal)
+    #     fft_bins = np.fft.rfftfreq(len(signal), d=dt)
+    #     phase_correction = np.exp(
+    #         -1j * distance * np.divide(2 * np.pi * fft_bins, reference_c(fft_bins), out=np.zeros_like(fft_bins),
+    #                                    where=reference_c(fft_bins) != 0))
+    #     time_shift = np.exp(1j
+    #     tshift
+    #     2
+    #     np.pi
+    #     fft_bins)
+    #     frequency_domain_uncompressed_signal = fft
+    #     phase_correction
+    #     time_shift
+    #     time_domain_uncompressed_signal = np.fft.irfft(frequency_domain_uncompressed_signal)
+
     def normalize(self, clip_factor=6, clip_weight=10, norm_win=None, norm_method="1bit"):
 
         if norm_method == 'clipping':

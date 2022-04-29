@@ -30,7 +30,6 @@ class process_ant:
         self.data_domain = "frequency"
         self.save_files = "True"
         self.taper_max_percent = 0.05
-        self.num_hours_dict_matrix = 6
         self.num_minutes_dict_matrix = 15
         self.gaps_tol = 120
 
