@@ -29,4 +29,6 @@ class SettingsDialogNoise(pw.QDialog, UiSettingsDialogNoise):
         param_dict["whitheningCB"] = self.whitheningCB.isChecked()
         param_dict["channels"] = self.componentsLE.text().split(',')
         param_dict["stack"] = self.stackCB.currentText()
+        param_dict["power"] = self.powerSB.value()
+        param_dict["processing_window"] = float(self.timeWindowCB.currentText())
         return param_dict

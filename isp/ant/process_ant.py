@@ -30,8 +30,10 @@ class process_ant:
         self.data_domain = "frequency"
         self.save_files = "True"
         self.taper_max_percent = 0.05
-        self.num_minutes_dict_matrix = 15
+        self.timeWindowCB = param_dict["processing_window"]
+        self.num_minutes_dict_matrix = int(self.timeWindowCB/60)
         self.gaps_tol = 120
+        self.cpuCount = os.cpu_count()-1
 
         self.output_files_path = output_files_path
         self.parameters = param_dict
@@ -50,6 +52,7 @@ class process_ant:
         self.time_normalizationCB = param_dict["time_normalizationCB"]
         self.whitheningCB = param_dict["whitheningCB"]
         self.water_level = param_dict["waterlevel"]
+
 
     def create_all_dict_matrix(self, list_raw, info):
         """
@@ -233,7 +236,7 @@ class process_ant:
         self.dict_matrix_E['data_matrix_E'] = np.zeros((self.num_rows, num_columns_E, self.DD_half_point), dtype=np.complex64)
         self.inc_time = [i * 60 * num_minutes for i in range(self.num_rows + 1)]
         num_columns = min(num_columns_N, num_columns_E)
-        with Pool(processes=6) as pool:
+        with Pool(processes=self.cpuCount) as pool:
             r = pool.map(self.process_col_matrix_horizontals, range(num_columns))
 
         j = 0

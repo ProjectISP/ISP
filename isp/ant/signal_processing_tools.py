@@ -1,7 +1,7 @@
 import numpy as np
 import math
-
 from numba import jit
+
 
 
 class noise_processing:
@@ -9,76 +9,98 @@ class noise_processing:
     def __init__(self, tr):
         self.tr = tr
 
-    def phase_match(self, tr, interp_c, distance, filter_parameter = 0.5):
 
-        signal = tr.data
-        dt = tr.stats.delta
-        n = tr.stats.npts
-        tshift = (n * dt) / 2
-        shifted_fft = np.fft.fftshift(np.fft.fft(signal))
-        shifted_fft_bins = np.fft.fftshift(np.fft.fftfreq(len(signal), d=dt))
+    def __get_reference_disp(self, type, phaseMacthmodel, fft_bins):
+        import pandas as pd
+        import os
+        from isp import DISP_REF_CURVES
+        from scipy import interpolate
 
-        phase_correction = []
-        for bin_ in shifted_fft_bins:
-            try:
-                wavenumber = 2 * np.pi * bin_ / interp_c(np.abs(bin_))  # bin_ contiene el signo de la frecuencia ya, no hace falta meterlo en el paso siguiente
-                phase_correction.append(np.exp(1j * distance * wavenumber))
-            except FloatingPointError:
-                phase_correction.append(np.exp(0))
+        if phaseMacthmodel == "ak-135f":
 
-        frequency_domain_compressed_signal = shifted_fft * np.array(phase_correction) * np.exp(
-            -1j * tshift * 2 * np.pi * shifted_fft_bins)
-        time_domain_compressed_signal = np.fft.ifft(np.fft.ifftshift(frequency_domain_compressed_signal))
-        gauss_window = np.exp(-0.25 * ((np.arange(0, len(signal), 1) - len(signal) / 2)) * 2 / (filter_parameter / dt * 2))
-        tshift = len(signal) * dt / 2
-        #time_domain_decompressed_signal_freq = np.fft(time_domain_compressed_signal*gauss_window)*np.exp(-1j * tshift * 2 * np.pi * fft_bins)
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_velocity.txt")
+            df = pd.read_csv(path)
+            T = 1/(df['period'].to_numpy())
+            if type == "Rayleigh":
+                vel = df['phase_velocity_rayleigh'].to_numpy()
+            if type == "Love":
+                vel = df['phase_velocity_love'].to_numpy()
+
+        elif phaseMacthmodel == "ak-135f (Ocean-shallow waters)":
+
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_shallow_velocity.txt")
+            df = pd.read(path)
+            T = 1/(df['period'].to_numpy())
+            if type == "Rayleigh":
+                vel = df['phase_velocity_rayleigh'].to_numpy()
+            if type == "Love":
+                vel = df['phase_velocity_love'].to_numpy()
+
+        elif phaseMacthmodel == "ak-135f (Ocean-intermediate waters)":
+
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_intermediate_velocity.txt")
+            df = pd.read(path)
+            T = 1/(df['period'].to_numpy())
+            if type == "Rayleigh":
+                vel = df['phase_velocity_rayleigh'].to_numpy()
+            if type == "Love":
+                vel = df['phase_velocity_love'].to_numpy()
+
+        elif phaseMacthmodel == "ak-135f (Ocean-deep waters)":
+
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_deep_velocity.txt")
+            df = pd.read(path)
+            T = 1/(df['period'].to_numpy())
+            if type == "Rayleigh":
+                vel = df['phase_velocity_rayleigh'].to_numpy()
+            if type == "Love":
+                vel = df['phase_velocity_love'].to_numpy()
+        f = interpolate.interp1d(np.flip(T), np.flip(vel), fill_value="extrapolate")
+        vel = f(1/fft_bins)
+        vel = np.flip(vel)
+        return vel
 
 
-        tr.data = time_domain_compressed_signal
-        return tr
+    def phase_matched_filter(self, type, phaseMacthmodel, distance, filter_parameter = 2):
 
-    # def phase_matched_filter2(self, signal, dt, reference_c):
-    #     # reference_c es un scipy.interpolate.interp1d
-    #     tshift = (len(signal) * dt) / 2  # We will shift the collapsed Rayleigh waves to the center of the time series
-    #
-    #     fft = np.fft.rfft(signal)
-    #     fft_bins = np.fft.rfftfreq(len(signal), d=dt)
-    #
-    #     # Compute and apply the phase correction and time shifts, return to the time domain
-    #     phase_correction = np.exp(
-    #         1j * 2 * np.pi * fft_bins * np.divide(distance, reference_c(fft_bins), out=np.zeros_like(fft_bins),
-    #                                               where=reference_c(fft_bins) != 0))
-    #     time_shift = np.exp(-1j
-    #     tshift
-    #     2
-    #     np.pi
-    #     fft_bins)
-    #     frequency_domain_compressed_signal = fft * phase_correction * time_shift
-    #     time_domain_compressed_signal = np.fft.irfft(frequency_domain_compressed_signal)
-    #
-    #     # Apply a Gaussian window in the time domain
-    #     sigma = 2 / dt  # standard deviation in seconds divided by dt gives us samples
-    #     gauss_window = np.exp(-0.25 * (
-    #     (np.arange(0, len(time_domain_compressed_signal), 1) - len(time_domain_compressed_signal) / 2)) ** 2 / (
-    #                                       sigma ** 2))
-    #     windowed_compressed_signal = time_domain_compressed_signal * gauss_window
-    #     windowed_compressed_signal[np.abs(windowed_compressed_signal) < 1e-16] = 0
-    #
-    #     # FFT to the frequency domain, disperse the signal and back to the time domain
-    #     fft = np.fft.rfft(windowed_compressed_signal)
-    #     fft_bins = np.fft.rfftfreq(len(signal), d=dt)
-    #     phase_correction = np.exp(
-    #         -1j * distance * np.divide(2 * np.pi * fft_bins, reference_c(fft_bins), out=np.zeros_like(fft_bins),
-    #                                    where=reference_c(fft_bins) != 0))
-    #     time_shift = np.exp(1j
-    #     tshift
-    #     2
-    #     np.pi
-    #     fft_bins)
-    #     frequency_domain_uncompressed_signal = fft
-    #     phase_correction
-    #     time_shift
-    #     time_domain_uncompressed_signal = np.fft.irfft(frequency_domain_uncompressed_signal)
+        #reference_c es un scipy.interpolate.interp1d
+        tr_process = self.tr.copy()
+        signal = tr_process.data
+        dt = tr_process.stats.delta
+        tshift = (len(signal) * dt) / 2  # We will shift the collapsed Rayleigh waves to the center of the time series
+
+        fft = np.fft.rfft(signal)
+        fft_bins = np.fft.rfftfreq(len(signal), d=dt)
+        reference_disp_phase_vel = self.__get_reference_disp(type, phaseMacthmodel, fft_bins)
+
+        # Compute and apply the phase correction and time shifts, return to the time domain 2*pi*[distance/phase_Vel]
+        #phase_correction = np.exp(1j * 2 * np.pi * fft_bins * np.divide(distance, reference_disp_phase_vel(fft_bins), out=np.zeros_like(fft_bins),
+        #                                           where=reference_disp_phase_vel(fft_bins) != 0))
+
+        phase_correction = np.exp(1j * 2 * np.pi * fft_bins * np.divide(distance, reference_disp_phase_vel))
+        time_shift = np.exp(-1j*tshift*2*np.pi*fft_bins)
+        frequency_domain_compressed_signal = fft * phase_correction * time_shift
+        time_domain_compressed_signal = np.fft.irfft(frequency_domain_compressed_signal)
+        # Apply a Gaussian window in the time domain
+        sigma = filter_parameter / dt  # standard deviation in seconds divided by dt gives us samples
+        gauss_window = np.exp(-0.25 * ((np.arange(0, len(time_domain_compressed_signal), 1) - len(time_domain_compressed_signal) / 2)) ** 2
+                               / (sigma ** 2))
+        windowed_compressed_signal = time_domain_compressed_signal * gauss_window
+        windowed_compressed_signal[np.abs(windowed_compressed_signal) < 1e-16] = 0
+        # FFT to the frequency domain, disperse the signal and back to the time domain
+        signal_freq = np.fft.rfft(windowed_compressed_signal)
+        fft_bins = np.fft.rfftfreq(len(signal), d=dt)
+        # Estimate phase corrections to unwrap the filtered signal
+        # phase_correction_unwrap = np.exp(-1j * distance * np.divide(2 * np.pi * fft_bins, reference_disp_phase_vel(fft_bins), out=np.zeros_like(fft_bins),
+        #                                                       where=reference_disp_phase_vel(fft_bins) != 0))
+
+        phase_correction_unwrap = np.exp(-1j * 2 * np.pi * fft_bins * np.divide(distance, reference_disp_phase_vel))
+        #phase_correction_unwrap = np.exp(-1j * distance * np.divide(2 * np.pi * fft_bins, reference_disp_phase_vel))
+        time_shift_unwrap = np.exp(1j*tshift*2*np.pi*fft_bins)
+        frequency_domain_uncompressed_signal = signal_freq*phase_correction_unwrap*time_shift_unwrap
+        time_domain_uncompressed_signal = np.real(np.fft.irfft(frequency_domain_uncompressed_signal))
+        tr_process.data = time_domain_uncompressed_signal
+        return tr_process
 
     def normalize(self, clip_factor=6, clip_weight=10, norm_win=None, norm_method="1bit"):
 

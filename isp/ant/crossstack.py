@@ -14,7 +14,7 @@ from obspy.geodetics import gps2dist_azimuth
 
 class noisestack:
 
-    def __init__(self, output_files_path, channels, stack):
+    def __init__(self, output_files_path, channels, stack, power):
 
         """
                 Process ANT, Cross + Stack
@@ -27,7 +27,7 @@ class noisestack:
         self.output_files_path = output_files_path
         self.channel = channels
         self.stack = stack
-
+        self.power = power
         self.year = 2000
 
     def check_path(self):
@@ -52,7 +52,7 @@ class noisestack:
             for jj in range(len(self.channel)):
                 if self.channel[jj] in pickle_file:
                     self.pickle_files.append(pickle_file)
-        print(self.pickle_files)
+        #print(self.pickle_files)
     # Para cada pareja de ficheros, se cargan los ficheros y se multiplican las matrices de datos que contienen, sólo en los días comunes
     # Indices i,j: se refieren a ficheros de datos file_i, file_j que contiene las matrices que se multiplicarán.
 
@@ -170,32 +170,35 @@ class noisestack:
                         size_3d = 2 * corr_ij_freq.shape[2] - 1
                         corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, size_3d, axis=2))
 
-                        if self.stack == "PWS":
-                            # estimate the analytic function and then the instantaneous phase matrix
-                            #analytic_signal = np.zeros((size_1d, size_2d, size_3d), dtype=np.complex64)
-                            f,c,d = corr_ij_freq.shape
-                            c = np.zeros((f,c,(d//2)-1), dtype=np.complex64)
-                            signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
-                            signal_rfft_mod[((d // 2)+1):] = signal_rfft_mod[((d // 2)+1):] * 0
-                            signal_rfft_mod[1:d // 2] = 2 * signal_rfft_mod[1:d // 2]
+                        if self.stack == "nrooth":
+                            corr_ij_time = (np.abs(corr_ij_time)**(1/self.power))*np.sign(corr_ij_time)
+                            c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
 
-                            #Generate the analytic function matrix
-                            analytic_signal = np.fft.ifft(signal_rfft_mod, size_3d, axis = 2)
-
+                        elif self.stack == "Linear":
                         # Stack: Linear stack
-                        c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0)/size_2d_all
+                            c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0)/size_2d_all
 
-                        if self.stack == "PWS":
+                        elif self.stack == "PWS":
+                            # estimate the analytic function and then the instantaneous phase matrix
+                            # analytic_signal = np.zeros((size_1d, size_2d, size_3d), dtype=np.complex64)
+                            f, c, d = corr_ij_freq.shape
+                            c = np.zeros((f, c, (d // 2) - 1), dtype=np.complex64)
+                            signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
+                            signal_rfft_mod[((d // 2) + 1):] = signal_rfft_mod[((d // 2) + 1):] * 0
+                            signal_rfft_mod[1:d // 2] = 2 * signal_rfft_mod[1:d // 2]
+                            # Generate the analytic function matrix
+                            analytic_signal = np.fft.ifft(signal_rfft_mod, size_3d, axis=2)
+                            # Compute linear stack
+                            c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
                             phase_stack = np.sum(np.sum(analytic_signal, axis=1), axis=0)/size_2d_all
-
                             # this point proceed to the PWS
-                            phase_stack = (np.abs(phase_stack))**2
+                            phase_stack = (np.abs(phase_stack))**self.power
                             c_stack = c_stack*phase_stack
 
                         # c_stack par, impar ...
                         c_stack = np.roll(c_stack, int(len(c_stack) / 2))
                         print("stack[" + str(i) + "," + str(j) + "]:")
-                        print(c_stack)
+                        #print(c_stack)
 
                         # Guardar fichero
                         # print(metadata_list_file_i)
