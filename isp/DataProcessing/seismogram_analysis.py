@@ -136,6 +136,38 @@ class SeismogramDataAdvanced:
             func(msg)
 
 
+    def resample_check(self, start_time = None, end_time = None):
+
+        decimator_factor = None
+        check = False
+
+        if start_time is not None and end_time is not None:
+            start = start_time
+            end = end_time
+        else:
+            start = self.stats.StartTime
+            end = self.stats.EndTime
+
+        diff = end - start
+
+        lim1 = 3600*6
+        lim2 = 3600*3
+
+        if diff >= lim1:
+            check = True
+            decimator_factor = 1
+            return [decimator_factor, check]
+
+        if diff >= lim2 and diff < lim1:
+            check = True
+            decimator_factor = 5
+
+            return [decimator_factor, check]
+
+        else:
+            return [decimator_factor, check]
+
+
     def get_waveform_advanced(self, parameters, inventory, filter_error_callback=None, **kwargs):
 
         start_time = kwargs.get("start_time", self.stats.StartTime)

@@ -342,6 +342,20 @@ class BasePltPyqtCanvas(FigureCanvas):
         return ax.annotate(text, xy=(1, 1), xycoords='axes fraction', xytext=(-20, -20), textcoords='offset points',
                            ha="right", va="top", bbox=bbox)
 
+    def set_warning_label(self, ax: Axes or int, text: str):
+        """
+        Sets an label box at the upper right corner of the axes.
+
+        :param ax: The axes or axes_index to add the annotation.
+        :param text: The text
+        :return:
+        """
+        if type(ax) == int:
+            ax = self.get_axe(ax)
+        bbox = dict(boxstyle="round", alpha= 0.5, fc="red")
+        return ax.annotate(text, xy=(0.15, 1), xycoords='axes fraction', xytext=(-20, -20), textcoords='offset points',
+                           ha="right", va="top",  bbox=bbox)
+
     def get_ydata(self, ax_index):
         """
         Get y-data at the axe index.

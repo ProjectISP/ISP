@@ -549,7 +549,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def plot_seismogram(self):
-        print("initial",self.zoom_diff)
+        #print("initial",self.zoom_diff)
         if self.st:
             del self.st
 
@@ -595,6 +595,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             sd = SeismogramDataAdvanced(file_path)
 
+            if self.trimCB.isChecked() and diff >= 0:
+
+                decimator = sd.resample_check(start_time=start_time, end_time=end_time)
+
+            else:
+
+                decimator = sd.resample_check()
+
+            if decimator[1]:
+                parameters.insert(0, ['resample', decimator[0], True])
 
             if self.trimCB.isChecked() and diff >= 0:
 
@@ -632,6 +642,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 last_index = index
 
                 st_stats = ObspyUtil.get_stats(file_path)
+
+                if decimator[1]:
+                    warning = "Decimated to " + str(decimator[0])+"  Hz"
+                    self.canvas.set_warning_label(index, warning)
 
                 if st_stats and self.sortCB.isChecked() == False:
                     info = "{}.{}.{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)

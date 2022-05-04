@@ -170,8 +170,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         if self.phase_matchCB.isChecked():
             distance = tr.stats.mseed['geodetic'][0]
             ns = noise_processing(tr)
-            tr = ns.phase_matched_filter(self.typeCB.currentText(),
+            tr_filtered = ns.phase_matched_filter(self.typeCB.currentText(),
                   self.phaseMacthmodelCB.currentText(), distance , filter_parameter = self.phaseMatchCB.value())
+            tr.data = tr_filtered.data
 
         if selection == "Continuous Wavelet Transform":
 

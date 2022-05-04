@@ -9,6 +9,24 @@ class noise_processing:
     def __init__(self, tr):
         self.tr = tr
 
+    def __plot_phase_match(self, t, gauss_window, time_domain_compressed_signal):
+
+        import matplotlib.pyplot as plt
+        from isp.Gui.Frames import MatplotlibFrame
+        fig, ax1 = plt.subplots(figsize=(6, 6))
+        self.mpf = MatplotlibFrame(fig)
+        t = t[1:]
+        print(len(t), len(gauss_window), len(time_domain_compressed_signal))
+        ax1.plot(t, time_domain_compressed_signal/np.max(time_domain_compressed_signal), linewidth=0.5,
+                 color='steelblue', label="time_domain_compressed_signal")
+        ax1.plot(t, gauss_window, linewidth=0.5, color='green', label="Gauss pulse")
+
+
+        plt.ylabel('Amplitude')
+        plt.xlabel('Time')
+        #plt.grid(True, which="both", ls="-", color='grey')
+        plt.legend()
+        self.mpf.show()
 
     def __get_reference_disp(self, type, phaseMacthmodel, fft_bins):
         import pandas as pd
@@ -20,7 +38,7 @@ class noise_processing:
 
             path = os.path.join(DISP_REF_CURVES, "ak135_earth_velocity.txt")
             df = pd.read_csv(path)
-            T = 1/(df['period'].to_numpy())
+            freq_ref = 1/(df['period'].to_numpy())
             if type == "Rayleigh":
                 vel = df['phase_velocity_rayleigh'].to_numpy()
             if type == "Love":
@@ -29,8 +47,8 @@ class noise_processing:
         elif phaseMacthmodel == "ak-135f (Ocean-shallow waters)":
 
             path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_shallow_velocity.txt")
-            df = pd.read(path)
-            T = 1/(df['period'].to_numpy())
+            df = pd.read_csv(path)
+            freq_ref = 1/(df['period'].to_numpy())
             if type == "Rayleigh":
                 vel = df['phase_velocity_rayleigh'].to_numpy()
             if type == "Love":
@@ -39,8 +57,8 @@ class noise_processing:
         elif phaseMacthmodel == "ak-135f (Ocean-intermediate waters)":
 
             path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_intermediate_velocity.txt")
-            df = pd.read(path)
-            T = 1/(df['period'].to_numpy())
+            df = pd.read_csv(path)
+            freq_ref = 1/(df['period'].to_numpy())
             if type == "Rayleigh":
                 vel = df['phase_velocity_rayleigh'].to_numpy()
             if type == "Love":
@@ -49,15 +67,16 @@ class noise_processing:
         elif phaseMacthmodel == "ak-135f (Ocean-deep waters)":
 
             path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_deep_velocity.txt")
-            df = pd.read(path)
-            T = 1/(df['period'].to_numpy())
+            df = pd.read_csv(path)
+            freq_ref = 1/(df['period'].to_numpy())
             if type == "Rayleigh":
                 vel = df['phase_velocity_rayleigh'].to_numpy()
             if type == "Love":
                 vel = df['phase_velocity_love'].to_numpy()
-        f = interpolate.interp1d(np.flip(T), np.flip(vel), fill_value="extrapolate")
-        vel = f(1/fft_bins)
+        freq_ref = np.flip(freq_ref)
         vel = np.flip(vel)
+        f = interpolate.interp1d(freq_ref, vel, fill_value="extrapolate")
+        vel = f(fft_bins)
         return vel
 
 
@@ -86,7 +105,8 @@ class noise_processing:
         gauss_window = np.exp(-0.25 * ((np.arange(0, len(time_domain_compressed_signal), 1) - len(time_domain_compressed_signal) / 2)) ** 2
                                / (sigma ** 2))
         windowed_compressed_signal = time_domain_compressed_signal * gauss_window
-        windowed_compressed_signal[np.abs(windowed_compressed_signal) < 1e-16] = 0
+        #windowed_compressed_signal[np.abs(windowed_compressed_signal) < 1e-16] = 0
+        self.__plot_phase_match(tr_process.times(), gauss_window, time_domain_compressed_signal)
         # FFT to the frequency domain, disperse the signal and back to the time domain
         signal_freq = np.fft.rfft(windowed_compressed_signal)
         fft_bins = np.fft.rfftfreq(len(signal), d=dt)
