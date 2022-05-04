@@ -237,7 +237,7 @@ class noisestack:
 
 
     def rotate_horizontals(self):
-
+        #self.check_path()
         obsfiles = self.list_directory(self.stack_files_path)
         station_list = self.list_stations(self.stack_files_path)
         channel_check = ["EE", "EN", "NN", "NE"]
@@ -266,6 +266,7 @@ class noisestack:
                             matrix_data["net"] = tr.stats.network
                             matrix_data[chn] = data
                             matrix_data['geodetic'] = tr.stats.mseed['geodetic']
+                            matrix_data["sampling_rate"] = tr.stats.sampling_rate
                             # method to rotate the dictionary
                     except:
                         pass
@@ -277,12 +278,11 @@ class noisestack:
                 def_rotated["geodetic"] = matrix_data['geodetic']
                 def_rotated["net"] = matrix_data["net"]
                 def_rotated["station_pair"] = station_pair
+                def_rotated['sampling_rate'] = matrix_data["sampling_rate"]
                 print(station_pair, "rotated")
                 self.save_rotated(def_rotated)
                 print(station_pair, "saved")
 
-
-            station_list.remove(station_pair)
 
     def __validation(self, data_matrix):
 
@@ -371,8 +371,11 @@ class noisestack:
         for file in files:
             try:
                 st = read(file)
-                if st[0].stats.station not in stations:
-                    stations.append(st[0].stats.station)
+                name = st[0].stats.station
+                info = name.split("_")
+                flip_name = info[1]+"_"+info[0]
+                if name not in stations and flip_name not in stations and info[0] != info[1]:
+                    stations.append(name)
             except:
                 pass
 
@@ -408,8 +411,7 @@ class noisestack:
         channels = ["TT", "RR", "TR", "RT"]
         stats['network'] = def_rotated["net"]
         stats['station'] = def_rotated["station_pair"]
-        stats['sampling_rate'] = self.sampling_rate
-
+        stats['sampling_rate'] = def_rotated['sampling_rate']
         j = 0
         for chn in channels:
 

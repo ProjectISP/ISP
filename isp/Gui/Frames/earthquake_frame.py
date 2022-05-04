@@ -51,7 +51,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cnn = CNNPicker()
         #finally:
         #print("Neural Network cannot be loaded")
-
+        self.zoom_diff = None
         self.cancelled = False
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('Earthquake Location')
@@ -209,6 +209,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+W'), self)
         self.shortcut_open.activated.connect(self.get_now_files)
         #######
+
+
+    # def on_xlims_change(self, event_ax):
+    #
+    #     self.zoom = event_ax.get_xlim()
+    #     t1 = UTCDateTime(mdt.num2date(self.zoom[0]))
+    #     t2 = UTCDateTime(mdt.num2date(self.zoom[1]))
+    #     self.zoom_diff = (t2-t1)
+
 
     def cancelled_callback(self):
         self.cancelled = True
@@ -540,10 +549,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def plot_seismogram(self):
+        print("initial",self.zoom_diff)
         if self.st:
             del self.st
 
         self.canvas.clear()
+
         ##
         self.nums_clicks = 0
         all_traces = []
@@ -595,8 +606,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                                    filter_error_callback=self.filter_error_message,trace_number=index)
             if len(tr) > 0:
+
                 t = tr.times("matplotlib")
                 s = tr.data
+
                 self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
                 if  self.pagination.items_per_page>=16:
                     ax = self.canvas.get_axe(index)
@@ -657,6 +670,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.auto_end = auto_end
 
             ax = self.canvas.get_axe(last_index)
+            #ax.callbacks.connect('xlim_changed', self.on_xlims_change)
             if self.trimCB.isChecked():
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             else:
