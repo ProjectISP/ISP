@@ -9,22 +9,20 @@ class noise_processing:
     def __init__(self, tr):
         self.tr = tr
 
-    def __plot_phase_match(self, t, gauss_window, time_domain_compressed_signal):
+    def __plot_phase_match(self, t, gauss_window, time_domain_compressed_signal, windowed_compressed_signal):
 
         import matplotlib.pyplot as plt
         from isp.Gui.Frames import MatplotlibFrame
         fig, ax1 = plt.subplots(figsize=(6, 6))
         self.mpf = MatplotlibFrame(fig)
         t = t[1:]
-        print(len(t), len(gauss_window), len(time_domain_compressed_signal))
         ax1.plot(t, time_domain_compressed_signal/np.max(time_domain_compressed_signal), linewidth=0.5,
                  color='steelblue', label="time_domain_compressed_signal")
         ax1.plot(t, gauss_window, linewidth=0.5, color='green', label="Gauss pulse")
-
+        ax1.plot(t, windowed_compressed_signal/np.max(windowed_compressed_signal), linewidth=0.5, color='red', label="windowed_compressed_signal")
 
         plt.ylabel('Amplitude')
         plt.xlabel('Time')
-        #plt.grid(True, which="both", ls="-", color='grey')
         plt.legend()
         self.mpf.show()
 
@@ -33,6 +31,8 @@ class noise_processing:
         import os
         from isp import DISP_REF_CURVES
         from scipy import interpolate
+        import matplotlib.pyplot as plt
+        from isp.Gui.Frames import MatplotlibFrame
 
         if phaseMacthmodel == "ak-135f":
 
@@ -76,12 +76,13 @@ class noise_processing:
         freq_ref = np.flip(freq_ref)
         vel = np.flip(vel)
         f = interpolate.interp1d(freq_ref, vel, fill_value="extrapolate")
-        vel = f(fft_bins)
-        return vel
+        vel2 = f(fft_bins)
+        return vel2
 
 
     def phase_matched_filter(self, type, phaseMacthmodel, distance, filter_parameter = 2):
 
+        distance = distance/1000
         #reference_c es un scipy.interpolate.interp1d
         tr_process = self.tr.copy()
         signal = tr_process.data
@@ -105,8 +106,8 @@ class noise_processing:
         gauss_window = np.exp(-0.25 * ((np.arange(0, len(time_domain_compressed_signal), 1) - len(time_domain_compressed_signal) / 2)) ** 2
                                / (sigma ** 2))
         windowed_compressed_signal = time_domain_compressed_signal * gauss_window
-        #windowed_compressed_signal[np.abs(windowed_compressed_signal) < 1e-16] = 0
-        self.__plot_phase_match(tr_process.times(), gauss_window, time_domain_compressed_signal)
+        windowed_compressed_signal[np.abs(windowed_compressed_signal) < 1e-16] = 0
+        #self.__plot_phase_match(tr_process.times(), gauss_window, time_domain_compressed_signal, windowed_compressed_signal)
         # FFT to the frequency domain, disperse the signal and back to the time domain
         signal_freq = np.fft.rfft(windowed_compressed_signal)
         fft_bins = np.fft.rfftfreq(len(signal), d=dt)
