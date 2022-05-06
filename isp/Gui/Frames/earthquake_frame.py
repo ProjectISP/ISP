@@ -114,6 +114,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.rotateBtn.clicked.connect(self.rotate)
         self.mapBtn.clicked.connect(self.plot_map_stations)
         self.crossBtn.clicked.connect(self.cross)
+        self.macroBtn.clicked.connect(self.open_parameters_settings)
         #self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.__metadata_manager = MetadataManager(self.metadata_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
@@ -144,6 +145,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRemove_picks.triggered.connect(lambda: self.remove_picks())
         self.actionNew_location.triggered.connect(lambda: self.start_location())
         self.actionRun_autoloc.triggered.connect(lambda: self.picker_all())
+
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -550,6 +552,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def plot_seismogram(self):
         #print("initial",self.zoom_diff)
+        self.decimator = [None, False]
         if self.st:
             del self.st
 
@@ -595,16 +598,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             sd = SeismogramDataAdvanced(file_path)
 
-            if self.trimCB.isChecked() and diff >= 0:
+            if self.trimCB.isChecked() and diff >= 0 and self.fastCB.isChecked():
 
-                decimator = sd.resample_check(start_time=start_time, end_time=end_time)
+                self.decimator = sd.resample_check(start_time=start_time, end_time=end_time)
 
-            else:
+            elif self.trimCB.isChecked() == False and self.fastCB.isChecked() == True:
 
-                decimator = sd.resample_check()
+                self.decimator = sd.resample_check()
 
-            if decimator[1]:
-                parameters.insert(0, ['resample', decimator[0], True])
+            if self.decimator[1]:
+                parameters.insert(0, ['resample', self.decimator[0], True])
 
             if self.trimCB.isChecked() and diff >= 0:
 
@@ -643,8 +646,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                 st_stats = ObspyUtil.get_stats(file_path)
 
-                if decimator[1]:
-                    warning = "Decimated to " + str(decimator[0])+"  Hz"
+                if self.decimator[1]:
+                    warning = "Decimated to " + str(self.decimator[0])+"  Hz"
                     self.canvas.set_warning_label(index, warning)
 
                 if st_stats and self.sortCB.isChecked() == False:

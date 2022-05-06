@@ -407,7 +407,7 @@ class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
         # bind widgets from EventInfo box.
         self.__latitude_bind = BindPyqtObject(self.latitudeDsb)
         self.__longitude_bind = BindPyqtObject(self.longitudeDsb)
-        self.__depth_bind = BindPyqtObject(self.depthLineEdit)
+        self.__depth_bind = BindPyqtObject(self.depthDsb)
 
         # button bind
         self.plotArrivalsBtn.clicked.connect(self.__on_click_plot_arrivals)
