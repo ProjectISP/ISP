@@ -7,12 +7,10 @@ Created on Sat Mar 10 12:07:15 2018
 @author: robertocabieces
 """
 import math
-
 import matplotlib.pyplot as plt
 import numpy as np
 from obspy import read
 from scipy.signal import hilbert
-
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, MseedUtil
