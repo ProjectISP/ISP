@@ -1,6 +1,7 @@
 import shutil
 from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
+from matplotlib.backend_bases import MouseButton
 from obspy import UTCDateTime, Stream, Trace
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth
@@ -75,8 +76,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.__metadata_manager = None
         self.st = None
         self.cf = None
-        self.chop = {'Body waves':{}, 'Surf Waves':{}, 'Coda':{}, 'Noise':{}}
-        self.color={'Body waves':'orangered','Surf Waves':'blue','Coda':'purple','Noise':'green'}
+        self.chop = {'Body waves': {}, 'Surf Waves': {}, 'Coda': {}, 'Noise': {}}
+        self.color = {'Body waves': 'orangered', 'Surf Waves': 'blue', 'Coda': 'purple', 'Noise': 'green'}
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
         self.pagination = Pagination(self.pagination_widget, self.total_items, self.items_per_page)
         self.pagination.set_total_items(0)
@@ -90,7 +91,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.canvas.on_double_click(self.on_click_matplotlib)
         self.canvas.on_pick(self.on_pick)
-        self.canvas.register_on_select(self.on_select, rectprops = dict(alpha=0.2, facecolor='red'))
+        self.canvas.register_on_select(self.on_select, rectprops=dict(alpha=0.2, facecolor='red'))
+        # That's how you can register a right click selector
+        self.canvas.register_on_select(self.on_multiple_select,
+                                       button=MouseButton.RIGHT, sharex=True, rectprops=dict(alpha=0.2, facecolor='blue'))
+
         self.canvas.mpl_connect('key_press_event', self.key_pressed)
         self.canvas.mpl_connect('axes_enter_event', self.enter_axes)
         self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
@@ -1231,21 +1236,26 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if isinstance(canvas, MatplotlibCanvas):
             polarity, color = map_polarity_from_pressed_key(event.key)
             phase = self.comboBox_phases.currentText()
-            click_at_index = event.inaxes.rowNum
+            #click_at_index = event.inaxes.rowNum
+            click_at_index = self.ax_num
             x1, y1 = event.xdata, event.ydata
             #x2, y2 = event.x, event.y
             stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
             # Get amplitude from index
             #x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
             #amplitude = canvas.get_ydata(click_at_index).item(x_index)  # get y-data from index.
-            amplitude = y1
+            #amplitude = y1
             label = "{} {}".format(phase, polarity)
-            line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
             tt = UTCDateTime(mdt.num2date(x1))
             diff = tt - stats.StartTime
             t = stats.StartTime + diff
+            idx_amplitude = int(stats.Sampling_rate*diff)
+            amplitudes = self.st[self.ax_num].data
+            amplitude = amplitudes[idx_amplitude]
+            line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
             self.picked_at[str(line)] = PickerStructure(t, stats.Station, x1, amplitude, color, label,
                                                         self.get_file_at_index(click_at_index))
+            #print(self.picked_at)
             # Add pick data to file.
             self.pm.add_data(t, amplitude, stats.Station, phase, Component = stats.Channel,  First_Motion=polarity)
             self.pm.save()  # maybe we can move this to when you press locate.
@@ -1373,7 +1383,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             md = MessageDialog(self)
             md.set_warning_message("Check correlation template and trim time")
 
-
+    # TODO implement your logic here for multiple select
+    def on_multiple_select(self, ax_index, xmin, xmax):
+        pass
 
     def on_select(self, ax_index, xmin, xmax):
         self.kind_wave = self.ChopCB.currentText()
@@ -1393,6 +1405,31 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.plot_date(t, s, ax_index, clear_plot=False, color = self.color[self.kind_wave], fmt='-', linewidth=0.5)
         id = {id: [metadata, t, s, xmin_index, xmax_index]}
         self.chop[self.kind_wave].update(id)
+
+    def on_multiple_select(self, ax_index, xmin, xmax):
+
+        self.kind_wave = self.ChopCB.currentText()
+        self.set_pagination_files(self.files_path)
+        files_at_page = self.get_files_at_page()
+
+        for ax_index, file_path in enumerate(files_at_page):
+            tr = self.st[ax_index]
+            t = self.st[ax_index].times("matplotlib")
+            y = self.st[ax_index].data
+            dic_metadata = ObspyUtil.get_stats_from_trace(tr)
+            metadata = [dic_metadata['net'], dic_metadata['station'], dic_metadata['location'], dic_metadata['channel'],
+                        dic_metadata['starttime'], dic_metadata['endtime'], dic_metadata['sampling_rate'],
+                        dic_metadata['npts']]
+            id = tr.id
+            self.canvas.plot_date(t, y, ax_index, clear_plot=False, color="black", fmt='-', linewidth=0.5)
+            xmin_index = np.max(np.where(t <= xmin))
+            xmax_index = np.min(np.where(t >= xmax))
+            t = t[xmin_index:xmax_index]
+            s = y[xmin_index:xmax_index]
+            self.canvas.plot_date(t, s, ax_index, clear_plot=False, color=self.color[self.kind_wave], fmt='-',
+                                  linewidth=0.5)
+            id = {id: [metadata, t, s, xmin_index, xmax_index]}
+            self.chop[self.kind_wave].update(id)
 
 
     def enter_axes(self, event):
