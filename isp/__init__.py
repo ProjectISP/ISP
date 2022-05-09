@@ -12,6 +12,8 @@ MACROS_PATH = os.path.join(ROOT_DIR,'macros')
 HELP_PATH = os.path.join(ROOT_DIR,'ISP_Documentation')
 EVENTS_DETECTED = os.path.join(ROOT_DIR,'earthquakeAnalisysis/auto_detect/events')
 AUTOMATIC_PHASES = os.path.join(ROOT_DIR,'earthquakeAnalisysis/auto_detect/phases')
+DISP_MAPS = os.path.join(ROOT_DIR,'ant/data_tomo')
+DISP_REF_CURVES = os.path.join(ROOT_DIR,'ant/disp_curv_ref')
 
 def create_logger():
 

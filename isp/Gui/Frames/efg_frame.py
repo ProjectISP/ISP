@@ -14,7 +14,6 @@ from isp.ant.ambientnoise import noise_organize
 from isp.ant.process_ant import process_ant
 from isp.ant.crossstack import noisestack
 from sys import platform
-
 from isp.Gui.Utils.pyqt_utils import add_save_load
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 
@@ -175,7 +174,11 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.process_ant.create_all_dict_matrix(list_raw, self.channels)
 
     def stack(self):
-        stack = noisestack(self.output_bind.value)
+        self.params = self.settings_dialog.getParameters()
+        channels = self.params["channels"]
+        stack_method = self.params["stack"]
+        power = self.params["power"]
+        stack = noisestack(self.output_bind.value, channels, stack_method, power)
         stack.run_cross_stack()
         stack.rotate_horizontals()
 

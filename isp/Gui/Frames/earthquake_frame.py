@@ -52,7 +52,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cnn = CNNPicker()
         #finally:
         #print("Neural Network cannot be loaded")
-
+        self.zoom_diff = None
         self.cancelled = False
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('Earthquake Location')
@@ -119,6 +119,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.rotateBtn.clicked.connect(self.rotate)
         self.mapBtn.clicked.connect(self.plot_map_stations)
         self.crossBtn.clicked.connect(self.cross)
+        self.macroBtn.clicked.connect(self.open_parameters_settings)
         #self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.__metadata_manager = MetadataManager(self.metadata_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
@@ -149,6 +150,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRemove_picks.triggered.connect(lambda: self.remove_picks())
         self.actionNew_location.triggered.connect(lambda: self.start_location())
         self.actionRun_autoloc.triggered.connect(lambda: self.picker_all())
+
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -214,6 +216,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+W'), self)
         self.shortcut_open.activated.connect(self.get_now_files)
         #######
+
+
+    # def on_xlims_change(self, event_ax):
+    #
+    #     self.zoom = event_ax.get_xlim()
+    #     t1 = UTCDateTime(mdt.num2date(self.zoom[0]))
+    #     t2 = UTCDateTime(mdt.num2date(self.zoom[1]))
+    #     self.zoom_diff = (t2-t1)
+
 
     def cancelled_callback(self):
         self.cancelled = True
@@ -545,10 +556,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def plot_seismogram(self):
+        #print("initial",self.zoom_diff)
+        self.decimator = [None, False]
         if self.st:
             del self.st
 
         self.canvas.clear()
+
         ##
         self.nums_clicks = 0
         all_traces = []
@@ -589,6 +603,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             sd = SeismogramDataAdvanced(file_path)
 
+            if self.trimCB.isChecked() and diff >= 0 and self.fastCB.isChecked():
+
+                self.decimator = sd.resample_check(start_time=start_time, end_time=end_time)
+
+            elif self.trimCB.isChecked() == False and self.fastCB.isChecked() == True:
+
+                self.decimator = sd.resample_check()
+
+            if self.decimator[1]:
+                parameters.insert(0, ['resample', self.decimator[0], True])
 
             if self.trimCB.isChecked() and diff >= 0:
 
@@ -600,8 +624,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                                    filter_error_callback=self.filter_error_message,trace_number=index)
             if len(tr) > 0:
+
                 t = tr.times("matplotlib")
                 s = tr.data
+
                 self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
                 if  self.pagination.items_per_page>=16:
                     ax = self.canvas.get_axe(index)
@@ -624,6 +650,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 last_index = index
 
                 st_stats = ObspyUtil.get_stats(file_path)
+
+                if self.decimator[1]:
+                    warning = "Decimated to " + str(self.decimator[0])+"  Hz"
+                    self.canvas.set_warning_label(index, warning)
 
                 if st_stats and self.sortCB.isChecked() == False:
                     info = "{}.{}.{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
@@ -662,6 +692,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.auto_end = auto_end
 
             ax = self.canvas.get_axe(last_index)
+            #ax.callbacks.connect('xlim_changed', self.on_xlims_change)
             if self.trimCB.isChecked():
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             else:
