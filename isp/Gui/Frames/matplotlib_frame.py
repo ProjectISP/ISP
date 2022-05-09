@@ -1169,8 +1169,6 @@ class CartopyCanvas(BasePltPyqtCanvas):
         self.draw()
 
 
-<<<<<<< HEAD
-=======
     def clear_color_bar(self):
         try:
             if self.__cbar:
@@ -1266,9 +1264,6 @@ class CartopyCanvas(BasePltPyqtCanvas):
         self.draw()
 
 
-
-
->>>>>>> master
 class FocCanvas(BasePltPyqtCanvas):
 
     def __init__(self, parent, **kwargs):
