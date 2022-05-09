@@ -19,6 +19,7 @@ from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
+from isp.Gui.Frames.uncertainity import UncertainityInfo
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.settings_dialog import SettingsDialog
 from isp.Gui.Utils import map_polarity_from_pressed_key
@@ -156,6 +157,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # Parameters settings
 
         self.parameters = ParametersSettings()
+
+        # Uncertainity pick
+        self.uncertainities = UncertainityInfo()
+
         # Earth Model Viewer
 
         self.earthmodel = EarthModelViewer()
@@ -215,6 +220,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # test
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+W'), self)
         self.shortcut_open.activated.connect(self.get_now_files)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('U'), self)
+        self.shortcut_open.activated.connect(self.open_uncertainity_settings)
+
         #######
 
 
@@ -235,6 +244,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def open_parameters_settings(self):
         self.parameters.show()
+
+    def open_uncertainity_settings(self):
+        self.uncertainities.show()
 
     def open_earth_model_viewer(self):
         self.earthmodel.show()
@@ -1280,15 +1292,21 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             tt = UTCDateTime(mdt.num2date(x1))
             diff = tt - stats.StartTime
             t = stats.StartTime + diff
-            idx_amplitude = int(stats.Sampling_rate*diff)
+            if self.decimator[0] is not None:
+                idx_amplitude = int(self.decimator[0]*diff)
+            else:
+                idx_amplitude = int(stats.Sampling_rate * diff)
             amplitudes = self.st[self.ax_num].data
             amplitude = amplitudes[idx_amplitude]
+            uncertainty = self.uncertainities.getUncertainity()
+
             line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
-            self.picked_at[str(line)] = PickerStructure(t, stats.Station, x1, amplitude, color, label,
+            self.picked_at[str(line)] = PickerStructure(t, stats.Station, x1, uncertainty, amplitude, color, label,
                                                         self.get_file_at_index(click_at_index))
             #print(self.picked_at)
             # Add pick data to file.
-            self.pm.add_data(t, amplitude, stats.Station, phase, Component = stats.Channel,  First_Motion=polarity)
+            self.pm.add_data(t, uncertainty, amplitude, stats.Station, phase, Component = stats.Channel,
+                             First_Motion=polarity)
             self.pm.save()  # maybe we can move this to when you press locate.
 
 

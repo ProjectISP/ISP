@@ -90,16 +90,18 @@ class PickerManager:
         """
         date = "{year:04d}{month:02d}{day:02d}".format(year=time.date.year, month=time.date.month, day=time.date.day)
         hour_min = "{:02d}{:02d}".format(time.hour, time.minute)
-        seconds = "{:02d}".format(time.second)
+        seconds = "{second:02d}.{micro}".format(second=time.second, micro = str(time.microsecond)[0:3])
+
         return date, hour_min, seconds
 
-    def add_data(self, time, amplitude: float, station: str, p_phase: str, **kwargs):
+    def add_data(self, time, err: float, amplitude: float, station: str, p_phase: str, **kwargs):
         """
         Add data to be saved.
 
         Important: To save data to file you must call the method save.
 
         :param time: An UTCDateTime or a valid time string.
+        :param err: Associated uncertainty for that pick
         :param amplitude: The amplitude of the waveform.
         :param station: The station name
         :param p_phase: The phase.
@@ -107,7 +109,7 @@ class PickerManager:
         :keyword Instrument: The instrument.
         :keyword Component:
         :keyword First_Motion: The polarization, either "U" or "D"
-        :keyword Err:
+        :keyword Err: uncertainty
         :keyword ErrMag:
         :keyword Coda_duration:
         :keyword Period:
@@ -119,8 +121,9 @@ class PickerManager:
 
         date, hour_min, seconds = self.__from_utctime_to_datetime(time)
         amplitude = "{0:.2f}".format(amplitude)
-
-        self.__add_data(Date=date, Hour_min=hour_min, Seconds=seconds, Station_name=station, Amplitude=amplitude,
+        #err = "{0:.2f}".format(err)
+        err = format(err, ".2E")
+        self.__add_data(Date=date, Hour_min=hour_min, Seconds=seconds, Err=err, Station_name=station, Amplitude=amplitude,
                         P_phase_descriptor=p_phase, **kwargs)
 
     def __add_data(self, **kwargs):
