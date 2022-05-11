@@ -5,7 +5,7 @@ from multiprocessing import Pool
 from os import listdir
 from os.path import isfile, join
 from typing import List
-
+import pandas as pd
 import numpy as np
 from obspy import Stream, read, Trace, UTCDateTime, read_events
 # noinspection PyProtectedMember
@@ -15,7 +15,6 @@ from obspy.io.mseed.core import _is_mseed
 from obspy.io.stationxml.core import _is_stationxml
 #from obspy.io.sac.core import _is_sac
 from obspy.io.xseed.parser import Parser
-
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils.nllOrgErrors import computeOriginErrors
@@ -566,3 +565,19 @@ class MseedUtil:
             new_times.append(UTCDateTime(clusters[k][0]))
             string_times.append(UTCDateTime(clusters[k][0]).strftime(format="%Y-%m-%dT%H:%M:%S.%f"))
         return new_times,string_times
+
+    @staticmethod
+    def get_NLL_phase_picks():
+
+        pick_times = {}
+        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "location_output", "obs")
+        pick_file = os.path.join(root, "output.txt")
+        if os.path.isfile(pick_file):
+            df = pd.read_csv(pick_file, delimiter=" ")
+            for index, row in df.iterrows():
+                tt = str(row['Date']) + "TT" + str(row['Hour_min']) + '{:0>2}'.format(row['Seconds'])
+                pick_times[row['Station_name'] + "." + row["Component"]] = [row["P_phase_descriptor"], UTCDateTime(tt)]
+            print(pick_times)
+            return pick_times
+
+
