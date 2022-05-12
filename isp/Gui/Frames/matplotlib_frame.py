@@ -807,7 +807,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
 
 
 class MatplotlibFrame(pw.QMainWindow):
-    def __init__(self, obj, **kwargs):
+    def __init__(self, obj, window_title="Matplotlib Window", **kwargs):
         """
         Embed a figure from matplotlib into a pyqt canvas.
 
@@ -815,7 +815,7 @@ class MatplotlibFrame(pw.QMainWindow):
         """
         super().__init__()
         # self.setAttribute(pyc.Qt.WA_DeleteOnClose)
-        self.setWindowTitle("Matplotlib Window")
+        self.setWindowTitle(window_title)
 
         self.file_menu = pw.QMenu('&File', self)
         self.file_menu.addAction('&Quit', self.fileQuit,
