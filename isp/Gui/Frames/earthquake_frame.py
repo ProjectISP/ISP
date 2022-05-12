@@ -56,6 +56,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.zoom_diff = None
         self.cancelled = False
         self.aligned_checked = False
+        self.aligned_fixed = False
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('Earthquake Location')
         self.progressbar.setLabelText(" Computing Auto-Picking ")
@@ -153,6 +154,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionNew_location.triggered.connect(lambda: self.start_location())
         self.actionRun_autoloc.triggered.connect(lambda: self.picker_all())
         self.actionFrom_Phase_Pick.triggered.connect(lambda: self.alaign_picks())
+
 
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
@@ -369,9 +371,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         md.set_info_message("Location complete. Check details for earthquake located in "+LOC_OUTPUT_PATH)
 
     def alaign_picks(self):
-        self.aligned_checked = True
-        self.pick_times = MseedUtil.get_NLL_phase_picks()
-        self.plot_seismogram()
+
+            self.aligned_checked = True
+            self.pick_times = MseedUtil.get_NLL_phase_picks()
+            self.plot_seismogram()
+
+
 
     @property
     def dataless_manager(self):
@@ -647,6 +652,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     pick_reference = self.pick_times[tr.stats.station+"."+tr.stats.channel]
                     shift_time = pick_reference[1] - tr.stats.starttime
                     tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00") - shift_time
+
+                if self.actionFrom_StartT.isChecked():
+                    tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
 
                 t = tr.times("matplotlib")
                 s = tr.data
