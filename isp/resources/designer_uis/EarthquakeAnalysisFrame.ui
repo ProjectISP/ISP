@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1811</width>
-    <height>911</height>
+    <width>1680</width>
+    <height>1029</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1022,10 +1022,18 @@
     </property>
     <addaction name="actionOpen_Help"/>
    </widget>
+   <widget class="QMenu" name="menuAlign_Traces">
+    <property name="title">
+     <string>Align Traces</string>
+    </property>
+    <addaction name="actionFrom_Phase_Pick"/>
+    <addaction name="actionFrom_StartT"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
    <addaction name="menuGo"/>
    <addaction name="menuCompute"/>
+   <addaction name="menuAlign_Traces"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -1273,6 +1281,16 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+F</string>
+   </property>
+  </action>
+  <action name="actionFrom_Phase_Pick">
+   <property name="text">
+    <string>From Phase Pick</string>
+   </property>
+  </action>
+  <action name="actionFrom_StartT">
+   <property name="text">
+    <string>From StartTime</string>
    </property>
   </action>
  </widget>

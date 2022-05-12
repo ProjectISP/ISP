@@ -813,10 +813,13 @@ class MatplotlibFrame(pw.QMainWindow):
 
         :param obj: Expected to be a obspy Stream or a matplotlib figure.
         """
-        super().__init__()
-        # self.setAttribute(pyc.Qt.WA_DeleteOnClose)
-        self.setWindowTitle("Matplotlib Window")
+        title = kwargs.pop("window_title", "Matplotlib Window")
 
+        super().__init__()
+
+        # self.setAttribute(pyc.Qt.WA_DeleteOnClose)
+        #self.setWindowTitle("Matplotlib Window")
+        self.setWindowTitle(title)
         self.file_menu = pw.QMenu('&File', self)
         self.file_menu.addAction('&Quit', self.fileQuit,
                                  pyc.Qt.CTRL + pyc.Qt.Key_Q)

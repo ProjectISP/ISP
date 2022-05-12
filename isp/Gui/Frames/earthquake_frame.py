@@ -55,6 +55,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         #print("Neural Network cannot be loaded")
         self.zoom_diff = None
         self.cancelled = False
+        self.aligned_checked = False
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('Earthquake Location')
         self.progressbar.setLabelText(" Computing Auto-Picking ")
@@ -151,6 +152,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRemove_picks.triggered.connect(lambda: self.remove_picks())
         self.actionNew_location.triggered.connect(lambda: self.start_location())
         self.actionRun_autoloc.triggered.connect(lambda: self.picker_all())
+        self.actionFrom_Phase_Pick.triggered.connect(lambda: self.alaign_picks())
 
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
@@ -366,6 +368,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         md = MessageDialog(self)
         md.set_info_message("Location complete. Check details for earthquake located in "+LOC_OUTPUT_PATH)
 
+    def alaign_picks(self):
+        self.aligned_checked = True
+        self.pick_times = MseedUtil.get_NLL_phase_picks()
+        self.plot_seismogram()
 
     @property
     def dataless_manager(self):
@@ -637,6 +643,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                                    filter_error_callback=self.filter_error_message,trace_number=index)
             if len(tr) > 0:
 
+                if self.aligned_checked:
+                    pick_reference = self.pick_times[tr.stats.station+"."+tr.stats.channel]
+                    shift_time = pick_reference[1] - tr.stats.starttime
+                    tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00") - shift_time
+
                 t = tr.times("matplotlib")
                 s = tr.data
 
@@ -696,6 +707,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             all_traces.append(tr)
 
         self.st = Stream(traces=all_traces)
+        self.aligned_checked = False
         try:
             if min_starttime and max_endtime is not None:
                 auto_start = min(min_starttime)

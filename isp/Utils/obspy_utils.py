@@ -15,6 +15,8 @@ from obspy.io.mseed.core import _is_mseed
 from obspy.io.stationxml.core import _is_stationxml
 #from obspy.io.sac.core import _is_sac
 from obspy.io.xseed.parser import Parser
+
+from isp import PICKING_DIR
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils.nllOrgErrors import computeOriginErrors
@@ -566,12 +568,11 @@ class MseedUtil:
             string_times.append(UTCDateTime(clusters[k][0]).strftime(format="%Y-%m-%dT%H:%M:%S.%f"))
         return new_times,string_times
 
-    @staticmethod
-    def get_NLL_phase_picks():
+    @classmethod
+    def get_NLL_phase_picks(cls):
 
         pick_times = {}
-        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "location_output", "obs")
-        pick_file = os.path.join(root, "output.txt")
+        pick_file = os.path.join(PICKING_DIR, "output.txt")
         if os.path.isfile(pick_file):
             df = pd.read_csv(pick_file, delimiter=" ")
             for index, row in df.iterrows():
