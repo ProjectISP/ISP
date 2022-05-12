@@ -19,6 +19,7 @@ class PlotToolsManager:
         import matplotlib.pyplot as plt
         from isp.Gui.Frames import MatplotlibFrame
         fig, ax1 = plt.subplots(figsize=(6, 6))
+        fig.canvas.manager.set_window_title("Amplitude spectrum")
         self.mpf = MatplotlibFrame(fig)
         ax1.loglog(freq, spec, linewidth=1.0, color='steelblue', label=self.__id)
         ax1.frequencies = freq
