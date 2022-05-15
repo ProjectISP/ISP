@@ -569,7 +569,7 @@ class MseedUtil:
         return new_times,string_times
 
     @classmethod
-    def get_NLL_phase_picks(cls):
+    def get_NLL_phase_picks(cls, phase):
 
         pick_times = {}
         pick_file = os.path.join(PICKING_DIR, "output.txt")
@@ -577,8 +577,8 @@ class MseedUtil:
             df = pd.read_csv(pick_file, delimiter=" ")
             for index, row in df.iterrows():
                 tt = str(row['Date']) + "TT" + str(row['Hour_min']) + '{:0>2}'.format(row['Seconds'])
-                pick_times[row['Station_name'] + "." + row["Component"]] = row["P_phase_descriptor"]
-                pick_times[row['Station_name'] + "." + row["Component"]][row["P_phase_descriptor"]] = UTCDateTime(tt)
+                if phase == row["P_phase_descriptor"]:
+                    pick_times[row['Station_name'] + "." + row["Component"]] = [row["P_phase_descriptor"], UTCDateTime(tt)]
             return pick_times
 
 

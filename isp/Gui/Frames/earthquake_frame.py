@@ -371,9 +371,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         md.set_info_message("Location complete. Check details for earthquake located in "+LOC_OUTPUT_PATH)
 
     def alaign_picks(self):
-
+            phase = self.comboBox_phases.currentText()
             self.aligned_checked = True
-            self.pick_times = MseedUtil.get_NLL_phase_picks()
+            self.pick_times = MseedUtil.get_NLL_phase_picks(phase)
             self.plot_seismogram()
 
 
