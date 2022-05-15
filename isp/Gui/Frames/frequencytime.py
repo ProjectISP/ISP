@@ -389,14 +389,20 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             self.canvas_plot1.set_xlabel(1, "Period (s)")
             self.canvas_plot1.set_ylabel(1, "Group Velocity (km/s)")
 
-            # Plot ridges
+            # TODO: duplicated with CWT, should be common
+            # Plot ridges and create lasso selectors
 
-            for k in range(self.numridgeSB.value()):
-                self.canvas_plot1.plot(period[0, :], group_vel[k], axes_index=1, marker=".", color=self.colors[k],
-                                       clear_plot=False)
-
+            self.selectors = []
             self.group_vel = group_vel
             self.periods = period[0, :]
+            ax = self.canvas_plot1.get_axe(1)
+
+            for k in range(self.numridgeSB.value()):
+                # self.canvas_plot1.plot(period[0,:], group_vel[k], axes_index=1, marker=".", color = self.colors[k],
+                #                      clear_plot=False)
+
+                pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
+                self.selectors.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
 
 
 
