@@ -5,6 +5,9 @@ from matplotlib.path import Path
 import numpy as np
 from matplotlib.widgets import SpanSelector
 
+# TODO: use qt here?
+from isp.Gui import pw, qt, pyc
+
 class Keys:
     NoKey = "None"
     Ctr = "control"
@@ -37,7 +40,11 @@ def map_polarity_from_pressed_key(key_name: str):
     return polarity, color
 
 
-class CollectionLassoSelector:
+# TODO: change comment, and improve color selection
+class CollectionLassoSelector(pyc.QObject):
+
+    selection_changed = pyc.pyqtSignal()
+
     """
     Select indices from a matplotlib collection using `LassoSelector`.
 
@@ -55,16 +62,16 @@ class CollectionLassoSelector:
         Axes to interact with.
     collection : `matplotlib.collections.Collection` subclass
         Collection you want to select from.
-    alpha_other : 0 <= float <= 1
-        To highlight a selection, this tool sets all selected points to an
-        alpha value of 1 and non-selected points to *alpha_other*.
+    selected_color : list
+        Four-element list with RGBa color for selected points
+
     """
 
-    def __init__(self, ax, collection, alpha_other=0.3):
+    def __init__(self, ax, collection, selected_color=[0.3, 0.3, 0.3, 1.], parent=None):
+        super().__init__(parent)
         self.canvas = ax.figure.canvas
         self.collection = collection
-        self.alpha_other = alpha_other
-
+        self.selected_color = selected_color
         self.xys = collection.get_offsets()
         self.Npts = len(self.xys)
 
@@ -74,17 +81,23 @@ class CollectionLassoSelector:
             raise ValueError('Collection must have a facecolor')
         elif len(self.fc) == 1:
             self.fc = np.tile(self.fc, (self.Npts, 1))
-
+        self.original_fc = np.copy(self.fc)
         self.lasso = LassoSelector(ax, onselect=self.on_select)
         self.ind = []
 
     def on_select(self, verts):
         path = Path(verts)
-        self.ind = np.nonzero(path.contains_points(self.xys))[0]
-        self.fc[:, -1] = self.alpha_other
-        self.fc[self.ind, -1] = 1
+        indexes = np.nonzero(path.contains_points(self.xys))[0]
+        if len(self.ind) == 0 or pw.QApplication.keyboardModifiers() != qt.ControlModifier:
+            self.ind = indexes
+        else:
+            self.ind = np.unique(np.concatenate((self.ind, indexes)))
+
+        self.fc = np.copy(self.original_fc)
+        self.fc[self.ind] = self.selected_color
         self.collection.set_facecolors(self.fc)
         self.canvas.draw_idle()
+        self.selection_changed.emit()
 
     def disconnect(self):
         self.lasso.disconnect_events()
