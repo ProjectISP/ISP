@@ -1,6 +1,7 @@
 from isp.Gui import pqg, pw
 from isp.Gui.Frames import BaseFrame
 from isp.Gui.Frames.frequencytime import FrequencyTimeFrame
+from isp.Gui.Frames.dispersion_maps_frame import EGFDispersion
 from isp.Gui.Frames.uis_frames import UiNoise
 from isp.Gui.Frames.efg_frame import EGFFrame
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -28,8 +29,10 @@ class NoiseFrame(BaseFrame, UiNoise):
         # Or they are only specific to EGFFrame?
         self.egf_frame = EGFFrame(self.parameters, self.settings_dialog)
         self.ft_frame = FrequencyTimeFrame()
+        self.dsp_frame = EGFDispersion()
         self.tabWidget.addTab(self.egf_frame, 'EGFs')
         self.tabWidget.addTab(self.ft_frame, 'Frequency Time Analysis')
+        self.tabWidget.addTab(self.dsp_frame, 'Dispersion Maps')
 
         # Help Documentation
         self.help = HelpDoc()

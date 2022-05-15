@@ -3,6 +3,7 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOCATION_OUTPUT_PATH = os.path.join(ROOT_DIR, 'earthquakeAnalisysis/location_output/loc')
+PICKING_DIR = os.path.join(ROOT_DIR, 'earthquakeAnalisysis/location_output/obs')
 MOMENT_TENSOR_OUTPUT = os.path.join(ROOT_DIR, 'mti/output')
 RESOURCE_PATH = os.path.join(ROOT_DIR, 'resources')
 IMAGES_PATH = os.path.join(RESOURCE_PATH, 'images')
@@ -12,6 +13,8 @@ MACROS_PATH = os.path.join(ROOT_DIR,'macros')
 HELP_PATH = os.path.join(ROOT_DIR,'ISP_Documentation')
 EVENTS_DETECTED = os.path.join(ROOT_DIR,'earthquakeAnalisysis/auto_detect/events')
 AUTOMATIC_PHASES = os.path.join(ROOT_DIR,'earthquakeAnalisysis/auto_detect/phases')
+DISP_MAPS = os.path.join(ROOT_DIR,'ant/data_tomo')
+DISP_REF_CURVES = os.path.join(ROOT_DIR,'ant/disp_curv_ref')
 
 def create_logger():
 

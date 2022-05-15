@@ -19,6 +19,7 @@ from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
+from isp.Gui.Frames.uncertainity import UncertainityInfo
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.settings_dialog import SettingsDialog
 from isp.Gui.Utils import map_polarity_from_pressed_key
@@ -52,8 +53,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cnn = CNNPicker()
         #finally:
         #print("Neural Network cannot be loaded")
-
+        self.zoom_diff = None
         self.cancelled = False
+        self.aligned_checked = False
+        self.aligned_fixed = False
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('Earthquake Location')
         self.progressbar.setLabelText(" Computing Auto-Picking ")
@@ -119,6 +122,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.rotateBtn.clicked.connect(self.rotate)
         self.mapBtn.clicked.connect(self.plot_map_stations)
         self.crossBtn.clicked.connect(self.cross)
+        self.macroBtn.clicked.connect(self.open_parameters_settings)
         #self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.__metadata_manager = MetadataManager(self.metadata_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
@@ -149,11 +153,18 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRemove_picks.triggered.connect(lambda: self.remove_picks())
         self.actionNew_location.triggered.connect(lambda: self.start_location())
         self.actionRun_autoloc.triggered.connect(lambda: self.picker_all())
+        self.actionFrom_Phase_Pick.triggered.connect(lambda: self.alaign_picks())
+
+
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
 
         self.parameters = ParametersSettings()
+
+        # Uncertainity pick
+        self.uncertainities = UncertainityInfo()
+
         # Earth Model Viewer
 
         self.earthmodel = EarthModelViewer()
@@ -213,7 +224,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # test
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+W'), self)
         self.shortcut_open.activated.connect(self.get_now_files)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('U'), self)
+        self.shortcut_open.activated.connect(self.open_uncertainity_settings)
+
         #######
+
+
+    # def on_xlims_change(self, event_ax):
+    #
+    #     self.zoom = event_ax.get_xlim()
+    #     t1 = UTCDateTime(mdt.num2date(self.zoom[0]))
+    #     t2 = UTCDateTime(mdt.num2date(self.zoom[1]))
+    #     self.zoom_diff = (t2-t1)
+
 
     def cancelled_callback(self):
         self.cancelled = True
@@ -224,6 +248,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def open_parameters_settings(self):
         self.parameters.show()
+
+    def open_uncertainity_settings(self):
+        self.uncertainities.show()
 
     def open_earth_model_viewer(self):
         self.earthmodel.show()
@@ -342,6 +369,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             #                    , std_out)
         md = MessageDialog(self)
         md.set_info_message("Location complete. Check details for earthquake located in "+LOC_OUTPUT_PATH)
+
+    def alaign_picks(self):
+            phase = self.comboBox_phases.currentText()
+            self.aligned_checked = True
+            self.pick_times = MseedUtil.get_NLL_phase_picks(phase)
+            self.plot_seismogram()
+
 
 
     @property
@@ -545,10 +579,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def plot_seismogram(self):
+        #print("initial",self.zoom_diff)
+        self.decimator = [None, False]
         if self.st:
             del self.st
 
         self.canvas.clear()
+
         ##
         self.nums_clicks = 0
         all_traces = []
@@ -589,6 +626,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             sd = SeismogramDataAdvanced(file_path)
 
+            if self.trimCB.isChecked() and diff >= 0 and self.fastCB.isChecked():
+
+                self.decimator = sd.resample_check(start_time=start_time, end_time=end_time)
+
+            elif self.trimCB.isChecked() == False and self.fastCB.isChecked() == True:
+
+                self.decimator = sd.resample_check()
+
+            if self.decimator[1]:
+                parameters.insert(0, ['resample', self.decimator[0], True])
 
             if self.trimCB.isChecked() and diff >= 0:
 
@@ -600,8 +647,22 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                                    filter_error_callback=self.filter_error_message,trace_number=index)
             if len(tr) > 0:
+
+                if self.aligned_checked:
+                    try:
+                        pick_reference = self.pick_times[tr.stats.station+"."+tr.stats.channel]
+                        shift_time = pick_reference[1] - tr.stats.starttime
+                        tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00") - shift_time
+                    except:
+                        tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+
+
+                if self.actionFrom_StartT.isChecked():
+                    tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+
                 t = tr.times("matplotlib")
                 s = tr.data
+
                 self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
                 if  self.pagination.items_per_page>=16:
                     ax = self.canvas.get_axe(index)
@@ -624,6 +685,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 last_index = index
 
                 st_stats = ObspyUtil.get_stats(file_path)
+
+                if self.decimator[1]:
+                    warning = "Decimated to " + str(self.decimator[0])+"  Hz"
+                    self.canvas.set_warning_label(index, warning)
 
                 if st_stats and self.sortCB.isChecked() == False:
                     info = "{}.{}.{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
@@ -654,6 +719,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             all_traces.append(tr)
 
         self.st = Stream(traces=all_traces)
+        self.aligned_checked = False
         try:
             if min_starttime and max_endtime is not None:
                 auto_start = min(min_starttime)
@@ -662,6 +728,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.auto_end = auto_end
 
             ax = self.canvas.get_axe(last_index)
+            #ax.callbacks.connect('xlim_changed', self.on_xlims_change)
             if self.trimCB.isChecked():
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
             else:
@@ -1249,15 +1316,21 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             tt = UTCDateTime(mdt.num2date(x1))
             diff = tt - stats.StartTime
             t = stats.StartTime + diff
-            idx_amplitude = int(stats.Sampling_rate*diff)
+            if self.decimator[0] is not None:
+                idx_amplitude = int(self.decimator[0]*diff)
+            else:
+                idx_amplitude = int(stats.Sampling_rate * diff)
             amplitudes = self.st[self.ax_num].data
             amplitude = amplitudes[idx_amplitude]
+            uncertainty = self.uncertainities.getUncertainity()
+
             line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
-            self.picked_at[str(line)] = PickerStructure(t, stats.Station, x1, amplitude, color, label,
+            self.picked_at[str(line)] = PickerStructure(t, stats.Station, x1, uncertainty, amplitude, color, label,
                                                         self.get_file_at_index(click_at_index))
             #print(self.picked_at)
             # Add pick data to file.
-            self.pm.add_data(t, amplitude, stats.Station, phase, Component = stats.Channel,  First_Motion=polarity)
+            self.pm.add_data(t, uncertainty, amplitude, stats.Station, phase, Component = stats.Channel,
+                             First_Motion=polarity)
             self.pm.save()  # maybe we can move this to when you press locate.
 
 

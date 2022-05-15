@@ -49,7 +49,7 @@ class StationsMap:
         #
         proj = ccrs.PlateCarree()
         fig, ax = plt.subplots(1, 1, subplot_kw=dict(projection=proj), figsize=(16, 12))
-        self.mpf = MatplotlibFrame(fig)
+        self.mpf = MatplotlibFrame(fig, window_title="Stations Map")
 
         xmin = min(lon)-4
         xmax = max(lon)+4

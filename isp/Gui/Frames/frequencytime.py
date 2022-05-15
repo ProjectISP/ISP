@@ -10,6 +10,7 @@ from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
 from sys import platform
 from isp.Utils import ObspyUtil
 from isp.seismogramInspector.MTspectrogram import MTspectrogram, hilbert_gauss
+from isp.ant.signal_processing_tools import noise_processing
 import numpy as np
 from obspy import read
 import os
@@ -167,6 +168,12 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             endtime =  tr.stats.endtime
             tr.trim(starttime=starttime, endtime=endtime)
 
+        if self.phase_matchCB.isChecked():
+            distance = tr.stats.mseed['geodetic'][0]
+            ns = noise_processing(tr)
+            tr_filtered = ns.phase_matched_filter(self.typeCB.currentText(),
+                  self.phaseMacthmodelCB.currentText(), distance , filter_parameter = self.phaseMatchCB.value())
+            tr.data = tr_filtered.data
 
         if selection == "Continuous Wavelet Transform":
 

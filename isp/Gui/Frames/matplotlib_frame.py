@@ -356,6 +356,20 @@ class BasePltPyqtCanvas(FigureCanvas):
         return ax.annotate(text, xy=(1, 1), xycoords='axes fraction', xytext=(-20, -20), textcoords='offset points',
                            ha="right", va="top", bbox=bbox)
 
+    def set_warning_label(self, ax: Axes or int, text: str):
+        """
+        Sets an label box at the upper right corner of the axes.
+
+        :param ax: The axes or axes_index to add the annotation.
+        :param text: The text
+        :return:
+        """
+        if type(ax) == int:
+            ax = self.get_axe(ax)
+        bbox = dict(boxstyle="round", alpha= 0.5, fc="red")
+        return ax.annotate(text, xy=(0.15, 1), xycoords='axes fraction', xytext=(-20, -20), textcoords='offset points',
+                           ha="right", va="top",  bbox=bbox)
+
     def get_ydata(self, ax_index):
         """
         Get y-data at the axe index.
@@ -799,10 +813,13 @@ class MatplotlibFrame(pw.QMainWindow):
 
         :param obj: Expected to be a obspy Stream or a matplotlib figure.
         """
-        super().__init__()
-        # self.setAttribute(pyc.Qt.WA_DeleteOnClose)
-        self.setWindowTitle("Matplotlib Window")
+        title = kwargs.pop("window_title", "Matplotlib Window")
 
+        super().__init__()
+
+        # self.setAttribute(pyc.Qt.WA_DeleteOnClose)
+        #self.setWindowTitle("Matplotlib Window")
+        self.setWindowTitle(title)
         self.file_menu = pw.QMenu('&File', self)
         self.file_menu.addAction('&Quit', self.fileQuit,
                                  pyc.Qt.CTRL + pyc.Qt.Key_Q)
@@ -1144,6 +1161,101 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
+
+        gl.top_labels = False
+        gl.left_labels = False
+        gl.xlines = False
+        gl.ylines = False
+        gl.xformatter = LONGITUDE_FORMATTER
+        gl.yformatter = LATITUDE_FORMATTER
+
+        self.draw()
+
+
+    def clear_color_bar(self):
+        try:
+            if self.__cbar:
+                self.__cbar.remove()
+        except:
+            pass
+
+    def __flat_axes(self):
+        # make sure axes are always a np.array
+        if type(self.axes) is not numpy.ndarray:
+            self.axes = numpy.array([self.axes])
+        self.axes = self.axes.flatten()
+
+    def set_new_subplot_cartopy(self, nrows, ncols, update=True, **kwargs):
+        sharex = kwargs.pop("sharex", "all")
+        self.figure.clf()
+        plt.close(self.figure)
+        nrows = max(nrows, 1)  # avoid zero rows.
+        self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, subplot_kw = {"projection":ccrs.PlateCarree()},
+                                         **kwargs)
+        self.__flat_axes()
+
+        if update:
+            self.draw()
+
+    def plot_disp_map(self, axes_index, grid, interp, color, plot_global_map =False, show_relief = False):
+
+        import numpy as np
+        from isp import ROOT_DIR
+        import os
+
+        os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
+
+        #resolution = kwargs.pop('resolution', 'low')
+        resolution = "low"
+        lats = grid[0]['grid'][:,0][:,1]
+        lons = grid[0]['grid'][1,:][:,0]
+
+        ax = self.get_axe(axes_index)
+#        geodetic_transform = ccrs.PlateCarree()._as_mpl_transform(ax)
+#        text_transform = offset_copy(geodetic_transform, units='dots', x=-25)
+        ax.clear()
+        self.clear_color_bar()
+        if show_relief:
+            ax.background_img(name='ne_shaded', resolution=resolution)
+        xmin = min(lons)
+        xmax = max(lons)
+        ymin = min(lats)
+        ymax = max(lats)
+        extent = [xmin, xmax, ymin, ymax]
+        ax.set_extent(extent, crs=ccrs.PlateCarree())
+
+        ax.coastlines()
+
+        #map = ax.contourf(lons, lats, grid[0]['m_opt_relative'], transform=ccrs.PlateCarree(), cmap="RdBu",
+        #                    vmin=-10, vmax=10, alpha=0.7)
+        img_extent = (xmin, xmax, ymin, ymax)
+        map = ax.imshow(grid[0]['m_opt_relative'], interpolation=interp, origin='lower', extent=img_extent,
+                        transform=ccrs.PlateCarree(), cmap=color, vmin=-10, vmax=10, alpha=0.7)
+
+        self.__cbar: Colorbar = self.figure.colorbar(map, ax=ax, orientation='vertical', fraction=0.05,
+                                                     extend='both', pad=0.08)
+
+        self.__cbar.ax.set_ylabel("Velocity [km/s]")
+
+        # Create an inset GeoAxes showing the Global location
+        geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
+        if plot_global_map:
+            sub_ax = ax.figure.add_axes([0.70, 0.73, 0.28, 0.28], projection=ccrs.PlateCarree())
+            sub_ax.set_extent([-179.9, 180, -89.9, 90], geodetic)
+
+            # Make a nice border around the inset axes.
+            effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
+            sub_ax.outline_patch.set_path_effects([effect])
+
+            # Add the land, coastlines and the extent .
+            sub_ax.add_feature(cfeature.LAND)
+            sub_ax.coastlines()
+            extent_box = sgeom.box(extent[0], extent[2], extent[1], extent[3])
+            sub_ax.add_geometries([extent_box], ccrs.PlateCarree(), facecolor='none',
+                                  edgecolor='blue', linewidth=1.0)
+
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                          linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
 
         gl.top_labels = False
         gl.left_labels = False
