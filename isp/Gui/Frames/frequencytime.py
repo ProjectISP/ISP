@@ -14,6 +14,7 @@ from isp.ant.signal_processing_tools import noise_processing
 import numpy as np
 from obspy import read
 import os
+from isp.Gui.Utils import CollectionLassoSelector
 
 
 @add_save_load()
@@ -283,14 +284,19 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             self.canvas_plot1.set_xlabel(1, "Period (s)")
             self.canvas_plot1.set_ylabel(1, "Group Velocity (km/s)")
 
-            # Plot ridges
+            # Plot ridges and create lasso selectors
+
+            self.selectors = []
+            self.group_vel = group_vel
+            self.periods = period[0, :]
+            ax = self.canvas_plot1.get_axe(1)
 
             for k in range(self.numridgeSB.value()):
-                self.canvas_plot1.plot(period[0,:], group_vel[k], axes_index=1, marker=".", color = self.colors[k],
-                                       clear_plot=False)
+                #self.canvas_plot1.plot(period[0,:], group_vel[k], axes_index=1, marker=".", color = self.colors[k],
+                 #                      clear_plot=False)
 
-            self.group_vel = group_vel
-            self.periods = period[0,:]
+                pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
+                self.selectors.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
 
         if selection == "Hilbert-Multiband":
 
@@ -390,14 +396,20 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             self.canvas_plot1.set_xlabel(1, "Period (s)")
             self.canvas_plot1.set_ylabel(1, "Group Velocity (km/s)")
 
-            # Plot ridges
+            # TODO: duplicated with CWT, should be common
+            # Plot ridges and create lasso selectors
 
-            for k in range(self.numridgeSB.value()):
-                self.canvas_plot1.plot(period[0, :], group_vel[k], axes_index=1, marker=".", color=self.colors[k],
-                                       clear_plot=False)
-
+            self.selectors = []
             self.group_vel = group_vel
             self.periods = period[0, :]
+            ax = self.canvas_plot1.get_axe(1)
+
+            for k in range(self.numridgeSB.value()):
+                # self.canvas_plot1.plot(period[0,:], group_vel[k], axes_index=1, marker=".", color = self.colors[k],
+                #                      clear_plot=False)
+
+                pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
+                self.selectors.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
 
 
 
@@ -427,6 +439,13 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.canvas_plot1.set_ylabel(0, "Phase Velocity (km/s)")
 
     def phase_vel2(self):
+        self.periods_now = []
+        self.solutions = []
+        for i, selector in enumerate(self.selectors):
+            for idx in selector.ind:
+                self.periods_now.append(self.periods[idx])
+                self.solutions.append(self.group_vel[i, idx])
+
         landa = -1*np.pi/4
         phase_vel_array = np.zeros([len(np.arange(-5, 5, 1)), len(self.solutions)])
         for k in np.arange(-5, 5, 1):
@@ -513,15 +532,14 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         for k in range(dim):
             group_vel_test = self.group_vel[k, :][idx_periods]
             err = abs(group_vel_test - y1)
-            if err>0:
+            if err > 0:
                 rms.append(err)
             else:
-                err=100
+                err = 100
                 rms.append(err)
 
         rms = np.array(rms)
         idx = np.argmin(rms)
-
         return value_period, self.group_vel[idx, idx_periods], idx
 
     def key_pressed(self, event):

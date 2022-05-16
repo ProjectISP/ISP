@@ -1,8 +1,12 @@
 from typing import Callable, List, Set
-
 from matplotlib.axes import Axes
+from matplotlib.widgets import LassoSelector
+from matplotlib.path import Path
+import numpy as np
 from matplotlib.widgets import SpanSelector
 
+# TODO: use qt here?
+from isp.Gui import pw, qt, pyc
 
 class Keys:
     NoKey = "None"
@@ -34,6 +38,72 @@ def map_polarity_from_pressed_key(key_name: str):
         polarity = "-"
         color = "blue"
     return polarity, color
+
+
+# TODO: change comment, and improve color selection
+class CollectionLassoSelector(pyc.QObject):
+
+    selection_changed = pyc.pyqtSignal()
+
+    """
+    Select indices from a matplotlib collection using `LassoSelector`.
+
+    Selected indices are saved in the `ind` attribute. This tool fades out the
+    points that are not part of the selection (i.e., reduces their alpha
+    values). If your collection has alpha < 1, this tool will permanently
+    alter the alpha values.
+
+    Note that this tool selects collection objects based on their *origins*
+    (i.e., `offsets`).
+
+    Parameters
+    ----------
+    ax : `~matplotlib.axes.Axes`
+        Axes to interact with.
+    collection : `matplotlib.collections.Collection` subclass
+        Collection you want to select from.
+    selected_color : list
+        Four-element list with RGBa color for selected points
+
+    """
+
+    def __init__(self, ax, collection, selected_color=[0.3, 0.3, 0.3, 1.], parent=None):
+        super().__init__(parent)
+        self.canvas = ax.figure.canvas
+        self.collection = collection
+        self.selected_color = selected_color
+        self.xys = collection.get_offsets()
+        self.Npts = len(self.xys)
+
+        # Ensure that we have separate colors for each object
+        self.fc = collection.get_facecolors()
+        if len(self.fc) == 0:
+            raise ValueError('Collection must have a facecolor')
+        elif len(self.fc) == 1:
+            self.fc = np.tile(self.fc, (self.Npts, 1))
+        self.original_fc = np.copy(self.fc)
+        self.lasso = LassoSelector(ax, onselect=self.on_select)
+        self.ind = []
+
+    def on_select(self, verts):
+        path = Path(verts)
+        indexes = np.nonzero(path.contains_points(self.xys))[0]
+        if len(self.ind) == 0 or pw.QApplication.keyboardModifiers() != qt.ControlModifier:
+            self.ind = indexes
+        else:
+            self.ind = np.unique(np.concatenate((self.ind, indexes)))
+
+        self.fc = np.copy(self.original_fc)
+        self.fc[self.ind] = self.selected_color
+        self.collection.set_facecolors(self.fc)
+        self.canvas.draw_idle()
+        self.selection_changed.emit()
+
+    def disconnect(self):
+        self.lasso.disconnect_events()
+        self.fc[:, -1] = 1
+        self.collection.set_facecolors(self.fc)
+        self.canvas.draw_idle()
 
 
 class ExtendSpanSelector(SpanSelector):
