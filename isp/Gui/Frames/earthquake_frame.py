@@ -371,9 +371,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         md.set_info_message("Location complete. Check details for earthquake located in "+LOC_OUTPUT_PATH)
 
     def alaign_picks(self):
-
+            phase = self.comboBox_phases.currentText()
             self.aligned_checked = True
-            self.pick_times = MseedUtil.get_NLL_phase_picks()
+            self.pick_times = MseedUtil.get_NLL_phase_picks(phase)
             self.plot_seismogram()
 
 
@@ -649,9 +649,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             if len(tr) > 0:
 
                 if self.aligned_checked:
-                    pick_reference = self.pick_times[tr.stats.station+"."+tr.stats.channel]
-                    shift_time = pick_reference[1] - tr.stats.starttime
-                    tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00") - shift_time
+                    try:
+                        pick_reference = self.pick_times[tr.stats.station+"."+tr.stats.channel]
+                        shift_time = pick_reference[1] - tr.stats.starttime
+                        tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00") - shift_time
+                    except:
+                        tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+
 
                 if self.actionFrom_StartT.isChecked():
                     tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
