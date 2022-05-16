@@ -1028,6 +1028,7 @@
     </property>
     <addaction name="actionFrom_Phase_Pick"/>
     <addaction name="actionFrom_StartT"/>
+    <addaction name="actionUsing_MCCC"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
@@ -1294,6 +1295,11 @@
    </property>
    <property name="text">
     <string>From StartTime</string>
+   </property>
+  </action>
+  <action name="actionUsing_MCCC">
+   <property name="text">
+    <string>Using MCCC</string>
    </property>
   </action>
  </widget>

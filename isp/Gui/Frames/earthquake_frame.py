@@ -27,6 +27,7 @@ from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdateti
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.arrayanalysis import array_analysis
+from isp.arrayanalysis.backprojection_tools import backproj
 from isp.earthquakeAnalisysis import PickerManager, NllManager
 import numpy as np
 import os
@@ -57,6 +58,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cancelled = False
         self.aligned_checked = False
         self.aligned_fixed = False
+        self.shift_times = None
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('Earthquake Location')
         self.progressbar.setLabelText(" Computing Auto-Picking ")
@@ -154,7 +156,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionNew_location.triggered.connect(lambda: self.start_location())
         self.actionRun_autoloc.triggered.connect(lambda: self.picker_all())
         self.actionFrom_Phase_Pick.triggered.connect(lambda: self.alaign_picks())
-
+        self.actionUsing_MCCC.triggered.connect(lambda: self.alaign_mccc())
 
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
@@ -370,12 +372,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         md = MessageDialog(self)
         md.set_info_message("Location complete. Check details for earthquake located in "+LOC_OUTPUT_PATH)
 
+
     def alaign_picks(self):
             phase = self.comboBox_phases.currentText()
             self.aligned_checked = True
             self.pick_times = MseedUtil.get_NLL_phase_picks(phase)
             self.plot_seismogram()
-
 
 
     @property
@@ -548,6 +550,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
             bind.value = selected[0]
 
+
+    def alaign_mccc(self):
+        if self.st:
+            bp = backproj()
+            self.st, self.shift_times = bp.multichanel(self.st, resample = True)
+            self.plot_seismogram()
+
+
     def sort_by_distance_advance(self, file):
 
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
@@ -660,6 +670,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 if self.actionFrom_StartT.isChecked():
                     tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
 
+                if self.shift_times is not None:
+                    tr.stats.starttime = tr.stats.starttime + self.shift_times[index][0]
+
                 t = tr.times("matplotlib")
                 s = tr.data
 
@@ -720,6 +733,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.st = Stream(traces=all_traces)
         self.aligned_checked = False
+        self.shift_times = None
         try:
             if min_starttime and max_endtime is not None:
                 auto_start = min(min_starttime)
