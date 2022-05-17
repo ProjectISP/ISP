@@ -1328,7 +1328,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             #amplitude = y1
             label = "{} {}".format(phase, polarity)
             tt = UTCDateTime(mdt.num2date(x1))
-            diff = tt - stats.StartTime
+            diff = tt -self.st[self.ax_num].stats.starttime
             t = stats.StartTime + diff
             if self.decimator[0] is not None:
                 idx_amplitude = int(self.decimator[0]*diff)
