@@ -569,16 +569,41 @@ class MseedUtil:
         return new_times,string_times
 
     @classmethod
-    def get_NLL_phase_picks(cls, phase):
+    def get_NLL_phase_picks(cls, phase = None, **kwargs ):
 
         pick_times = {}
         pick_file = os.path.join(PICKING_DIR, "output.txt")
+        pick_file = kwargs.pop("input_file", pick_file)
+
         if os.path.isfile(pick_file):
             df = pd.read_csv(pick_file, delimiter=" ")
             for index, row in df.iterrows():
                 tt = str(row['Date']) + "TT" + str(row['Hour_min']) + '{:0>2}'.format(row['Seconds'])
                 if phase == row["P_phase_descriptor"]:
                     pick_times[row['Station_name'] + "." + row["Component"]] = [row["P_phase_descriptor"], UTCDateTime(tt)]
+                elif phase is None:
+                    pick_times[row['Station_name'] + "." + row["Component"]] = [row["P_phase_descriptor"],
+                                                                                UTCDateTime(tt)]
             return pick_times
 
 
+    @classmethod
+    def get_NLL_phase_picks2(cls, phase = None, **kwargs ):
+
+        pick_times = {}
+        pick_file = os.path.join(PICKING_DIR, "output.txt")
+        pick_file = kwargs.pop("input_file", pick_file)
+
+        if os.path.isfile(pick_file):
+            df = pd.read_csv(pick_file, delimiter=" ")
+            for index, row in df.iterrows():
+                tt = str(row['Date']) + "TT" + str(row['Hour_min']) + '{:0>2}'.format(row['Seconds'])
+                id = row['Station_name'] + "." + row["Component"]
+                if id not in pick_times:
+                    items = []
+                    items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
+                    pick_times[id] = items
+                else:
+                    items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
+                    pick_times[id] = items
+            return pick_times

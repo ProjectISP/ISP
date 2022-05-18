@@ -158,6 +158,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRun_autoloc.triggered.connect(lambda: self.picker_all())
         self.actionFrom_Phase_Pick.triggered.connect(lambda: self.alaign_picks())
         self.actionUsing_MCCC.triggered.connect(lambda: self.alaign_mccc())
+        self.actionPicks_from_file.triggered.connect(lambda: self.import_pick_from_file())
 
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
@@ -380,6 +381,37 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.pick_times = MseedUtil.get_NLL_phase_picks(phase)
             self.plot_seismogram()
 
+    def import_pick_from_file(self):
+        #if isinstance(canvas, MatplotlibCanvas):
+        selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            self.pick_times_imported = MseedUtil.get_NLL_phase_picks2(input_file = selected[0])
+            print(self.pick_times_imported)
+            stations_info = self.__stations_info_list()
+            for count, station in enumerate(stations_info):
+                id = station[1] + "." + station[3]
+                if id in self.pick_times_imported:
+                    pick = self.pick_times_imported[id] #in UTCDatetime needs to be in samples
+                    for j in range(len(pick)):
+                        pick_value = pick[j][1].matplotlib_date
+                        self.canvas.draw_arrow(pick_value, count, arrow_label=pick[j][0], amplitude=None, color="green",
+                                           picker=True)
+
+
+
+    def __stations_info_list(self):
+        files_at_page = self.get_files_at_page()
+        sd = []
+
+        for file in files_at_page:
+            st = SeismogramDataAdvanced(file)
+
+            station = [st.stats.Network, st.stats.Station, st.stats.Location, st.stats.Channel, st.stats.StartTime,
+                       st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
+
+            sd.append(station)
+
+        return sd
 
     @property
     def dataless_manager(self):

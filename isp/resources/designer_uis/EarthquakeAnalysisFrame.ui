@@ -1030,11 +1030,18 @@
     <addaction name="actionFrom_StartT"/>
     <addaction name="actionUsing_MCCC"/>
    </widget>
+   <widget class="QMenu" name="menuImport">
+    <property name="title">
+     <string>Import</string>
+    </property>
+    <addaction name="actionPicks_from_file"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
    <addaction name="menuGo"/>
    <addaction name="menuCompute"/>
    <addaction name="menuAlign_Traces"/>
+   <addaction name="menuImport"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -1300,6 +1307,11 @@
   <action name="actionUsing_MCCC">
    <property name="text">
     <string>Using MCCC</string>
+   </property>
+  </action>
+  <action name="actionPicks_from_file">
+   <property name="text">
+    <string>Picks from file</string>
    </property>
   </action>
  </widget>
