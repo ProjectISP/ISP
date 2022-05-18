@@ -59,6 +59,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.aligned_checked = False
         self.aligned_fixed = False
         self.shift_times = None
+        self.lines = []
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('Earthquake Location')
         self.progressbar.setLabelText(" Computing Auto-Picking ")
@@ -1339,6 +1340,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             uncertainty = self.uncertainities.getUncertainity()
 
             line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
+            self.lines.append(line)
             self.picked_at[str(line)] = PickerStructure(t, stats.Station, x1, uncertainty, amplitude, color, label,
                                                         self.get_file_at_index(click_at_index))
             #print(self.picked_at)
@@ -1757,9 +1759,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         md = MessageDialog(self)
         output_path = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
         try:
+            del self.pm
             command = "{} {}".format('rm', output_path)
             exc_cmd(command, cwd=ROOT_DIR)
             md.set_info_message("Removed picks from file")
+            self.canvas.remove_arrows(self.lines)
+            self.pm = PickerManager()
         except:
 
             md.set_error_message("Coundn't remove pick file")
