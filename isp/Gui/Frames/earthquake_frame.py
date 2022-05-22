@@ -215,6 +215,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('W'), self)
         self.shortcut_open.activated.connect(self.plot_seismogram)
 
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+W'), self)
+        self.shortcut_open.activated.connect(self.get_now_files)
+
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+R'), self)
         self.shortcut_open.activated.connect(self.detect_events)
 
@@ -223,11 +226,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+F'), self)
         self.shortcut_open.activated.connect(self.picker_all)
-
-        #######
-        # test
-        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+W'), self)
-        self.shortcut_open.activated.connect(self.get_now_files)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('U'), self)
         self.shortcut_open.activated.connect(self.open_uncertainity_settings)
@@ -1790,8 +1788,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def remove_picks(self):
         md = MessageDialog(self)
         output_path = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
+
         try:
-            del self.pm
+            self.pm.clear()
+            self.picked_at = {}
             command = "{} {}".format('rm', output_path)
             exc_cmd(command, cwd=ROOT_DIR)
             md.set_info_message("Removed picks from file")

@@ -15,6 +15,7 @@ class PickerManager:
     Date = "Date"
     HourMin = "Hour_min"
     Seconds = "Seconds"
+    GAU = "GAU"
     Err = "Err"
     ErrMag = "ErrMag"
     CodaDuration = "Coda_duration"
@@ -46,7 +47,7 @@ class PickerManager:
             self.__output_path = self.get_default_output_path()
 
         self.columns = [self.StationName, self.Instrument, self.Component, self.PPhaseOnset, self.PPhaseDescriptor,
-                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, self.Err, self.ErrMag,
+                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, "GAU", self.Err, self.ErrMag,
                         self.CodaDuration, self.Amplitude, self.Period]
 
         if overwrite:
@@ -142,6 +143,7 @@ class PickerManager:
         :keyword Date:
         :keyword Hour_min:
         :keyword Seconds:
+        :keyword GAU:
         :keyword Err:
         :keyword ErrMag:
         :keyword Coda_duration:
@@ -154,7 +156,9 @@ class PickerManager:
         data = {key: kwargs.get(key, "?") for key in self.columns}  # start a dict with default values equal "?"
 
         # Override defaults values for some keys
-        data[self.Err] = "GAU" if data[self.Err] == "?" else data[self.Err]
+        data["GAU"] = "GAU"
+        data[self.Err] = "{:.1f}".format(0) if data[self.Err] == "?" else data[self.Err]
+        #data[self.Err] = "GAU" if data[self.Err] == "?" else data[self.Err]
         data[self.ErrMag] = "{:.1f}".format(0) if data[self.ErrMag] == "?" else data[self.ErrMag]
         data[self.CodaDuration] = "{:.1f}".format(0) if data[self.CodaDuration] == "?" else data[self.CodaDuration]
         data[self.Period] = "{:.1f}".format(0) if data[self.Period] == "?" else data[self.Period]
