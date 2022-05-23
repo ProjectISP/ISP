@@ -275,25 +275,40 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             for k, times in arrivals.items():
                 for t in times:
                     if k == "p":
-                        self.canvas.draw_arrow(t.matplotlib_date, index + 2,
+                        line = self.canvas.draw_arrow(t.matplotlib_date, index + 2,
                                                "P", color="blue", linestyles='--', picker=False)
+                        self.lines.append(line)
                         with open(self.path_phases, "a+") as f:
                             f.write(station + " " + k.upper() + " " + t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
 
-                        self.pm.add_data(t, 1, st2[2].stats.station, "P", Component=st2[2].stats.channel,
+                        self.picked_at[str(line)] = PickerStructure(t,st2[2].stats.station, t.matplotlib_date,
+                            0.2, 0, "blue", "P", self.get_file_at_index(index + 2))
+
+                        self.pm.add_data(t, 0.2, 0, st2[2].stats.station, "P", Component=st2[2].stats.channel,
                                          First_Motion="?")
                         self.pm.save()
 
                     if k == "s":
 
-                        self.canvas.draw_arrow(t.matplotlib_date, index + 0,
+                        line1s = self.canvas.draw_arrow(t.matplotlib_date, index + 0,
                                                "S", color="purple", linestyles='--', picker=False)
-                        self.canvas.draw_arrow(t.matplotlib_date, index + 1,
+                        line2s = self.canvas.draw_arrow(t.matplotlib_date, index + 1,
                                                "S", color="purple", linestyles='--', picker=False)
+
+                        self.lines.append(line1s)
+                        self.lines.append(line2s)
+
 
                         with open(self.path_phases, "a+") as f:
                                 f.write(station+" "+k.upper()+" "+t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
-                        self.pm.add_data(t, 0, st2[1].stats.station, "S", Component=st2[1].stats.channel,
+
+                        self.picked_at[str(line1s)] = PickerStructure(t, st2[1].stats.station, t.matplotlib_date,
+                             0.2, 0, "blue", "S", self.get_file_at_index(index + 0))
+
+                        self.picked_at[str(line2s)] = PickerStructure(t, st2[1].stats.station, t.matplotlib_date,
+                             0.2, 0, "blue", "S", self.get_file_at_index(index + 1))
+
+                        self.pm.add_data(t, 0.2, 0, st2[1].stats.station, "S", Component=st2[1].stats.channel,
                                          First_Motion="?")
                         self.pm.save()
 
@@ -380,11 +395,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.plot_seismogram()
 
     def import_pick_from_file(self):
-        #if isinstance(canvas, MatplotlibCanvas):
-        selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
+
+        selected = pw.QFileDialog.getOpenFileName(self, "Select picking file")
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
             self.pick_times_imported = MseedUtil.get_NLL_phase_picks2(input_file = selected[0])
-            print(self.pick_times_imported)
             stations_info = self.__stations_info_list()
             for count, station in enumerate(stations_info):
                 id = station[1] + "." + station[3]
@@ -392,10 +406,24 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     pick = self.pick_times_imported[id] #in UTCDatetime needs to be in samples
                     for j in range(len(pick)):
                         pick_value = pick[j][1].matplotlib_date
-                        self.canvas.draw_arrow(pick_value, count, arrow_label=pick[j][0], amplitude=None, color="green",
-                                           picker=True)
+                        # build the label properly
 
+                        if pick[j][3] == "U":
+                            label = pick[j][0] + " +"
+                        elif pick[j][3] == "D":
+                            label = pick[j][0] + " -"
+                        else:
+                            label = pick[j][0] + " ?"
 
+                        line = self.canvas.draw_arrow(pick_value, count, arrow_label=label, amplitude=pick[j][7],
+                                                      color="green", picker=True)
+                        self.lines.append(line)
+                        self.picked_at[str(line)] = PickerStructure(pick[j][1], id.split(".")[0], pick_value, pick[j][4],
+                             pick[j][7], "green", label, self.get_file_at_index(count))
+
+                        self.pm.add_data(pick_value, pick[j][4], pick[j][7], id.split(".")[0], pick[j][0],
+                                         First_Motion = pick[j][3], Component = pick[j][2])
+                        self.pm.save()
 
     def __stations_info_list(self):
         files_at_page = self.get_files_at_page()
@@ -1359,7 +1387,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             #amplitude = y1
             label = "{} {}".format(phase, polarity)
             tt = UTCDateTime(mdt.num2date(x1))
-            diff = tt -self.st[self.ax_num].stats.starttime
+            diff = tt - self.st[self.ax_num].stats.starttime
             t = stats.StartTime + diff
             if self.decimator[0] is not None:
                 idx_amplitude = int(self.decimator[0]*diff)

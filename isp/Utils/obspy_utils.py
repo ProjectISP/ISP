@@ -588,7 +588,7 @@ class MseedUtil:
 
 
     @classmethod
-    def get_NLL_phase_picks2(cls, phase = None, **kwargs ):
+    def get_NLL_phase_picks2(cls, **kwargs ):
 
         pick_times = {}
         pick_file = os.path.join(PICKING_DIR, "output.txt")
@@ -601,9 +601,13 @@ class MseedUtil:
                 id = row['Station_name'] + "." + row["Component"]
                 if id not in pick_times:
                     items = []
-                    items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
+                    #items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
+                    items.append([row["P_phase_descriptor"], UTCDateTime(tt), row["Component"], row["First_Motion"],
+                                  row["Err"], row["ErrMag"], row["Coda_duration"], row["Amplitude"], row["Period"]])
                     pick_times[id] = items
                 else:
-                    items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
+                    #items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
+                    items.append([row["P_phase_descriptor"], UTCDateTime(tt), row["Component"], row["First_Motion"],
+                                  row["Err"], row["ErrMag"], row["Coda_duration"], row["Amplitude"], row["Period"]])
                     pick_times[id] = items
             return pick_times
