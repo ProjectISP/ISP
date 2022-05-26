@@ -272,7 +272,7 @@ class MseedUtil:
             for file in files:
                 cls.pos_file.append(os.path.join(top_dir, file))
 
-        with Pool(processes=6) as pool:
+        with Pool(processes=os.cpu_count()) as pool:
             r =  pool.map(cls.loop_tree, range(len(cls.pos_file)))
 
         r = list(filter(None, r))
@@ -307,7 +307,7 @@ class MseedUtil:
         else:
 
             if cls.robust and cls.is_valid_mseed(cls.pos_file[i]):
-
+                
                 result = cls.pos_file[i]
 
             elif not cls.robust:
