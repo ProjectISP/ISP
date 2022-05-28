@@ -230,8 +230,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('U'), self)
         self.shortcut_open.activated.connect(self.open_uncertainity_settings)
 
-        #######
 
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('I'), self)
+        self.shortcut_open.activated.connect(self.multi_cursor_on)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('O'), self)
+        self.shortcut_open.activated.connect(self.multi_cursor_off)
 
     # def on_xlims_change(self, event_ax):
     #
@@ -241,8 +245,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     #     self.zoom_diff = (t2-t1)
 
 
+
     def cancelled_callback(self):
         self.cancelled = True
+
+    def multi_cursor_on(self):
+        self.canvas.activate_multi_cursor()
+
+
+    def multi_cursor_off(self):
+        self.canvas.deactivate_multi_cursor()
 
 
     def open_help(self):

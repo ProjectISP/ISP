@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from typing import Optional
 import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -15,7 +16,7 @@ from matplotlib.colorbar import Colorbar
 from matplotlib.lines import Line2D
 from matplotlib.patheffects import Stroke
 from matplotlib.transforms import offset_copy
-from matplotlib.widgets import SpanSelector
+from matplotlib.widgets import SpanSelector, MultiCursor
 from mpl_toolkits.mplot3d import Axes3D
 from obspy import Stream
 from owslib.wms import WebMapService
@@ -74,7 +75,7 @@ class BasePltPyqtCanvas(FigureCanvas):
         self.__callback_on_select = None
         self.__selector = {}  # selector should be a dict where the key is the buttons
         self.pickers = {}
-
+        self.multi: Optional[MultiCursor] = None
         if not obj:
             fig = self.__construct_subplot(**kwargs)
         else:
@@ -121,11 +122,23 @@ class BasePltPyqtCanvas(FigureCanvas):
 
         return fig
 
+    def axes_updated(self):
+        if self.multi:
+            self.activate_multi_cursor()
+
     def __flat_axes(self):
         # make sure axes are always a np.array
         if type(self.axes) is not numpy.ndarray:
             self.axes = numpy.array([self.axes])
         self.axes = self.axes.flatten()
+        # axes have changed....do update
+        self.axes_updated()
+
+    def activate_multi_cursor(self):
+        self.multi = MultiCursor(self, self.axes)
+
+    def deactivate_multi_cursor(self):
+        self.multi = None
 
     def register_on_click(self):
         if not self.button_connection:
