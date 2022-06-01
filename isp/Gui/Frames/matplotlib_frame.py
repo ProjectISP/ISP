@@ -885,6 +885,43 @@ class MatplotlibFrame(pw.QMainWindow):
                              canvases and Obspy stream.""")
 
 
+class Multiprocess_plot(BasePltPyqtCanvas):
+
+      def __init__(self, parent, **kwargs):
+          super().__init__(parent, **kwargs)
+
+      def call_back(self):
+          while self.pipe.poll():
+              command = self.pipe.recv()
+              if command is None:
+                  self.terminate()
+                  return False
+              else:
+                  self.x.append(command[0])
+                  self.y.append(command[1])
+                  self.ax.plot_date(self.x, self.y, 'ro')
+          self.fig.canvas.draw()
+          return True
+
+      def __call__(self, pipe):
+          print('starting plotter...')
+
+          self.pipe = pipe
+          timer = self.fig.canvas.new_timer(interval=10)
+          timer.add_callback(self.call_back)
+          timer.start()
+
+          print('...done')
+
+      def plot_send(self, t, y, finished = True):
+          send = self.plot_pipe.send
+          if finished:
+              send(None)
+          else:
+              data = [t,y]
+              send(data)
+
+
 class CartopyCanvas(BasePltPyqtCanvas):
 
     #MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'

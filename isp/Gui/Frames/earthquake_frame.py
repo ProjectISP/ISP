@@ -20,6 +20,7 @@ from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.uncertainity import UncertainityInfo
+from isp.Gui.Frames.project_frame import Project
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.settings_dialog import SettingsDialog
 from isp.Gui.Utils import map_polarity_from_pressed_key
@@ -159,6 +160,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionFrom_Phase_Pick.triggered.connect(lambda: self.alaign_picks())
         self.actionUsing_MCCC.triggered.connect(lambda: self.alaign_mccc())
         self.actionPicks_from_file.triggered.connect(lambda: self.import_pick_from_file())
+        self.actionNew_Project.triggered.connect(lambda: self.open_project())
 
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
@@ -168,6 +170,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         # Uncertainity pick
         self.uncertainities = UncertainityInfo()
+
+        # Project Ingo
+
+        self.project_dialog = Project()
+        #self.project_dialog.project
 
         # Earth Model Viewer
 
@@ -265,6 +272,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def open_uncertainity_settings(self):
         self.uncertainities.show()
+
+    def open_project(self):
+        self.setEnabled(False)
+        self.project_dialog.exec()
+        self.setEnabled(True)
 
     def open_earth_model_viewer(self):
         self.earthmodel.show()
@@ -518,9 +530,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
                 diff = end-start
                 if diff > 0:
-                    files_path = MseedUtil.get_tree_mseed_files(dir_path, starttime = start, endtime = end, robust = self.robustCB.isChecked())
+                    #files_path = MseedUtil.get_tree_mseed_files(dir_path, starttime = start, endtime = end, robust = self.robustCB.isChecked())
+                    ms = MseedUtil(starttime = start, endtime = end, robust = self.robustCB.isChecked())
+                    files_path = ms.get_tree_mseed_files(dir_path)
             else:
-                files_path = MseedUtil.get_tree_mseed_files(dir_path, robust = self.robustCB.isChecked())
+                #files_path = MseedUtil.get_tree_mseed_files(dir_path, robust = self.robustCB.isChecked())
+                ms = MseedUtil(robust=self.robustCB.isChecked())
+                files_path =  ms.get_tree_mseed_files(dir_path)
 
         else:
 
@@ -746,6 +762,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                 t = tr.times("matplotlib")
                 s = tr.data
+                #
+                # def plot(self, finished=False):
+                #     send = self.plot_pipe.send
+                #     if finished:
+                #         send(None)
+                #     else:
+                #         data = np.random.random(2)
+                #         send(data)
 
                 self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
                 if  self.pagination.items_per_page>=16:

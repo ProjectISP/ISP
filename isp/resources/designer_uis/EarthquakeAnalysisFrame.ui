@@ -960,6 +960,14 @@
      </property>
      <addaction name="actionWrite_Current_Page"/>
     </widget>
+    <widget class="QMenu" name="menuProject">
+     <property name="title">
+      <string>Project</string>
+     </property>
+     <addaction name="actionNew_Project"/>
+     <addaction name="actionLoad_Project"/>
+    </widget>
+    <addaction name="menuProject"/>
     <addaction name="actionNew_location"/>
     <addaction name="separator"/>
     <addaction name="menuWrite_Files"/>
@@ -1312,6 +1320,16 @@
   <action name="actionPicks_from_file">
    <property name="text">
     <string>Picks from file</string>
+   </property>
+  </action>
+  <action name="actionNew_Project">
+   <property name="text">
+    <string>New Project</string>
+   </property>
+  </action>
+  <action name="actionLoad_Project">
+   <property name="text">
+    <string>Load Project</string>
    </property>
   </action>
  </widget>

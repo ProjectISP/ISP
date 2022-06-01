@@ -21,6 +21,10 @@ from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils.nllOrgErrors import computeOriginErrors
 
+import os
+import re
+from pathlib import Path
+
 
 @unique
 class Filters(Enum):
@@ -49,6 +53,7 @@ class Filters(Enum):
 
 
 class ObspyUtil:
+
 
     @staticmethod
     def get_figure_from_stream(st: Stream, **kwargs):
@@ -234,7 +239,16 @@ class ObspyUtil:
         return True
 
 
+
 class MseedUtil:
+
+    def __init__(self, robust=True, **kwargs):
+
+        self.start = kwargs.pop('starttime', [])
+        self.end = kwargs.pop('endtime', [])
+        self.obsfiles = []
+        self.pos_file = []
+        self.robust = robust
 
     @classmethod
     def get_mseed_files(cls, root_dir: str):
@@ -254,51 +268,46 @@ class MseedUtil:
 
          return []
 
-    @classmethod
-    def get_tree_mseed_files(cls, root_dir: str, robust = True, **kwargs):
+    def get_tree_mseed_files(self, root_dir: str):
         """
         Get a list of valid mseed files inside all folder tree from the the root_dir.
         If root_dir doesn't exists it returns a empty list.
         :param root_dir: The full path of the dir or a file.
         :return: A list of full path of mseed files.
         """
-        cls.start = kwargs.pop('starttime', [])
-        cls.end = kwargs.pop('endtime', [])
-        cls.obsfiles = []
-        cls.pos_file = []
-        cls.robust = robust
+
 
         for top_dir, sub_dir, files in os.walk(root_dir):
             for file in files:
-                cls.pos_file.append(os.path.join(top_dir, file))
+                self.pos_file.append(os.path.join(top_dir, file))
 
         with Pool(processes=os.cpu_count()) as pool:
-            r =  pool.map(cls.loop_tree, range(len(cls.pos_file)))
+            r =  pool.map(self.loop_tree, range(len(self.pos_file)))
 
         r = list(filter(None, r))
         r.sort()
 
         return r
 
-    @classmethod
-    def loop_tree(cls, i):
+
+    def loop_tree(self, i):
         result = None
-        if isinstance(cls.start, UTCDateTime):
+        if isinstance(self.start, UTCDateTime):
             try:
-                header = read(cls.pos_file[i], headlonly=True)
+                header = read(self.pos_file[i], headlonly=True)
                 #check times as a filter
                 st0 = header[0].stats.starttime
-                st1 = cls.start
+                st1 = self.start
                 et0 = header[0].stats.endtime
-                et1 = cls.end
+                et1 = self.end
                 if st1>=st0 and et1>et0 and (st1-st0) <= 86400:
-                    result = cls.pos_file[i]
+                    result = self.pos_file[i]
                 elif st1<=st0 and et1>=et0:
-                    result = cls.pos_file[i]
+                    result = self.pos_file[i]
                 elif st1<=st0 and et1<=et0 and (et0-et1) <= 86400:
-                    result = cls.pos_file[i]
+                    result = self.pos_file[i]
                 elif st1 >= st0 and et1 <= et0:
-                    result = cls.pos_file[i]
+                    result = self.pos_file[i]
                 else:
                     pass
             except:
@@ -306,16 +315,58 @@ class MseedUtil:
 
         else:
 
-            if cls.robust and cls.is_valid_mseed(cls.pos_file[i]):
+            if self.robust and self.is_valid_mseed(self.pos_file[i]):
                 
-                result = cls.pos_file[i]
+                result = self.pos_file[i]
 
-            elif not cls.robust:
+            elif not self.robust:
 
-                result = cls.pos_file[i]
+                result = self.pos_file[i]
 
 
         return result
+
+########### New Project
+    #
+    # @classmethod
+    # def search_files(cls, rooth_path: str):
+    #
+    #     cls.search_file = []
+    #     for top_dir, sub_dir, files in os.walk(rooth_path):
+    #         for file in files:
+    #             cls.search_file.append(os.path.join(top_dir, file))
+    #
+    #     with Pool(processes=os.cpu_count()) as pool:
+    #         returned_list =  pool.map(cls.create_dict, range(len(cls.search_file)))
+    #
+    #     project = dict(filter(None, returned_list))
+    #
+    #     return project
+    #
+    # @classmethod
+    # def create_dict(cls, i):
+    #     key = None
+    #     data_map = None
+    #
+    #     header = read(cls.search_file[i], headeronly=True)
+    #     net = header[0].stats.network
+    #     sta = header[0].stats.station
+    #     chn = header[0].stats.channel
+    #     key = net + "." + sta + "." + chn
+    #     data_map = [cls.search_file[i], header[0].stats]
+    #
+    #
+    #     return (key, data_map)
+    #
+    #
+    # def estimate_size(self, rooth_path):
+    #     # nbytes = sum(d.stat().st_size for d in os.scandir(rooth_path) if d.is_file())
+    #     nbytes = sum(file.stat().st_size for file in Path(rooth_path).rglob('*')) * 1E-6
+    #     print(nbytes)
+
+########## New Project
+
+
 
     def get_tree_hd5_files(self, root_dir: str, robust=True, **kwargs):
 
@@ -333,6 +384,7 @@ class MseedUtil:
                     pass
 
         return pos_file
+
 
     # @classmethod
     # def get_tree_hd5_files(cls, root_dir: str, robust=True, **kwargs):
@@ -611,3 +663,4 @@ class MseedUtil:
                                   row["Err"], row["ErrMag"], row["Coda_duration"], row["Amplitude"], row["Period"]])
                     pick_times[id] = items
             return pick_times
+
