@@ -60,7 +60,7 @@ class PhaseInfoModel(db.Model, BaseModel):
     __tablename__ = 'phase_info'
 
     id = Column(String(16), primary_key=True)
-    event_info_id = Column(String(16), ForeignKey("event_locations.id"), nullable=False, unique=True)
+    event_info_id = Column(String(16), ForeignKey("event_locations.id"), nullable=False, primary_key=True)
     station_code = Column(String(5), nullable=False)
     channel = Column(String(5), nullable=False)
     phase = Column(String(1), nullable=False)
@@ -87,7 +87,7 @@ class EventArrayModel(db.Model, BaseModel):
 
     # The table columns.
     event_info_id = Column(String(16), ForeignKey("event_locations.id"), primary_key=True)
-    array_analysis_id = Column(String(16), ForeignKey("array_analysis.id"), primary_key=True, unique=True)
+    array_analysis_id = Column(String(16), ForeignKey("array_analysis.id"), primary_key=True)
 
     def __repr__(self):
         return "EventArrayModel(event_info_id={}, array_analysis_id={})".format(self.event_info_id,

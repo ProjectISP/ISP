@@ -174,7 +174,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # Project Ingo
 
         self.project_dialog = Project()
-        #self.project_dialog.project
 
         # Earth Model Viewer
 
@@ -277,6 +276,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.setEnabled(False)
         self.project_dialog.exec()
         self.setEnabled(True)
+        # now we can access to #self.project_dialog.project
+
 
     def open_earth_model_viewer(self):
         self.earthmodel.show()
@@ -576,8 +577,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
 
-        if not self.trimCB.isChecked():
-           md.show()
+        md.show()
 
 
     # def onChange_dataless_path(self, value):

@@ -2,7 +2,7 @@ import os
 import pickle
 from concurrent.futures.thread import ThreadPoolExecutor
 
-from isp.Gui import pw
+from isp.Gui import pw, pqg
 from isp.Gui.Frames import MessageDialog
 from isp.Gui.Frames.uis_frames import UiProject
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
@@ -20,6 +20,12 @@ class Project(pw.QDialog, UiProject):
         if parent is not None:
             self.setWindowTitle(parent.windowTitle())
             self.setWindowIcon(parent.windowIcon())
+
+        self.progressbar = pw.QProgressDialog(self)
+        self.progressbar.setWindowTitle('Earthquake Location')
+        self.progressbar.setLabelText(" Computing Auto-Picking ")
+        self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
+        self.progressbar.close()
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.pathFilesBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
@@ -49,35 +55,29 @@ class Project(pw.QDialog, UiProject):
         if dir_path:
             bind.value = dir_path
 
-    def openProject(self):
-        print(self.root_path_bind.value)
-        self.project = MseedUtil.search_files(self.root_path_bind.value)
-        print(self.project)
 
-    # def openProject(self):
-    #
-    #     md = MessageDialog(self)
-    #     md.hide()
-    #     try:
-    #         self.progressbar.reset()
-    #         self.progressbar.setLabelText(" Reading Files ")
-    #         self.progressbar.setRange(0, 0)
-    #         with ThreadPoolExecutor(1) as executor:
-    #             f = executor.submit(lambda: MseedUtil.search_files(self.root_path_bind.value))
-    #             self.progressbar.exec()
-    #             self.project = f.result()
-    #             f.cancel()
-    #
-    #     # self.files_path = self.get_files(self.root_path_bind.value)
-    #
-    #         md.set_info_message("Created Project")
-    #
-    #     except:
-    #
-    #         md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
-    #
-    #
-    #     md.show()
+    def openProject(self):
+
+        md = MessageDialog(self)
+        md.hide()
+        try:
+            ms = MseedUtil()
+            self.progressbar.reset()
+            self.progressbar.setLabelText("Bulding Project")
+            self.progressbar.setRange(0, 0)
+            with ThreadPoolExecutor(1) as executor:
+                f = executor.submit(lambda: ms.search_files(self.root_path_bind.value))
+                self.progressbar.exec()
+                self.project = f.result()
+                f.cancel()
+
+            md.set_info_message("Created Project")
+            md.hide()
+        except:
+
+            md.set_error_message("Something went wrong. Please check that your data files are correct mseed files")
+            md.hide()
+        md.show()
 
 
 

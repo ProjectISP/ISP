@@ -326,45 +326,61 @@ class MseedUtil:
 
         return result
 
-########### New Project
-    #
-    # @classmethod
-    # def search_files(cls, rooth_path: str):
-    #
-    #     cls.search_file = []
-    #     for top_dir, sub_dir, files in os.walk(rooth_path):
-    #         for file in files:
-    #             cls.search_file.append(os.path.join(top_dir, file))
-    #
-    #     with Pool(processes=os.cpu_count()) as pool:
-    #         returned_list =  pool.map(cls.create_dict, range(len(cls.search_file)))
-    #
-    #     project = dict(filter(None, returned_list))
-    #
-    #     return project
-    #
-    # @classmethod
-    # def create_dict(cls, i):
-    #     key = None
-    #     data_map = None
-    #
-    #     header = read(cls.search_file[i], headeronly=True)
-    #     net = header[0].stats.network
-    #     sta = header[0].stats.station
-    #     chn = header[0].stats.channel
-    #     key = net + "." + sta + "." + chn
-    #     data_map = [cls.search_file[i], header[0].stats]
-    #
-    #
-    #     return (key, data_map)
-    #
-    #
-    # def estimate_size(self, rooth_path):
-    #     # nbytes = sum(d.stat().st_size for d in os.scandir(rooth_path) if d.is_file())
-    #     nbytes = sum(file.stat().st_size for file in Path(rooth_path).rglob('*')) * 1E-6
-    #     print(nbytes)
+    ####### New Project ###################
 
-########## New Project
+    def search_files(self, rooth_path: str):
+
+        self.search_file = []
+        for top_dir, sub_dir, files in os.walk(rooth_path):
+            for file in files:
+                self.search_file.append(os.path.join(top_dir, file))
+
+        with Pool(processes=os.cpu_count()) as pool:
+            returned_list =  pool.map(self.create_dict, range(len(self.search_file)))
+
+        project = self.convert2dict(returned_list)
+        #project = dict(filter(None, returned_list))
+
+        return project
+
+    def create_dict(self, i):
+        key = None
+        data_map = None
+
+        try:
+            header = read(self.search_file[i], headeronly=True)
+            net = header[0].stats.network
+            sta = header[0].stats.station
+            chn = header[0].stats.channel
+            key = net + "." + sta + "." + chn
+            print(key)
+            data_map = [self.search_file[i], header[0].stats]
+        except:
+            pass
+
+
+        return [key, data_map]
+
+
+    def estimate_size(self, rooth_path):
+
+        nbytes = sum(file.stat().st_size for file in Path(rooth_path).rglob('*')) * 1E-6
+        
+        return nbytes
+
+    def convert2dict(self, project):
+        project_converted = {}
+        for name in project:
+            if name[0] in project_converted.keys() and name[0] is not None:
+                project_converted[name[0]].append([name[1][0],name[1][1]])
+
+            elif name[0] not in project_converted.keys() and name[0] is not None:
+                project_converted[name[0]] = [name[1][0],name[1][1]]
+
+        return project_converted
+
+
+    ###### New Project ###########
 
 
 
