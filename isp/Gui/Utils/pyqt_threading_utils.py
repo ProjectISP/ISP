@@ -1,4 +1,5 @@
 import functools
+import random
 from multiprocessing.dummy import Pool as ThreadPool
 
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread, pyqtBoundSignal
@@ -122,12 +123,17 @@ def thread(on_finished: str = None):
         def wrapper_thread(*args, **kwargs):
             self = args[0]  # expected to be an object
             on_finished_func = self.__getattribute__(on_finished)
-            worker_name = f"worker_{func.__name__}"
+            worker_name = f"worker_{func.__name__}_{random.getrandbits(128)}"
             self.__setattr__(worker_name, Worker())  # sets a new worker for this method
             worker = self.__getattribute__(worker_name)
 
             worker.job(lambda: func(*args, **kwargs))
-            worker.job_finished(on_finished_func)
+            
+            if on_finished: # user defined method
+                worker.job_finished(on_finished_func)
+            
+            # remove worker after finished
+            worker.finished.connect(lambda: self.__delattr__(worker_name)) 
             worker.start()
 
         return wrapper_thread
