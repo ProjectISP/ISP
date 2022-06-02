@@ -107,27 +107,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.mpl_connect('axes_enter_event', self.enter_axes)
         self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
         self.event_info.register_plot_arrivals_click(self.on_click_plot_arrivals)
-
         self.earthquake_3c_frame = Earthquake3CFrame(self.parentWidget3C)
         self.earthquake_location_frame = EarthquakeLocationFrame(self.parentWidgetLocation)
-
-        self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
-        #self.dataless_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_dataless_path)
-
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
 
         # Bind buttons
-        self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
-        self.readFilesBtn.clicked.connect(lambda: self.get_now_files())
-        #self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.dataless_path_bind))
+
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_file(self.metadata_path_bind))
+        self.selectDirBtn.clicked.connect(lambda: self.load_project())
         self.updateBtn.clicked.connect(self.plot_seismogram)
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
         self.rotateBtn.clicked.connect(self.rotate)
         self.mapBtn.clicked.connect(self.plot_map_stations)
         self.crossBtn.clicked.connect(self.cross)
         self.macroBtn.clicked.connect(self.open_parameters_settings)
-        #self.__metadata_manager = MetadataManager(self.dataless_path_bind.value)
         self.__metadata_manager = MetadataManager(self.metadata_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.actionOpen_Earth_Model_Viewer.triggered.connect(lambda: self.open_earth_model_viewer())
@@ -160,7 +153,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionFrom_Phase_Pick.triggered.connect(lambda: self.alaign_picks())
         self.actionUsing_MCCC.triggered.connect(lambda: self.alaign_mccc())
         self.actionPicks_from_file.triggered.connect(lambda: self.import_pick_from_file())
-        self.actionNew_Project.triggered.connect(lambda: self.open_project())
+        self.actionNew_Project.triggered.connect(lambda: self.new_project())
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
 
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
@@ -273,10 +266,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def open_uncertainity_settings(self):
         self.uncertainities.show()
 
-    def open_project(self):
+    def new_project(self):
         self.setEnabled(False)
         self.project_dialog.exec()
         self.setEnabled(True)
+        self.project = self.project_dialog.project
+        self.get_now_files()
+        # now we can access to #self.project_dialog.project
 
 
     def load_project(self):
@@ -298,7 +294,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 md.set_error_message("Project couldn't be loaded ")
         else:
             md.set_error_message("Project couldn't be loaded ")
-
+        self.get_now_files()
         # now we can access to #self.project_dialog.project
 
 
@@ -545,68 +541,24 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.pagination.set_total_items(self.total_items)
 
 
-    def get_files(self, dir_path):
-
-        if self.scan.isChecked():
-
-            if self.trimCB.isChecked():
-                start = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
-                end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-                diff = end-start
-                if diff > 0:
-                    #files_path = MseedUtil.get_tree_mseed_files(dir_path, starttime = start, endtime = end, robust = self.robustCB.isChecked())
-                    ms = MseedUtil(starttime = start, endtime = end, robust = self.robustCB.isChecked())
-                    files_path = ms.get_tree_mseed_files(dir_path)
-            else:
-                #files_path = MseedUtil.get_tree_mseed_files(dir_path, robust = self.robustCB.isChecked())
-                ms = MseedUtil(robust=self.robustCB.isChecked())
-                files_path =  ms.get_tree_mseed_files(dir_path)
-
-        else:
-
-            files_path = MseedUtil.get_mseed_files(dir_path)
-
-        if self.selectCB.isChecked():
-
-            selection = [self.netForm.text(), self.stationForm.text(), self.channelForm.text()]
-
-            files_path = MseedUtil.get_selected_files(files_path, selection)
-
-        self.set_pagination_files(files_path)
-        #print(files_path)
-        pyc.QMetaObject.invokeMethod(self.progressbar, 'accept', qt.AutoConnection)
-        return files_path
-
     def get_now_files(self):
 
-        md = MessageDialog(self)
-        md.hide()
-        try:
+        selection = [self.netForm.text(), self.stationForm.text(), self.channelForm.text()]
+        _, self.files_path = MseedUtil.filter_project_keys(self.project, net=selection[0], station=selection[1], channel=selection[2])
 
-            self.progressbar.reset()
-            self.progressbar.setLabelText(" Reading Files ")
-            self.progressbar.setRange(0,0)
-            with ThreadPoolExecutor(1) as executor:
-                f = executor.submit(lambda : self.get_files(self.root_path_bind.value))
-                self.progressbar.exec()
-                self.files_path = f.result()
-                f.cancel()
-
-            md.set_info_message("Readed data files Successfully")
-
-        except:
-
-            md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
-
-        md.show()
+        if self.trimCB.isChecked():
+            start = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+            end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+            diff = end-start
+            if diff > 0:
+                self.files_path = MseedUtil.filter_time(list_files=self.files_path, starttime=start, endtime=end)
+        else:
+            self.files_path = MseedUtil.filter_time(list_files=self.files_path)
 
 
-    # def onChange_dataless_path(self, value):
-    #     try:
-    #         self.__dataless_manager = DatalessManager(value)
-    #         self.earthquake_location_frame.set_dataless_dir(value)
-    #     except:
-    #         pass
+        self.set_pagination_files(self.files_path)
+
+
 
 
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
@@ -697,29 +649,21 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def plot_seismogram(self):
-        #print("initial",self.zoom_diff)
+
         self.decimator = [None, False]
         if self.st:
             del self.st
 
         self.canvas.clear()
 
-        ##
         self.nums_clicks = 0
         all_traces = []
-        if self.trimCB.isChecked() and self.check_start_time != None and self.check_end_time != None:
-            if self.check_start_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_1) and \
-                    self.check_end_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_2):
-                self.get_now_files()
 
-        #files_path = self.get_files(self.root_path_bind.value)
-        #self.files_path = self.get_files(self.root_path_bind.value)
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":
                 self.files_path.sort(key=self.sort_by_distance_advance)
                 self.message_dataless_not_found()
 
-        #
             elif self.comboBox_sort.currentText() == "Back Azimuth":
                 self.files_path.sort(key=self.sort_by_baz_advance)
                 self.message_dataless_not_found()
@@ -783,14 +727,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                 t = tr.times("matplotlib")
                 s = tr.data
-                #
-                # def plot(self, finished=False):
-                #     send = self.plot_pipe.send
-                #     if finished:
-                #         send(None)
-                #     else:
-                #         data = np.random.random(2)
-                #         send(data)
 
                 self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
                 if  self.pagination.items_per_page>=16:
@@ -1483,14 +1419,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def stationsInfo(self):
 
-        files_path = self.get_files(self.root_path_bind.value)
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":
-                files_path.sort(key=self.sort_by_distance_advance)
+                self.files_path.sort(key=self.sort_by_distance_advance)
                 self.message_dataless_not_found()
 
             elif self.comboBox_sort.currentText() == "Back Azimuth":
-                files_path.sort(key=self.sort_by_baz_advance)
+                self.files_path.sort(key=self.sort_by_baz_advance)
                 self.message_dataless_not_found()
 
         files_at_page = self.get_files_at_page()

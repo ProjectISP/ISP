@@ -404,21 +404,30 @@ class MseedUtil:
 
         return res
 
-    def filter_project_keys(self, project, **kwargs):
+    @classmethod
+    def filter_project_keys(cls, project, **kwargs):
 
         # filter dict by python wilcards remind
 
         # * --> .+
         # ? --> .
 
-        net = kwargs.pop('net', '.')
-        station = kwargs.pop('station', '.')
-        channel = kwargs.pop('channel', '.')
+        net = kwargs.pop('net', '.+')
+        station = kwargs.pop('station', '.+')
+        channel = kwargs.pop('channel', '.+')
+        if net == '':
+            net = '.+'
+        if station == '':
+            station = '.+'
+        if channel == '':
+            channel = '.+'
+
+
         data = []
 
         # filter for regular expresions
         event = [net, station, channel]
-        project = self.search(project, event)
+        project = cls.search(project, event)
 
         for key, value in project.items():
             for j in value:
@@ -426,7 +435,8 @@ class MseedUtil:
 
         return project, data
 
-    def filter_time(self, list_files, **kwargs):
+    @classmethod
+    def filter_time(cls, list_files, **kwargs):
 
         #filter the list output of filter_project_keys by trimed times
 
@@ -434,22 +444,28 @@ class MseedUtil:
         st1 = kwargs.pop('starttime', None)
         et1 = kwargs.pop('endtime', None)
 
-        for file in list_files:
-            pos_file = file[0]
-            st0 = file[1]
-            et0 = file[2]
-            # check times as a filter
+        if st1 is None and et1 is None:
+            for file in list_files:
+                result.append(file[0])
 
-            if st1 >= st0 and et1 > et0 and (st1 - st0) <= 86400:
-                result.append(pos_file)
-            elif st1 <= st0 and et1 >= et0:
-                result.append(pos_file)
-            elif st1 <= st0 and et1 <= et0 and (et0 - et1) <= 86400:
-                result.append(pos_file)
-            elif st1 >= st0 and et1 <= et0:
-                result.append(pos_file)
-            else:
-                pass
+        else:
+
+            for file in list_files:
+                pos_file = file[0]
+                st0 = file[1]
+                et0 = file[2]
+                # check times as a filter
+
+                if st1 >= st0 and et1 > et0 and (st1 - st0) <= 86400:
+                    result.append(pos_file)
+                elif st1 <= st0 and et1 >= et0:
+                    result.append(pos_file)
+                elif st1 <= st0 and et1 <= et0 and (et0 - et1) <= 86400:
+                    result.append(pos_file)
+                elif st1 >= st0 and et1 <= et0:
+                    result.append(pos_file)
+                else:
+                    pass
 
         return result
 
