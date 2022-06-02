@@ -467,6 +467,8 @@ class MseedUtil:
                 else:
                     pass
 
+        result.sort()
+
         return result
 
 
