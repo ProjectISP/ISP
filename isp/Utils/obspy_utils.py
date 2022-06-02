@@ -334,7 +334,7 @@ class MseedUtil:
         project = {}
         try:
             project = pickle.load(open(file, "rb"))
-            print(project)
+
         except:
             pass
         return project
@@ -365,7 +365,6 @@ class MseedUtil:
             sta = header[0].stats.station
             chn = header[0].stats.channel
             key = net + "." + sta + "." + chn
-            print(key)
             data_map = [self.search_file[i], header[0].stats]
         except:
             pass

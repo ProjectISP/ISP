@@ -658,6 +658,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.nums_clicks = 0
         all_traces = []
+        if self.trimCB.isChecked() and self.check_start_time != None and self.check_end_time != None:
+            if self.check_start_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_1) and \
+                    self.check_end_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_2):
+                self.get_now_files()
 
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":

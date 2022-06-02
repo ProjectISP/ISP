@@ -262,7 +262,7 @@
                      <number>-1</number>
                     </property>
                     <property name="text">
-                     <string>Load Project</string>
+                     <string>Load Project and Apply Seach Filters</string>
                     </property>
                    </widget>
                   </item>
