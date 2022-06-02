@@ -16,27 +16,17 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout_2">
-     <item row="0" column="2">
-      <widget class="QLineEdit" name="rootPathForm"/>
-     </item>
-     <item row="1" column="2">
-      <widget class="QCheckBox" name="saveTraceBtn">
-       <property name="text">
-        <string>Save traces objects</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
+     <item row="2" column="1">
       <widget class="QPushButton" name="saveBtn">
        <property name="text">
-        <string>Save</string>
+        <string>Save Project</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QPushButton" name="openProjectBtn">
        <property name="text">
-        <string>Create</string>
+        <string>Create Project</string>
        </property>
       </widget>
      </item>
@@ -46,6 +36,19 @@
         <string>Project Path Files</string>
        </property>
       </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Project Name</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="3">
+      <widget class="QLineEdit" name="nameForm"/>
+     </item>
+     <item row="0" column="2" colspan="2">
+      <widget class="QLineEdit" name="rootPathForm"/>
      </item>
     </layout>
    </item>

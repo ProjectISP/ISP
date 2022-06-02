@@ -161,6 +161,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionUsing_MCCC.triggered.connect(lambda: self.alaign_mccc())
         self.actionPicks_from_file.triggered.connect(lambda: self.import_pick_from_file())
         self.actionNew_Project.triggered.connect(lambda: self.open_project())
+        self.actionLoad_Project.triggered.connect(lambda: self.load_project())
 
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
@@ -276,6 +277,28 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.setEnabled(False)
         self.project_dialog.exec()
         self.setEnabled(True)
+
+
+    def load_project(self):
+
+        if "darwin" == platform:
+            selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
+        else:
+            selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR,
+                                                      pw.QFileDialog.DontUseNativeDialog)
+
+        md = MessageDialog(self)
+
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            try:
+                self.project = MseedUtil.load_project(file = selected[0])
+                project_name = os.path.basename(selected[0])
+                md.set_info_message("Project {} loaded  ".format(project_name))
+            except:
+                md.set_error_message("Project couldn't be loaded ")
+        else:
+            md.set_error_message("Project couldn't be loaded ")
+
         # now we can access to #self.project_dialog.project
 
 
@@ -568,8 +591,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.progressbar.exec()
                 self.files_path = f.result()
                 f.cancel()
-
-            #self.files_path = self.get_files(self.root_path_bind.value)
 
             md.set_info_message("Readed data files Successfully")
 
