@@ -136,7 +136,7 @@ class EventLocationModel(db.Model, BaseModel):
 
     @classmethod
     def create_from_origin(cls, origin: Origin):
-        if cls.find_by(latitude=origin.latitude, longitude=origin.longitude,depth=  origin.depth,
+        if cls.find_by(latitude=origin.latitude, longitude=origin.longitude, depth=origin.depth,
                        origin_time=origin.time.datetime):
             raise AttributeError("Object already exist in the database.")
 

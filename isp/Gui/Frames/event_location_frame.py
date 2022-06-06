@@ -3,7 +3,7 @@ from isp.Gui import pw, pyc, qt, pqg
 from isp.Gui.Frames import BaseFrame, MessageDialog
 from isp.Gui.Frames.uis_frames import UiEventLocationFrame
 from isp.Gui.Models.sql_alchemy_model import SQLAlchemyModel
-from isp.db.models import EventLocationModel, FirstPolarityModel, MomentTensorModel
+from isp.db.models import EventLocationModel, FirstPolarityModel, MomentTensorModel, PhaseInfoModel
 from isp.db import generate_id
 # from sqlalchemy.sql.sqltypes import DateTime
 from datetime import datetime, timedelta
@@ -159,71 +159,6 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         self.btnShowAll.clicked.connect(self._showAll)
         self.PlotMapBtn.clicked.connect(self.__plot_map)
 
-    # def _plot_row(self, index):
-    #     # try:
-    #     #     self.text.pop(0).remove()
-    #     # except:
-    #     #     pass
-    #     lat_index = self.model.index(index.row(), 3)
-    #     lon_index = self.model.index(index.row(), 4)
-    #     depth_index = self.model.index(index.row(), 5)
-    #     lat = self.model.data(lat_index)
-    #     lon = self.model.data(lon_index)
-    #     depth = self.model.data(depth_index)
-    #     print(lat,lon,depth)
-    #     self.text=self.map_widget.ax.annotate('Hola', xy=(-12, 35), xycoords='data',
-    #                                 xytext=(-12, 36), textcoords='data', arrowprops=dict(arrowstyle="->",
-    #                                                                                      connectionstyle="arc3,rad=.2"))
-    #
-    #     self.map_widget.fig.canvas.draw()
-
-    def _plot_foc_mec(self, index):
-
-        # Plot Focal Mechanism
-        model = self.tableView.model()
-        check = False
-        if self.methodCB.currentText() == "First Polarity":
-
-            strike = model.data(model.index(index.row(), 24))
-            dip = model.data(model.index(index.row(), 25))
-            rake = model.data(model.index(index.row(), 26))
-            if None not in [strike, dip, rake]:
-                self.plot_foc_mec(method=self.methodCB.currentText(), strike=strike, dip=dip, rake=rake)
-                check = True
-
-        if self.methodCB.currentText() == "MTI":
-            mrr = model.data(model.index(index.row(), 43))
-            mtt = model.data(model.index(index.row(), 44))
-            mpp = model.data(model.index(index.row(), 45))
-            mrt = model.data(model.index(index.row(), 46))
-            mrp = model.data(model.index(index.row(), 47))
-            mtp = model.data(model.index(index.row(), 48))
-
-            if None not in [mrr, mtt, mpp, mrt, mrp, mtp]:
-                self.plot_foc_mec(method=self.methodCB.currentText(), mrr=mrr, mtt=mtt, mpp=mpp, mrt=mrt, mrp=mrp,
-                                  mtp=mtp)
-                check = True
-
-        if check:
-            # plot in the map
-            lat = model.data(model.index(index.row(), 3))
-            lon = model.data(model.index(index.row(), 4))
-            print(lat, lon)
-            file = os.path.join(ROOT_DIR, 'db/map_class/foc_mec.png')
-
-            img = Image.open(file)
-            imagebox = OffsetImage(img, zoom=0.08)
-            imagebox.image.axes = self.map_widget.ax
-            ab = AnnotationBbox(imagebox, [lon + 0.3, lat + 0.3], frameon=False)
-            self.map_widget.ax.add_artist(ab)
-
-            self.map_widget.ax.annotate('', xy=(lon, lat), xycoords='data',
-                                        xytext=(lon + 0.3, lat + 0.3), textcoords='data',
-                                        arrowprops=dict(arrowstyle="->",
-                                                        connectionstyle="arc3,rad=.2"))
-
-            self.map_widget.fig.canvas.draw()
-
     def refreshLimits(self):
         entities = self.model.getEntities()
         events = []
@@ -329,6 +264,9 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         except Exception as e:
             pw.QMessageBox.warning(self, self.windowTitle(), f'An error ocurred reading hyp file: {e}')
             return
+
+        # TODO INCLUDES PICKING INFO
+        # TODO INCLUDES JSON WITH WAVEFORMS
 
         # Update magnitude data
         mag_file = os.path.join(LOCATION_OUTPUT_PATH, 'magnitudes_output.mag')
@@ -539,3 +477,50 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
         plt.savefig(outfile, bbox_inches='tight', pad_inches=0, transparent=True, edgecolor='none')
         plt.clf()
         plt.close()
+
+    def _plot_foc_mec(self, index):
+
+        # Plot Focal Mechanism
+        model = self.tableView.model()
+        check = False
+        if self.methodCB.currentText() == "First Polarity":
+
+            strike = model.data(model.index(index.row(), 24))
+            dip = model.data(model.index(index.row(), 25))
+            rake = model.data(model.index(index.row(), 26))
+            if None not in [strike, dip, rake]:
+                self.plot_foc_mec(method=self.methodCB.currentText(), strike=strike, dip=dip, rake=rake)
+                check = True
+
+        if self.methodCB.currentText() == "MTI":
+            mrr = model.data(model.index(index.row(), 43))
+            mtt = model.data(model.index(index.row(), 44))
+            mpp = model.data(model.index(index.row(), 45))
+            mrt = model.data(model.index(index.row(), 46))
+            mrp = model.data(model.index(index.row(), 47))
+            mtp = model.data(model.index(index.row(), 48))
+
+            if None not in [mrr, mtt, mpp, mrt, mrp, mtp]:
+                self.plot_foc_mec(method=self.methodCB.currentText(), mrr=mrr, mtt=mtt, mpp=mpp, mrt=mrt, mrp=mrp,
+                                  mtp=mtp)
+                check = True
+
+        if check:
+            # plot in the map
+            lat = model.data(model.index(index.row(), 3))
+            lon = model.data(model.index(index.row(), 4))
+            print(lat, lon)
+            file = os.path.join(ROOT_DIR, 'db/map_class/foc_mec.png')
+
+            img = Image.open(file)
+            imagebox = OffsetImage(img, zoom=0.08)
+            imagebox.image.axes = self.map_widget.ax
+            ab = AnnotationBbox(imagebox, [lon + 0.3, lat + 0.3], frameon=False)
+            self.map_widget.ax.add_artist(ab)
+
+            self.map_widget.ax.annotate('', xy=(lon, lat), xycoords='data',
+                                        xytext=(lon + 0.3, lat + 0.3), textcoords='data',
+                                        arrowprops=dict(arrowstyle="->",
+                                                        connectionstyle="arc3,rad=.2"))
+
+            self.map_widget.fig.canvas.draw()
