@@ -23,7 +23,7 @@ from isp.Gui.Frames.uncertainity import UncertainityInfo
 from isp.Gui.Frames.project_frame import Project
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.settings_dialog import SettingsDialog
-from isp.Gui.Utils import map_polarity_from_pressed_key
+from isp.Gui.Utils import map_polarity_from_pressed_key, ParallelWorkers
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime, parallel_progress_run
 from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
@@ -44,6 +44,7 @@ from sys import platform
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     value_entropy_init = pyc.pyqtSignal(int)
+    plot_progress = pyc.pyqtSignal()
 
     def __init__(self):
         super(EarthquakeAnalysisFrame, self).__init__()
@@ -647,8 +648,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
              print("No Metadata found for {} file.".format(file))
              return 0.
 
-
     def plot_seismogram(self):
+        self.workers = ParallelWorkers(os.cpu_count())
+        # Here we can disabled thing or make additional staff
+        self.workers.job(self.__plot_seismogram)
 
         self.decimator = [None, False]
         if self.st:
@@ -657,7 +660,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.clear()
 
         self.nums_clicks = 0
-        all_traces = []
+
         if self.trimCB.isChecked() and self.check_start_time != None and self.check_end_time != None:
             if self.check_start_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_1) and \
                     self.check_end_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_2):
@@ -673,142 +676,178 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.message_dataless_not_found()
 
         self.set_pagination_files(self.files_path)
-        files_at_page = self.get_files_at_page()
+        self.files_at_page = self.get_files_at_page()
+
         ##
-        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
-        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-        self.check_start_time = start_time
-        self.check_end_time = start_time
+        self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        self.check_start_time = self.start_time
+        self.check_end_time = self.end_time
 
-        diff = end_time - start_time
-        if len(self.canvas.axes) != len(files_at_page) or self.autorefreshCB.isChecked():
-            self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
-        last_index = 0
-        min_starttime = []
-        max_endtime = []
-        parameters = self.parameters.getParameters()
+        self.diff = self.end_time - self.start_time
+        if len(self.canvas.axes) != len(self.files_at_page) or self.autorefreshCB.isChecked():
+            self.canvas.set_new_subplot(nrows=len(self.files_at_page), ncols=1)
+        self.last_index = 0
+        self.min_starttime = []
+        self.max_endtime = []
 
-        for index, file_path in enumerate(files_at_page):
+        tuple_files = [(i, file) for i, file in enumerate(self.files_at_page)]
 
-            sd = SeismogramDataAdvanced(file_path)
+        self.all_traces = [None for i in range(len(self.files_at_page))]
 
-            if self.trimCB.isChecked() and diff >= 0 and self.fastCB.isChecked():
+        self.parameters_list = self.parameters.getParameters()
+        self.min_starttime = [ None for i in range(len(self.files_at_page))]
+        self.max_endtime = [None for i in range(len(self.files_at_page))]
 
-                self.decimator = sd.resample_check(start_time=start_time, end_time=end_time)
+        prog_dialog = pw.QProgressDialog()
+        prog_dialog.setLabelText("Proocess and Plot")
+        prog_dialog.setValue(0)
+        prog_dialog.setRange(0, len(self.files_at_page))
 
-            elif self.trimCB.isChecked() == False and self.fastCB.isChecked() == True:
+        def prog_callback():
 
-                self.decimator = sd.resample_check()
+            value = prog_dialog.value() + 1
+            pyc.QMetaObject.invokeMethod(prog_dialog, "setValue", qt.AutoConnection,
+                                         pyc.Q_ARG(int, value))
 
-            if self.decimator[1]:
-                parameters.insert(0, ['resample', self.decimator[0], True])
+        self.plot_progress.connect(prog_callback)
 
-            if self.trimCB.isChecked() and diff >= 0:
-
-                tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                              filter_error_callback=self.filter_error_message,
-                                              start_time=start_time, end_time=end_time, trace_number=index)
-            else:
-
-                tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                                   filter_error_callback=self.filter_error_message,trace_number=index)
-            if len(tr) > 0:
-
-                if self.aligned_checked:
-                    try:
-                        pick_reference = self.pick_times[tr.stats.station+"."+tr.stats.channel]
-                        shift_time = pick_reference[1] - tr.stats.starttime
-                        tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00") - shift_time
-                    except:
-                        tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+        self.workers.start(tuple_files)
 
 
-                if self.actionFrom_StartT.isChecked():
-                    tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+        #self.workers.finished.connect(prog_dialog.accept)
+        prog_dialog.exec()
 
-                if self.shift_times is not None:
-                    tr.stats.starttime = tr.stats.starttime + self.shift_times[index][0]
-
-                t = tr.times("matplotlib")
-                s = tr.data
-
-                self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
-                if  self.pagination.items_per_page>=16:
-                    ax = self.canvas.get_axe(index)
-                    ax.spines["top"].set_visible(False)
-                    ax.spines["bottom"].set_visible(False)
-                    ax.tick_params(top=False)
-                    ax.tick_params(labeltop=False)
-                    if index!=(self.pagination.items_per_page-1):
-                       ax.tick_params(bottom=False)
-
-
-                try:
-                    self.redraw_pickers(file_path, index)
-                    #redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
-                    self.redraw_chop(tr, s, index)
-                    self.redraw_event_times(index)
-                except:
-                    print("It couldn't plot chop data")
-
-                last_index = index
-
-                st_stats = ObspyUtil.get_stats(file_path)
-
-                if self.decimator[1]:
-                    warning = "Decimated to " + str(self.decimator[0])+"  Hz"
-                    self.canvas.set_warning_label(index, warning)
-
-                if st_stats and self.sortCB.isChecked() == False:
-                    info = "{}.{}.{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
-                    self.canvas.set_plot_label(index, info)
-
-                elif st_stats and self.sortCB.isChecked() and self.comboBox_sort.currentText() == "Distance":
-
-                    dist = self.sort_by_distance_advance(file_path)
-                    dist = "{:.1f}".format(dist/1000.0)
-                    info = "{}.{}.{} Distance {} km".format(st_stats.Network, st_stats.Station, st_stats.Channel,
-                                                         str(dist))
-                    self.canvas.set_plot_label(index, info)
-
-                elif st_stats and self.sortCB.isChecked() and self.comboBox_sort.currentText() == "Back Azimuth":
-
-                    back = self.sort_by_baz_advance(file_path)
-                    back = "{:.1f}".format(back)
-                    info = "{}.{}.{} Back Azimuth {}".format(st_stats.Network, st_stats.Station, st_stats.Channel,
-                                                             str(back))
-                    self.canvas.set_plot_label(index, info)
-
-                try:
-                    min_starttime.append(min(t))
-                    max_endtime.append(max(t))
-                except:
-                    print("Empty traces")
-
-            all_traces.append(tr)
-
-        self.st = Stream(traces=all_traces)
+        self.st = Stream(traces=self.all_traces)
         self.aligned_checked = False
         self.shift_times = None
+
         try:
-            if min_starttime and max_endtime is not None:
-                auto_start = min(min_starttime)
-                auto_end = max(max_endtime)
+            if self.min_starttime and self.max_endtime is not None:
+                auto_start = min(self.min_starttime)
+                auto_end = max(self.max_endtime)
                 self.auto_start = auto_start
                 self.auto_end = auto_end
 
-            ax = self.canvas.get_axe(last_index)
-            #ax.callbacks.connect('xlim_changed', self.on_xlims_change)
+            ax = self.canvas.get_axe(len(self.files_at_page)-1)
+            # ax.callbacks.connect('xlim_changed', self.on_xlims_change)
             if self.trimCB.isChecked():
-                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+
+                ax.set_xlim(self.start_time.matplotlib_date, self.end_time.matplotlib_date)
             else:
-                ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
-            #formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+
+                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            # formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
             formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
-            self.canvas.set_xlabel(last_index, "Date")
+            self.canvas.set_xlabel(len(self.files_at_page)-1, "Date")
         except:
             pass
+
+
+    def __plot_seismogram(self, tuple_files):
+
+        index = tuple_files[0]
+        file_path = tuple_files[1]
+
+        sd = SeismogramDataAdvanced(file_path)
+
+        if self.trimCB.isChecked() and self.diff >= 0 and self.fastCB.isChecked():
+
+            self.decimator = sd.resample_check(start_time=self.start_time, end_time=self.end_time)
+
+        elif self.trimCB.isChecked() == False and self.fastCB.isChecked() == True:
+
+            self.decimator = sd.resample_check()
+
+        if self.decimator[1]:
+            self.parameters_list.insert(0, ['resample', self.decimator[0], True])
+
+        if self.trimCB.isChecked() and self.diff >= 0:
+
+            tr = sd.get_waveform_advanced(self.parameters_list, self.inventory,
+                                          filter_error_callback=self.filter_error_message,
+                                          start_time=self.start_time, end_time=self.end_time, trace_number=index)
+        else:
+
+            tr = sd.get_waveform_advanced(self.parameters_list, self.inventory,
+                                               filter_error_callback=self.filter_error_message, trace_number=index)
+        if len(tr) > 0:
+
+            if self.aligned_checked:
+                try:
+                    pick_reference = self.pick_times[tr.stats.station+"."+tr.stats.channel]
+                    shift_time = pick_reference[1] - tr.stats.starttime
+                    tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00") - shift_time
+                except:
+                    tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+
+
+            if self.actionFrom_StartT.isChecked():
+                tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+
+            if self.shift_times is not None:
+                tr.stats.starttime = tr.stats.starttime + self.shift_times[index][0]
+
+            t = tr.times("matplotlib")
+            s = tr.data
+
+            self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
+            #if  self.pagination.items_per_page>=16:
+            ax = self.canvas.get_axe(index)
+            ax.spines["top"].set_visible(False)
+            ax.spines["bottom"].set_visible(False)
+            ax.tick_params(top=False)
+            ax.tick_params(labeltop=False)
+            if index!=(self.pagination.items_per_page-1):
+               ax.tick_params(bottom=False)
+
+            try:
+                self.redraw_pickers(file_path, index)
+                #redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
+                self.redraw_chop(tr, s, index)
+                self.redraw_event_times(index)
+            except:
+                print("It couldn't plot chop data")
+
+            last_index = index
+
+            st_stats = ObspyUtil.get_stats(file_path)
+
+            if self.decimator[1]:
+                warning = "Decimated to " + str(self.decimator[0])+"  Hz"
+                self.canvas.set_warning_label(index, warning)
+
+            if st_stats and self.sortCB.isChecked() == False:
+                info = "{}.{}.{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
+                self.canvas.set_plot_label(index, info)
+
+            elif st_stats and self.sortCB.isChecked() and self.comboBox_sort.currentText() == "Distance":
+
+                dist = self.sort_by_distance_advance(file_path)
+                dist = "{:.1f}".format(dist/1000.0)
+                info = "{}.{}.{} Distance {} km".format(st_stats.Network, st_stats.Station, st_stats.Channel,
+                                                     str(dist))
+                self.canvas.set_plot_label(index, info)
+
+            elif st_stats and self.sortCB.isChecked() and self.comboBox_sort.currentText() == "Back Azimuth":
+
+                back = self.sort_by_baz_advance(file_path)
+                back = "{:.1f}".format(back)
+                info = "{}.{}.{} Back Azimuth {}".format(st_stats.Network, st_stats.Station, st_stats.Channel,
+                                                         str(back))
+                self.canvas.set_plot_label(index, info)
+
+            try:
+                self.min_starttime[index] = min(t)
+                self.max_endtime[index] = max(t)
+            except:
+                print("Empty traces")
+
+            self.all_traces[index] = tr
+
+            self.plot_progress.emit()
+
 
 
 
