@@ -696,26 +696,27 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.all_traces = [None for i in range(len(self.files_at_page))]
 
         self.parameters_list = self.parameters.getParameters()
-        self.min_starttime = [ None for i in range(len(self.files_at_page))]
+        self.min_starttime = [None for i in range(len(self.files_at_page))]
         self.max_endtime = [None for i in range(len(self.files_at_page))]
 
         prog_dialog = pw.QProgressDialog()
         prog_dialog.setLabelText("Proocess and Plot")
         prog_dialog.setValue(0)
-        prog_dialog.setRange(0, len(self.files_at_page))
+        prog_dialog.setRange(0, 0)
 
         def prog_callback():
-
-            value = prog_dialog.value() + 1
-            pyc.QMetaObject.invokeMethod(prog_dialog, "setValue", qt.AutoConnection,
-                                         pyc.Q_ARG(int, value))
+            pyc.QMetaObject.invokeMethod(prog_dialog, "accept")
 
         self.plot_progress.connect(prog_callback)
-
         self.workers.start(tuple_files)
-
-
+        # prog_dialog.setRange(0, len(self.files_at_page))
+        # def prog_callback():
+        #
+        #     value = prog_dialog.value() + 1
+        #     pyc.QMetaObject.invokeMethod(prog_dialog, "setValue", qt.AutoConnection,
+        #                                  pyc.Q_ARG(int, value))
         #self.workers.finished.connect(prog_dialog.accept)
+
         prog_dialog.exec()
 
         self.st = Stream(traces=self.all_traces)
