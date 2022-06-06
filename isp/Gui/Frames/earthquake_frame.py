@@ -238,6 +238,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('O'), self)
         self.shortcut_open.activated.connect(self.multi_cursor_off)
 
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('R'), self)
+        self.shortcut_open.activated.connect(self.reload_current_project)
+
     # def on_xlims_change(self, event_ax):
     #
     #     self.zoom = event_ax.get_xlim()
@@ -288,6 +291,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
             try:
+                self.current_project_file = selected[0]
                 self.project = MseedUtil.load_project(file = selected[0])
                 project_name = os.path.basename(selected[0])
                 md.set_info_message("Project {} loaded  ".format(project_name))
@@ -298,6 +302,21 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.get_now_files()
         # now we can access to #self.project_dialog.project
 
+    def reload_current_project(self):
+
+        md = MessageDialog(self)
+
+        if isinstance(self.current_project_file, str) and os.path.isfile(self.current_project_file):
+            try:
+                self.current_project_file = self.current_project_file
+                self.project = MseedUtil.load_project(file = self.current_project_file)
+                project_name = os.path.basename(self.current_project_file)
+                md.set_info_message("Project {} loaded  ".format(project_name))
+            except:
+                md.set_error_message("Project couldn't be loaded ")
+        else:
+            md.set_error_message("Project couldn't be loaded ")
+        self.get_now_files()
 
     def open_earth_model_viewer(self):
         self.earthmodel.show()
@@ -683,7 +702,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         self.check_start_time = self.start_time
         self.check_end_time = self.end_time
-
+        ##
         self.diff = self.end_time - self.start_time
         if len(self.canvas.axes) != len(self.files_at_page) or self.autorefreshCB.isChecked():
             self.canvas.set_new_subplot(nrows=len(self.files_at_page), ncols=1)
@@ -700,7 +719,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.max_endtime = [None for i in range(len(self.files_at_page))]
 
         prog_dialog = pw.QProgressDialog()
-        prog_dialog.setLabelText("Proocess and Plot")
+        prog_dialog.setLabelText("Process and Plot")
         prog_dialog.setValue(0)
         prog_dialog.setRange(0, 0)
 
