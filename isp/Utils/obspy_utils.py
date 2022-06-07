@@ -16,16 +16,14 @@ from obspy.io.mseed.core import _is_mseed
 from obspy.io.stationxml.core import _is_stationxml
 #from obspy.io.sac.core import _is_sac
 from obspy.io.xseed.parser import Parser
-
 from isp import PICKING_DIR
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils.nllOrgErrors import computeOriginErrors
-
 import os
 import re
 from pathlib import Path
-
+from obspy.io.nlloc.core import read_nlloc_hyp
 
 @unique
 class Filters(Enum):
@@ -225,11 +223,19 @@ class ObspyUtil:
                 'origin_uncertainty'].min_horizontal_uncertainty
             origin.origin_uncertainty.azimuth_max_horizontal_uncertainty = modified_origin_90['origin_uncertainty'].azimuth_max_horizontal_uncertainty
 
+        return origin
 
+    @staticmethod
+    def reads_pick_info(hyp_file_path: str):
+        """
+        Reads an hyp file and returns the Obspy Origin.
+        :param hyp_file_path: The file path to the .hyp file
+        :return: list Pick info
+        """
+        if os.path.isfile(hyp_file_path):
+            Origin = read_nlloc_hyp(hyp_file_path)
+            return Origin.events[0].picks
 
-            return origin
-        else:
-            raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(hyp_file_path))
 
     @staticmethod
     def has_same_sample_rate(st: Stream, value):

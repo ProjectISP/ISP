@@ -1,9 +1,7 @@
 # just for test implementation
-from obspy import UTCDateTime
 from obspy.core.event import Origin
 from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey
 from sqlalchemy.orm import relationship
-
 from isp.db import db, generate_id
 from isp.db.models import RelationShip
 from isp.db.models.base_model import BaseModel
@@ -56,28 +54,54 @@ class MomentTensorModel(db.Model, BaseModel):
         return "MomentTensorModel({})".format(self.to_dict())
 
 
+# class PhaseInfoModel(db.Model, BaseModel):
+#     __tablename__ = 'phase_info'
+#
+#     id = Column(String(16), primary_key=True)
+#     event_info_id = Column(String(16), ForeignKey("event_locations.id"), nullable=False, primary_key=True)
+#     station_code = Column(String(5), nullable=False)
+#     channel = Column(String(5), nullable=False)
+#     phase = Column(String(1), nullable=False)
+#     polarity = Column(String(1), nullable=False)
+#     time = Column(DateTime, nullable=False)
+#     amplitude = Column(Float, nullable=False)
+#     travel_time = Column(Float, nullable=False)
+#     rms = Column(Float, nullable=False)
+#     residual = Column(Float, nullable=False)
+#     weight = Column(Float, nullable=False)
+#     s_dist = Column(Float, nullable=False)
+#     s_az = Column(Float, nullable=False)
+#     r_az = Column(Float, nullable=False)
+#     r_dip = Column(Float, nullable=False)
+
 class PhaseInfoModel(db.Model, BaseModel):
     __tablename__ = 'phase_info'
 
     id = Column(String(16), primary_key=True)
     event_info_id = Column(String(16), ForeignKey("event_locations.id"), nullable=False, primary_key=True)
     station_code = Column(String(5), nullable=False)
-    channel = Column(String(5), nullable=False)
     phase = Column(String(1), nullable=False)
-    polarity = Column(String(1), nullable=False)
     time = Column(DateTime, nullable=False)
-    amplitude = Column(Float, nullable=False)
-    travel_time = Column(Float, nullable=False)
-    rms = Column(Float, nullable=False)
-    residual = Column(Float, nullable=False)
-    weight = Column(Float, nullable=False)
-    s_dist = Column(Float, nullable=False)
-    s_az = Column(Float, nullable=False)
-    r_az = Column(Float, nullable=False)
-    r_dip = Column(Float, nullable=False)
+
 
     def __repr__(self):
         return "PhaseInfoModel({})".format(self.to_dict())
+
+    @classmethod
+    def create_phases_from_origin(cls, event_info_id, picks):
+        phases = []
+
+        #if cls.find_by(latitude=origin.latitude, longitude=origin.longitude, depth=origin.depth,
+         #              origin_time=origin.time.datetime):
+         #   raise AttributeError("Object already exist in the database.")
+
+        for pick in picks:
+            event_dict = {"id": generate_id(16), "event_info_id": event_info_id, "station_code":pick.waveform_id.station_code,
+                          "phase" : pick.phase_hint, "time" : pick.time.datetime}
+            phases.append(cls(**event_dict))
+
+        return phases
+
 
 
 class EventArrayModel(db.Model, BaseModel):
@@ -154,6 +178,7 @@ class EventLocationModel(db.Model, BaseModel):
 
         return cls(**event_dict)
 
+
     def set_magnitudes(self, mag_dict):
         import numbers
         from collections.abc import Mapping
@@ -183,6 +208,19 @@ class EventLocationModel(db.Model, BaseModel):
         self.event_arrays.append(event_arrays)
 
 
+    def add_phase(self, phase):
+        """
+        Link an ArrayAnalysisModel to this event_location.
+
+        Important: This will not be added to the database until this entity is saved.
+
+        :param array_analysis_id: The current id of the array_analysis.
+        """
+
+        #phase = PhaseInfoModel(id = phase_id, event_info_id=self.id)
+        self.phase_info.append(phase)
+
+
 class ArrayAnalysisModel(db.Model, BaseModel):
     __tablename__ = 'array_analysis'
 
@@ -199,6 +237,11 @@ class ArrayAnalysisModel(db.Model, BaseModel):
 
     def __repr__(self):
         return "ArrayAnalysisModel({})".format(self.to_dict())
+
+    @classmethod
+    def create(cls, lat: float, long: float):
+        if cls.find_by(latitude_ref=lat, longitude_ref=long):
+            return None
 
     @property
     def get_event_location(self):
