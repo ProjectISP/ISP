@@ -60,9 +60,10 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.plot2Btn.clicked.connect(self.run_phase_vel)
         self.stationsBtn.clicked.connect(self.stations_info)
         self.macroBtn.clicked.connect(lambda: self.open_parameters_settings())
-        # clicks
-        self.canvas_plot1.on_double_click(self.on_click_matplotlib)
-        self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
+
+        # clicks #now is not compatible with collectors
+        #self.canvas_plot1.on_double_click(self.on_click_matplotlib)
+        #self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
 
     def open_parameters_settings(self):
         self.parameters.show()
@@ -286,7 +287,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             # Plot ridges and create lasso selectors
 
-            self.selectors = []
+            self.selectors_group_vel = []
             self.group_vel = group_vel
             self.periods = period[0, :]
             ax = self.canvas_plot1.get_axe(1)
@@ -296,7 +297,8 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                  #                      clear_plot=False)
 
                 pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
-                self.selectors.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
+                self.selectors_group_vel.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
+
 
         if selection == "Hilbert-Multiband":
 
@@ -399,7 +401,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             # TODO: duplicated with CWT, should be common
             # Plot ridges and create lasso selectors
 
-            self.selectors = []
+            self.selectors_group_vel = []
             self.group_vel = group_vel
             self.periods = period[0, :]
             ax = self.canvas_plot1.get_axe(1)
@@ -409,27 +411,26 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                 #                      clear_plot=False)
 
                 pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
-                self.selectors.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
+                self.selectors_group_vel.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
 
 
 
 
     def run_phase_vel(self):
 
-        phase_vel_array = self.phase_vel2()
-        phase_vel__array = np.flipud(phase_vel_array)
-        test = np.arange(-5, 5, 1)
-    # Plot phase vel
+        phase_vel_array = self.phase_velocity()
+        test = np.arange(-5, 5, 1) # natural ambiguity
+        # Plot phase vel
 
         ax2 = self.canvas_plot1.get_axe(0)
         ax2.cla()
+        self.selectors_phase_vel = []
+        self.phase_vel = []
         for k in range(len(test)):
-            ax2.semilogx(self.periods_now, phase_vel_array[k,:], linewidth = 0.0, marker=".")
-            #self.canvas_plot1.plot_contour(self.periods_now, phase_vel_array[k,:],np.ones([1, len(self.periods_now)]),
-            #                                0, "scatter", show_colorbar=False, marker = '.', xscale="log")
+            pts = ax2.scatter(self.periods_now, phase_vel_array[k,:], marker=".", s = 60)
+            self.selectors_phase_vel.append(CollectionLassoSelector(ax2, pts, [0.5, 0., 0.5, 1.]))
+            ax2.set_xscale('log')
 
-            #self.canvas_plot1.plot(self.periods_now, phase_vel_array[k,:], axes_index=0, marker=".", clear_plot=False,
-            #                       xscale="log")
 
         if self.ftCB.isChecked():
           ax2.set_xlim(self.period_min_cwtDB.value(), self.period_max_cwtDB.value())
@@ -438,10 +439,12 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.canvas_plot1.set_xlabel(0, "Period (s)")
         self.canvas_plot1.set_ylabel(0, "Phase Velocity (km/s)")
 
-    def phase_vel2(self):
+
+
+    def phase_velocity(self):
         self.periods_now = []
         self.solutions = []
-        for i, selector in enumerate(self.selectors):
+        for i, selector in enumerate(self.selectors_group_vel):
             for idx in selector.ind:
                 self.periods_now.append(self.periods[idx])
                 self.solutions.append(self.group_vel[i, idx])
@@ -459,24 +462,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                 phase_vel_den = phase_test+inst_freq_test*to-(np.pi/4)-k*2*np.pi+landa
                 phase_vel_array[k, j] = phase_vel_num / phase_vel_den
 
-        return phase_vel_array
-
-    def phase_vel(self, scalogram2, ridge, phase, inst_freq, t, dist, n):
-
-        # extract phase_vel info
-
-        phase_vel_array = np.zeros([n, len(ridge)])
-        for k in np.arange(-5, 5, 1):
-            for j in range(len(ridge)):
-                value, idx = self.find_nearest(scalogram2[:, j], ridge[j])
-                to = t[idx, j]
-                phase_test = phase[idx, j]
-                inst_freq_test = inst_freq[idx, j]
-                phase_vel_num = dist * inst_freq_test
-                phase_vel_den = phase_test+inst_freq_test*to-(np.pi/4)-k*2*np.pi
-                phase_vel_array[k, j] = phase_vel_num / phase_vel_den
 
         return phase_vel_array
+
 
     def find_ridges(self, scalogram2, vel, height, distance, num_ridges):
 
