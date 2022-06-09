@@ -2,7 +2,7 @@ from scipy.signal import find_peaks
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.Gui import pw
 import matplotlib.pyplot as plt
-from isp.Gui.Frames import FilesView, MatplotlibCanvas, MessageDialog
+from isp.Gui.Frames import MatplotlibCanvas, MessageDialog
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.uis_frames import UiFrequencyTime
@@ -15,7 +15,6 @@ import numpy as np
 from obspy import read
 import os
 from isp.Gui.Utils import CollectionLassoSelector
-
 
 @add_save_load()
 class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
@@ -49,8 +48,8 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
 
         # Add file selector to the widget
-        self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget_2,
-                                       on_change_file_callback=lambda file_path: self.onChange_file(file_path))
+        #self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget_2,
+        #                               on_change_file_callback=lambda file_path: self.onChange_file(file_path))
 
         # Binds
         self.selectDirBtn_2.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
@@ -61,9 +60,11 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.stationsBtn.clicked.connect(self.stations_info)
         self.macroBtn.clicked.connect(lambda: self.open_parameters_settings())
 
+
         # clicks #now is not compatible with collectors
         #self.canvas_plot1.on_double_click(self.on_click_matplotlib)
         #self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
+
 
     def open_parameters_settings(self):
         self.parameters.show()
@@ -73,6 +74,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         md.set_info_message(msg)
 
     def onChange_root_path(self, value):
+
         """
         Fired every time the root_path is changed
 
@@ -80,7 +82,27 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
         :return:
         """
-        self.file_selector.set_new_rootPath(value)
+        self.tw_files.clearContents()
+
+        for file in os.listdir(value):
+            try:
+                trace = read(value + '/' + file, format='H5')
+                self.tw_files.setRowCount(self.tw_files.rowCount() + 1)
+
+                dist = '{dist:.2f}'.format(dist =trace[0].stats.mseed['geodetic'][0]/1000)
+                azim = '{azim:.2f}'.format(azim =trace[0].stats.mseed['geodetic'][1])
+
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 0, pw.QTableWidgetItem(file))
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 1, pw.QTableWidgetItem(str(dist)))
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 2, pw.QTableWidgetItem(str(azim)))
+                check = pw.QCheckBox()
+                self.tw_files.setCellWidget(self.tw_files.rowCount() - 1, 3, check)
+
+                # TODO in the save file project
+                #check = self.tw_files.cellWidget(self.tw_files.currentRow(), 3)
+                #check.setChecked(True)
+            except Exception:
+                pass
 
 
     def onChange_file(self, file_path):
@@ -112,7 +134,8 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
     def stations_info(self):
         sd = []
-        st = read(self.file_selector.file_path)
+        row = self.tw_files.currentRow()
+        st = read(self.tw_files.item(row, 0).data(0))
         tr = st[0]
         sd.append([tr.stats.network, tr.stats.station, tr.stats.location, tr.stats.channel, tr.stats.starttime,
                        tr.stats.endtime, tr.stats.sampling_rate, tr.stats.npts])
@@ -124,16 +147,18 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
     @property
     def trace(self):
-        return ObspyUtil.get_tracer_from_file(self.file_selector.file_path)
+        row = self.tw_files.currentRow()
+
+        return ObspyUtil.get_tracer_from_file(self.tw_files.item(row, 0).data(0))
 
     def get_data(self):
         parameters = self.parameters.getParameters()
-        file = self.file_selector.file_path
+        row = self.tw_files.currentRow()
+        file = os.path.join(self.rootPathForm_2.text(),self.tw_files.item(row, 0).data(0))
         try:
 
             sd = SeismogramDataAdvanced(file_path = file)
             tr = sd.get_waveform_advanced(parameters, {}, filter_error_callback=self.filter_error_message)
-            #tr = st[0]
             t = tr.times()
 
             return tr, t
@@ -298,6 +323,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
                 pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
                 self.selectors_group_vel.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
+                data = self.selectors_group_vel[0].xys
+
+            T, group_vel = self.__get_vel_from_selection(data)
 
 
         if selection == "Hilbert-Multiband":
@@ -412,7 +440,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
                 pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
                 self.selectors_group_vel.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
+                data = self.selectors_group_vel[0].xys
 
+            T, group_vel = self.__get_vel_from_selection(data)
 
 
 
@@ -430,6 +460,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             pts = ax2.scatter(self.periods_now, phase_vel_array[k,:], marker=".", s = 60)
             self.selectors_phase_vel.append(CollectionLassoSelector(ax2, pts, [0.5, 0., 0.5, 1.]))
             ax2.set_xscale('log')
+
+        data = self.selectors_phase_vel[0].xys
+        T, phase_vel = self.__get_vel_from_selection(data)
 
 
         if self.ftCB.isChecked():
@@ -541,6 +574,17 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                 self.periods_now.remove(period)
                 self.solutions.remove(pick_vel)
                 self.canvas_plot1.plot(period, pick_vel, color=self.colors[idx], axes_index=1, clear_plot=False, marker=".")
+
+    @staticmethod
+    def __get_vel_from_selection(data):
+        period = []
+        vel = []
+        for index in data:
+            if isinstance(index[0], float) and isinstance(index[0], float):
+                period.append(index[0])
+                vel.append(index[0])
+
+        return period,vel
 
 
     # if selection == "Multitaper Spectrogram":

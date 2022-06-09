@@ -25,31 +25,6 @@
      <widget class="QWidget" name="layoutWidget_4">
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
-        <widget class="QWidget" name="fileSelectorWidget_2" native="true">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16700</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string>Files Selector. Please select the file you want to Process adn plot</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QGroupBox" name="groupBox_4">
          <property name="minimumSize">
           <size>
@@ -64,20 +39,14 @@
           <set>Qt::AlignCenter</set>
          </property>
          <layout class="QGridLayout" name="gridLayout_9">
-          <item row="0" column="1">
-           <widget class="QLineEdit" name="rootPathForm_2"/>
-          </item>
-          <item row="0" column="0">
-           <widget class="QPushButton" name="selectDirBtn_2">
-            <property name="toolTip">
-             <string>Select the folder where you have the seismogram files</string>
-            </property>
+          <item row="2" column="0">
+           <widget class="QPushButton" name="macroBtn">
             <property name="text">
-             <string>File Directory</string>
+             <string>Macro</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
+          <item row="2" column="1">
            <widget class="QPushButton" name="stationsBtn">
             <property name="toolTip">
              <string>Click to view header information of the loaded seismogram files</string>
@@ -87,11 +56,53 @@
             </property>
            </widget>
           </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="rootPathForm_2"/>
+          </item>
           <item row="1" column="0">
-           <widget class="QPushButton" name="macroBtn">
-            <property name="text">
-             <string>Macro</string>
+           <widget class="QPushButton" name="selectDirBtn_2">
+            <property name="toolTip">
+             <string>Select the folder where you have the seismogram files</string>
             </property>
+            <property name="text">
+             <string>File Directory</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="2">
+           <widget class="QTableWidget" name="tw_files">
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+            <property name="showGrid">
+             <bool>false</bool>
+            </property>
+            <property name="sortingEnabled">
+             <bool>true</bool>
+            </property>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <column>
+             <property name="text">
+              <string>File</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Distance [km]</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Azimuth</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Check</string>
+             </property>
+            </column>
            </widget>
           </item>
          </layout>
