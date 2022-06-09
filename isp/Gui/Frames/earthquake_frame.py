@@ -1,6 +1,7 @@
 import shutil
 from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
+
 from matplotlib.backend_bases import MouseButton
 from obspy import UTCDateTime, Stream, Trace
 from obspy.core.event import Origin
@@ -61,6 +62,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.aligned_checked = False
         self.aligned_fixed = False
         self.shift_times = None
+        self.special_selection = []
         self.lines = []
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('Earthquake Location')
@@ -694,8 +696,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.files_path.sort(key=self.sort_by_baz_advance)
                 self.message_dataless_not_found()
 
-        self.set_pagination_files(self.files_path)
-        self.files_at_page = self.get_files_at_page()
+
+        if len(self.special_selection)> 0:
+            self.set_pagination_files(self.special_selection)
+            self.files_at_page = self.get_files_at_page()
+        else:
+            self.set_pagination_files(self.files_path)
+            self.files_at_page = self.get_files_at_page()
 
         ##
         self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
@@ -728,18 +735,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.plot_progress.connect(prog_callback)
         self.workers.start(tuple_files)
-        # prog_dialog.setRange(0, len(self.files_at_page))
-        # def prog_callback():
-        #
-        #     value = prog_dialog.value() + 1
-        #     pyc.QMetaObject.invokeMethod(prog_dialog, "setValue", qt.AutoConnection,
-        #                                  pyc.Q_ARG(int, value))
-        #self.workers.finished.connect(prog_dialog.accept)
 
         prog_dialog.exec()
 
         self.st = Stream(traces=self.all_traces)
-        self.aligned_checked = False
+
         self.shift_times = None
 
         try:
@@ -763,6 +763,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.canvas.set_xlabel(len(self.files_at_page)-1, "Date")
         except:
             pass
+        self.special_selection = []
+        self.aligned_checked = False
 
 
     def __plot_seismogram(self, tuple_files):
@@ -867,6 +869,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.all_traces[index] = tr
 
             self.plot_progress.emit()
+
 
 
 
@@ -1710,6 +1713,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             [spec, freq, jackknife_errors] = spectrumelement(data, delta, id)
             self.spectrum = PlotToolsManager(id)
             self.spectrum.plot_spectrum(freq, spec, jackknife_errors)
+
+        if event.key == 'h':
+
+            self.canvas.draw_selection(self.ax_num)
+            self.special_selection.append(self.files_at_page[self.ax_num])
+
+
+        if event.key == 'j':
+
+            self.canvas.draw_selection(self.ax_num, check = False)
+            if self.files_at_page[self.ax_num] in self.special_selection:
+                self.special_selection.pop(self.ax_num)
+
 
         if event.key == 'f':
             self.kind_wave = self.ChopCB.currentText()

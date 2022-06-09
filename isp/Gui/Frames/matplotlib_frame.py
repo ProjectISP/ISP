@@ -21,6 +21,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from obspy import Stream
 from owslib.wms import WebMapService
 
+from isp import RESOURCE_PATH
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Utils import ExtendSpanSelector, Worker
 from isp.Utils import ObspyUtil, AsycTime
@@ -749,6 +750,30 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
     def clear_color_bar(self):
         if self.__cbar:
             self.__cbar.remove()
+
+    def draw_selection(self, axe_index, check = True):
+        from PIL import Image
+        from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+        import os
+        ax = self.get_axe(axe_index)
+        # try:
+        #     ax.artists.remove()
+        # except:
+        #     pass
+
+        if check:
+            path_to_image = os.path.join(RESOURCE_PATH,'images', 'check.png')
+            img = Image.open(path_to_image)
+        else:
+            path_to_image = os.path.join(RESOURCE_PATH,'images', 'uncheck.png')
+            img = Image.open(path_to_image)
+
+        imagebox = OffsetImage(img, zoom=0.08)
+        ab = AnnotationBbox(imagebox, (0.05, 0.7), xycoords='axes fraction', frameon=False)
+        ax.add_artist(ab)
+        self.draw_idle()
+
+
 
     def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, amplitude=None, **kwargs):
         """
