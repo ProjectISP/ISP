@@ -285,17 +285,18 @@ class ConvolveWaveletBase:
 
         return self._tf
 
+
     def phase(self):
+
         if self._tf is None:
             self.compute_tf()
-        phase = np.angle(self._tf)
 
-        x = np.where(phase<0)
-        phase[x] = 2*np.pi + phase[x]
-
-
-        #inst_freq2 = np.abs(np.diff(phase, axis = 1))
-        inst_freq = (np.diff(self._tf, axis=1))/(self._tf[:,1:]*1j)
+        phase = np.unwrap(np.angle(self._tf), axis = 0)
+        # Following connvenncional numerical diferenciation
+        # inst_freq = np.abs(np.diff(phase, axis = 1))
+        # Following Synchrosqqueezing wavelet transform
+        #np.diff(self._tf, axis=1) can be differentiated in frequency domain --> np.fft.fft(self._tf, axis=1)*2*np.pi*1j
+        inst_freq = (np.diff(self._tf, axis=1))/(self._tf[:,1:])
         inst_freq = np.abs(inst_freq)
         ins_freq_hz = (inst_freq*self._sample_rate)/2*np.pi
         return phase, inst_freq, ins_freq_hz
