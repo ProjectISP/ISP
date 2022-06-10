@@ -18,9 +18,12 @@ from isp.Gui.Utils import CollectionLassoSelector
 
 @add_save_load()
 class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
-    def __init__(self):
+    def __init__(self, project):
         super(FrequencyTimeFrame, self).__init__()
+
         self.setupUi(self)
+        self.project = project
+
         self.solutions = []
         self.periods_now = []
         self.colors = ["white", "green", "black"]
@@ -59,11 +62,77 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.plot2Btn.clicked.connect(self.run_phase_vel)
         self.stationsBtn.clicked.connect(self.stations_info)
         self.macroBtn.clicked.connect(lambda: self.open_parameters_settings())
-
-
+        self.saveBtn.clicked.connect(self.save_to_project)
+        self.removeBtn.clicked.connect(self.remove_from_project)
         # clicks #now is not compatible with collectors
         #self.canvas_plot1.on_double_click(self.on_click_matplotlib)
         #self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
+
+
+    def save_to_project(self):
+        md = MessageDialog(self)
+        if isinstance(self.project.project_dispersion, dict):
+            # get info
+            row = self.tw_files.currentRow()
+            file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
+            st = read(file)
+            tr = st[0]
+            wave_type = self.typeCB.currentText()
+            if wave_type == "Rayleigh":
+                wave_type = "ZZ"
+            elif wave_type == "Love":
+                wave_type = "TT"
+
+            id_phase = tr.stats.station+"_"+wave_type+"_"+"phv"
+            id_group = tr.stats.station+"_"+wave_type+"_"+"dsp"
+
+            # save info to the project
+            if len(self.periods_group_vel) and len(self.group_vel_save):
+                self.project.project_dispersion[id_group] = {'period':self.periods_group_vel,'velocity':self.group_vel_save}
+            if len(self.periods_phase_vel) and len(self.phase_vel_save):
+                self.project.project_dispersion[id_phase] = {'period': self.periods_phase_vel, 'velocity': self.phase_vel_save}
+            print(self.project.project_dispersion)
+            #send check signal
+            check = self.tw_files.cellWidget(self.tw_files.currentRow(), 3)
+            check.setChecked(True)
+
+            md.set_info_message("Saved data Succesfully")
+        else:
+            md.set_error_message("Something went wrong, ", "Please check you have creeated a project "
+                                                           "and it is loaded in memory")
+
+
+    def remove_from_project(self):
+        md = MessageDialog(self)
+        if isinstance(self.project.project_dispersion, dict):
+            # get info
+            row = self.tw_files.currentRow()
+            file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
+            st = read(file)
+            tr = st[0]
+            wave_type = self.typeCB.currentText()
+            if wave_type == "Rayleigh":
+                wave_type = "ZZ"
+            elif wave_type == "Love":
+                wave_type = "TT"
+
+            id_phase = tr.stats.station+"_"+wave_type+"_"+"phv"
+            id_group = tr.stats.station+"_"+wave_type+"_"+"dsp"
+
+            # remove info to the project
+            if id_group in self.project.project_dispersion:
+                self.project.project_dispersion.pop(id_group)
+            if id_phase in self.project.project_dispersion:
+                self.project.project_dispersion.pop(id_phase)
+            print(self.project.project_dispersion)
+            #send check signal
+            check = self.tw_files.cellWidget(self.tw_files.currentRow(), 3)
+            check.setChecked(False)
+
+            md.set_info_message("Deleted data Succesfully")
+        else:
+            md.set_error_message("Something went wrong, ", "Please check you have creeated a project "
+                                                           "and it is loaded in memory")
 
 
     def open_parameters_settings(self):
@@ -98,9 +167,6 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                 check = pw.QCheckBox()
                 self.tw_files.setCellWidget(self.tw_files.rowCount() - 1, 3, check)
 
-                # TODO in the save file project
-                #check = self.tw_files.cellWidget(self.tw_files.currentRow(), 3)
-                #check.setChecked(True)
             except Exception:
                 pass
 
@@ -135,14 +201,14 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
     def stations_info(self):
         sd = []
         row = self.tw_files.currentRow()
-        st = read(self.tw_files.item(row, 0).data(0))
+        file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
+        st = read(file)
         tr = st[0]
         sd.append([tr.stats.network, tr.stats.station, tr.stats.location, tr.stats.channel, tr.stats.starttime,
                        tr.stats.endtime, tr.stats.sampling_rate, tr.stats.npts])
 
         self._stations_info = StationsInfo(sd, check= False)
         self._stations_info.show()
-
 
 
     @property
@@ -325,7 +391,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                 self.selectors_group_vel.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
                 data = self.selectors_group_vel[0].xys
 
-            T, group_vel = self.__get_vel_from_selection(data)
+            self.periods_group_vel, self.group_vel_save = self.__get_vel_from_selection(data)
 
 
         if selection == "Hilbert-Multiband":
@@ -462,7 +528,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             ax2.set_xscale('log')
 
         data = self.selectors_phase_vel[0].xys
-        T, phase_vel = self.__get_vel_from_selection(data)
+        self.periods_phase_vel, self.phase_vel_save = self.__get_vel_from_selection(data)
 
 
         if self.ftCB.isChecked():
@@ -481,7 +547,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             for idx in selector.ind:
                 self.periods_now.append(self.periods[idx])
                 self.solutions.append(self.group_vel[i, idx])
-
+        # TODO WHAT IS THE OPTIMUM LAMBDA
         landa = -1*np.pi/4
         phase_vel_array = np.zeros([len(np.arange(-5, 5, 1)), len(self.solutions)])
         for k in np.arange(-5, 5, 1):
@@ -563,17 +629,17 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         idx = np.argmin(rms)
         return value_period, self.group_vel[idx, idx_periods], idx
 
-    def key_pressed(self, event):
-
-        if event.key == 'r':
-            x1_value, y1_value = event.xdata, event.ydata
-            print(x1_value, y1_value)
-            period, pick_vel,idx = self.find_pos(x1_value, y1_value)
-            # check if is in solutions
-            if period in self.periods_now and pick_vel in self.solutions:
-                self.periods_now.remove(period)
-                self.solutions.remove(pick_vel)
-                self.canvas_plot1.plot(period, pick_vel, color=self.colors[idx], axes_index=1, clear_plot=False, marker=".")
+    # def key_pressed(self, event):
+    #
+    #     if event.key == 'r':
+    #         x1_value, y1_value = event.xdata, event.ydata
+    #         print(x1_value, y1_value)
+    #         period, pick_vel,idx = self.find_pos(x1_value, y1_value)
+    #         # check if is in solutions
+    #         if period in self.periods_now and pick_vel in self.solutions:
+    #             self.periods_now.remove(period)
+    #             self.solutions.remove(pick_vel)
+    #             self.canvas_plot1.plot(period, pick_vel, color=self.colors[idx], axes_index=1, clear_plot=False, marker=".")
 
     @staticmethod
     def __get_vel_from_selection(data):

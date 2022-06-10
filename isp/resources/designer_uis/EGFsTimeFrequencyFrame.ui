@@ -39,12 +39,18 @@
           <set>Qt::AlignCenter</set>
          </property>
          <layout class="QGridLayout" name="gridLayout_9">
-          <item row="2" column="0">
-           <widget class="QPushButton" name="macroBtn">
+          <item row="1" column="0">
+           <widget class="QPushButton" name="selectDirBtn_2">
+            <property name="toolTip">
+             <string>Select the folder where you have the seismogram files</string>
+            </property>
             <property name="text">
-             <string>Macro</string>
+             <string>File Directory</string>
             </property>
            </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="rootPathForm_2"/>
           </item>
           <item row="2" column="1">
            <widget class="QPushButton" name="stationsBtn">
@@ -56,16 +62,10 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QLineEdit" name="rootPathForm_2"/>
-          </item>
-          <item row="1" column="0">
-           <widget class="QPushButton" name="selectDirBtn_2">
-            <property name="toolTip">
-             <string>Select the folder where you have the seismogram files</string>
-            </property>
+          <item row="2" column="0">
+           <widget class="QPushButton" name="macroBtn">
             <property name="text">
-             <string>File Directory</string>
+             <string>Macro</string>
             </property>
            </widget>
           </item>
@@ -103,6 +103,23 @@
               <string>Check</string>
              </property>
             </column>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QPushButton" name="saveBtn">
+            <property name="toolTip">
+             <string>Save Dispersion points to a Project</string>
+            </property>
+            <property name="text">
+             <string>Save to Project</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="removeBtn">
+            <property name="text">
+             <string>Remove from Project</string>
+            </property>
            </widget>
           </item>
          </layout>
@@ -413,10 +430,10 @@
              <number>1</number>
             </property>
             <property name="maximum">
-             <number>3</number>
+             <number>25</number>
             </property>
             <property name="value">
-             <number>1</number>
+             <number>3</number>
             </property>
            </widget>
           </item>
