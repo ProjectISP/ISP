@@ -680,7 +680,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.canvas.clear()
 
-        self.nums_clicks = 0
+        #self.nums_clicks = 0
 
         if self.trimCB.isChecked() and self.check_start_time != None and self.check_end_time != None:
             if self.check_start_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_1) and \
@@ -757,10 +757,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             else:
 
                 ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
-            # formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
-            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
-            ax.xaxis.set_major_formatter(formatter)
+
             self.canvas.set_xlabel(len(self.files_at_page)-1, "Date")
+
         except:
             pass
         self.special_selection = []
@@ -821,6 +820,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax.spines["bottom"].set_visible(False)
             ax.tick_params(top=False)
             ax.tick_params(labeltop=False)
+            ax.set_ylim(np.min(s),np.max(s))
             if index!=(self.pagination.items_per_page-1):
                ax.tick_params(bottom=False)
 
@@ -865,6 +865,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.max_endtime[index] = max(t)
             except:
                 print("Empty traces")
+
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
+            ax.xaxis.set_major_formatter(formatter)
+
 
             self.all_traces[index] = tr
 
@@ -1803,7 +1807,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax.set_ylim(min(data),max(data))
             formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
-            self.nums_clicks = self.nums_clicks+1
+            #self.nums_clicks = self.nums_clicks+1
 
     def availability(self):
 
