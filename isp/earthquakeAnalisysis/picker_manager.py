@@ -17,7 +17,6 @@ class PickerManager:
     Seconds = "Seconds"
     GAU = "GAU"
     Err = "Err"
-    ErrMag = "ErrMag"
     CodaDuration = "Coda_duration"
     Amplitude = "Amplitude"
     Period = "Period"
@@ -47,8 +46,8 @@ class PickerManager:
             self.__output_path = self.get_default_output_path()
 
         self.columns = [self.StationName, self.Instrument, self.Component, self.PPhaseOnset, self.PPhaseDescriptor,
-                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, "GAU", self.Err, self.ErrMag,
-                        self.CodaDuration, self.Amplitude, self.Period]
+                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, "GAU", self.Err, self.CodaDuration,
+                        self.Amplitude, self.Period]
 
         if overwrite:
             self.df = self.__setup_file()
@@ -111,7 +110,6 @@ class PickerManager:
         :keyword Component:
         :keyword First_Motion: The polarization, either "U" or "D"
         :keyword Err: uncertainty
-        :keyword ErrMag:
         :keyword Coda_duration:
         :keyword Period:
         :return:
@@ -145,7 +143,6 @@ class PickerManager:
         :keyword Seconds:
         :keyword GAU:
         :keyword Err:
-        :keyword ErrMag:
         :keyword Coda_duration:
         :keyword Amplitude:
         :keyword Period:
@@ -159,7 +156,6 @@ class PickerManager:
         data["GAU"] = "GAU"
         data[self.Err] = "{:.1f}".format(0) if data[self.Err] == "?" else data[self.Err]
         #data[self.Err] = "GAU" if data[self.Err] == "?" else data[self.Err]
-        data[self.ErrMag] = "{:.1f}".format(0) if data[self.ErrMag] == "?" else data[self.ErrMag]
         data[self.CodaDuration] = "{:.1f}".format(0) if data[self.CodaDuration] == "?" else data[self.CodaDuration]
         data[self.Period] = "{:.1f}".format(0) if data[self.Period] == "?" else data[self.Period]
 
