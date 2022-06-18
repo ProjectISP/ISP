@@ -1462,11 +1462,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
             self.lines.append(line)
-            self.picked_at[str(line)] = PickerStructure(t, stats.Station, x1, uncertainty, amplitude, color, label,
+            self.picked_at[str(line)] = PickerStructure(tt, stats.Station, x1, uncertainty, amplitude, color, label,
                                                         self.get_file_at_index(click_at_index))
             #print(self.picked_at)
             # Add pick data to file.
-            self.pm.add_data(t, uncertainty, amplitude, stats.Station, phase, Component = stats.Channel,
+            self.pm.add_data(tt, uncertainty, amplitude, stats.Station, phase, Component=stats.Channel,
                              First_Motion=polarity)
             self.pm.save()  # maybe we can move this to when you press locate.
 
