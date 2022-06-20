@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1680</width>
-    <height>1029</height>
+    <height>1000</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -559,7 +559,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>1109</width>
-                  <height>787</height>
+                  <height>758</height>
                  </rect>
                 </property>
                </widget>
@@ -859,25 +859,21 @@
     <property name="title">
      <string>File</string>
     </property>
-    <widget class="QMenu" name="menuWrite_Files">
-     <property name="title">
-      <string>Write Files</string>
-     </property>
-     <addaction name="actionWrite_Current_Page"/>
-    </widget>
     <widget class="QMenu" name="menuProject">
      <property name="title">
       <string>Project</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>../images/icons/project.png</normaloff>../images/icons/project.png</iconset>
      </property>
      <addaction name="actionNew_Project"/>
      <addaction name="actionLoad_Project"/>
     </widget>
     <addaction name="menuProject"/>
     <addaction name="actionNew_location"/>
-    <addaction name="separator"/>
-    <addaction name="menuWrite_Files"/>
-    <addaction name="separator"/>
     <addaction name="actionOpen_Settings"/>
+    <addaction name="actionWrite_Current_Page_2"/>
    </widget>
    <widget class="QMenu" name="menuActions">
     <property name="title">
@@ -979,11 +975,19 @@
    </property>
   </action>
   <action name="actionNew_location">
+   <property name="icon">
+    <iconset>
+     <normaloff>../images/icons/edit-paste.png</normaloff>../images/icons/edit-paste.png</iconset>
+   </property>
    <property name="text">
     <string>New Location</string>
    </property>
   </action>
   <action name="actionSettings">
+   <property name="icon">
+    <iconset>
+     <normaloff>../images/icons/Lapiz.png</normaloff>../images/icons/Lapiz.png</iconset>
+   </property>
    <property name="text">
     <string>Settings</string>
    </property>
@@ -1112,6 +1116,10 @@
    </property>
   </action>
   <action name="actionOpen_Settings">
+   <property name="icon">
+    <iconset>
+     <normaloff>../images/icons/Lapiz.png</normaloff>../images/icons/Lapiz.png</iconset>
+   </property>
    <property name="text">
     <string>Open Settings</string>
    </property>
@@ -1156,6 +1164,10 @@
    </property>
   </action>
   <action name="actionOpen_Help">
+   <property name="icon">
+    <iconset>
+     <normaloff>../images/icons/help-content.png</normaloff>../images/icons/help-content.png</iconset>
+   </property>
    <property name="text">
     <string>Open Help</string>
    </property>
@@ -1228,6 +1240,10 @@
    </property>
   </action>
   <action name="actionNew_Project">
+   <property name="icon">
+    <iconset>
+     <normaloff>../images/icons/project.png</normaloff>../images/icons/project.png</iconset>
+   </property>
    <property name="text">
     <string>New Project</string>
    </property>
@@ -1236,8 +1252,23 @@
    </property>
   </action>
   <action name="actionLoad_Project">
+   <property name="icon">
+    <iconset>
+     <normalon>../images/icons/folder.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Load Project</string>
+   </property>
+  </action>
+  <action name="actionWrite_Current_Page_2">
+   <property name="icon">
+    <iconset>
+     <normalon>../images/icons/save.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Write Files</string>
    </property>
   </action>
  </widget>

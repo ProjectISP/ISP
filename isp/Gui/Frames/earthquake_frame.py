@@ -127,7 +127,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.__metadata_manager = MetadataManager(self.metadata_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.actionOpen_Earth_Model_Viewer.triggered.connect(lambda: self.open_earth_model_viewer())
-        self.actionWrite_Current_Page.triggered.connect(self.write_files_page)
+        self.actionWrite_Current_Page_2.triggered.connect(self.write_files_page)
         self.actionArray_Anlysis.triggered.connect(self.open_array_analysis)
         self.actionMoment_Tensor_Inversion.triggered.connect(self.open_moment_tensor)
         self.actionTime_Frequency_Analysis.triggered.connect(self.time_frequency_analysis)
