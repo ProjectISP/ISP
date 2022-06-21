@@ -14,7 +14,7 @@ class AsycTime(Thread):
         self.__obj = None
 
     def run(self) -> None:
-        if self.seconds is not 0:
+        if self.seconds != 0:
             time.sleep(self.seconds)
         result = None
         if self.__callback:

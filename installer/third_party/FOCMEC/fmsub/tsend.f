@@ -1,0 +1,9 @@
+C+
+C*******SUBROUTINE TSEND************************************************
+C
+C	CLOSES THE PLOT BUFFER (IBM SUBPROGRAM)
+C-
+	SUBROUTINE TSEND
+	CALL PLOT(0.0,0.0,0)
+	RETURN
+	END

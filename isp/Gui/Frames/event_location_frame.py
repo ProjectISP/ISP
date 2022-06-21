@@ -12,7 +12,7 @@ from obspy.core.event import Origin
 # from sqlalchemy import Column
 from obspy.imaging.beachball import beach
 from isp import LOCATION_OUTPUT_PATH, MOMENT_TENSOR_OUTPUT, ROOT_DIR
-from isp.mti.read_log import read_log
+from isp.MTI.read_log import read_log
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from PIL import Image
 import numpy as np
@@ -410,7 +410,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
 
         URL = self.wmsLE.text()
         layer = self.layerLE.text()
-        if URL is not "" and layer is not "":
+        if URL != "" and layer != "":
             self.plot_map(map_service=URL, layer=layer)
         else:
             self.plot_map()

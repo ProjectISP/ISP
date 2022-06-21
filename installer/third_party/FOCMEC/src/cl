@@ -1,0 +1,7 @@
+#
+# For compiling and linking a single FOCMEC package program
+# If you ae not using gfortran, replace the first two entries with
+#    your compiler name (g77, f77)
+#  Syntax is cl progname   (for a program progname.f)
+#
+gfortran -fbackslash $1.f ../lib/libiasp.a ../lib/libfm.a -o ../bin/$1

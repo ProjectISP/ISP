@@ -10,8 +10,8 @@ from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.earthquakeAnalisysis.stations_map import StationsMap
-from isp.mti.mti_utilities import MTIManager
-from isp.mti.class_isola_new import *
+from isp.MTI.mti_utilities import MTIManager
+from isp.MTI.class_isola_new import *
 from isp.Gui.Frames.help_frame import HelpDoc
 import pandas as pd
 from sys import platform
