@@ -15,7 +15,7 @@ QML_OriginUncertainty  horUnc -1  minHorUnc 1.83411  maxHorUnc 2.23697  azMaxHor
 QML_ConfidenceEllipsoid  semiMajorAxisLength 22.7844  semiMinorAxisLength 2.27081  semiIntermediateAxisLength 2.76661  majorAxisPlunge -89.5444  majorAxisAzimuth 93.0567  majorAxisRotation 206.424
 FOCALMECH  Hyp  35.649902 -7.089397 44.034180 Mech  0 0 0 mf  0 nObs 0
 PHASE ID Ins Cmp On Pha  FM Date     HrMn   Sec     Err  ErrMag    Coda      Amp       Per  >   TTpred    Res       Weight    StaLoc(X  Y         Z)        SDist    SAzim  RAz  RDip RQual    Tcorr 
-ECEU   ?    ?    ? P      U 20150917 1512    7.0000 GAU  0.00e+00 -1.00e+00  3.47e+02 -1.00e+00 >   22.4552    0.1207    1.4964  416.1210  321.9778   -0.2780  155.7824  79.82  79.8  98.3  9     0.0000
+ECEU   ?    ?    ? Pg     U 20150917 1512    7.0000 GAU  1.00e-02 -1.00e+00  3.47e+02 -1.00e+00 >   22.4552    0.1207    1.4964  416.1210  321.9778   -0.2780  155.7824  79.82  79.8  98.3  9     0.0000
 CEU    ?    ?    ? P      U 20150917 1512    8.0000 GAU  0.00e+00 -1.00e+00  2.61e+02 -1.00e+00 >   22.5019    1.0740    0.0654  416.4492  322.0778   -0.3200  156.1232  79.80  79.8  98.2  9     0.0000
 ARNO   ?    ?    ? P      D 20150917 1512    8.0000 GAU  0.00e+00 -1.00e+00 -1.00e+00 -1.00e+00 >   23.3567    0.2193    1.3136  289.5985  455.4222   -0.1170  163.2050   9.45   9.5  97.8  9     0.0000
 ESPR   ?    ?    ? P      U 20150917 1512    9.0000 GAU  0.00e+00 -1.00e+00  1.02e+02 -1.00e+00 >   24.4098    0.1661    1.4213  368.3440  429.8444   -0.1350  171.6890  37.94  37.9  97.3  9     0.0000

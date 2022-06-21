@@ -1,11 +1,12 @@
 import math
 import os
+import pickle
 from enum import unique, Enum
 from multiprocessing import Pool
 from os import listdir
 from os.path import isfile, join
 from typing import List
-
+import pandas as pd
 import numpy as np
 from obspy import Stream, read, Trace, UTCDateTime, read_events
 # noinspection PyProtectedMember
@@ -15,11 +16,14 @@ from obspy.io.mseed.core import _is_mseed
 from obspy.io.stationxml.core import _is_stationxml
 #from obspy.io.sac.core import _is_sac
 from obspy.io.xseed.parser import Parser
-
+from isp import PICKING_DIR
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils.nllOrgErrors import computeOriginErrors
-
+import os
+import re
+from pathlib import Path
+from obspy.io.nlloc.core import read_nlloc_hyp
 
 @unique
 class Filters(Enum):
@@ -48,6 +52,7 @@ class Filters(Enum):
 
 
 class ObspyUtil:
+
 
     @staticmethod
     def get_figure_from_stream(st: Stream, **kwargs):
@@ -218,11 +223,19 @@ class ObspyUtil:
                 'origin_uncertainty'].min_horizontal_uncertainty
             origin.origin_uncertainty.azimuth_max_horizontal_uncertainty = modified_origin_90['origin_uncertainty'].azimuth_max_horizontal_uncertainty
 
+        return origin
 
+    @staticmethod
+    def reads_pick_info(hyp_file_path: str):
+        """
+        Reads an hyp file and returns the Obspy Origin.
+        :param hyp_file_path: The file path to the .hyp file
+        :return: list Pick info
+        """
+        if os.path.isfile(hyp_file_path):
+            Origin = read_nlloc_hyp(hyp_file_path)
+            return Origin.events[0].picks
 
-            return origin
-        else:
-            raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(hyp_file_path))
 
     @staticmethod
     def has_same_sample_rate(st: Stream, value):
@@ -233,7 +246,16 @@ class ObspyUtil:
         return True
 
 
+
 class MseedUtil:
+
+    def __init__(self, robust=True, **kwargs):
+
+        self.start = kwargs.pop('starttime', [])
+        self.end = kwargs.pop('endtime', [])
+        self.obsfiles = []
+        self.pos_file = []
+        self.robust = robust
 
     @classmethod
     def get_mseed_files(cls, root_dir: str):
@@ -253,51 +275,46 @@ class MseedUtil:
 
          return []
 
-    @classmethod
-    def get_tree_mseed_files(cls, root_dir: str, robust = True, **kwargs):
+    def get_tree_mseed_files(self, root_dir: str):
         """
         Get a list of valid mseed files inside all folder tree from the the root_dir.
         If root_dir doesn't exists it returns a empty list.
         :param root_dir: The full path of the dir or a file.
         :return: A list of full path of mseed files.
         """
-        cls.start = kwargs.pop('starttime', [])
-        cls.end = kwargs.pop('endtime', [])
-        cls.obsfiles = []
-        cls.pos_file = []
-        cls.robust = robust
+
 
         for top_dir, sub_dir, files in os.walk(root_dir):
             for file in files:
-                cls.pos_file.append(os.path.join(top_dir, file))
+                self.pos_file.append(os.path.join(top_dir, file))
 
-        with Pool(processes=6) as pool:
-            r =  pool.map(cls.loop_tree, range(len(cls.pos_file)))
+        with Pool(processes=os.cpu_count()) as pool:
+            r =  pool.map(self.loop_tree, range(len(self.pos_file)))
 
         r = list(filter(None, r))
         r.sort()
 
         return r
 
-    @classmethod
-    def loop_tree(cls, i):
+
+    def loop_tree(self, i):
         result = None
-        if isinstance(cls.start, UTCDateTime):
+        if isinstance(self.start, UTCDateTime):
             try:
-                header = read(cls.pos_file[i], headlonly=True)
+                header = read(self.pos_file[i], headlonly=True)
                 #check times as a filter
                 st0 = header[0].stats.starttime
-                st1 = cls.start
+                st1 = self.start
                 et0 = header[0].stats.endtime
-                et1 = cls.end
+                et1 = self.end
                 if st1>=st0 and et1>et0 and (st1-st0) <= 86400:
-                    result = cls.pos_file[i]
+                    result = self.pos_file[i]
                 elif st1<=st0 and et1>=et0:
-                    result = cls.pos_file[i]
+                    result = self.pos_file[i]
                 elif st1<=st0 and et1<=et0 and (et0-et1) <= 86400:
-                    result = cls.pos_file[i]
+                    result = self.pos_file[i]
                 elif st1 >= st0 and et1 <= et0:
-                    result = cls.pos_file[i]
+                    result = self.pos_file[i]
                 else:
                     pass
             except:
@@ -305,16 +322,162 @@ class MseedUtil:
 
         else:
 
-            if cls.robust and cls.is_valid_mseed(cls.pos_file[i]):
+            if self.robust and self.is_valid_mseed(self.pos_file[i]):
+                
+                result = self.pos_file[i]
 
-                result = cls.pos_file[i]
+            elif not self.robust:
 
-            elif not cls.robust:
-
-                result = cls.pos_file[i]
+                result = self.pos_file[i]
 
 
         return result
+
+    ####### New Project ###################
+
+    @classmethod
+    def load_project(cls, file: str):
+        project = {}
+        try:
+            project = pickle.load(open(file, "rb"))
+
+        except:
+            pass
+        return project
+
+
+    def search_files(self, rooth_path: str):
+
+        self.search_file = []
+        for top_dir, sub_dir, files in os.walk(rooth_path):
+            for file in files:
+                self.search_file.append(os.path.join(top_dir, file))
+
+        with Pool(processes=os.cpu_count()) as pool:
+            returned_list =  pool.map(self.create_dict, range(len(self.search_file)))
+
+        project = self.convert2dict(returned_list)
+        #project = dict(filter(None, returned_list))
+
+        return project
+
+    def create_dict(self, i):
+        key = None
+        data_map = None
+
+        try:
+            header = read(self.search_file[i], headeronly=True)
+            net = header[0].stats.network
+            sta = header[0].stats.station
+            chn = header[0].stats.channel
+            key = net + "." + sta + "." + chn
+            data_map = [self.search_file[i], header[0].stats]
+        except:
+            pass
+
+
+        return [key, data_map]
+
+
+    def estimate_size(self, rooth_path):
+
+        nbytes = sum(file.stat().st_size for file in Path(rooth_path).rglob('*')) * 1E-6
+        
+        return nbytes
+
+    def convert2dict(self, project):
+        project_converted = {}
+        for name in project:
+            if name[0] in project_converted.keys() and name[0] is not None:
+                project_converted[name[0]].append([name[1][0],name[1][1]])
+
+            elif name[0] not in project_converted.keys() and name[0] is not None:
+                project_converted[name[0]] = [[name[1][0],name[1][1]]]
+
+        return project_converted
+
+    @staticmethod
+    def search(project, event):
+        res = {}
+        for key in project.keys():
+            name_list = key.split('.')
+            net = name_list[0]
+            sta = name_list[1]
+            channel = name_list[2]
+            if re.search(event[0], net) and re.search(event[1], sta) and re.search(event[2], channel):
+                res[key] = project[key]
+
+        return res
+
+    @classmethod
+    def filter_project_keys(cls, project, **kwargs):
+
+        # filter dict by python wilcards remind
+
+        # * --> .+
+        # ? --> .
+
+        net = kwargs.pop('net', '.+')
+        station = kwargs.pop('station', '.+')
+        channel = kwargs.pop('channel', '.+')
+        if net == '':
+            net = '.+'
+        if station == '':
+            station = '.+'
+        if channel == '':
+            channel = '.+'
+
+
+        data = []
+
+        # filter for regular expresions
+        event = [net, station, channel]
+        project = cls.search(project, event)
+
+        for key, value in project.items():
+            for j in value:
+                data.append([j[0], j[1]['starttime'], j[1]['endtime']])
+
+        return project, data
+
+    @classmethod
+    def filter_time(cls, list_files, **kwargs):
+
+        #filter the list output of filter_project_keys by trimed times
+
+        result = []
+        st1 = kwargs.pop('starttime', None)
+        et1 = kwargs.pop('endtime', None)
+
+        if st1 is None and et1 is None:
+            for file in list_files:
+                result.append(file[0])
+
+        else:
+
+            for file in list_files:
+                pos_file = file[0]
+                st0 = file[1]
+                et0 = file[2]
+                # check times as a filter
+
+                if st1 >= st0 and et1 > et0 and (st1 - st0) <= 86400:
+                    result.append(pos_file)
+                elif st1 <= st0 and et1 >= et0:
+                    result.append(pos_file)
+                elif st1 <= st0 and et1 <= et0 and (et0 - et1) <= 86400:
+                    result.append(pos_file)
+                elif st1 >= st0 and et1 <= et0:
+                    result.append(pos_file)
+                else:
+                    pass
+
+        result.sort()
+
+        return result
+
+
+    ###### New Project ###########
 
     def get_tree_hd5_files(self, root_dir: str, robust=True, **kwargs):
 
@@ -332,6 +495,7 @@ class MseedUtil:
                     pass
 
         return pos_file
+
 
     # @classmethod
     # def get_tree_hd5_files(cls, root_dir: str, robust=True, **kwargs):
@@ -566,3 +730,48 @@ class MseedUtil:
             new_times.append(UTCDateTime(clusters[k][0]))
             string_times.append(UTCDateTime(clusters[k][0]).strftime(format="%Y-%m-%dT%H:%M:%S.%f"))
         return new_times,string_times
+
+    @classmethod
+    def get_NLL_phase_picks(cls, phase = None, **kwargs ):
+
+        pick_times = {}
+        pick_file = os.path.join(PICKING_DIR, "output.txt")
+        pick_file = kwargs.pop("input_file", pick_file)
+
+        if os.path.isfile(pick_file):
+            df = pd.read_csv(pick_file, delimiter=" ")
+            for index, row in df.iterrows():
+                tt = str(row['Date']) + "TT" + str(row['Hour_min']) + '{:0>2}'.format(row['Seconds'])
+                if phase == row["P_phase_descriptor"]:
+                    pick_times[row['Station_name'] + "." + row["Component"]] = [row["P_phase_descriptor"], UTCDateTime(tt)]
+                elif phase is None:
+                    pick_times[row['Station_name'] + "." + row["Component"]] = [row["P_phase_descriptor"],
+                                                                                UTCDateTime(tt)]
+            return pick_times
+
+
+    @classmethod
+    def get_NLL_phase_picks2(cls, **kwargs ):
+
+        pick_times = {}
+        pick_file = os.path.join(PICKING_DIR, "output.txt")
+        pick_file = kwargs.pop("input_file", pick_file)
+
+        if os.path.isfile(pick_file):
+            df = pd.read_csv(pick_file, delimiter=" ")
+            for index, row in df.iterrows():
+                tt = str(row['Date']) + "TT" + str(row['Hour_min']) + '{:0>2}'.format(row['Seconds'])
+                id = row['Station_name'] + "." + row["Component"]
+                if id not in pick_times:
+                    items = []
+                    #items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
+                    items.append([row["P_phase_descriptor"], UTCDateTime(tt), row["Component"], row["First_Motion"],
+                                  row["Err"], row["ErrMag"], row["Coda_duration"], row["Amplitude"], row["Period"]])
+                    pick_times[id] = items
+                else:
+                    #items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
+                    items.append([row["P_phase_descriptor"], UTCDateTime(tt), row["Component"], row["First_Motion"],
+                                  row["Err"], row["ErrMag"], row["Coda_duration"], row["Amplitude"], row["Period"]])
+                    pick_times[id] = items
+            return pick_times
+

@@ -188,17 +188,20 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         for i in range(n):
             #coords[i]=data[i]
             self.coords[i] = np.array([df['Lon'][i], df['Lat'][i], df['Depth'][i]])
+        print(self.coords)
 
     def arf(self):
         try:
             if self.coords.all():
 
                 wavenumber = array_analysis.array()
-                arf = wavenumber.arf(self.coords, self.fmin_bind.value, self.fmax_bind.value,
-                                             self.smax_bind.value, self.grid_bind.value)
+                arf = wavenumber.arf(self.coords, self.fmin_bind.value, self.fmax_bind.value, self.smax_bind.value, self.grid_bind.value)
 
                 slim = self.smax_bind.value
                 x = y = np.linspace(-1 * slim, slim, len(arf))
+
+                self.canvas.clear()
+                #self.canvas.set_new_subplot(nrows=1, ncols=1)
                 self.canvas.plot_contour(x, y, arf, axes_index=0, clabel="Power [dB]", cmap=plt.get_cmap("jet"))
                 self.canvas.set_xlabel(0, "Sx (s/km)")
                 self.canvas.set_ylabel(0, "Sy (s/km)")
@@ -217,7 +220,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             for i in range(n):
                  coords[df['Name'][i]]=[df['Lat'][i], df['Lon'][i],]
         #try:
-            self.cartopy_canvas.plot_map(df['Lat'][0], df['Lon'][0], 0, 0, 0, 0, resolution = "low", stations = coords)
+            self.cartopy_canvas.plot_map(df['Lon'][0], df['Lat'][0], 0, 0, 0, 0, resolution = "low", stations = coords)
         #except:
         #    pass
 

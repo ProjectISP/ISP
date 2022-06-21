@@ -22,6 +22,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from obspy import Stream
 from owslib.wms import WebMapService
 
+from isp import RESOURCE_PATH
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Utils import ExtendSpanSelector, Worker
 from isp.Utils import ObspyUtil, AsycTime
@@ -77,7 +78,6 @@ class BasePltPyqtCanvas(FigureCanvas):
         self.__selector = {}  # selector should be a dict where the key is the buttons
         self.pickers = {}
         self.multi: Optional[MultiCursor] = None
-
         if not obj:
             fig = self.__construct_subplot(**kwargs)
         else:
@@ -750,6 +750,30 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         if self.__cbar:
             self.__cbar.remove()
 
+    def draw_selection(self, axe_index, check = True):
+        from PIL import Image
+        from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+        import os
+        ax = self.get_axe(axe_index)
+        # try:
+        #     ax.artists.remove()
+        # except:
+        #     pass
+
+        if check:
+            path_to_image = os.path.join(RESOURCE_PATH,'images', 'check.png')
+            img = Image.open(path_to_image)
+        else:
+            path_to_image = os.path.join(RESOURCE_PATH,'images', 'uncheck.png')
+            img = Image.open(path_to_image)
+
+        imagebox = OffsetImage(img, zoom=0.08)
+        ab = AnnotationBbox(imagebox, (0.05, 0.7), xycoords='axes fraction', frameon=False)
+        ax.add_artist(ab)
+        self.draw_idle()
+
+
+
     def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, amplitude=None, **kwargs):
         """
         Draw an arrow over the a plot. This plot will add a pick event to the line.
@@ -826,10 +850,13 @@ class MatplotlibFrame(pw.QMainWindow):
 
         :param obj: Expected to be a obspy Stream or a matplotlib figure.
         """
-        super().__init__()
-        # self.setAttribute(pyc.Qt.WA_DeleteOnClose)
-        self.setWindowTitle("Matplotlib Window")
+        title = kwargs.pop("window_title", "Matplotlib Window")
 
+        super().__init__()
+
+        # self.setAttribute(pyc.Qt.WA_DeleteOnClose)
+        #self.setWindowTitle("Matplotlib Window")
+        self.setWindowTitle(title)
         self.file_menu = pw.QMenu('&File', self)
         self.file_menu.addAction('&Quit', self.fileQuit,
                                  pyc.Qt.CTRL + pyc.Qt.Key_Q)
@@ -880,6 +907,43 @@ class MatplotlibFrame(pw.QMainWindow):
                              
                              This program is a Qt5 application embedding matplotlib 
                              canvases and Obspy stream.""")
+
+
+class Multiprocess_plot(BasePltPyqtCanvas):
+
+      def __init__(self, parent, **kwargs):
+          super().__init__(parent, **kwargs)
+
+      def call_back(self):
+          while self.pipe.poll():
+              command = self.pipe.recv()
+              if command is None:
+                  self.terminate()
+                  return False
+              else:
+                  self.x.append(command[0])
+                  self.y.append(command[1])
+                  self.ax.plot_date(self.x, self.y, 'ro')
+          self.fig.canvas.draw()
+          return True
+
+      def __call__(self, pipe):
+          print('starting plotter...')
+
+          self.pipe = pipe
+          timer = self.fig.canvas.new_timer(interval=10)
+          timer.add_callback(self.call_back)
+          timer.start()
+
+          print('...done')
+
+      def plot_send(self, t, y, finished = True):
+          send = self.plot_pipe.send
+          if finished:
+              send(None)
+          else:
+              data = [t,y]
+              send(data)
 
 
 class CartopyCanvas(BasePltPyqtCanvas):

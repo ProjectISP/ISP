@@ -217,7 +217,7 @@ class CNNPicker:
 
                 stamp_pick = self.get_time_from_index(index_of_max)
                 picks.append(stamp_pick)
-                print("{}".format(stamp_pick.isoformat()))
+                #print("{}".format(stamp_pick.isoformat()))
 
         except TypeError:
             # this error happens when pass a empty list of prob.

@@ -160,6 +160,7 @@ class PickerStructure(NamedTuple):
         * Time = (UTCDateTime) The time of the picker.
         * Station = (string) The station name.
         * XPosition = (float) The x position of the plot.
+        * Uncertainty = (float) The uncertainty associated to the pick
         * Amplitude = (float) The amplitude of the pick.
         * Color = (str) The color for the annotate box.
         * Label = (str) The abel for the annotate box.
@@ -168,6 +169,7 @@ class PickerStructure(NamedTuple):
     Time: UTCDateTime
     Station: str
     XPosition: float
+    Uncertainty: float
     Amplitude: float
     Color: str
     Label: str

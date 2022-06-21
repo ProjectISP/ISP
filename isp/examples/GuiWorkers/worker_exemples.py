@@ -1,10 +1,12 @@
 import sys
 import time
+from typing import List
 
-from PyQt5.QtCore import QThreadPool
+from PyQt5.QtCore import QThreadPool, pyqtSlot, pyqtBoundSignal, pyqtSignal
 
 from isp.Gui import pw
 from isp.Gui.Utils import Worker
+from isp.Gui.Utils.pyqt_threading_utils import thread, ParallelWorkers
 
 
 class Controller:
@@ -26,15 +28,19 @@ def start_app():
 
 
 class MainWindow(pw.QMainWindow):
+
     THREADS = QThreadPool.globalInstance().maxThreadCount()
+    plot_data_signal: pyqtBoundSignal = pyqtSignal(object)
 
     def __init__(self):
         super().__init__()
-
+        self.workers = None
         # set simple UI
         button_start_worker = pw.QPushButton(self)
         button_start_worker.setText("Start worker")
-        button_start_worker.clicked.connect(self.start_job)
+        self.plot_data_signal.connect(self.plot_data)
+        #button_start_worker.clicked.connect(self.start_job)
+        button_start_worker.clicked.connect(self.on_click_button)
         button_start_worker.move(50, 20)
 
         self.worker = None
@@ -66,6 +72,40 @@ class MainWindow(pw.QMainWindow):
 
     def job_finished(self, name: str):
         print(f'{name} finished')
+
+
+    def on_click_button(self):
+        self.workers = ParallelWorkers(4)
+        # Here we can disabled thing or make additional staff
+        self.workers.job(self.process_data)
+        # All jobs finished
+        self.workers.progress_callback(self.process_data_progress)
+        self.workers.job_finished(self.process_data_finished)
+
+        self.workers.start([f"file_{i}" for i in range(100)])
+
+    #@thread("process_data_finished")
+    def process_data(self, file_name: str):
+        print(f"Process data started. {file_name}")
+        time.sleep(1)
+        data = [1, 2, 3]
+        self.plot_data_signal.emit(data)
+        return data
+
+    @pyqtSlot(int, object)
+    def process_data_progress(self, p: int, data: List[int]):
+        # GUI STAFF MUST BE HERE
+        print(data)
+
+    @pyqtSlot() #for 1 thread
+    def process_data_finished(self):
+        print("work done")
+
+    @pyqtSlot(object)
+    def plot_data(self, data: List[int]):
+        print("Plotting data")
+
+
 
 
 if __name__ == '__main__':

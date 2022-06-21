@@ -124,7 +124,7 @@ class FirstPolarity:
             f = open(input_run_path, 'r')
             string = f.read()
             p.communicate(input=string.encode())
-        shutil.move('mechanism.out',os.path.join(output_path, 'mechanism.out'))
+        shutil.move('mechanism.out', os.path.join(output_path, 'mechanism.out'))
         shutil.move('focmec.lst', os.path.join(output_path, 'focmec.lst'))
         shutil.move('./log.txt', os.path.join(output_path, 'log.txt'))
 

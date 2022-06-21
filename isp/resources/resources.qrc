@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file alias="project.png">images/icons/project.png</file>
     <file alias="ANT.png">images/icons/ANT.png</file>
     <file alias="realtime.png">images/icons/realtime.png</file>
     <file alias="rf-icon.png">images/icons/rf.png</file>

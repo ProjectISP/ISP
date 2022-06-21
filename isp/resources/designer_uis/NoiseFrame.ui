@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1680</width>
-    <height>928</height>
+    <height>924</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
      <x>0</x>
      <y>0</y>
      <width>1680</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -62,8 +62,15 @@
     </property>
     <addaction name="actionSet_Parameters"/>
    </widget>
+   <widget class="QMenu" name="menuDispersion_Curves">
+    <property name="title">
+     <string>Dispersion Curves</string>
+    </property>
+    <addaction name="actionNew_Project"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
+   <addaction name="menuDispersion_Curves"/>
    <addaction name="menuHelp"/>
   </widget>
   <action name="actionWhatever">
@@ -295,6 +302,16 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+F</string>
+   </property>
+  </action>
+  <action name="actionNew_Project">
+   <property name="text">
+    <string>Manage Project</string>
+   </property>
+  </action>
+  <action name="actionLoad_Project">
+   <property name="text">
+    <string>Load Project</string>
    </property>
   </action>
  </widget>

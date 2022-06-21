@@ -7,11 +7,13 @@ from isp.seismogramInspector.signal_processing_advanced import spectrumelement
 class PlotToolsManager:
 
     def __init__(self, id):
+
         """
         Manage Plot signal analysis in Earthquake Frame.
 
         :param obs_file_path: The file path of pick observations.
         """
+
         self.__id = id
 
 
@@ -19,7 +21,7 @@ class PlotToolsManager:
         import matplotlib.pyplot as plt
         from isp.Gui.Frames import MatplotlibFrame
         fig, ax1 = plt.subplots(figsize=(6, 6))
-        self.mpf = MatplotlibFrame(fig)
+        self.mpf = MatplotlibFrame(fig, window_title="Amplitude spectrum")
         ax1.loglog(freq, spec, linewidth=1.0, color='steelblue', label=self.__id)
         ax1.frequencies = freq
         ax1.spectrum = spec
@@ -36,7 +38,7 @@ class PlotToolsManager:
         import matplotlib.pyplot as plt
         from isp.Gui.Frames import MatplotlibFrame
         fig, ax1 = plt.subplots(figsize=(6, 6))
-        self.mpf = MatplotlibFrame(fig)
+        self.mpf = MatplotlibFrame(fig, window_title="Amplitude spectrum comparison")
 
         for key, seismogram in all_items:
             data = seismogram[2]

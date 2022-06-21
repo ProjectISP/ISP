@@ -515,7 +515,10 @@ background-color: rgb(233, 233, 233);</string>
          <item row="1" column="2">
           <widget class="QDoubleSpinBox" name="distanceSB">
            <property name="maximum">
-            <double>1000.000000000000000</double>
+            <double>5000.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>500.000000000000000</double>
            </property>
           </widget>
          </item>
