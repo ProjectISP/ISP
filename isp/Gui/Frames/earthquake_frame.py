@@ -283,11 +283,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def load_project(self):
 
+        # REVISAR ANGEL VERA QT VIEJO A QT 5.15
+        # AVISO: PETARA EN MAC
+         
         if "darwin" == platform:
             selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
         else:
-            selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR,
-                                                      pw.QFileDialog.DontUseNativeDialog)
+            selected = pw.QFileDialog.getOpenFileName(self, 
+                                                      "Select Project", 
+                                                      ROOT_DIR,
+                                                      "All Files (*)",
+                                                      options=pw.QFileDialog.DontUseNativeDialog)
 
         md = MessageDialog(self)
 

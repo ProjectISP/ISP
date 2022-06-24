@@ -111,6 +111,7 @@ class ExtendSpanSelector(SpanSelector):
     def __init__(self, ax: Axes, onselect: Callable, direction: str, sharex=False, **kwargs):
         # Keep track of all axes
         self.__on_move_callback = kwargs.pop("onmove_callback", None)
+        print(kwargs)
         super().__init__(ax, onselect, direction, onmove_callback=self.__on_move, **kwargs)
 
         self.__kwargs = kwargs

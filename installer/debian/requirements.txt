@@ -1,12 +1,12 @@
-PyQt5==5.15.0
-PyQtWebEngine==5.15.0
+PyQt5==5.15.4
+PyQtWebEngine==5.15.4
 cython
 deprecated
 dill
 future
 geographiclib==1.52
 llvmlite
-matplotlib==3.3.0
+matplotlib==3.5.2
 nitime
 numba
 numpy==1.20.3
@@ -15,8 +15,8 @@ obspyh5==0.5.0
 owslib
 pandas
 pillow
-pyqt5-tools==5.15.0.1.7
-pyqtchart==5.15.0
+pyqt5-tools==5.15.4.3.2
+pyqtchart==5.15.4
 pywavelets
 pywavelets
 scipy
