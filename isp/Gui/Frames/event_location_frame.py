@@ -215,18 +215,21 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
 
     def _readHypFile(self, file_abs_path):
         origin: Origin = ObspyUtil.reads_hyp_to_origin(file_abs_path)
-        Picks = ObspyUtil.reads_pick_info(file_abs_path)
-        try:
-            event_model = EventLocationModel.create_from_origin(origin)
-            phases = PhaseInfoModel.create_phases_from_origin(event_model.id, picks = Picks)
-            for phase in phases:
-                phase.save()
-                event_model.add_phase(phase)
-            event_model.save()
-        except AttributeError:
-            # TODO: what to do if it is already inserted?
-            event_model = EventLocationModel.find_by(latitude=origin.latitude, longitude=origin.longitude,
-                                                     depth=origin.depth, origin_time=origin.time.datetime)
+        event_model = EventLocationModel.find_by(latitude=origin.latitude, longitude=origin.longitude,
+                                                 depth=origin.depth, origin_time=origin.time.datetime)
+
+        if event_model:
+            print("Even location already exist")
+            return
+
+        event_model = EventLocationModel.create_from_origin(origin)
+        phases = PhaseInfoModel.create_phases_from_origin(
+            event_model.id,
+            picks=ObspyUtil.reads_pick_info(file_abs_path)
+        )
+        for phase in phases:
+            event_model.add_phase(phase)
+        event_model.save()
 
         return event_model
 
@@ -353,7 +356,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
 
         URL = self.wmsLE.text()
         layer = self.layerLE.text()
-        if URL is not "" and layer is not "":
+        if URL != "" and layer != "":
             self.plot_map(map_service=URL, layer=layer)
         else:
             self.plot_map()
@@ -385,7 +388,7 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
                 lon.append(j[0].longitude)
                 depth.append(j[0].depth)
 
-                if j[0].mw == None:
+                if j[0].mw is None:
                     j[0].mw = 3.0
 
                 mag.append(j[0].mw)
@@ -529,3 +532,13 @@ class EventLocationFrame(BaseFrame, UiEventLocationFrame):
                                                         connectionstyle="arc3,rad=.2"))
 
             self.map_widget.fig.canvas.draw()
+
+    def export_event_location_to_earthquake_analysis(self):
+        from isp.Gui.controllers import Controller
+
+        controller: Controller = Controller()
+        if not controller.earthquake_analysis_frame:
+            controller.open_earthquake_window()
+
+        controller.earthquake_analysis_frame.retrieve_event([0,1,2,3])
+

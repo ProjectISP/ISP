@@ -30,6 +30,7 @@ from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.arrayanalysis import array_analysis
 from isp.arrayanalysis.backprojection_tools import backproj
+from isp.db.models import EventLocationModel
 from isp.earthquakeAnalisysis import PickerManager, NllManager
 import numpy as np
 import os
@@ -1964,16 +1965,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cancelled = False
         parallel_progress_run("Current progress: ", 0, len(self.st), self,
                               self.spectral_entropy, self.cancelled_callback,
-                              signalValue= self.value_entropy_init)
+                              signalValue=self.value_entropy_init)
 
-
-    # señal = pyc.pyQtSignal()
-    #def spectral_entropy_progress(self):
-        #def cancelled_callback(self):
-        #    self.cancelled = True
-    #    self.cancelled = False
-    #    parallel_progress_run("Current progress: ", 0, 0, self,
-    #                          "metodo", self.cancelled_callback,
-    #                          signalExit= self.señal)
+    def retrieve_event(self, event_location: EventLocationModel):
+        print(event_location)
 
 

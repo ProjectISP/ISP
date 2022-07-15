@@ -6,7 +6,7 @@ from isp.db import db
 
 
 class BaseModel:
-
+    #TODO: This must be updated to include a more powerful searching filters
     def __init__(self, *args, **kwargs):
         super(BaseModel).__init__(self, *args, **kwargs)
 
