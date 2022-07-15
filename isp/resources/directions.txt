@@ -1,0 +1,7 @@
+pyrcc5 -o resources.py resources.qrc
+Open the Resource Browser (View -> Resource Browser)
+Click the Edit Resources button (first on the left)
+Click the New Resource File button (first on the left)
+Enter a file name (e.g. resources.qrc) and click Save
+Click the Add Prefix button (fourth from the left) and enter a name (e.g. images)
+Click the Add Files button (fifth from the left) and add your resources
