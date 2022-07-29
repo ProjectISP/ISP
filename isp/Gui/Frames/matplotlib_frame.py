@@ -1,4 +1,6 @@
 from __future__ import unicode_literals
+
+from typing import Optional
 import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -14,12 +16,16 @@ from matplotlib.colorbar import Colorbar
 from matplotlib.lines import Line2D
 from matplotlib.patheffects import Stroke
 from matplotlib.transforms import offset_copy
-from matplotlib.widgets import SpanSelector
+from matplotlib.widgets import SpanSelector, MultiCursor
 from mpl_toolkits.mplot3d import Axes3D
 from obspy import Stream
 from owslib.wms import WebMapService
+
+from isp import RESOURCE_PATH
 from isp.Gui import pw, pyc, qt
+from isp.Gui.Utils import ExtendSpanSelector, Worker
 from isp.Utils import ObspyUtil, AsycTime
+
 
 class MatplotlibWidget(pw.QWidget):
 
@@ -65,12 +71,12 @@ class BasePltPyqtCanvas(FigureCanvas):
         self.axes = None
         self.__callback_on_double_click = None
         self.__callback_on_click = None
-        self.__callback_on_select = None
         self.__selected_axe_index = None
         self.__callback_on_pick = None
-        self.__selector = None
+        self.__callback_on_select = None
+        self.__selector = {}  # selector should be a dict where the key is the buttons
         self.pickers = {}
-
+        self.multi: Optional[MultiCursor] = None
         if not obj:
             fig = self.__construct_subplot(**kwargs)
         else:
@@ -117,11 +123,23 @@ class BasePltPyqtCanvas(FigureCanvas):
 
         return fig
 
+    def axes_updated(self):
+        if self.multi:
+            self.activate_multi_cursor()
+
     def __flat_axes(self):
         # make sure axes are always a np.array
         if type(self.axes) is not numpy.ndarray:
             self.axes = numpy.array([self.axes])
         self.axes = self.axes.flatten()
+        # axes have changed....do update
+        self.axes_updated()
+
+    def activate_multi_cursor(self):
+        self.multi = MultiCursor(self, self.axes)
+
+    def deactivate_multi_cursor(self):
+        self.multi = None
 
     def register_on_click(self):
         if not self.button_connection:
@@ -143,6 +161,8 @@ class BasePltPyqtCanvas(FigureCanvas):
         :keyword kwargs:
 
         :keyword direction: "horizontal" or "vertical". Default = "horizontal".
+
+        :keyword sharex: Set True to draw SpanSelector in all axes. Default = False
 
         :keyword minspan: float, default is 1E-6. If selection is less than minspan, do not
             call on_select callback.
@@ -169,28 +189,32 @@ class BasePltPyqtCanvas(FigureCanvas):
             self.cdi_enter_axes = self.mpl_connect("axes_enter_event", self.__on_enter_axes)
 
         direction = kwargs.pop("direction", "horizontal")
+        sharex = kwargs.pop("sharex", False)
         useblit = kwargs.pop("useblit", True)
         minspan = kwargs.pop("minspan", 1.E-6)
         rectprops = kwargs.pop("rectprops", dict(alpha=0.5, facecolor='red'))
         button = kwargs.pop("button", MouseButton.LEFT)
 
-        # register callback.
-        self.__callback_on_select = func
-        self.__selector = SpanSelector(self.get_axe(0), self.__on_select, direction=direction,
-                                       useblit=useblit, minspan=minspan, rectprops=rectprops,
-                                       button=button, **kwargs)
-
-    def __on_select(self, xmin, xmax):
-        if self.__callback_on_select:
-            self.__callback_on_select(self.__selected_axe_index, xmin, xmax)
+        # register callback at spanSelector in a dict where the key is the button.
+        self.__selector.setdefault(
+            button,
+            ExtendSpanSelector(
+                self.get_axe(0),
+                onselect=lambda x_min, x_max: func(self.__selected_axe_index, x_min, x_max, ),
+                direction=direction, sharex=sharex,
+                useblit=useblit, minspan=minspan, props=rectprops, button=button, **kwargs)
+        )
 
     def __on_enter_axes(self, event):
-        if self.__selector and isinstance(self.__selector, SpanSelector):
+        for selector in self.__selector.values():
+            selector: ExtendSpanSelector
             # new way to get axes index from event.
             # event.inaxes.get_subplotspec().rowspan.start
             self.__selected_axe_index = self.get_axe_index(event.inaxes)
-            self.__selector.new_axes(event.inaxes)
-            self.__selector.update_background(event)
+            selector.new_axes(event.inaxes)
+            selector.update_background(event)
+            # set all axes to selector. Only has effect if sharex=True
+            selector.set_sub_axes(self.axes)
 
     def __figure_leave_event(self, event):
         """
@@ -231,6 +255,10 @@ class BasePltPyqtCanvas(FigureCanvas):
         if self.pick_connect:
             self.mpl_disconnect(self.pick_connect)
 
+        for s in self.__selector.values():
+            s: SpanSelector
+            s.disconnect_events()
+
     def __on_pick_event(self, event: PickEvent):
         if self.__callback_on_pick:
             self.__callback_on_pick(event)
@@ -238,7 +266,7 @@ class BasePltPyqtCanvas(FigureCanvas):
     def __on_click_event(self, event: MouseEvent):
         self.is_dlb_click = False
         if event.dblclick and event.button == MouseButton.LEFT:
-            # On double click with left button.
+            # On double-click with left button.
             self.is_dlb_click = True
             if self.__callback_on_double_click:
                 self.__callback_on_double_click(event, self)
@@ -342,6 +370,20 @@ class BasePltPyqtCanvas(FigureCanvas):
         return ax.annotate(text, xy=(1, 1), xycoords='axes fraction', xytext=(-20, -20), textcoords='offset points',
                            ha="right", va="top", bbox=bbox)
 
+    def set_warning_label(self, ax: Axes or int, text: str):
+        """
+        Sets an label box at the upper right corner of the axes.
+
+        :param ax: The axes or axes_index to add the annotation.
+        :param text: The text
+        :return:
+        """
+        if type(ax) == int:
+            ax = self.get_axe(ax)
+        bbox = dict(boxstyle="round", alpha= 0.5, fc="red")
+        return ax.annotate(text, xy=(0.15, 1), xycoords='axes fraction', xytext=(-20, -20), textcoords='offset points',
+                           ha="right", va="top",  bbox=bbox)
+
     def get_ydata(self, ax_index):
         """
         Get y-data at the axe index.
@@ -364,7 +406,7 @@ class BasePltPyqtCanvas(FigureCanvas):
 
     def on_double_click(self, func):
         """
-        Register a callback when double click the matplotlib canvas.
+         Register a callback when double-click the matplotlib canvas.
 
         :param func: The callback function. Expect an event and canvas parameters.
         :return:
@@ -709,6 +751,30 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         if self.__cbar:
             self.__cbar.remove()
 
+    def draw_selection(self, axe_index, check = True):
+        from PIL import Image
+        from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+        import os
+        ax = self.get_axe(axe_index)
+        # try:
+        #     ax.artists.remove()
+        # except:
+        #     pass
+
+        if check:
+            path_to_image = os.path.join(RESOURCE_PATH,'images', 'check.png')
+            img = Image.open(path_to_image)
+        else:
+            path_to_image = os.path.join(RESOURCE_PATH,'images', 'uncheck.png')
+            img = Image.open(path_to_image)
+
+        imagebox = OffsetImage(img, zoom=0.08)
+        ab = AnnotationBbox(imagebox, (0.05, 0.7), xycoords='axes fraction', frameon=False)
+        ax.add_artist(ab)
+        self.draw_idle()
+
+
+
     def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, amplitude=None, **kwargs):
         """
         Draw an arrow over the a plot. This plot will add a pick event to the line.
@@ -785,10 +851,13 @@ class MatplotlibFrame(pw.QMainWindow):
 
         :param obj: Expected to be a obspy Stream or a matplotlib figure.
         """
-        super().__init__()
-        # self.setAttribute(pyc.Qt.WA_DeleteOnClose)
-        self.setWindowTitle("Matplotlib Window")
+        title = kwargs.pop("window_title", "Matplotlib Window")
 
+        super().__init__()
+
+        # self.setAttribute(pyc.Qt.WA_DeleteOnClose)
+        #self.setWindowTitle("Matplotlib Window")
+        self.setWindowTitle(title)
         self.file_menu = pw.QMenu('&File', self)
         self.file_menu.addAction('&Quit', self.fileQuit,
                                  pyc.Qt.CTRL + pyc.Qt.Key_Q)
@@ -839,6 +908,43 @@ class MatplotlibFrame(pw.QMainWindow):
                              
                              This program is a Qt5 application embedding matplotlib 
                              canvases and Obspy stream.""")
+
+
+class Multiprocess_plot(BasePltPyqtCanvas):
+
+      def __init__(self, parent, **kwargs):
+          super().__init__(parent, **kwargs)
+
+      def call_back(self):
+          while self.pipe.poll():
+              command = self.pipe.recv()
+              if command is None:
+                  self.terminate()
+                  return False
+              else:
+                  self.x.append(command[0])
+                  self.y.append(command[1])
+                  self.ax.plot_date(self.x, self.y, 'ro')
+          self.fig.canvas.draw()
+          return True
+
+      def __call__(self, pipe):
+          print('starting plotter...')
+
+          self.pipe = pipe
+          timer = self.fig.canvas.new_timer(interval=10)
+          timer.add_callback(self.call_back)
+          timer.start()
+
+          print('...done')
+
+      def plot_send(self, t, y, finished = True):
+          send = self.plot_pipe.send
+          if finished:
+              send(None)
+          else:
+              data = [t,y]
+              send(data)
 
 
 class CartopyCanvas(BasePltPyqtCanvas):
@@ -1112,6 +1218,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         if show_distance_circles:
            #if len(line1)>0 and len(line2)>0:
            try:
+               # TODO what are line1 and line2? This code will always fail.
+
                l1 = line1.pop(0)
                l2 = line2.pop(0)
                l1.remove()
@@ -1137,6 +1245,102 @@ class CartopyCanvas(BasePltPyqtCanvas):
         gl.yformatter = LATITUDE_FORMATTER
 
         self.draw()
+
+
+    def clear_color_bar(self):
+        try:
+            if self.__cbar:
+                self.__cbar.remove()
+        except:
+            pass
+
+    def __flat_axes(self):
+        # make sure axes are always a np.array
+        if type(self.axes) is not numpy.ndarray:
+            self.axes = numpy.array([self.axes])
+        self.axes = self.axes.flatten()
+
+    def set_new_subplot_cartopy(self, nrows, ncols, update=True, **kwargs):
+        sharex = kwargs.pop("sharex", "all")
+        self.figure.clf()
+        plt.close(self.figure)
+        nrows = max(nrows, 1)  # avoid zero rows.
+        self.axes = self.figure.subplots(nrows=nrows, ncols=ncols, subplot_kw = {"projection":ccrs.PlateCarree()},
+                                         **kwargs)
+        self.__flat_axes()
+
+        if update:
+            self.draw()
+
+    def plot_disp_map(self, axes_index, grid, interp, color, plot_global_map =False, show_relief = False):
+
+        import numpy as np
+        from isp import ROOT_DIR
+        import os
+
+        os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
+
+        #resolution = kwargs.pop('resolution', 'low')
+        resolution = "low"
+        lats = grid[0]['grid'][:,0][:,1]
+        lons = grid[0]['grid'][1,:][:,0]
+
+        ax = self.get_axe(axes_index)
+#        geodetic_transform = ccrs.PlateCarree()._as_mpl_transform(ax)
+#        text_transform = offset_copy(geodetic_transform, units='dots', x=-25)
+        ax.clear()
+        self.clear_color_bar()
+        if show_relief:
+            ax.background_img(name='ne_shaded', resolution=resolution)
+        xmin = min(lons)
+        xmax = max(lons)
+        ymin = min(lats)
+        ymax = max(lats)
+        extent = [xmin, xmax, ymin, ymax]
+        ax.set_extent(extent, crs=ccrs.PlateCarree())
+
+        ax.coastlines()
+
+        #map = ax.contourf(lons, lats, grid[0]['m_opt_relative'], transform=ccrs.PlateCarree(), cmap="RdBu",
+        #                    vmin=-10, vmax=10, alpha=0.7)
+        img_extent = (xmin, xmax, ymin, ymax)
+        map = ax.imshow(grid[0]['m_opt_relative'], interpolation=interp, origin='lower', extent=img_extent,
+                        transform=ccrs.PlateCarree(), cmap=color, vmin=-10, vmax=10, alpha=0.7)
+
+        self.__cbar: Colorbar = self.figure.colorbar(map, ax=ax, orientation='vertical', fraction=0.05,
+                                                     extend='both', pad=0.08)
+
+        self.__cbar.ax.set_ylabel("Velocity [km/s]")
+
+        # Create an inset GeoAxes showing the Global location
+        geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
+        if plot_global_map:
+            sub_ax = ax.figure.add_axes([0.70, 0.73, 0.28, 0.28], projection=ccrs.PlateCarree())
+            sub_ax.set_extent([-179.9, 180, -89.9, 90], geodetic)
+
+            # Make a nice border around the inset axes.
+            effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
+            sub_ax.outline_patch.set_path_effects([effect])
+
+            # Add the land, coastlines and the extent .
+            sub_ax.add_feature(cfeature.LAND)
+            sub_ax.coastlines()
+            extent_box = sgeom.box(extent[0], extent[2], extent[1], extent[3])
+            sub_ax.add_geometries([extent_box], ccrs.PlateCarree(), facecolor='none',
+                                  edgecolor='blue', linewidth=1.0)
+
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                          linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
+
+        gl.top_labels = False
+        gl.left_labels = False
+        gl.xlines = False
+        gl.ylines = False
+        gl.xformatter = LONGITUDE_FORMATTER
+        gl.yformatter = LATITUDE_FORMATTER
+
+        self.draw()
+
 
 class FocCanvas(BasePltPyqtCanvas):
 

@@ -1,9 +1,8 @@
 from scipy.signal import find_peaks
-
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.Gui import pw
 import matplotlib.pyplot as plt
-from isp.Gui.Frames import FilesView, MatplotlibCanvas, MessageDialog
+from isp.Gui.Frames import MatplotlibCanvas, MessageDialog
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.uis_frames import UiFrequencyTime
@@ -11,19 +10,20 @@ from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
 from sys import platform
 from isp.Utils import ObspyUtil
 from isp.seismogramInspector.MTspectrogram import MTspectrogram, hilbert_gauss
+from isp.ant.signal_processing_tools import noise_processing
 import numpy as np
 from obspy import read
 import os
-
-
-
-
+from isp.Gui.Utils import CollectionLassoSelector
 
 @add_save_load()
 class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
-    def __init__(self):
+    def __init__(self, project):
         super(FrequencyTimeFrame, self).__init__()
+
         self.setupUi(self)
+        self.project = project
+
         self.solutions = []
         self.periods_now = []
         self.colors = ["white", "green", "black"]
@@ -51,8 +51,8 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
 
         # Add file selector to the widget
-        self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget_2,
-                                       on_change_file_callback=lambda file_path: self.onChange_file(file_path))
+        #self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget_2,
+        #                               on_change_file_callback=lambda file_path: self.onChange_file(file_path))
 
         # Binds
         self.selectDirBtn_2.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
@@ -62,9 +62,78 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.plot2Btn.clicked.connect(self.run_phase_vel)
         self.stationsBtn.clicked.connect(self.stations_info)
         self.macroBtn.clicked.connect(lambda: self.open_parameters_settings())
-        # clicks
-        self.canvas_plot1.on_double_click(self.on_click_matplotlib)
-        self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
+        self.saveBtn.clicked.connect(self.save_to_project)
+        self.removeBtn.clicked.connect(self.remove_from_project)
+        # clicks #now is not compatible with collectors
+        #self.canvas_plot1.on_double_click(self.on_click_matplotlib)
+        #self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
+
+
+    def save_to_project(self):
+        md = MessageDialog(self)
+        if isinstance(self.project.project_dispersion, dict):
+            # get info
+            row = self.tw_files.currentRow()
+            file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
+            st = read(file)
+            tr = st[0]
+            wave_type = self.typeCB.currentText()
+            if wave_type == "Rayleigh":
+                wave_type = "ZZ"
+            elif wave_type == "Love":
+                wave_type = "TT"
+
+            id_phase = tr.stats.station+"_"+wave_type+"_"+"phv"
+            id_group = tr.stats.station+"_"+wave_type+"_"+"dsp"
+
+            # save info to the project
+            if len(self.periods_group_vel) and len(self.group_vel_save):
+                self.project.project_dispersion[id_group] = {'period':self.periods_group_vel,'velocity':self.group_vel_save}
+            if len(self.periods_phase_vel) and len(self.phase_vel_save):
+                self.project.project_dispersion[id_phase] = {'period': self.periods_phase_vel, 'velocity': self.phase_vel_save}
+            print(self.project.project_dispersion)
+            #send check signal
+            check = self.tw_files.cellWidget(self.tw_files.currentRow(), 3)
+            check.setChecked(True)
+
+            md.set_info_message("Saved data Succesfully")
+        else:
+            md.set_error_message("Something went wrong, ", "Please check you have creeated a project "
+                                                           "and it is loaded in memory")
+
+
+    def remove_from_project(self):
+        md = MessageDialog(self)
+        if isinstance(self.project.project_dispersion, dict):
+            # get info
+            row = self.tw_files.currentRow()
+            file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
+            st = read(file)
+            tr = st[0]
+            wave_type = self.typeCB.currentText()
+            if wave_type == "Rayleigh":
+                wave_type = "ZZ"
+            elif wave_type == "Love":
+                wave_type = "TT"
+
+            id_phase = tr.stats.station+"_"+wave_type+"_"+"phv"
+            id_group = tr.stats.station+"_"+wave_type+"_"+"dsp"
+
+            # remove info to the project
+            if id_group in self.project.project_dispersion:
+                self.project.project_dispersion.pop(id_group)
+            if id_phase in self.project.project_dispersion:
+                self.project.project_dispersion.pop(id_phase)
+            print(self.project.project_dispersion)
+            #send check signal
+            check = self.tw_files.cellWidget(self.tw_files.currentRow(), 3)
+            check.setChecked(False)
+
+            md.set_info_message("Deleted data Succesfully")
+        else:
+            md.set_error_message("Something went wrong, ", "Please check you have creeated a project "
+                                                           "and it is loaded in memory")
+
 
     def open_parameters_settings(self):
         self.parameters.show()
@@ -74,6 +143,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         md.set_info_message(msg)
 
     def onChange_root_path(self, value):
+
         """
         Fired every time the root_path is changed
 
@@ -81,7 +151,24 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
         :return:
         """
-        self.file_selector.set_new_rootPath(value)
+        self.tw_files.clearContents()
+
+        for file in os.listdir(value):
+            try:
+                trace = read(value + '/' + file, format='H5')
+                self.tw_files.setRowCount(self.tw_files.rowCount() + 1)
+
+                dist = '{dist:.2f}'.format(dist =trace[0].stats.mseed['geodetic'][0]/1000)
+                azim = '{azim:.2f}'.format(azim =trace[0].stats.mseed['geodetic'][1])
+
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 0, pw.QTableWidgetItem(file))
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 1, pw.QTableWidgetItem(str(dist)))
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 2, pw.QTableWidgetItem(str(azim)))
+                check = pw.QCheckBox()
+                self.tw_files.setCellWidget(self.tw_files.rowCount() - 1, 3, check)
+
+            except Exception:
+                pass
 
 
     def onChange_file(self, file_path):
@@ -113,7 +200,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
     def stations_info(self):
         sd = []
-        st = read(self.file_selector.file_path)
+        row = self.tw_files.currentRow()
+        file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
+        st = read(file)
         tr = st[0]
         sd.append([tr.stats.network, tr.stats.station, tr.stats.location, tr.stats.channel, tr.stats.starttime,
                        tr.stats.endtime, tr.stats.sampling_rate, tr.stats.npts])
@@ -122,19 +211,20 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self._stations_info.show()
 
 
-
     @property
     def trace(self):
-        return ObspyUtil.get_tracer_from_file(self.file_selector.file_path)
+        row = self.tw_files.currentRow()
+
+        return ObspyUtil.get_tracer_from_file(self.tw_files.item(row, 0).data(0))
 
     def get_data(self):
         parameters = self.parameters.getParameters()
-        file = self.file_selector.file_path
+        row = self.tw_files.currentRow()
+        file = os.path.join(self.rootPathForm_2.text(),self.tw_files.item(row, 0).data(0))
         try:
 
             sd = SeismogramDataAdvanced(file_path = file)
             tr = sd.get_waveform_advanced(parameters, {}, filter_error_callback=self.filter_error_message)
-            #tr = st[0]
             t = tr.times()
 
             return tr, t
@@ -170,6 +260,12 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             endtime =  tr.stats.endtime
             tr.trim(starttime=starttime, endtime=endtime)
 
+        if self.phase_matchCB.isChecked():
+            distance = tr.stats.mseed['geodetic'][0]
+            ns = noise_processing(tr)
+            tr_filtered = ns.phase_matched_filter(self.typeCB.currentText(),
+                  self.phaseMacthmodelCB.currentText(), distance , filter_parameter = self.phaseMatchCB.value())
+            tr.data = tr_filtered.data
 
         if selection == "Continuous Wavelet Transform":
 
@@ -280,14 +376,23 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             self.canvas_plot1.set_xlabel(1, "Period (s)")
             self.canvas_plot1.set_ylabel(1, "Group Velocity (km/s)")
 
-            # Plot ridges
+            # Plot ridges and create lasso selectors
+
+            self.selectors_group_vel = []
+            self.group_vel = group_vel
+            self.periods = period[0, :]
+            ax = self.canvas_plot1.get_axe(1)
 
             for k in range(self.numridgeSB.value()):
-                self.canvas_plot1.plot(period[0,:], group_vel[k], axes_index=1, marker=".", color = self.colors[k],
-                                       clear_plot=False)
+                #self.canvas_plot1.plot(period[0,:], group_vel[k], axes_index=1, marker=".", color = self.colors[k],
+                 #                      clear_plot=False)
 
-            self.group_vel = group_vel
-            self.periods = period[0,:]
+                pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
+                self.selectors_group_vel.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
+                data = self.selectors_group_vel[0].xys
+
+            self.periods_group_vel, self.group_vel_save = self.__get_vel_from_selection(data)
+
 
         if selection == "Hilbert-Multiband":
 
@@ -387,34 +492,44 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             self.canvas_plot1.set_xlabel(1, "Period (s)")
             self.canvas_plot1.set_ylabel(1, "Group Velocity (km/s)")
 
-            # Plot ridges
+            # TODO: duplicated with CWT, should be common
+            # Plot ridges and create lasso selectors
 
-            for k in range(self.numridgeSB.value()):
-                self.canvas_plot1.plot(period[0, :], group_vel[k], axes_index=1, marker=".", color=self.colors[k],
-                                       clear_plot=False)
-
+            self.selectors_group_vel = []
             self.group_vel = group_vel
             self.periods = period[0, :]
+            ax = self.canvas_plot1.get_axe(1)
 
+            for k in range(self.numridgeSB.value()):
+                # self.canvas_plot1.plot(period[0,:], group_vel[k], axes_index=1, marker=".", color = self.colors[k],
+                #                      clear_plot=False)
+
+                pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
+                self.selectors_group_vel.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
+                data = self.selectors_group_vel[0].xys
+
+            T, group_vel = self.__get_vel_from_selection(data)
 
 
 
     def run_phase_vel(self):
 
-        phase_vel_array = self.phase_vel2()
-        phase_vel__array = np.flipud(phase_vel_array)
-        test = np.arange(-5, 5, 1)
-    # Plot phase vel
+        phase_vel_array = self.phase_velocity()
+        test = np.arange(-5, 5, 1) # natural ambiguity
+        # Plot phase vel
 
         ax2 = self.canvas_plot1.get_axe(0)
         ax2.cla()
+        self.selectors_phase_vel = []
+        self.phase_vel = []
         for k in range(len(test)):
-            ax2.semilogx(self.periods_now, phase_vel_array[k,:], linewidth = 0.0, marker=".")
-            #self.canvas_plot1.plot_contour(self.periods_now, phase_vel_array[k,:],np.ones([1, len(self.periods_now)]),
-            #                                0, "scatter", show_colorbar=False, marker = '.', xscale="log")
+            pts = ax2.scatter(self.periods_now, phase_vel_array[k,:], marker=".", s = 60)
+            self.selectors_phase_vel.append(CollectionLassoSelector(ax2, pts, [0.5, 0., 0.5, 1.]))
+            ax2.set_xscale('log')
 
-            #self.canvas_plot1.plot(self.periods_now, phase_vel_array[k,:], axes_index=0, marker=".", clear_plot=False,
-            #                       xscale="log")
+        data = self.selectors_phase_vel[0].xys
+        self.periods_phase_vel, self.phase_vel_save = self.__get_vel_from_selection(data)
+
 
         if self.ftCB.isChecked():
           ax2.set_xlim(self.period_min_cwtDB.value(), self.period_max_cwtDB.value())
@@ -423,7 +538,16 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.canvas_plot1.set_xlabel(0, "Period (s)")
         self.canvas_plot1.set_ylabel(0, "Phase Velocity (km/s)")
 
-    def phase_vel2(self):
+
+
+    def phase_velocity(self):
+        self.periods_now = []
+        self.solutions = []
+        for i, selector in enumerate(self.selectors_group_vel):
+            for idx in selector.ind:
+                self.periods_now.append(self.periods[idx])
+                self.solutions.append(self.group_vel[i, idx])
+        # TODO WHAT IS THE OPTIMUM LAMBDA
         landa = -1*np.pi/4
         phase_vel_array = np.zeros([len(np.arange(-5, 5, 1)), len(self.solutions)])
         for k in np.arange(-5, 5, 1):
@@ -437,24 +561,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                 phase_vel_den = phase_test+inst_freq_test*to-(np.pi/4)-k*2*np.pi+landa
                 phase_vel_array[k, j] = phase_vel_num / phase_vel_den
 
-        return phase_vel_array
-
-    def phase_vel(self, scalogram2, ridge, phase, inst_freq, t, dist, n):
-
-        # extract phase_vel info
-
-        phase_vel_array = np.zeros([n, len(ridge)])
-        for k in np.arange(-5, 5, 1):
-            for j in range(len(ridge)):
-                value, idx = self.find_nearest(scalogram2[:, j], ridge[j])
-                to = t[idx, j]
-                phase_test = phase[idx, j]
-                inst_freq_test = inst_freq[idx, j]
-                phase_vel_num = dist * inst_freq_test
-                phase_vel_den = phase_test+inst_freq_test*to-(np.pi/4)-k*2*np.pi
-                phase_vel_array[k, j] = phase_vel_num / phase_vel_den
 
         return phase_vel_array
+
 
     def find_ridges(self, scalogram2, vel, height, distance, num_ridges):
 
@@ -510,28 +619,38 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         for k in range(dim):
             group_vel_test = self.group_vel[k, :][idx_periods]
             err = abs(group_vel_test - y1)
-            if err>0:
+            if err > 0:
                 rms.append(err)
             else:
-                err=100
+                err = 100
                 rms.append(err)
 
         rms = np.array(rms)
         idx = np.argmin(rms)
-
         return value_period, self.group_vel[idx, idx_periods], idx
 
-    def key_pressed(self, event):
+    # def key_pressed(self, event):
+    #
+    #     if event.key == 'r':
+    #         x1_value, y1_value = event.xdata, event.ydata
+    #         print(x1_value, y1_value)
+    #         period, pick_vel,idx = self.find_pos(x1_value, y1_value)
+    #         # check if is in solutions
+    #         if period in self.periods_now and pick_vel in self.solutions:
+    #             self.periods_now.remove(period)
+    #             self.solutions.remove(pick_vel)
+    #             self.canvas_plot1.plot(period, pick_vel, color=self.colors[idx], axes_index=1, clear_plot=False, marker=".")
 
-        if event.key == 'r':
-            x1_value, y1_value = event.xdata, event.ydata
-            print(x1_value, y1_value)
-            period, pick_vel,idx = self.find_pos(x1_value, y1_value)
-            # check if is in solutions
-            if period in self.periods_now and pick_vel in self.solutions:
-                self.periods_now.remove(period)
-                self.solutions.remove(pick_vel)
-                self.canvas_plot1.plot(period, pick_vel, color=self.colors[idx], axes_index=1, clear_plot=False, marker=".")
+    @staticmethod
+    def __get_vel_from_selection(data):
+        period = []
+        vel = []
+        for index in data:
+            if isinstance(index[0], float) and isinstance(index[0], float):
+                period.append(index[0])
+                vel.append(index[0])
+
+        return period,vel
 
 
     # if selection == "Multitaper Spectrogram":

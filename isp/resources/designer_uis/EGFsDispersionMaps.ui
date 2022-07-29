@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>EGFFrame</class>
+ <widget class="QWidget" name="EGFFrame">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1680</width>
+    <height>924</height>
+   </rect>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
+   <item>
+    <widget class="QSplitter" name="splitter_3">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QWidget" name="layoutWidget_4">
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <layout class="QGridLayout" name="gridLayout_7">
+         <item row="1" column="2" colspan="2">
+          <widget class="QComboBox" name="wave_typeCB">
+           <item>
+            <property name="text">
+             <string>Vertical</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Transversal</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>All</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="2" column="2" colspan="2">
+          <widget class="QComboBox" name="disp_typeCB">
+           <item>
+            <property name="text">
+             <string>Group Velocity</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Phase Velocity</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Both</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="11" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Period Step</string>
+           </property>
+          </widget>
+         </item>
+         <item row="15" column="0" colspan="4">
+          <widget class="Line" name="line_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="21" column="0" colspan="4">
+          <widget class="Line" name="line_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="24" column="0">
+          <widget class="QCheckBox" name="reliefCB">
+           <property name="text">
+            <string>Relief</string>
+           </property>
+          </widget>
+         </item>
+         <item row="22" column="0" colspan="4" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>Plotting</string>
+           </property>
+          </widget>
+         </item>
+         <item row="16" column="0" colspan="4" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Smooth Parameters</string>
+           </property>
+          </widget>
+         </item>
+         <item row="18" column="0" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Beta</string>
+           </property>
+          </widget>
+         </item>
+         <item row="13" column="0">
+          <widget class="QLabel" name="label_20">
+           <property name="text">
+            <string>Grid resolution lat (km)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>min / max period [s]</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="4">
+          <widget class="Line" name="line_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="17" column="0" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Alpha</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0" colspan="2">
+          <widget class="QPushButton" name="stationsBtn">
+           <property name="toolTip">
+            <string>Click to view header information of the loaded seismogram files</string>
+           </property>
+           <property name="text">
+            <string>Station Info</string>
+           </property>
+          </widget>
+         </item>
+         <item row="11" column="1">
+          <widget class="QDoubleSpinBox" name="periods_stepCB"/>
+         </item>
+         <item row="19" column="0" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Gamma</string>
+           </property>
+          </widget>
+         </item>
+         <item row="13" column="3">
+          <widget class="QDoubleSpinBox" name="grid_lonSB"/>
+         </item>
+         <item row="0" column="0" colspan="2">
+          <widget class="QPushButton" name="read_pklBtn">
+           <property name="toolTip">
+            <string>Select the folder where you have the seismogram files</string>
+           </property>
+           <property name="text">
+            <string>File Directory</string>
+           </property>
+          </widget>
+         </item>
+         <item row="17" column="1">
+          <widget class="QDoubleSpinBox" name="alphaCB">
+           <property name="maximum">
+            <double>10000.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="13" column="1">
+          <widget class="QDoubleSpinBox" name="grid_latSB"/>
+         </item>
+         <item row="10" column="2">
+          <widget class="QDoubleSpinBox" name="max_periodCB"/>
+         </item>
+         <item row="0" column="2" colspan="2">
+          <widget class="QLineEdit" name="rootPathForm"/>
+         </item>
+         <item row="10" column="1">
+          <widget class="QDoubleSpinBox" name="min_periodCB"/>
+         </item>
+         <item row="4" column="2" colspan="2">
+          <widget class="QLineEdit" name="StationsPathForm"/>
+         </item>
+         <item row="6" column="0" colspan="4">
+          <widget class="Line" name="line">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="3">
+          <widget class="QCheckBox" name="all_periodsCheck">
+           <property name="text">
+            <string>All periods</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Wave Type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="18" column="1">
+          <widget class="QDoubleSpinBox" name="betaCB">
+           <property name="maximum">
+            <double>10000.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="12" column="0" colspan="4">
+          <widget class="Line" name="line_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="2" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_12">
+           <property name="text">
+            <string>Dispersion type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0" colspan="4" alignment="Qt::AlignHCenter">
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>Dispersion Maps Parameters</string>
+           </property>
+          </widget>
+         </item>
+         <item row="19" column="1">
+          <widget class="QDoubleSpinBox" name="gammaCB">
+           <property name="maximum">
+            <double>10000.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="13" column="2">
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Grid resolution lon (km)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="25" column="1">
+          <widget class="QLabel" name="label_13">
+           <property name="text">
+            <string>color pallette</string>
+           </property>
+          </widget>
+         </item>
+         <item row="24" column="2" colspan="2">
+          <widget class="QComboBox" name="interpCB">
+           <property name="currentText">
+            <string>gaussian</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>nearest</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>gaussian</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>bilinear</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>bicubic</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>bessel</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>spline16</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>spline36</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>hanning</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>hamming</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>hermite</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>kaiser</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>quadratic</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>catrom</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>mitchell</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>sinc</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>lanczos</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string/>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="25" column="2" colspan="2">
+          <widget class="QComboBox" name="colorCB">
+           <item>
+            <property name="text">
+             <string>RdBu</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>coolwarm</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>seismic</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Spectral</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>PiYG</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>PRGn</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>PuOr</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>RdGy</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>RdYlBu</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>RdYlGn</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>bwr</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="20" column="1" colspan="3">
+          <widget class="QPushButton" name="createdispBtn">
+           <property name="text">
+            <string>Create Dispersion Maps</string>
+           </property>
+          </widget>
+         </item>
+         <item row="24" column="1">
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>Interpolate</string>
+           </property>
+          </widget>
+         </item>
+         <item row="26" column="2" colspan="2">
+          <widget class="QPushButton" name="plotMapBtn">
+           <property name="text">
+            <string>Plot Disp Maps</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="3" column="0">
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QWidget" name="pagination_widget" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>100</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>400</width>
+             <height>80</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QWidget" name="plotMatWidget" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 255, 255);</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

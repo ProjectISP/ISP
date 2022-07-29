@@ -46,4 +46,7 @@ UiMapRealTime = load_ui_designers("map_realtime.ui")
 UiEGFFrame = load_ui_designers("EGFFrame.ui")
 UiNoise = load_ui_designers("NoiseFrame.ui")
 UiFrequencyTime = load_ui_designers("EGFsTimeFrequencyFrame.ui")
-
+UiDispersionMaps = load_ui_designers("EGFsDispersionMaps.ui")
+UiUncertainity = load_ui_designers("UncertainityInfo.ui")
+UiProject = load_ui_designers("Project.ui")
+UiProject_Dispersion = load_ui_designers("Project_Dispersion.ui")

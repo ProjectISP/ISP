@@ -4,6 +4,7 @@ from sqlalchemy import Column
 import datetime
 # Get columns instead of column attribute names and query for every entity in realtion
 class SQLAlchemyModel(pyc.QAbstractTableModel):
+    #TODO: This is going to be updated by basemodels
     """ This class implements a Qt model for SQL Alchemy model classes
         
         :param sql_alchemy_model: Subclass of BaseModel, representing a SQL Alchemy Model
@@ -74,12 +75,13 @@ class SQLAlchemyModel(pyc.QAbstractTableModel):
         return True
 
     def revertAll(self):
+        # TODO: REVIEW THIS METHOD
         self.layoutAboutToBeChanged.emit()
         self._deleted_rows = []
         
         query = db.session.query(*self._columns, *self._models)
         
-        for p,d in zip(self._join_params, self._join_dicts) :
+        for p, d in zip(self._join_params, self._join_dicts):
             query = query.join(*p, **d)
 
         if self._filter:

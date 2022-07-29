@@ -109,8 +109,8 @@ dependencies:
   - lxml=4.6.4=py38hf1fe3a4_0
   - lz4-c=1.9.3=h9c3ff4c_1
   - markdown=3.3.6=pyhd8ed1ab_0
-  - matplotlib=3.3.0=1
-  - matplotlib-base=3.3.0=py38h91b0d89_1
+  - matplotlib=3.5.1=py38h578d9bd_0
+  - matplotlib-base=3.5.1=py38hf4fb855_0
   - mtspec=0.3.2=py38h7eb8c7e_4
   - multidict=5.1.0=py38h497a2fe_1
   - munkres=1.1.4=pyh9f0ad1d_0
@@ -126,7 +126,7 @@ dependencies:
   - oauthlib=3.1.1=pyhd8ed1ab_0
   - obspy=1.2.2=py38h6c62de6_1
   - olefile=0.46=pyh9f0ad1d_1
-  - openssl=1.1.1l=h7f98852_0
+  - openssl=1.1.1n=h166bdaf_0
   - opt_einsum=3.3.0=pyhd8ed1ab_1
   - owslib=0.25.0=pyhd8ed1ab_0
   - packaging=21.3=pyhd8ed1ab_0

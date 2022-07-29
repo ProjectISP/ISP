@@ -96,6 +96,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
            </widget>
           </item>
           <item row="4" column="2" colspan="2">
@@ -105,6 +108,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="singleStep">
+             <double>0.010000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.030000000000000</double>
             </property>
            </widget>
           </item>
@@ -121,6 +130,12 @@
             </property>
             <property name="maximum">
              <double>1.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.000100000000000</double>
+            </property>
+            <property name="value">
+             <double>0.050000000000000</double>
             </property>
            </widget>
           </item>
@@ -168,6 +183,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="value">
+             <double>5.000000000000000</double>
             </property>
            </widget>
           </item>

@@ -242,12 +242,29 @@ class backproj:
 
         return cc
 
-    def multichanel(self, st):
+    def multichanel(self, st, resample = False):
+        # mutlichannel cross correlation Van deCar 1993
+
         n = len(st)
         rows = int(0.5*n*(n-1)+1)
         columns = n
         m = np.zeros((rows,columns))
         ccs = np.zeros((rows,1))
+
+        if resample:
+            sampling_freq = []
+
+            for tr in st:
+                sampling_freq.append(tr.stats.sampling_rate)
+
+            max_sampling_freq = max(sampling_freq)
+            st.resample(sampling_rate = max_sampling_freq, no_filter= False)
+            fs = max_sampling_freq
+
+        else:
+
+            fs = st[0].stats.sampling_rate
+
         k = 0
         for i in range(0, n, 1):
             for j in range(0, n, 1):
@@ -266,11 +283,11 @@ class backproj:
                     else:
                          maximo = np.where(cc == np.min(cc))
 
-                    lag_time = ((maximo[0][0])/50)-0.5*(len(cc)/50)
-
+                    lag_time = (maximo[0][0] - 0.5 * (len(cc)))/fs
                     ccs[k] = lag_time
 
                     k = k + 1
+
         m[rows-1,:] = np.ones(columns)
         times = -1*np.matmul(np.linalg.pinv(m),ccs)
         for i in range(len(st)):

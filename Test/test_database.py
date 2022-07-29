@@ -44,6 +44,10 @@ class MyTestCase(unittest.TestCase):
         origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file)
         try:
             event_model = EventLocationModel.create_from_origin(origin)
+            phases = PhaseInfoModel.create_phases_from_origin(origin, event_model.id)
+            for phase in phases:
+                phase.save()
+                event_model.add_phase(phase)
             event_model.save()
             event_model: EventLocationModel = EventLocationModel.find_by_id(event_model.id)
             self.assertIsNotNone(event_model)

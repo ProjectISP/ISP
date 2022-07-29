@@ -1,13 +1,127 @@
 import numpy as np
 import math
-
 from numba import jit
+
 
 
 class noise_processing:
 
     def __init__(self, tr):
         self.tr = tr
+
+    def __plot_phase_match(self, t, gauss_window, time_domain_compressed_signal, windowed_compressed_signal):
+
+        import matplotlib.pyplot as plt
+        from isp.Gui.Frames import MatplotlibFrame
+        fig, ax1 = plt.subplots(figsize=(6, 6))
+        self.mpf = MatplotlibFrame(fig)
+        t = t[1:]
+        ax1.plot(t, time_domain_compressed_signal/np.max(time_domain_compressed_signal), linewidth=0.5,
+                 color='steelblue', label="time_domain_compressed_signal")
+        ax1.plot(t, gauss_window, linewidth=0.5, color='green', label="Gauss pulse")
+        ax1.plot(t, windowed_compressed_signal/np.max(windowed_compressed_signal), linewidth=0.5, color='red', label="windowed_compressed_signal")
+
+        plt.ylabel('Amplitude')
+        plt.xlabel('Time')
+        plt.legend()
+        self.mpf.show()
+
+    def __get_reference_disp(self, type, phaseMacthmodel, fft_bins):
+        import pandas as pd
+        import os
+        from isp import DISP_REF_CURVES
+        from scipy import interpolate
+        import matplotlib.pyplot as plt
+        from isp.Gui.Frames import MatplotlibFrame
+
+        if phaseMacthmodel == "ak-135f":
+
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_velocity.txt")
+            df = pd.read_csv(path)
+            freq_ref = 1/(df['period'].to_numpy())
+            if type == "Rayleigh":
+                vel = df['phase_velocity_rayleigh'].to_numpy()
+            if type == "Love":
+                vel = df['phase_velocity_love'].to_numpy()
+
+        elif phaseMacthmodel == "ak-135f (Ocean-shallow waters)":
+
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_shallow_velocity.txt")
+            df = pd.read_csv(path)
+            freq_ref = 1/(df['period'].to_numpy())
+            if type == "Rayleigh":
+                vel = df['phase_velocity_rayleigh'].to_numpy()
+            if type == "Love":
+                vel = df['phase_velocity_love'].to_numpy()
+
+        elif phaseMacthmodel == "ak-135f (Ocean-intermediate waters)":
+
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_intermediate_velocity.txt")
+            df = pd.read_csv(path)
+            freq_ref = 1/(df['period'].to_numpy())
+            if type == "Rayleigh":
+                vel = df['phase_velocity_rayleigh'].to_numpy()
+            if type == "Love":
+                vel = df['phase_velocity_love'].to_numpy()
+
+        elif phaseMacthmodel == "ak-135f (Ocean-deep waters)":
+
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_deep_velocity.txt")
+            df = pd.read_csv(path)
+            freq_ref = 1/(df['period'].to_numpy())
+            if type == "Rayleigh":
+                vel = df['phase_velocity_rayleigh'].to_numpy()
+            if type == "Love":
+                vel = df['phase_velocity_love'].to_numpy()
+        freq_ref = np.flip(freq_ref)
+        vel = np.flip(vel)
+        f = interpolate.interp1d(freq_ref, vel, fill_value="extrapolate")
+        vel2 = f(fft_bins)
+        return vel2
+
+
+    def phase_matched_filter(self, type, phaseMacthmodel, distance, filter_parameter = 2):
+
+        distance = distance/1000
+        #reference_c es un scipy.interpolate.interp1d
+        tr_process = self.tr.copy()
+        signal = tr_process.data
+        dt = tr_process.stats.delta
+        tshift = (len(signal) * dt) / 2  # We will shift the collapsed Rayleigh waves to the center of the time series
+
+        fft = np.fft.rfft(signal)
+        fft_bins = np.fft.rfftfreq(len(signal), d=dt)
+        reference_disp_phase_vel = self.__get_reference_disp(type, phaseMacthmodel, fft_bins)
+
+        # Compute and apply the phase correction and time shifts, return to the time domain 2*pi*[distance/phase_Vel]
+        #phase_correction = np.exp(1j * 2 * np.pi * fft_bins * np.divide(distance, reference_disp_phase_vel(fft_bins), out=np.zeros_like(fft_bins),
+        #                                           where=reference_disp_phase_vel(fft_bins) != 0))
+
+        phase_correction = np.exp(1j * 2 * np.pi * fft_bins * np.divide(distance, reference_disp_phase_vel))
+        time_shift = np.exp(-1j*tshift*2*np.pi*fft_bins)
+        frequency_domain_compressed_signal = fft * phase_correction * time_shift
+        time_domain_compressed_signal = np.fft.irfft(frequency_domain_compressed_signal)
+        # Apply a Gaussian window in the time domain
+        sigma = filter_parameter / dt  # standard deviation in seconds divided by dt gives us samples
+        gauss_window = np.exp(-0.25 * ((np.arange(0, len(time_domain_compressed_signal), 1) - len(time_domain_compressed_signal) / 2)) ** 2
+                               / (sigma ** 2))
+        windowed_compressed_signal = time_domain_compressed_signal * gauss_window
+        windowed_compressed_signal[np.abs(windowed_compressed_signal) < 1e-16] = 0
+        #self.__plot_phase_match(tr_process.times(), gauss_window, time_domain_compressed_signal, windowed_compressed_signal)
+        # FFT to the frequency domain, disperse the signal and back to the time domain
+        signal_freq = np.fft.rfft(windowed_compressed_signal)
+        fft_bins = np.fft.rfftfreq(len(signal), d=dt)
+        # Estimate phase corrections to unwrap the filtered signal
+        # phase_correction_unwrap = np.exp(-1j * distance * np.divide(2 * np.pi * fft_bins, reference_disp_phase_vel(fft_bins), out=np.zeros_like(fft_bins),
+        #                                                       where=reference_disp_phase_vel(fft_bins) != 0))
+
+        phase_correction_unwrap = np.exp(-1j * 2 * np.pi * fft_bins * np.divide(distance, reference_disp_phase_vel))
+        #phase_correction_unwrap = np.exp(-1j * distance * np.divide(2 * np.pi * fft_bins, reference_disp_phase_vel))
+        time_shift_unwrap = np.exp(1j*tshift*2*np.pi*fft_bins)
+        frequency_domain_uncompressed_signal = signal_freq*phase_correction_unwrap*time_shift_unwrap
+        time_domain_uncompressed_signal = np.real(np.fft.irfft(frequency_domain_uncompressed_signal))
+        tr_process.data = time_domain_uncompressed_signal
+        return tr_process
 
     def normalize(self, clip_factor=6, clip_weight=10, norm_win=None, norm_method="1bit"):
 

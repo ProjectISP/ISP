@@ -15,8 +15,8 @@ class PickerManager:
     Date = "Date"
     HourMin = "Hour_min"
     Seconds = "Seconds"
+    GAU = "GAU"
     Err = "Err"
-    ErrMag = "ErrMag"
     CodaDuration = "Coda_duration"
     Amplitude = "Amplitude"
     Period = "Period"
@@ -46,8 +46,8 @@ class PickerManager:
             self.__output_path = self.get_default_output_path()
 
         self.columns = [self.StationName, self.Instrument, self.Component, self.PPhaseOnset, self.PPhaseDescriptor,
-                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, self.Err, self.ErrMag,
-                        self.CodaDuration, self.Amplitude, self.Period]
+                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, "GAU", self.Err, self.CodaDuration,
+                        self.Amplitude, self.Period]
 
         if overwrite:
             self.df = self.__setup_file()
@@ -90,16 +90,18 @@ class PickerManager:
         """
         date = "{year:04d}{month:02d}{day:02d}".format(year=time.date.year, month=time.date.month, day=time.date.day)
         hour_min = "{:02d}{:02d}".format(time.hour, time.minute)
-        seconds = "{:02d}".format(time.second)
+        seconds = "{second:02d}.{micro}".format(second=time.second, micro = str(time.microsecond)[0:3])
+
         return date, hour_min, seconds
 
-    def add_data(self, time, amplitude: float, station: str, p_phase: str, **kwargs):
+    def add_data(self, time, err: float, amplitude: float, station: str, p_phase: str, **kwargs):
         """
         Add data to be saved.
 
         Important: To save data to file you must call the method save.
 
         :param time: An UTCDateTime or a valid time string.
+        :param err: Associated uncertainty for that pick
         :param amplitude: The amplitude of the waveform.
         :param station: The station name
         :param p_phase: The phase.
@@ -107,8 +109,7 @@ class PickerManager:
         :keyword Instrument: The instrument.
         :keyword Component:
         :keyword First_Motion: The polarization, either "U" or "D"
-        :keyword Err:
-        :keyword ErrMag:
+        :keyword Err: uncertainty
         :keyword Coda_duration:
         :keyword Period:
         :return:
@@ -119,8 +120,9 @@ class PickerManager:
 
         date, hour_min, seconds = self.__from_utctime_to_datetime(time)
         amplitude = "{0:.2f}".format(amplitude)
-
-        self.__add_data(Date=date, Hour_min=hour_min, Seconds=seconds, Station_name=station, Amplitude=amplitude,
+        #err = "{0:.2f}".format(err)
+        err = format(err, ".2E")
+        self.__add_data(Date=date, Hour_min=hour_min, Seconds=seconds, Err=err, Station_name=station, Amplitude=amplitude,
                         P_phase_descriptor=p_phase, **kwargs)
 
     def __add_data(self, **kwargs):
@@ -139,8 +141,8 @@ class PickerManager:
         :keyword Date:
         :keyword Hour_min:
         :keyword Seconds:
+        :keyword GAU:
         :keyword Err:
-        :keyword ErrMag:
         :keyword Coda_duration:
         :keyword Amplitude:
         :keyword Period:
@@ -151,8 +153,9 @@ class PickerManager:
         data = {key: kwargs.get(key, "?") for key in self.columns}  # start a dict with default values equal "?"
 
         # Override defaults values for some keys
-        data[self.Err] = "GAU" if data[self.Err] == "?" else data[self.Err]
-        data[self.ErrMag] = "{:.1f}".format(0) if data[self.ErrMag] == "?" else data[self.ErrMag]
+        data["GAU"] = "GAU"
+        data[self.Err] = "{:.1f}".format(0) if data[self.Err] == "?" else data[self.Err]
+        #data[self.Err] = "GAU" if data[self.Err] == "?" else data[self.Err]
         data[self.CodaDuration] = "{:.1f}".format(0) if data[self.CodaDuration] == "?" else data[self.CodaDuration]
         data[self.Period] = "{:.1f}".format(0) if data[self.Period] == "?" else data[self.Period]
 

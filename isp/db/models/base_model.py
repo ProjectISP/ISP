@@ -1,13 +1,12 @@
 from sqlalchemy import Column, or_, and_, text
 from sqlalchemy.orm import Query
-
 from isp.Exceptions import EntityNotFound, QueryException
 from isp.Structures.structures import Search, SearchResult
 from isp.db import db
 
 
 class BaseModel:
-
+    #TODO: This must be updated to include a more powerful searching filters
     def __init__(self, *args, **kwargs):
         super(BaseModel).__init__(self, *args, **kwargs)
 
