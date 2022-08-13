@@ -38,5 +38,5 @@ def create_tables(force=False):
         db.create_all()
 
 
-# will create tables if sqlite file don't exist. If force is True is create anyway.
+# will create tables if sqlite file don't exist. If force is True is created anyway.
 create_tables()
