@@ -284,11 +284,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def load_project(self):
 
-        if "darwin" == platform:
-            selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
-        else:
-            selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR,
-                                                      pw.QFileDialog.DontUseNativeDialog)
+        selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
 
         md = MessageDialog(self)
 
@@ -343,12 +339,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 for t in times:
                     if k == "p":
                         line = self.canvas.draw_arrow(t.matplotlib_date, index + 2,
-                                               "P", color="blue", linestyles='--', picker=False)
+                                               "P", color="blue", linestyles='--', picker=True)
                         self.lines.append(line)
                         with open(self.path_phases, "a+") as f:
                             f.write(station + " " + k.upper() + " " + t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
 
-                        self.picked_at[str(line)] = PickerStructure(t,st2[2].stats.station, t.matplotlib_date,
+                        self.picked_at[str(line)] = PickerStructure(t, st2[2].stats.station, t.matplotlib_date,
                             0.2, 0, "blue", "P", self.get_file_at_index(index + 2))
 
                         self.pm.add_data(t, 0.2, 0, st2[2].stats.station, "P", Component=st2[2].stats.channel,
@@ -358,16 +354,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     if k == "s":
 
                         line1s = self.canvas.draw_arrow(t.matplotlib_date, index + 0,
-                                               "S", color="purple", linestyles='--', picker=False)
+                                               "S", color="purple", linestyles='--', picker=True)
                         line2s = self.canvas.draw_arrow(t.matplotlib_date, index + 1,
-                                               "S", color="purple", linestyles='--', picker=False)
+                                               "S", color="purple", linestyles='--', picker=True)
 
                         self.lines.append(line1s)
                         self.lines.append(line2s)
 
 
                         with open(self.path_phases, "a+") as f:
-                                f.write(station+" "+k.upper()+" "+t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
+                            f.write(station+" "+k.upper()+" "+t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
 
                         self.picked_at[str(line1s)] = PickerStructure(t, st2[1].stats.station, t.matplotlib_date,
                              0.2, 0, "blue", "S", self.get_file_at_index(index + 0))
@@ -389,8 +385,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def _run_picker(self):
         os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
         # Creates a new file
-        with open(self.path_phases, 'w') as fp:
-            pass
+        #with open(self.path_phases, 'w') as fp:
+        #    pass
         if self.st:
             stations = ObspyUtil.get_stations_from_stream(self.st)
             N = len(stations)
@@ -815,28 +811,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             s = tr.data
 
             self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
-            #if  self.pagination.items_per_page>=16:
+            self.redraw_chop(tr, s, index)
+            self.redraw_event_times(index)
             ax = self.canvas.get_axe(index)
             ax.spines["top"].set_visible(False)
             ax.spines["bottom"].set_visible(False)
             ax.tick_params(top=False)
             ax.tick_params(labeltop=False)
-            ax.set_ylim(np.min(s),np.max(s))
-            if index!=(self.pagination.items_per_page-1):
-               ax.tick_params(bottom=False)
-
-            try:
-                self.redraw_pickers(file_path, index)
-                #redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
-                self.redraw_chop(tr, s, index)
-                self.redraw_event_times(index)
-            except:
-                print("It couldn't plot chop data")
-
-            last_index = index
+            ax.set_ylim(np.min(s), np.max(s))
+            #
+            if index != (self.pagination.items_per_page-1):
+                ax.tick_params(bottom=False)
 
             st_stats = ObspyUtil.get_stats(file_path)
-
+            self.redraw_pickers(file_path, index)
             if self.decimator[1]:
                 warning = "Decimated to " + str(self.decimator[0])+"  Hz"
                 self.canvas.set_warning_label(index, warning)
@@ -1413,8 +1401,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         for key, value in picked_at.items():
             ps: PickerStructure = value
             if file_name == ps.FileName:
-                new_line = self.canvas.draw_arrow(ps.XPosition, axe_index, ps.Label,
-                                                  amplitude=ps.Amplitude, color=ps.Color, picker=True)
+                #new_line = self.canvas.draw_arrow(ps.XPosition, axe_index, ps.Label,
+                #                                  amplitude=ps.Amplitude, color=ps.Color, picker=True)
+                new_line = self.canvas.draw_arrow(ps.XPosition, axe_index, ps.Label, amplitude=ps.Amplitude,
+                                                  color=ps.Color, picker=True)
+                #picked_at.pop(key)
                 self.picked_at.pop(key)
                 self.picked_at[str(new_line)] = ps
 

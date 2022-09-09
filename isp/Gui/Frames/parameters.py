@@ -1,4 +1,7 @@
 from isp.Gui import pw
+from PyQt5.QtCore import QCoreApplication
+
+from isp.Gui.Frames import MessageDialog
 from isp.Gui.Frames.add_parameters import AdditionalParameters
 from isp.Gui.Frames.uis_frames import UiParametersFrame
 from isp import MACROS_PATH
@@ -46,11 +49,17 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
         self.currentFilename = None
         self.saveBtn.clicked.connect(self.on_save_action_pushed)
         self.loadBtn.clicked.connect(self.on_load_action_pushed)
-
+        self.accept_Btn.clicked.connect(self.accept)
     def execAdditionalParameters(self):
         if self.additionalParams is None:
             self.additionalParams = AdditionalParameters()
         self.additionalParams.exec()
+
+    def accept(self):
+        md = MessageDialog(self)
+        md.set_info_message(" Process Loaded ")
+        print(self.getParameters())
+        #QCoreApplication.instance().quit
 
     def on_save_action_pushed(self):
         path = self.currentFilename
@@ -182,11 +191,13 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
 
             freq_minDB = pw.QDoubleSpinBox()
             freq_minDB.setMinimum(0)
+            freq_minDB.setMaximum(500)
             freq_minDB.setDecimals(3)
             freq_minDB.setSingleStep(0.001)
 
             freq_maxDB = pw.QDoubleSpinBox()
             freq_maxDB.setMinimum(0)
+            freq_maxDB.setMaximum(500)
             freq_maxDB.setDecimals(3)
             freq_maxDB.setSingleStep(0.001)
 
@@ -226,19 +237,21 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
 
             freq_minDB1 = pw.QDoubleSpinBox()
             freq_minDB1.setMinimum(0)
-            freq_minDB1.setSingleStep(0.01)
+            freq_minDB1.setSingleStep(0.001)
 
             freq_minDB2 = pw.QDoubleSpinBox()
             freq_minDB2.setMinimum(0)
-            freq_minDB2.setSingleStep(0.01)
+            freq_minDB2.setSingleStep(0.001)
 
             freq_maxDB1 = pw.QDoubleSpinBox()
             freq_maxDB1.setMinimum(0)
-            freq_maxDB1.setSingleStep(0.01)
+            freq_maxDB1.setMaximum(500)
+            freq_maxDB1.setSingleStep(0.001)
 
             freq_maxDB2 = pw.QDoubleSpinBox()
             freq_maxDB2.setMinimum(0)
-            freq_maxDB2.setSingleStep(0.01)
+            freq_maxDB2.setMaximum(500)
+            freq_maxDB2.setSingleStep(0.001)
 
             water_levelDB = pw.QDoubleSpinBox()
             water_levelDB.setMinimum(0)

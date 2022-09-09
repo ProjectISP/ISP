@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1680</width>
-    <height>1000</height>
+    <height>1038</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -62,77 +62,17 @@
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout">
-                  <item row="7" column="1" colspan="2">
-                   <widget class="QDateTimeEdit" name="dateTimeEdit_1">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>60</width>
-                      <height>30</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>16777215</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="styleSheet">
-                     <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
-                    </property>
-                    <property name="currentSection">
-                     <enum>QDateTimeEdit::YearSection</enum>
-                    </property>
-                    <property name="displayFormat">
-                     <string>yyyy/M/d h:mm:ss UTC</string>
-                    </property>
-                    <property name="calendarPopup">
-                     <bool>true</bool>
-                    </property>
-                    <property name="timeSpec">
-                     <enum>Qt::LocalTime</enum>
+                  <item row="7" column="3" alignment="Qt::AlignLeft">
+                   <widget class="QLabel" name="label">
+                    <property name="text">
+                     <string>Start</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="8" column="1" colspan="2">
-                   <widget class="QDateTimeEdit" name="dateTimeEdit_2">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>60</width>
-                      <height>30</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>16777215</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="styleSheet">
-                     <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
-                    </property>
-                    <property name="currentSection">
-                     <enum>QDateTimeEdit::YearSection</enum>
-                    </property>
-                    <property name="displayFormat">
-                     <string>yyyy/M/d h:mm:ss UTC</string>
-                    </property>
-                    <property name="calendarPopup">
-                     <bool>true</bool>
-                    </property>
-                    <property name="timeSpec">
-                     <enum>Qt::LocalTime</enum>
+                  <item row="8" column="3" alignment="Qt::AlignLeft">
+                   <widget class="QLabel" name="label_2">
+                    <property name="text">
+                     <string>End</string>
                     </property>
                    </widget>
                   </item>
@@ -146,7 +86,7 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="6" column="1" colspan="3">
+                  <item row="6" column="1" colspan="4">
                    <widget class="QLineEdit" name="datalessPathForm">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -162,19 +102,6 @@
                     </property>
                     <property name="readOnly">
                      <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="7" column="0">
-                   <widget class="QLabel" name="label">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="text">
-                     <string>Start Time</string>
                     </property>
                    </widget>
                   </item>
@@ -201,19 +128,6 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="8" column="0">
-                   <widget class="QLabel" name="label_2">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="text">
-                     <string>End Time</string>
-                    </property>
-                   </widget>
-                  </item>
                   <item row="6" column="0">
                    <widget class="QPushButton" name="selectDatalessDirBtn">
                     <property name="toolTip">
@@ -224,7 +138,7 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="7" column="3" rowspan="2">
+                  <item row="7" column="4" rowspan="3">
                    <widget class="QCheckBox" name="trimCB">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -253,7 +167,7 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="1" column="0" colspan="4">
+                  <item row="1" column="0" colspan="5">
                    <widget class="QPushButton" name="selectDirBtn">
                     <property name="toolTip">
                      <string extracomment="Select the folder where you have the seismogram files">Select the folder where you have the Project file / Press &quot;R&quot; to reload last Project with your selected filters.</string>
@@ -266,10 +180,10 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="2" colspan="2">
+                  <item row="3" column="3" colspan="2">
                    <widget class="QLineEdit" name="channelForm"/>
                   </item>
-                  <item row="2" column="2" colspan="2" alignment="Qt::AlignHCenter">
+                  <item row="2" column="3" colspan="2" alignment="Qt::AlignHCenter">
                    <widget class="QLabel" name="label_6">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -279,6 +193,80 @@
                     </property>
                     <property name="text">
                      <string>Channels</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="0" colspan="3">
+                   <widget class="QDateTimeEdit" name="dateTimeEdit_1">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>60</width>
+                      <height>30</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
+                    </property>
+                    <property name="currentSection">
+                     <enum>QDateTimeEdit::YearSection</enum>
+                    </property>
+                    <property name="displayFormat">
+                     <string>yyyy/M/d h:mm:ss UTC</string>
+                    </property>
+                    <property name="calendarPopup">
+                     <bool>true</bool>
+                    </property>
+                    <property name="timeSpec">
+                     <enum>Qt::LocalTime</enum>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="0" colspan="3">
+                   <widget class="QDateTimeEdit" name="dateTimeEdit_2">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>60</width>
+                      <height>30</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">font: 13pt &quot;.SF NS Text&quot;;</string>
+                    </property>
+                    <property name="currentSection">
+                     <enum>QDateTimeEdit::YearSection</enum>
+                    </property>
+                    <property name="displayFormat">
+                     <string>yyyy/M/d h:mm:ss UTC</string>
+                    </property>
+                    <property name="calendarPopup">
+                     <bool>true</bool>
+                    </property>
+                    <property name="timeSpec">
+                     <enum>Qt::LocalTime</enum>
                     </property>
                    </widget>
                   </item>
@@ -559,7 +547,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>1109</width>
-                  <height>758</height>
+                  <height>796</height>
                  </rect>
                 </property>
                </widget>
