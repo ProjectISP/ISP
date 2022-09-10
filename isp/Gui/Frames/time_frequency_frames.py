@@ -1,7 +1,5 @@
 import math
-from matplotlib.colors import Normalize
 from scipy import ndimage
-
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
@@ -14,7 +12,6 @@ from isp.Gui.Frames.time_frequency_advance_frame import TimeFrequencyAdvance
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime, set_qdatetime
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.seismogramInspector.MTspectrogram import MTspectrogram, WignerVille
-import matplotlib.pyplot as plt
 import numpy as np
 from isp.Gui.Frames.help_frame import HelpDoc
 import os
