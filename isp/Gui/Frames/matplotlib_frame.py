@@ -1,5 +1,4 @@
 from __future__ import unicode_literals
-
 from typing import Optional
 import cartopy
 import cartopy.crs as ccrs
@@ -20,10 +19,10 @@ from matplotlib.widgets import SpanSelector, MultiCursor
 from mpl_toolkits.mplot3d import Axes3D
 from obspy import Stream
 from owslib.wms import WebMapService
-
+import numpy as np
 from isp import RESOURCE_PATH
 from isp.Gui import pw, pyc, qt
-from isp.Gui.Utils import ExtendSpanSelector, Worker
+from isp.Gui.Utils import ExtendSpanSelector
 from isp.Utils import ObspyUtil, AsycTime
 
 
@@ -597,6 +596,11 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             area = 10.*z**2  # points size from 0 to 5
             cs = ax.scatter(x, y, s=area, c=z, cmap=cmap, alpha=0.5, vmin=vmin, vmax=vmax, marker=".", **kwargs)
 
+        elif plot_type == "imshow":
+            extent = [np.min(x),np.max(x), np.min(y), np.max(y)]
+            cs = ax.imshow(z, cmap=cmap, extent=extent, origin = 'lower', aspect='auto',
+                           vmin=vmin, vmax=vmax, **kwargs)
+            ax.set(yscale='log', aspect='auto')
         else:
             raise ValueError("Invalid value for plot_type it must be equal to either contourf or scatter.")
 
@@ -672,6 +676,23 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
                 return artist
             else:
                 return self.__plot_date(x, y, ax, clear_plot=clear_plot, update=update, **kwargs)
+
+    def image(self, x: object, y: object, z: object, axes_index: object, clear_plot: object = True, show_colorbar: object = True, **kwargs: object) -> object:
+        """
+         Wrapper for matplotlib contourf.
+
+         :param x: x-axis data.
+         :param y: y-axis data.
+         :param z: z-axis data.
+         :param axes_index: The subplot axes index.
+         :param clear_plot: True to clean plot, False to plot over.
+         :param show_colorbar: True to show colorbar, false otherwise.
+         :param kwargs: Valid Matplotlib kwargs for contourf.
+         :return:
+         """
+        if self.axes is not None:
+            ax = self.get_axe(axes_index)
+            self.__plot_3d(x, y, z, ax, "imshow", clear_plot=clear_plot, show_colorbar=show_colorbar, **kwargs)
 
     def plot_contour(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """

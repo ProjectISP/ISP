@@ -10,6 +10,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 from obspy import read
+from scipy import ndimage
 from scipy.signal import hilbert
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
@@ -55,21 +56,31 @@ class MTspectrogram:
     #     x, y, log_spectrogram = self.__compute_spectrogram(tr.data)
     #     return x, y, log_spectrogram
 
-    def __compute_spectrogram(self, tr):
-         npts = len(tr)
-         t = np.linspace(0, (tr.stats.delta * npts), npts - self.win)
-         mt_spectrum = MTspectrum(tr.data, self.win, tr.stats.delta, self.tbp, self.ntapers, self.f_min, self.f_max)
-         log_spectrogram = 10. * np.log(mt_spectrum / np.max(mt_spectrum))
-         x, y = np.meshgrid(t, np.linspace(self.f_min, self.f_max, log_spectrogram.shape[0]))
-         return x, y, log_spectrogram
+    def __compute_spectrogram(self, tr, res):
+        npts = len(tr)
+
+        mt_spectrum = MTspectrum(tr.data, self.win, tr.stats.delta, self.tbp, self.ntapers, self.f_min, self.f_max)
+        log_spectrogram = 10. * np.log(mt_spectrum / np.max(mt_spectrum))
+
+        if res > 1:
+             log_spectrogram = ndimage.zoom(log_spectrogram, (1.0, 1 / log_spectrogram))
+             t = np.linspace(0, res * tr.stats.delta * log_spectrogram.shape[1], log_spectrogram.shape[1])
+             f = np.linspace(self.f_min, self.f_max, log_spectrogram.shape[0])
+             x, y = np.meshgrid(t, f)
+        else:
+             t = np.linspace(0, (tr.stats.delta * npts), npts - self.win)
+             f = np.linspace(self.f_min, self.f_max, log_spectrogram.shape[0])
+             x, y = np.meshgrid(t, f)
+
+        return x, y, log_spectrogram
 
 
 
-    def compute_spectrogram(self, tr, start_time=None, end_time=None):
+    def compute_spectrogram(self, tr, res = 1, start_time=None, end_time=None):
 
          tr.trim(starttime=start_time, endtime=end_time)
 
-         x, y, log_spectrogram = self.__compute_spectrogram(tr)
+         x, y, log_spectrogram = self.__compute_spectrogram(tr, res)
          return x, y, log_spectrogram
 
     def plot_spectrogram(self, tr, fig=None, show=False):
@@ -141,15 +152,21 @@ class  WignerVille:
         return wv
 
 
-    def __compute_spectrogram(self, tr):
+    def __compute_spectrogram(self, tr, res):
         npts = len(tr)
-        t = np.linspace(0, (tr.stats.delta * npts), npts)
         mt_wigner_spectrum = self.mt_wigner_wille_spectrum(tr.data, self.win, tr.stats.delta, self.tbp, self.ntapers, self.f_min, self.f_max)
         mt_wigner_spectrum = np.flipud(mt_wigner_spectrum)
         mt_wigner_spectrum =np.sqrt(abs(mt_wigner_spectrum))
-        #log_spectrogram = 10. * np.log(mt_wigner_spectrum / np.max(mt_wigner_spectrum))
         mt_wigner_spectrum = mt_wigner_spectrum / np.max(mt_wigner_spectrum)
-        x, y = np.meshgrid(t, np.linspace(self.f_min, self.f_max, mt_wigner_spectrum.shape[0]))
+        if res > 1:
+             log_spectrogram = ndimage.zoom(mt_wigner_spectrum, (1.0, 1 / mt_wigner_spectrum))
+             t = np.linspace(0, res * tr.stats.delta * log_spectrogram.shape[1], log_spectrogram.shape[1])
+             f = np.linspace(self.f_min, self.f_max, log_spectrogram.shape[0])
+             x, y = np.meshgrid(t, f)
+        else:
+             t = np.linspace(0, (tr.stats.delta * npts), npts)
+             f = np.linspace(self.f_min, self.f_max, mt_wigner_spectrum.shape[0])
+             x, y = np.meshgrid(t, f)
         return x, y, mt_wigner_spectrum
 
 
