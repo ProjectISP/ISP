@@ -284,8 +284,17 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
 
 
             # Plot Cross Scalogram
-            self.cross_spectrumWidget_Widget_Canvas.plot_contour(x, y, cross_scalogram, axes_index=1, clabel="Cross Power [dB]",
-                                           cmap=plt.get_cmap(colour))
+
+            if self.typeCB.currentText() == 'contourf':
+                self.cross_spectrumWidget_Widget_Canvas.plot_contour(x, y, cross_scalogram, axes_index=1, clear_plot=True,
+                                                                     clabel="Cross Power [dB]", cmap=self.colourCB.currentText())
+            elif self.typeCB.currentText() == 'pcolormesh':
+                self.cross_spectrumWidget_Widget_Canvas.pcolormesh(x, y, cross_scalogram, axes_index=1, clear_plot=True,
+                                                                     clabel="Cross Power [dB]", cmap=self.colourCB.currentText())
+            elif self.typeCB.currentText() == 'imshow':
+                self.cross_spectrumWidget_Widget_Canvas.image(x, y, cross_scalogram, axes_index=1, clear_plot=True,
+                                                                     clabel="Cross Power [dB]", cmap=self.colourCB.currentText())
+
             # Plot Cone
             ax_cone = self.cross_spectrumWidget_Widget_Canvas.get_axe(1)
             ax_cone.fill_between(pred, f, 0, color="black", edgecolor="red", alpha=0.3)
