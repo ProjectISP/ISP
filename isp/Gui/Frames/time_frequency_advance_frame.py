@@ -1,4 +1,5 @@
 from obspy import Stream
+from scipy import ndimage
 
 from isp.Gui import pw
 from isp.Gui.Frames import MatplotlibCanvas
@@ -38,6 +39,18 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
         self.Cross_scalogramBtn.clicked.connect(self.plot_cross_scalogram)
         self.tr1 = tr1
         self.tr2 = tr2
+
+        self.horizontalSlider.valueChanged.connect(self.valueChanged)
+
+        # Resolution
+        # Based on 100 Hz,
+        self.very_low_res = 100 * 3600 * 0.5
+        self.low_res = 100 * 3600 * 1
+        self.high_res = 100 * 3600 * 3
+        self.very_high_res = 100 * 3600 * 6
+
+    def valueChanged(self):
+        self.resSB.setValue(self.horizontalSlider.value())
 
     def plot_spectrum(self):
         if len(self.tr1) >0:
@@ -210,6 +223,26 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
             self.cross_spectrumWidget_Widget_Canvas.set_xlabel(0, "Time (s)")
             self.cross_spectrumWidget_Widget_Canvas.set_ylabel(0, "Frequency (Hz)")
 
+    def __estimate_res(self, npts):
+
+        res_user = self.resSB.value()
+        if npts <= self.very_low_res:
+            self.res_factor = 1
+            if res_user > self.res_factor:
+                self.res_factor = res_user
+        elif self.very_low_res < npts <= self.low_res:
+            self.res_factor = 20
+            if res_user > self.res_factor:
+                self.res_factor = res_user
+        elif self.high_res < npts <= self.very_high_res:
+            self.res_factor = 50
+            if res_user > self.res_factor:
+                self.res_factor = res_user
+        elif npts > self.very_high_res:
+            self.res_factor = 100
+            if res_user > self.res_factor:
+                self.res_factor = res_user
+        print("resolution Factor", self.res_factor)
 
     def plot_cross_scalogram(self):
 
@@ -238,6 +271,7 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
             tr2.taper(max_percentage=0.05)
 
             npts =len(tr1.data)
+            self.__estimate_res( npts)
             t = np.linspace(0,  npts/fs, npts)
             f_max = fs/2
             nf = 40
@@ -255,11 +289,19 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
             cross_scalogram = np.abs(crossCFS)**2
             cross_scalogram = 10*np.log(cross_scalogram/np.max(cross_scalogram))
             cross_scalogram = np.clip(cross_scalogram, a_min=base_line, a_max=0)
-            min_cwt = base_line
-            max_cwt = 0
+
+            if self.res_factor > 1:
+
+                cross_scalogram = ndimage.zoom(cross_scalogram, (1.0, 1/self.res_factor))
+                #tt = t[::factor]
+                t = np.linspace(0, self.res_factor * (1/fs) * cross_scalogram.shape[1], cross_scalogram.shape[1])
+                freq = np.logspace(np.log10(f_min), np.log10(f_max), cross_scalogram.shape[0])
+                x, y = np.meshgrid(t, freq)
+            else:
+                freq = np.logspace(np.log10(f_min), np.log10(f_max), cross_scalogram.shape[0])
+                x, y = np.meshgrid(t, freq)
 
 
-            x, y = np.meshgrid(t, np.logspace(np.log10(f_min), np.log10(f_max), cross_scalogram.shape[0]))
             c_f = wmin / 2 * math.pi
             f = np.linspace((f_min), (f_max), cross_scalogram.shape[0])
             pred = (math.sqrt(2) * c_f / f) - (math.sqrt(2) * c_f / f_max)
@@ -285,15 +327,15 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
 
             # Plot Cross Scalogram
 
-            if self.typeCB.currentText() == 'contourf':
+            if self.res_factor <= 1:
                 self.cross_spectrumWidget_Widget_Canvas.plot_contour(x, y, cross_scalogram, axes_index=1, clear_plot=True,
                                                                      clabel="Cross Power [dB]", cmap=self.colourCB.currentText())
-            elif self.typeCB.currentText() == 'pcolormesh':
+            else:
                 self.cross_spectrumWidget_Widget_Canvas.pcolormesh(x, y, cross_scalogram, axes_index=1, clear_plot=True,
                                                                      clabel="Cross Power [dB]", cmap=self.colourCB.currentText())
-            elif self.typeCB.currentText() == 'imshow':
-                self.cross_spectrumWidget_Widget_Canvas.image(x, y, cross_scalogram, axes_index=1, clear_plot=True,
-                                                                     clabel="Cross Power [dB]", cmap=self.colourCB.currentText())
+            # elif self.typeCB.currentText() == 'imshow':
+            #     self.cross_spectrumWidget_Widget_Canvas.image(x, y, cross_scalogram, axes_index=1, clear_plot=True,
+            #                                                          clabel="Cross Power [dB]", cmap=self.colourCB.currentText())
 
             # Plot Cone
             ax_cone = self.cross_spectrumWidget_Widget_Canvas.get_axe(1)

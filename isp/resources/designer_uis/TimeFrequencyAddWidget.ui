@@ -152,10 +152,117 @@
     </item>
     <item row="1" column="0">
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="13" column="0">
-       <widget class="QLabel" name="label_3">
+      <item row="6" column="0" colspan="2">
+       <widget class="QPushButton" name="cross_correlationsBtn">
         <property name="text">
-         <string>Colour</string>
+         <string>Cross Correlation</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Number of Cycles</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <widget class="QPushButton" name="plot_spectrumBtn">
+        <property name="text">
+         <string>Plot Spectrum</string>
+        </property>
+       </widget>
+      </item>
+      <item row="12" column="1">
+       <widget class="QDoubleSpinBox" name="base_lineDB">
+        <property name="decimals">
+         <number>1</number>
+        </property>
+        <property name="minimum">
+         <double>-400.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>0.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>-220.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QSpinBox" name="time_window_coheSB">
+        <property name="maximum">
+         <number>3600</number>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0" colspan="2">
+       <widget class="QPushButton" name="Cross_scalogramBtn">
+        <property name="text">
+         <string>Cross Wavelet</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0" colspan="2">
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="1">
+       <widget class="QDoubleSpinBox" name="freq_min_waveletSB">
+        <property name="value">
+         <double>0.250000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QSpinBox" name="num_cyclesSB">
+        <property name="value">
+         <number>6</number>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Overlap (%)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="Line" name="line_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="labeltime">
+        <property name="text">
+         <string>Time Window (s)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Freq min</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0" colspan="2">
+       <widget class="Line" name="line_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QPushButton" name="coherenceBtn">
+        <property name="text">
+         <string>Coherence</string>
         </property>
        </widget>
       </item>
@@ -190,147 +297,67 @@
         </property>
        </widget>
       </item>
+      <item row="13" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Colour</string>
+        </property>
+       </widget>
+      </item>
       <item row="3" column="1">
        <widget class="QSpinBox" name="cohe_overlapSB"/>
       </item>
-      <item row="9" column="1">
-       <widget class="QSpinBox" name="num_cyclesSB">
-        <property name="value">
-         <number>6</number>
+      <item row="10" column="0">
+       <widget class="QSlider" name="horizontalSlider">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Overlap (%)</string>
+        <property name="mouseTracking">
+         <bool>true</bool>
         </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="labeltime">
-        <property name="text">
-         <string>Time Window (s)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="0" colspan="2">
-       <widget class="QPushButton" name="cross_correlationsBtn">
-        <property name="text">
-         <string>Cross Correlation</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" colspan="2">
-       <widget class="Line" name="line_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0" colspan="2">
-       <widget class="Line" name="line">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0" colspan="2">
-       <widget class="QPushButton" name="coherenceBtn">
-        <property name="text">
-         <string>Coherence</string>
-        </property>
-       </widget>
-      </item>
-      <item row="12" column="1">
-       <widget class="QDoubleSpinBox" name="base_lineDB">
-        <property name="decimals">
-         <number>1</number>
+        <property name="tabletTracking">
+         <bool>true</bool>
         </property>
         <property name="minimum">
-         <double>-400.000000000000000</double>
+         <number>1</number>
         </property>
         <property name="maximum">
-         <double>0.000000000000000</double>
+         <number>100</number>
+        </property>
+        <property name="singleStep">
+         <number>5</number>
         </property>
         <property name="value">
-         <double>-220.000000000000000</double>
+         <number>1</number>
         </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QSpinBox" name="time_window_coheSB">
-        <property name="maximum">
-         <number>3600</number>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="0" colspan="2">
-       <widget class="QPushButton" name="Cross_scalogramBtn">
-        <property name="text">
-         <string>Cross Wavelet</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0" colspan="2">
-       <widget class="Line" name="line_3">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="tickPosition">
+         <enum>QSlider::TicksBothSides</enum>
+        </property>
+        <property name="tickInterval">
+         <number>10</number>
         </property>
        </widget>
       </item>
       <item row="10" column="1">
-       <widget class="QDoubleSpinBox" name="freq_min_waveletSB">
-        <property name="value">
-         <double>0.250000000000000</double>
+       <widget class="QSpinBox" name="resSB">
+        <property name="suffix">
+         <string>                  Decimation Factor</string>
         </property>
-       </widget>
-      </item>
-      <item row="9" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Number of Cycles</string>
+        <property name="minimum">
+         <number>1</number>
         </property>
-       </widget>
-      </item>
-      <item row="10" column="0">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Freq min</string>
+        <property name="maximum">
+         <number>100</number>
         </property>
-       </widget>
-      </item>
-      <item row="0" column="0" colspan="2">
-       <widget class="QPushButton" name="plot_spectrumBtn">
-        <property name="text">
-         <string>Plot Spectrum</string>
+        <property name="singleStep">
+         <number>5</number>
         </property>
-       </widget>
-      </item>
-      <item row="11" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>Type</string>
-        </property>
-       </widget>
-      </item>
-      <item row="11" column="1">
-       <widget class="QComboBox" name="typeCB">
-        <item>
-         <property name="text">
-          <string>contourf</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>imshow</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>pcolormesh</string>
-         </property>
-        </item>
        </widget>
       </item>
      </layout>
