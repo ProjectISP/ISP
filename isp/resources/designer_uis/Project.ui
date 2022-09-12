@@ -23,12 +23,15 @@
       <item row="0" column="1">
        <widget class="QLineEdit" name="rootPathForm_inv">
         <property name="text">
-         <string>All files (*.*);;Seismograms (*.HHZ);;Station (*EMUR*)</string>
+         <string>Seismograms (*.HHZ);;Station (*EMUR*)</string>
         </property>
        </widget>
       </item>
       <item row="0" column="0">
        <widget class="QPushButton" name="regularBtn">
+        <property name="toolTip">
+         <string>Fill blank to automatic set All files (*.*), the filters are additive !!!</string>
+        </property>
         <property name="text">
          <string>Search files using Regular expressions</string>
         </property>
@@ -47,6 +50,9 @@
        <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="0">
          <widget class="QPushButton" name="pathFilesBtn">
+          <property name="toolTip">
+           <string>Set the rooth path of the data be added to your project</string>
+          </property>
           <property name="text">
            <string>Project Path Files</string>
           </property>
@@ -57,6 +63,9 @@
         </item>
         <item row="0" column="2">
          <widget class="QPushButton" name="openProjectBtn">
+          <property name="toolTip">
+           <string>Create project using all files (might be filtered with the settings of Eartuqake analysis)</string>
+          </property>
           <property name="text">
            <string>Create Project</string>
           </property>
@@ -75,6 +84,9 @@
      <layout class="QGridLayout" name="gridLayout_4">
       <item row="0" column="0">
        <widget class="QPushButton" name="saveBtn">
+        <property name="toolTip">
+         <string>Save the Project either created from Individual files or Full Project</string>
+        </property>
         <property name="text">
          <string>Save Project</string>
         </property>

@@ -54,7 +54,7 @@ class Project(pw.QDialog, UiProject):
             filter = "All files (*.*)"
         else:
 
-            filter = "All files (*.*);;" + self.rootPathForm_inv.text()
+            filter = self.rootPathForm_inv.text()
         print(filter)
 
         selected_files, _ = pw.QFileDialog.getOpenFileNames(self, "Select Project", ROOT_DIR, filter=filter)
@@ -77,7 +77,6 @@ class Project(pw.QDialog, UiProject):
                 f = executor.submit(callback)
                 self.progressbar.exec()
                 self.project = f.result()
-                print(self.project)
                 f.cancel()
 
             md.set_info_message("Created Project")
