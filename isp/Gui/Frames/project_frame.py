@@ -2,6 +2,7 @@ import os
 import pickle
 from concurrent.futures.thread import ThreadPoolExecutor
 
+from isp import ROOT_DIR
 from isp.Gui import pw, pqg, pyc
 from isp.Gui.Frames import MessageDialog
 from isp.Gui.Frames.uis_frames import UiProject
@@ -31,6 +32,7 @@ class Project(pw.QDialog, UiProject):
         self.pathFilesBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.openProjectBtn.clicked.connect(lambda: self.openProject())
         self.saveBtn.clicked.connect(lambda: self.saveProject())
+        self.regularBtn.clicked.connect(lambda: self.load_files_done())
 
     @pyc.Slot()
     def _increase_progress(self):
@@ -45,6 +47,47 @@ class Project(pw.QDialog, UiProject):
         :return:
         """
         pass
+
+    def load_files_done(self):
+
+        if self.rootPathForm_inv.text() == "":
+            filter = "All files (*.*)"
+        else:
+
+            filter = "All files (*.*);;" + self.rootPathForm_inv.text()
+        print(filter)
+
+        selected_files, _ = pw.QFileDialog.getOpenFileNames(self, "Select Project", ROOT_DIR, filter=filter)
+
+        md = MessageDialog(self)
+        md.hide()
+
+        try:
+            ms = MseedUtil()
+            self.progressbar.reset()
+            self.progressbar.setLabelText("Bulding Project")
+            self.progressbar.setRange(0, 0)
+
+            def callback():
+                r = ms.search_indiv_files(selected_files)
+                pyc.QMetaObject.invokeMethod(self.progressbar, "accept")
+                return r
+
+            with ThreadPoolExecutor(1) as executor:
+                f = executor.submit(callback)
+                self.progressbar.exec()
+                self.project = f.result()
+                print(self.project)
+                f.cancel()
+
+            md.set_info_message("Created Project")
+
+        except:
+
+            md.set_error_message("Something went wrong. Please check that your data files are correct mseed files")
+
+        md.show()
+
 
 
     def on_click_select_directory(self, bind: BindPyqtObject):
