@@ -1,7 +1,6 @@
 import shutil
 from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
-
 from matplotlib.backend_bases import MouseButton
 from obspy import UTCDateTime, Stream, Trace
 from obspy.core.event import Origin
@@ -158,8 +157,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionUsing_MCCC.triggered.connect(lambda: self.alaign_mccc())
         self.actionPicks_from_file.triggered.connect(lambda: self.import_pick_from_file())
         self.actionNew_Project.triggered.connect(lambda: self.new_project())
+        self.newProjectBtn.clicked.connect(lambda: self.new_project())
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
-
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -169,7 +168,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # Uncertainity pick
         self.uncertainities = UncertainityInfo()
 
-        # Project Ingo
+        # Project
 
         self.project_dialog = Project()
 
@@ -251,8 +250,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     #     t2 = UTCDateTime(mdt.num2date(self.zoom[1]))
     #     self.zoom_diff = (t2-t1)
 
-
-
     def cancelled_callback(self):
         self.cancelled = True
 
@@ -280,7 +277,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.project = self.project_dialog.project
         self.get_now_files()
         # now we can access to #self.project_dialog.project
-
 
     def load_project(self):
 

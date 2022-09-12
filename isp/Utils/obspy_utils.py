@@ -256,9 +256,11 @@ class MseedUtil:
         self.obsfiles = []
         self.pos_file = []
         self.robust = robust
+        self.use_ind_files = False
 
     @classmethod
     def get_mseed_files(cls, root_dir: str):
+
          """
          Get a list of valid mseed files inside the root_dir. If root_dir doesn't exists it returns a empty list.
          :param root_dir: The full path of the dir or a file.
@@ -276,13 +278,13 @@ class MseedUtil:
          return []
 
     def get_tree_mseed_files(self, root_dir: str):
+
         """
         Get a list of valid mseed files inside all folder tree from the the root_dir.
         If root_dir doesn't exists it returns a empty list.
         :param root_dir: The full path of the dir or a file.
         :return: A list of full path of mseed files.
         """
-
 
         for top_dir, sub_dir, files in os.walk(root_dir):
             for file in files:
@@ -345,6 +347,17 @@ class MseedUtil:
             pass
         return project
 
+    def search_indiv_files(self, list_files: list):
+
+        self.use_ind_files = True
+        self.list_files = list_files
+        with Pool(processes=os.cpu_count()) as pool:
+            returned_list = pool.map(self.create_dict, range(len(self.list_files)))
+
+        project = self.convert2dict(returned_list)
+        self.use_ind_files = False
+
+        return project
 
     def search_files(self, rooth_path: str):
 
@@ -354,10 +367,9 @@ class MseedUtil:
                 self.search_file.append(os.path.join(top_dir, file))
 
         with Pool(processes=os.cpu_count()) as pool:
-            returned_list =  pool.map(self.create_dict, range(len(self.search_file)))
+            returned_list = pool.map(self.create_dict, range(len(self.search_file)))
 
         project = self.convert2dict(returned_list)
-        #project = dict(filter(None, returned_list))
 
         return project
 
@@ -366,12 +378,21 @@ class MseedUtil:
         data_map = None
 
         try:
-            header = read(self.search_file[i], headeronly=True)
-            net = header[0].stats.network
-            sta = header[0].stats.station
-            chn = header[0].stats.channel
-            key = net + "." + sta + "." + chn
-            data_map = [self.search_file[i], header[0].stats]
+            if self.use_ind_files:
+                header = read(self.list_files[i], headeronly=True)
+                net = header[0].stats.network
+                sta = header[0].stats.station
+                chn = header[0].stats.channel
+                key = net + "." + sta + "." + chn
+                data_map = [self.list_files[i], header[0].stats]
+            else:
+                header = read(self.search_file[i], headeronly=True)
+                net = header[0].stats.network
+                sta = header[0].stats.station
+                chn = header[0].stats.channel
+                key = net + "." + sta + "." + chn
+                data_map = [self.search_file[i], header[0].stats]
+
         except:
             pass
 
