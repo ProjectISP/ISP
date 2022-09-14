@@ -1,7 +1,10 @@
 import os
+import pickle
 from concurrent.futures import ThreadPoolExecutor
 import matplotlib.dates as mdt
 from obspy import Stream
+
+from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
@@ -66,7 +69,9 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.cross_stackBtn.clicked.connect(self.stack)
         self.mapBtn.clicked.connect(self.map)
         self.settingsBtn.clicked.connect(self.settings_dialog.show)
-
+        self.createProjectBtn.clicked.connect(self.create_project)
+        self.loadProjectBtn.clicked.connect(self.load_project)
+        self.saveProjectBtn.clicked.connect(self.save_project)
 
 
     @pyc.Slot()
@@ -155,15 +160,60 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 self.data_map, self.size, self.channels = f.result()
                 f.cancel()
 
-            md.set_info_message("Readed data files Successfully")
+            md.set_info_message("Created Project Successfully, Run Pre-Process or Save the project")
         except:
             md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
 
         md.show()
 
-    def run_preprocess(self):
+    def create_project(self):
         self.params = self.settings_dialog.getParameters()
         self.read_files(self.root_path_bind.value)
+
+    def save_project(self):
+        project = {"data_map":self.data_map, "size":self.size, "channels":self.channels}
+        try:
+            if "darwin" == platform:
+                path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value)
+            else:
+                path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
+            if not path:
+                return
+
+            file_to_store = open(os.path.join(path, "Project_EGFs"), "wb")
+            pickle.dump(project, file_to_store)
+
+            md = MessageDialog(self)
+            md.set_info_message("Project saved successfully")
+
+        except:
+
+            md = MessageDialog(self)
+            md.set_info_message("No data to save in Project")
+
+    def load_project(self):
+
+        selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
+
+        md = MessageDialog(self)
+
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            try:
+                self.current_project_file = selected[0]
+                project = MseedUtil.load_project(file = selected[0])
+                self.data_map = project["data_map"]
+                self.size = project["size"]
+                self.channels = project["channels"]
+                project_name = os.path.basename(selected[0])
+                md.set_info_message("Project {} loaded  ".format(project_name))
+            except:
+                md.set_error_message("Project couldn't be loaded ")
+        else:
+            md.set_error_message("Project couldn't be loaded ")
+
+    def run_preprocess(self):
+        self.params = self.settings_dialog.getParameters()
         self.process()
 
     ####################################################################################################################
