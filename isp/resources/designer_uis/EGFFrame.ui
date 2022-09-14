@@ -208,6 +208,13 @@
        </property>
       </widget>
      </item>
+     <item row="5" column="4" rowspan="2">
+      <widget class="QPushButton" name="settingsBtn">
+       <property name="text">
+        <string>Settings</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>

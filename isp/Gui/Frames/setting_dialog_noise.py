@@ -31,4 +31,8 @@ class SettingsDialogNoise(pw.QDialog, UiSettingsDialogNoise):
         param_dict["stack"] = self.stackCB.currentText()
         param_dict["power"] = self.powerSB.value()
         param_dict["processing_window"] = float(self.timeWindowCB.currentText())
+        param_dict["nets_list"] = self.lineEditNets.text()
+        param_dict["stations_list"] = self.lineEditStations.text()
+        param_dict["channels_list"] = self.lineEditChannels.text()
+
         return param_dict

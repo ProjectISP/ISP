@@ -380,6 +380,7 @@ class MseedUtil:
         try:
             if self.use_ind_files:
                 header = read(self.list_files[i], headeronly=True)
+                print(self.list_files[i])
                 net = header[0].stats.network
                 sta = header[0].stats.station
                 chn = header[0].stats.channel
@@ -387,6 +388,7 @@ class MseedUtil:
                 data_map = [self.list_files[i], header[0].stats]
             else:
                 header = read(self.search_file[i], headeronly=True)
+                print(self.search_file[i])
                 net = header[0].stats.network
                 sta = header[0].stats.station
                 chn = header[0].stats.channel

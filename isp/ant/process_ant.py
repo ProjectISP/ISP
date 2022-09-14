@@ -1,7 +1,7 @@
 import multiprocessing
 import os
 import pickle
-from obspy import read
+from obspy import read, UTCDateTime
 import numpy as np
 import math
 from multiprocessing import Pool
@@ -85,7 +85,7 @@ class process_ant:
             else:
 
                 # check both channels belongs to the same station
-                if channel[2] in ["N", "E", "1", "2", "Y","X"] and station_check == station:
+                if channel[2] in ["N", "E", "1", "2", "Y", "X"] and station_check == station:
 
                     #channels.append(list_item[0][2])
 
@@ -116,7 +116,7 @@ class process_ant:
         print(" -- Matrix: " + list_item[0][0] + list_item[0][1] + list_item[0][2])
 
         # 1.- dict_matrix['date_list']
-        # taking account changes of yars
+        # taking account changes of years
         year_ini = info_item[0][0].year
         year_end = info_item[0][1].year
         date_ini = info_item[0][0].julday
@@ -136,7 +136,7 @@ class process_ant:
         self.num_rows = int((24 * 60) / num_minutes)
         num_columns = len(list_item) - 1
         N = num_minutes * 60 * sampling_rate_new + 1  # segundos*fs
-        DD = 2 ** math.ceil(math.log2(N))
+        DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
         self.list_item = list_item
         # ······
         # f = [0, 1, ..., n / 2 - 1, n / 2] / (d * n) if n is even
@@ -329,10 +329,11 @@ class process_ant:
             tr_test = tr.copy()
 
             if check_process:
-
+                # ensure the start and end to have 24 h
+                tr_test = self.ensure_24(tr_test)
                 tr_test.trim(starttime=tr.stats.starttime + self.inc_time[i],
                                  endtime=tr.stats.starttime + self.inc_time[i + 1])
-
+                print(tr_test)
                 if fill_gaps:
                     st = self.fill_gaps(Stream(traces=tr_test), tol=self.gaps_tol)
                     if st == []:
@@ -418,13 +419,15 @@ class process_ant:
                     tr_test_E = tr_E.copy()
                     maxstart = np.max([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
                     #minend = np.min([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
-
-                    tr_test_N.trim(starttime = maxstart + self.inc_time[i],
-                                 endtime = maxstart + self.inc_time[i + 1])
+                    tr_test_N = self.ensure_24(tr_test_N)
+                    tr_test_E = self.ensure_24(tr_test_E)
+                    tr_test_N.trim(starttime=maxstart + self.inc_time[i],
+                                 endtime=maxstart + self.inc_time[i + 1])
 
                     tr_test_E.trim(starttime=maxstart + self.inc_time[i],
                                    endtime=maxstart + self.inc_time[i + 1])
-
+                    print(tr_test_N)
+                    print(tr_test_E)
                     if fill_gaps:
                         st_N = self.fill_gaps(Stream(traces=tr_test_N), tol=self.gaps_tol)
                         st_E = self.fill_gaps(Stream(traces=tr_test_E), tol=self.gaps_tol)
@@ -541,6 +544,17 @@ class process_ant:
         max_ends = max(ends)
 
         return min_start, max_ends
+
+    def ensure_24(self, tr):
+        # Ensure that this trace is set to have 24h points padding with zeros the starttime and endtime
+        start = tr.stats.starttime
+        year = start.year
+        month = start.month
+        day = start.day
+        check_starttime = UTCDateTime(year=year, month=month, day=day, hour=00, minute=00, microsecond=00)
+        check_endtime = check_starttime + 24 * 3600
+        tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=True, fill_value=0)
+        return tr
 
 
     def __remove_response(self, tr, f1, f2, f3, f4, water_level, units):
