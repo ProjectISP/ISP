@@ -127,5 +127,6 @@ class noise_organize(pyc.QObject):
 
                 except:
                     pass
+
         self.send_message.emit("Ended Dictionary")
         return data_map, size, info
