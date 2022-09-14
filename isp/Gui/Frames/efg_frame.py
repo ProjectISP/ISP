@@ -65,13 +65,13 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.preprocessBtn.clicked.connect(self.run_preprocess)
         self.cross_stackBtn.clicked.connect(self.stack)
         self.mapBtn.clicked.connect(self.map)
+        self.settingsBtn.clicked.connect(self.settings_dialog.show)
 
 
 
     @pyc.Slot()
     def _increase_progress(self):
         self.progressbar.setValue(self.progressbar.value() + 1)
-
 
     def filter_error_message(self, msg):
         md = MessageDialog(self)
@@ -143,8 +143,10 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 self.ant.send_message.connect(self.receive_messages)
 
                 def read_files_callback():
-                    data_map, size, channels = self.ant.create_dict()
-                    print(channels)
+
+                    data_map, size, channels = self.ant.create_dict(net_list=self.params["nets_list"],
+                                sta_list=self.params["stations_list"], chn_list=self.params["channels_list"])
+
                     pyc.QMetaObject.invokeMethod(self.progressbar, 'accept')
                     return data_map, size, channels
 
@@ -153,7 +155,6 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 self.data_map, self.size, self.channels = f.result()
                 f.cancel()
 
-            # self.ant.test()
             md.set_info_message("Readed data files Successfully")
         except:
             md.set_error_message("Something went wrong. Please check your data files are correct mseed files")
