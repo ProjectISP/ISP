@@ -34,5 +34,6 @@ class SettingsDialogNoise(pw.QDialog, UiSettingsDialogNoise):
         param_dict["nets_list"] = self.lineEditNets.text()
         param_dict["stations_list"] = self.lineEditStations.text()
         param_dict["channels_list"] = self.lineEditChannels.text()
-
+        param_dict["autocorr"] = self.autocorrCB.isChecked()
+        param_dict["max_distance"] = self.max_distanceBtn.value()
         return param_dict
