@@ -135,7 +135,7 @@ class process_ant:
         num_minutes = self.num_minutes_dict_matrix  # 15min 96 incrementos
         self.num_rows = int((24 * 60) / num_minutes)
         num_columns = len(list_item) - 1
-        N = num_minutes * 60 * sampling_rate_new + 1  # segundos*fs
+        N = num_minutes * 60 * sampling_rate_new  # seconds*fs
         DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
         self.list_item = list_item
         # ······
@@ -161,7 +161,7 @@ class process_ant:
             self.dict_matrix['date_list'].append(col[1])
 
 
-        print("Finalizado", info_item)
+        print("Finished", info_item)
 
         # compressing matrix
         # dict_matrix['data_matrix']=xr.DataArray(dictmatrix)
@@ -222,9 +222,9 @@ class process_ant:
         self.num_rows = int((24 * 60) / num_minutes)
         num_columns_N = len(list_item_horizonrals["North"]) - 1
         num_columns_E = len(list_item_horizonrals["East"]) - 1
-        N = num_minutes * 60 * sampling_rate_new + 1  # segundos*fs
+        N = num_minutes * 60 * sampling_rate_new  # segundos*fs
 
-        DD = 2 ** math.ceil(math.log2(N))
+        DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
         self.list_item_N = list_item_horizonrals["North"]
         self.list_item_E = list_item_horizonrals["East"]
         # ······
@@ -316,7 +316,7 @@ class process_ant:
         if self.decimationCB and check_process:
             #print("decimating ", tr.id)
             try:
-                tr.decimate(factor=self.factor, no_filter = False)
+                tr.decimate(factor=self.factor, no_filter=False)
             except:
                 check_process = False
                 print("Couldn't decimate")
@@ -333,7 +333,7 @@ class process_ant:
                 tr_test = self.ensure_24(tr_test)
                 tr_test.trim(starttime=tr.stats.starttime + self.inc_time[i],
                                  endtime=tr.stats.starttime + self.inc_time[i + 1])
-                print(tr_test)
+                #print(tr_test)
                 if fill_gaps:
                     st = self.fill_gaps(Stream(traces=tr_test), tol=self.gaps_tol)
                     if st == []:
@@ -350,10 +350,18 @@ class process_ant:
                         tr_test.detrend(type='simple')
                         tr_test.taper(max_percentage=0.05)
                         process = noise_processing(tr_test)
-                        if self.time_normalizationCB:
-                            process.normalize(norm_win=3, norm_method='ramn')
-                        if self.whitheningCB:
-                            process.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+
+                        if self.time_normalizationCB and self.timenorm == "running avarage":
+                            process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
+                            if self.whitheningCB:
+                                process.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+
+                        elif self.time_normalizationCB and self.timenorm == "1 bit":
+                            if self.whitheningCB:
+                                process.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+                            if self.time_normalizationCB:
+                                process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
+
                         try:
                             # self.dict_matrix['data_matrix'][i, j, :] = np.fft.rfft(process.tr.data, D)
                             res.append(np.fft.rfft(process.tr.data, D))
@@ -426,8 +434,7 @@ class process_ant:
 
                     tr_test_E.trim(starttime=maxstart + self.inc_time[i],
                                    endtime=maxstart + self.inc_time[i + 1])
-                    print(tr_test_N)
-                    print(tr_test_E)
+
                     if fill_gaps:
                         st_N = self.fill_gaps(Stream(traces=tr_test_N), tol=self.gaps_tol)
                         st_E = self.fill_gaps(Stream(traces=tr_test_E), tol=self.gaps_tol)
@@ -452,10 +459,18 @@ class process_ant:
                             tr_test_N.taper(max_percentage=0.05)
                             tr_test_E.taper(max_percentage=0.05)
                             process_horizontals = noise_processing_horizontals(tr_test_N, tr_test_E)
-                            if self.time_normalizationCB:
-                                process_horizontals.normalize(norm_win=3, norm_method='ramn')
-                            if self.whitheningCB:
-                                process_horizontals.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+
+                            if self.time_normalizationCB and self.timenorm == "running avarage":
+                                process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
+                                if self.whitheningCB:
+                                    process_horizontals.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+
+                            elif self.time_normalizationCB and self.timenorm == "1 bit":
+                                if self.whitheningCB:
+                                    process_horizontals.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+                                if self.time_normalizationCB:
+                                    process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
+
                             try:
                                 # self.dict_matrix['data_matrix'][i, j, :] = np.fft.rfft(process.tr.data, D)
                                 res_N.append(np.fft.rfft(process_horizontals.tr_N.data, D))
@@ -553,6 +568,7 @@ class process_ant:
         day = start.day
         check_starttime = UTCDateTime(year=year, month=month, day=day, hour=00, minute=00, microsecond=00)
         check_endtime = check_starttime + 24 * 3600
+        tr.detrend(type="simple")
         tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=True, fill_value=0)
         return tr
 
