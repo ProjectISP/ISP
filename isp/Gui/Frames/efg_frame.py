@@ -229,7 +229,10 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         channels = self.params["channels"]
         stack_method = self.params["stack"]
         power = self.params["power"]
-        stack = noisestack(self.output_bind.value, channels, stack_method, power)
+        autocorr = self.params["autocorr"]
+        min_distance = self.params["max_distance"]
+        stack = noisestack(self.output_bind.value, channels, stack_method, power, autocorr=autocorr,
+                           min_distance=min_distance)
         stack.run_cross_stack()
         stack.rotate_horizontals()
 

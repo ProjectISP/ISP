@@ -20,6 +20,20 @@
       <string>Preprocessing Box</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="lineEditNets">
+        <property name="text">
+         <string>XT</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="label_19">
+        <property name="text">
+         <string>Nets</string>
+        </property>
+       </widget>
+      </item>
       <item row="16" column="2">
        <widget class="QDoubleSpinBox" name="freqbandwidth">
         <property name="value">
@@ -101,6 +115,12 @@
       </item>
       <item row="6" column="0">
        <widget class="QLabel" name="label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
          <string>f1</string>
         </property>
@@ -110,23 +130,6 @@
        <widget class="QLabel" name="label_8">
         <property name="text">
          <string>factor</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="2">
-       <widget class="QCheckBox" name="remove_responseCB">
-        <property name="text">
-         <string/>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="3">
-       <widget class="QLabel" name="label_14">
-        <property name="text">
-         <string>Units</string>
         </property>
        </widget>
       </item>
@@ -143,21 +146,21 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="3">
-       <widget class="QDoubleSpinBox" name="f2">
-        <property name="decimals">
-         <number>4</number>
-        </property>
-        <property name="singleStep">
-         <double>0.100000000000000</double>
-        </property>
-        <property name="value">
-         <double>0.020000000000000</double>
+      <item row="7" column="3">
+       <widget class="QLabel" name="label_14">
+        <property name="text">
+         <string>Units</string>
         </property>
        </widget>
       </item>
       <item row="6" column="4">
        <widget class="QLabel" name="label_4">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
          <string>f3</string>
         </property>
@@ -191,6 +194,12 @@
       </item>
       <item row="6" column="2">
        <widget class="QLabel" name="label_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
          <string>f2</string>
         </property>
@@ -295,13 +304,6 @@
         </item>
        </widget>
       </item>
-      <item row="2" column="2">
-       <widget class="QLineEdit" name="lineEditNets">
-        <property name="text">
-         <string>XT</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label_17">
         <property name="text">
@@ -355,38 +357,54 @@
         </item>
        </widget>
       </item>
-      <item row="1" column="2" alignment="Qt::AlignHCenter">
-       <widget class="QLabel" name="label_19">
-        <property name="text">
-         <string>Nets</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3" alignment="Qt::AlignHCenter">
+      <item row="1" column="2">
        <widget class="QLabel" name="label_20">
         <property name="text">
          <string>Stations</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="5" alignment="Qt::AlignHCenter">
+      <item row="6" column="3">
+       <widget class="QDoubleSpinBox" name="f2">
+        <property name="decimals">
+         <number>4</number>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.020000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="5">
        <widget class="QLabel" name="label_21">
         <property name="text">
          <string>Channels</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="3">
+      <item row="2" column="2" colspan="3">
        <widget class="QLineEdit" name="lineEditStations">
         <property name="text">
          <string>CAPC,PAPC</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="5">
+      <item row="2" column="5" colspan="3">
        <widget class="QLineEdit" name="lineEditChannels">
         <property name="text">
          <string>BHZ</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="2" colspan="6">
+       <widget class="QCheckBox" name="remove_responseCB">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -399,33 +417,24 @@
       <string>Stack Box</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="1" column="1">
-       <widget class="QLabel" name="label_15">
+      <item row="3" column="3">
+       <widget class="QCheckBox" name="autocorrCB">
         <property name="text">
-         <string>Method</string>
+         <string>Include Autocorrelations and Shifted Cross Correlations</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
-       <widget class="QComboBox" name="stackCB">
-        <item>
-         <property name="text">
-          <string>PWS</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Linear</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>nrooth</string>
-         </property>
-        </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="label_22">
+        <property name="text">
+         <string>Maximum Interdistance</string>
+        </property>
        </widget>
       </item>
-      <item row="1" column="3">
+      <item row="1" column="4">
        <widget class="QSpinBox" name="powerSB">
         <property name="minimum">
          <number>1</number>
@@ -445,10 +454,49 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="2">
+      <item row="1" column="3">
+       <widget class="QComboBox" name="stackCB">
+        <item>
+         <property name="text">
+          <string>PWS</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Linear</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>nrooth</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="label_15">
+        <property name="text">
+         <string>Method</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
        <widget class="QLineEdit" name="componentsLE">
         <property name="text">
          <string>BHE,BHN,BHZ</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QSpinBox" name="max_distanceBtn">
+        <property name="suffix">
+         <string> km</string>
+        </property>
+        <property name="maximum">
+         <number>10000</number>
+        </property>
+        <property name="value">
+         <number>1000</number>
         </property>
        </widget>
       </item>
@@ -461,7 +509,7 @@
       <enum>Qt::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Close</set>
+      <set>QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
