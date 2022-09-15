@@ -688,11 +688,14 @@ class clock_process:
         stack_day = np.sum(self.matrix, axis=0)
         stack_partial = []
         data_new = np.zeros(self.matrix.shape[2])
+        sum = 1
         for row in range(self.matrix.shape[1]):
             data = stack_day[row, :]
-            data_new = data_new + data
+            data_new = (data_new + data)/sum
+            data_new = np.roll(data_new, int(len(data_new) / 2))
             self.metadata['location'] = str(row)
             stack_partial.append(Trace(data=data_new, header=self.metadata))
+            sum = sum + 1
 
         st = Stream(stack_partial)
         st.write(self.name, format='h5')

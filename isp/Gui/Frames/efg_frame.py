@@ -2,8 +2,7 @@ import os
 import pickle
 from concurrent.futures import ThreadPoolExecutor
 import matplotlib.dates as mdt
-from obspy import Stream
-
+from obspy import Stream, read
 from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -72,6 +71,8 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.createProjectBtn.clicked.connect(self.create_project)
         self.loadProjectBtn.clicked.connect(self.load_project)
         self.saveProjectBtn.clicked.connect(self.save_project)
+        self.searchSyncFileBtn.clicked.connect(self.load_file_sync)
+        self.plot_dailyBtn.clicked.connect(self.plot_daily)
 
 
     @pyc.Slot()
@@ -428,3 +429,53 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         except:
             md = MessageDialog(self)
             md.set_error_message("couldn't plot stations map, please check your metadata and the trace headers")
+
+
+################## clock sync ######################
+
+    def load_file_sync(self):
+
+        md = MessageDialog(self)
+        md.hide()
+
+        try:
+
+            selected_file, _ = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
+            self.clockLE.setText(selected_file)
+            md.set_info_message("Loaded Stream to Sync Ready")
+
+        except:
+
+            md.set_error_message("Something went wrong. Please check that your data files are correct stream files")
+
+        md.show()
+
+    def plot_daily(self):
+        #colors = ['black','indianred','chocolate','darkorange','olivedrab','lightseagreen',
+        #         'royalblue','darkorchid','magenta']
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=1, ncols=1)
+        parameters = self.parameters.getParameters()
+        st = read(self.clockLE.text())
+        cte = 0
+
+        for tr in st:
+            sd = SeismogramDataAdvanced(file_path=None, realtime=True, stream=tr)
+            tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                          filter_error_callback=self.filter_error_message, trace_number=0)
+            if len(tr) > 0:
+                t = tr.times("matplotlib")
+                tr.detrend(type="simple")
+                tr.normalize()
+                s = tr.data+cte
+                self.canvas.plot_date(t, s, 0, color="black", clear_plot=False, fmt='-', alpha=0.75, linewidth=0.5, label= tr.id)
+                cte = cte + 2
+
+        ax = self.canvas.get_axe(0)
+        #ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
+        formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
+        ax.xaxis.set_major_formatter(formatter)
+        self.canvas.set_xlabel(0, "Date")
+
+
+
