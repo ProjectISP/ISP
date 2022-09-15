@@ -9,10 +9,12 @@ import os
 from obspy import read
 from obspy.geodetics import gps2dist_azimuth
 
+from isp.ant.process_ant import clock_process
+
 
 class noisestack:
 
-    def __init__(self, output_files_path, channels, stack, power, autocorr, min_distance):
+    def __init__(self, output_files_path, channels, stack, power, autocorr, min_distance, dailyStacks):
 
         """
                 Process ANT, Cross + Stack
@@ -29,6 +31,7 @@ class noisestack:
         self.year = 2000
         self.autocorr = autocorr
         self.min_dist = min_distance
+        self.dailyStacks = dailyStacks
 
 
 
@@ -37,6 +40,7 @@ class noisestack:
 
         self.stack_files_path = os.path.join(self.output_files_path, "stack")
         self.stack_rotated_files_path = os.path.join(self.output_files_path, "stack_rotated")
+        self.stack_daily_files_path = os.path.join(self.output_files_path, "stack_daily")
 
         if not os.path.exists(self.stack_files_path):
            os.makedirs(self.stack_files_path)
@@ -44,6 +48,10 @@ class noisestack:
         if not os.path.exists(self.stack_rotated_files_path):
 
             os.makedirs(self.stack_rotated_files_path)
+
+        if not os.path.exists(self.stack_daily_files_path):
+
+            os.makedirs(self.stack_daily_files_path)
 
     # Ficheros de datos
         #self.pickle_files = [pickle_file for pickle_file in os.listdir(self.output_files_path) if self.channel in pickle_file]
@@ -228,6 +236,10 @@ class noisestack:
                                 print(path_name)
                                 st.write(path_name, format='H5')
                                 #
+                                if self.dailyStacks:
+                                    path_name = os.path.join(self.stack_daily_files_path, filename+ "_daily")
+                                    clock = clock_process(corr_ij_time, stats, path_name)
+                                    clock.daily_stack()
 
                             else:
                                 print("Empty date_list.")
@@ -398,7 +410,11 @@ class noisestack:
                             path_name = os.path.join(self.stack_files_path, filename)
                             print(path_name)
                             st.write(path_name, format='H5')
-                            #
+
+                            if self.dailyStacks:
+                                path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
+                                clock = clock_process(corr_ij_time, stats, path_name)
+                                clock.daily_stack()
 
                         else:
                             print("Empty date_list.")
@@ -407,6 +423,8 @@ class noisestack:
                     else:
                         print("Excluded cross correlations for being out of maximum distance ", dist * 1E-3, "<",
                               self.min_dist)
+
+
 
     def list_directory(self, path):
         obsfiles = []

@@ -417,17 +417,17 @@
       <string>Stack Box</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="3" column="3">
+      <item row="4" column="3">
        <widget class="QCheckBox" name="autocorrCB">
         <property name="text">
          <string>Include Autocorrelations and Shifted Cross Correlations</string>
         </property>
         <property name="checked">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
+      <item row="3" column="1">
        <widget class="QLabel" name="label_22">
         <property name="text">
          <string>Maximum Interdistance</string>
@@ -483,11 +483,11 @@
       <item row="0" column="3">
        <widget class="QLineEdit" name="componentsLE">
         <property name="text">
-         <string>BHE,BHN,BHZ</string>
+         <string>BHZ</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="3">
+      <item row="3" column="3">
        <widget class="QSpinBox" name="max_distanceBtn">
         <property name="suffix">
          <string> km</string>
@@ -497,6 +497,16 @@
         </property>
         <property name="value">
          <number>1000</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QCheckBox" name="dailyStacksCB">
+        <property name="text">
+         <string>Compute daily Stacks</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
