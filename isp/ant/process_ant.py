@@ -1,13 +1,12 @@
 import multiprocessing
 import os
 import pickle
-from obspy import read, UTCDateTime
+from obspy import read, Trace, Stream, UTCDateTime
 import numpy as np
 import math
 from multiprocessing import Pool
 import obspy
 from isp.ant.signal_processing_tools import noise_processing, noise_processing_horizontals
-from obspy import Stream
 from isp import DISP_MAPS
 
 class process_ant:
@@ -668,5 +667,34 @@ class disp_maps_tools:
           except:
 
             return False
+
+
+class clock_process:
+    def __init__(self, matrix, metadata, name):
+
+        """
+                Process ANT,
+
+
+
+                :param No params required to initialize the class
+        """
+
+        self.matrix = matrix
+        self.metadata = metadata
+        self.name = name
+
+    def daily_stack(self):
+        stack_day = np.sum(self.matrix, axis=0)
+        stack_partial = []
+        data_new = np.zeros(self.matrix.shape[2])
+        for row in range(self.matrix.shape[1]):
+            data = stack_day[row, :]
+            data_new = data_new + data
+            self.metadata['location'] = str(row)
+            stack_partial.append(Trace(data=data_new, header=self.metadata))
+
+        st = Stream(stack_partial)
+        st.write(self.name, format='h5')
 
 
