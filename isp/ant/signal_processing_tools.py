@@ -138,7 +138,7 @@ class noise_processing:
                 self.tr.data[self.tr.data > lim] /= clip_weight
                 self.tr.data[self.tr.data < -lim] /= clip_weight
 
-        elif norm_method == 'ramn':
+        elif norm_method == 'running avarage':
             lwin = int(self.tr.stats.sampling_rate * norm_win)
             st = 0  # starting point
             N = lwin  # ending point
@@ -158,7 +158,7 @@ class noise_processing:
             taper = self.get_window(self.tr.stats.npts)
             self.tr.data *= taper
 
-        elif norm_method == "1bit":
+        elif norm_method == "1 bit":
             self.tr.data = np.sign(self.tr.data)
             self.tr.data = np.float32(self.tr.data)
 
