@@ -303,7 +303,7 @@
       </widget>
      </item>
      <item row="9" column="0" colspan="5">
-      <widget class="QPushButton" name="MacroBtn">
+      <widget class="QPushButton" name="macroBtn">
        <property name="text">
         <string>Macro</string>
        </property>
