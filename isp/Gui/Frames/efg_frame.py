@@ -73,6 +73,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.saveProjectBtn.clicked.connect(self.save_project)
         self.searchSyncFileBtn.clicked.connect(self.load_file_sync)
         self.plot_dailyBtn.clicked.connect(self.plot_daily)
+        self.macroBtn.clicked.connect(self.open_parameters_settings)
 
 
     @pyc.Slot()
@@ -136,6 +137,10 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                                                            pw.QFileDialog.DontUseNativeDialog)
         if dir_path:
             bind.value = dir_path
+
+
+    def open_parameters_settings(self):
+        self.parameters.show()
 
     def read_files(self, dir_path):
         md = MessageDialog(self)
@@ -472,7 +477,6 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 cte = cte + 2
 
         ax = self.canvas.get_axe(0)
-        #ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
         formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
         ax.xaxis.set_major_formatter(formatter)
         self.canvas.set_xlabel(0, "Date")
