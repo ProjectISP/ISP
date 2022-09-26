@@ -472,9 +472,9 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 t = tr.times("matplotlib")
                 tr.detrend(type="simple")
                 tr.normalize()
-                s = tr.data+cte
+                s = 20*tr.data+cte
                 self.canvas.plot_date(t, s, 0, color="black", clear_plot=False, fmt='-', alpha=0.75, linewidth=0.5, label= tr.id)
-                cte = cte + 2
+                cte = cte + 20
 
         ax = self.canvas.get_axe(0)
         formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')

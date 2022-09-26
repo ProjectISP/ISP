@@ -183,8 +183,8 @@ class noisestack:
                                 size_2d_all = size_1d + size_2d
                                 # 7-7-2021, important 2n - 1
                                 size_3d = 2 * corr_ij_freq.shape[2] - 1
+                                corr_ij_freq[np.isnan(corr_ij_freq)] = 0.0 + 0.0j
                                 corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, size_3d, axis=2))
-
                                 if self.stack == "nrooth":
                                     corr_ij_time = (np.abs(corr_ij_time) ** (1 / self.power)) * np.sign(corr_ij_time)
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
@@ -239,7 +239,7 @@ class noisestack:
                                 if self.dailyStacks:
                                     path_name = os.path.join(self.stack_daily_files_path, filename+ "_daily")
                                     clock = clock_process(corr_ij_time, stats, path_name)
-                                    clock.daily_stack()
+                                    clock.daily_stack_part()
 
                             else:
                                 print("Empty date_list.")
@@ -357,6 +357,7 @@ class noisestack:
                             size_2d_all = size_1d + size_2d
                             # 7-7-2021, important 2n - 1
                             size_3d = 2 * corr_ij_freq.shape[2] - 1
+                            corr_ij_freq[np.isnan(corr_ij_freq)] = 0.0 + 0.0j
                             corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, size_3d, axis=2))
 
                             if self.stack == "nrooth":
@@ -414,7 +415,7 @@ class noisestack:
                             if self.dailyStacks:
                                 path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
                                 clock = clock_process(corr_ij_time, stats, path_name)
-                                clock.daily_stack()
+                                clock.daily_stack_part()
 
                         else:
                             print("Empty date_list.")

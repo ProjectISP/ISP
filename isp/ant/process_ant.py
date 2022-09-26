@@ -126,6 +126,7 @@ class process_ant:
         self.dict_matrix['metadata_list'] = info_item[1]
         # update the sampling_rate
         sampling_rate = info_item[1][0][0][0].sample_rate
+        #sampling_rate = 1.0
         sampling_rate_new = sampling_rate / self.factor
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = sampling_rate_new
 
@@ -696,6 +697,27 @@ class clock_process:
             self.metadata['location'] = str(row)
             stack_partial.append(Trace(data=data_new, header=self.metadata))
             sum = sum + 1
+
+        st = Stream(stack_partial)
+        st.write(self.name, format='h5')
+
+    def daily_stack_part(self, part_day=20):
+        stack_day = np.sum(self.matrix, axis=0)
+        stack_partial = []
+
+        numeration = [x for x in range(part_day, self.matrix.shape[1], part_day)]
+
+        for days in numeration:
+            data_new = np.zeros(self.matrix.shape[2])
+            for day in range(days, 2*days):
+                if day < self.matrix.shape[1]:
+                    data = stack_day[day, :]
+                    data_new = data_new + data
+            data_new = (np.roll(data_new, int(len(data_new) / 2)))/part_day
+            self.metadata['location'] = str(days)
+            stack_partial.append(Trace(data=data_new, header=self.metadata))
+            np.zeros(self.matrix.shape[2])
+            del data
 
         st = Stream(stack_partial)
         st.write(self.name, format='h5')
