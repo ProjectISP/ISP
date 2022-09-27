@@ -1,8 +1,7 @@
 import numpy as np
 import math
 from numba import jit
-
-
+from scipy import stats
 
 class noise_processing:
 
@@ -79,6 +78,54 @@ class noise_processing:
         vel2 = f(fft_bins)
         return vel2
 
+    @staticmethod
+    def statisics_fit(x, y, deg=1):
+        x = np.array(x)
+        y = np.array(y)
+        p = np.polyfit(x, y, deg)
+        m = p[0]
+        c = p[1]
+
+        # Number of observations
+        n = y.size
+        # Number of parameters: equal to the degree of the fitted polynomial (ie the
+        # number of coefficients) plus 1 (ie the number of constants)
+        m = p.size
+        # Degrees of freedom (number of observations - number of parameters)
+        dof = n - m
+        # Significance level
+        alpha = 0.05
+        # We're using a two-sided test
+        tails = 2
+        # The percent-point function (aka the quantile function) of the t-distribution
+        # gives you the critical t-value that must be met in order to get significance
+        t_critical = stats.t.ppf(1 - (alpha / tails), dof)
+        #print(f'The fitted straight line has equation y = {m:.1f}x {c:=+6.1f}')
+
+        # Model the data using the parameters of the fitted straight line
+        #y_model = np.polyval(p, x)
+
+        # Create the linear (1 degree polynomial) model
+        model = np.poly1d(p)
+        # Fit the model
+        y_model = model(x)
+        # Mean
+        y_bar = np.mean(y)
+        # Coefficient of determination, R²
+        R2 = np.sum((y_model - y_bar) ** 2) / np.sum((y - y_bar) ** 2)
+
+        #print(f'R² = {R2:.2f}')
+        print("Straight line coefficients and R^2", m, c, R2)
+        # Calculate the residuals (the error in the data, according to the model)
+        resid = y - y_model
+        # Chi-squared (estimates the error in data)
+        chi2 = sum((resid / y_model) ** 2)
+        # Reduced chi-squared (measures the goodness-of-fit)
+        chi2_red = chi2 / dof
+        # Standard deviation of the error
+        std_err = np.sqrt(sum(resid ** 2) / dof)
+
+        return m, c, t_critical, resid, chi2_red, std_err
 
     def phase_matched_filter(self, type, phaseMacthmodel, distance, filter_parameter = 2):
 
