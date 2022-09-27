@@ -30,8 +30,6 @@ class noise_processing:
         import os
         from isp import DISP_REF_CURVES
         from scipy import interpolate
-        import matplotlib.pyplot as plt
-        from isp.Gui.Frames import MatplotlibFrame
 
         if phaseMacthmodel == "ak-135f":
 
@@ -82,6 +80,19 @@ class noise_processing:
     def statisics_fit(x, y, deg=1):
         x = np.array(x)
         y = np.array(y)
+        # clean outliers
+
+        mean_y = np.mean(y, axis=0)
+        sd_y = np.std(y, axis=0)
+
+        outliers_index = np.where(y >= mean_y+2*sd_y)
+        x = np.delete(x, outliers_index)
+        y = np.delete(y, outliers_index)
+        print(y)
+
+
+
+
         p = np.polyfit(x, y, deg)
         m = p[0]
         c = p[1]
@@ -100,10 +111,10 @@ class noise_processing:
         # The percent-point function (aka the quantile function) of the t-distribution
         # gives you the critical t-value that must be met in order to get significance
         t_critical = stats.t.ppf(1 - (alpha / tails), dof)
-        #print(f'The fitted straight line has equation y = {m:.1f}x {c:=+6.1f}')
+        print(f'The fitted straight line has equation y = {m:.1f}x {c:=+6.1f}')
 
         # Model the data using the parameters of the fitted straight line
-        #y_model = np.polyval(p, x)
+        y_model = np.polyval(p, x)
 
         # Create the linear (1 degree polynomial) model
         model = np.poly1d(p)
@@ -114,8 +125,8 @@ class noise_processing:
         # Coefficient of determination, R²
         R2 = np.sum((y_model - y_bar) ** 2) / np.sum((y - y_bar) ** 2)
 
-        #print(f'R² = {R2:.2f}')
-        print("Straight line coefficients and R^2", m, c, R2)
+        print(f'R² = {R2:.2f}')
+        #print("Straight line coefficients and R^2", m, c, R2)
         # Calculate the residuals (the error in the data, according to the model)
         resid = y - y_model
         # Chi-squared (estimates the error in data)
