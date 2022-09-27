@@ -37,7 +37,8 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.progressbar.setLabelText(" Computing ")
         self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
         self.progressbar.close()
-
+        self.all_traces = []
+        self.st_daily = None
         self.inventory = {}
         self.files = []
         self.total_items = 0
@@ -461,6 +462,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
     def plot_daily(self):
         #colors = ['black','indianred','chocolate','darkorange','olivedrab','lightseagreen',
         #         'royalblue','darkorchid','magenta']
+
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=1, ncols=1)
         parameters = self.parameters.getParameters()
@@ -478,6 +480,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 s = 20*tr.data+cte
                 self.canvas.plot_date(t, s, 0, color="black", clear_plot=False, fmt='-', alpha=0.75, linewidth=0.5, label= tr.id)
                 cte = cte + 20
+            self.all_traces.append(tr)
 
         ax = self.canvas.get_axe(0)
         formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
@@ -486,54 +489,51 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
 
     def cross(self):
-        self.cf = []
-        cfs = []
+
         max_values = []
         lags = []
         st = read(self.clockLE.text())
+        parameters = self.parameters.getParameters()
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=len(st), ncols=1)
         #parameters = self.parameters.getParameters()
 
         template = st[0]
         for j, tr in enumerate(st):
-
+            sd = SeismogramDataAdvanced(file_path=None, realtime=True, stream=tr)
+            tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                          filter_error_callback=self.filter_error_message, trace_number=0)
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             temp_stats = ObspyUtil.get_stats_from_trace(template)
             max_sampling_rates = st_stats['sampling_rate']
 
             cc = correlate_maxlag(tr.data, template.data, maxlag=max([len(tr.data), len(template.data)]))
-            lags.append(get_lags(cc) / max_sampling_rates)
+
             stats = {'network': st_stats['net'], 'station': st_stats['station'], 'location': '',
                      'channel': st_stats['channel'], 'npts': len(cc),
                      'sampling_rate': max_sampling_rates, 'mseed': {'dataquality': 'M'},
                      'starttime': temp_stats['starttime']}
 
-            values = [np.max(cc), np.min(cc)]
-            values = np.abs(values)
+            values = np.max(cc)
 
-            if values[0] > values[1]:
-                maximo = np.where(cc == np.max(cc))
-            else:
-                maximo = np.where(cc == np.min(cc))
+            maximo = np.where(cc == np.max(cc))
 
             max_values.append(maximo)
             self.canvas.plot(get_lags(cc) / max_sampling_rates, cc, j, clear_plot=True,
                              linewidth=0.5, color="black")
 
             max_line = ((maximo[0][0])/max_sampling_rates)-0.5*(len(cc)/max_sampling_rates)
+            lags.append(max_line)
             self.canvas.draw_arrow(max_line, j, "max lag", color="red", linestyles='-', picker=False)
             ax = self.canvas.get_axe(j)
             ax.set_xlim(min(get_lags(cc) / max_sampling_rates), max(get_lags(cc) / max_sampling_rates))
-            # saving
-            cfs.append(Trace(cc, stats))
+
 
 
         self.canvas.set_xlabel(j, "Time [s] from zero lag")
 
-        self.cf = Stream(cfs)
         x =  [x for x in range(0, len(st))]
-        #m, c, t_critical, resid, chi2_red, std_err = noise_processing.statisics_fit(x, lags)
+        m, c, t_critical, resid, chi2_red, std_err = noise_processing.statisics_fit(x, lags)
 
 
 
