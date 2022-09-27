@@ -2,7 +2,7 @@ import os
 import pickle
 from concurrent.futures import ThreadPoolExecutor
 import matplotlib.dates as mdt
-from obspy import Stream, read
+from obspy import Stream, read, Trace
 from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -17,8 +17,10 @@ from isp.ant.process_ant import process_ant
 from isp.ant.crossstack import noisestack
 from sys import platform
 from isp.Gui.Utils.pyqt_utils import add_save_load
+from isp.ant.signal_processing_tools import noise_processing
 from isp.earthquakeAnalisysis.stations_map import StationsMap
-
+from isp.seismogramInspector.signal_processing_advanced import correlate_maxlag, get_lags
+import numpy as np
 
 @add_save_load()
 class EGFFrame(pw.QWidget, UiEGFFrame):
@@ -74,6 +76,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.searchSyncFileBtn.clicked.connect(self.load_file_sync)
         self.plot_dailyBtn.clicked.connect(self.plot_daily)
         self.macroBtn.clicked.connect(self.open_parameters_settings)
+        self.SyncBtn.clicked.connect(self.cross)
 
 
     @pyc.Slot()
@@ -480,6 +483,57 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
         ax.xaxis.set_major_formatter(formatter)
         self.canvas.set_xlabel(0, "Date")
+
+
+    def cross(self):
+        self.cf = []
+        cfs = []
+        max_values = []
+        lags = []
+        st = read(self.clockLE.text())
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=len(st), ncols=1)
+        #parameters = self.parameters.getParameters()
+
+        template = st[0]
+        for j, tr in enumerate(st):
+
+            st_stats = ObspyUtil.get_stats_from_trace(tr)
+            temp_stats = ObspyUtil.get_stats_from_trace(template)
+            max_sampling_rates = st_stats['sampling_rate']
+
+            cc = correlate_maxlag(tr.data, template.data, maxlag=max([len(tr.data), len(template.data)]))
+            lags.append(get_lags(cc) / max_sampling_rates)
+            stats = {'network': st_stats['net'], 'station': st_stats['station'], 'location': '',
+                     'channel': st_stats['channel'], 'npts': len(cc),
+                     'sampling_rate': max_sampling_rates, 'mseed': {'dataquality': 'M'},
+                     'starttime': temp_stats['starttime']}
+
+            values = [np.max(cc), np.min(cc)]
+            values = np.abs(values)
+
+            if values[0] > values[1]:
+                maximo = np.where(cc == np.max(cc))
+            else:
+                maximo = np.where(cc == np.min(cc))
+
+            max_values.append(maximo)
+            self.canvas.plot(get_lags(cc) / max_sampling_rates, cc, j, clear_plot=True,
+                             linewidth=0.5, color="black")
+
+            max_line = ((maximo[0][0])/max_sampling_rates)-0.5*(len(cc)/max_sampling_rates)
+            self.canvas.draw_arrow(max_line, j, "max lag", color="red", linestyles='-', picker=False)
+            ax = self.canvas.get_axe(j)
+            ax.set_xlim(min(get_lags(cc) / max_sampling_rates), max(get_lags(cc) / max_sampling_rates))
+            # saving
+            cfs.append(Trace(cc, stats))
+
+
+        self.canvas.set_xlabel(j, "Time [s] from zero lag")
+
+        self.cf = Stream(cfs)
+        x =  [x for x in range(0, len(st))]
+        #m, c, t_critical, resid, chi2_red, std_err = noise_processing.statisics_fit(x, lags)
 
 
 
