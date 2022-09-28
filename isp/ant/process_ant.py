@@ -705,11 +705,11 @@ class clock_process:
         stack_day = np.sum(self.matrix, axis=0)
         stack_partial = []
 
-        numeration = [x for x in range(part_day, self.matrix.shape[1], part_day)]
+        numeration = [x for x in range(0, self.matrix.shape[1], part_day)]
 
         for days in numeration:
             data_new = np.zeros(self.matrix.shape[2])
-            for day in range(days, 2*days):
+            for day in range(days, 20+days):
                 if day < self.matrix.shape[1]:
                     data = stack_day[day, :]
                     data_new = data_new + data
