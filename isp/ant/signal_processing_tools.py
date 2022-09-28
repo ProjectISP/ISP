@@ -90,9 +90,6 @@ class noise_processing:
         y = np.delete(y, outliers_index)
         print(y)
 
-
-
-
         p = np.polyfit(x, y, deg)
         m = p[0]
         c = p[1]
@@ -136,7 +133,7 @@ class noise_processing:
         # Standard deviation of the error
         std_err = np.sqrt(sum(resid ** 2) / dof)
 
-        return m, c, t_critical, resid, chi2_red, std_err
+        return m, n, R2, p, c, t_critical, resid, chi2_red, std_err
 
     def phase_matched_filter(self, type, phaseMacthmodel, distance, filter_parameter = 2):
 

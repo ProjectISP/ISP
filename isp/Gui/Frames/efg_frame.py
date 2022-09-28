@@ -6,6 +6,7 @@ from obspy import Stream, read, Trace
 from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
+from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Exceptions import parse_excepts
 from isp.Gui import pqg, pw, pyc, qt
 from isp.Gui.Frames import Pagination, MatplotlibCanvas, MessageDialog
@@ -533,7 +534,9 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.canvas.set_xlabel(j, "Time [s] from zero lag")
 
         x =  [x for x in range(0, len(st))]
-        m, c, t_critical, resid, chi2_red, std_err = noise_processing.statisics_fit(x, lags)
+        m, n, R2, p, c, t_critical, resid, chi2_red, std_err = noise_processing.statisics_fit(x, lags)
+        self.pt = PlotToolsManager("id")
+        self.pt.plot_fit(x, lags, p, t_critical, std_err, n, R2)
 
 
 

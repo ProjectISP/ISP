@@ -107,3 +107,49 @@ class PlotToolsManager:
       log_spectrogram = 10. * np.log(mt_spectrum / np.max(mt_spectrum))
       x, y = np.meshgrid(t, np.linspace(f_min, f_max, log_spectrogram.shape[0]))
       return x, y, log_spectrogram
+
+
+    def plot_fit(self, x, y, p, t_critical, std_err, n, R2):
+
+        import matplotlib.pyplot as plt
+        from isp.Gui.Frames import MatplotlibFrame
+
+        x = np.array(x)
+        y = np.array(y)
+        # clean outliers
+
+        mean_y = np.mean(y, axis=0)
+        sd_y = np.std(y, axis=0)
+
+        outliers_index = np.where(y >= mean_y + 2 * sd_y)
+        x = np.delete(x, outliers_index)
+        y = np.delete(y, outliers_index)
+
+        fig, ax1 = plt.subplots(figsize=(6, 6))
+        self.mpf = MatplotlibFrame(fig, window_title="Fit Plot")
+        ax1.scatter(x, y, c='gray', marker='o', edgecolors='k', s=18)
+        xlim = plt.xlim()
+        ylim = plt.ylim()
+        ax1.plot(np.array(xlim), p[1] + p[0] * np.array(xlim), label=f'Line of Best Fit, R² = {R2:.2f}')
+        # Fit
+        x_fitted = np.linspace(xlim[0], xlim[1], 100)
+        y_fitted = np.polyval(p, x_fitted)
+        # Confidence interval
+        ci = t_critical * std_err * np.sqrt(1 / n + (x_fitted - np.mean(x)) ** 2 / np.sum((x - np.mean(x)) ** 2))
+        ax1.fill_between(
+            x_fitted, y_fitted + ci, y_fitted - ci, facecolor='#b9cfe7', zorder=0,
+            label=r'95\% Confidence Interval'
+        )
+        # Prediction Interval
+        pi = t_critical * std_err * np.sqrt(1 + 1 / n + (x_fitted - np.mean(x)) ** 2 / np.sum((x - np.mean(x)) ** 2))
+        ax1.plot(x_fitted, y_fitted - pi, '--', color='0.5', label=r'95\% Prediction Limits')
+        ax1.plot(x_fitted, y_fitted + pi, '--', color='0.5')
+        # Title and labels
+        ax1.set_title('Simple Linear Regression')
+        plt.xlabel('Independent Variable')
+        plt.ylabel('Dependent Variable')
+        # Finished
+        ax1.legend(fontsize=8)
+        ax1.set_xlim(xlim)
+        ax1.set_ylim(0, ylim[1])
+        self.mpf.show()
