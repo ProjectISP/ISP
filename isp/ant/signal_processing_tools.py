@@ -290,8 +290,12 @@ class noise_processing:
 
         data_f_whiten[0:half_width] = ((data_f[0:half_width]) / diff_mean)  # First part of spectrum
         data_f_whiten[(N_rfft - half_width):] = (data_f[(N_rfft - half_width):]) / diff_mean2  # end of spectrum
-        data = np.fft.irfft(data_f_whiten)
-        data = data[0:N]
+        try:
+            data = np.fft.irfft(data_f_whiten)
+            data = data[0:N]
+        except:
+            print("whitenning cannot be done")
+
 
         self.tr.data = data
 

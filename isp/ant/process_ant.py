@@ -8,6 +8,7 @@ from multiprocessing import Pool
 import obspy
 from isp.ant.signal_processing_tools import noise_processing, noise_processing_horizontals
 from isp import DISP_MAPS
+from isp.arrayanalysis.array_analysis import array
 
 class process_ant:
 
@@ -701,23 +702,37 @@ class clock_process:
         st = Stream(stack_partial)
         st.write(self.name, format='h5')
 
-    def daily_stack_part(self, part_day=20):
+    def daily_stack_part(self, part_day=20, type="Linear", power=2):
         stack_day = np.sum(self.matrix, axis=0)
         stack_partial = []
 
         numeration = [x for x in range(0, self.matrix.shape[1], part_day)]
 
         for days in numeration:
-            data_new = np.zeros(self.matrix.shape[2])
+            if type == "Linear":
+                data_new = np.zeros(self.matrix.shape[2])
+            if type == "PWS":
+                data_new = np.zeros((part_day, self.matrix.shape[2]))
+            index = 0
             for day in range(days, 20+days):
                 if day < self.matrix.shape[1]:
-                    data = stack_day[day, :]
-                    data_new = data_new + data
+                    if type == "Linear":
+                        data = stack_day[day, :]
+                        data_new = data_new + data
+                    else:
+                        data_new[index , :] = stack_day[day, :]
+                        index = index +1
+
+            if type == "PWS":
+                stack_obj = array()
+                data_new = stack_obj.stack(data_new, stack_type='Phase Weigth Stack', order=power)
+
             data_new = (np.roll(data_new, int(len(data_new) / 2)))/part_day
             self.metadata['location'] = str(days)
             stack_partial.append(Trace(data=data_new, header=self.metadata))
             np.zeros(self.matrix.shape[2])
-            del data
+            if type == "Linear":
+                del data
 
         st = Stream(stack_partial)
         st.write(self.name, format='h5')
