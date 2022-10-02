@@ -702,11 +702,11 @@ class clock_process:
         st = Stream(stack_partial)
         st.write(self.name, format='h5')
 
-    def daily_stack_part(self, part_day=20, type="Linear", power=2):
+    def daily_stack_part(self, part_day=20, type="Linear", overlap=75, power=2):
         stack_day = np.sum(self.matrix, axis=0)
         stack_partial = []
-
-        numeration = [x for x in range(0, self.matrix.shape[1], part_day)]
+        part_day_overlap = part_day*(1-overlap/100)
+        numeration = [x for x in range(0, self.matrix.shape[1], part_day_overlap)]
 
         for days in numeration:
             if type == "Linear":

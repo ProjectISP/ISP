@@ -534,9 +534,9 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.canvas.set_xlabel(j, "Time [s] from zero lag")
 
         x =  [x for x in range(0, len(st))]
-        m, n, R2, p, c, t_critical, resid, chi2_red, std_err = noise_processing.statisics_fit(x, lags)
+        #m, n, R2, p, model, c, t_critical, resid, chi2_red, std_err, x, y = noise_processing.statisics_fit(x, lags)
         self.pt = PlotToolsManager("id")
-        self.pt.plot_fit(x, lags, p, t_critical, std_err, n, R2)
+        self.pt.plot_fit2(x, lags)
 
 
 
