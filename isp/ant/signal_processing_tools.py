@@ -87,7 +87,7 @@ class noise_processing:
             p = np.polyfit(x_new, y_new, deg)
             m = p[0]
             c = p[1]
-            print(f'The fitted straight line has equation y = {m:.1f}x {c:=+6.1f}')
+            print(f'The fitted straight line has equation y = {m:.3f}x {c:=+6.3f}')
         elif type == "Polynom":
             p = np.polyfit(x_new, y_new, deg)
             m = p[0]
@@ -97,7 +97,7 @@ class noise_processing:
             p = np.polyfit(log_x, y, 1)
             m = p[0]
             c = p[1]
-            print(f'The fitted Logarithmic has equation y = {c:.1f}log(x) {m:=+6.1f}')
+            print(f'The fitted Logarithmic has equation y = {c:.3f}log(x) {m:=+6.3f}')
         elif type == "Exponential":
             p = np.polyfit(x, np.log(y), 1, w=np.sqrt(y))
             m = p[0]

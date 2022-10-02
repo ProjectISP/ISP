@@ -2,7 +2,7 @@ import os
 import pickle
 from concurrent.futures import ThreadPoolExecutor
 import matplotlib.dates as mdt
-from obspy import Stream, read, Trace
+from obspy import Stream, read, UTCDateTime
 from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -11,14 +11,13 @@ from isp.Exceptions import parse_excepts
 from isp.Gui import pqg, pw, pyc, qt
 from isp.Gui.Frames import Pagination, MatplotlibCanvas, MessageDialog
 from isp.Gui.Frames.uis_frames import UiEGFFrame
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, set_qdatetime, convert_qdatetime_utcdatetime
 from isp.Utils import AsycTime, MseedUtil, ObspyUtil
 from isp.ant.ambientnoise import noise_organize
 from isp.ant.process_ant import process_ant
 from isp.ant.crossstack import noisestack
 from sys import platform
 from isp.Gui.Utils.pyqt_utils import add_save_load
-from isp.ant.signal_processing_tools import noise_processing
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import correlate_maxlag, get_lags
 import numpy as np
@@ -58,6 +57,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
         self.canvas = MatplotlibCanvas(self.plotMatWidget, nrows=self.items_per_page, constrained_layout=False)
         self.canvas.set_xlabel(0, "Time (s)")
+        self.canvas.mpl_connect('key_press_event', self.key_pressed)
         self.canvas.figure.tight_layout()
 
         # Bind buttons
@@ -79,6 +79,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.plot_dailyBtn.clicked.connect(self.plot_daily)
         self.macroBtn.clicked.connect(self.open_parameters_settings)
         self.SyncBtn.clicked.connect(self.cross)
+
 
 
     @pyc.Slot()
@@ -243,8 +244,9 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         autocorr = self.params["autocorr"]
         min_distance = self.params["max_distance"]
         dailyStacks = self.params["dailyStacks"]
+        overlap = self.params["overlap"]
         stack = noisestack(self.output_bind.value, channels, stack_method, power, autocorr=autocorr,
-                           min_distance=min_distance, dailyStacks=dailyStacks)
+                           min_distance=min_distance, dailyStacks=dailyStacks, overlap=overlap)
         stack.run_cross_stack()
         stack.rotate_horizontals()
 
@@ -276,7 +278,6 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
     def get_files(self, dir_path):
         files_path = MseedUtil.get_tree_hd5_files(self, dir_path, robust=False)
         self.set_pagination_files(files_path)
-        # print(files_path)
         pyc.QMetaObject.invokeMethod(self.progressbar, 'accept', qt.AutoConnection)
 
         return files_path
@@ -493,17 +494,33 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
         max_values = []
         lags = []
+        days = []
+        day = 0
         st = read(self.clockLE.text())
         parameters = self.parameters.getParameters()
+        params_dialog = self.settings_dialog.getParameters()
+        overlap = params_dialog["overlap"]
+        part_day_overlap = int(20 * (1 - overlap / 100))
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=len(st), ncols=1)
-        #parameters = self.parameters.getParameters()
+        self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
 
         template = st[0]
         for j, tr in enumerate(st):
+
             sd = SeismogramDataAdvanced(file_path=None, realtime=True, stream=tr)
-            tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                          filter_error_callback=self.filter_error_message, trace_number=0)
+
+
+            if self.trimCB.isChecked():
+                tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                              filter_error_callback=self.filter_error_message,start_time = self.start_time, end_time = self.end_time,
+                                              trace_number=0)
+
+            else:
+                tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                              filter_error_callback=self.filter_error_message, trace_number=0)
+
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             temp_stats = ObspyUtil.get_stats_from_trace(template)
             max_sampling_rates = st_stats['sampling_rate']
@@ -528,14 +545,34 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             self.canvas.draw_arrow(max_line, j, "max lag", color="red", linestyles='-', picker=False)
             ax = self.canvas.get_axe(j)
             ax.set_xlim(min(get_lags(cc) / max_sampling_rates), max(get_lags(cc) / max_sampling_rates))
-
+            day = part_day_overlap + day
+            days.append(day)
 
 
         self.canvas.set_xlabel(j, "Time [s] from zero lag")
 
-        x =  [x for x in range(0, len(st))]
+        #x = [x for x in range(0, len(st), part_day_overlap)]
+        #x =  [x for x in range(0, len(st))]
         self.pt = PlotToolsManager("id")
-        self.pt.plot_fit2(x, lags, self.fitTypeCB.currentText(), self.degSB.value())
+        self.pt.plot_fit2(days, lags, self.fitTypeCB.currentText(), self.degSB.value())
+
+    def key_pressed(self, event):
+
+        if event.key == 'q':
+            #files_at_page = self.get_files_at_page()
+            x1, y1 = event.xdata, event.ydata
+            tt = UTCDateTime(mdt.num2date(x1))
+            set_qdatetime(tt, self.dateTimeEdit_1)
+            # for index, file_path in enumerate(files_at_page):
+            self.canvas.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
+
+        if event.key == 'e':
+            #files_at_page = self.get_files_at_page()
+            x1, y1 = event.xdata, event.ydata
+            tt = UTCDateTime(mdt.num2date(x1))
+            set_qdatetime(tt, self.dateTimeEdit_2)
+            # for index, file_path in enumerate(files_at_page):
+            self.canvas.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--', picker=False)
 
 
 
