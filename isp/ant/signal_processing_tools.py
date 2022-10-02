@@ -2,6 +2,10 @@ import numpy as np
 import math
 from numba import jit
 from scipy import stats
+from scipy.signal import wiener
+
+from isp.seismogramInspector.signal_processing_advanced import hampel_aux
+
 
 class noise_processing:
 
@@ -78,24 +82,47 @@ class noise_processing:
 
     @staticmethod
     def statisics_fit(x, y, deg=1):
-        x = np.array(x)
-        y = np.array(y)
-        # clean outliers
+        x_new = np.array(x)
+        y_new = np.array(y)
+       #  # clean outliers
+       #
+       #  mean_y = np.mean(y, axis=0)
+       #  sd_y = np.std(y, axis=0)
+       #  q75, q25 = np.percentile(y, [75, 25])
+       #  intr_qr = q75 - q25
+       #  max = q75 + (1.5 * intr_qr)
+       #  min = q25 - (1.5 * intr_qr)
+       #  #outliers_index = np.where(y-mean_y >= sd_y)
+       #  outliers_index = np.where(y <= min)
+       #  x_new = np.delete(x, outliers_index)
+       #  y_new = np.delete(y, outliers_index)
+       #  outliers_index = np.where(y_new >= max)
+       #  x_new = np.delete(x_new, outliers_index)
+       #  y_new = np.delete(y_new, outliers_index)
+       #  # Remove Spikes
+       # # y_new = hampel_aux(y, window_size=3, size=len(y), n_sigmas=3)
+       #  k = 1.4826  # scale factor for Gaussian distribution
+       #  window_size = 8
+       #  size = len(y_new)
+       #  # indices = []
+       #  new_series = y_new.copy()
+       #  n_sigmas = 1
+       #  # possibly use np.nanmedian
+       #  for i in range((window_size), (size - window_size)):
+       #      x0 = np.median(y_new[(i - window_size):(i + window_size)])
+       #      S0 = k * np.median(np.abs(y_new[(i - window_size):(i + window_size)] - x0))
+       #      if (np.abs(y_new[i] - x0) > n_sigmas * S0):
+       #          new_series[i] = x0
+       #  y_new = new_series
 
-        mean_y = np.mean(y, axis=0)
-        sd_y = np.std(y, axis=0)
+        #y_new = wiener(y_new, 12)
 
-        outliers_index = np.where(y >= mean_y+2*sd_y)
-        x = np.delete(x, outliers_index)
-        y = np.delete(y, outliers_index)
-        print(y)
-
-        p = np.polyfit(x, y, deg)
+        p = np.polyfit(x_new, y_new, deg)
         m = p[0]
         c = p[1]
-
+        print(f'The fitted straight line has equation y = {m:.1f}x {c:=+6.1f}')
         # Number of observations
-        n = y.size
+        n = y_new.size
         # Number of parameters: equal to the degree of the fitted polynomial (ie the
         # number of coefficients) plus 1 (ie the number of constants)
         m = p.size
@@ -108,24 +135,24 @@ class noise_processing:
         # The percent-point function (aka the quantile function) of the t-distribution
         # gives you the critical t-value that must be met in order to get significance
         t_critical = stats.t.ppf(1 - (alpha / tails), dof)
-        print(f'The fitted straight line has equation y = {m:.1f}x {c:=+6.1f}')
+
 
         # Model the data using the parameters of the fitted straight line
-        y_model = np.polyval(p, x)
+        y_model = np.polyval(p, x_new)
 
         # Create the linear (1 degree polynomial) model
         model = np.poly1d(p)
         # Fit the model
-        y_model = model(x)
+        y_model = model(x_new)
         # Mean
-        y_bar = np.mean(y)
+        y_bar = np.mean(y_new)
         # Coefficient of determination, R²
-        R2 = np.sum((y_model - y_bar) ** 2) / np.sum((y - y_bar) ** 2)
+        R2 = np.sum((y_model - y_bar) ** 2) / np.sum((y_new - y_bar) ** 2)
 
         print(f'R² = {R2:.2f}')
         #print("Straight line coefficients and R^2", m, c, R2)
         # Calculate the residuals (the error in the data, according to the model)
-        resid = y - y_model
+        resid = y_new - y_model
         # Chi-squared (estimates the error in data)
         chi2 = sum((resid / y_model) ** 2)
         # Reduced chi-squared (measures the goodness-of-fit)
@@ -133,7 +160,7 @@ class noise_processing:
         # Standard deviation of the error
         std_err = np.sqrt(sum(resid ** 2) / dof)
 
-        return m, n, R2, p, c, t_critical, resid, chi2_red, std_err
+        return m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err, x_new, y_new
 
     def phase_matched_filter(self, type, phaseMacthmodel, distance, filter_parameter = 2):
 
@@ -177,6 +204,7 @@ class noise_processing:
         time_domain_uncompressed_signal = np.real(np.fft.irfft(frequency_domain_uncompressed_signal))
         tr_process.data = time_domain_uncompressed_signal
         return tr_process
+
 
     def normalize(self, clip_factor=6, clip_weight=10, norm_win=None, norm_method="1bit"):
 
