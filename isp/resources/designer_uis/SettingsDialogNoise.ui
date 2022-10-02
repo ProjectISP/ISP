@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>848</width>
-    <height>736</height>
+    <height>773</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -640,6 +640,43 @@
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <layout class="QGridLayout" name="gridLayout_5">
+        <item row="0" column="1" colspan="3">
+         <widget class="QLineEdit" name="componentsLE">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="0">
+         <widget class="QCheckBox" name="dailyStacksCB">
+          <property name="text">
+           <string>Compute daily Stacks</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_22">
+          <property name="text">
+           <string>Maximum Interdistance</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2" rowspan="2" colspan="2">
+         <widget class="QSpinBox" name="powerSB">
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>8</number>
+          </property>
+          <property name="value">
+           <number>2</number>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0">
          <widget class="QLabel" name="label_16">
           <property name="text">
@@ -666,10 +703,10 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0" rowspan="2">
-         <widget class="QLabel" name="label_15">
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_23">
           <property name="text">
-           <string>Method</string>
+           <string>Daily Overlap</string>
           </property>
          </widget>
         </item>
@@ -698,50 +735,30 @@
           </item>
          </widget>
         </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_22">
+        <item row="1" column="0" rowspan="2">
+         <widget class="QLabel" name="label_15">
           <property name="text">
-           <string>Maximum Interdistance</string>
+           <string>Method</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="1" colspan="3">
-         <widget class="QLineEdit" name="componentsLE">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="2" rowspan="2" colspan="2">
-         <widget class="QSpinBox" name="powerSB">
-          <property name="minimum">
-           <number>1</number>
-          </property>
-          <property name="maximum">
-           <number>8</number>
-          </property>
-          <property name="value">
-           <number>2</number>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="0">
-         <widget class="QCheckBox" name="dailyStacksCB">
-          <property name="text">
-           <string>Compute daily Stacks</string>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="1">
+        <item row="8" column="1">
          <widget class="QCheckBox" name="autocorrCB">
           <property name="text">
            <string>Include Autocorrelations and Shifted Cross Correlations</string>
           </property>
           <property name="checked">
            <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <widget class="QSpinBox" name="overlapSB">
+          <property name="suffix">
+           <string> %</string>
+          </property>
+          <property name="value">
+           <number>50</number>
           </property>
          </widget>
         </item>

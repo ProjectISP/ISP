@@ -14,7 +14,7 @@ from isp.ant.process_ant import clock_process
 
 class noisestack:
 
-    def __init__(self, output_files_path, channels, stack, power, autocorr, min_distance, dailyStacks):
+    def __init__(self, output_files_path, channels, stack, power, autocorr, min_distance, dailyStacks, overlap):
 
         """
                 Process ANT, Cross + Stack
@@ -32,6 +32,7 @@ class noisestack:
         self.autocorr = autocorr
         self.min_dist = min_distance
         self.dailyStacks = dailyStacks
+        self.overlap = overlap
 
 
 
@@ -239,7 +240,7 @@ class noisestack:
                                 if self.dailyStacks:
                                     path_name = os.path.join(self.stack_daily_files_path, filename+ "_daily")
                                     clock = clock_process(corr_ij_time, stats, path_name)
-                                    clock.daily_stack_part(type=self.stack, power=self.power)
+                                    clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
 
                             else:
                                 print("Empty date_list.")
@@ -415,7 +416,7 @@ class noisestack:
                             if self.dailyStacks:
                                 path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
                                 clock = clock_process(corr_ij_time, stats, path_name)
-                                clock.daily_stack_part(type=self.stack, power=self.power)
+                                clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
 
                         else:
                             print("Empty date_list.")
