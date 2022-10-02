@@ -507,33 +507,26 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
 
         template = st[0]
+        if self.trimCB.isChecked():
+            template.trim(starttime=self.start_time, endtime=self.end_time)
+
         for j, tr in enumerate(st):
 
             sd = SeismogramDataAdvanced(file_path=None, realtime=True, stream=tr)
 
-
             if self.trimCB.isChecked():
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                              filter_error_callback=self.filter_error_message,start_time = self.start_time, end_time = self.end_time,
-                                              trace_number=0)
+                                              filter_error_callback=self.filter_error_message, start_time=self.start_time,
+                                              end_time=self.end_time, trace_number=0)
 
             else:
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                               filter_error_callback=self.filter_error_message, trace_number=0)
 
             st_stats = ObspyUtil.get_stats_from_trace(tr)
-            temp_stats = ObspyUtil.get_stats_from_trace(template)
             max_sampling_rates = st_stats['sampling_rate']
 
             cc = correlate_maxlag(tr.data, template.data, maxlag=max([len(tr.data), len(template.data)]))
-
-            stats = {'network': st_stats['net'], 'station': st_stats['station'], 'location': '',
-                     'channel': st_stats['channel'], 'npts': len(cc),
-                     'sampling_rate': max_sampling_rates, 'mseed': {'dataquality': 'M'},
-                     'starttime': temp_stats['starttime']}
-
-            values = np.max(cc)
-
             maximo = np.where(cc == np.max(cc))
 
             max_values.append(maximo)
@@ -548,11 +541,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             day = part_day_overlap + day
             days.append(day)
 
-
         self.canvas.set_xlabel(j, "Time [s] from zero lag")
-
-        #x = [x for x in range(0, len(st), part_day_overlap)]
-        #x =  [x for x in range(0, len(st))]
         self.pt = PlotToolsManager("id")
         self.pt.plot_fit2(days, lags, self.fitTypeCB.currentText(), self.degSB.value())
 
