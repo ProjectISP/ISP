@@ -219,14 +219,18 @@ class PlotToolsManager:
 
 
 
-    def plot_fit2(self, x, y):
+    def plot_fit2(self, x, y, type, deg):
 
         import matplotlib.pyplot as plt
         from isp.Gui.Frames import MatplotlibFrame
 
         fig, ax1 = plt.subplots(figsize=(6, 6))
         self.mpf = MatplotlibFrame(fig, window_title="Fit Plot")
-        pts = ax1.scatter(x, y, c='gray', marker='o', edgecolors='k', s=18)
+        if type == "Logarithmic":
+            x = np.log(x)
+            pts = ax1.scatter(x, y, c='gray', marker='o', edgecolors='k', s=18)
+        else:
+            pts = ax1.scatter(x, y, c='gray', marker='o', edgecolors='k', s=18)
         selector = SelectFromCollection(ax1, pts)
 
         def accept(event):
@@ -235,7 +239,10 @@ class PlotToolsManager:
                 print(selector.xys[selector.ind])
                 x = selector.xys[selector.ind][:,0]
                 y = selector.xys[selector.ind][:,1]
-                m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err, x, y = noise_processing.statisics_fit(x, y)
+                m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err, x, y = \
+                    noise_processing.statisics_fit(x, y, type, deg)
+                if type == "Logarithmic":
+                   x = np.log(x)
                 ax1.scatter(x, y, color="blue", linewidth=1)
                 ax1.plot(x, y_model, color="red", linewidth=1, label=f'Line of Best Fit, R² = {R2:.2f}')
                 selector.disconnect()

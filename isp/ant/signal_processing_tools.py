@@ -2,9 +2,6 @@ import numpy as np
 import math
 from numba import jit
 from scipy import stats
-from scipy.signal import wiener
-
-from isp.seismogramInspector.signal_processing_advanced import hampel_aux
 
 
 class noise_processing:
@@ -81,46 +78,32 @@ class noise_processing:
         return vel2
 
     @staticmethod
-    def statisics_fit(x, y, deg=1):
+    def statisics_fit(x, y, type, deg):
         x_new = np.array(x)
         y_new = np.array(y)
-       #  # clean outliers
-       #
-       #  mean_y = np.mean(y, axis=0)
-       #  sd_y = np.std(y, axis=0)
-       #  q75, q25 = np.percentile(y, [75, 25])
-       #  intr_qr = q75 - q25
-       #  max = q75 + (1.5 * intr_qr)
-       #  min = q25 - (1.5 * intr_qr)
-       #  #outliers_index = np.where(y-mean_y >= sd_y)
-       #  outliers_index = np.where(y <= min)
-       #  x_new = np.delete(x, outliers_index)
-       #  y_new = np.delete(y, outliers_index)
-       #  outliers_index = np.where(y_new >= max)
-       #  x_new = np.delete(x_new, outliers_index)
-       #  y_new = np.delete(y_new, outliers_index)
-       #  # Remove Spikes
-       # # y_new = hampel_aux(y, window_size=3, size=len(y), n_sigmas=3)
-       #  k = 1.4826  # scale factor for Gaussian distribution
-       #  window_size = 8
-       #  size = len(y_new)
-       #  # indices = []
-       #  new_series = y_new.copy()
-       #  n_sigmas = 1
-       #  # possibly use np.nanmedian
-       #  for i in range((window_size), (size - window_size)):
-       #      x0 = np.median(y_new[(i - window_size):(i + window_size)])
-       #      S0 = k * np.median(np.abs(y_new[(i - window_size):(i + window_size)] - x0))
-       #      if (np.abs(y_new[i] - x0) > n_sigmas * S0):
-       #          new_series[i] = x0
-       #  y_new = new_series
 
-        #y_new = wiener(y_new, 12)
+        if type == "Straight Line":
+            deg = 1
+            p = np.polyfit(x_new, y_new, deg)
+            m = p[0]
+            c = p[1]
+            print(f'The fitted straight line has equation y = {m:.1f}x {c:=+6.1f}')
+        elif type == "Polynom":
+            p = np.polyfit(x_new, y_new, deg)
+            m = p[0]
+            c = p[1]
+        elif type == "Logarithmic":
+            log_x = np.log(x)
+            p = np.polyfit(log_x, y, 1)
+            m = p[0]
+            c = p[1]
+            print(f'The fitted Logarithmic has equation y = {c:.1f}log(x) {m:=+6.1f}')
+        elif type == "Exponential":
+            p = np.polyfit(x, np.log(y), 1, w=np.sqrt(y))
+            m = p[0]
+            c = p[1]
 
-        p = np.polyfit(x_new, y_new, deg)
-        m = p[0]
-        c = p[1]
-        print(f'The fitted straight line has equation y = {m:.1f}x {c:=+6.1f}')
+
         # Number of observations
         n = y_new.size
         # Number of parameters: equal to the degree of the fitted polynomial (ie the
