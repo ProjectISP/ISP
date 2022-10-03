@@ -130,7 +130,10 @@ class CustomBuildExtCommand(build_ext):
 
     def make_mti(self, mti_dir):
         src_path = os.path.join(mti_dir)
+        out_path = os.path.join(mti_dir,"output")
+        green_path = os.path.join(mti_dir,"green")
         command = "sh compile_mti.sh"
+
         try:
             exc_cmd(command, cwd=src_path, shell=True)
             print("MTI successfully installed")
@@ -139,6 +142,11 @@ class CustomBuildExtCommand(build_ext):
             print(e)
         except sb.SubprocessError:  # some warnings nothing so bad.
             print("MTI successfully installed")
+
+        if not os.path.exists(out_path):
+           os.makedirs(out_path)
+        if not os.path.exists(green_path):
+           os.makedirs(green_path)
 
 
 setup(
