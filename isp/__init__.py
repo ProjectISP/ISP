@@ -15,6 +15,7 @@ EVENTS_DETECTED = os.path.join(ROOT_DIR,'earthquakeAnalisysis/auto_detect/events
 AUTOMATIC_PHASES = os.path.join(ROOT_DIR,'earthquakeAnalisysis/auto_detect/phases')
 DISP_MAPS = os.path.join(ROOT_DIR,'ant/data_tomo')
 DISP_REF_CURVES = os.path.join(ROOT_DIR,'ant/disp_curv_ref')
+CLOCK_PATH = os.path.join(ROOT_DIR,'ant/clock_dir')
 
 def create_logger():
 
