@@ -2275,7 +2275,9 @@ class ISOLA:
         full = beach2(mt2, linewidth=lw, facecolor=facecolor, edgecolor='black', zorder=1)
         ax.add_collection(full)
         if self.decompose:
-            dc = beach2((self.centroid['s1'], self.centroid['d1'], self.centroid['r1']), nofill=True, linewidth=lw / 2,
+            #dc = beach2((self.centroid['s1'], self.centroid['d1'], self.centroid['r1']), nofill=True, linewidth=lw / 2,
+            #            zorder=2)
+            dc = beach((self.centroid['s1'], self.centroid['d1'], self.centroid['r1']), nofill=True, linewidth=lw / 2,
                         zorder=2)
             ax.add_collection(dc)
         if outfile:
@@ -2380,12 +2382,14 @@ class ISOLA:
                 print('plotting this moment tensor failed: ', mt2)
         if best:
             mt2 = a2mt(c['a'], system='USE')
-            full = beach2(mt2, linewidth=lw * 3, nofill=True, edgecolor=(0., 1., 0.2))
+            #full = beach2(mt2, linewidth=lw * 3, nofill=True, edgecolor=(0., 1., 0.2))
+            full = beach(mt2, linewidth=lw * 3, nofill=True, edgecolor=(0., 1., 0.2))
             ax.add_collection(full)
         if reference and len(reference) == 6:
             ref = decompose(reference)
             mt2 = (reference[2], reference[0], reference[1], reference[4], -reference[5], -reference[3])
-            full = beach2(mt2, linewidth=lw * 3, nofill=True, edgecolor='red')
+            #full = beach2(mt2, linewidth=lw * 3, nofill=True, edgecolor='red')
+            full = beach(mt2, linewidth=lw * 3, nofill=True, edgecolor='red')
             ax.add_collection(full)
         elif reference:
             ref = reference
@@ -2416,7 +2420,8 @@ class ISOLA:
         plt.ylim(-100 - lw / 2, 100 + lw / 2)
         for i in range(0, len(strike), 2):
             try:
-                dc = beach2((strike[i], dip[i], rake[i]), linewidth=lw, nofill=True, edgecolor='black', alpha=0.1)
+                #dc = beach2((strike[i], dip[i], rake[i]), linewidth=lw, nofill=True, edgecolor='black', alpha=0.1)
+                dc = beach((strike[i], dip[i], rake[i]), linewidth=lw, nofill=True, edgecolor='black', alpha=0.1)
                 ax.add_collection(dc)
             except:
                 print('plotting this moment strike / dip / rake failed: ', (strike[i], dip[i], rake[i]))
@@ -2424,7 +2429,8 @@ class ISOLA:
             dc = beach2((c['s1'], c['d1'], c['r1']), nofill=True, linewidth=lw * 3, edgecolor=(0., 1., 0.2))
             ax.add_collection(dc)
         if reference:
-            dc = beach2((ref['s1'], ref['d1'], ref['r1']), linewidth=lw * 3, nofill=True, edgecolor='red')
+            #dc = beach2((ref['s1'], ref['d1'], ref['r1']), linewidth=lw * 3, nofill=True, edgecolor='red')
+            dc = beach((ref['s1'], ref['d1'], ref['r1']), linewidth=lw * 3, nofill=True, edgecolor='red')
             ax.add_collection(dc)
         if outfile:
             plt.savefig(s1 + 'MT_DC' + s2, bbox_inches='tight', pad_inches=0)
