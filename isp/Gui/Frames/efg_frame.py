@@ -543,7 +543,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
         self.canvas.set_xlabel(j, "Time [s] from zero lag")
         self.pt = PlotToolsManager("id")
-        self.pt.plot_fit2(days, lags, self.fitTypeCB.currentText(), self.degSB.value())
+        self.pt.plot_fit(days, lags, self.fitTypeCB.currentText(), self.degSB.value(), clocks_station_name=st_stats["station"])
 
     def key_pressed(self, event):
 
