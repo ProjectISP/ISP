@@ -127,8 +127,8 @@ class process_ant:
         # 2.- dict_matrix['metadata_list']
         self.dict_matrix['metadata_list'] = info_item[1]
         # update the sampling_rate
-        #sampling_rate = info_item[1][0][0][0].sample_rate
-        sampling_rate = 1.0
+        sampling_rate = info_item[1][0][0][0].sample_rate
+        #sampling_rate = 1.0
         sampling_rate_new = sampling_rate / self.factor
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = sampling_rate_new
 
