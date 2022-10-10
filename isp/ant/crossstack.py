@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import collections
 
 from obspy import Trace, Stream
 from obspy.core import UTCDateTime
@@ -137,23 +138,31 @@ class noisestack:
                             print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
                             print("dict_matrix_file_j['date_list']: " + str(date_list_file_j))
 
-                            # Lista de días comunes a las dos matrices que se van a multiplicar
-                            # Antes de multiplicarl, se eliminarán de ellas las columnas correspondientes a los días que no aparecen en esta lista
-                            common_dates_list = [value for value in date_list_file_i if value in date_list_file_j]
 
                             if (len(date_list_file_i) > 0 and len(date_list_file_j) > 0):
 
-                                # Sufijo _corr: para matrices que se multiplicarán después de eliminar días no comunes a la matriz original
                                 data_matrix_file_i_corr = data_matrix_file_i
                                 data_matrix_file_j_corr = data_matrix_file_j
+                                # check for duplicate days
+                                elements_i_to_delete = self.checkIfDuplicates(date_list_file_i)
+                                elements_j_to_delete = self.checkIfDuplicates(date_list_file_j)
 
-                                # Se eliminan de las matrices los días no comunes con numpy.delete()
-                                # >numpy.delete(arr, obj, axis=None)
-                                # >arr refers to the input array,
-                                # >obj refers to which sub-arrays (e.g. column/row no. or slice of the array) and
-                                # >axis refers to either column wise (axis = 1) or row-wise (axis = 0) delete operation
-                                elements_i_to_delete = []
-                                elements_j_to_delete = []
+                                # refress date_list without repeated days
+                                if len(elements_i_to_delete) > 0:
+                                    index_set = set(elements_i_to_delete)
+                                    date_list_file_i_common = [x for i, x in enumerate(date_list_file_i) if i not in index_set]
+                                else:
+                                    date_list_file_i_common = date_list_file_i
+
+
+                                if len(elements_j_to_delete) > 0:
+                                    index_set = set(elements_j_to_delete)
+                                    date_list_file_j_common = [x for i, x in enumerate(date_list_file_j) if i not in index_set]
+                                else:
+                                    date_list_file_j_common = date_list_file_j
+
+                                # eliminate non common days
+                                common_dates_list = [value for value in date_list_file_i_common if value in date_list_file_j_common]
 
                                 for date_i in date_list_file_i:
                                     if (not date_i in common_dates_list):
@@ -311,23 +320,33 @@ class noisestack:
                         print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
                         print("dict_matrix_file_j['date_list']: " + str(date_list_file_j))
 
-                        # Lista de días comunes a las dos matrices que se van a multiplicar
-                        # Antes de multiplicarl, se eliminarán de ellas las columnas correspondientes a los días que no aparecen en esta lista
-                        common_dates_list = [value for value in date_list_file_i if value in date_list_file_j]
 
                         if (len(date_list_file_i) > 0 and len(date_list_file_j) > 0):
-
-                            # Sufijo _corr: para matrices que se multiplicarán después de eliminar días no comunes a la matriz original
                             data_matrix_file_i_corr = data_matrix_file_i
                             data_matrix_file_j_corr = data_matrix_file_j
+                            # check for duplicate days
+                            elements_i_to_delete = self.checkIfDuplicates(date_list_file_i)
+                            elements_j_to_delete = self.checkIfDuplicates(date_list_file_j)
 
-                            # Se eliminan de las matrices los días no comunes con numpy.delete()
-                            # >numpy.delete(arr, obj, axis=None)
-                            # >arr refers to the input array,
-                            # >obj refers to which sub-arrays (e.g. column/row no. or slice of the array) and
-                            # >axis refers to either column wise (axis = 1) or row-wise (axis = 0) delete operation
-                            elements_i_to_delete = []
-                            elements_j_to_delete = []
+                            # refress date_list without repeated days
+                            if len(elements_i_to_delete) > 0:
+                                index_set = set(elements_i_to_delete)
+                                date_list_file_i_common = [x for i, x in enumerate(date_list_file_i) if
+                                                           i not in index_set]
+                            else:
+                                date_list_file_i_common = date_list_file_i
+
+                            if len(elements_j_to_delete) > 0:
+                                index_set = set(elements_j_to_delete)
+                                date_list_file_j_common = [x for i, x in enumerate(date_list_file_j) if
+                                                           i not in index_set]
+                            else:
+                                date_list_file_j_common = date_list_file_j
+
+                            # eliminate non common days
+
+                            common_dates_list = [value for value in date_list_file_i_common if
+                                                 value in date_list_file_j_common]
 
                             for date_i in date_list_file_i:
                                 if (not date_i in common_dates_list):
@@ -344,6 +363,7 @@ class noisestack:
 
                             if len(elements_j_to_delete) > 0:
                                 data_matrix_file_j_corr = np.delete(data_matrix_file_j, elements_j_to_delete, 1)
+
 
                             # ###########
                             # Correlación: multiplicación de matrices elemento a elemento
@@ -435,6 +455,42 @@ class noisestack:
                 obsfiles.append(os.path.join(top_dir, file))
         obsfiles.sort()
         return obsfiles
+
+    def checkIfDuplicates(self, listOfElems):
+
+        ''' Check if given list contains any duplicates '''
+        # dupes = []
+
+        elements_to_delete = []
+        dupes = [item for item, count in collections.Counter(listOfElems).items() if count > 1]
+        if len(dupes) > 0:
+            for elements in dupes:
+                indices = [i for i, x in enumerate(listOfElems) if x == elements]
+                for index in indices:
+                    elements_to_delete.append(index)
+                #    elements_to_delete.append(listOfElems[index])
+
+
+        return elements_to_delete
+
+
+    # def checkIfDuplicates(self, listOfElems):
+    #
+    #     ''' Check if given list contains any duplicates '''
+    #     # dupes = []
+    #     elements_to_delete = []
+    #     for elem in listOfElems:
+    #
+    #         if listOfElems.count(elem) > 1:
+    #             seen = set()
+    #             dupes = [x for x in listOfElems if x in seen or seen.add(x)]
+    #             for elements in dupes:
+    #                 indices = [i for i, x in enumerate(listOfElems) if x == elements]
+    #                 for index in indices:
+    #                     elements_to_delete.append(index)
+    #                     #listOfElems.pop(listOfElems[index])
+    #             return elements_to_delete
+    #     return elements_to_delete
 
 
     def rotate_horizontals(self):
