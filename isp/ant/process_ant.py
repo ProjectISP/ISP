@@ -9,6 +9,7 @@ import obspy
 from isp.ant.signal_processing_tools import noise_processing, noise_processing_horizontals
 from isp import DISP_MAPS
 from isp.arrayanalysis.array_analysis import array
+from datetime import datetime
 
 class process_ant:
 
@@ -126,8 +127,8 @@ class process_ant:
         # 2.- dict_matrix['metadata_list']
         self.dict_matrix['metadata_list'] = info_item[1]
         # update the sampling_rate
-        sampling_rate = info_item[1][0][0][0].sample_rate
-        #sampling_rate = 1.0
+        #sampling_rate = info_item[1][0][0][0].sample_rate
+        sampling_rate = 1.0
         sampling_rate_new = sampling_rate / self.factor
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = sampling_rate_new
 
@@ -297,9 +298,11 @@ class process_ant:
 
         check_process = True
         res = []
-        tr = obspy.read(self.list_item[1 + j])[0]
-        list_day = str(tr.stats.starttime.julday)+"."+str(tr.stats.starttime.year)
-        print("Processing", str(tr.stats.starttime.julday)+"."+str(tr.stats.starttime.year))
+        tr_raw = obspy.read(self.list_item[1 + j])[0]
+        # ensure the starttime and endtime and to have 24 h
+        tr = self.ensure_24(tr_raw)
+        list_day = str(tr.stats.starttime.julday) + "." + str(tr.stats.starttime.year)
+        print("Processing", tr.stats.station, tr.stats.channel, str(tr.stats.starttime.julday)+"."+str(tr.stats.starttime.year))
 
         st = self.fill_gaps(Stream(traces=tr), tol=5*self.gaps_tol)
 
@@ -331,10 +334,11 @@ class process_ant:
 
             if check_process:
                 # ensure the start and end to have 24 h
-                tr_test = self.ensure_24(tr_test)
+                #tr_test = self.ensure_24(tr_test)
                 tr_test.trim(starttime=tr.stats.starttime + self.inc_time[i],
                                  endtime=tr.stats.starttime + self.inc_time[i + 1])
-                #print(tr_test)
+
+               # print(tr_test)
                 if fill_gaps:
                     st = self.fill_gaps(Stream(traces=tr_test), tol=self.gaps_tol)
                     if st == []:
@@ -384,14 +388,17 @@ class process_ant:
         check_process = True
         res_N = []
         res_E = []
-        tr_N = obspy.read(self.list_item_N[1 + j])[0]
-        tr_E = obspy.read(self.list_item_E[1 + j])[0]
+        tr_N_raw = obspy.read(self.list_item_N[1 + j])[0]
+        tr_E_raw = obspy.read(self.list_item_E[1 + j])[0]
+        tr_N = self.ensure_24(tr_N_raw)
+        tr_E = self.ensure_24(tr_E_raw)
 
         list_days_N = str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year)
         list_days_E = str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year)
 
-        print("Processing", str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year))
-        print("Processing", str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year))
+        print("Processing",tr_N.stats.station, tr_N.stats.channel, str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year))
+        print("Processing", tr_E.stats.station, tr_E.stats.channel,
+              str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year))
 
         st1 = self.fill_gaps(Stream(traces=tr_N), tol=5 * self.gaps_tol)
         st2 = self.fill_gaps(Stream(traces=tr_E), tol=5 * self.gaps_tol)
@@ -428,8 +435,8 @@ class process_ant:
                     tr_test_E = tr_E.copy()
                     maxstart = np.max([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
                     #minend = np.min([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
-                    tr_test_N = self.ensure_24(tr_test_N)
-                    tr_test_E = self.ensure_24(tr_test_E)
+                   # tr_test_N = self.ensure_24(tr_test_N)
+                   # tr_test_E = self.ensure_24(tr_test_E)
                     tr_test_N.trim(starttime=maxstart + self.inc_time[i],
                                  endtime=maxstart + self.inc_time[i + 1])
 
@@ -563,10 +570,16 @@ class process_ant:
 
     def ensure_24(self, tr):
         # Ensure that this trace is set to have 24h points padding with zeros the starttime and endtime
-        start = tr.stats.starttime
-        year = start.year
-        month = start.month
-        day = start.day
+        # take random numbers to ensure the day
+        random_list = np.random.choice(len(tr), 100)
+        times_posix = tr.times(type="timestamp")
+        days_prob = times_posix[random_list.tolist()]
+        days_prob_max = days_prob.tolist()
+        max_prob = max(set(days_prob_max), key=days_prob_max.count)
+        year = int(datetime.utcfromtimestamp(max_prob).strftime('%Y'))
+        month = int(datetime.utcfromtimestamp(max_prob).strftime('%m'))
+        day = int(datetime.utcfromtimestamp(max_prob).strftime('%d'))
+
         check_starttime = UTCDateTime(year=year, month=month, day=day, hour=00, minute=00, microsecond=00)
         check_endtime = check_starttime + 24 * 3600
         tr.detrend(type="simple")
@@ -594,7 +607,7 @@ class process_ant:
             return True
         return False
 
-    def __list_days(self, year_ini,year_end, date_ini, date_end):
+    def __list_days(self, year_ini, year_end, date_ini, date_end):
 
         year_list = [year for year in range(year_ini, year_end)]
         bi = []

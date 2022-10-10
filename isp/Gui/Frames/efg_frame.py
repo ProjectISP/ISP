@@ -324,6 +324,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
         self.set_pagination_files(self.files_path)
         files_at_page = self.get_files_at_page()
+        files_at_page.sort()
         ##
         if len(self.canvas.axes) != len(files_at_page):
             self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
