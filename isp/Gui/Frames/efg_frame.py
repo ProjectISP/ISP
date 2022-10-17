@@ -340,7 +340,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                               filter_error_callback=self.filter_error_message, trace_number=index)
-                print(tr.data)
+
                 if len(tr) > 0:
                     t = tr.times("matplotlib")
                     s = tr.data
@@ -383,7 +383,8 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                         max_endtime.append(max(t))
                     except:
                         print("Empty traces")
-
+                half_point = (tr.stats.starttime + int(len(tr.data) / (2 * tr.stats.sampling_rate))).matplotlib_date
+                self.canvas.draw_arrow(half_point, index, arrow_label="", color="blue")
                 all_traces.append(tr)
 
         self.st = Stream(traces=all_traces)
@@ -431,10 +432,14 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
             for tr in self.st:
 
-                station = tr.stats.station.split("_")[0]
-                name = tr.stats.network+"."+station
-                sd.append(name)
-                map_dict[name] = [tr.stats.mseed['coordinates'][0], tr.stats.mseed['coordinates'][1]]
+                station_1 = tr.stats.station.split("_")[0]
+                station_2 = tr.stats.station.split("_")[1]
+                name1 = tr.stats.network+"."+station_1
+                name2 = tr.stats.network+"."+station_2
+                sd.append(name1)
+                sd.append(name2)
+                map_dict[name1] = [tr.stats.mseed['coordinates'][0], tr.stats.mseed['coordinates'][1]]
+                map_dict[name2] = [tr.stats.mseed['coordinates'][2], tr.stats.mseed['coordinates'][3]]
 
             self.map_stations = StationsMap(map_dict)
             self.map_stations.plot_stations_map(latitude = 0, longitude=0)
@@ -515,6 +520,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                              
                 tr.normalize()
                 s = 2*diff*tr.data+date
+                half_point = (tr.stats.starttime + int(len(tr.data) / (2 * tr.stats.sampling_rate))).matplotlib_date
                 if j == self.refSB.value():
                     self.canvas.plot_date(t, s, 0, color="red", clear_plot=False, fmt='-', alpha=0.75, linewidth=0.5,
                                           label= tr.id)
@@ -524,6 +530,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
             self.all_traces.append(tr)
             j = j+1
+        self.canvas.draw_arrow(half_point, color = "blue")
         ax = self.canvas.get_axe(0)
         formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
         ax.xaxis.set_major_formatter(formatter)
@@ -554,6 +561,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
 
         template = st[self.refSB.value()]
+
         if self.phase_matchCB.isChecked():
             tr_filtered_causal = template.copy()
             tr_filtered_acausal = template.copy()
@@ -580,9 +588,16 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                                                                   filter_parameter=self.phaseMatchCB.value())
             template.data = np.concatenate((tr_filtered_causal.data, tr_filtered_acausal.data), axis=None)
 
+        sd_template = SeismogramDataAdvanced(file_path=None, realtime=True, stream=template)
 
         if self.trimCB.isChecked():
-            template.trim(starttime=self.start_time, endtime=self.end_time)
+            template = sd_template.get_waveform_advanced(parameters, self.inventory,
+                                          filter_error_callback=self.filter_error_message, start_time=self.start_time,
+                                          end_time=self.end_time, trace_number=0)
+
+        else:
+            template = sd_template.get_waveform_advanced(parameters, self.inventory,
+                                          filter_error_callback=self.filter_error_message, trace_number=0)
 
         for j, tr in enumerate(st):
 
@@ -644,7 +659,8 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
         self.canvas.set_xlabel(j, "Time [s] from zero lag")
         self.pt = PlotToolsManager("id")
-        self.pt.plot_fit(dates, lags, self.fitTypeCB.currentText(), self.degSB.value(), clocks_station_name=st_stats["station"])
+        self.pt.plot_fit(dates, lags, self.fitTypeCB.currentText(), self.degSB.value(),
+                         clocks_station_name=st_stats["station"], ref=dates[self.refSB.value()], dates=dates)
 
     def key_pressed(self, event):
 

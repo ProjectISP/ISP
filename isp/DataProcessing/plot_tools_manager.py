@@ -1,5 +1,6 @@
 import math
 import os
+import pickle
 
 import numpy as np
 from mtspec import mtspec
@@ -218,20 +219,21 @@ class PlotToolsManager:
 
 
 
-    def plot_fit(self, x, y, type, deg, clocks_station_name):
+    def plot_fit(self, x, y, type, deg, clocks_station_name, ref, dates):
 
         import matplotlib.pyplot as plt
         from isp.Gui.Frames import MatplotlibFrame
-        import pandas as pd
         print(clocks_station_name)
         fig, ax1 = plt.subplots(figsize=(6, 6))
+
         self.mpf = MatplotlibFrame(fig, window_title="Fit Plot")
         if type == "Logarithmic":
             x = np.log(x)
             pts = ax1.scatter(x, y, c='gray', marker='o', edgecolors='k', s=18)
         else:
             pts = ax1.scatter(x, y, c='gray', marker='o', edgecolors='k', s=18)
-        selector = SelectFromCollection(ax1, pts)
+
+        selector = SelectFromCollection(ax1, pts, )
 
         def accept(event):
             if event.key == "enter":
@@ -245,15 +247,20 @@ class PlotToolsManager:
                    x = np.log(x)
                 ax1.scatter(x, y, color="blue", linewidth=1)
                 ax1.plot(x, y_model, color="red", linewidth=1, label=f'Line of Best Fit, R² = {R2:.2f}')
+                idx = np.abs(np.array(x) - ref).argmin()
+                ax1.scatter(ref, y[idx], c="red", marker='o', edgecolors='k', s=18)
                 selector.disconnect()
                 ax1.set_title("")
                 fig.canvas.draw()
-                name = clocks_station_name+".txt"
-                path = os.path.join(CLOCK_PATH, name)
-                polynom = {clocks_station_name:p.tolist()}
-                df = pd.DataFrame(polynom)
-                print(df)
-                df.to_csv(path)
+                path = os.path.join(CLOCK_PATH, clocks_station_name)
+                p = np.flip(p)
+                polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Ref': ref}
+                print(polynom)
+                file_to_store = open(path, "wb")
+                pickle.dump(polynom, file_to_store)
+                #polynom = {clocks_station_name: p.tolist()}
+                #df = pd.DataFrame(polynom)
+                #df.to_csv(path)
 
 
         fig.canvas.mpl_connect("key_press_event", accept)
