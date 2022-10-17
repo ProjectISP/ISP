@@ -473,6 +473,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         dates = mapping["dates"]
         st = mapping["stream"]
         diff = dates[1]-dates[0]
+        j = 0
         for date, tr in zip(dates, st):
 
             sd = SeismogramDataAdvanced(file_path=None, realtime=True, stream=tr)
@@ -483,10 +484,15 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 tr.detrend(type="simple")
                 tr.normalize()
                 s = 2*diff*tr.data+date
-                self.canvas.plot_date(t, s, 0, color="black", clear_plot=False, fmt='-', alpha=0.75, linewidth=0.5, label= tr.id)
+                if j == self.refSB.value():
+                    self.canvas.plot_date(t, s, 0, color="red", clear_plot=False, fmt='-', alpha=0.75, linewidth=0.5,
+                                          label= tr.id)
+                else:
+                    self.canvas.plot_date(t, s, 0, color="black", clear_plot=False, fmt='-', alpha=0.75, linewidth=0.5,
+                                          label=tr.id)
 
             self.all_traces.append(tr)
-
+            j = j+1
         ax = self.canvas.get_axe(0)
         formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
         ax.xaxis.set_major_formatter(formatter)
@@ -514,8 +520,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.canvas.set_new_subplot(nrows=len(st), ncols=1)
         self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-
-        template = st[0]
+        template = st[self.refSB.value()]
         if self.trimCB.isChecked():
             template.trim(starttime=self.start_time, endtime=self.end_time)
 
