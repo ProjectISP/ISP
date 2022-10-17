@@ -45,6 +45,12 @@
           <property name="suffix">
            <string> s</string>
           </property>
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="value">
+           <double>10.000000000000000</double>
+          </property>
          </widget>
         </item>
         <item row="5" column="0">
@@ -53,7 +59,7 @@
            <string>Phase Match Filter</string>
           </property>
           <property name="checked">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -554,7 +560,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1011</width>
+        <width>1013</width>
         <height>898</height>
        </rect>
       </property>
