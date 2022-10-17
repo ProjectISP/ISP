@@ -685,7 +685,7 @@ class disp_maps_tools:
 
 
 class clock_process:
-    def __init__(self, matrix, metadata, name):
+    def __init__(self, matrix, metadata, name, common_dates_list):
 
         """
                 Process ANT,
@@ -698,30 +698,34 @@ class clock_process:
         self.matrix = matrix
         self.metadata = metadata
         self.name = name
+        self.common_date_list = common_dates_list
 
-    def daily_stack(self):
-        stack_day = np.sum(self.matrix, axis=0)
-        stack_partial = []
-        data_new = np.zeros(self.matrix.shape[2])
-        sum = 1
-        for row in range(self.matrix.shape[1]):
-            data = stack_day[row, :]
-            data_new = (data_new + data)/sum
-            data_new = np.roll(data_new, int(len(data_new) / 2))
-            self.metadata['location'] = str(row)
-            stack_partial.append(Trace(data=data_new, header=self.metadata))
-            sum = sum + 1
-
-        st = Stream(stack_partial)
-        st.write(self.name, format='h5')
+    # def daily_stack(self):
+    #     stack_day = np.sum(self.matrix, axis=0)
+    #     stack_partial = []
+    #     data_new = np.zeros(self.matrix.shape[2])
+    #     sum = 1
+    #     for row in range(self.matrix.shape[1]):
+    #         data = stack_day[row, :]
+    #         data_new = (data_new + data)/sum
+    #         data_new = np.roll(data_new, int(len(data_new) / 2))
+    #         self.metadata['location'] = str(row)
+    #         stack_partial.append(Trace(data=data_new, header=self.metadata))
+    #         sum = sum + 1
+    #
+    #     st = Stream(stack_partial)
+    #     st.write(self.name, format='h5')
 
     def daily_stack_part(self, part_day=20, type="Linear", power=2, overlap=75):
         stack_day = np.sum(self.matrix, axis=0)
         stack_partial = []
         part_day_overlap = int(part_day*(1-overlap/100))
         numeration = [x for x in range(0, self.matrix.shape[1], part_day_overlap)]
+        numeration_days = []
 
         for days in numeration:
+            # take the day of self.common_date_list
+            numeration_days.append(self.common_date_list[days])
             if type == "Linear":
                 data_new = np.zeros(self.matrix.shape[2])
             if type == "PWS":
@@ -748,7 +752,51 @@ class clock_process:
                 del data
 
         st = Stream(stack_partial)
-        st.write(self.name, format='h5')
+        numeration_days = self.extract_list_days(numeration_days)
+        data_to_save = {"dates": numeration_days, "stream": st}
+
+        file_to_store = open(self.name, "wb")
+        pickle.dump(data_to_save, file_to_store)
+
+
+        # new save as a pickle to have control of dates
+        #st.write(self.name, format='h5')
+
+    def extract_list_days(self, dates):
+
+        days = []
+        years = []
+        leapyear = False
+        # unwrap dates
+
+        # extract years
+        for year in dates:
+            date_year = year.split(".")
+            date_year = int(date_year[1])
+            if date_year not in years:
+                years.append(date_year)
+        j = 0
+        for year in years:
+            for date in dates:
+                date = date.split(".")
+                day = int(date[0])
+                year_list = int(date[1])
+                if year == year_list:
+                    if j > 0:
+                        if years[j - 1] % 4 == 0 and (years[j - 1] % 100 != 0 or years[j - 1] % 400 == 0):
+                            leapyear = True
+
+                        if leapyear:
+                            days.append(j * 366 + day)
+                        elif leapyear == False:
+                            days.append(j * 365 + day)
+                    else:
+                        days.append(day)
+
+            j = j + 1
+
+        return days
+
 
 
 

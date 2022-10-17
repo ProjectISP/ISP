@@ -248,7 +248,7 @@ class noisestack:
                                 #
                                 if self.dailyStacks:
                                     path_name = os.path.join(self.stack_daily_files_path, filename+ "_daily")
-                                    clock = clock_process(corr_ij_time, stats, path_name)
+                                    clock = clock_process(corr_ij_time, stats, path_name, common_dates_list)
                                     clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
 
                             else:

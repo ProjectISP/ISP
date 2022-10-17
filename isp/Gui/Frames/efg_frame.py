@@ -462,16 +462,19 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         md.show()
 
     def plot_daily(self):
-        #colors = ['black','indianred','chocolate','darkorange','olivedrab','lightseagreen',
-        #         'royalblue','darkorchid','magenta']
 
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=1, ncols=1)
         parameters = self.parameters.getParameters()
-        st = read(self.clockLE.text())
-        cte = 0
+        path_file = self.clockLE.text()
+        with open(path_file, 'rb') as handle:
+            mapping = pickle.load(handle)
 
-        for tr in st:
+        dates = mapping["dates"]
+        st = mapping["stream"]
+        diff = dates[1]-dates[0]
+        for date, tr in zip(dates, st):
+
             sd = SeismogramDataAdvanced(file_path=None, realtime=True, stream=tr)
             tr = sd.get_waveform_advanced(parameters, self.inventory,
                                           filter_error_callback=self.filter_error_message, trace_number=0)
@@ -479,9 +482,9 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 t = tr.times("matplotlib")
                 tr.detrend(type="simple")
                 tr.normalize()
-                s = 20*tr.data+cte
+                s = 2*diff*tr.data+date
                 self.canvas.plot_date(t, s, 0, color="black", clear_plot=False, fmt='-', alpha=0.75, linewidth=0.5, label= tr.id)
-                cte = cte + 20
+
             self.all_traces.append(tr)
 
         ax = self.canvas.get_axe(0)
@@ -496,7 +499,13 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         lags = []
         days = []
         day = 0
-        st = read(self.clockLE.text())
+        path_file = self.clockLE.text()
+        with open(path_file, 'rb') as handle:
+            mapping = pickle.load(handle)
+
+        dates = mapping["dates"]
+        st = mapping["stream"]
+
         parameters = self.parameters.getParameters()
         params_dialog = self.settings_dialog.getParameters()
         overlap = params_dialog["overlap"]
@@ -543,7 +552,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
         self.canvas.set_xlabel(j, "Time [s] from zero lag")
         self.pt = PlotToolsManager("id")
-        self.pt.plot_fit(days, lags, self.fitTypeCB.currentText(), self.degSB.value(), clocks_station_name=st_stats["station"])
+        self.pt.plot_fit(dates, lags, self.fitTypeCB.currentText(), self.degSB.value(), clocks_station_name=st_stats["station"])
 
     def key_pressed(self, event):
 
