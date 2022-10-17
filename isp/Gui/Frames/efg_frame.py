@@ -2,7 +2,7 @@ import os
 import pickle
 from concurrent.futures import ThreadPoolExecutor
 import matplotlib.dates as mdt
-from obspy import Stream, read, UTCDateTime
+from obspy import Stream, UTCDateTime
 from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -19,7 +19,9 @@ from isp.ant.crossstack import noisestack
 from sys import platform
 from isp.Gui.Utils.pyqt_utils import add_save_load
 from isp.earthquakeAnalisysis.stations_map import StationsMap
+from isp.ant.signal_processing_tools import noise_processing
 from isp.seismogramInspector.signal_processing_advanced import correlate_maxlag, get_lags
+
 import numpy as np
 
 @add_save_load()
@@ -482,6 +484,35 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             if len(tr) > 0:
                 t = tr.times("matplotlib")
                 tr.detrend(type="simple")
+
+                if self.phase_matchCB.isChecked():
+                    tr_filtered_causal = tr.copy()
+                    tr_filtered_acausal = tr.copy()
+                    fs = tr_filtered_causal.stats.sampling_rate
+                    endtime = tr_filtered_causal.stats.starttime+int(len(tr.data) / (2*fs))
+                    tr_filtered_causal.trim(starttime=tr_filtered_causal.stats.starttime,endtime=endtime)
+                    data = np.flip(tr_filtered_causal.data)
+                    tr_filtered_causal.data = data
+
+
+                    distance = tr.stats.mseed['geodetic'][0]
+                    ns_causal = noise_processing(tr_filtered_causal)
+                    tr_filtered_causal = ns_causal.phase_matched_filter("Rayleigh", self.phaseMacthmodelCB.currentText(), distance,
+                                                                 filter_parameter = self.phaseMatchCB.value())
+
+                    tr_filtered_causal.data = np.flip(tr_filtered_causal.data)
+
+                    starttime = tr.stats.starttime + int(len(tr.data) / (2 * fs))
+                    endtime = tr.stats.endtime
+                    tr_filtered_acausal.trim(starttime=starttime, endtime=endtime)
+                    ns_acausal = noise_processing(tr_filtered_acausal)
+                    tr_filtered_acausal = ns_acausal.phase_matched_filter("Rayleigh",
+                                                                        self.phaseMacthmodelCB.currentText(), distance,
+                                                                        filter_parameter=self.phaseMatchCB.value())
+                    tr.data = np.concatenate((tr_filtered_causal.data,tr_filtered_acausal.data), axis = None)
+                    #tr.data = np.flip(tr_filtered.data, int(len(tr_filtered.data) /2))
+                    t = tr.times("matplotlib")
+                             
                 tr.normalize()
                 s = 2*diff*tr.data+date
                 if j == self.refSB.value():
@@ -520,7 +551,36 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.canvas.set_new_subplot(nrows=len(st), ncols=1)
         self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+
+
         template = st[self.refSB.value()]
+        if self.phase_matchCB.isChecked():
+            tr_filtered_causal = template.copy()
+            tr_filtered_acausal = template.copy()
+            fs = tr_filtered_causal.stats.sampling_rate
+            endtime = tr_filtered_causal.stats.starttime + int(len(template.data) / (2 * fs))
+            tr_filtered_causal.trim(starttime=tr_filtered_causal.stats.starttime, endtime=endtime)
+            data = np.flip(tr_filtered_causal.data)
+            tr_filtered_causal.data = data
+
+            distance = template.stats.mseed['geodetic'][0]
+            ns_causal = noise_processing(tr_filtered_causal)
+            tr_filtered_causal = ns_causal.phase_matched_filter("Rayleigh", self.phaseMacthmodelCB.currentText(),
+                                                                distance,
+                                                                filter_parameter=self.phaseMatchCB.value())
+
+            tr_filtered_causal.data = np.flip(tr_filtered_causal.data)
+
+            starttime = template.stats.starttime + int(len(template.data) / (2 * fs))
+            endtime = template.stats.endtime
+            tr_filtered_acausal.trim(starttime=starttime, endtime=endtime)
+            ns_acausal = noise_processing(tr_filtered_acausal)
+            tr_filtered_acausal = ns_acausal.phase_matched_filter("Rayleigh",
+                                                                  self.phaseMacthmodelCB.currentText(), distance,
+                                                                  filter_parameter=self.phaseMatchCB.value())
+            template.data = np.concatenate((tr_filtered_causal.data, tr_filtered_acausal.data), axis=None)
+
+
         if self.trimCB.isChecked():
             template.trim(starttime=self.start_time, endtime=self.end_time)
 
@@ -536,6 +596,33 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             else:
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                               filter_error_callback=self.filter_error_message, trace_number=0)
+
+            if self.phase_matchCB.isChecked():
+                tr_filtered_causal = tr.copy()
+                tr_filtered_acausal = tr.copy()
+                fs = tr_filtered_causal.stats.sampling_rate
+                endtime = tr_filtered_causal.stats.starttime + int(len(tr.data) / (2 * fs))
+                tr_filtered_causal.trim(starttime=tr_filtered_causal.stats.starttime, endtime=endtime)
+                data = np.flip(tr_filtered_causal.data)
+                tr_filtered_causal.data = data
+
+                distance = tr.stats.mseed['geodetic'][0]
+                ns_causal = noise_processing(tr_filtered_causal)
+                tr_filtered_causal = ns_causal.phase_matched_filter("Rayleigh", self.phaseMacthmodelCB.currentText(),
+                                                                    distance,
+                                                                    filter_parameter=self.phaseMatchCB.value())
+
+                tr_filtered_causal.data = np.flip(tr_filtered_causal.data)
+
+                starttime = tr.stats.starttime + int(len(tr.data) / (2 * fs))
+                endtime = tr.stats.endtime
+                tr_filtered_acausal.trim(starttime=starttime, endtime=endtime)
+                ns_acausal = noise_processing(tr_filtered_acausal)
+                tr_filtered_acausal = ns_acausal.phase_matched_filter("Rayleigh",
+                                                                      self.phaseMacthmodelCB.currentText(), distance,
+                                                                      filter_parameter=self.phaseMatchCB.value())
+                tr.data = np.concatenate((tr_filtered_causal.data, tr_filtered_acausal.data), axis=None)
+
 
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             max_sampling_rates = st_stats['sampling_rate']

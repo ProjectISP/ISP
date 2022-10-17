@@ -31,6 +31,39 @@
         <string>Clock Synchronization</string>
        </property>
        <layout class="QGridLayout" name="gridLayout_3">
+        <item row="5" column="1">
+         <widget class="QDoubleSpinBox" name="phaseMatchCB">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="prefix">
+           <string>Gauss Pulse Width </string>
+          </property>
+          <property name="suffix">
+           <string> s</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QCheckBox" name="phase_matchCB">
+          <property name="text">
+           <string>Phase Match Filter</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0" alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>Reference</string>
+          </property>
+         </widget>
+        </item>
         <item row="1" column="0">
          <widget class="QPushButton" name="searchSyncFileBtn">
           <property name="text">
@@ -113,11 +146,39 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="0" alignment="Qt::AlignHCenter">
-         <widget class="QLabel" name="label_5">
-          <property name="text">
-           <string>Reference</string>
+        <item row="5" column="2">
+         <widget class="QComboBox" name="phaseMacthmodelCB">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
+          <item>
+           <property name="text">
+            <string>ak-135f</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>ak-135f (Ocean-shallow waters)</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>ak-135f (Ocean-intermediate waters)</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>ak-135f (Ocean-deep waters)</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string/>
+           </property>
+          </item>
          </widget>
         </item>
        </layout>
@@ -493,7 +554,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1110</width>
+        <width>1011</width>
         <height>898</height>
        </rect>
       </property>
