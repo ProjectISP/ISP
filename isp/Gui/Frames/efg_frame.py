@@ -594,23 +594,14 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             template = sd_template.get_waveform_advanced(parameters, self.inventory,
                                           filter_error_callback=self.filter_error_message, start_time=self.start_time,
                                           end_time=self.end_time, trace_number=0)
+            if template.stats.endtime.julday <= (template.stats.endtime.julday/2):
+                template.data = np.flip(template.data)
 
         else:
             template = sd_template.get_waveform_advanced(parameters, self.inventory,
                                           filter_error_callback=self.filter_error_message, trace_number=0)
 
         for j, tr in enumerate(st):
-
-            sd = SeismogramDataAdvanced(file_path=None, realtime=True, stream=tr)
-
-            if self.trimCB.isChecked():
-                tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                              filter_error_callback=self.filter_error_message, start_time=self.start_time,
-                                              end_time=self.end_time, trace_number=0)
-
-            else:
-                tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                              filter_error_callback=self.filter_error_message, trace_number=0)
 
             if self.phase_matchCB.isChecked():
                 tr_filtered_causal = tr.copy()
@@ -638,7 +629,21 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                                                                       filter_parameter=self.phaseMatchCB.value())
                 tr.data = np.concatenate((tr_filtered_causal.data, tr_filtered_acausal.data), axis=None)
 
+            sd = SeismogramDataAdvanced(file_path=None, realtime=True, stream=tr)
 
+            if self.trimCB.isChecked():
+                tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                              filter_error_callback=self.filter_error_message, start_time=self.start_time,
+                                              end_time=self.end_time, trace_number=0)
+
+                if tr.stats.endtime.julday <= (tr.stats.endtime.julday / 2):
+                    tr.data = np.flip(tr.data)
+
+            else:
+                tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                              filter_error_callback=self.filter_error_message, trace_number=0)
+
+                  
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             max_sampling_rates = st_stats['sampling_rate']
 
