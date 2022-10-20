@@ -23,6 +23,7 @@ from isp.Gui.Frames.uncertainity import UncertainityInfo
 from isp.Gui.Frames.project_frame import Project
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.settings_dialog import SettingsDialog
+from isp.Gui.Frames.search_catalog_frame import SearchCatalogViewer
 from isp.Gui.Utils import map_polarity_from_pressed_key, ParallelWorkers
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime, parallel_progress_run
 from isp.Structures.structures import PickerStructure
@@ -138,7 +139,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionReceiver_Functions.triggered.connect(self.open_receiver_functions)
         self.actionRun_picker.triggered.connect(self._picker_thread)
         self.actionRun_Event_Detector.triggered.connect(self.detect_events)
-        self.actionOpen_Settings.triggered.connect(lambda : self.settings_dialog.show())
+        self.actionOpen_Settings.triggered.connect(lambda: self.settings_dialog.show())
+        self.actionSearch_in_Catalog.triggered.connect(lambda: self.open_catalog_viewer())
         self.actionStack.triggered.connect(lambda: self.stack_all_seismograms())
         #self.actionSpectral_Entropy.triggered.connect(lambda : self.spectral_entropy())
         self.actionSpectral_Entropy.triggered.connect(lambda: self.spectral_entropy_progress())
@@ -179,6 +181,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # help Documentation
 
         self.help = HelpDoc()
+
+        # catalog viewer
+
+        self.catalog = SearchCatalogViewer()
 
         # shortcuts
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+U'), self)
@@ -315,6 +321,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def open_earth_model_viewer(self):
         self.earthmodel.show()
+
+    def open_catalog_viewer(self):
+        self.catalog.show()
     #@property
     #def event_info(self) -> EventInfoBox:
     #    return self.__event_info
@@ -1954,7 +1963,21 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                               self.spectral_entropy, self.cancelled_callback,
                               signalValue=self.value_entropy_init)
 
-    def retrieve_event(self, event_location: EventLocationModel):
-        print(event_location)
+    # def retrieve_event(self, event_location: EventLocationModel):
+    #     print(event_location)
+
+    def set_catalog_values(self, event_catalog):
+        print("Set event values", event_catalog)
+        otime = event_catalog[0]
+        lat = event_catalog[1]
+        lon = event_catalog[2]
+        depth = event_catalog[3]
+
+        set_qdatetime(otime, self.dateTimeEdit_1)
+        set_qdatetime(otime+900, self.dateTimeEdit_2)
+        self.event_info.set_time(otime)
+        self.event_info.set_coordinates([lat,lon,depth])
+
+
 
 
