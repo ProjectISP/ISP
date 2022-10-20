@@ -643,7 +643,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 tr = sd.get_waveform_advanced(parameters, self.inventory,
                                               filter_error_callback=self.filter_error_message, trace_number=0)
 
-                  
+
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             max_sampling_rates = st_stats['sampling_rate']
 

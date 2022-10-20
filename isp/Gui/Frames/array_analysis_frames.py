@@ -18,15 +18,14 @@ import os
 import matplotlib.dates as mdt
 from datetime import date
 import pandas as pd
-from isp.Utils import MseedUtil, AsycTime
+from isp.Utils import MseedUtil
 from isp.arrayanalysis import array_analysis
 from isp import ROOT_DIR
 from isp.Utils.subprocess_utils import exc_cmd
 from isp.Gui.Frames.help_frame import HelpDoc
 from sys import platform
-
 from isp.arrayanalysis.backprojection_tools import back_proj_organize, backproj
-from isp.arrayanalysis.plot_bp import plot_cum, plot_bp
+from isp.arrayanalysis.plot_bp import plot_bp
 
 
 class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):

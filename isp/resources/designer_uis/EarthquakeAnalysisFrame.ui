@@ -899,6 +899,7 @@
     <addaction name="actionOpen_Magnitudes_Calculator"/>
     <addaction name="actionOpen_Earth_Model_Viewer"/>
     <addaction name="menuData_Availability"/>
+    <addaction name="actionSearch_in_Catalog"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -1269,6 +1270,11 @@
   <action name="actionLoad_Files">
    <property name="text">
     <string>Load Files</string>
+   </property>
+  </action>
+  <action name="actionSearch_in_Catalog">
+   <property name="text">
+    <string>Search in Catalog</string>
    </property>
   </action>
  </widget>

@@ -125,6 +125,22 @@ def set_qdatetime(time, pyqt_time_object: pw.QDateTimeEdit):
 
     pyqt_time_object.setDateTime(time)
 
+def set_qcoordinates(coordinates, pyqt_latitude_object, pyqt_longitude_object, pyqt_depth_object):
+    """
+    Set the coordinates to an edit latitude, longitude and depth qt object.
+
+    :param coordinates: A list with coordinates.
+
+    :param pyqt_coordinates_object:
+
+    :return:
+
+    """
+    pyqt_latitude_object.setValue(float(coordinates[0]))
+    pyqt_longitude_object.setValue(float(coordinates[1]))
+    pyqt_depth_object.setValue(float(coordinates[2]))
+
+
 
 def convert_qdatetime_utcdatetime(q_datetime_edit: pw.QDateTimeEdit):
     """
