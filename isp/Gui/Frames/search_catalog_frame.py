@@ -1,3 +1,5 @@
+from obspy.geodetics import gps2dist_azimuth
+
 from isp.Gui import pw
 from isp.Gui.Frames.uis_frames import UiSearch_Catalog
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
@@ -6,6 +8,8 @@ import pandas as pd
 import os
 from PyQt5 import QtWidgets
 from obspy import UTCDateTime
+
+from isp.seismogramInspector.signal_processing_advanced import find_nearest
 
 
 @add_save_load()
@@ -34,6 +38,7 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
 
             # Map
             self.cartopy_canvas = CartopyCanvas(self.map)
+            self.cartopy_canvas.mpl_connect('key_press_event', self.key_pressed)
             self.cartopy_canvas.global_map(0)
             self.cartopy_canvas.figure.subplots_adjust(left=0.00, bottom=0.055, right=0.97, top=0.920, wspace=0.0,
                                                        hspace=0.0)
@@ -127,6 +132,25 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
                 self.evlo = float(event_dict[event]['lon'])
                 self.evdp = float(event_dict[event]['depth'])
                 self.export_event_location_to_earthquake_analysis()
+
+        def key_pressed(self, event):
+
+            if event.key == 'r':
+                x1, y1 = event.xdata, event.ydata
+                self.dataSelect(x1, y1)
+
+        def dataSelect(self, lon1, lat1):
+
+            dist = []
+            for row in range(self.tableWidget.rowCount()):
+                lat2 = float(self.tableWidget.item(row, 1).text())
+                lon2 = float(self.tableWidget.item(row, 2).text())
+
+                great_arc, az0, az2 = gps2dist_azimuth(lat1, lon1, lat2, lon2, a=6378137.0, f=0.0033528106647474805)
+                dist.append(great_arc)
+
+            idx, val = find_nearest(dist, min(dist))
+            self.tableWidget.selectRow(idx)
 
         def export_event_location_to_earthquake_analysis(self):
             from isp.Gui.controllers import Controller
