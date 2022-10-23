@@ -4,6 +4,7 @@ Created on Sun Jun 21 00:39:39 2020
 
 @author: Cabieces & Olivar
 """
+from obspy.geodetics import gps2dist_azimuth
 
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, CartopyCanvas, MessageDialog
@@ -17,6 +18,9 @@ from isp.Gui.Utils.pyqt_utils import convert_qdatetime_utcdatetime
 from isp.retrieve_events import retrieve
 from isp.Gui.Frames.help_frame import HelpDoc
 from sys import platform
+
+from isp.seismogramInspector.signal_processing_advanced import find_nearest
+
 
 class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
     def __init__(self):
@@ -67,7 +71,10 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
 
     def get_catalog(self):
-
+        try:
+            self.tableWidget.setRowCount(0)
+        except:
+            pass
         latitudes = []
         longitudes = []
         depths = []
@@ -359,6 +366,11 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             self.networksLE.setText(",".join(self.network_list))
             self.stationsLE.setText(",".join(self.stations_list))
 
+        if event.key == 'r':
+            x1, y1 = event.xdata, event.ydata
+            self.dataSelect(x1, y1)
+            # check which event is the nearest to the selected coordinates
+
     def press_right(self, event):
         self.retrivetool = retrieve()
         if event.dblclick:
@@ -374,6 +386,20 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                     if data[1] in self.stations_list:
                         self.stations_list.remove(data[1])
                         self.stationsLE.setText(",".join(self.stations_list))
+
+    def dataSelect(self, lon1, lat1):
+
+        dist = []
+        for row in range(self.tableWidget.rowCount()):
+            lat2 = float(self.tableWidget.item(row, 1).text())
+            lon2 = float(self.tableWidget.item(row, 2).text())
+
+            great_arc, az0, az2 = gps2dist_azimuth(lat1, lon1, lat2, lon2, a=6378137.0, f=0.0033528106647474805)
+            dist.append(great_arc)
+
+        idx, val = find_nearest(dist, min(dist))
+        self.tableWidget.selectRow(idx)
+        
 
     def open_help(self):
         self.help.show()
