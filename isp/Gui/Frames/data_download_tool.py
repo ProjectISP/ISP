@@ -366,7 +366,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             self.networksLE.setText(",".join(self.network_list))
             self.stationsLE.setText(",".join(self.stations_list))
 
-        if event.key == 'r':
+        if event.key == 't':
             x1, y1 = event.xdata, event.ydata
             self.dataSelect(x1, y1)
             # check which event is the nearest to the selected coordinates
