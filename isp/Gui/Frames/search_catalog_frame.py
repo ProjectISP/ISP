@@ -135,7 +135,7 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
 
         def key_pressed(self, event):
 
-            if event.key == 'r':
+            if event.key == 't':
                 x1, y1 = event.xdata, event.ydata
                 self.dataSelect(x1, y1)
 
