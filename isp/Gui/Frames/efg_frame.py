@@ -594,7 +594,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             template = sd_template.get_waveform_advanced(parameters, self.inventory,
                                           filter_error_callback=self.filter_error_message, start_time=self.start_time,
                                           end_time=self.end_time, trace_number=0)
-            if template.stats.endtime.julday <= (template.stats.endtime.julday/2):
+            if template.stats.endtime.timestamp <= (template.stats.endtime.timestamp/2):
                 template.data = np.flip(template.data)
 
         else:
@@ -636,7 +636,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                                               filter_error_callback=self.filter_error_message, start_time=self.start_time,
                                               end_time=self.end_time, trace_number=0)
 
-                if tr.stats.endtime.julday <= (tr.stats.endtime.julday / 2):
+                if tr.stats.endtime.timestamp <= (tr.stats.endtime.timestamp / 2):
                     tr.data = np.flip(tr.data)
 
             else:

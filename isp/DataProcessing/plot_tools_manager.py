@@ -225,6 +225,8 @@ class PlotToolsManager:
         from isp.Gui.Frames import MatplotlibFrame
         print(clocks_station_name)
         fig, ax1 = plt.subplots(figsize=(6, 6))
+        plt.ylabel('Skew [s]')
+        plt.xlabel('Jul day')
 
         self.mpf = MatplotlibFrame(fig, window_title="Fit Plot")
         if type == "Logarithmic":
@@ -254,7 +256,7 @@ class PlotToolsManager:
                 fig.canvas.draw()
                 path = os.path.join(CLOCK_PATH, clocks_station_name)
                 p = np.flip(p)
-                polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Ref': ref}
+                polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Drift': y, 'Ref': ref, 'R2': R2}
                 print(polynom)
                 file_to_store = open(path, "wb")
                 pickle.dump(polynom, file_to_store)
