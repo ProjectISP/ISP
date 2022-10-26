@@ -1854,3 +1854,10 @@ isp/examples/catalog/catalog.numbers
 isp/resources/designer_uis/SelectCatalog.ui
 isp/UPFLOW/macro_upflow.pkl
 Test/read_catalogFile.py
+isp/ant/clock_dir/UP03_UP04
+isp/ant/clock_dir/UP07_CMLA
+isp/ant/clock_dir/UP07_UP06
+isp/ant/clock_dir/UP07_UP09
+isp/ant/clock_dir/UP09_UP13
+isp/ant/clock_dir/UP11_UP08
+isp/ant/clock_dir/X25H_UP12
