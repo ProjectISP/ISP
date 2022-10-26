@@ -374,7 +374,7 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         lat = origin.latitude
         lon = origin.longitude
         stations = self.nll_manager.stations_match()
-
+        self.cartopy_canvas.clear()
         self.cartopy_canvas.plot_map(lon, lat, scatter_x, scatter_y, scatter_z, 0,
                                      resolution= 'high', stations = stations)
         # Writing Location information
@@ -390,7 +390,7 @@ class EarthquakeLocationFrame(pw.QFrame, UiEarthquakeLocationFrame):
         self.pdf.plot_scatter()
 
     def plot_residuals(self, xp, yp, xs, ys):
-
+        self.residuals_canvas.clear()
         artist = self.residuals_canvas.plot(xp, yp, axes_index=0, linewidth=0.5)
         self.residuals_canvas.set_xlabel(0, "Station")
         self.residuals_canvas.set_ylabel(0, "P wave Res")
