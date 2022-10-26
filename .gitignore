@@ -1851,7 +1851,6 @@ isp/ant/clock_dir/UP37_UP38
 isp/ant/clock_dir/UP40_PMAR
 isp/examples/catalog/catalog.csv
 isp/examples/catalog/catalog.numbers
-isp/resources/designer_uis/SelectCatalog.ui
 isp/UPFLOW/macro_upflow.pkl
 Test/read_catalogFile.py
 isp/ant/clock_dir/UP03_UP04
