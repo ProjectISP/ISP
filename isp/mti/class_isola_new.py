@@ -2376,7 +2376,8 @@ class ISOLA:
         for a in A:
             mt2 = a2mt(a, system='USE')
             try:
-                full = beach2(mt2, linewidth=lw, nofill=True, edgecolor='black', alpha=0.1)
+                #full = beach2(mt2, linewidth=lw, nofill=True, edgecolor='black', alpha=0.1)
+                full = beach(mt2, linewidth=lw, nofill=True, edgecolor='black', alpha=0.1)
                 ax.add_collection(full)
             except:
                 print('plotting this moment tensor failed: ', mt2)
@@ -2426,7 +2427,8 @@ class ISOLA:
             except:
                 print('plotting this moment strike / dip / rake failed: ', (strike[i], dip[i], rake[i]))
         if best and self.decompose:
-            dc = beach2((c['s1'], c['d1'], c['r1']), nofill=True, linewidth=lw * 3, edgecolor=(0., 1., 0.2))
+            #dc = beach2((c['s1'], c['d1'], c['r1']), nofill=True, linewidth=lw * 3, edgecolor=(0., 1., 0.2))
+            dc = beach((c['s1'], c['d1'], c['r1']), nofill=True, linewidth=lw * 3, edgecolor=(0., 1., 0.2))
             ax.add_collection(dc)
         if reference:
             #dc = beach2((ref['s1'], ref['d1'], ref['r1']), linewidth=lw * 3, nofill=True, edgecolor='red')
@@ -2520,7 +2522,8 @@ class ISOLA:
             mt2 = a2mt(a, system='USE')
             # full = beach(mt2, linewidth=lw, nofill=True, edgecolor='black')
             try:
-                full = beach2(mt2, linewidth=lw, nofill=True, edgecolor='black')
+                full = beach(mt2, linewidth=lw, nofill=True, edgecolor='black')
+                #full = beach2(mt2, linewidth=lw, nofill=True, edgecolor='black')
             except:
                 print(a)
                 print(mt2)
