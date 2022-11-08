@@ -682,7 +682,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
              return 0.
 
     def plot_seismogram(self):
-        self.workers = ParallelWorkers(os.cpu_count())
+        self.workers = ParallelWorkers(os.cpu_count()-1)
         # Here we can disabled thing or make additional staff
         self.workers.job(self.__plot_seismogram)
 
@@ -825,9 +825,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             t = tr.times("matplotlib")
             s = tr.data
 
-            self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
-            self.redraw_chop(tr, s, index)
-            self.redraw_event_times(index)
+            self.canvas.plot_date(t, s, index, color="black", fmt= '-', linewidth=0.5)
+
             ax = self.canvas.get_axe(index)
             ax.spines["top"].set_visible(False)
             ax.spines["bottom"].set_visible(False)
@@ -839,6 +838,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 ax.tick_params(bottom=False)
 
             st_stats = ObspyUtil.get_stats(file_path)
+            self.redraw_chop(tr, s, index)
+            self.redraw_event_times(index)
             self.redraw_pickers(file_path, index)
             if self.decimator[1]:
                 warning = "Decimated to " + str(self.decimator[0])+"  Hz"
