@@ -61,6 +61,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.zoom_diff = None
         self.cancelled = False
         self.aligned_checked = False
+        self.aligned_picks = False
         self.aligned_fixed = False
         self.shift_times = None
         self.special_selection = []
@@ -467,6 +468,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def alaign_picks(self):
+            self.aligned_picks = True
             phase = self.comboBox_phases.currentText()
             self.aligned_checked = True
             self.pick_times = MseedUtil.get_NLL_phase_picks(phase)
@@ -763,7 +765,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             ax = self.canvas.get_axe(len(self.files_at_page)-1)
             # ax.callbacks.connect('xlim_changed', self.on_xlims_change)
-            if self.trimCB.isChecked():
+            if self.trimCB.isChecked() and self.aligned_picks == False:
 
                 ax.set_xlim(self.start_time.matplotlib_date, self.end_time.matplotlib_date)
             else:
@@ -776,6 +778,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             pass
         self.special_selection = []
         self.aligned_checked = False
+        self.aligned_picks = False
 
 
     def __plot_seismogram(self, tuple_files):
