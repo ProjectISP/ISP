@@ -277,15 +277,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.uncertainities.show()
 
     def new_project(self):
+        self.loaded_project = False
         self.setEnabled(False)
         self.project_dialog.exec()
         self.setEnabled(True)
         self.project = self.project_dialog.project
+
         self.get_now_files()
         # now we can access to #self.project_dialog.project
 
     def load_project(self):
-
+        self.loaded_project = True
         selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
 
         md = MessageDialog(self)
@@ -306,18 +308,26 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def reload_current_project(self):
 
         md = MessageDialog(self)
+        if self.loaded_project:
+            if isinstance(self.current_project_file, str) and os.path.isfile(self.current_project_file):
+                try:
+                    self.project = MseedUtil.load_project(file = self.current_project_file)
+                    project_name = os.path.basename(self.current_project_file)
+                    md.set_info_message("Project {} reloaded  ".format(project_name))
+                except:
+                    md.set_error_message("Project couldn't be reloaded ")
+            else:
+                md.set_error_message("Project couldn't be reloaded ")
+            self.get_now_files()
 
-        if isinstance(self.current_project_file, str) and os.path.isfile(self.current_project_file):
-            try:
-                self.current_project_file = self.current_project_file
-                self.project = MseedUtil.load_project(file = self.current_project_file)
-                project_name = os.path.basename(self.current_project_file)
-                md.set_info_message("Project {} loaded  ".format(project_name))
-            except:
-                md.set_error_message("Project couldn't be loaded ")
         else:
-            md.set_error_message("Project couldn't be loaded ")
-        self.get_now_files()
+            try:
+                if isinstance(self.project, dict):
+                    self.get_now_files()
+                    md.set_info_message("New Project reloaded")
+            except:
+                md.set_error_message("Project couldn't be reloaded ")
+
 
     def open_earth_model_viewer(self):
         self.earthmodel.show()

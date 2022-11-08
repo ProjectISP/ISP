@@ -1,14 +1,12 @@
 import os
 import pickle
 from concurrent.futures.thread import ThreadPoolExecutor
-
 from isp import ROOT_DIR
 from isp.Gui import pw, pqg, pyc
 from isp.Gui.Frames import MessageDialog
 from isp.Gui.Frames.uis_frames import UiProject
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from sys import platform
-
 from isp.Utils import MseedUtil
 
 
