@@ -684,7 +684,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
              return 0.
 
     def plot_seismogram(self):
-        self.workers = ParallelWorkers(os.cpu_count()-1)
+        self.workers = ParallelWorkers(os.cpu_count())
         # Here we can disabled thing or make additional staff
         self.workers.job(self.__plot_seismogram)
 
@@ -751,6 +751,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.workers.start(tuple_files)
 
         prog_dialog.exec()
+        for tuple_ind in tuple_files:
+            self.redraw_event_times(tuple_ind[0])
+            self.redraw_pickers(tuple_ind[1], tuple_ind[0])
 
         self.st = Stream(traces=self.all_traces)
 
@@ -831,19 +834,24 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.canvas.plot_date(t, s, index, color="black", fmt= '-', linewidth=0.5)
 
             ax = self.canvas.get_axe(index)
-            ax.spines["top"].set_visible(False)
-            ax.spines["bottom"].set_visible(False)
-            ax.tick_params(top=False)
-            ax.tick_params(labeltop=False)
+            try:
+                ax.spines["top"].set_visible(False)
+                ax.spines["bottom"].set_visible(False)
+                ax.tick_params(top=False)
+                ax.tick_params(labeltop=False)
+            except:
+                pass
             ax.set_ylim(np.min(s), np.max(s))
             #
             if index != (self.pagination.items_per_page-1):
-                ax.tick_params(bottom=False)
+                try:
+                    ax.tick_params(bottom=False)
+                except:
+                    pass
 
             st_stats = ObspyUtil.get_stats(file_path)
             self.redraw_chop(tr, s, index)
-            self.redraw_event_times(index)
-            self.redraw_pickers(file_path, index)
+
             if self.decimator[1]:
                 warning = "Decimated to " + str(self.decimator[0])+"  Hz"
                 self.canvas.set_warning_label(index, warning)
@@ -877,13 +885,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
 
-
             self.all_traces[index] = tr
-
             self.plot_progress.emit()
-
-
-
 
 
     # Rotate to GAC #
@@ -1432,7 +1435,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if len(self.events_times)>0:
             for k in self.events_times:
                 k = k.matplotlib_date
-                self.canvas.draw_arrow(k ,index, "Event Detected", color="blue",linestyles='--', picker=False)
+                self.canvas.draw_arrow(k, index, "Event Detected", color="blue", linestyles='--', picker=False)
 
     def redraw_chop(self, tr, s, ax_index):
        self.kind_wave = self.ChopCB.currentText()
