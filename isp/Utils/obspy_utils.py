@@ -1,5 +1,4 @@
 import math
-import os
 import pickle
 from enum import unique, Enum
 from multiprocessing import Pool
@@ -9,13 +8,12 @@ from typing import List
 import pandas as pd
 import numpy as np
 from obspy import Stream, read, Trace, UTCDateTime, read_events
-# noinspection PyProtectedMember
 from obspy.core.event import Origin
-from obspy.geodetics import gps2dist_azimuth
+from obspy.geodetics import gps2dist_azimuth, degrees2kilometers
 from obspy.io.mseed.core import _is_mseed
 from obspy.io.stationxml.core import _is_stationxml
-#from obspy.io.sac.core import _is_sac
 from obspy.io.xseed.parser import Parser
+from obspy.taup import TauPyModel
 from isp import PICKING_DIR
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
@@ -111,6 +109,51 @@ class ObspyUtil:
 
         return stations
 
+    @staticmethod
+    def get_trip_times(source_depth, min_dist, max_dist):
+
+        model = TauPyModel(model="iasp91")
+        distances = np.linspace(min_dist, max_dist, 50)
+        arrivals_list = []
+
+        for value in distances:
+            arrival = model.get_travel_times(source_depth_in_km=source_depth, distance_in_degree=float(value))
+            arrivals_list.append(arrival)
+
+        return arrivals_list
+
+    @staticmethod
+    def convert_travel_times(arrivals, otime, dist_km = True):
+
+        all_arrival = {}
+
+        # Loop over arrivals objects in list
+        for arrival_set in arrivals:
+            # Loop over phases in list
+            for arrival in arrival_set:
+                phase_id = arrival.purist_name
+                time = otime + arrival.time
+
+                dist = arrival.purist_distance % 360.0
+                distance = arrival.distance
+                if distance < 0:
+                    distance = (distance % 360)
+                if abs(dist - distance) / dist > 1E-5:
+                    continue
+
+                if dist_km:
+                    distance = degrees2kilometers(distance)
+
+                if phase_id in all_arrival.keys():
+                    all_arrival[phase_id]["times"].append(time.matplotlib_date)
+                    all_arrival[phase_id]["distances"].append(distance)
+
+                else:
+                    all_arrival[phase_id] = {}
+                    all_arrival[phase_id]["times"] = [time.matplotlib_date]
+                    all_arrival[phase_id]["distances"] = [distance]
+
+        return all_arrival
 
     @staticmethod
     def coords2azbazinc(station_latitude, station_longitude,station_elevation, origin_latitude,

@@ -4,7 +4,7 @@ import matplotlib.dates as mdt
 from matplotlib.backend_bases import MouseButton
 from obspy import UTCDateTime, Stream, Trace
 from obspy.core.event import Origin
-from obspy.geodetics import gps2dist_azimuth
+from obspy.geodetics import gps2dist_azimuth, kilometers2degrees
 from obspy.signal.trigger import coincidence_trigger
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.NeuralNetwork import CNNPicker
@@ -64,6 +64,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.aligned_picks = False
         self.aligned_fixed = False
         self.shift_times = None
+        self.dist_all = []
+        self.baz_all = []
         self.special_selection = []
         self.lines = []
         self.progressbar = pw.QProgressDialog(self)
@@ -209,6 +211,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+P'),self)
         self.shortcut_open.activated.connect(self.comboBox_phases.showPopup)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('P'), self)
+        self.shortcut_open.activated.connect(self.plot_prs)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+K'), self)
         self.shortcut_open.activated.connect(self.save_cf)
@@ -654,28 +659,64 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.plot_seismogram()
 
 
+
+    def sort_by_distance_traces(self, trace):
+
+        st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, trace)
+        if st_stats:
+
+            dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
+                                          self.event_info.longitude)
+            self.dist_all.append(dist/1000)
+
+            return dist
+        else:
+            self.dataless_not_found.add(trace)
+            print("No Metadata found for {} file.".format(trace))
+            return 0.
+
+    def sort_by_baz_traces(self, trace):
+        st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, trace)
+
+        if st_stats:
+
+            _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
+                                                 self.event_info.longitude)
+            self.baz_all.append(az_from_epi)
+            return az_from_epi
+        else:
+
+            self.dataless_not_found.add(trace)
+            print("No Metadata found for {} file.".format(trace))
+            return 0.
+
+
     def sort_by_distance_advance(self, file):
 
+         self.dist_all = []
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
          if st_stats:
 
              dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
                                            self.event_info.longitude)
-             # print("File, dist: ", file, dist)
+             self.dist_all.append(dist/1000)
              return dist
          else:
              self.dataless_not_found.add(file)
              print("No Metadata found for {} file.".format(file))
+             self.dist_all.append(-100)
              return 0.
 
     def sort_by_baz_advance(self, file):
 
+         self.baz_all = []
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
 
          if st_stats:
 
              _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
                                           self.event_info.longitude)
+             self.baz_all.append(az_from_epi)
              return az_from_epi
          else:
 
@@ -1274,7 +1315,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     self.events_times.append(time)
         # calling for 1D clustering more than one detection per earthquake //eps seconds span
         try:
-            self.events_times,str_times = MseedUtil.cluster_events(self.events_times, eps=cluster)
+            self.events_times, str_times = MseedUtil.cluster_events(self.events_times, eps=cluster)
 
             with open(self.path_detection, "w") as fp:
                 json.dump(str_times, fp)
@@ -1354,7 +1395,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def plot_all_seismograms(self):
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=1, ncols=1)
-        ax = self.canvas.get_axe(0)
         index = 0
         colors = ['black','indianred','chocolate','darkorange','olivedrab','lightseagreen',
                   'royalblue','darkorchid','magenta']
@@ -1389,6 +1429,113 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         except:
             pass
 
+    def plot_prs(self):
+
+        dist_all = []
+        baz_all = []
+        distance_in_km = True
+        depth = self.event_info.event_depth
+        otime = self.event_info.event_time
+
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=1, ncols=1)
+        index = 0
+        ##
+        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+
+
+        if len(self.st) > 0:
+
+            self.st.detrend(type="simple")
+            self.st.reverse()
+            if self.sortCB.isChecked():
+                if self.comboBox_sort.currentText() == "Distance":
+                    for tr in self.st:
+                        st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
+                        if st_stats:
+                            dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
+                                                          self.event_info.longitude)
+                            dist_all.append(dist / 1000)
+
+                    max_dist = kilometers2degrees(max(dist_all))
+                    min_dist = kilometers2degrees(min(dist_all))
+                    dist_all.sort()
+                    dist_all.reverse()
+
+                    if sum(dist_all)/len(dist_all) > 700:
+                        distance_in_km = False
+                        for index, dist in enumerate(dist_all):
+                            dist_all[index] = kilometers2degrees(dist)
+                        max_dist = max(dist_all)
+                        min_dist = min(dist_all)
+                    self.message_dataless_not_found()
+
+                    arrivals = ObspyUtil.get_trip_times(source_depth=depth, min_dist = min_dist,
+                                                                   max_dist=max_dist)
+                    all_arrivals = ObspyUtil.convert_travel_times(arrivals, otime,
+                                                                  dist_km = distance_in_km)
+
+                elif self.comboBox_sort.currentText() == "Back Azimuth":
+                    for tr in self.st:
+                        st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
+
+                        if st_stats:
+                            _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude,
+                                                                 self.event_info.latitude,
+                                                                 self.event_info.longitude)
+                            baz_all.append(az_from_epi)
+
+                    baz_all.sort()
+                    baz_all.reverse()
+                    self.message_dataless_not_found()
+
+            i = 0
+            for tr in self.st:
+                if len(tr) > 0:
+                    try:
+                        t = tr.times("matplotlib")
+                        if distance_in_km:
+                            s = 5*(tr.data/np.max(tr.data)) + dist_all[i]
+                        else:
+                            s = 5 * (tr.data / np.max(tr.data)) + dist_all[i]
+
+
+                        #if len(self.st) <= 25:
+
+                            self.canvas.plot_date(t, s, index, clear_plot=False, fmt='-', alpha=0.5,
+                                                      linewidth=0.5, label=tr.id)
+                        #else:
+                        self.canvas.plot_date(t, s, index, clear_plot=False, color="black", fmt='-', alpha=0.5,
+                                                      linewidth=0.5, label="")
+
+                    except:
+                        pass
+                    i = i + 1
+
+        if distance_in_km:
+            self.canvas.plot_date(all_arrivals["P"]["times"], all_arrivals["P"]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
+                              linewidth=0.5, label="P")
+
+            self.canvas.plot_date(all_arrivals["S"]["times"], all_arrivals["S"]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
+                              linewidth=0.5, label="S")
+
+        else:
+            for key in all_arrivals:
+                self.canvas.plot_date(all_arrivals[key]["times"], all_arrivals[key]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
+                                  linewidth=0.5, label=str(key))
+        try:
+            ax = self.canvas.get_axe(0)
+            if self.trimCB.isChecked():
+                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+            else:
+                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(0, "Date")
+            ax.legend()
+        except:
+            pass
 
     def plot_map_stations(self):
 
