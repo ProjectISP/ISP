@@ -1515,15 +1515,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         if distance_in_km:
             self.canvas.plot_date(all_arrivals["P"]["times"], all_arrivals["P"]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
-                              linewidth=0.5, label="P")
+                              linewidth=2.0, label="P")
 
             self.canvas.plot_date(all_arrivals["S"]["times"], all_arrivals["S"]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
-                              linewidth=0.5, label="S")
+                              linewidth=2.0, label="S")
 
         else:
             for key in all_arrivals:
                 self.canvas.plot_date(all_arrivals[key]["times"], all_arrivals[key]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
-                                  linewidth=0.5, label=str(key))
+                                  linewidth=2.0, label=str(key))
         try:
             ax = self.canvas.get_axe(0)
             if self.trimCB.isChecked():
@@ -2141,6 +2141,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         set_qdatetime(otime+900, self.dateTimeEdit_2)
         self.event_info.set_time(otime)
         self.event_info.set_coordinates([lat,lon,depth])
+
+    def set_event_download_values(self, event_catalog):
+        print("Set event values", event_catalog)
+        otime = event_catalog[0]
+        lat = event_catalog[1]
+        lon = event_catalog[2]
+        depth = event_catalog[3]
+
+        set_qdatetime(otime, self.dateTimeEdit_1)
+        set_qdatetime(otime+900, self.dateTimeEdit_2)
+        self.event_info.set_time(otime)
+        self.event_info.set_coordinates([lat,lon,depth])
+
+
 
 
 

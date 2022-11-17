@@ -647,6 +647,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="select_eventBtn">
+        <property name="text">
+         <string>Export Event to Earthquake Analysis</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>

@@ -4,6 +4,7 @@ Created on Sun Jun 21 00:39:39 2020
 
 @author: Cabieces & Olivar
 """
+from obspy import UTCDateTime
 from obspy.geodetics import gps2dist_azimuth
 
 from isp.Gui import pw
@@ -52,6 +53,8 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         self.help = HelpDoc()
 
+        # action Buttons
+        self.select_eventBtn.clicked.connect(self.select_event)
         #
         self.latitudes = []
         self.longitudes = []
@@ -403,5 +406,43 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
     def open_help(self):
         self.help.show()
+
+    # set conexion DataDownload with Eartuquake Analysis
+    def select_event(self):
+
+        selected_items = self.tableWidget.selectedItems()
+        event_dict = {}
+        row = 0
+        column = 0
+        for i, item in enumerate(selected_items):
+            event_dict.setdefault(row, {})
+            header = self.tableWidget.horizontalHeaderItem(column).text()
+            event_dict[row][header] = item.text()
+            column += 1
+            if i % 5 == 0 and i > 0:
+                row += 1
+                column = 0
+
+        for event in event_dict.keys():
+            date = event_dict[event]['otime']
+            date_full = date.split("T")
+            date = date_full[0].split("-")
+            time = date_full[1].split(":")
+            tt = UTCDateTime(int(date[0]), int(date[1]), int(date[2]), int(time[0]), int(time[1]), float(time[2][:-1]))
+
+            self.otime = UTCDateTime(tt)
+            self.evla = float(event_dict[event]['lat'])
+            self.evlo = float(event_dict[event]['lon'])
+            self.evdp = float(event_dict[event]['depth'])
+            self.export_event_download_to_earthquake_analysis()
+
+    def export_event_download_to_earthquake_analysis(self):
+        from isp.Gui.controllers import Controller
+
+        controller: Controller = Controller()
+        if not controller.earthquake_analysis_frame:
+            controller.open_earthquake_window()
+
+        controller.earthquake_analysis_frame.set_event_download_values([self.otime, self.evla, self.evlo, self.evdp])
 
 
