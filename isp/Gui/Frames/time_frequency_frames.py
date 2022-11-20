@@ -30,8 +30,14 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self._stations_info = {}
         self.tr1 = []
         self.tr2 = []
+        self.tr3 = []
         self.canvas_plot1 = MatplotlibCanvas(self.widget_plot_up, sharex=True, constrained_layout=True, nrows=2)
         self.canvas_plot2 = MatplotlibCanvas(self.widget_plot_down, sharex=True, constrained_layout=True, nrows=2)
+        self.canvas_plot3 = MatplotlibCanvas(self.widget_plot_3, sharex=True, constrained_layout=True, nrows=3)
+        #self.canvas_plot3.figure.subplots_adjust(left=0.046, bottom=0.070, right=0.976, top=0.975, wspace=0.2,
+        #                                         hspace=0.0)
+        self.canvas_plot3.set_xlabel(2, "Time (s)")
+
         # Binding
         self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
         self.canvas_plot2.mpl_connect('key_press_event', self.key_pressed)
@@ -89,7 +95,6 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
         self.dataless_not_found.clear()
 
-
     def open_parameters_settings(self):
         self.parameters.show()
 
@@ -97,6 +102,10 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self._time_frequency_advance = TimeFrequencyAdvance(self.tr1, self.tr2)
         self._time_frequency_advance.show()
 
+    def find_nearest(self, a, a0):
+        "Element in nd array `a` closest to the scalar value `a0`"
+        idx = np.abs(a - a0).argmin()
+        return a.flat[idx], idx
 
     def validate_file(self):
         if not MseedUtil.is_valid_mseed(self.file_selector.file_path):
@@ -234,6 +243,22 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             self.__estimate_res(self.tr2.stats.npts)
             if self.time_frequencyChB.isChecked():
                 self.time_frequency(self.tr2, selection)
+
+
+        if selection == "Seismogram 3":
+
+            self.canvas_plot3.clear()
+            [self.tr3, t] = self.get_data()
+            self.canvas_plot3.plot(t, self.tr3.data, 0, clear_plot=True, color="black", linewidth=0.5)
+            self.canvas_plot3.set_xlabel(2, "Time (s)")
+            self.canvas_plot3.set_ylabel(0, "Amplitude ")
+            self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")
+            self.canvas_plot3.set_ylabel(2, "Period (s)")
+            info = "{}.{}.{}".format(self.tr3.stats.network, self.tr3.stats.station, self.tr3.stats.channel)
+            self.canvas_plot3.set_plot_label(0, info)
+            self.__estimate_res(self.tr3.stats.npts)
+            if self.time_frequencyChB.isChecked():
+                self.time_frequency_full(self.tr3, selection)
 
 
     @AsycTime.run_async()
@@ -454,6 +479,98 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             del scalogram2
         else:
             pass
+
+    #@AsycTime.run_async()
+    def time_frequency_full(self, tr, order):
+        selection = self.time_frequencyCB.currentText()
+        ts, te = self.get_time_window()
+        diff = te - ts
+
+        if selection == "Continuous Wavelet Transform":
+
+            fs = tr.stats.sampling_rate
+            nf = self.atomsSB.value()
+            f_min = self.freq_min_cwtDB.value()
+            f_max = self.freq_max_cwtDB.value()
+            if f_max < 1 :
+                f_max = 1
+            wmin = self.wminSB.value()
+            wmax = self.wminSB.value()
+            npts = len(tr.data)
+            t = np.linspace(0, tr.stats.delta * npts, npts)
+            cw = ConvolveWaveletScipy(tr)
+            wavelet = self.wavelet_typeCB.currentText()
+
+            m = self.wavelets_param.value()
+            if self.trimCB.isChecked() and diff >= 0:
+
+                cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=int(fs / f_min), fmin=f_min, fmax=f_max, nf=nf,
+                                 use_wavelet=wavelet, m=m, decimate=False)
+            else:
+                cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=int(fs / f_min), fmin=f_min, fmax=f_max, nf=nf,
+                                 use_wavelet=wavelet, m=m, decimate=False)
+
+            scalogram2 = cw.scalogram_in_dbs()
+            scalogram2 = np.clip(scalogram2, a_min=self.minlevelCB.value(), a_max=0)
+
+            if self.res_factor > 1:
+
+                scalogram2 = ndimage.zoom(scalogram2, (1.0, 1 / self.res_factor))
+                tt = np.linspace(0, self.res_factor * tr.stats.delta * scalogram2.shape[1], scalogram2.shape[1])
+                freq = np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0])
+                x, y = np.meshgrid(tt, freq)
+            else:
+                x, y = np.meshgrid(t, np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0]))
+
+
+            min_cwt = self.minlevelCB.value()
+            max_cwt = 0
+
+            value, idx = self.find_nearest(y[:,1], 1.0)
+            scalogram_period = scalogram2[0:idx,:]
+
+            scalogram2 = scalogram2[(idx):,:]
+
+            x_period = x[0:idx,:]
+            y_period = 1/(y[0:idx,:])
+            #y_period = np.flipud(y_period)
+            x_freq = x[(idx):,:]
+            y_freq = y[(idx):,:]
+
+
+            if self.res_factor <= 1:
+                self.canvas_plot3.plot_contour(x_freq, y_freq, scalogram2, axes_index=1, clear_plot=True,show_colorbar=False,
+                                               cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
+
+                self.canvas_plot3.plot_contour(x_period, 10*np.log(y_period), scalogram_period, axes_index=2, clear_plot=True, clabel="Power [dB]",
+                                               cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
+
+            elif self.res_factor > 1:
+                self.canvas_plot3.pcolormesh(x_freq, y_freq, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
+                                             cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
+
+                self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, clear_plot=True, clabel="Power [dB]",
+                                         cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
+
+            ax_period = self.canvas_plot3.get_axe(1)
+            ax_period.set_yscale('log')
+            ax_period=self.canvas_plot3.get_axe(2)
+            ax_period.invert_yaxis()
+            ax_period.set_yscale('log')
+            #self.canvas_plot3.figure.subplots_adjust(left=0.046, bottom=0.070, right=0.976, top=0.975, wspace=0.2,
+            #                                         hspace=0.0)
+            self.canvas_plot3.set_xlabel(2, "Time (s)")
+            self.canvas_plot3.set_ylabel(0, "Amplitude ")
+            self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")
+            self.canvas_plot3.set_ylabel(2, "Period (s)")
+            # clean objects
+            del cw
+            del x
+            del y
+            del scalogram2
+        else:
+            pass
+
 
     def key_pressed(self, event):
         selection = self.selectCB.currentText()
