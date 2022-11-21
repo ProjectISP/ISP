@@ -652,7 +652,7 @@
      </layout>
     </item>
     <item row="0" column="1" rowspan="2">
-     <widget class="QTabWidget" name="tabWidget_2">
+     <widget class="QTabWidget" name="tabWidget_TF">
       <property name="currentIndex">
        <number>0</number>
       </property>
