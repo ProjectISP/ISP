@@ -41,6 +41,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         # Binding
         self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
         self.canvas_plot2.mpl_connect('key_press_event', self.key_pressed)
+        self.canvas_plot3.mpl_connect('key_press_event', self.key_pressed)
+
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
@@ -625,6 +627,13 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 set_qdatetime(tt, self.starttime_date)
                 self.canvas_plot2.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
 
+            elif selection == "Seismogram 3":
+                x1, y1 = event.xdata, event.ydata
+                [tr, t] = self.get_data()
+                tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.starttime_date)
+                self.canvas_plot3.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
+
         if event.key == 'e':
 
             if selection == "Seismogram 1":
@@ -641,6 +650,14 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 set_qdatetime(tt, self.endtime_date)
                 self.canvas_plot2.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--',
                                               picker=False)
+
+            elif selection == "Seismogram 3":
+                x1, y1 = event.xdata, event.ydata
+                [tr, t] = self.get_data()
+                tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.endtime_date)
+                self.canvas_plot3.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--', picker=False)
+
 
 
     def open_help(self):
