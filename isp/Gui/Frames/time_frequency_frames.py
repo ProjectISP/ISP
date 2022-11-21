@@ -199,10 +199,17 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             self.res_factor = 1
             if res_user > self.res_factor:
                 self.res_factor = res_user
+
         elif self.very_low_res < npts <= self.low_res:
             self.res_factor = 20
             if res_user > self.res_factor:
                 self.res_factor = res_user
+
+        elif self.low_res < npts <= self.high_res:
+            self.res_factor = 40
+            if res_user > self.res_factor:
+                self.res_factor = res_user
+
         elif self.high_res < npts <= self.very_high_res:
             self.res_factor = 50
             if res_user > self.res_factor:
@@ -218,6 +225,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
         if selection == "Seismogram 1":
             #self.validate_file()
+            self.tabWidget_TF.setCurrentIndex(0)
             self.canvas_plot1.clear()
             [self.tr1, t] = self.get_data()
             self.canvas_plot1.plot(t, self.tr1.data, 0, clear_plot=True, color="black", linewidth=0.5)
@@ -232,6 +240,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
         if selection == "Seismogram 2":
             #self.validate_file()
+            self.tabWidget_TF.setCurrentIndex(0)
             self.canvas_plot2.clear()
             [self.tr2, t] = self.get_data()
             self.canvas_plot2.plot(t, self.tr2.data, 0, clear_plot=True, color="black", linewidth=0.5)
@@ -247,6 +256,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
         if selection == "Seismogram 3":
 
+            self.tabWidget_TF.setCurrentIndex(1)
             self.canvas_plot3.clear()
             [self.tr3, t] = self.get_data()
             self.canvas_plot3.plot(t, self.tr3.data, 0, clear_plot=True, color="black", linewidth=0.5)
@@ -260,6 +270,29 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             if self.time_frequencyChB.isChecked():
                 self.time_frequency_full(self.tr3, selection)
 
+    def process_import_trace(self, tr):
+        self.tabWidget_TF.setCurrentIndex(1)
+        self.canvas_plot3.clear()
+        self.tr3 = tr
+        t = self.tr3.times()
+        print("trace imported")
+        print(self.tr3)
+        set_qdatetime(tr.stats.starttime, self.starttime_date)
+        set_qdatetime(tr.stats.endtime, self.endtime_date)
+        self.trimCB.setChecked(True)
+        self.time_frequencyCB.setCurrentIndex(1)
+        self.time_frequencyChB.setChecked(True)
+        self.canvas_plot3.plot(t, self.tr3.data, 0, clear_plot=True, color="black", linewidth=0.5)
+        self.canvas_plot3.set_xlabel(2, "Time (s)")
+        self.canvas_plot3.set_ylabel(0, "Amplitude ")
+        self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")
+        self.canvas_plot3.set_ylabel(2, "Period (s)")
+        info = "{}.{}.{}".format(self.tr3.stats.network, self.tr3.stats.station, self.tr3.stats.channel)
+        self.canvas_plot3.set_plot_label(0, info)
+        self.__estimate_res(self.tr3.stats.npts)
+        if self.time_frequencyChB.isChecked():
+            selection = self.selectCB.currentText()
+            self.time_frequency_full(self.tr3, selection)
 
     @AsycTime.run_async()
     def time_frequency(self, tr, order):
@@ -539,18 +572,18 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
 
             if self.res_factor <= 1:
-                self.canvas_plot3.plot_contour(x_freq, y_freq, scalogram2, axes_index=1, clear_plot=True,show_colorbar=False,
+                self.canvas_plot3.plot_contour(x_freq, y_freq, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
                                                cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
-                self.canvas_plot3.plot_contour(x_period, 10*np.log(y_period), scalogram_period, axes_index=2, clear_plot=True, clabel="Power [dB]",
+                self.canvas_plot3.plot_contour(x_period, 10*np.log(y_period), scalogram_period, axes_index=2,
+                                               clear_plot=True, clabel="Power [dB]",
                                                cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
             elif self.res_factor > 1:
-                self.canvas_plot3.pcolormesh(x_freq, y_freq, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
+                self.canvas_plot3.pcolormesh(x_freq, y_freq, scalogram2, axes_index=1, clear_plot = True, clabel="Power [dB]",
                                              cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
-                self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, clear_plot=True, clabel="Power [dB]",
-                                         cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
+                self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, clear_plot=True, clabel ="Power [dB]", cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
             ax_period = self.canvas_plot3.get_axe(1)
             ax_period.set_yscale('log')

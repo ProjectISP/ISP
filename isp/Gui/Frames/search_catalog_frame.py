@@ -1,5 +1,4 @@
 from obspy.geodetics import gps2dist_azimuth
-
 from isp.Gui import pw
 from isp.Gui.Frames.uis_frames import UiSearch_Catalog
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject

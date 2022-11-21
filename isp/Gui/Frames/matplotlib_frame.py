@@ -794,6 +794,21 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         ax.add_artist(ab)
         self.draw_idle()
 
+    def draw_selection_TF(self, axe_index):
+        from PIL import Image
+        from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+        import os
+        ax = self.get_axe(axe_index)
+
+        path_to_image = os.path.join(RESOURCE_PATH, 'images', 'waveform.png')
+        img = Image.open(path_to_image)
+
+
+        imagebox = OffsetImage(img, zoom=0.08)
+        ab = AnnotationBbox(imagebox, (0.05, 0.3), xycoords='axes fraction', frameon=False)
+        ax.add_artist(ab)
+        self.draw_idle()
+
 
 
     def draw_arrow(self, x_pos, axe_index=0, arrow_label="Arrow", draw_arrow=False, amplitude=None, **kwargs):

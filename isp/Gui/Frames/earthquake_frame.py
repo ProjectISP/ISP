@@ -1872,6 +1872,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.spectrum = PlotToolsManager(id)
             self.spectrum.plot_spectrum(freq, spec, jackknife_errors)
 
+
+        if event.key == 'm':
+            self.canvas.draw_selection_TF(self.ax_num)
+            self.tr_tf = self.st[self.ax_num]
+
         if event.key == 'h':
 
             self.canvas.draw_selection(self.ax_num)
@@ -2104,6 +2109,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def time_frequency_analysis(self):
         self.controller().open_seismogram_window()
+        if len(self.tr_tf) > 0:
+            self.controller().time_frequency_frame.process_import_trace(self.tr_tf)
 
     def open_receiver_functions(self):
         self.controller().open_receiverFunctions()
@@ -2146,9 +2153,3 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         set_qdatetime(otime+900, self.dateTimeEdit_2)
         self.event_info.set_time(otime)
         self.event_info.set_coordinates([lat,lon,depth])
-
-
-
-
-
-
