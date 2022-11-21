@@ -117,7 +117,10 @@ class ObspyUtil:
         arrivals_list = []
 
         for value in distances:
-            arrival = model.get_travel_times(source_depth_in_km=source_depth, distance_in_degree=float(value))
+
+            arrival = model.get_travel_times(source_depth_in_km=source_depth, distance_in_degree= float(value))
+
+
             arrivals_list.append(arrival)
 
         return arrivals_list

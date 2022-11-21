@@ -1471,24 +1471,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                         min_dist = min(dist_all)
                     self.message_dataless_not_found()
 
-                    arrivals = ObspyUtil.get_trip_times(source_depth=depth, min_dist = min_dist,
-                                                                   max_dist=max_dist)
+                    arrivals = ObspyUtil.get_trip_times(source_depth=depth, min_dist = min_dist, max_dist=max_dist)
                     all_arrivals = ObspyUtil.convert_travel_times(arrivals, otime,
                                                                   dist_km = distance_in_km)
 
-                elif self.comboBox_sort.currentText() == "Back Azimuth":
-                    for tr in self.st:
-                        st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
-
-                        if st_stats:
-                            _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude,
-                                                                 self.event_info.latitude,
-                                                                 self.event_info.longitude)
-                            baz_all.append(az_from_epi)
-
-                    baz_all.sort()
-                    baz_all.reverse()
-                    self.message_dataless_not_found()
+                # elif self.comboBox_sort.currentText() == "Back Azimuth":
+                #     for tr in self.st:
+                #         st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
+                #
+                #         if st_stats:
+                #             _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude,
+                #                                                  self.event_info.latitude,
+                #                                                  self.event_info.longitude)
+                #             baz_all.append(az_from_epi)
+                #
+                #     baz_all.sort()
+                #     baz_all.reverse()
+                #    self.message_dataless_not_found()
 
             i = 0
             for tr in self.st:
@@ -1498,15 +1497,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                         if distance_in_km:
                             s = 5*(tr.data/np.max(tr.data)) + dist_all[i]
                         else:
-                            s = 5 * (tr.data / np.max(tr.data)) + dist_all[i]
+                            s = 0.5 * (tr.data / np.max(tr.data)) + dist_all[i]
 
-
-                        #if len(self.st) <= 25:
-
-                            self.canvas.plot_date(t, s, index, clear_plot=False, fmt='-', alpha=0.5,
-                                                      linewidth=0.5, label=tr.id)
-                        #else:
-                        self.canvas.plot_date(t, s, index, clear_plot=False, color="black", fmt='-', alpha=0.5,
+                        self.canvas.plot_date(t, s, 0, clear_plot=False, color="black", fmt='-', alpha=0.5,
                                                       linewidth=0.5, label="")
 
                     except:
@@ -1515,15 +1508,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         if distance_in_km:
             self.canvas.plot_date(all_arrivals["P"]["times"], all_arrivals["P"]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
-                              linewidth=2.0, label="P")
+                              linewidth=1.0, label="P")
 
             self.canvas.plot_date(all_arrivals["S"]["times"], all_arrivals["S"]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
-                              linewidth=2.0, label="S")
+                              linewidth=1.0, label="S")
 
         else:
             for key in all_arrivals:
                 self.canvas.plot_date(all_arrivals[key]["times"], all_arrivals[key]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
-                                  linewidth=2.0, label=str(key))
+                                  linewidth=1.0, label=str(key))
         try:
             ax = self.canvas.get_axe(0)
             if self.trimCB.isChecked():
