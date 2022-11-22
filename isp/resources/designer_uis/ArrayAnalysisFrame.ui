@@ -1336,9 +1336,16 @@
     </property>
     <addaction name="actionOpen_Help"/>
    </widget>
+   <widget class="QMenu" name="menuSlowness_Search">
+    <property name="title">
+     <string>Slowness Search</string>
+    </property>
+    <addaction name="actionOpenSlowness"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuParameters"/>
    <addaction name="menuVespagram"/>
+   <addaction name="menuSlowness_Search"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -1395,6 +1402,11 @@
   <action name="actionOpen_Help">
    <property name="text">
     <string>Open Help</string>
+   </property>
+  </action>
+  <action name="actionOpenSlowness">
+   <property name="text">
+    <string>Open Slowness Map</string>
    </property>
   </action>
  </widget>
