@@ -10,6 +10,7 @@ from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_coordinates import StationsCoords
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.vespagram import Vespagram
+from isp.Gui.Frames.slowness_map import SlownessMap
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.Gui import pw, pqg, pyc
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -96,9 +97,13 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.create_gridBtn.clicked.connect(self.create_grid)
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.load_videoBtn.clicked.connect(self.loadvideoBP)
+        self.actionOpenSlowness.triggered.connect(lambda: self.open_slownessMap())
 
         # help Documentation
         self.help = HelpDoc()
+
+        # Slowness Map
+        self.__slownessMap = SlownessMap()
 
         # Parameters settings
         self.__parameters = ParametersSettings()
@@ -135,12 +140,14 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
     def setPosition(self, position):
          self.player.setPosition(position)
 
+    def open_slownessMap(self):
+        self.__slownessMap.show()
+
     def open_parameters_settings(self):
         self.__parameters.show()
 
     def stations_coordinates(self):
         self.__stations_coords.show()
-
 
     def open_vespagram(self):
         if self.st and self.inventory and self.t1 and self.t2:
