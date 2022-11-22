@@ -272,7 +272,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             if self.time_frequencyChB.isChecked():
                 self.time_frequency_full(self.tr3, selection)
 
-    def process_import_trace(self, tr):
+    def process_import_trace(self, tr, phases=None, travel_times=None):
         self.tabWidget_TF.setCurrentIndex(1)
         self.canvas_plot3.clear()
         self.tr3 = tr
@@ -285,6 +285,10 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.time_frequencyCB.setCurrentIndex(1)
         self.time_frequencyChB.setChecked(True)
         self.canvas_plot3.plot(t, self.tr3.data, 0, clear_plot=True, color="black", linewidth=0.5)
+        # plot arrivals
+        if phases!=None and travel_times!=None:
+            for phase, time in zip(phases, travel_times):
+                self.canvas_plot3.draw_arrow(time, axe_index=0, arrow_label=phase, draw_arrow=False, color = "green")
         self.canvas_plot3.set_xlabel(2, "Time (s)")
         self.canvas_plot3.set_ylabel(0, "Amplitude ")
         self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")
@@ -293,8 +297,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.canvas_plot3.set_plot_label(0, info)
         self.__estimate_res(self.tr3.stats.npts)
         if self.time_frequencyChB.isChecked():
-            selection = self.selectCB.currentText()
-            self.time_frequency_full(self.tr3, selection)
+             selection = self.selectCB.currentText()
+             self.time_frequency_full(self.tr3, selection)
 
     @AsycTime.run_async()
     def time_frequency(self, tr, order):
@@ -585,7 +589,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 self.canvas_plot3.pcolormesh(x_freq, y_freq, scalogram2, axes_index=1, clear_plot = True, clabel="Power [dB]",
                                              cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
-                self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, clear_plot=True, clabel ="Power [dB]", cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
+                self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, clear_plot=True,
+                                             clabel ="Power [dB]", cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
             ax_period = self.canvas_plot3.get_axe(1)
             ax_period.set_yscale('log')
@@ -603,6 +608,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             del x
             del y
             del scalogram2
+            del ax_period
         else:
             pass
 
