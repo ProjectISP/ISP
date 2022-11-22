@@ -2125,15 +2125,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def time_frequency_analysis(self):
         self.controller().open_seismogram_window()
-        if len(self.tr_tf) > 0 and self.phases!=None and self.travel_times!=None:
+        answer = pw.QMessageBox.question(self, "Export Seismogram to TF Analysis",
+            "if you have selected a seismogram this will be automatically processed in TF Analysis module")
 
-            self.controller().time_frequency_frame.process_import_trace(self.tr_tf, phases=self.phases,
-                                                                        travel_times=self.travel_times)
-        else:
-            self.controller().time_frequency_frame.process_import_trace(self.tr_tf)
+        if pw.QMessageBox.Yes == answer:
+            if len(self.tr_tf) > 0 and self.phases!=None and self.travel_times!=None:
 
-        self.phases = None
-        self.travel_times = None
+                self.controller().time_frequency_frame.process_import_trace(self.tr_tf, phases=self.phases,
+                                                                            travel_times=self.travel_times)
+            else:
+                self.controller().time_frequency_frame.process_import_trace(self.tr_tf)
+
+            self.phases = None
+            self.travel_times = None
 
     def open_receiver_functions(self):
         self.controller().open_receiverFunctions()
