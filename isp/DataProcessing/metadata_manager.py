@@ -34,8 +34,15 @@ class MetadataManager:
 
     def extrac_coordinates_from_trace(self, inventory, trace):
         stats = ObspyUtil.get_stats_from_trace(trace)
-        selected_inv = inventory.select(network=stats['net'], station=stats['station'], channel=stats['channel'],
-                                        starttime=stats['starttime'], endtime=stats['endtime'])
+        try:
+            selected_inv = inventory.select(network=stats['net'], station=stats['station'], channel=stats['channel'],
+                                            starttime=stats['starttime'], endtime=stats['endtime'])
+        except:
+            selected_inv = inventory.select(network=stats['net'], station=stats['station'], location=stats['location'],
+                                            channel=stats['channel'], starttime=stats['starttime'],
+                                            endtime=stats['endtime'])
+
+
         cont = selected_inv.get_contents()
         coords = selected_inv.get_coordinates(cont['channels'][0])
 

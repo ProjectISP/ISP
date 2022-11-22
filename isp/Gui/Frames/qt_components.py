@@ -525,9 +525,10 @@ class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
                                             picker=False)
             self.add_arrivals_line(line)
 
-    def plot_travel_times(self):
-        delta_time = self.event_time.matplotlib_date
-
+    def get_station_travel_times(self, station_stats):
+        sma = SeismogramAnalysis(station_stats.Latitude, station_stats.Longitude)
+        phases, times = sma.get_phases_and_arrivals(self.latitude, self.longitude, self.event_depth)
+        return phases, times
 
     def get_event_coordinates(self):
         return self.latitude,self.longitude,self.event_depth

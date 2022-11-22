@@ -59,6 +59,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         #finally:
         #print("Neural Network cannot be loaded")
         self.zoom_diff = None
+        self.phases = None
+        self.travel_times = None
         self.cancelled = False
         self.aligned_checked = False
         self.aligned_picks = False
@@ -1641,6 +1643,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             # TODO remove stats.StartTime and use the picked one from UI.
             self.event_info.plot_arrivals2(index, st_stats)
 
+    def get_arrivals_tf(self):
+
+        try:
+            st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, self.tr_tf)
+            self.phases, self.travel_times = self.event_info.get_station_travel_times(st_stats)
+            self.phases = list(self.phases)
+            self.travel_times = list(self.travel_times)
+            eventtime = self.event_info.event_time
+            for index, time in enumerate(self.travel_times):
+                self.travel_times[index] = (eventtime-self.tr_tf.stats.starttime)+self.travel_times[index]
+        except:
+            pass
+
     def stationsInfo(self):
 
         if self.sortCB.isChecked():
@@ -1876,6 +1891,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if event.key == 'm':
             self.canvas.draw_selection_TF(self.ax_num)
             self.tr_tf = self.st[self.ax_num]
+            self.get_arrivals_tf()
 
         if event.key == 'h':
 
@@ -2109,8 +2125,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def time_frequency_analysis(self):
         self.controller().open_seismogram_window()
-        if len(self.tr_tf) > 0:
+        if len(self.tr_tf) > 0 and self.phases!=None and self.travel_times!=None:
+
+            self.controller().time_frequency_frame.process_import_trace(self.tr_tf, phases=self.phases,
+                                                                        travel_times=self.travel_times)
+        else:
             self.controller().time_frequency_frame.process_import_trace(self.tr_tf)
+
+        self.phases = None
+        self.travel_times = None
 
     def open_receiver_functions(self):
         self.controller().open_receiverFunctions()
