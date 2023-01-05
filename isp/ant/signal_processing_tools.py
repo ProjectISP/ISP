@@ -221,8 +221,10 @@ class noise_processing:
                 N += 1
 
             # taper edges
-            taper = self.get_window(self.tr.stats.npts)
-            self.tr.data *= taper
+            #taper = self.get_window(self.tr.stats.npts)
+            #self.tr.data *= taper
+            # ensure no glitches in the extremes due to previous pre-filt
+            self.tr.taper(type="blackman", max_percentage=0.025)
 
         elif norm_method == "1 bit":
             self.tr.data = np.sign(self.tr.data)
@@ -348,10 +350,14 @@ class noise_processing_horizontals:
                 N += 1
 
             # taper edges
-            taper = self.get_window(self.tr_N.stats.npts)
-            self.tr_N.data *= taper
-            taper = self.get_window(self.tr_E.stats.npts)
-            self.tr_E.data *= taper
+            #taper = self.get_window(self.tr_N.stats.npts)
+            #self.tr_N.data *= taper
+            #taper = self.get_window(self.tr_E.stats.npts)
+            #self.tr_E.data *= taper
+
+            self.tr_N.taper(type="blackman", max_percentage=0.025)
+            self.tr_E.taper(type="blackman", max_percentage=0.025)
+
 
 
 

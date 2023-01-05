@@ -30,7 +30,7 @@ class process_ant:
         self.num_rows = None
         self.data_domain = "frequency"
         self.save_files = "True"
-        self.taper_max_percent = 0.05
+        self.taper_max_percent = 0.025
         self.timeWindowCB = param_dict["processing_window"]
         self.num_minutes_dict_matrix = int(self.timeWindowCB/60)
         self.gaps_tol = 120
@@ -129,7 +129,8 @@ class process_ant:
         # update the sampling_rate
         sampling_rate = info_item[1][0][0][0].sample_rate
         #sampling_rate = 1.0
-        sampling_rate_new = sampling_rate / self.factor
+        #sampling_rate_new = sampling_rate / self.factor
+        sampling_rate_new = self.factor
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
@@ -320,13 +321,13 @@ class process_ant:
         if self.decimationCB and check_process:
             #print("decimating ", tr.id)
             try:
-                tr.decimate(factor=self.factor, no_filter=False)
+                tr.detrend(type="simple")
+                tr.taper(type="blackman", max_percentage=0.025)
+                tr.filter(type="lowpass", freq=0.4*self.factor, zerophase=True, corners=4)
+                tr.resample(sampling_rate=self.factor, no_filter=True)
             except:
                 check_process = False
                 print("Couldn't decimate")
-
-        # for i in range(self.num_rows):
-        #print("Starting hard process ", tr.id)
 
         for i in range(len(self.inc_time) - 1):
 
@@ -334,26 +335,29 @@ class process_ant:
 
             if check_process:
                 # ensure the start and end to have 24 h
-                #tr_test = self.ensure_24(tr_test)
                 tr_test.trim(starttime=tr.stats.starttime + self.inc_time[i],
                                  endtime=tr.stats.starttime + self.inc_time[i + 1])
 
-               # print(tr_test)
-                if fill_gaps:
-                    st = self.fill_gaps(Stream(traces=tr_test), tol=self.gaps_tol)
-                    if st == []:
-                        tr_test.data = np.zeros(len(tr_test.data), dtype=np.complex64)
-                    else:
-                        tr_test = st[0]
+               # TODO "Make sense to check gaps every time window??"
+               #  if fill_gaps:
+               #      st = self.fill_gaps(Stream(traces=tr_test), tol=self.gaps_tol)
+               #      if st == []:
+               #          tr_test.data = np.zeros(len(tr_test.data), dtype=np.complex64)
+               #      else:
+               #          tr_test = st[0]
+
                 if (self.data_domain == "frequency") and len(tr[:]) > 0:
                     n = tr_test.count()
                     if n > 0:
                         D = 2 ** math.ceil(math.log2(n))
-                        #print(tr_test)
-                        # tr_test.plot()
-                        # Prefilt
+                        # Automatic Pre-filt
+                        # filter the signal between 150 seconds and 1/4 the sampling rate
+
                         tr_test.detrend(type='simple')
-                        tr_test.taper(max_percentage=0.05)
+                        tr_test.taper(max_percentage=0.025)
+                        tr_test.filter(type="bandpass", freqmin=0.005, freqmax=self.factor / 8, zerophase=True,
+                                       corners=6)
+
                         process = noise_processing(tr_test)
 
                         if self.time_normalizationCB and self.timenorm == "running avarage":
@@ -419,9 +423,16 @@ class process_ant:
 
             if self.decimationCB and check_process:
                 #print("decimating ", tr_N.id, tr_E.id)
-                try :
-                    tr_N.decimate(factor=self.factor, no_filter = False)
-                    tr_E.decimate(factor=self.factor, no_filter = False)
+                try:
+                    tr_N.detrend(type="simple")
+                    tr_N.taper(type="blackman", max_percentage=0.025)
+                    tr_N.resample(sampling_rate=self.factor, no_filter=True)
+                    tr_N.decimate(factor=self.factor, no_filter=False)
+
+                    tr_E.detrend(type="simple")
+                    tr_E.taper(type="blackman", max_percentage=0.025)
+                    tr_E.resample(sampling_rate=self.factor, no_filter=True)
+                    tr_E.decimate(factor=self.factor, no_filter=False)
                 except:
                     check_process = False
                     print("Couldn't Decimate")
@@ -435,37 +446,46 @@ class process_ant:
                     tr_test_E = tr_E.copy()
                     maxstart = np.max([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
                     #minend = np.min([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
-                   # tr_test_N = self.ensure_24(tr_test_N)
-                   # tr_test_E = self.ensure_24(tr_test_E)
+
                     tr_test_N.trim(starttime=maxstart + self.inc_time[i],
                                  endtime=maxstart + self.inc_time[i + 1])
 
                     tr_test_E.trim(starttime=maxstart + self.inc_time[i],
                                    endtime=maxstart + self.inc_time[i + 1])
 
-                    if fill_gaps:
-                        st_N = self.fill_gaps(Stream(traces=tr_test_N), tol=self.gaps_tol)
-                        st_E = self.fill_gaps(Stream(traces=tr_test_E), tol=self.gaps_tol)
-
-                        if st_N == []:
-                            tr_test_N.data = np.zeros(len(tr_test_N.data), dtype=np.complex64)
-                        elif st_E == []:
-                            tr_test_E.data = np.zeros(len(tr_test_E.data), dtype=np.complex64)
-                        else:
-                            tr_test_N = st_N[0]
-                            tr_test_E = st_E[0]
+                    # TODO Make sense to check trim data?
+                    # if fill_gaps:
+                    #     st_N = self.fill_gaps(Stream(traces=tr_test_N), tol=self.gaps_tol)
+                    #     st_E = self.fill_gaps(Stream(traces=tr_test_E), tol=self.gaps_tol)
+                    #
+                    #     if st_N == []:
+                    #         tr_test_N.data = np.zeros(len(tr_test_N.data), dtype=np.complex64)
+                    #     elif st_E == []:
+                    #         tr_test_E.data = np.zeros(len(tr_test_E.data), dtype=np.complex64)
+                    #     else:
+                    #         tr_test_N = st_N[0]
+                    #         tr_test_E = st_E[0]
 
                     if (self.data_domain == "frequency") and len(tr_N[:]) and len(tr_E[:]) > 0:
                         n = tr_test_N.count()
                         if n > 0:
                             D = 2 ** math.ceil(math.log2(n))
-                            #print(tr_test_N, tr_test_E)
-                            # tr_test.plot()
+
                             # Prefilt
+
+                            # Automatic Pre-filt
+                            # filter the signal between 150 seconds and 1/4 the sampling rate
                             tr_test_N.detrend(type='simple')
                             tr_test_E.detrend(type='simple')
-                            tr_test_N.taper(max_percentage=0.05)
-                            tr_test_E.taper(max_percentage=0.05)
+                            tr_test_N.taper(max_percentage=0.025)
+                            tr_test_E.taper(max_percentage=0.025)
+
+                            tr_test_N.filter(type="bandpass", freqmin=0.005, freqmax=self.factor / 8, zerophase=True,
+                                           corners=6)
+
+                            tr_test_E.filter(type="bandpass", freqmin=0.005, freqmax=self.factor / 8, zerophase=True,
+                                           corners=6)
+
                             process_horizontals = noise_processing_horizontals(tr_test_N, tr_test_E)
 
                             if self.time_normalizationCB and self.timenorm == "running avarage":
@@ -592,11 +612,8 @@ class process_ant:
         done = True
 
         try:
-
             tr.remove_response(inventory=self.inventory, pre_filt=(f1, f2, f3, f4), output=units, water_level=water_level)
-
         except:
-
             print("Coudn't deconvolve", tr.stats)
             done = False
 

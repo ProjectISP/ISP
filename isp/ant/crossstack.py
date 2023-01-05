@@ -20,8 +20,6 @@ class noisestack:
         """
                 Process ANT, Cross + Stack
 
-
-
                 :param No params required to initialize the class
         """
         self.__metadata_manager = None
@@ -34,8 +32,6 @@ class noisestack:
         self.min_dist = min_distance
         self.dailyStacks = dailyStacks
         self.overlap = overlap
-
-
 
     def check_path(self):
     # Se crea la carpeta si no existe:

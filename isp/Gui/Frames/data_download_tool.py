@@ -6,7 +6,6 @@ Created on Sun Jun 21 00:39:39 2020
 """
 from obspy import UTCDateTime
 from obspy.geodetics import gps2dist_azimuth
-
 from isp.Gui import pw
 from isp.Gui.Frames import BaseFrame, CartopyCanvas, MessageDialog
 from isp.Gui.Frames.uis_frames import UiDataDownloadFrame
@@ -15,11 +14,11 @@ import os
 import obspy
 import obspy.clients.fdsn
 import obspy.taup
-from isp.Gui.Utils.pyqt_utils import convert_qdatetime_utcdatetime
+from isp.Gui.Utils.pyqt_utils import convert_qdatetime_utcdatetime, convert_qdatetime_datetime
 from isp.retrieve_events import retrieve
 from isp.Gui.Frames.help_frame import HelpDoc
+from isp.Gui.Frames.seiscom3conexion_frame import SeisCopm3connexion
 from sys import platform
-
 from isp.seismogramInspector.signal_processing_advanced import find_nearest
 
 
@@ -28,6 +27,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         super(BaseFrame, self).__init__()
         self.setupUi(self)
         self.inventory = {}
+        self.seiscomp3parameters = None
         self.network_list = []
         self.stations_list = []
         self.catalogBtn.clicked.connect(self.get_catalog)
@@ -53,13 +53,22 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         self.help = HelpDoc()
 
+        # SeicomP3
+
+        self.seiscomp3connection = SeisCopm3connexion()
+
         # action Buttons
         self.select_eventBtn.clicked.connect(self.select_event)
+        self.seiscompBtn.clicked.connect(self.open_connect_seiscomp3)
         #
         self.latitudes = []
         self.longitudes = []
         self.depths = []
         self.magnitudes = []
+
+
+    def open_connect_seiscomp3(self):
+        self.seiscomp3connection.show()
 
     def get_coordinates(self, row, column):
         lat = self.tableWidget.item(row,1).data(0)
@@ -72,6 +81,21 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         #self.line1 = ax.scatter(lon30, lat30, s=8, c="white")
         #self.line2 = ax.scatter(lon90, lat90, s=8, c="white")
 
+    def set_table(self, otime, lat, lon, depth, magnitude, magnitude_type):
+        self.tableWidget.insertRow(self.tableWidget.rowCount())
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QtWidgets.QTableWidgetItem(str(otime)))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QtWidgets.QTableWidgetItem(str(lat)))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QtWidgets.QTableWidgetItem(str(lon)))
+        try:
+
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem(str(depth / 1000)))
+
+        except TypeError:
+
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem("N/A"))
+
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 4, QtWidgets.QTableWidgetItem(str(magnitude)))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 5, QtWidgets.QTableWidgetItem(str(magnitude_type)))
 
     def get_catalog(self):
         try:
@@ -84,6 +108,8 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         magnitudes = []
         starttime = convert_qdatetime_utcdatetime(self.start_dateTimeEdit)
         endtime = convert_qdatetime_utcdatetime(self.end_dateTimeEdit)
+        starttime_datetime = convert_qdatetime_datetime(self.start_dateTimeEdit)
+        endtime_datetime = convert_qdatetime_datetime(self.end_dateTimeEdit)
         minmagnitude = self.min_magnitudeCB.value()
         maxmagnitude = self.max_magnitudeCB.value()
         mindepth = self.depth_minCB.value()
@@ -92,36 +118,50 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         try:
             md = MessageDialog(self)
             md.hide()
-            catalog = self.client.get_events(starttime=starttime, endtime=endtime, mindepth = mindepth,
-                                         maxdepth = maxdepth, minmagnitude=minmagnitude, maxmagnitude = maxmagnitude)
-            for event in catalog:
-                otime = event.origins[0].time
-                lat = event.origins[0].latitude
-                lon = event.origins[0].longitude
-                depth = event.origins[0].depth
-                magnitude = event.magnitudes[0].mag
-                magnitude_type = event.magnitudes[0].magnitude_type
-                # append results
-                latitudes.append(lat)
-                longitudes.append(lon)
-                depths.append(depth)
-                magnitudes.append(magnitude)
 
+            if self.FDSN_CB.isChecked():
+                catalog = self.client.get_events(starttime=starttime, endtime=endtime, mindepth = mindepth,
+                                             maxdepth = maxdepth, minmagnitude=minmagnitude, maxmagnitude = maxmagnitude)
 
-                self.tableWidget.insertRow(self.tableWidget.rowCount())
-                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QtWidgets.QTableWidgetItem(str(otime)))
-                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QtWidgets.QTableWidgetItem(str(lat)))
-                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QtWidgets.QTableWidgetItem(str(lon)))
-                try:
+            elif self.seiscomp3connexionCB.isChecked():
+                # Declaracion clase seiscompConnector
+                sc = self.seiscomp3connection.getParametersNow()
 
-                    self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem(str(depth/1000)))
+                if not sc.checkfile():
 
-                except TypeError:
+                    self.sc3_filter = {'depth': [mindepth, maxdepth], 'magnitude': [minmagnitude, maxmagnitude]}
+                    catalog = sc.find(starttime_datetime, endtime_datetime, self.sc3_filter)
+                    self.sc3_catalog_search = catalog
 
-                    self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem("N/A"))
+            if self.FDSN_CB.isChecked():
+                for event in catalog:
+                    otime = event.origins[0].time
+                    lat = event.origins[0].latitude
+                    lon = event.origins[0].longitude
+                    depth = event.origins[0].depth
+                    magnitude = event.magnitudes[0].mag
+                    magnitude_type = event.magnitudes[0].magnitude_type
+                    # append results
+                    latitudes.append(lat)
+                    longitudes.append(lon)
+                    depths.append(depth)
+                    magnitudes.append(magnitude)
+                    self.set_table(otime, lat, lon, depth, magnitude, magnitude_type)
 
-                self.tableWidget.setItem(self.tableWidget.rowCount() - 1,4,QtWidgets.QTableWidgetItem(str(magnitude)))
-                self.tableWidget.setItem(self.tableWidget.rowCount() - 1,5,QtWidgets.QTableWidgetItem(str(magnitude_type)))
+            elif self.seiscomp3connexionCB.isChecked():
+                for event in catalog:
+                    otime = UTCDateTime(event['time'])
+                    lat = event['latitude']
+                    lon = event['longitude']
+                    depth = event['depth']*1000
+                    magnitude = event['magnitude']
+                    magnitude_type = "Mw"
+                    # append results
+                    latitudes.append(lat)
+                    longitudes.append(lon)
+                    depths.append(depth)
+                    magnitudes.append(magnitude)
+                    self.set_table(otime, lat, lon, depth, magnitude, magnitude_type)
 
             selection_range = QtWidgets.QTableWidgetSelectionRange(0,0,self.tableWidget.rowCount() - 1, self.tableWidget.columnCount() - 1)
             #print(selection_range.bottomRow())
@@ -149,6 +189,42 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             md.show()
 
         #obspy.clients.fdsn.client.Client
+
+    def download_seiscomp3_events(self):
+
+        starttime = convert_qdatetime_utcdatetime(self.start_dateTimeEdit)
+        endtime = convert_qdatetime_utcdatetime(self.end_dateTimeEdit)
+        networks = self.networksLE.text()
+        stations = self.stationsLE.text()
+        channels = self.channelsLE.text()
+
+        selected_items = self.tableWidget.selectedItems()
+        event_dict = {}
+        errors = False
+        row = 0
+        column = 0
+        for i, item in enumerate(selected_items):
+            event_dict.setdefault(row, {})
+            header = self.tableWidget.horizontalHeaderItem(column).text()
+            event_dict[row][header] = item.text()
+            column += 1
+            if i % 5 == 0 and i > 0:
+                row += 1
+                column = 0
+        try:
+            # TODO MATCH CATALOG NEAREST HEADER
+
+            root_path = os.path.dirname(os.path.abspath(__file__))
+            if "darwin" == platform:
+                dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+            else:
+                dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                               pw.QFileDialog.DontUseNativeDialog)
+
+
+        except:
+            md = MessageDialog(self)
+            md.set_info_message("Couldn't download time series")
 
 
     def download_events(self):
