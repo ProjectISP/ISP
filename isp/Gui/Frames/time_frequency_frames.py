@@ -607,7 +607,12 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             del cw
             del x
             del y
+            del x_period
+            del y_period
+            del x_freq
+            del y_freq
             del scalogram2
+            del scalogram_period
             del ax_period
         else:
             pass

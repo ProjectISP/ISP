@@ -910,6 +910,7 @@
     <addaction name="actionSpectral_Entropy"/>
     <addaction name="actionStack"/>
     <addaction name="actionPlot_All_Seismograms"/>
+    <addaction name="actionPlot_Record_Section"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -1265,6 +1266,20 @@
   <action name="actionSearch_in_Catalog">
    <property name="text">
     <string>Search in Catalog</string>
+   </property>
+  </action>
+  <action name="actionPlot_Record_Section">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Plot Record Section</string>
+   </property>
+   <property name="toolTip">
+    <string>Plot Record Section, activated when sort traces by distance</string>
+   </property>
+   <property name="shortcut">
+    <string>P</string>
    </property>
   </action>
  </widget>

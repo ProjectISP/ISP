@@ -197,8 +197,14 @@ dependencies:
   - zlib=1.2.11=h36c2ea0_1013
   - zstd=1.5.0=ha95c52a_0
   - pip:
+    - bcrypt==4.0.1
     - geographiclib==1.52
     - llvmlite==0.37.0
+    - mysql==0.0.3
+    - mysql-connector-python==8.0.31
+    - mysqlclient==2.1.1
     - numba==0.54.1
     - nvector==0.7.7
     - obspyh5==0.5.0
+    - pynacl==1.5.0
+    - pysftp==0.2.9

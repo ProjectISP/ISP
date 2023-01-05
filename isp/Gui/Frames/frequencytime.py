@@ -250,28 +250,28 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
         if self.causalCB.currentText() == "Causal":
             starttime = tr.stats.starttime
-            endtime = tr.stats.starttime+int(len(tr.data) / (2*fs))
+            endtime = tr.stats.starttime+len(tr.data) / (2*fs)
             tr.trim(starttime=starttime,endtime=endtime)
             data = np.flip(tr.data)
             tr.data = data
 
         else:
-            starttime = tr.stats.starttime +int(len(tr.data) / (2*fs))
-            endtime =  tr.stats.endtime
+            starttime = tr.stats.starttime + len(tr.data) / (2*fs)
+            endtime = tr.stats.endtime
             tr.trim(starttime=starttime, endtime=endtime)
 
         if self.phase_matchCB.isChecked():
             distance = tr.stats.mseed['geodetic'][0]
             ns = noise_processing(tr)
             tr_filtered = ns.phase_matched_filter(self.typeCB.currentText(),
-                  self.phaseMacthmodelCB.currentText(), distance , filter_parameter = self.phaseMatchCB.value())
+                  self.phaseMacthmodelCB.currentText(), distance, filter_parameter=self.phaseMatchCB.value())
             tr.data = tr_filtered.data
 
         if selection == "Continuous Wavelet Transform":
 
             nf = self.atomsSB.value()
-            f_min = 1 / self.period_max_cwtDB.value()
-            f_max = 1/  self.period_min_cwtDB.value()
+            f_min = 1/self.period_max_cwtDB.value()
+            f_max = 1/self.period_min_cwtDB.value()
             wmin = self.wminSB.value()
             wmax = self.wminSB.value()
             npts = len(tr.data)
@@ -282,14 +282,14 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             m = self.wavelets_param.value()
 
             cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf,
-                                 use_wavelet = wavelet, m = m, decimate=False)
+                                 use_wavelet=wavelet, m=m, decimate=False)
 
             scalogram2 = cw.scalogram_in_dbs()
             phase, inst_freq, ins_freq_hz = cw.phase() # phase in radians
             inst_freq = ins_freq_hz
-            #delay = cw.get_time_delay()
-            x, y = np.meshgrid(t, np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0]))
-            #x = x + delay
+
+            # x, y = np.meshgrid(t, np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0]))
+            x, y = np.meshgrid(t, np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0], base=10))
             # chop cero division
             dist = self.convert_2_vel(tr)
             vel = (dist / (x[:, 1:] * 1000))
@@ -313,10 +313,8 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
 
             scalogram2 = np.clip(scalogram2, a_min=self.minlevelCB.value(), a_max=0)
-            min_cwt= self.minlevelCB.value()
+            min_cwt = self.minlevelCB.value()
             max_cwt = 0
-
-            #scalogram2 = scalogram2+0.01
 
             # flips
             scalogram2 = scalogram2.T
@@ -343,7 +341,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             # extract ridge
 
-            ridge = np.max(scalogram2, axis = 0)
+            ridge = np.max(scalogram2, axis=0)
 
             distance = self.dist_ridgDB.value()*vel.shape[0]/(max_vel-min_vel)
             height = (self.minlevelCB.value(),0)
@@ -362,9 +360,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             # Plot
             self.ax_seism1.cla()
-            self.ax_seism1.plot(tr.data, tr.times() / tr.stats.sampling_rate, linewidth=0.5)
+            self.ax_seism1.plot(tr.data, tr.times(), linewidth=0.5)
             self.ax_seism1.plot(tr.data[min_time_idx:max_time_idx],
-                                tr.times()[min_time_idx:max_time_idx] / tr.stats.sampling_rate,
+                                tr.times()[min_time_idx:max_time_idx],
                                 color='red', linewidth=0.5)
 
             self.ax_seism1.set_xlabel("Amplitude")

@@ -166,6 +166,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionNew_Project.triggered.connect(lambda: self.new_project())
         self.newProjectBtn.clicked.connect(lambda: self.new_project())
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
+        self.actionPlot_Record_Section.triggered.connect(lambda: self.plot_prs())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -246,7 +247,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('U'), self)
         self.shortcut_open.activated.connect(self.open_uncertainity_settings)
-
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('I'), self)
         self.shortcut_open.activated.connect(self.multi_cursor_on)
@@ -747,6 +747,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":
                 self.files_path.sort(key=self.sort_by_distance_advance)
+                self.actionPlot_Record_Section.setEnabled(True)
                 self.message_dataless_not_found()
 
             elif self.comboBox_sort.currentText() == "Back Azimuth":
@@ -1531,6 +1532,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax.legend()
         except:
             pass
+
+        self.actionPlot_Record_Section.setDisabled(True)
 
     def plot_map_stations(self):
 

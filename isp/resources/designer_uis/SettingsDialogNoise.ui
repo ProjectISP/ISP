@@ -186,7 +186,7 @@
            <double>0.010000000000000</double>
           </property>
           <property name="value">
-           <double>0.010000000000000</double>
+           <double>0.002500000000000</double>
           </property>
          </widget>
         </item>
@@ -199,7 +199,7 @@
            <double>0.100000000000000</double>
           </property>
           <property name="value">
-           <double>0.020000000000000</double>
+           <double>0.005000000000000</double>
           </property>
          </widget>
         </item>
@@ -241,7 +241,7 @@
            <double>0.010000000000000</double>
           </property>
           <property name="value">
-           <double>1.000000000000000</double>
+           <double>2.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -267,7 +267,7 @@
            <double>0.010000000000000</double>
           </property>
           <property name="value">
-           <double>1.500000000000000</double>
+           <double>5.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -423,7 +423,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>factor</string>
+           <string>New Sampling Rate</string>
           </property>
          </widget>
         </item>
@@ -459,7 +459,7 @@
            </sizepolicy>
           </property>
           <property name="value">
-           <number>8</number>
+           <number>5</number>
           </property>
          </widget>
         </item>
@@ -553,7 +553,7 @@
            <double>1.000000000000000</double>
           </property>
           <property name="value">
-           <double>3.000000000000000</double>
+           <double>75.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -720,12 +720,12 @@
           </property>
           <item>
            <property name="text">
-            <string>PWS</string>
+            <string>Linear</string>
            </property>
           </item>
           <item>
            <property name="text">
-            <string>Linear</string>
+            <string>PWS</string>
            </property>
           </item>
           <item>

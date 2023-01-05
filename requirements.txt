@@ -18,3 +18,4 @@ dill
 nvector
 numba
 Tensorflow>=2.3.0
+pysftp

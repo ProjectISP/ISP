@@ -140,7 +140,14 @@ def set_qcoordinates(coordinates, pyqt_latitude_object, pyqt_longitude_object, p
     pyqt_longitude_object.setValue(float(coordinates[1]))
     pyqt_depth_object.setValue(float(coordinates[2]))
 
+def convert_qdatetime_datetime(q_datetime_edit: pw.QDateTimeEdit):
+    """
+        Convert the datetime from QDateTimeEdit widget to a datetime object
 
+        :param q_datetime_edit: The QDateTimeEdit widget
+        :return: datetime object
+        """
+    return q_datetime_edit.dateTime().toPyDateTime()
 
 def convert_qdatetime_utcdatetime(q_datetime_edit: pw.QDateTimeEdit):
     """

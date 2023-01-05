@@ -256,7 +256,8 @@ class PlotToolsManager:
                 fig.canvas.draw()
                 path = os.path.join(CLOCK_PATH, clocks_station_name)
                 p = np.flip(p)
-                polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Drift': y, 'Ref': ref, 'R2': R2}
+                polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Dates_selected': x, 'Drift': y, 'Ref': ref,
+                           'R2': R2, 'resid': resid, 'chi2_red': chi2_red, 'std_err': std_err}
                 print(polynom)
                 file_to_store = open(path, "wb")
                 pickle.dump(polynom, file_to_store)
