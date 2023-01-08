@@ -1,8 +1,12 @@
 import numpy as np
 import math
-from numba import jit
+#from numba import jit
 from scipy import stats
-
+# Cython code
+from isp.cython_code.whiten import whiten_aux, whiten_aux_horizontals
+#import pyximport
+#pyximport.install()
+#import isp.cython_code.whiten
 
 class noise_processing:
 
@@ -280,11 +284,14 @@ class noise_processing:
         data_f_whiten = data_f.copy()
         index = np.arange(0, N_rfft - half_width, 1)
 
-        #data_f_whiten = self.whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos)
-        for j in index:
-            den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
-            # den = np.mean(np.abs(data_f[j:j + 2 * half_width]))
-            data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
+        # Calling Cython version
+        data_f_whiten = whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos)
+
+        # with no pre-compilation
+        # for j in index:
+        #     den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
+        #     # den = np.mean(np.abs(data_f[j:j + 2 * half_width]))
+        #     data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
 
         # Taper (optional) and remove mean diffs in edges of the frequency domain
 
@@ -312,12 +319,12 @@ class noise_processing:
 
         self.tr.data = data
 
-    @jit(nopython=True, parallel=True)
-    def whiten_aux(self, data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos):
-         for j in index:
-             den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
-             data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
-         return data_f_whiten
+    # @jit(nopython=True, parallel=True)
+    # def whiten_aux(self, data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos):
+    #      for j in index:
+    #          den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
+    #          data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
+    #      return data_f_whiten
 
 class noise_processing_horizontals:
 
@@ -380,8 +387,7 @@ class noise_processing_horizontals:
 
         return: whithened trace (Phase is not modified)
         """""
-        tr_E = self.tr_E.copy()
-        tr_N = self.tr_N.copy()
+
         fs = self.tr_N.stats.sampling_rate
         N = self.tr_N.count()
         D = 2 ** math.ceil(math.log2(N))
@@ -399,10 +405,6 @@ class noise_processing_horizontals:
         half_width = int((N_smooth + 1) / 2)  # midpoint
         half_width_pos = half_width - 1
 
-        # Prefilt
-        #self.tr.detrend(type='simple')
-        #self.tr.taper(max_percentage=0.05)
-
         # ready to whiten
         data_N = self.tr_N.data
         data_E = self.tr_E.data
@@ -414,12 +416,13 @@ class noise_processing_horizontals:
         data_f_whiten_E = data_f_E.copy()
         index = np.arange(0, N_rfft - half_width, 1)
 
-        #data_f_whiten_N,data_f_whiten_E = self.whiten_aux_horizontals(data_f_N, data_f_whiten_N, data_f_E,
-        #                        data_f_whiten_E, index, half_width, avarage_window_width, half_width_pos)
-        for j in index:
-            den = 0.5*(np.sum(np.abs(data_f_N[j:j + 2 * half_width]) + np.abs(data_f_E[j:j + 2 * half_width]))/avarage_window_width)
-            data_f_whiten_N[j + half_width_pos] = data_f_whiten_N[j + half_width_pos] / den
-            data_f_whiten_E[j + half_width_pos] = data_f_whiten_E[j + half_width_pos] / den
+        # calling cython version faster
+        data_f_whiten_N,data_f_whiten_E = whiten_aux_horizontals(data_f_N, data_f_whiten_N, data_f_E,
+                                data_f_whiten_E, index, half_width, avarage_window_width, half_width_pos)
+        # for j in index:
+        #     den = 0.5*(np.sum(np.abs(data_f_N[j:j + 2 * half_width]) + np.abs(data_f_E[j:j + 2 * half_width]))/avarage_window_width)
+        #     data_f_whiten_N[j + half_width_pos] = data_f_whiten_N[j + half_width_pos] / den
+        #     data_f_whiten_E[j + half_width_pos] = data_f_whiten_E[j + half_width_pos] / den
 
         # Taper (optional) and remove mean diffs in edges of the frequency domain
 
@@ -455,17 +458,17 @@ class noise_processing_horizontals:
         self.tr_N.data = data_N
         self.tr_N.data = data_E
 
-    @jit(nopython=True, parallel=True)
-    def whiten_aux_horizontals(self, data_f_N, data_f_whiten_N, data_f_E, data_f_whiten_E, index, half_width,
-                               avarage_window_width, half_width_pos):
-        for j in index:
-
-            den_N = np.sum(np.abs(data_f_N[j:j + 2 * half_width])) / avarage_window_width
-            den_E = np.sum(np.abs(data_f_E[j:j + 2 * half_width])) / avarage_window_width
-            mean = np.mean(den_N, den_E)
-            # den = np.mean(np.abs(data_f[j:j + 2 * half_width]))
-            data_f_whiten_N[j + half_width_pos] = data_f_whiten_N[j + half_width_pos] / mean
-            data_f_whiten_E[j + half_width_pos] = data_f_whiten_E[j + half_width_pos] / mean
+    # @jit(nopython=True, parallel=True)
+    # def whiten_aux_horizontals(self, data_f_N, data_f_whiten_N, data_f_E, data_f_whiten_E, index, half_width,
+    #                            avarage_window_width, half_width_pos):
+    #     for j in index:
+    #
+    #         den_N = np.sum(np.abs(data_f_N[j:j + 2 * half_width])) / avarage_window_width
+    #         den_E = np.sum(np.abs(data_f_E[j:j + 2 * half_width])) / avarage_window_width
+    #         mean = np.mean(den_N, den_E)
+    #         # den = np.mean(np.abs(data_f[j:j + 2 * half_width]))
+    #         data_f_whiten_N[j + half_width_pos] = data_f_whiten_N[j + half_width_pos] / mean
+    #         data_f_whiten_E[j + half_width_pos] = data_f_whiten_E[j + half_width_pos] / mean
 
         return data_f_whiten_N, data_f_whiten_E
 
