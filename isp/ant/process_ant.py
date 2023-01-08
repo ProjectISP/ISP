@@ -58,7 +58,7 @@ class process_ant:
     def create_all_dict_matrix(self, list_raw, info):
         """
         :Description: Method that sort data Vertical / horizontals and send to create_dict_matrix to create the matrix
-        with the spectrums rady to make later cross correlations
+        with the spectrums ready to make later cross correlations
 
         :param list_raw: List with inside a header with the reference and the list with the files corresponding to
 
@@ -128,9 +128,12 @@ class process_ant:
         self.dict_matrix['metadata_list'] = info_item[1]
         # update the sampling_rate
         sampling_rate = info_item[1][0][0][0].sample_rate
-        #sampling_rate = 1.0
-        #sampling_rate_new = sampling_rate / self.factor
-        sampling_rate_new = self.factor
+
+        if self.decimationCB:
+            sampling_rate_new = self.factor
+        else:
+            sampling_rate_new = sampling_rate
+
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
@@ -148,7 +151,7 @@ class process_ant:
         self.DD_half_point = int(((DD) / 2) + 1)
         self.dict_matrix['data_matrix'] = np.zeros((self.num_rows, num_columns, self.DD_half_point), dtype=np.complex64)
         self.inc_time = [i * 60 * num_minutes for i in range(self.num_rows + 1)]
-        with Pool(processes = multiprocessing.cpu_count()) as pool:
+        with Pool(processes=multiprocessing.cpu_count()) as pool:
             r = pool.map(self.process_col_matrix, range(num_columns))
 
         j = 0
@@ -183,28 +186,27 @@ class process_ant:
 
         self.dict_matrix_N = {'data_matrix_N': [], 'metadata_list_N': [], 'date_list_N': []}
         self.dict_matrix_E = {'data_matrix_E': [], 'metadata_list_E': [], 'date_list_E': []}
-        print(" -- Matrix: " + list_item_horizonrals["North"][0][0] + list_item_horizonrals["North"][0][1] + list_item_horizonrals["North"][0][2])
+        print(" -- Matrix: " + list_item_horizonrals["North"][0][0] + list_item_horizonrals["North"][0][1] +
+              list_item_horizonrals["North"][0][2])
         print(" -- Matrix: " + list_item_horizonrals["East"][0][0] + list_item_horizonrals["East"][0][1] +
               list_item_horizonrals["East"][0][2])
 
         # 1.- dict_matrix['date_list']
 
-        date_ini_N = info_N[0][0].julday
-        year_ini_N = info_N[0][0].year
-
-        date_ini_E = info_E[0][0].julday
-        year_ini_E = info_E[0][0].year
-
-        date_end_N = info_N[0][1].julday
-        year_end_N = info_N[0][1].year
-
-        date_end_E = info_E[0][1].julday
-        year_end_E = info_E[0][1].year
-
+        # date_ini_N = info_N[0][0].julday
+        # year_ini_N = info_N[0][0].year
+        #
+        # date_ini_E = info_E[0][0].julday
+        # year_ini_E = info_E[0][0].year
+        #
+        # date_end_N = info_N[0][1].julday
+        # year_end_N = info_N[0][1].year
+        #
+        # date_end_E = info_E[0][1].julday
+        # year_end_E = info_E[0][1].year
 
         #self.dict_matrix_N['date_list_N'] = self.__list_days(year_ini_N, year_end_N, date_ini_N, date_end_N)
         #self.dict_matrix_E['date_list_E'] = self.__list_days(year_ini_E, year_end_E, date_ini_E, date_end_E)
-
 
         # 2.- dict_matrix['metadata_list']
         self.dict_matrix_N['metadata_list_N'] = info_N[1]
@@ -213,11 +215,14 @@ class process_ant:
         # update the sampling_rate
 
         sampling_rate = info_N[1][0][0][0].sample_rate
-        sampling_rate_new = sampling_rate/self.factor
+
+        if self.decimationCB:
+            sampling_rate_new = self.factor
+        else:
+            sampling_rate_new = sampling_rate
+
         self.dict_matrix_N['metadata_list_N'][0][0][0].sample_rate = sampling_rate_new
         self.dict_matrix_E['metadata_list_E'][0][0][0].sample_rate = sampling_rate_new
-        #self.info_N[1].net.sampling_rate = sampling_rate_new
-        #self.info_E[1].sampling_rate = sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
 
@@ -230,13 +235,15 @@ class process_ant:
         DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
         self.list_item_N = list_item_horizonrals["North"]
         self.list_item_E = list_item_horizonrals["East"]
-        # ······
+        """
         # f = [0, 1, ..., n / 2 - 1, n / 2] / (d * n) if n is even
         # f = [0, 1, ..., (n - 1) / 2 - 1, (n - 1) / 2] / (d * n) if n is odd
-        # ······
+        """
         self.DD_half_point = int(((DD) / 2) + 1)
-        self.dict_matrix_N['data_matrix_N'] = np.zeros((self.num_rows, num_columns_N, self.DD_half_point), dtype=np.complex64)
-        self.dict_matrix_E['data_matrix_E'] = np.zeros((self.num_rows, num_columns_E, self.DD_half_point), dtype=np.complex64)
+        self.dict_matrix_N['data_matrix_N'] = np.zeros((self.num_rows, num_columns_N, self.DD_half_point),
+                                                       dtype=np.complex64)
+        self.dict_matrix_E['data_matrix_E'] = np.zeros((self.num_rows, num_columns_E, self.DD_half_point),
+                                                       dtype=np.complex64)
         self.inc_time = [i * 60 * num_minutes for i in range(self.num_rows + 1)]
         num_columns = min(num_columns_N, num_columns_E)
         with Pool(processes=self.cpuCount) as pool:
@@ -245,7 +252,7 @@ class process_ant:
         j = 0
         for pair in r:
             i = 0
-            for N,E in zip(pair[0],pair[1]):
+            for N, E in zip(pair[0],pair[1]):
                 if N is not None and N.size == self.DD_half_point and E is not None and E.size == self.DD_half_point:
                     self.dict_matrix_N['data_matrix_N'][i, j, :] = N
                     self.dict_matrix_E['data_matrix_E'][i, j, :] = E
@@ -265,8 +272,7 @@ class process_ant:
             path = self.output_files_path + '/' + list_item_horizonrals["North"][0][0] + \
                    list_item_horizonrals["North"][0][1] + list_item_horizonrals["North"][0][2]
             print("Saving to ", path)
-            #print("Saving Days", self.dict_matrix['date_list_N'])
-            #print("Saving Days", self.dict_matrix['date_list_E'])
+
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix_N, file_to_store)
 
@@ -316,7 +322,8 @@ class process_ant:
 
         if self.remove_responseCB and check_process:
             #print("removing response ", tr.id)
-            tr, check_process = self.__remove_response(tr, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
+            tr, check_process = self.__remove_response(tr, self.f1, self.f2, self.f3, self.f4, self.water_level,
+                                                       self.unitsCB)
 
         if self.decimationCB and check_process:
             #print("decimating ", tr.id)
@@ -350,6 +357,7 @@ class process_ant:
                     n = tr_test.count()
                     if n > 0:
                         D = 2 ** math.ceil(math.log2(n))
+
                         # Automatic Pre-filt
                         # filter the signal between 150 seconds and 1/4 the sampling rate
 
@@ -414,6 +422,7 @@ class process_ant:
             tr_N = st1[0]
             tr_E = st2[0]
 
+        # Very important, data is process as pairs (N,E) just if belongs to the same day!!!!
         if tr_N.stats.starttime.julday == tr_E.stats.starttime.julday:
 
             if self.remove_responseCB and check_process:
@@ -436,9 +445,6 @@ class process_ant:
                 except:
                     check_process = False
                     print("Couldn't Decimate")
-
-            # Prepare Matrix for North Component
-            #print("Starting hard process ", tr_N.id, tr_E.id)
 
             for i in range(len(self.inc_time) - 1):
                 if check_process:
