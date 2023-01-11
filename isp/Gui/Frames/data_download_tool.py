@@ -102,6 +102,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             self.tableWidget.setRowCount(0)
         except:
             pass
+
         latitudes = []
         longitudes = []
         depths = []
@@ -123,17 +124,6 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                 catalog = self.client.get_events(starttime=starttime, endtime=endtime, mindepth = mindepth,
                                              maxdepth = maxdepth, minmagnitude=minmagnitude, maxmagnitude = maxmagnitude)
 
-            elif self.seiscomp3connexionCB.isChecked():
-                # Declaracion clase seiscompConnector
-                sc = self.seiscomp3connection.getParametersNow()
-
-                if not sc.checkfile():
-
-                    self.sc3_filter = {'depth': [mindepth, maxdepth], 'magnitude': [minmagnitude, maxmagnitude]}
-                    catalog = sc.find(starttime_datetime, endtime_datetime, self.sc3_filter)
-                    self.sc3_catalog_search = catalog
-
-            if self.FDSN_CB.isChecked():
                 for event in catalog:
                     otime = event.origins[0].time
                     lat = event.origins[0].latitude
@@ -147,8 +137,16 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                     depths.append(depth)
                     magnitudes.append(magnitude)
                     self.set_table(otime, lat, lon, depth, magnitude, magnitude_type)
+            else:
+                sc = self.seiscomp3connection.getSeisComPdatabase()
+                self.inventory = self.seiscomp3connection.getMetadata()
+                self.plotstationsBtn.setEnabled(True)
+                self.catalogBtn.setEnabled(True)
+                #if not sc.checkfile():
+                sc3_filter = {'depth': [mindepth, maxdepth], 'magnitude': [minmagnitude, maxmagnitude]}
+                catalog = sc.find(starttime_datetime, endtime_datetime, **sc3_filter)
+                self.sc3_catalog_search = catalog
 
-            elif self.seiscomp3connexionCB.isChecked():
                 for event in catalog:
                     otime = UTCDateTime(event['time'])
                     lat = event['latitude']
@@ -163,7 +161,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                     magnitudes.append(magnitude)
                     self.set_table(otime, lat, lon, depth, magnitude, magnitude_type)
 
-            selection_range = QtWidgets.QTableWidgetSelectionRange(0,0,self.tableWidget.rowCount() - 1, self.tableWidget.columnCount() - 1)
+            selection_range = QtWidgets.QTableWidgetSelectionRange(0, 0, self.tableWidget.rowCount() - 1, self.tableWidget.columnCount() - 1)
             #print(selection_range.bottomRow())
 
             self.longitudes = longitudes
@@ -182,12 +180,13 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             self.event_dataBtn.setEnabled(True)
             md.set_info_message("Catalog generated succesfully!!!")
             md.show()
+
         except:
 
-            md.set_error_message("Something wet wrong, Please check that you have: 1- Loaded Inventory, "
-                                 "2- Search Parameters have sense")
-            md.show()
-
+                md.set_error_message("Something wet wrong, Please check that you have: 1- Loaded Inventory, " 
+                                     "2- Search Parameters have sense")
+                md.show()
+#
         #obspy.clients.fdsn.client.Client
 
     def download_seiscomp3_events(self):
@@ -391,9 +390,11 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         self.retrivetool = retrieve()
 
         try:
+
             self.inventory, self.client = self.retrivetool.get_inventory(self.URL_CB.currentText(), starttime, endtime,
-            self.networksLE.text(), self.stationsLE.text(), use_networks=self.netsCB.isChecked(), FDSN=self.FDSN_CB.isChecked(),
-            ip_address=self.IP_LE.text(), port=self.portLE.text())
+            self.networksLE.text(), self.stationsLE.text(), use_networks=self.netsCB.isChecked(),
+                                                                         FDSN=self.FDSN_CB.isChecked())
+
             if self.inventory and self.client is not None:
                 md = MessageDialog(self)
                 md.set_info_message("Loaded Inventory from Address")

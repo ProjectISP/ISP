@@ -4,6 +4,7 @@ from isp.retrieve_events.query import dbquery
 import pysftp as sftp
 import time
 
+
 class seiscompConnector:
     def __init__(self, **kwargs):
 
@@ -107,28 +108,10 @@ class seiscompConnector:
 
         # Database init
         self.db = dbquery(host=self._hostname, name=self._dbname, user=self._user, password=self._password)
-        #self.db(host=self._hostname, name=self._dbname, user=self._user, password=self._password)
+        # self.db(host=self._hostname, name=self._dbname, user=self._user, password=self._password)
 
         self.archive.init(host=self._sdshost, user=self._sdsuser, password=self._sdspass, sdsdir=self._sdsdir,
                           sdsout=self._sdsout, port=self._port)
-
-    @staticmethod
-    def parseTime(start, end):
-        if end is None:
-            end = date.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            end = end.strftime("%Y-%m-%d %H:%M:%S")
-
-        if start is None:
-            start = (date.datetime.strptime(end, "%Y-%m-%d %H:%M:%S") - date.timedelta(days=2)).strftime("%Y-%m-%d "
-                                                                                                 "%H:%M:%S")
-        else:
-            start = start.strftime("%Y-%m-%d %H:%M:%S")
-
-        return start, end
-
-    def checkfile(self):
-        return self._filename is not None
 
     def find(self, start, end, **kwargs):
         start, end = self.parseTime(start, end)
@@ -187,9 +170,84 @@ class seiscompConnector:
         else:
             return self.event.eventsFiltered
 
+    def delete_filter(self, data, trash):
+        for i in trash:
+            data.remove(i)
+
+        return data
+
+    def filter_by_name(self, data, name, filter):
+        streams_array = []
+        data_array = []
+        for d in data:
+            if name in ['channel', 'station', 'network']:
+                for i in range(len(d['streams'])):
+                    if filter not in d['streams'][i].split('.'):
+                        streams_array.append(d['streams'][i])
+
+                if len(streams_array) > 0:
+                    d['streams'] = self.delete_filter(d['streams'], streams_array)
+
+                streams_array = []
+
+                if len(d['streams']) == 0:
+                    data_array.append(d)
+
+            else:
+                if d[name] < filter[0] or d[name] > filter[1]:
+                    data_array.append(d)
+
+        data = self.delete_filter(data, data_array)
+
+        return data
+
+    def filter_smart(self, data, filter):
+
+        if 'channel' in filter.keys():
+            data = self.filter_by_name(data, 'channel', filter['channel'])
+
+        if 'network' in filter.keys():
+            data = self.filter_by_name(data, 'network', filter['network'])
+
+        if 'station' in filter.keys():
+            data = self.filter_by_name(data, 'station', filter['station'])
+
+        if 'depth' in filter.keys():
+            data = self.filter_by_name(data, 'depth', filter['depth'])
+
+        if 'latitude' in filter.keys():
+            data = self.filter_by_name(data, 'latitude', filter['latitude'])
+
+        if 'longitude' in filter.keys():
+            data = self.filter_by_name(data, 'longitude', filter['longitude'])
+
+        if 'magnitude' in filter.keys():
+            data = self.filter_by_name(data, 'magnitude', filter['magnitude'])
+
+        return data
+
+    @staticmethod
+    def parseTime(start, end):
+        if end is None:
+            end = date.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            end = end.strftime("%Y-%m-%d %H:%M:%S")
+
+        if start is None:
+            start = (date.datetime.strptime(end, "%Y-%m-%d %H:%M:%S") - date.timedelta(days=2)).strftime("%Y-%m-%d "
+                                                                                                         "%H:%M:%S")
+        else:
+            start = start.strftime("%Y-%m-%d %H:%M:%S")
+
+        return start, end
+
+    def checkfile(self):
+        return self._filename is not None
+
     def download(self, events):
         self.getStreams(self.event.events)
         self.archive.conn.close()
+
     """
         # Get mseed
 
@@ -206,6 +264,7 @@ class seiscompConnector:
                     self._ids.append((row[0]))
                 print(row)
     """
+
     def eventFilter(self, name, item):
         if len(self.event.eventsFiltered) > 0:
             self.event.eventsFiltered = [e for e in self.event.eventsFiltered if (item[0] <= e[name] <= item[1])]
@@ -420,7 +479,6 @@ class Archive:
 
         if 'port' in kwargs.keys():
             self.port = kwargs['port']
-
 
         self.conn = self.connect()
 

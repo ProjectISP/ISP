@@ -140,6 +140,27 @@
         </item>
        </layout>
       </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QPushButton" name="metadataBtn">
+          <property name="text">
+           <string>Metadata</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="loadBtn">
+          <property name="text">
+           <string>Load</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="datalessPathForm"/>
+        </item>
+       </layout>
+      </item>
      </layout>
     </widget>
    </item>
