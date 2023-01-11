@@ -215,6 +215,9 @@ class process_ant:
         # update the sampling_rate
 
         sampling_rate = info_N[1][0][0][0].sample_rate
+        # take the azimuth
+
+        self.az = info_N[1][0][0][0].azimuth
 
         if self.decimationCB:
             sampling_rate_new = self.factor
@@ -498,6 +501,9 @@ class process_ant:
                                            corners=6)
 
                             process_horizontals = noise_processing_horizontals(tr_test_N, tr_test_E)
+
+                            # rotate to N & E, designed specially for OBSs
+                            process_horizontals.rotate2NE(self.az)
 
                             if self.time_normalizationCB and self.timenorm == "running avarage":
                                 process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)

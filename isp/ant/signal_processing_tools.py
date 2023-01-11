@@ -4,9 +4,6 @@ import math
 from scipy import stats
 # Cython code
 from isp.cython_code.whiten import whiten_aux, whiten_aux_horizontals
-#import pyximport
-#pyximport.install()
-#import isp.cython_code.whiten
 
 class noise_processing:
 
@@ -456,7 +453,7 @@ class noise_processing_horizontals:
         data_E = data_E[0:N]
 
         self.tr_N.data = data_N
-        self.tr_N.data = data_E
+        self.tr_E.data = data_E
 
     # @jit(nopython=True, parallel=True)
     # def whiten_aux_horizontals(self, data_f_N, data_f_whiten_N, data_f_E, data_f_whiten_E, index, half_width,
@@ -472,4 +469,14 @@ class noise_processing_horizontals:
 
         return data_f_whiten_N, data_f_whiten_E
 
+    def rotate2NE(self, baz):
+
+        x0 = self.tr_E.data
+        y0 = self.tr_N.data
+        rad = math.pi/180
+        x1 = x0*math.cos(baz*rad) - y0*math.sin(baz*rad)
+        y1 = x0*math.sin(baz*rad) + y0*math.con(baz*rad)
+
+        self.tr_N.data = y1
+        self.tr_E.data = x1
 
