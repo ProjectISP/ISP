@@ -427,8 +427,10 @@ class process_ant:
 
             if self.remove_responseCB and check_process:
                 #print("removing response ", tr_N.id, tr_E.id)
-                tr_N, check_process = self.__remove_response(tr_N, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
-                tr_E, check_process = self.__remove_response(tr_E, self.f1, self.f2, self.f3, self.f4, self.water_level, self.unitsCB)
+                tr_N, check_process = self.__remove_response(tr_N, self.f1, self.f2, self.f3, self.f4, self.water_level,
+                                                             self.unitsCB)
+                tr_E, check_process = self.__remove_response(tr_E, self.f1, self.f2, self.f3, self.f4, self.water_level,
+                                                             self.unitsCB)
 
             if self.decimationCB and check_process:
                 #print("decimating ", tr_N.id, tr_E.id)
@@ -476,6 +478,9 @@ class process_ant:
                         n = tr_test_N.count()
                         if n > 0:
                             D = 2 ** math.ceil(math.log2(n))
+
+                            #TODO Autorotate to azimuth in metadata
+
 
                             # Prefilt
 

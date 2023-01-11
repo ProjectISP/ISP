@@ -1970,7 +1970,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             #    self.cbar = fig.colorbar(cs, ax=axs[j], extend='both', orientation='horizontal', pad=0.2)
             #    self.cbar.ax.set_ylabel("Power [dB]")
 
-            tr=self.st[self.ax_num]
+            tr = self.st[self.ax_num]
             tt = tr.times("matplotlib")
             data = tr.data
             self.canvas.plot_date(tt, data, self.ax_num, clear_plot=False, color='black', fmt='-', linewidth=0.5)
