@@ -1170,7 +1170,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         coordinates = kwargs.pop('coordinates', {})
         resolution = kwargs.pop('resolution', 'high')
         color = kwargs.pop('color', 'red')
-        size = kwargs.pop('size',8)
+        size = kwargs.pop('size', 10)
 
         extent = kwargs.pop("extent", [])
 
@@ -1229,7 +1229,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
                     else:
                         pass
 
-            ax.scatter(lon, lat, s=size, marker="^", color=color, alpha=0.7, transform=ccrs.PlateCarree())
+            ax.scatter(lon, lat, s=size, marker="^", edgecolors="white", color="black", alpha=0.7,
+                       transform=ccrs.PlateCarree())
 
 
         if plot_earthquakes:

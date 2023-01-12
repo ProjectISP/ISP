@@ -226,6 +226,21 @@ class seiscompConnector:
 
         return data
 
+    def refilt(result, coords):
+
+        # example
+        # coords = [['2022-10-01 01:45:07', 39.696, -1.194, 10], ['2022-10-01 07:04:13', 39.64, -1.143, 12]]
+        result_new = []
+        for item in result:
+            item_test = [item['time'], item['latitude'], item['longitude'], item['depth']]
+            for coord_test in coords:
+                if coord_test == item_test:
+                    result_new.append(item)
+            else:
+                pass
+        return result_new
+
+
     @staticmethod
     def parseTime(start, end):
         if end is None:
