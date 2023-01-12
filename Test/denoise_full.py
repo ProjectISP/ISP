@@ -200,7 +200,7 @@ class CheckDataBaseCoherence:
                         noise.plot_compare_spectrums_full(channels, Ztilt, save_fig=True, path_save=plot_path)
                         # save in time domain
                         tr_znew = noise.Znew
-                        tr_znew.stats.channel = 'SCZ'
+                        #tr_znew.stats.channel = 'SCZ'
                         year = tr_znew.stats.starttime.year
                         month = tr_znew.stats.starttime.month
                         day = tr_znew.stats.starttime.day
@@ -215,16 +215,17 @@ class CheckDataBaseCoherence:
     def full_denoise(self, start, end, output_path, plots_path):
 
         self.__get_selections()
-        sta_done = ["X25", "UP01", "UP02", "UP03", "UP04", "UP05", "UP06", "UP07","UP08","UP09","UP11","UP12", "UP13", "UP14"
-                    "UP15",  "UP16", "UP17", "UP18", "UP20", "UP21", "UP22", "UP24", "UP23", "UP25", "UP26", "UP27",
-                    "UP29", "UP30", "UP31", "UP32", "UP33", "UP34", "UP35", "UP36", "UP37",
-                    "UP38", "UP39", "UP40", "UP41", "UP42", "UP43", "UP44", "UP45", "UP46"]
+
+        # sta_done = ["X25", "UP01", "UP02", "UP03", "UP04", "UP05", "UP06", "UP07", "UP08", "UP09", "UP11", "UP12",
+        #             "UP13", "UP14", "UP15", "UP16", "UP17", "UP18", "UP20", "UP21", "UP22", "UP24", "UP23", "UP25",
+        #             "UP26", "UP27", "UP29", "UP30", "UP31", "UP32", "UP33", "UP34", "UP35", "UP36", "UP37",
+        #             "UP38", "UP39", "UP40", "UP41", "UP42", "UP43", "UP44", "UP45", "UP46"]
+        sta_done = []
         for selection in self.full_selection:
-            sta = selection [0][1]
+            sta = selection[0][1]
             print(sta)
             if sta not in sta_done:
                 self.daily_denoise(selection, start, end, output_path, plots_path)
-
 
 
 if __name__ == "__main__":
