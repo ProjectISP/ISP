@@ -138,13 +138,13 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                     magnitudes.append(magnitude)
                     self.set_table(otime, lat, lon, depth, magnitude, magnitude_type)
             else:
-                sc = self.seiscomp3connection.getSeisComPdatabase()
+                self.sc = self.seiscomp3connection.getSeisComPdatabase()
                 self.inventory = self.seiscomp3connection.getMetadata()
                 self.plotstationsBtn.setEnabled(True)
                 self.catalogBtn.setEnabled(True)
                 #if not sc.checkfile():
                 sc3_filter = {'depth': [mindepth, maxdepth], 'magnitude': [minmagnitude, maxmagnitude]}
-                catalog = sc.find(starttime_datetime, endtime_datetime, **sc3_filter)
+                catalog = self.sc.find(starttime_datetime, endtime_datetime, **sc3_filter)
                 self.sc3_catalog_search = catalog
 
                 for event in catalog:
@@ -189,17 +189,23 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 #
         #obspy.clients.fdsn.client.Client
 
+    def dowload_events(self):
+        if self.FDSN_CB.isChecked():
+            self.download_fdsn()
+        else:
+            self.download_seiscomp3_events()
+
     def download_seiscomp3_events(self):
 
-        starttime = convert_qdatetime_utcdatetime(self.start_dateTimeEdit)
-        endtime = convert_qdatetime_utcdatetime(self.end_dateTimeEdit)
-        networks = self.networksLE.text()
-        stations = self.stationsLE.text()
-        channels = self.channelsLE.text()
+        filter = {'network': self.networksLE.text(),
+                  'station': self.stationsLE.text(),
+                  'channel': self.channelsLE.text()}
+
+        catalog_filtered = self.sc.filter_smart(self.sc3_catalog_search, **filter)
+
 
         selected_items = self.tableWidget.selectedItems()
         event_dict = {}
-        errors = False
         row = 0
         column = 0
         for i, item in enumerate(selected_items):
@@ -210,8 +216,20 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             if i % 5 == 0 and i > 0:
                 row += 1
                 column = 0
+
+        # TODO NEEDS TO APPLY FILTER OVER SELECTED EARTHQUAKES
+        coords = []
+        for event in event_dict.keys():
+            otime = event_dict[event]['otime']
+            evla = float(event_dict[event]['lat'])
+            evlo = float(event_dict[event]['lon'])
+            evdp = float(event_dict[event]['depth'])
+            coord_test = [otime, evla, evlo, evdp]
+            coords.append(coord_test)
+
+        catalog_filtered = self.sc.refilt(catalog_filtered, coords)
+
         try:
-            # TODO MATCH CATALOG NEAREST HEADER
 
             root_path = os.path.dirname(os.path.abspath(__file__))
             if "darwin" == platform:
@@ -219,14 +237,15 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             else:
                 dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
                                                                pw.QFileDialog.DontUseNativeDialog)
-
+            self.sc._sdsout = dir_path
+            self.sc.download(catalog_filtered)
 
         except:
+
             md = MessageDialog(self)
             md.set_info_message("Couldn't download time series")
 
-
-    def download_events(self):
+    def download_fdsn(self):
 
         root_path = os.path.dirname(os.path.abspath(__file__))
 
