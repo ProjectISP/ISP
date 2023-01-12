@@ -130,18 +130,18 @@ class process_ant:
         sampling_rate = info_item[1][0][0][0].sample_rate
 
         if self.decimationCB:
-            sampling_rate_new = self.factor
+            self.sampling_rate_new = self.factor
         else:
-            sampling_rate_new = sampling_rate
+            self.sampling_rate_new = sampling_rate
 
-        self.dict_matrix['metadata_list'][0][0][0].sample_rate = sampling_rate_new
+        self.dict_matrix['metadata_list'][0][0][0].sample_rate = self.sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
 
         num_minutes = self.num_minutes_dict_matrix  # 15min 96 incrementos
         self.num_rows = int((24 * 60) / num_minutes)
         num_columns = len(list_item) - 1
-        N = num_minutes * 60 * sampling_rate_new  # seconds*fs
+        N = num_minutes * 60 * self.sampling_rate_new  # seconds*fs
         DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
         self.list_item = list_item
         # ······
@@ -220,12 +220,12 @@ class process_ant:
         self.az = info_N[1][0][0][0].azimuth
 
         if self.decimationCB:
-            sampling_rate_new = self.factor
+            self.sampling_rate_new = self.factor
         else:
-            sampling_rate_new = sampling_rate
+            self.sampling_rate_new = sampling_rate
 
-        self.dict_matrix_N['metadata_list_N'][0][0][0].sample_rate = sampling_rate_new
-        self.dict_matrix_E['metadata_list_E'][0][0][0].sample_rate = sampling_rate_new
+        self.dict_matrix_N['metadata_list_N'][0][0][0].sample_rate = self.sampling_rate_new
+        self.dict_matrix_E['metadata_list_E'][0][0][0].sample_rate = self.sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
 
@@ -233,7 +233,7 @@ class process_ant:
         self.num_rows = int((24 * 60) / num_minutes)
         num_columns_N = len(list_item_horizonrals["North"]) - 1
         num_columns_E = len(list_item_horizonrals["East"]) - 1
-        N = num_minutes * 60 * sampling_rate_new  # segundos*fs
+        N = num_minutes * 60 * self.sampling_rate_new  # segundos*fs
 
         DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
         self.list_item_N = list_item_horizonrals["North"]
@@ -366,8 +366,8 @@ class process_ant:
 
                         tr_test.detrend(type='simple')
                         tr_test.taper(max_percentage=0.025)
-                        tr_test.filter(type="bandpass", freqmin=0.005, freqmax=self.factor / 8, zerophase=True,
-                                       corners=6)
+                        tr_test.filter(type="bandpass", freqmin=0.005, freqmax=0.4*self.sampling_rate_new,
+                                       zerophase=True, corners=4)
 
                         process = noise_processing(tr_test)
 
@@ -440,13 +440,13 @@ class process_ant:
                 try:
                     tr_N.detrend(type="simple")
                     tr_N.taper(type="blackman", max_percentage=0.025)
+                    tr_N.filter(type="lowpass", freq=0.4 * self.factor, zerophase=True, corners=4)
                     tr_N.resample(sampling_rate=self.factor, no_filter=True)
-                    tr_N.decimate(factor=self.factor, no_filter=False)
 
                     tr_E.detrend(type="simple")
                     tr_E.taper(type="blackman", max_percentage=0.025)
+                    tr_E.filter(type="lowpass", freq=0.4 * self.factor, zerophase=True, corners=4)
                     tr_E.resample(sampling_rate=self.factor, no_filter=True)
-                    tr_E.decimate(factor=self.factor, no_filter=False)
                 except:
                     check_process = False
                     print("Couldn't Decimate")
@@ -494,11 +494,11 @@ class process_ant:
                             tr_test_N.taper(max_percentage=0.025)
                             tr_test_E.taper(max_percentage=0.025)
 
-                            tr_test_N.filter(type="bandpass", freqmin=0.005, freqmax=self.factor / 8, zerophase=True,
-                                           corners=6)
+                            tr_test_N.filter(type="bandpass", freqmin=0.005, freqmax=0.4*self.sampling_rate_new,
+                                             zerophase=True, corners=4)
 
-                            tr_test_E.filter(type="bandpass", freqmin=0.005, freqmax=self.factor / 8, zerophase=True,
-                                           corners=6)
+                            tr_test_E.filter(type="bandpass", freqmin=0.005, freqmax=0.4*self.sampling_rate_new,
+                                             zerophase=True, corners=4)
 
                             process_horizontals = noise_processing_horizontals(tr_test_N, tr_test_E)
 
