@@ -31,7 +31,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         self.network_list = []
         self.stations_list = []
         self.catalogBtn.clicked.connect(self.get_catalog)
-        self.event_dataBtn.clicked.connect(self.download_events)
+        self.event_dataBtn.clicked.connect(self.dowload_events)
         self.plotstationsBtn.clicked.connect(self.stations)
         self.TimeBtn.clicked.connect(self.download_time_series)
         self.MetadataBtn.clicked.connect(self.download_stations_xml)
@@ -190,6 +190,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         #obspy.clients.fdsn.client.Client
 
     def dowload_events(self):
+
         if self.FDSN_CB.isChecked():
             self.download_fdsn()
         else:
@@ -201,7 +202,8 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
                   'station': self.stationsLE.text(),
                   'channel': self.channelsLE.text()}
 
-        catalog_filtered = self.sc.filter_smart(self.sc3_catalog_search, **filter)
+        catalog_filtered = self.sc.filter_smart(self.sc3_catalog_search, network=filter['network'],
+                                                station=filter['station'], channel=filter['channel'])
 
 
         selected_items = self.tableWidget.selectedItems()
@@ -279,15 +281,15 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         stations = self.stationsLE.text()
         channels = self.channelsLE.text()
 
-        if self.Earthworm_CB.isChecked():
-           ip_address = self.IP_LE.text()
-           port = self.portLE.text()
-           client_earthworm = obspy.clients.earthworm.Client(ip_address, int(port))
-           inventory = client_earthworm.get_stations(network=networks, station=stations, starttime=starttime,
-                                             endtime=endtime)
-        else:
+        # if self.Earthworm_CB.isChecked():
+        #    ip_address = self.IP_LE.text()
+        #    port = self.portLE.text()
+        #    client_earthworm = obspy.clients.earthworm.Client(ip_address, int(port))
+        #    inventory = client_earthworm.get_stations(network=networks, station=stations, starttime=starttime,
+        #                                      endtime=endtime)
+        #else:
 
-           inventory = self.client.get_stations(network=networks, station=stations, starttime=starttime,
+        inventory = self.client.get_stations(network=networks, station=stations, starttime=starttime,
                                                       endtime=endtime)
 
         
@@ -429,6 +431,10 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
             md.set_info_message("The current client does not have a station service")
 
     def stations(self):
+        if self.FDSN_CB.isChecked():
+            pass
+        else:
+            self.retrivetool = retrieve()
 
         coordinates = self.retrivetool.get_inventory_coordinates(self.inventory)
         self.cartopy_canvas.global_map(0, plot_earthquakes=False, show_colorbar=False,

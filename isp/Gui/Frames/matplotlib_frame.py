@@ -1229,6 +1229,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
                     else:
                         pass
 
+            #ax.scatter(lon, lat, s=size, marker="^", edgecolors="white", color="black", alpha=0.7,
+            #           transform=ccrs.PlateCarree())
             ax.scatter(lon, lat, s=size, marker="^", edgecolors="white", color="black", alpha=0.7,
                        transform=ccrs.PlateCarree())
 

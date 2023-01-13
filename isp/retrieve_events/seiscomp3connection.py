@@ -201,32 +201,24 @@ class seiscompConnector:
 
         return data
 
-    def filter_smart(self, data, filter):
+    def filter_smart(self, data, **kwargs):
 
-        if 'channel' in filter.keys():
-            data = self.filter_by_name(data, 'channel', filter['channel'])
+        network = kwargs.pop('network', [])
+        station = kwargs.pop('station', [])
+        channel = kwargs.pop('channel', [])
 
-        if 'network' in filter.keys():
-            data = self.filter_by_name(data, 'network', filter['network'])
+        if len(network) > 0:
+            data = self.filter_by_name(data, 'network', network)
 
-        if 'station' in filter.keys():
-            data = self.filter_by_name(data, 'station', filter['station'])
+        if len(station) > 0:
+            data = self.filter_by_name(data, 'station', station)
 
-        if 'depth' in filter.keys():
-            data = self.filter_by_name(data, 'depth', filter['depth'])
-
-        if 'latitude' in filter.keys():
-            data = self.filter_by_name(data, 'latitude', filter['latitude'])
-
-        if 'longitude' in filter.keys():
-            data = self.filter_by_name(data, 'longitude', filter['longitude'])
-
-        if 'magnitude' in filter.keys():
-            data = self.filter_by_name(data, 'magnitude', filter['magnitude'])
+        if len(station) > 0:
+            data = self.filter_by_name(data, 'channel', channel)
 
         return data
 
-    def refilt(result, coords):
+    def refilt(self, result, coords):
 
         # example
         # coords = [['2022-10-01 01:45:07', 39.696, -1.194, 10], ['2022-10-01 07:04:13', 39.64, -1.143, 12]]
