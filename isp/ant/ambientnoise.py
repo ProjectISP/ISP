@@ -43,6 +43,7 @@ class noise_organize(pyc.QObject):
 
         data_map = {}
         info = {}
+        info_starts = []
         data_map['nets'] = {}
         size = 0
 
@@ -92,18 +93,22 @@ class noise_organize(pyc.QObject):
 
                             if endtime_ini - info[key_meta][0][1] > 0:
                                 info[key_meta][0][1] = endtime_ini
+                                info[key_meta][2].append(starttime_ini)
 
                             elif info[key_meta][0][0] - starttime_ini > 0:
                                 info[key_meta][0][0] = starttime_ini
+
 
                         if chn_list[0] == "":
                             data_map['nets'][net][sta][chn].append(paths)
 
                             if endtime_ini - info[key_meta][0][1] > 0:
                                 info[key_meta][0][1] = endtime_ini
+                                info[key_meta][2].append(starttime_ini)
 
                             elif info[key_meta][0][0] - starttime_ini > 0:
                                 info[key_meta][0][0] = starttime_ini
+
 
                             size = size + 1
                     else:
@@ -114,7 +119,7 @@ class noise_organize(pyc.QObject):
                             endtime_chn = endtime_ini
 
                             info[key_meta] = [[starttime_chn, endtime_chn],
-                                              self.metadata.select(channel=chn, station=sta)]
+                                              self.metadata.select(channel=chn, station=sta), [starttime_chn]]
 
                             size = size + 1
                         if chn_list[0] == "":
@@ -122,7 +127,7 @@ class noise_organize(pyc.QObject):
                             starttime_chn = starttime_ini
                             endtime_chn = endtime_ini
                             info[key_meta] = [[starttime_chn, endtime_chn],
-                                              self.metadata.select(channel=chn, station=sta)]
+                                              self.metadata.select(channel=chn, station=sta), [starttime_chn]]
                             size = size + 1
 
                 except:
