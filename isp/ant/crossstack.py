@@ -217,7 +217,16 @@ class noisestack:
                                     c_stack = c_stack * phase_stack
 
                                 # c_stack par, impar ...
-                                c_stack = np.roll(c_stack, int(len(c_stack) / 2))
+                                num = len(c_stack)
+                                if (num % 2) == 0:
+
+                                    #print(“Thenumber is even”)
+                                    c = int(np.ceil(num / 2.) + 1)
+                                else:
+                                    #print(“The providednumber is odd”)
+                                    c = int(np.ceil((num + 1)/2))
+
+                                c_stack = np.roll(c_stack, c)
                                 print("stack[" + str(i) + "," + str(j) + "]:")
                                 # print(c_stack)
 
@@ -403,7 +412,16 @@ class noisestack:
                                 c_stack = c_stack * phase_stack
 
                             # c_stack par, impar ...
-                            c_stack = np.roll(c_stack, int(len(c_stack) / 2))
+                            num = len(c_stack)
+                            if (num % 2) == 0:
+
+                                #print(“Thenumber is even”)
+                                c = int(np.ceil(num / 2.) + 1)
+                            else:
+                                #print(“The providednumber is odd”)
+                                c = int(np.ceil((num + 1)/2))
+
+                            c_stack = np.roll(c_stack, c)
                             print("stack[" + str(i) + "," + str(j) + "]:")
                             # print(c_stack)
 
