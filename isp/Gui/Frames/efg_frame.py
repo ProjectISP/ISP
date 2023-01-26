@@ -383,7 +383,17 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                         max_endtime.append(max(t))
                     except:
                         print("Empty traces")
-                half_point = (tr.stats.starttime + int(len(tr.data) / (2 * tr.stats.sampling_rate))).matplotlib_date
+
+                num = len(tr.data)
+                if (num % 2) == 0:
+
+                    # print(“Thenumber is even”)
+                    c = int(np.ceil(num / 2.) + 1)
+                else:
+                    # print(“The provided number is odd”)
+                    c = int(np.ceil((num + 1) / 2))
+                #half_point = (tr.stats.starttime + int(len(tr.data) / (2 * tr.stats.sampling_rate))).matplotlib_date
+                half_point = (tr.stats.starttime+(c/tr.stats.sampling_rate)).matplotlib_date
                 self.canvas.draw_arrow(half_point, index, arrow_label="", color="blue")
                 all_traces.append(tr)
 
