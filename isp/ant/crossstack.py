@@ -413,7 +413,7 @@ class noisestack:
                             stats = {}
                             stats['network'] = file_i[:2]
                             stats['station'] = file_i[2:6] + "_" + file_j[2:6]
-                            stats['channel'] = file_i[-1]
+                            stats['channel'] = file_i[-1]+file_j[-1]
                             stats['sampling_rate'] = self.sampling_rate
                             stats['npts'] = len(c_stack)
                             stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim],
@@ -429,10 +429,10 @@ class noisestack:
                             print(path_name)
                             st.write(path_name, format='H5')
 
-                            if self.dailyStacks:
-                                path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
-                                clock = clock_process(corr_ij_time, stats, path_name)
-                                clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
+                        if self.dailyStacks:
+                            path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
+                            clock = clock_process(corr_ij_time, stats, path_name, common_dates_list)
+                            clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
 
                         else:
                             print("Empty date_list.")

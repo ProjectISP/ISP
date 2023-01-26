@@ -477,7 +477,7 @@ class noise_processing_horizontals:
         y0 = self.tr_N.data
         rad = math.pi/180
         x1 = x0*math.cos(baz*rad) - y0*math.sin(baz*rad)
-        y1 = x0*math.sin(baz*rad) + y0*math.con(baz*rad)
+        y1 = x0*math.sin(baz*rad) + y0*math.cos(baz*rad)
 
         self.tr_N.data = y1
         self.tr_E.data = x1

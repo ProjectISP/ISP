@@ -78,7 +78,7 @@ class process_ant:
             station_check = station
             channel = list_item[0][2]
 
-            if channel[2] == "Z":
+            if channel[2] == "Z" or channel[2] == "H":
                 channels.append(list_item[0][2])
                 key_info = list_item[0][0] + list_item[0][1] + list_item[0][2]  # Data, Metadata, dates 'XTCAPCBHE', ...
                 self.create_dict_matrix(list_item, info[key_info])
@@ -103,12 +103,72 @@ class process_ant:
                         check_E = True
 
                     if check_N and check_E:
+                        # TODO VERY IMPORTANT TO CLEAN DAYS WITH NO SIMILAR STARTTIME IN BOTH COMPONENTS
+                        list_item_horizontals, info_N, info_E = self.clean_horizontals_unique(list_item_horizontals,
+                                                                                               info_N, info_E)
                         self.create_dict_matrix_horizontals(list_item_horizontals, info_N, info_E)
                         check_N = False
                         check_E = False
 
 
         return all_dict_matrix
+
+    def clean_horizontals_unique(self, list_item_horizontals, info_N, info_E):
+
+        data_N = list_item_horizontals["North"][1:]
+        data_E = list_item_horizontals["East"][1:]
+        starts_N = info_N[2]
+        starts_E = info_E[2]
+        #starts_E.sort()
+        #starts_N.sort()
+        idx_N_delete = []
+        idx_E_delete = []
+        # Sort lists
+        data_N = [x for _, x in sorted(zip(starts_N, data_N))]
+        data_E = [x for _, x in sorted(zip(starts_E, data_E))]
+        for idx_N, value1 in enumerate(starts_N):
+            value1_valid = False
+            for value2 in starts_E:
+                if abs(value2-value1) < 5:
+                    value1_valid = True
+
+            if value1_valid:
+                value1_valid = False
+            else:
+                idx_N_delete.append(idx_N)
+
+        # CLEAN N
+        idx_N_list=sorted(idx_N_delete,reverse=True)
+        for idx in idx_N_list:
+            if idx < len(data_N):
+                data_N.pop(idx)
+                starts_N.pop(idx)
+
+
+        for idx_E, value2 in enumerate(starts_E):
+            value2_valid = False
+            for value1 in starts_N:
+                if abs(value2 - value1) < 5:
+                    value2_valid = True
+
+            if value2_valid:
+                value2_valid = False
+            else:
+                idx_E_delete.append(idx_E)
+
+        # CLEAN E
+        idx_E_list=sorted(idx_E_delete,reverse=True)
+        for idx in idx_E_list:
+            if idx < len(data_E):
+                data_E.pop(idx)
+                starts_E.pop(idx)
+
+        list_item_horizontals["North"][1:] = data_N
+        list_item_horizontals["East"][1:] = data_E
+        info_N[2] = starts_N
+        info_E[2] = starts_E
+
+        return list_item_horizontals, info_N, info_E
 
     def create_dict_matrix(self, list_item, info_item):
         # create an object to compress
@@ -129,11 +189,11 @@ class process_ant:
         # update the sampling_rate
         sampling_rate = info_item[1][0][0][0].sample_rate
 
-        if self.decimationCB:
-            self.sampling_rate_new = self.factor
-        else:
-            self.sampling_rate_new = sampling_rate
-
+        # if self.decimationCB:
+        #     self.sampling_rate_new = self.factor
+        # else:
+        #     self.sampling_rate_new = sampling_rate
+        self.sampling_rate_new = 20
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = self.sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
@@ -219,11 +279,11 @@ class process_ant:
 
         self.az = info_N[1][0][0][0].azimuth
 
-        if self.decimationCB:
-            self.sampling_rate_new = self.factor
-        else:
-            self.sampling_rate_new = sampling_rate
-
+        # if self.decimationCB:
+        #     self.sampling_rate_new = self.factor
+        # else:
+        #     self.sampling_rate_new = sampling_rate
+        self.sampling_rate_new=20
         self.dict_matrix_N['metadata_list_N'][0][0][0].sample_rate = self.sampling_rate_new
         self.dict_matrix_E['metadata_list_E'][0][0][0].sample_rate = self.sampling_rate_new
 
@@ -273,7 +333,7 @@ class process_ant:
                   list_item_horizonrals["North"][0][1] + list_item_horizonrals["North"][0][2])
 
             path = self.output_files_path + '/' + list_item_horizonrals["North"][0][0] + \
-                   list_item_horizonrals["North"][0][1] + list_item_horizonrals["North"][0][2]
+                   list_item_horizonrals["North"][0][1] + (list_item_horizonrals["North"][0][2][0:2]+"N")
             print("Saving to ", path)
 
             file_to_store = open(path, "wb")
@@ -283,7 +343,7 @@ class process_ant:
                   list_item_horizonrals["East"][0][1] + list_item_horizonrals["East"][0][2])
 
             path = self.output_files_path + '/' + list_item_horizonrals["East"][0][0] + \
-                   list_item_horizonrals["East"][0][1] + list_item_horizonrals["East"][0][2]
+                   list_item_horizonrals["East"][0][1] + (list_item_horizonrals["East"][0][2][0:2]+"E")
             print("Saving to ", path)
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix_E, file_to_store)
@@ -411,7 +471,8 @@ class process_ant:
         list_days_N = str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year)
         list_days_E = str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year)
 
-        print("Processing",tr_N.stats.station, tr_N.stats.channel, str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year))
+        print("Processing",tr_N.stats.station, tr_N.stats.channel, str(tr_N.stats.starttime.julday) + "." +
+              str(tr_N.stats.starttime.year))
         print("Processing", tr_E.stats.station, tr_E.stats.channel,
               str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year))
 
