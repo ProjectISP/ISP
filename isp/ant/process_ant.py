@@ -189,11 +189,11 @@ class process_ant:
         # update the sampling_rate
         sampling_rate = info_item[1][0][0][0].sample_rate
 
-        # if self.decimationCB:
-        #     self.sampling_rate_new = self.factor
-        # else:
-        #     self.sampling_rate_new = sampling_rate
-        self.sampling_rate_new = 20
+        if self.decimationCB:
+            self.sampling_rate_new = self.factor
+        else:
+            self.sampling_rate_new = sampling_rate
+
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = self.sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
@@ -279,11 +279,11 @@ class process_ant:
 
         self.az = info_N[1][0][0][0].azimuth
 
-        # if self.decimationCB:
-        #     self.sampling_rate_new = self.factor
-        # else:
-        #     self.sampling_rate_new = sampling_rate
-        self.sampling_rate_new=20
+        if self.decimationCB:
+            self.sampling_rate_new = self.factor
+        else:
+            self.sampling_rate_new = sampling_rate
+
         self.dict_matrix_N['metadata_list_N'][0][0][0].sample_rate = self.sampling_rate_new
         self.dict_matrix_E['metadata_list_E'][0][0][0].sample_rate = self.sampling_rate_new
 
