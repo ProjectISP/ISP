@@ -223,29 +223,16 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         coords = []
         for event in event_dict.keys():
             otime = event_dict[event]['otime']
+            otime = otime[0:10]+" "+otime[11:19]
             evla = float(event_dict[event]['lat'])
             evlo = float(event_dict[event]['lon'])
             evdp = float(event_dict[event]['depth'])
-            coord_test = [otime, evla, evlo, evdp]
+            coord_test = [otime, evla, evlo, int(evdp)]
             coords.append(coord_test)
 
         catalog_filtered = self.sc.refilt(catalog_filtered, coords)
+        self.sc.download(catalog_filtered)
 
-        try:
-
-            root_path = os.path.dirname(os.path.abspath(__file__))
-            if "darwin" == platform:
-                dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
-            else:
-                dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
-                                                               pw.QFileDialog.DontUseNativeDialog)
-            self.sc._sdsout = dir_path
-            self.sc.download(catalog_filtered)
-
-        except:
-
-            md = MessageDialog(self)
-            md.set_info_message("Couldn't download time series")
 
     def download_fdsn(self):
 

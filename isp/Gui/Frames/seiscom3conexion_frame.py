@@ -1,7 +1,6 @@
 import os
-
+from sys import platform
 from PyQt5.QtWidgets import QDialogButtonBox
-
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Gui import pw
 from isp.Gui.Frames import MessageDialog
@@ -23,12 +22,28 @@ class SeisCopm3connexion(pw.QDialog, UiSeisComp3connexion):
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.metadataBtn.clicked.connect(lambda: self.on_click_select_file(self.dataless_path_bind))
         #self.loadBtn.clicked.connect(self.load_metadata_path(self.datalessPathForm.text()))
+        self.dataoutputBtn.clicked.connect(self.set_output_path)
 
     def on_click_select_file(self, bind: BindPyqtObject):
         selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
             bind.value = selected[0]
             self.load_metadata_path(bind.value)
+
+    def set_output_path(self):
+        try:
+
+            root_path = os.path.dirname(os.path.abspath(__file__))
+            if "darwin" == platform:
+                dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+            else:
+                dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+                                                               pw.QFileDialog.DontUseNativeDialog)
+            self.dataoutputLE.setText(dir_path)
+
+        except:
+            md = MessageDialog(self)
+            md.set_info_message("Couldn't download event")
 
     def load_metadata_path(self, value):
         md = MessageDialog(self)
@@ -58,7 +73,7 @@ class SeisCopm3connexion(pw.QDialog, UiSeisComp3connexion):
                'sdspass': self.sds_password.text(),
                'sdsdir': self.sds_path.text(),
                'sdsport': self.sds_port.text(),
-               'sdsout': '/none'}
+               'sdsout': self.dataoutputLE.text()+"/"}
 
         print(self.cfg)
         self.sc = SC(**self.cfg)
