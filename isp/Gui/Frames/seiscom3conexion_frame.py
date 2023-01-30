@@ -21,7 +21,7 @@ class SeisCopm3connexion(pw.QDialog, UiSeisComp3connexion):
         self.connectBtn.button(QDialogButtonBox.Ok).clicked.connect(self.get_connect_parameters)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.metadataBtn.clicked.connect(lambda: self.on_click_select_file(self.dataless_path_bind))
-        #self.loadBtn.clicked.connect(self.load_metadata_path(self.datalessPathForm.text()))
+        self.loadBtn.clicked.connect(self.load_metadata_path_ext)
         self.dataoutputBtn.clicked.connect(self.set_output_path)
 
     def on_click_select_file(self, bind: BindPyqtObject):
@@ -49,6 +49,16 @@ class SeisCopm3connexion(pw.QDialog, UiSeisComp3connexion):
         md = MessageDialog(self)
         try:
             self.__metadata_manager = MetadataManager(value)
+            self.inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
+            md.set_info_message("Loaded Metadata, please check your terminal for further details")
+        except:
+            md.set_error_message("Something went wrong. Please check your metadata file is a correct one")
+
+    def load_metadata_path_ext(self):
+        md = MessageDialog(self)
+        try:
+            self.__metadata_manager = MetadataManager(self.datalessPathForm.text())
             self.inventory = self.__metadata_manager.get_inventory()
             print(self.inventory)
             md.set_info_message("Loaded Metadata, please check your terminal for further details")

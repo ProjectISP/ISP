@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>SeisCoomP3 Connection</string>
+   <string>SeisComP3/4 Connexion</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
