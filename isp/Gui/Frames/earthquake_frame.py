@@ -364,8 +364,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                         line = self.canvas.draw_arrow(t.matplotlib_date, index + 2,
                                                "P", color="blue", linestyles='--', picker=True)
                         self.lines.append(line)
-                        with open(self.path_phases, "a+") as f:
-                            f.write(station + " " + k.upper() + " " + t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
+
+                        # TODO needs to be reviewed
+                        #with open(self.path_phases, "a+") as f:
+                        #    f.write(station + " " + k.upper() + " " + t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
 
                         self.picked_at[str(line)] = PickerStructure(t, st2[2].stats.station, t.matplotlib_date,
                             0.2, 0, "blue", "P", self.get_file_at_index(index + 2))
@@ -384,9 +386,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                         self.lines.append(line1s)
                         self.lines.append(line2s)
 
-
-                        with open(self.path_phases, "a+") as f:
-                            f.write(station+" "+k.upper()+" "+t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
+                        # TODO needs to be reviewed
+                        #with open(self.path_phases, "a+") as f:
+                        #    f.write(station+" "+k.upper()+" "+t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
 
                         self.picked_at[str(line1s)] = PickerStructure(t, st2[1].stats.station, t.matplotlib_date,
                              0.2, 0, "blue", "S", self.get_file_at_index(index + 0))

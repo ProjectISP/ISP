@@ -1,0 +1,38 @@
+Evento         Fecha     Hora(GMT)   Latitud   Longitud Profundidad Magnitud      Localizacion
+roa2022ywuv  2022-12-21 00:22:14.33  36.7050   -10.5533        20.0      3.3    Azores Cape St. Vincent Ridge
+roa2022yxne  2022-12-21 09:39:07.13  35.4376    -3.6633        24.4      2.3    Strait of Gibraltar 
+roa2022yxxm  2022-12-21 14:50:32.90  38.6673    -8.3922         0.0      2.6    Portugal            
+roa2022yymh  2022-12-21 22:20:33.20  35.4915    -3.6670        19.1      2.3    Strait of Gibraltar 
+roa2022yyrp  2022-12-22 01:01:21.59  33.0860    -6.5279         0.0      2.4    Morocco             
+roa2022yysz  2022-12-22 01:42:49.19  36.7286   -12.1642         0.0      3.5    Azores Cape St. Vincent Ridge
+roa2022yyxq  2022-12-22 04:03:36.86  35.7401    -4.6569        85.0      2.9    Strait of Gibraltar 
+roa2022yzpt  2022-12-22 13:13:51.30  -7.8762   -74.3209       102.1      5.5    Peru-Brazil Border Region
+roa2022yzrn  2022-12-22 14:06:57.78  37.7641    -6.6060         0.0      2.1    Spain               
+roa2022yzrq  2022-12-22 14:09:45.28  37.7535    -6.6075         0.0      2.3    Spain               
+roa2022zahx  2022-12-22 22:22:56.00  35.4698    -3.6650        21.7      2.1    Strait of Gibraltar 
+roa2022zbfr  2022-12-23 10:23:39.39  37.3183    -7.1538         0.0      2.1    Portugal            
+roa2022zbmp  2022-12-23 13:54:02.09  37.7453    -6.6024         0.0      2.1    Spain               
+roa2022zcck  2022-12-23 21:52:26.30  35.4106    -3.6304        18.7      2.9    Strait of Gibraltar 
+roa2022zcdt  2022-12-23 22:33:36.11  35.3738    -3.6048        21.1      2.6    Strait of Gibraltar 
+roa2022zcht  2022-12-24 00:35:36.03  35.4332    -3.6261        11.2      3.1    Strait of Gibraltar 
+roa2022zcji  2022-12-24 01:22:47.85  35.4488    -3.6144        12.7      2.5    Strait of Gibraltar 
+roa2022zcug  2022-12-24 06:53:50.34  35.9163    -4.9258       122.8      2.4    Strait of Gibraltar 
+roa2022zcxs  2022-12-24 08:38:21.39  35.3208    -4.8226        76.4      3.5    Strait of Gibraltar 
+roa2022zdmp  2022-12-24 16:10:08.20  35.4525    -3.6029         8.6      3.7    Strait of Gibraltar 
+roa2022zdre  2022-12-24 18:28:39.23  35.4761    -3.6272         6.4      3.3    Strait of Gibraltar 
+roa2022zgaj  2022-12-26 01:24:20.10  37.0599    -5.5432         0.0      2.0    Spain               
+roa2022zgxz  2022-12-26 13:19:58.53  37.7822    -6.7907         3.6      2.0    Spain               
+roa2022zjnc  2022-12-27 23:13:48.01  33.2453    -4.8576         0.0      3.4    Morocco             
+roa2022zkos  2022-12-28 13:11:03.53  34.0264   -14.5054        21.6      4.2    Madeira Islands, Portugal Region
+roa2022zkrv  2022-12-28 14:45:57.52  37.7321    -6.5958         0.0      2.2    Spain               
+roa2022zlpo  2022-12-29 02:45:24.58  42.4883    -9.7055         0.0      4.2    Spain               
+roa2022zmjn  2022-12-29 12:50:48.00  37.4129    -4.4613        21.3      2.2    Spain               
+roa2022zmln  2022-12-29 13:51:24.40  37.7286    -6.5984         0.0      2.3    Spain               
+roa2022zohy  2022-12-30 14:18:23.01  37.7580    -6.6239         2.7      2.3    Spain               
+roa2022zoil  2022-12-30 14:33:28.03  37.7340    -6.5877         0.0      2.3    Spain               
+roa2022zovm  2022-12-30 21:09:23.11  37.7812    -6.8333         0.0      2.1    Spain               
+roa2022zoyc  2022-12-30 22:28:54.17  37.7743    -6.7520         0.0      2.1    Spain               
+roa2022zphu  2022-12-31 03:21:59.96  37.2281   -12.7294         0.0      3.8    Azores Cape St. Vincent Ridge
+roa2022zpne  2022-12-31 06:05:05.04  34.4092    -4.6357         0.0      2.9    Morocco             
+roa2022zppe  2022-12-31 07:05:53.01  36.9818    -1.8121         0.0      4.4    Western Mediterranean Sea
+roa2022zpzx  2022-12-31 12:31:24.94  37.2968   -13.5918         4.5      4.3    Azores Cape St. Vincent Ridge
