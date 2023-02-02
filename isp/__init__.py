@@ -3,6 +3,7 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOCATION_OUTPUT_PATH = os.path.join(ROOT_DIR, 'earthquakeAnalisysis/location_output/loc')
+ALL_LOCATIONS = os.path.join(ROOT_DIR, 'earthquakeAnalisysis/location_output/all_locations')
 PICKING_DIR = os.path.join(ROOT_DIR, 'earthquakeAnalisysis/location_output/obs')
 MOMENT_TENSOR_OUTPUT = os.path.join(ROOT_DIR, 'mti/output')
 RESOURCE_PATH = os.path.join(ROOT_DIR, 'resources')

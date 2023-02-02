@@ -1,9 +1,8 @@
 from obspy.geodetics import gps2dist_azimuth, locations2degrees
-from obspy import UTCDateTime, Trace
+from obspy import UTCDateTime
 from isp.Gui import pw
-from isp.Gui.Frames import MatplotlibCanvas, BaseFrame, SettingsLoader
+from isp.Gui.Frames import MatplotlibCanvas, SettingsLoader
 from isp.Gui.Frames.uis_frames import UiMagnitudeFrame
-from isp.Gui.Frames.qt_components import ParentWidget
 from mtspec import mtspec
 import numpy as np
 import scipy

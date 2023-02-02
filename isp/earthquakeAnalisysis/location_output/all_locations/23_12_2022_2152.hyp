@@ -1,0 +1,36 @@
+NLLOC "/Users/robertocabieces/Documents/desarrollo/ISP2021/isp/earthquakeAnalisysis/location_output/loc/location.20221223.215232.grid0" "LOCATED" "Location completed."
+SIGNATURE "Integrated Seismic Program   obs:/Users/robertocabieces/Documents/desarrollo/ISP2021/isp/earthquakeAnalisysis/location_output/obs/output.txt   NLLoc:v7.00.00(27Oct2017)  run:31Jan2023 12h33m14"
+COMMENT ""
+GRID  361 181 601  -180 -90 0  1 1 1 PROB_DENSITY
+SEARCH OCTREE nInitial 17628 nEvaluated 50004 smallestNodeSide 0.501179/0.407208/0.097819 oct_tree_integral 4.877897e+02 scatter_volume 4.877897e+02
+HYPOCENTER  x -3.64408 y 35.3815 z 30.5684  OT 25.0198  ix -1 iy -1 iz -1 MAXIMUM_LIKELIHOOD
+GEOGRAPHIC  OT 2022 12 23  21 52 25.019838  Lat 35.381470 Long -3.644081 Depth 30.568441
+QUALITY  Pmax 1.84803e+24 MFmin 11.1631 MFmax 11.4277 RMS 0.552067 Nphs 14 Gap 189.702 Dist 0.565154 Mamp -9.90 0 Mdur -9.90 0
+VPVSRATIO  VpVsRatio 2  Npair 7  Diff 17.99
+STATISTICS  ExpectX -3.63999 Y 35.4021 Z 31.2261  CovXX 9.26253 XY 4.78313 XZ 13.6884 YY 24.9622 YZ -12.4988 ZZ 67.2038 EllAz1  111.342 Dip1  -15.1713 Len1  3.46878 Az2  203.553 Dip2  -8.09545 Len2  9.41439 Len3  1.604305e+01
+STAT_GEOG  ExpectLat 35.402058 Long -3.639992 Depth 31.226093
+TRANSFORM  GLOBAL
+QML_OriginQuality  assocPhCt 16  usedPhCt 14  assocStaCt -1  usedStaCt 7  depthPhCt -1  stdErr 0.552067  azGap 189.702  secAzGap 189.702  gtLevel -  minDist 62.8422 maxDist 196.695 medDist 166.773
+QML_OriginUncertainty  horUnc -1  minHorUnc 4.26804  maxHorUnc 7.77823  azMaxHorUnc 15.6776
+QML_ConfidenceEllipsoid  semiMajorAxisLength 16.0431  semiMinorAxisLength 3.46878  semiIntermediateAxisLength 9.41439  majorAxisPlunge 72.7112  majorAxisAzimuth 140.746  majorAxisRotation 113.896
+FOCALMECH  Hyp  35.381470 -3.644081 30.568441 Mech  0 0 0 mf  0 nObs 0
+PHASE ID Ins Cmp On Pha  FM Date     HrMn   Sec     Err  ErrMag    Coda      Amp       Per  >   TTpred    Res       Weight    StaLoc(X  Y         Z)        SDist    SAzim  RAz  RDip RQual    Tcorr 
+WMELI  ?    HHZ  ? P      ? 20221223 2152   36.6720 GAU  0.00e+00 -1.00e+00  3.43e+01 -1.00e+00 >   11.5037    0.1484    1.3545   -2.9518   35.3547   -0.0050    0.5652  92.51  92.5 109.5  9     0.0000
+WMELI  ?    HHE  ? S      ? 20221223 2152   43.9850 GAU  0.00e+00 -1.00e+00 -1.00e+00 -1.00e+00 >   19.3468   -0.3816    1.2534   -2.9518   35.3547   -0.0050    0.5652  92.51  92.5 109.9  9     0.0000
+CHAS   ?    HHZ  ? P      D 20221223 2152   43.2940 GAU  0.00e+00 -1.00e+00  1.81e+02 -1.00e+00 >   18.0560    0.2182    1.3350   -2.4304   35.1837   -0.1100    1.0103 100.94 100.9  53.5  9     0.0000
+CHAS   ?    HHE  ? S      ? 20221223 2152   55.8110 GAU  0.00e+00 -1.00e+00  4.93e+02 -1.00e+00 >   31.2183   -0.4272    1.2256   -2.4304   35.1837   -0.1100    1.0103 100.94 100.9  58.7  9     0.0000
+EMIJ   ?    HHZ  ? P      ? 20221223 2152   49.6150 GAU  0.00e+00 -1.00e+00  2.39e+00 -1.00e+00 >   24.7165   -0.1213    1.3577   -4.7727   36.5645   -0.4700    1.4946 322.66 322.7  53.5  9     0.0000
+EMIJ   ?    HHN  ? S      ? 20221223 2153    7.2790 GAU  0.00e+00 -1.00e+00  3.71e+01 -1.00e+00 >   43.1720   -0.9128    0.8160   -4.7727   36.5645   -0.4700    1.4946 322.66 322.7  58.7  9     0.0000
+ECEU   ?    HHZ  ? P      ? 20221223 2152   50.5480 GAU  0.00e+00 -1.00e+00 -1.00e+00 -1.00e+00 >   24.7887    0.7394    1.0009   -5.3768   35.8978   -0.2780    1.4998 290.64 290.6  53.5  9     0.0000
+ECEU   ?    HHN  ? S      ? 20221223 2153    8.1200 GAU  0.00e+00 -1.00e+00 -1.00e+00 -1.00e+00 >   43.3016   -0.2015    1.3362   -5.3768   35.8978   -0.2780    1.4998 290.64 290.6  58.7  9     0.0000
+EMAL   ?    HHZ  ? P      ? 20221223 2152   50.1370 GAU  0.00e+00 -1.00e+00 -1.00e+00 -1.00e+00 >   25.0522    0.0650    1.3680   -4.4280   36.7620   -0.1310    1.5190 335.58 335.6  53.5  9     0.0000
+EMAL   ?    HHE  ? S      ? 20221223 2153    7.7160 GAU  0.00e+00 -1.00e+00  1.30e+02 -1.00e+00 >   43.7744   -1.0782    0.6565   -4.4280   36.7620   -0.1310    1.5190 335.58 335.6  58.7  9     0.0000
+EBER   ?    HHZ  ? P      ? 20221223 2152   53.3950 GAU  0.00e+00 -1.00e+00  4.21e+00 -1.00e+00 >   26.6374    1.7377    0.2306   -2.8896   36.8979   -1.6900    1.6342  21.67  21.7  53.5  9     0.0000
+EBER   ?    HHN  ? S      ? 20221223 2153   12.2130 GAU  0.00e+00 -1.00e+00 -1.00e+00 -1.00e+00 >   46.6195    0.5737    1.1349   -2.8896   36.8979   -1.6900    1.6342  21.67  21.7  58.7  9     0.0000
+EGOR   ?    HHZ  ? P      ? 20221223 2152   54.3300 GAU  0.00e+00 -1.00e+00  2.59e+00 -1.00e+00 >   28.4897    0.8205    0.9306   -4.1096   37.1101   -1.3780    1.7689 347.88 347.9  53.5  9     0.0000
+EGOR   ?    HHE  ? S      ? 20221223 2153   19.6330 GAU  0.00e+00 -1.00e+00 -1.00e+00 -1.00e+00 >   49.9437    4.6695    0.0000   -4.1096   37.1101   -1.3780    1.7689 347.88 347.9  58.7  9     0.0000
+ALHU   ?    HHE  ? S      l 20221223 2152   38.1130 GAU  0.00e+00 -1.00e+00  1.23e+00 -1.00e+00 >    0.0000    0.0000    0.0000 -100000000000000000000.0000 -100000000000000000000.0000 -100000000000000000000.0000    0.0000   0.00  -1.0  -1.0  0     0.0000
+ALHU   ?    HHZ  ? P      D 20221223 2152   32.9250 GAU  0.00e+00 -1.00e+00  3.50e-01 -1.00e+00 >    0.0000    0.0000    0.0000 -100000000000000000000.0000 -100000000000000000000.0000 -100000000000000000000.0000    0.0000   0.00  -1.0  -1.0  0     0.0000
+END_PHASE
+END_NLLOC
+
