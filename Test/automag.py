@@ -4,17 +4,34 @@ from datetime import datetime
 import pandas as pd
 from obspy import read, read_events, UTCDateTime, Stream
 from obspy.geodetics import gps2dist_azimuth
-from isp import LOCATION_OUTPUT_PATH, ALL_LOCATIONS
-from isp.Gui.Frames.open_magnitudes_calc import get_coordinates_from_metadata
-from isp.Utils import MseedUtil
 
+from isp import ALL_LOCATIONS
+from isp.Utils import MseedUtil
+from isp.DataProcessing.metadata_manager import MetadataManager
+from isp.Structures.structures import StationCoordinates
 
 class Automag:
 
-    def __init__(self, project):
+    def __init__(self, project, inventory_path, working_chnnels):
         self.project = project
         self.all_traces = []
         self.st = None
+        self.ML = []
+        self.ML_std = []
+        self.inventory_path = inventory_path
+        self.working_channels = working_chnnels
+
+    def load_metadata(self):
+
+        try:
+
+            self.__metadata_manager = MetadataManager(self.inventory_path)
+            self.inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
+        except:
+            raise FileNotFoundError("The metadata is not valid")
+
+
 
     def make_stream(self):
 
@@ -77,19 +94,42 @@ class Automag:
         tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=True, fill_value=0)
         return tr
 
+    def remove_response(self, tr,  water_level, units):
 
-    def remove_response(self, st, f1, f2, f3, f4, water_level, units):
+        f1 = 0.05
+        f2 = 0.08
+        f3 = 0.3*tr.stat.sampling_rate
+        f4 = 0.4*tr.stat.sampling_rate
+        pre_filt = (f1, f2, f3, f4)
 
-        pass
-        # done = True
-        #
-        # try:
-        #     st.remove_response(inventory=self.inventory, pre_filt=(f1, f2, f3, f4), output=units, water_level=water_level)
-        # except:
-        #     print("Coudn't deconvolve", print(st))
-        #     done = False
-        #
-        # return tr, done
+
+        if units != "Wood Anderson":
+            # just necessary horizontals
+            # print("Deconvolving")
+            try:
+                tr.remove_response(inventory=self.inventory, pre_filt=pre_filt, output=units, water_level=water_level)
+            except:
+                print("Coudn't deconvolve", tr.stats)
+                tr.data = np.array([])
+        else:
+            # print("Simulating Wood Anderson Seismograph")
+            resp = self.inventory.get_response(tr.id, tr.stats.starttime)
+            resp = resp.response_stages[0]
+            paz_wa = {'sensitivity': 2800, 'zeros': [0j], 'gain': 1,
+                      'poles': [-6.2832 - 4.7124j, -6.2832 + 4.7124j]}
+
+            paz_mine = {'sensitivity': resp.stage_gain * resp.normalization_factor, 'zeros': resp.zeros,
+                        'gain': resp.stage_gain, 'poles': resp.poles}
+
+            try:
+                tr.simulate(paz_remove=paz_mine, paz_simulate=paz_wa, water_level=water_level)
+            except:
+                print("Coudn't deconvolve", tr.stats)
+                tr.data = np.array([])
+
+        return tr
+
+
 
     def get_now_files(self, date, station):
 
@@ -109,9 +149,7 @@ class Automag:
 
         for file in self.files_path:
             header = read(file, headlonly=True)
-            net = header[0].stats.network
             sta = header[0].stats.station
-            chn = header[0].stats.channel
             if station == sta:
                 filtered_list.append(file)
 
@@ -155,32 +193,50 @@ class Automag:
                 print(focal_parameters)
                 for pick in picks:
                     if pick.waveform_id["station_code"] not in events_picks.keys():
-                        events_picks[pick.waveform_id["station_code"]]=[pick.phase_hint, pick.time]
+                        events_picks[pick.waveform_id["station_code"]]=[[pick.phase_hint, pick.time]]
                     else:
                         events_picks[pick.waveform_id["station_code"]].append([pick.phase_hint, pick.time])
                 print("end event")
                 for key in events_picks:
                     pick_info = events_picks[key]
                     st2 = self.st.select(station=key)
+                    mag = Indmag(st2, pick_info, focal_parameters, self.inventory)
+                    mag.magnitude_local()
                 #TODO: In this point send info to process magnitudes
 
 class Indmag:
-    def __init__(self, st, pick_info, event_info, inventory):
-        self.st = st
-        self.inventory = inventory
-        self.pick_info = pick_info
-        self.event_info = event_info
+     def __init__(self, st, pick_info, event_info, inventory):
+         self.st = st
+         self.inventory = inventory
+         self.pick_info = pick_info
+         self.event_info = event_info
 
-    def magnitude_local(self):
+     def extrac_coordinates_from_station_name(self, inventory, name):
+         selected_inv = inventory.select(station=name)
+         cont = selected_inv.get_contents()
+         coords = selected_inv.get_coordinates(cont['channels'][0])
+         return StationCoordinates.from_dict(coords)
 
-        pass
+     def magnitude_local(self):
+         
+         pickP_time = None
+         for item in self.pick_info:
+             if item[0] == "P":
+                 pickP_time = item[1]
 
+         # coords = self.extrac_coordinates_from_station_name(self.inventory, self.st[0].stats.station)
+         # print(coords)
+         # dist, _, _ = gps2dist_azimuth(coords.Latitude, coords.Longitude, self.event_info[1], self.event_info[2])
+         # dist = dist / 1000
+         # print("end")
 
 if __name__ == "__main__":
     project_path = "/Users/robertocabieces/Documents/Alboran"
+    inv_path = "/Users/robertocabieces/Documents/desarrollo/ISP2021/isp/Metadata/xml/metadata.xml"
     df = pd.read_pickle(project_path)
-    project = MseedUtil.load_project(file=project_path)
-    mg = Automag(project)
+    project = MseedUtil.load_project(project_path)
+    mg = Automag(project, inv_path, ["HHE, HHN, HHZ"])
+    mg.load_metadata()
     mg.scan_folder()
     mg.info_event()
     #mg.get_now_files()
