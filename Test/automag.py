@@ -4,7 +4,6 @@ from datetime import datetime
 import pandas as pd
 from obspy import read, read_events, UTCDateTime, Stream
 from obspy.geodetics import gps2dist_azimuth
-
 from isp import ALL_LOCATIONS
 from isp.Utils import MseedUtil
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -30,7 +29,6 @@ class Automag:
             print(self.inventory)
         except:
             raise FileNotFoundError("The metadata is not valid")
-
 
 
     def make_stream(self):
@@ -98,48 +96,64 @@ class Automag:
 
         st_deconv = []
         st_wood = []
+        tr_deconv = None
+        tr_wood = None
+        paz_wa = {'sensitivity': 2800, 'zeros': [0j], 'gain': 1,
+                  'poles': [-6.2832 - 4.7124j, -6.2832 + 4.7124j]}
 
         for tr in st:
-            f1 = 0.05
-            f2 = 0.08
-            f3 = 0.3*tr.stats.sampling_rate
-            f4 = 0.4*tr.stats.sampling_rate
-            pre_filt = (f1, f2, f3, f4)
 
-            # print("Deconvolving")
+            # Resample to 5Hz
             try:
                 tr_test = tr.copy()
-                tr_test.remove_response(inventory=self.inventory, pre_filt=pre_filt, output="displacement",
-                                        water_level=90)
-                st_deconv.append(tr)
+                tr_test.detrend(type="simple")
+                tr_test.taper(type="blackman", max_percentage=0.025)
+                tr_test.filter(type="lowpass", freq=0.4 * 5, zerophase=True, corners=4)
+                tr_test.resample(sampling_rate=5, no_filter=True)
+                f1 = 0.05
+                f2 = 0.08
+                f3 = 0.3 * tr_test.stats.sampling_rate
+                f4 = 0.40 * tr_test.stats.sampling_rate
+                pre_filt = (f1, f2, f3, f4)
+                tr_deconv = tr_test.copy()
+                tr_wood = tr_test.copy()
+            except:
+                pass
+
+            try:
+                print("Removing Instrument")
+                tr_deconv.remove_response(inventory=self.inventory, pre_filt=pre_filt, output="DISP", water_level=90)
+                print(tr_deconv)
+                #tr_test.plot()
+                st_deconv.append(tr_deconv)
             except:
                 print("Coudn't deconvolve", tr.stats)
                 tr.data = np.array([])
 
-                # print("Simulating Wood Anderson Seismograph")
-            resp = self.inventory.get_response(tr.id, tr.stats.starttime)
-            resp = resp.response_stages[0]
-            paz_wa = {'sensitivity': 2800, 'zeros': [0j], 'gain': 1,
-                      'poles': [-6.2832 - 4.7124j, -6.2832 + 4.7124j]}
-
-            paz_mine = {'sensitivity': resp.stage_gain * resp.normalization_factor, 'zeros': resp.zeros,
-                        'gain': resp.stage_gain, 'poles': resp.poles}
+            print("Simulating Wood Anderson Seismograph")
 
             try:
-                tr_test = tr.copy()
-                tr_test.simulate(paz_remove=paz_mine, paz_simulate=paz_wa, water_level=90)
-                st_wood.append(tr_test)
+                resp = self.inventory.get_response(tr.id, tr.stats.starttime)
+                resp = resp.response_stages[0]
+                paz_mine = {'sensitivity': resp.stage_gain * resp.normalization_factor, 'zeros': resp.zeros,
+                            'gain': resp.stage_gain, 'poles': resp.poles}
+                tr_wood.simulate(paz_remove=paz_mine, paz_simulate=paz_wa, water_level=90)
+                st_wood.append(tr_wood)
             except:
                 print("Coudn't deconvolve", tr.stats)
                 tr.data = np.array([])
 
+        print("Finished Deconvolution")
         st_deconv = Stream(traces=st_deconv)
         st_wood = Stream(traces=st_wood)
-        del self.st
 
         return st_deconv, st_wood
 
-
+    def statistics(self):
+        MLs =np.array(self.ML)
+        self.ML_mean = MLs.mean()
+        self.ML_deviation = MLs.std()
+        print("Local Magnitude", str(self.ML_mean)+str(self.ML_deviation))
 
     def get_now_files(self, date, station):
 
@@ -211,51 +225,55 @@ class Automag:
                     pick_info = events_picks[key]
                     st2 = self.st.select(station=key)
                     st_deconv, st_wood = self.remove_response(st2)
-                    mag = Indmag(st_deconv,st_wood, pick_info, focal_parameters, self.inventory)
-                    mag.magnitude_local()
-                #TODO: In this point send info to process magnitudes
+                    mag = Indmag(st_deconv, st_wood, pick_info, focal_parameters, self.inventory)
+                    self.ML.append(mag.magnitude_local())
+                self.statistics()
+
 
 class Indmag:
-     def __init__(self, st_deconv, st_wood, pick_info, event_info, inventory):
-         self.st_deconv = st_deconv
-         self.st_wood = st_wood
-         self.inventory = inventory
-         self.pick_info = pick_info
-         self.event_info = event_info
-         self.ML = []
-     def extrac_coordinates_from_station_name(self, inventory, name):
-         selected_inv = inventory.select(station=name)
-         cont = selected_inv.get_contents()
-         coords = selected_inv.get_coordinates(cont['channels'][0])
-         return StationCoordinates.from_dict(coords)
+    def __init__(self, st_deconv, st_wood, pick_info, event_info, inventory):
+        self.st_deconv = st_deconv
+        self.st_wood = st_wood
+        self.inventory = inventory
+        self.pick_info = pick_info
+        self.event_info = event_info
+        self.ML = []
 
-     def magnitude_local(self):
-         tr_N = self.st_wood.select(component="N")
-         tr_E = self.st_wood.select(component="E")
-         pickP_time = None
-         for item in self.pick_info:
-             if item[0] == "P":
-                 pickP_time = item[1]
+    def cut_waveform(self):
+        pickP_time = None
+        for item in self.pick_info:
+            if item[0] == "P":
+                pickP_time = item[1]
 
-         tr_N.trim(starttime=pickP_time-15, endtime = pickP_time+300)
-         tr_E.trim(starttime=pickP_time-15, endtime=pickP_time + 300)
-        #
-        #
-         coords = self.extrac_coordinates_from_station_name(self.inventory, self.st_wood[0].stats.station)
-         dist, _, _ = gps2dist_azimuth(coords.Latitude, coords.Longitude, self.event_info[1], self.event_info[2])
-         dist = dist / 1000
-         max_amplitude_N = np.max(tr_N.data) * 1e3  # convert to  mm --> nm
-         max_amplitude_E = np.max(tr_E.data) * 1e3
-         max_amplitude = max([max_amplitude_E, max_amplitude_N])
-         ML_value = np.log10(max_amplitude) + 1.11 * np.log10(dist) + 0.00189 * dist - 2.09
-         self.ML.append(ML_value)
-        #  MLs = np.array(ML)
-        #  ML_mean = MLs.mean()
-        #  ML_deviation = MLs.std()
+        self.st_deconv.trim(starttime=pickP_time-5, endtime=pickP_time+300)
+        self.st_wood.trim(starttime=pickP_time-5, endtime=pickP_time + 300)
+
+    def extrac_coordinates_from_station_name(self, inventory, name):
+        selected_inv = inventory.select(station=name)
+        cont = selected_inv.get_contents()
+        coords = selected_inv.get_coordinates(cont['channels'][0])
+        return StationCoordinates.from_dict(coords)
+
+    def magnitude_local(self):
+        print("Calculating Local Magnitude")
+        tr_E = self.st_wood.select(component="E")
+        tr_E = tr_E[0]
+        tr_N = self.st_deconv.select(component="N")
+        tr_N = tr_N[0]
+        coords = self.extrac_coordinates_from_station_name(self.inventory, self.st_deconv[0].stats.station)
+        dist, _, _ = gps2dist_azimuth(coords.Latitude, coords.Longitude, self.event_info[1], self.event_info[2])
+        dist = dist / 1000
+        max_amplitude_N = np.max(tr_N.data)*1e3 # convert to  mm --> nm
+        max_amplitude_E = np.max(tr_E.data) * 1e3  # convert to  mm --> nm
+        max_amplitude = max([max_amplitude_E, max_amplitude_N])
+        ML_value = np.log10(max_amplitude)+1.11*np.log10(dist)+0.00189*dist-2.09
+        print(ML_value)
+        self.ML.append(ML_value)
+
 
 if __name__ == "__main__":
-    project_path = "/home/rcabdia/Documentos/magnitudes_test/data/alboran"
-    inv_path = "/home/rcabdia/Documentos/ISP/isp/Metadata/xml/metadata.xml"
+    project_path = "/Users/robertocabieces/Documents/Alboran"
+    inv_path = "/Users/robertocabieces/Documents/desarrollo/ISP2021/isp/Metadata/xml/metadata.xml"
     df = pd.read_pickle(project_path)
     project = MseedUtil.load_project(project_path)
     mg = Automag(project, inv_path, ["HHE, HHN, HHZ"])
