@@ -94,25 +94,33 @@ class Automag:
         tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=True, fill_value=0)
         return tr
 
-    def remove_response(self, tr,  water_level, units):
+    def remove_response(self, st,  water_level, units):
 
-        f1 = 0.05
-        f2 = 0.08
-        f3 = 0.3*tr.stat.sampling_rate
-        f4 = 0.4*tr.stat.sampling_rate
-        pre_filt = (f1, f2, f3, f4)
+        st_deconv = []
+        st_wood = []
 
 
-        if units != "Wood Anderson":
+        for tr in st:
+            f1 = 0.05
+            f2 = 0.08
+            f3 = 0.3*tr.stat.sampling_rate
+            f4 = 0.4*tr.stat.sampling_rate
+            pre_filt = (f1, f2, f3, f4)
+
+
+
             # just necessary horizontals
             # print("Deconvolving")
             try:
-                tr.remove_response(inventory=self.inventory, pre_filt=pre_filt, output=units, water_level=water_level)
+                tr_test = tr.copy()
+                tr_test.remove_response(inventory=self.inventory, pre_filt=pre_filt, output="displacement",
+                                        water_level=90)
+                st_deconv.append(tr)
             except:
                 print("Coudn't deconvolve", tr.stats)
                 tr.data = np.array([])
-        else:
-            # print("Simulating Wood Anderson Seismograph")
+
+                # print("Simulating Wood Anderson Seismograph")
             resp = self.inventory.get_response(tr.id, tr.stats.starttime)
             resp = resp.response_stages[0]
             paz_wa = {'sensitivity': 2800, 'zeros': [0j], 'gain': 1,
@@ -122,18 +130,24 @@ class Automag:
                         'gain': resp.stage_gain, 'poles': resp.poles}
 
             try:
-                tr.simulate(paz_remove=paz_mine, paz_simulate=paz_wa, water_level=water_level)
+                tr_test = tr.copy()
+                tr_test.simulate(paz_remove=paz_mine, paz_simulate=paz_wa, water_level=water_level)
+                st_wood.append(tr_test)
             except:
                 print("Coudn't deconvolve", tr.stats)
                 tr.data = np.array([])
 
-        return tr
+        st_deconv = Stream(traces=st_deconv)
+        st_wood = Stream(traces=st_wood)
+        del self.st
+
+        return st_deconv, st_wood
 
 
 
     def get_now_files(self, date, station):
 
-        selection = [".",station, "."]
+        selection = [".", station, "."]
 
         _, self.files_path = MseedUtil.filter_project_keys(self.project, net=selection[0], station=selection[1],
                                                        channel=selection[2])
@@ -218,7 +232,7 @@ class Indmag:
          return StationCoordinates.from_dict(coords)
 
      def magnitude_local(self):
-         
+
          pickP_time = None
          for item in self.pick_info:
              if item[0] == "P":
