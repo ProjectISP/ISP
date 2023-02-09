@@ -119,6 +119,7 @@ class process_ant:
         data_E = list_item_horizontals["East"][1:]
         starts_N = info_N[2]
         starts_E = info_E[2]
+
         #starts_E.sort()
         #starts_N.sort()
         idx_N_delete = []
@@ -162,6 +163,36 @@ class process_ant:
             if idx < len(data_E):
                 data_E.pop(idx)
                 starts_E.pop(idx)
+
+        # Finally delete duplicated days, otherwise is almost impossible to delete it later
+
+        starts_N_diff = np.diff(np.array(starts_N))
+        starts_E_diff = np.diff(np.array(starts_E))
+        idx_N_diff = np.argwhere(starts_N_diff <= 5)
+        idx_E_diff = np.argwhere(starts_E_diff <= 5)
+
+        try:
+
+            # CLEAN N
+            if len(idx_N_diff) > 0:
+                idx_N_diff = idx_N_diff[0].tolist()
+                idx_N_list = sorted(idx_N_diff, reverse=True)
+                for idx in idx_N_list:
+                    if idx < len(data_N):
+                        data_N.pop(idx)
+                        starts_N.pop(idx)
+
+            # CLEAN E
+            if len(idx_E_diff) > 0:
+                idx_E_diff = idx_E_diff[0].tolist()
+                idx_E_list = sorted(idx_E_diff, reverse=True)
+                for idx in idx_E_list:
+                    if idx < len(data_E):
+                        data_E.pop(idx)
+                        starts_E.pop(idx)
+        except:
+                pass
+
 
         list_item_horizontals["North"][1:] = data_N
         list_item_horizontals["East"][1:] = data_E
@@ -364,14 +395,15 @@ class process_ant:
         # print(str(np.log2(left_pad+right_pad+current_size)))
         return datapad
 
-    def process_col_matrix(self, j, fill_gaps=True):
+    def process_col_matrix(self, j):
 
         check_process = True
         res = []
         tr_raw = obspy.read(self.list_item[1 + j])[0]
         # ensure the starttime and endtime and to have 24 h
-        tr = self.ensure_24(tr_raw)
-        list_day = str(tr.stats.starttime.julday) + "." + str(tr.stats.starttime.year)
+        tr, list_day = self.ensure_24(tr_raw)
+
+        #list_day = str(tr.stats.starttime.julday) + "." + str(tr.stats.starttime.year)
         print("Processing", tr.stats.station, tr.stats.channel, str(tr.stats.starttime.julday)+"."+str(tr.stats.starttime.year))
 
         st = self.fill_gaps(Stream(traces=tr), tol=5*self.gaps_tol)
@@ -458,22 +490,22 @@ class process_ant:
         return res, list_day
 
 
-    def process_col_matrix_horizontals(self, j, fill_gaps=True):
+    def process_col_matrix_horizontals(self, j):
 
         check_process = True
         res_N = []
         res_E = []
         tr_N_raw = obspy.read(self.list_item_N[1 + j])[0]
         tr_E_raw = obspy.read(self.list_item_E[1 + j])[0]
-        tr_N = self.ensure_24(tr_N_raw)
-        tr_E = self.ensure_24(tr_E_raw)
+        tr_N, list_days_N  = self.ensure_24(tr_N_raw)
+        tr_E, list_days_E = self.ensure_24(tr_E_raw)
         #print("Checking N", tr_N)
         #print("Checking E", tr_E)
 
-        list_days_N = str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year)
-        list_days_E = str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year)
+        #list_days_N = str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year)
+        #list_days_E = str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year)
 
-        print("Processing",tr_N.stats.station, tr_N.stats.channel, str(tr_N.stats.starttime.julday) + "." +
+        print("Processing", tr_N.stats.station, tr_N.stats.channel, str(tr_N.stats.starttime.julday) + "." +
               str(tr_N.stats.starttime.year))
         print("Processing", tr_E.stats.station, tr_E.stats.channel,
               str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year))
@@ -489,7 +521,7 @@ class process_ant:
             tr_E = st2[0]
 
         # Very important, data is process as pairs (N,E) just if belongs to the same day!!!!
-        if tr_N.stats.starttime.julday == tr_E.stats.starttime.julday:
+        if list_days_N == list_days_E:
 
             if self.remove_responseCB and check_process:
                 #print("removing response ", tr_N.id, tr_E.id)
@@ -526,8 +558,9 @@ class process_ant:
                                    fill_value=0)
 
                     tr_test_E.trim(starttime=maxstart + self.inc_time[i],
-                                   endtime=maxstart + self.inc_time[i + 1], pad=True, nearest_sample=False,
+                                   endtime=maxstart + self.inc_time[i + 1], pad=True, nearest_sample=True,
                                    fill_value=0)
+
 
                     #print("Checking Test N", tr_test_N)
                     #print("Checking Test E", tr_test_E)
@@ -544,7 +577,8 @@ class process_ant:
                     #         tr_test_N = st_N[0]
                     #         tr_test_E = st_E[0]
 
-                    if (self.data_domain == "frequency") and len(tr_N[:]) and len(tr_E[:]) > 0:
+                    if (self.data_domain == "frequency") and len(tr_N[:]) and len(tr_E[:]) > 0 and \
+                            len(tr_N[:]) == len(tr_E[:]):
                         n = tr_test_N.count()
                         if n > 0:
                             D = 2 ** math.ceil(math.log2(n))
@@ -686,9 +720,11 @@ class process_ant:
 
         check_starttime = UTCDateTime(year=year, month=month, day=day, hour=00, minute=00, microsecond=00)
         check_endtime = check_starttime + 24 * 3600
+        date = str(check_starttime.year) + "." + str(check_starttime.julday)
+
         tr.detrend(type="simple")
         tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=False, fill_value=0)
-        return tr
+        return tr, date
 
 
     def __remove_response(self, tr, f1, f2, f3, f4, water_level, units):
