@@ -467,6 +467,8 @@ class process_ant:
         tr_E_raw = obspy.read(self.list_item_E[1 + j])[0]
         tr_N = self.ensure_24(tr_N_raw)
         tr_E = self.ensure_24(tr_E_raw)
+        #print("Checking N", tr_N)
+        #print("Checking E", tr_E)
 
         list_days_N = str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year)
         list_days_E = str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year)
@@ -520,11 +522,15 @@ class process_ant:
                     #minend = np.min([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
 
                     tr_test_N.trim(starttime=maxstart + self.inc_time[i],
-                                 endtime=maxstart + self.inc_time[i + 1])
+                                 endtime=maxstart + self.inc_time[i + 1], pad=True, nearest_sample=True,
+                                   fill_value=0)
 
                     tr_test_E.trim(starttime=maxstart + self.inc_time[i],
-                                   endtime=maxstart + self.inc_time[i + 1])
+                                   endtime=maxstart + self.inc_time[i + 1], pad=True, nearest_sample=False,
+                                   fill_value=0)
 
+                    #print("Checking Test N", tr_test_N)
+                    #print("Checking Test E", tr_test_E)
                     # TODO Make sense to check trim data?
                     # if fill_gaps:
                     #     st_N = self.fill_gaps(Stream(traces=tr_test_N), tol=self.gaps_tol)
@@ -681,7 +687,7 @@ class process_ant:
         check_starttime = UTCDateTime(year=year, month=month, day=day, hour=00, minute=00, microsecond=00)
         check_endtime = check_starttime + 24 * 3600
         tr.detrend(type="simple")
-        tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=True, fill_value=0)
+        tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=False, fill_value=0)
         return tr
 
 
