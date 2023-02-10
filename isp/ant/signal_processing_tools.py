@@ -10,6 +10,95 @@ class noise_processing:
     def __init__(self, tr):
         self.tr = tr
 
+    @classmethod
+    def clean_horizontals_unique(cls, list_item_horizontals, info_N, info_E):
+
+        data_N = list_item_horizontals["North"][1:]
+        data_E = list_item_horizontals["East"][1:]
+        starts_N = info_N[2]
+        starts_E = info_E[2]
+
+        #starts_E.sort()
+        #starts_N.sort()
+        idx_N_delete = []
+        idx_E_delete = []
+        # Sort lists
+        data_N = [x for _, x in sorted(zip(starts_N, data_N))]
+        data_E = [x for _, x in sorted(zip(starts_E, data_E))]
+        for idx_N, value1 in enumerate(starts_N):
+            value1_valid = False
+            for value2 in starts_E:
+                if abs(value2-value1) < 5:
+                    value1_valid = True
+
+            if value1_valid:
+                value1_valid = False
+            else:
+                idx_N_delete.append(idx_N)
+
+        # CLEAN N
+        idx_N_list=sorted(idx_N_delete,reverse=True)
+        for idx in idx_N_list:
+            if idx < len(data_N):
+                data_N.pop(idx)
+                starts_N.pop(idx)
+
+
+        for idx_E, value2 in enumerate(starts_E):
+            value2_valid = False
+            for value1 in starts_N:
+                if abs(value2 - value1) < 5:
+                    value2_valid = True
+
+            if value2_valid:
+                value2_valid = False
+            else:
+                idx_E_delete.append(idx_E)
+
+        # CLEAN E
+        idx_E_list=sorted(idx_E_delete,reverse=True)
+        for idx in idx_E_list:
+            if idx < len(data_E):
+                data_E.pop(idx)
+                starts_E.pop(idx)
+
+        # Finally delete duplicated days, otherwise is almost impossible to delete it later
+
+        starts_N_diff = np.diff(np.array(starts_N))
+        starts_E_diff = np.diff(np.array(starts_E))
+        idx_N_diff = np.argwhere(starts_N_diff <= 5)
+        idx_E_diff = np.argwhere(starts_E_diff <= 5)
+
+        try:
+
+            # CLEAN N
+            if len(idx_N_diff) > 0:
+                idx_N_diff = idx_N_diff[0].tolist()
+                idx_N_list = sorted(idx_N_diff, reverse=True)
+                for idx in idx_N_list:
+                    if idx < len(data_N):
+                        data_N.pop(idx)
+                        starts_N.pop(idx)
+
+            # CLEAN E
+            if len(idx_E_diff) > 0:
+                idx_E_diff = idx_E_diff[0].tolist()
+                idx_E_list = sorted(idx_E_diff, reverse=True)
+                for idx in idx_E_list:
+                    if idx < len(data_E):
+                        data_E.pop(idx)
+                        starts_E.pop(idx)
+        except:
+                pass
+
+
+        list_item_horizontals["North"][1:] = data_N
+        list_item_horizontals["East"][1:] = data_E
+        info_N[2] = starts_N
+        info_E[2] = starts_E
+
+        return list_item_horizontals, info_N, info_E
+
     def __plot_phase_match(self, t, gauss_window, time_domain_compressed_signal, windowed_compressed_signal):
 
         import matplotlib.pyplot as plt
