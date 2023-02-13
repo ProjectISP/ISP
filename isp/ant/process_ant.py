@@ -181,8 +181,11 @@ class process_ant:
             #print("Saving Days", self.dict_matrix['date_list'])
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix, file_to_store)
-
-        return self.dict_matrix
+            try:
+                del self.dict_matrix
+            except:
+                pass
+        #return self.dict_matrix
 
     def create_dict_matrix_horizontals(self, list_item_horizonrals, info_N, info_E):
         # create an object to compress
@@ -226,7 +229,7 @@ class process_ant:
             self.sampling_rate_new = self.factor
         else:
             self.sampling_rate_new = sampling_rate
-
+        
         self.dict_matrix_N['metadata_list_N'][0][0][0].sample_rate = self.sampling_rate_new
         self.dict_matrix_E['metadata_list_E'][0][0][0].sample_rate = self.sampling_rate_new
 
@@ -290,8 +293,15 @@ class process_ant:
             print("Saving to ", path)
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix_E, file_to_store)
+            # free space
 
-        return self.dict_matrix
+            try:
+                del self.dict_matrix_E
+                del self.dict_matrix_N
+            except:
+                pass
+
+        #return self.dict_matrix
 
     def fftzeropad(self, data):
         current_size = len(data)
