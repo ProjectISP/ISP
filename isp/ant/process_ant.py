@@ -30,12 +30,11 @@ class process_ant:
         self.num_rows = None
         self.data_domain = "frequency"
         self.save_files = "True"
-        self.taper_max_percent = 0.025
+        self.taper_max_percent = 0.05
         self.timeWindowCB = param_dict["processing_window"]
         self.num_minutes_dict_matrix = int(self.timeWindowCB/60)
         self.gaps_tol = 120
         self.cpuCount = os.cpu_count()-1
-
         self.output_files_path = output_files_path
         self.parameters = param_dict
         self.f1 = param_dict["f1"]
@@ -346,7 +345,7 @@ class process_ant:
             #print("decimating ", tr.id)
             try:
                 tr.detrend(type="simple")
-                tr.taper(type="blackman", max_percentage=0.025)
+                tr.taper(type="blackman", max_percentage=0.05)
                 tr.filter(type="lowpass", freq=0.4*self.factor, zerophase=True, corners=4)
                 tr.resample(sampling_rate=self.factor, no_filter=True)
             except:
@@ -379,7 +378,7 @@ class process_ant:
                         # filter the signal between 150 seconds and 1/4 the sampling rate
 
                         tr_test.detrend(type='simple')
-                        tr_test.taper(max_percentage=0.025)
+                        tr_test.taper(max_percentage=0.05)
                         tr_test.filter(type="bandpass", freqmin=0.005, freqmax=0.4*self.sampling_rate_new,
                                        zerophase=True, corners=4)
 
@@ -456,12 +455,12 @@ class process_ant:
                 #print("decimating ", tr_N.id, tr_E.id)
                 try:
                     tr_N.detrend(type="simple")
-                    tr_N.taper(type="blackman", max_percentage=0.025)
+                    tr_N.taper(type="blackman", max_percentage=0.05)
                     tr_N.filter(type="lowpass", freq=0.4 * self.factor, zerophase=True, corners=4)
                     tr_N.resample(sampling_rate=self.factor, no_filter=True)
 
                     tr_E.detrend(type="simple")
-                    tr_E.taper(type="blackman", max_percentage=0.025)
+                    tr_E.taper(type="blackman", max_percentage=0.05)
                     tr_E.filter(type="lowpass", freq=0.4 * self.factor, zerophase=True, corners=4)
                     tr_E.resample(sampling_rate=self.factor, no_filter=True)
                 except:
@@ -514,8 +513,8 @@ class process_ant:
                             # filter the signal between 150 seconds and 1/4 the sampling rate
                             tr_test_N.detrend(type='simple')
                             tr_test_E.detrend(type='simple')
-                            tr_test_N.taper(max_percentage=0.025)
-                            tr_test_E.taper(max_percentage=0.025)
+                            tr_test_N.taper(max_percentage=0.05)
+                            tr_test_E.taper(max_percentage=0.05)
 
                             tr_test_N.filter(type="bandpass", freqmin=0.005, freqmax=0.4*self.sampling_rate_new,
                                              zerophase=True, corners=4)
@@ -642,7 +641,7 @@ class process_ant:
 
         check_starttime = UTCDateTime(year=year, month=month, day=day, hour=00, minute=00, microsecond=00)
         check_endtime = check_starttime + 24 * 3600
-        date = str(check_starttime.year) + "." + str(check_starttime.julday)
+        date = str(check_starttime.julday) + "." + str(check_starttime.year)
 
         tr.detrend(type="simple")
         tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=False, fill_value=0)
