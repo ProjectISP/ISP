@@ -129,7 +129,8 @@ class noisestack:
                         if (dist/1000) <= self.min_dist:
                             date_list_file_i = dict_matrix_file_i[key3_i]
                             date_list_file_j = dict_matrix_file_j[key3_j]
-
+                            date_list_file_i = self.sort_dates(date_list_file_i)
+                            date_list_file_j = self.sort_dates(date_list_file_j)
                             # Lista de días de cada fichero
                             print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
                             print("dict_matrix_file_j['date_list']: " + str(date_list_file_j))
@@ -459,6 +460,27 @@ class noisestack:
                     else:
                         print("Excluded cross correlations for being out of maximum distance ", dist * 1E-3, "<",
                               self.min_dist)
+
+    def sort_dates(self, dates_list):
+        # extract years
+        years = {}
+        all_years = []
+        for date in dates_list:
+            date = date.split(".")
+            julday = date[0]
+            year = date[1]
+            if year not in years.keys():
+                years[year] = [julday+"."+year]
+            else:
+                years[year].append(julday+"."+year)
+
+        # join dictionaries
+        for keys in years:
+            date_index = years[keys]
+            date_index = sorted(date_index, key=float)
+            all_years = all_years+date_index
+
+        return all_years
 
 
 
