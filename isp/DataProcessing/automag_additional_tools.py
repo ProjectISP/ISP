@@ -102,59 +102,6 @@ class AddMagTools:
             cls.add_arrivals_to_trace.angle_cache[key] = \
                 trace.stats.takeoff_angles[phase] = takeoff_angle
 
-    @classmethod
-    def add_arrivals_to_trace(cls, trace, config):
-        """
-        Add P and S arrival times and takeoff angles to trace.
-
-        Uses the theoretical arrival time if no pick is available
-        or if the pick is too different from the theoretical arrival.
-        """
-        tolerance = config.p_arrival_tolerance
-        for phase in 'P', 'S':
-            key = '{}_{}'.format(trace.id, phase)
-            # First, see if there are cached values
-            try:
-                trace.stats.arrivals[phase] = \
-                    cls.add_arrivals_to_trace.pick_cache[key]
-                trace.stats.travel_times[phase] = \
-                    cls.add_arrivals_to_trace.travel_time_cache[key]
-                trace.stats.takeoff_angles[phase] = \
-                    cls.add_arrivals_to_trace.angle_cache[key]
-                continue
-            except KeyError:
-                pass
-            # If no cache is available, compute travel_time and takeoff_angle
-            try:
-                travel_time, takeoff_angle, method = \
-                    cls._wave_arrival(trace, phase, config)
-                theo_pick_time = cls._get_theo_pick_time(trace, travel_time)
-                pick_time = cls._find_picks(trace, phase, theo_pick_time, tolerance)
-            except RuntimeError:
-                continue
-            if pick_time is not None:
-                logger.info('{}: found {} pick'.format(trace.id, phase))
-                travel_time = \
-                    cls._travel_time_from_pick(trace, pick_time) or travel_time
-                pick_phase = phase
-            elif theo_pick_time is not None:
-                logger.info('{}: using theoretical {} pick from {}'.format(
-                    trace.id, phase, method))
-                pick_time = theo_pick_time
-                pick_phase = phase + 'theo'
-            else:
-                continue
-            if config.rp_from_focal_mechanism:
-                logger.info(
-                    '{}: {} takeoff angle: {:.1f} computed from {}'.format(
-                        trace.id, phase, takeoff_angle, method
-                    ))
-            cls.add_arrivals_to_trace.pick_cache[key] = \
-                trace.stats.arrivals[phase] = (pick_phase, pick_time)
-            cls.add_arrivals_to_trace.travel_time_cache[key] = \
-                trace.stats.travel_times[phase] = travel_time
-            cls.add_arrivals_to_trace.angle_cache[key] = \
-                trace.stats.takeoff_angles[phase] = takeoff_angle
 
     @classmethod
     def _wave_arrival(cls, trace, phase, config):

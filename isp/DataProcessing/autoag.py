@@ -91,39 +91,34 @@ class Automag:
         tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=True, fill_value=0)
         return tr
 
-    def remove_response(self, st):
+    def remove_response(self, st, pick_info):
+
+
+        #trim the waveforms for regional events
+        st.trim(starttime=pick_info[0][1]-60, endtime=pick_info[0][1]+3*60)
+        st.detrend(type="simple")
+        st.taper(type="blackman", max_percentage=0.05)
+        f1 = 0.05
+        f2 = 0.08
+        f3 = 0.35 * st[0].stats.sampling_rate
+        f4 = 0.40 * st[0].stats.sampling_rate
+        pre_filt = (f1, f2, f3, f4)
 
         st_deconv = []
         st_wood = []
-        tr_deconv = None
-        tr_wood = None
         paz_wa = {'sensitivity': 2800, 'zeros': [0j], 'gain': 1,
                   'poles': [-6.2832 - 4.7124j, -6.2832 + 4.7124j]}
 
         for tr in st:
 
-            # Resample to 5Hz
-            try:
-                tr_deconv = tr.copy()
-                tr_wood = tr.copy()
-                tr_deconv.detrend(type="simple")
-                #tr_test.taper(type="blackman", max_percentage=0.025)
-                #tr_test.filter(type="lowpass", freq=0.4 * 5, zerophase=True, corners=4)
-                #tr_test.resample(sampling_rate=5, no_filter=True)
-                f1 = 0.05
-                f2 = 0.08
-                f3 = 0.3 * tr_deconv.stats.sampling_rate
-                f4 = 0.40 * tr_deconv.stats.sampling_rate
-                pre_filt = (f1, f2, f3, f4)
-
-            except:
-                pass
+            tr_deconv = tr.copy()
+            tr_wood = tr.copy()
 
             try:
                 print("Removing Instrument")
                 tr_deconv.remove_response(inventory=self.inventory, pre_filt=pre_filt, output="DISP", water_level=90)
                 print(tr_deconv)
-                #tr_test.plot()
+                # tr_deconv.plot()
                 st_deconv.append(tr_deconv)
             except:
                 print("Coudn't deconvolve", tr.stats)
@@ -137,6 +132,7 @@ class Automag:
                 paz_mine = {'sensitivity': resp.stage_gain * resp.normalization_factor, 'zeros': resp.zeros,
                             'gain': resp.stage_gain, 'poles': resp.poles}
                 tr_wood.simulate(paz_remove=paz_mine, paz_simulate=paz_wa, water_level=90)
+                # tr_wood.plot()
                 st_wood.append(tr_wood)
             except:
                 print("Coudn't deconvolve", tr.stats)
@@ -161,7 +157,7 @@ class Automag:
         _, self.files_path = MseedUtil.filter_project_keys(self.project, net=selection[0], station=selection[1],
                                                        channel=selection[2])
         start = date.split(".")
-        start = UTCDateTime(year=int(start[0]), julday=int(start[1]), hour=00, minute=00, second=00)+3600
+        start = UTCDateTime(year=int(start[1]), julday=int(start[0]), hour=00, minute=00, second=00)+3600
         end = start+23*3600
         self.files_path = MseedUtil.filter_time(list_files=self.files_path, starttime=start, endtime=end)
         print(self.files_path)
@@ -189,7 +185,7 @@ class Automag:
                     cat = read_events(file_hyp, format="NLLOC_HYP")
                     ev = cat[0]
                     date = ev.origins[0]["time"]
-                    date = str(date.year)+"."+str(date.julday)
+                    date = str(date.julday)+ "."+ str(date.year)
 
                     obsfiles1.append(file_hyp)
                     if date not in dates:
@@ -205,7 +201,7 @@ class Automag:
         events_picks = {}
         for date in self.dates:
             events = self.dates[date]
-            self.get_now_files(date, ".")
+            self.get_now_files(date, "WMELI")
             self.make_stream()
             #TODO search mseeds for this date and cut it ensure 24 and deconv, return a stream
             for event in events:
@@ -223,7 +219,7 @@ class Automag:
                 for key in events_picks:
                     pick_info = events_picks[key]
                     st2 = self.st.select(station=key)
-                    st_deconv, st_wood = self.remove_response(st2)
+                    st_deconv, st_wood = self.remove_response(st2, pick_info)
                     mag = Indmag(st_deconv, st_wood, pick_info, focal_parameters, self.inventory)
                     self.ML.append(mag.magnitude_local())
                 self.statistics()
@@ -269,8 +265,8 @@ if __name__ == "__main__":
                       spectral_model_params, postinversion_params, radiated_energy_params, avarage_params)
 
     #project_path = "/Users/admin/Documents/test_data/alboran_project"
-    project_path = "/Users/admin/Desktop/MELI_Project"
-    inv_path = "/Users/admin/Documents/ISP/isp/Metadata/xml/metadata.xml"
+    project_path = "/Users/admin/Documents/test_meli/MELI_Project"
+    inv_path = "/Users/admin/Documents/test_meli/metadata/metadata.xml"
     project = MseedUtil.load_project(project_path)
     mg = Automag(project, inv_path, ["HHE, HHN, HHZ"])
     mg.load_metadata()

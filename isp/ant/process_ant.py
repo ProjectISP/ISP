@@ -758,28 +758,65 @@ class clock_process:
         self.name = name
         self.common_date_list = common_dates_list
 
-    # def daily_stack(self):
-    #     stack_day = np.sum(self.matrix, axis=0)
-    #     stack_partial = []
-    #     data_new = np.zeros(self.matrix.shape[2])
-    #     sum = 1
-    #     for row in range(self.matrix.shape[1]):
-    #         data = stack_day[row, :]
-    #         data_new = (data_new + data)/sum
-    #         data_new = np.roll(data_new, int(len(data_new) / 2))
-    #         self.metadata['location'] = str(row)
-    #         stack_partial.append(Trace(data=data_new, header=self.metadata))
-    #         sum = sum + 1
-    #
-    #     st = Stream(stack_partial)
-    #     st.write(self.name, format='h5')
+    def sort_dates(self):
+        # extract years
+        years = {}
+        all_years = []
+        list_iterate = self.common_date_list
+        for date in list_iterate:
+            date = date.split(".")
+            julday = date[0]
+            year = date[1]
+            if year not in years.keys():
+                years[year] = [julday+"."+year]
+            else:
+                years[year].append(julday+"."+year)
+
+        for keys in years:
+            date_index = years[keys]
+            date_index = sorted(date_index, key=float)
+            all_years = all_years+date_index
+
+        old_index, new_index = self.help_swap(all_years, list_iterate)
+
+        return all_years, old_index, new_index
+
+
+    def help_swap(self, sort_list, raw_list):
+
+        l1 = sort_list
+        l2 = raw_list
+
+        index1_list = []  # lista de indices incorrectos en la matriz original
+        items1_list = []
+
+        index2_list = []
+        for index1, item1 in enumerate(l1):
+            index_check = l2.index(item1)
+            if index1 != index_check:
+                index1_list.append(index1)
+                items1_list.append(item1)
+                index2_list.append(index_check)
+
+        # arr[(:,index1_list)] = arr[:, index2_list] #swap index
+        old_index = index1_list
+        new_index = index2_list
+
+        return old_index, new_index
 
     def daily_stack_part(self, part_day=20, type="Linear", power=2, overlap=75):
         stack_day = np.sum(self.matrix, axis=0)
+        all_years, old_index, new_index = self.sort_dates()
+        self.common_date_list = all_years
+        stack_day = stack_day.transpose()
+        stack_day_old = stack_day.copy()
+        stack_day[:, [old_index]] = stack_day[:, [new_index]]
+        stack_day = stack_day.transpose()
         stack_partial = []
         part_day_overlap = int(part_day*(1-overlap/100))
         numeration = [x for x in range(0, self.matrix.shape[1], part_day_overlap)]
         numeration_days = []
+
 
         for days in numeration:
             # take the day of self.common_date_list

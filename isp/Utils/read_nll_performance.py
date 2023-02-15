@@ -317,9 +317,11 @@ def _read_single_hypocenter(lines, coordinate_converter, original_picks):
         o.arrivals.append(arrival)
         station = str(line[0])
         phase = str(line[4])
+        setattr(arrival, "station", line[0])
         setattr(arrival, "instrument", line[2])
         setattr(arrival, "polarity", line[5])
         setattr(arrival, "polarity_impulse", line[6])
+        setattr(arrival, "travel_time", line[15])
         arrival.phase = phase
         arrival.distance = kilometer2degrees(float(line[21]))
         arrival.azimuth = float(line[23])
