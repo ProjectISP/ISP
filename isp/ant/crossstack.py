@@ -70,7 +70,6 @@ class noisestack:
         else:
             self.hard_process_simple()
 
-
     def hard_process_simple(self):
         self.check_path()
         with Pool(processes=multiprocessing.cpu_count()-2) as pool:
@@ -253,7 +252,7 @@ class noisestack:
                             stats = {}
                             stats['network'] = file_i[:2]
                             stats['station'] = file_i[2:6] + "_" + file_j[2:6]
-                            stats['channel'] = file_i[-1]
+                            stats['channel'] = file_i[-1]+file_j[-1]
                             stats['sampling_rate'] = self.sampling_rate
                             stats['npts'] = len(c_stack)
                             stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim],
