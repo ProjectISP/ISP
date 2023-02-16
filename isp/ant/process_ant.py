@@ -809,7 +809,6 @@ class clock_process:
         all_years, old_index, new_index = self.sort_dates()
         self.common_date_list = all_years
         stack_day = stack_day.transpose()
-        stack_day_old = stack_day.copy()
         stack_day[:, [old_index]] = stack_day[:, [new_index]]
         stack_day = stack_day.transpose()
         stack_partial = []
@@ -817,38 +816,50 @@ class clock_process:
         numeration = [x for x in range(0, self.matrix.shape[1], part_day_overlap)]
         numeration_days = []
 
-
         for days in numeration:
-            # take the day of self.common_date_list
-            numeration_days.append(self.common_date_list[days])
-            if type == "Linear":
-                data_new = np.zeros(self.matrix.shape[2])
-            if type == "PWS":
-                data_new = np.zeros((part_day, self.matrix.shape[2]))
-            index = 0
-            for day in range(days, 20+days):
-                if day < self.matrix.shape[1]:
-                    if type == "Linear":
-                        data = stack_day[day, :]
-                        data_new = data_new + data
-                    else:
-                        data_new[index , :] = stack_day[day, :]
-                        index = index +1
+            # conditions to proceed
+            # 1. check that the list of partial items have no gaps
+            if self.check_listdays_gaps(all_years, part_day, days):
+                # take the day of self.common_date_list
+                numeration_days.append(self.common_date_list[days])
+                if type == "Linear":
+                    data_new = np.zeros(self.matrix.shape[2])
+                if type == "PWS":
+                    data_new = np.zeros((part_day, self.matrix.shape[2]))
+                index = 0
+                for day in range(days, part_day+days):
+                    if day < self.matrix.shape[1]:
+                        if type == "Linear":
+                            data = stack_day[day, :]
+                            data_new = data_new + data
+                        else:
+                            data_new[index , :] = stack_day[day, :]
+                            index = index +1
 
-            if type == "PWS":
-                stack_obj = array()
-                data_new = stack_obj.stack(data_new, stack_type='Phase Weigth Stack', order=power)
+                if type == "PWS":
+                    stack_obj = array()
+                    data_new = stack_obj.stack(data_new, stack_type='Phase Weigth Stack', order=power)
 
-            data_new = (np.roll(data_new, int(len(data_new) / 2)))/part_day
-            self.metadata['location'] = str(days)
-            stack_partial.append(Trace(data=data_new, header=self.metadata))
-            np.zeros(self.matrix.shape[2])
-            if type == "Linear":
-                del data
+                num = len(data_new)
+                if (num % 2) == 0:
+
+                    # print(“Thenumber is even”)
+                    c = int(np.ceil(num / 2.) + 1)
+                else:
+                    # print(“The providednumber is odd”)
+                    c = int(np.ceil((num + 1) / 2))
+                data_new = (np.roll(data_new, c))/part_day
+                #data_new = (np.roll(data_new, int(len(data_new) / 2)))/part_day
+                self.metadata['location'] = str(days+int(part_day/2))
+                stack_partial.append(Trace(data=data_new, header=self.metadata))
+                np.zeros(self.matrix.shape[2])
+                if type == "Linear":
+                    del data
 
         st = Stream(stack_partial)
         numeration_days = self.extract_list_days(numeration_days)
-        data_to_save = {"dates": numeration_days, "stream": st}
+        numeration_days = np.array(numeration_days) + int(part_day/2)
+        data_to_save = {"dates": numeration_days.tolist(), "stream": st}
 
         file_to_store = open(self.name, "wb")
         pickle.dump(data_to_save, file_to_store)
@@ -857,8 +868,27 @@ class clock_process:
         # new save as a pickle to have control of dates
         #st.write(self.name, format='h5')
 
-    def extract_list_days(self, dates):
 
+    def check_listdays_gaps(self, dates, part_day, days):
+
+        # check if there are day gaps in consecutive days
+
+        days = [day for day in range(days, part_day + days)]
+        all_dates = []
+        for day in days:
+            all_dates.append(dates[day])
+
+        all_dates = np.array(self.extract_list_days(all_dates))
+        sum_all = np.sum(np.diff(all_dates))
+        if sum_all > 0.1*part_day:
+            return False
+        else:
+            return True
+
+
+
+    def extract_list_days(self, dates):
+        # transform julday + "." + year --> ini_julday and  consecutive days
         days = []
         years = []
         leapyear = False

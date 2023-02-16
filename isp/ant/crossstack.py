@@ -190,6 +190,16 @@ class noisestack:
                                 size_3d = 2 * corr_ij_freq.shape[2] - 1
                                 corr_ij_freq[np.isnan(corr_ij_freq)] = 0.0 + 0.0j
                                 corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, size_3d, axis=2))
+
+                                # save memory
+                                if self.stack != "PWS":
+                                    try:
+                                        del data_matrix_file_i_corr
+                                        del data_matrix_file_j_corr
+                                        del corr_ij_freq
+                                    except:
+                                        pass
+
                                 if self.stack == "nrooth":
                                     corr_ij_time = (np.abs(corr_ij_time) ** (1 / self.power)) * np.sign(corr_ij_time)
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
@@ -384,6 +394,16 @@ class noisestack:
                             size_3d = 2 * corr_ij_freq.shape[2] - 1
                             corr_ij_freq[np.isnan(corr_ij_freq)] = 0.0 + 0.0j
                             corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, size_3d, axis=2))
+
+                            # save memory
+                            if self.stack != "PWS":
+                                try:
+                                    del data_matrix_file_i_corr
+                                    del data_matrix_file_j_corr
+                                    del corr_ij_freq
+                                except:
+                                    pass
+
 
                             if self.stack == "nrooth":
                                 corr_ij_time = (np.abs(corr_ij_time) ** (1 / self.power)) * np.sign(corr_ij_time)
