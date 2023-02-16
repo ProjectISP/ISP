@@ -74,12 +74,12 @@ class noisestack:
     def hard_process_simple(self):
         self.check_path()
         with Pool(processes=multiprocessing.cpu_count()-2) as pool:
-            pool.map(self.hard_process_simple_parallel, range(len(self.pickle_files)))
+            pool.map(self.hard_process_simple_parallel, range(len(self.pickle_files)-1))
 
     def hard_process_full(self):
         self.check_path()
         with Pool(processes=multiprocessing.cpu_count()-2) as pool:
-            pool.map(self.hard_process_full_parallel, range(len(self.pickle_files)))
+            pool.map(self.hard_process_full_parallel, range(len(self.pickle_files)-1))
 
     def hard_process_simple_parallel(self, i):
         file_i = self.pickle_files[i]

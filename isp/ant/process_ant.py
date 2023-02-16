@@ -816,45 +816,45 @@ class clock_process:
         numeration = [x for x in range(0, self.matrix.shape[1], part_day_overlap)]
         numeration_days = []
 
-        for days in numeration:
+        for days in numeration[0:-1]:
             # conditions to proceed
             # 1. check that the list of partial items have no gaps
-            if self.check_listdays_gaps(all_years, part_day, days):
-                # take the day of self.common_date_list
-                numeration_days.append(self.common_date_list[days])
-                if type == "Linear":
-                    data_new = np.zeros(self.matrix.shape[2])
-                if type == "PWS":
-                    data_new = np.zeros((part_day, self.matrix.shape[2]))
-                index = 0
-                for day in range(days, part_day+days):
-                    if day < self.matrix.shape[1]:
-                        if type == "Linear":
-                            data = stack_day[day, :]
-                            data_new = data_new + data
-                        else:
-                            data_new[index , :] = stack_day[day, :]
-                            index = index +1
+            #if self.check_listdays_gaps(all_years, part_day, days):
+            # take the day of self.common_date_list
+            numeration_days.append(self.common_date_list[days])
+            if type == "Linear":
+                data_new = np.zeros(self.matrix.shape[2])
+            if type == "PWS":
+                data_new = np.zeros((part_day, self.matrix.shape[2]))
+            index = 0
+            for day in range(days, part_day+days):
+                if day < self.matrix.shape[1]:
+                    if type == "Linear":
+                        data = stack_day[day, :]
+                        data_new = data_new + data
+                    else:
+                        data_new[index , :] = stack_day[day, :]
+                        index = index +1
 
-                if type == "PWS":
-                    stack_obj = array()
-                    data_new = stack_obj.stack(data_new, stack_type='Phase Weigth Stack', order=power)
+            if type == "PWS":
+                stack_obj = array()
+                data_new = stack_obj.stack(data_new, stack_type='Phase Weigth Stack', order=power)
 
-                num = len(data_new)
-                if (num % 2) == 0:
+            num = len(data_new)
+            if (num % 2) == 0:
 
-                    # print(“Thenumber is even”)
-                    c = int(np.ceil(num / 2.) + 1)
-                else:
-                    # print(“The providednumber is odd”)
-                    c = int(np.ceil((num + 1) / 2))
-                data_new = (np.roll(data_new, c))/part_day
-                #data_new = (np.roll(data_new, int(len(data_new) / 2)))/part_day
-                self.metadata['location'] = str(days+int(part_day/2))
-                stack_partial.append(Trace(data=data_new, header=self.metadata))
-                np.zeros(self.matrix.shape[2])
-                if type == "Linear":
-                    del data
+                # print(“Thenumber is even”)
+                c = int(np.ceil(num / 2.) + 1)
+            else:
+                # print(“The providednumber is odd”)
+                c = int(np.ceil((num + 1) / 2))
+            data_new = (np.roll(data_new, c))/part_day
+            #data_new = (np.roll(data_new, int(len(data_new) / 2)))/part_day
+            self.metadata['location'] = str(days+int(part_day/2))
+            stack_partial.append(Trace(data=data_new, header=self.metadata))
+            np.zeros(self.matrix.shape[2])
+            if type == "Linear":
+                del data
 
         st = Stream(stack_partial)
         numeration_days = self.extract_list_days(numeration_days)
@@ -880,10 +880,11 @@ class clock_process:
 
         all_dates = np.array(self.extract_list_days(all_dates))
         sum_all = np.sum(np.diff(all_dates))
+
         if sum_all > 0.1*part_day:
-            return False
-        else:
             return True
+        else:
+            return False
 
 
 
