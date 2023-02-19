@@ -560,6 +560,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         dates = mapping["dates"]
         st = mapping["stream"]
 
+
         parameters = self.parameters.getParameters()
         params_dialog = self.settings_dialog.getParameters()
         overlap = params_dialog["overlap"]
