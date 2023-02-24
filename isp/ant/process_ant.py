@@ -10,6 +10,7 @@ from isp.ant.signal_processing_tools import noise_processing, noise_processing_h
 from isp import DISP_MAPS
 from isp.arrayanalysis.array_analysis import array
 from datetime import datetime
+import gc
 
 class process_ant:
 
@@ -182,6 +183,7 @@ class process_ant:
             pickle.dump(self.dict_matrix, file_to_store)
             try:
                 del self.dict_matrix
+                gc.collect()
             except:
                 pass
         #return self.dict_matrix
@@ -297,6 +299,7 @@ class process_ant:
             try:
                 del self.dict_matrix_E
                 del self.dict_matrix_N
+                gc.collect()
             except:
                 pass
 
