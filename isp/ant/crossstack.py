@@ -11,6 +11,7 @@ import os
 from obspy import read
 from obspy.geodetics import gps2dist_azimuth
 from isp.ant.process_ant import clock_process
+import gc
 
 class noisestack:
 
@@ -67,18 +68,20 @@ class noisestack:
     def run_cross_stack(self):
         if self.autocorr:
             self.hard_process_full()
+            print("End Cross & Stack")
         else:
             self.hard_process_simple()
+            print("End Cross & Stack")
 
     def hard_process_simple(self):
         self.check_path()
         with Pool(processes=multiprocessing.cpu_count()-2) as pool:
-            pool.map(self.hard_process_simple_parallel, range(len(self.pickle_files)-1))
+            pool.map(self.hard_process_simple_parallel, range(len(self.pickle_files)))
 
     def hard_process_full(self):
         self.check_path()
         with Pool(processes=multiprocessing.cpu_count()-2) as pool:
-            pool.map(self.hard_process_full_parallel, range(len(self.pickle_files)-1))
+            pool.map(self.hard_process_full_parallel, range(len(self.pickle_files)))
 
     def hard_process_simple_parallel(self, i):
         file_i = self.pickle_files[i]
@@ -136,13 +139,18 @@ class noisestack:
                     if (dist/1000) <= self.min_dist:
                         date_list_file_i = dict_matrix_file_i[key3_i]
                         date_list_file_j = dict_matrix_file_j[key3_j]
+
+                        # check type of header
+
+
                         # Lista de días de cada fichero
                         print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
                         print("dict_matrix_file_j['date_list']: " + str(date_list_file_j))
 
 
                         if (len(date_list_file_i) > 0 and len(date_list_file_j) > 0):
-
+                            date_list_file_i = self.check_header(date_list_file_i)
+                            date_list_file_j = self.check_header(date_list_file_j)
                             data_matrix_file_i_corr = data_matrix_file_i
                             data_matrix_file_j_corr = data_matrix_file_j
                             # check for duplicate days
@@ -204,6 +212,7 @@ class noisestack:
                                     del data_matrix_file_i_corr
                                     del data_matrix_file_j_corr
                                     del corr_ij_freq
+                                    gc.collect()
                                 except:
                                     pass
 
@@ -271,6 +280,8 @@ class noisestack:
                                 path_name = os.path.join(self.stack_daily_files_path, filename+ "_daily")
                                 clock = clock_process(corr_ij_time, stats, path_name, common_dates_list)
                                 clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
+                                del corr_ij_time
+                                gc.collect()
 
                         else:
                             print("Empty date_list.")
@@ -342,6 +353,8 @@ class noisestack:
 
 
                     if (len(date_list_file_i) > 0 and len(date_list_file_j) > 0):
+                        date_list_file_i = self.check_header(date_list_file_i)
+                        date_list_file_j = self.check_header(date_list_file_j)
                         data_matrix_file_i_corr = data_matrix_file_i
                         data_matrix_file_j_corr = data_matrix_file_j
                         # check for duplicate days
@@ -407,6 +420,7 @@ class noisestack:
                                 del data_matrix_file_i_corr
                                 del data_matrix_file_j_corr
                                 del corr_ij_freq
+                                gc.collect()
                             except:
                                 pass
 
@@ -476,7 +490,8 @@ class noisestack:
                         path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
                         clock = clock_process(corr_ij_time, stats, path_name, common_dates_list)
                         clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
-
+                        del corr_ij_time
+                        gc.collect()
                     else:
                         print("Empty date_list.")
                     print("-----")
@@ -492,6 +507,22 @@ class noisestack:
                 obsfiles.append(os.path.join(top_dir, file))
         obsfiles.sort()
         return obsfiles
+
+    def check_header(self, list_files):
+        list_files_new = []
+        check_elem = list_files[0]
+        date_check = check_elem.split(".")
+
+        if len(date_check[0]) == 4:
+            for index, element in enumerate(list_files):
+                check_elem = element.split(".")
+                date = check_elem[1]+"."+check_elem[0]
+                list_files_new.append(date)
+        else:
+            list_files_new = list_files
+
+
+        return list_files_new
 
     def checkIfDuplicates(self, listOfElems):
 
@@ -548,13 +579,13 @@ class noisestack:
                 for file in obsfiles:
 
                     try:
-                        st  = read(file)
+                        st = read(file)
                         tr = st[0]
                         station_i = tr.stats.station
 
                         chn = tr.stats.mseed['cross_channels']
 
-                        if station_i == station_pair and chn in channel_check :
+                        if station_i == station_pair and chn in channel_check:
 
                             data = tr.data
                             matrix_data["net"] = tr.stats.network
