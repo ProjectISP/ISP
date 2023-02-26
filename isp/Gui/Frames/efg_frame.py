@@ -561,8 +561,19 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
         dates = mapping["dates"]
         st = mapping["stream"]
-
-
+        #TODO extract skew value
+        try:
+            stations = st[0].stats.station
+            stations_name = stations.split("_")
+            metadata1 = self.inventory.select(station=stations_name[0])
+            metadata2 = self.inventory.select(station=stations_name[1])
+            skew1 = metadata1[0][0].description
+            skew1 = float(skew1.split("_")[1])
+            skew2 = metadata2[0][0].description
+            skew2 = float(skew2.split("_")[1])
+            skew = [skew1, skew2]
+        except:
+            skew = []
         parameters = self.parameters.getParameters()
         params_dialog = self.settings_dialog.getParameters()
         overlap = params_dialog["overlap"]
@@ -679,7 +690,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.pt = PlotToolsManager("id")
         self.pt.plot_fit(dates, lags, self.fitTypeCB.currentText(), self.degSB.value(),
                          clocks_station_name=st_stats["station"], ref=dates[self.refSB.value()], dates=dates,
-                         crosscorrelate=max_cc)
+                         crosscorrelate=max_cc, skew=skew)
 
     def key_pressed(self, event):
 
