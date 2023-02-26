@@ -143,7 +143,6 @@ class noisestack:
 
                             # check type of header
 
-
                             # Lista de días de cada fichero
                             print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
                             print("dict_matrix_file_j['date_list']: " + str(date_list_file_j))
@@ -288,12 +287,18 @@ class noisestack:
                                 print("Empty date_list.")
                             print("-----")
                         else:
+                            del dict_matrix_file_i
+                            del dict_matrix_file_j
+                            del metadata_list_file_i
+                            del metadata_list_file_j
+                            gc.collect()
                             print("Excluded cross correlations for being out of maximum distance ", dist*1E-3, "<", self.min_dist)
         except:
             print("Something went wrong at:", file_i)
 
     def hard_process_full_parallel(self, i):
         file_i = self.pickle_files[i]
+
         try:
             if file_i[-1] in ["N", "E", "X", "Y", "1", "2"]:
                 key1_i = "data_matrix" + "_" + file_i[-1]
@@ -501,6 +506,11 @@ class noisestack:
                         print("-----")
 
                     else:
+                        del dict_matrix_file_i
+                        del dict_matrix_file_j
+                        del metadata_list_file_i
+                        del metadata_list_file_j
+                        gc.collect()
                         print("Excluded cross correlations for being out of maximum distance ", dist * 1E-3, "<",
                               self.min_dist)
         except:

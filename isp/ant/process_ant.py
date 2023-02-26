@@ -181,11 +181,11 @@ class process_ant:
             #print("Saving Days", self.dict_matrix['date_list'])
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix, file_to_store)
-            try:
-                del self.dict_matrix
-                gc.collect()
-            except:
-                pass
+            # try:
+            #     del self.dict_matrix
+            #     gc.collect()
+            # except:
+            #     pass
         #return self.dict_matrix
 
     def create_dict_matrix_horizontals(self, list_item_horizonrals, info_N, info_E):
@@ -296,12 +296,12 @@ class process_ant:
             pickle.dump(self.dict_matrix_E, file_to_store)
             # free space
 
-            try:
-                del self.dict_matrix_E
-                del self.dict_matrix_N
-                gc.collect()
-            except:
-                pass
+            # try:
+            #     del self.dict_matrix_E
+            #     del self.dict_matrix_N
+            #     gc.collect()
+            # except:
+            #     pass
 
         #return self.dict_matrix
 

@@ -219,7 +219,7 @@ class PlotToolsManager:
 
 
 
-    def plot_fit(self, x, y, type, deg, clocks_station_name, ref, dates):
+    def plot_fit(self, x, y, type, deg, clocks_station_name, ref, dates, crosscorrelate):
 
         import matplotlib.pyplot as plt
         from isp.Gui.Frames import MatplotlibFrame
@@ -231,16 +231,21 @@ class PlotToolsManager:
         self.mpf = MatplotlibFrame(fig, window_title="Fit Plot")
         if type == "Logarithmic":
             x = np.log(x)
-            pts = ax1.scatter(x, y, c='gray', marker='o', edgecolors='k', s=18)
+            pts = ax1.scatter(x, y, c=crosscorrelate, marker='o', edgecolors='k', s=18, vmin = 0.0, vmax = 1.0)
         else:
-            pts = ax1.scatter(x, y, c='gray', marker='o', edgecolors='k', s=18)
-
+            pts = ax1.scatter(x, y, c=crosscorrelate, marker='o', edgecolors='k', s=18, vmin = 0.0, vmax = 1.0)
+        fig.colorbar(pts, ax=ax1, orientation='horizontal', fraction=0.05,
+                                               extend='both', pad=0.15, label='Normalized Cross Correlation')
+        x_old = x
         selector = SelectFromCollection(ax1, pts, )
 
         def accept(event):
             if event.key == "enter":
                 print("Selected points:")
                 print(selector.xys[selector.ind])
+
+
+
                 x = selector.xys[selector.ind][:,0]
                 y = selector.xys[selector.ind][:,1]
                 m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err, x, y = \
@@ -254,10 +259,16 @@ class PlotToolsManager:
                 selector.disconnect()
                 ax1.set_title("")
                 fig.canvas.draw()
+
+                cc = []
+                for value in x:
+                    index = np.where(x_old == value)
+                    cc.append(crosscorrelate[int(index[0])])
+                cc = np.array(cc)
                 path = os.path.join(CLOCK_PATH, clocks_station_name)
                 p = np.flip(p)
                 polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Dates_selected': x, 'Drift': y, 'Ref': ref,
-                           'R2': R2, 'resid': resid, 'chi2_red': chi2_red, 'std_err': std_err}
+                           'R2': R2, 'resid': resid, 'chi2_red': chi2_red, 'std_err': std_err, 'cross_correlation': cc}
                 print(polynom)
                 file_to_store = open(path, "wb")
                 pickle.dump(polynom, file_to_store)

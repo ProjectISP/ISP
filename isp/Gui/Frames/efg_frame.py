@@ -250,8 +250,8 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         stack = noisestack(self.output_bind.value, channels, stack_method, power, autocorr=autocorr,
                            min_distance=min_distance, dailyStacks=dailyStacks, overlap=overlap)
         stack.run_cross_stack()
-        if autocorr:
-            stack.rotate_horizontals()
+        #if autocorr:
+        stack.rotate_horizontals()
 
     @pyc.pyqtSlot(str)
     def receive_messages(self, message):
@@ -551,6 +551,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
     def cross(self):
 
         max_values = []
+        max_cc = []
         lags = []
         days = []
         day = 0
@@ -661,7 +662,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
             cc = correlate_maxlag(tr.data, template.data, maxlag=max([len(tr.data), len(template.data)]))
             maximo = np.where(cc == np.max(cc))
-
+            max_cc.append(np.max(cc))
             max_values.append(maximo)
             self.canvas.plot(get_lags(cc) / max_sampling_rates, cc, j, clear_plot=True,
                              linewidth=0.5, color="black")
@@ -677,7 +678,8 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.canvas.set_xlabel(j, "Time [s] from zero lag")
         self.pt = PlotToolsManager("id")
         self.pt.plot_fit(dates, lags, self.fitTypeCB.currentText(), self.degSB.value(),
-                         clocks_station_name=st_stats["station"], ref=dates[self.refSB.value()], dates=dates)
+                         clocks_station_name=st_stats["station"], ref=dates[self.refSB.value()], dates=dates,
+                         crosscorrelate=max_cc)
 
     def key_pressed(self, event):
 
