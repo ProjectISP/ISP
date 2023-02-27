@@ -224,9 +224,14 @@ class PlotToolsManager:
         import matplotlib.pyplot as plt
         from isp.Gui.Frames import MatplotlibFrame
         print(clocks_station_name)
+        sta1 = clocks_station_name.split("_")[0]
+        sta2 = clocks_station_name.split("_")[1]
         fig, ax1 = plt.subplots(figsize=(6, 6))
         plt.ylabel('Skew [s]')
         plt.xlabel('Jul day')
+
+        # Correction by the refence point
+        y = y-y[0]
 
         self.mpf = MatplotlibFrame(fig, window_title="Fit Plot")
         if type == "Logarithmic":
@@ -236,16 +241,30 @@ class PlotToolsManager:
             pts = ax1.scatter(x, y, c=crosscorrelate, marker='o', edgecolors='k', s=18, vmin = 0.0, vmax = 1.0)
         fig.colorbar(pts, ax=ax1, orientation='horizontal', fraction=0.05,
                                                extend='both', pad=0.15, label='Normalized Cross Correlation')
+
+        try:
+            skew1 = sta1 +" Skew " + str(skew[0])
+        except:
+            skew1 = "No"
+
+        try:
+            skew2 = sta2 + " Skew " + str(skew[1])
+        except:
+            skew2 = "No"
+            
+        ax1.text(0.95, 0.08, skew1, verticalalignment='bottom', horizontalalignment='right', transform=ax1.transAxes,
+                color='black', fontsize=12)
+
+        ax1.text(0.95, 0.01, skew2, verticalalignment='bottom', horizontalalignment='right', transform=ax1.transAxes,
+                color='black', fontsize=12)
+
         x_old = x
         selector = SelectFromCollection(ax1, pts, )
 
         def accept(event):
             if event.key == "enter":
                 print("Selected points:")
-                print(selector.xys[selector.ind])
-
-
-
+                #print(selector.xys[selector.ind])
                 x = selector.xys[selector.ind][:,0]
                 y = selector.xys[selector.ind][:,1]
                 m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err, x, y = \
@@ -276,7 +295,6 @@ class PlotToolsManager:
                 #polynom = {clocks_station_name: p.tolist()}
                 #df = pd.DataFrame(polynom)
                 #df.to_csv(path)
-
 
         fig.canvas.mpl_connect("key_press_event", accept)
         ax1.set_title("Press enter to accept selected points.")
