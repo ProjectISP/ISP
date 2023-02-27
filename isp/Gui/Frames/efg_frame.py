@@ -686,10 +686,11 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             day = part_day_overlap + day
             days.append(day)
 
+        name = st_stats["station"]+"_"+st_stats["channel"]
         self.canvas.set_xlabel(j, "Time [s] from zero lag")
         self.pt = PlotToolsManager("id")
         self.pt.plot_fit(dates, lags, self.fitTypeCB.currentText(), self.degSB.value(),
-                         clocks_station_name=st_stats["station"], ref=dates[self.refSB.value()], dates=dates,
+                         clocks_station_name=name, ref=dates[self.refSB.value()], dates=dates,
                          crosscorrelate=max_cc, skew=skew)
 
     def key_pressed(self, event):

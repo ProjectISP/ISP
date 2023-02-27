@@ -251,7 +251,7 @@ class PlotToolsManager:
             skew2 = sta2 + " Skew " + str(skew[1])
         except:
             skew2 = "No"
-            
+
         ax1.text(0.95, 0.08, skew1, verticalalignment='bottom', horizontalalignment='right', transform=ax1.transAxes,
                 color='black', fontsize=12)
 
