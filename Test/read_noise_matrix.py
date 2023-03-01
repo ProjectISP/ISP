@@ -1,7 +1,6 @@
 import os
 import pickle
 
-import pandas as pd
 
 # CH1,CH2,HH1,HH2,BH1,BH2,CN1,CN2
 from obspy import read, read_inventory

@@ -75,12 +75,12 @@ class noisestack:
 
     def hard_process_simple(self):
         self.check_path()
-        with Pool(processes=multiprocessing.cpu_count()-2) as pool:
+        with Pool(processes=3) as pool:
             pool.map(self.hard_process_simple_parallel, range(len(self.pickle_files)))
 
     def hard_process_full(self):
         self.check_path()
-        with Pool(processes=multiprocessing.cpu_count()-2) as pool:
+        with Pool(processes=3) as pool:
             pool.map(self.hard_process_full_parallel, range(len(self.pickle_files)))
 
     def hard_process_simple_parallel(self, i):
@@ -117,8 +117,8 @@ class noisestack:
                         dict_matrix_file_i = pickle.load(h_i)
                         dict_matrix_file_j = pickle.load(h_j)
 
-                        data_matrix_file_i = dict_matrix_file_i[key1_i]
-                        data_matrix_file_j = dict_matrix_file_j[key1_j]
+                        data_matrix_file_i_corr = dict_matrix_file_i[key1_i]
+                        data_matrix_file_j_corr = dict_matrix_file_j[key1_j]
                         metadata_list_file_i = dict_matrix_file_i[key2_i]
                         metadata_list_file_j = dict_matrix_file_j[key2_j]
                         date_list_file_i = dict_matrix_file_i[key3_i]
@@ -151,8 +151,7 @@ class noisestack:
                             if (len(date_list_file_i) > 0 and len(date_list_file_j) > 0):
                                 date_list_file_i = self.check_header(date_list_file_i)
                                 date_list_file_j = self.check_header(date_list_file_j)
-                                data_matrix_file_i_corr = data_matrix_file_i
-                                data_matrix_file_j_corr = data_matrix_file_j
+
                                 # check for duplicate days
                                 elements_i_to_delete = self.checkIfDuplicates(date_list_file_i)
                                 elements_j_to_delete = self.checkIfDuplicates(date_list_file_j)
@@ -180,7 +179,7 @@ class noisestack:
                                         elements_i_to_delete.append(date_list_file_i.index(date_i))
 
                                 if len(elements_i_to_delete) > 0:
-                                    data_matrix_file_i_corr = np.delete(data_matrix_file_i, elements_i_to_delete, 1)
+                                    data_matrix_file_i_corr = np.delete(data_matrix_file_i_corr, elements_i_to_delete, 1)
 
                                 for date_j in date_list_file_j:
                                     if (not date_j in common_dates_list):
@@ -188,7 +187,7 @@ class noisestack:
                                         elements_j_to_delete.append(date_list_file_j.index(date_j))
 
                                 if len(elements_j_to_delete) > 0:
-                                    data_matrix_file_j_corr = np.delete(data_matrix_file_j, elements_j_to_delete, 1)
+                                    data_matrix_file_j_corr = np.delete(data_matrix_file_j_corr, elements_j_to_delete, 1)
 
                                 # ###########
                                 # Correlación: multiplicación de matrices elemento a elemento
@@ -284,12 +283,16 @@ class noisestack:
                                 st.write(path_name, format='H5')
                                 #
                                 if self.dailyStacks:
-                                    path_name = os.path.join(self.stack_daily_files_path, filename+ "_daily")
-                                    clock = clock_process(corr_ij_time, stats, path_name, common_dates_list)
-                                    clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
+                                    path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
+                                    dims = [corr_ij_time.shape[1], corr_ij_time.shape[2]]
+                                    stack_day = np.sum(corr_ij_time, axis=0)
+
+                                    # here I can delete corr_ij_time
                                     del corr_ij_time
                                     gc.collect()
 
+                                    clock = clock_process(stack_day, stats, path_name, common_dates_list, dims)
+                                    clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
                             else:
                                 print("Empty date_list.")
                             print("-----")
@@ -336,8 +339,8 @@ class noisestack:
                     dict_matrix_file_i = pickle.load(h_i)
                     dict_matrix_file_j = pickle.load(h_j)
 
-                    data_matrix_file_i = dict_matrix_file_i[key1_i]
-                    data_matrix_file_j = dict_matrix_file_j[key1_j]
+                    data_matrix_file_i_corr = dict_matrix_file_i[key1_i]
+                    data_matrix_file_j_corr = dict_matrix_file_j[key1_j]
                     metadata_list_file_i = dict_matrix_file_i[key2_i]
                     metadata_list_file_j = dict_matrix_file_j[key2_j]
                     date_list_file_i = dict_matrix_file_i[key3_i]
@@ -373,8 +376,6 @@ class noisestack:
                         if (len(date_list_file_i) > 0 and len(date_list_file_j) > 0):
                             date_list_file_i = self.check_header(date_list_file_i)
                             date_list_file_j = self.check_header(date_list_file_j)
-                            data_matrix_file_i_corr = data_matrix_file_i
-                            data_matrix_file_j_corr = data_matrix_file_j
                             # check for duplicate days
                             elements_i_to_delete = self.checkIfDuplicates(date_list_file_i)
                             elements_j_to_delete = self.checkIfDuplicates(date_list_file_j)
@@ -405,7 +406,7 @@ class noisestack:
                                     elements_i_to_delete.append(date_list_file_i.index(date_i))
 
                             if len(elements_i_to_delete) > 0:
-                                data_matrix_file_i_corr = np.delete(data_matrix_file_i, elements_i_to_delete, 1)
+                                data_matrix_file_i_corr = np.delete(data_matrix_file_i_corr, elements_i_to_delete, 1)
 
                             for date_j in date_list_file_j:
                                 if not date_j in common_dates_list:
@@ -413,7 +414,7 @@ class noisestack:
                                     elements_j_to_delete.append(date_list_file_j.index(date_j))
 
                             if len(elements_j_to_delete) > 0:
-                                data_matrix_file_j_corr = np.delete(data_matrix_file_j, elements_j_to_delete, 1)
+                                data_matrix_file_j_corr = np.delete(data_matrix_file_j_corr, elements_j_to_delete, 1)
 
 
                             # ###########
@@ -512,10 +513,16 @@ class noisestack:
 
                         if self.dailyStacks:
                             path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
-                            clock = clock_process(corr_ij_time, stats, path_name, common_dates_list)
-                            clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
+                            dims = [corr_ij_time.shape[1], corr_ij_time.shape[2]]
+                            stack_day = np.sum(corr_ij_time, axis=0)
+
+                            # here I can delete corr_ij_time
                             del corr_ij_time
                             gc.collect()
+
+                            clock = clock_process(stack_day, stats, path_name, common_dates_list, dims)
+                            clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
+
                         else:
                             print("Empty date_list.")
                         print("-----")
@@ -569,26 +576,6 @@ class noisestack:
 
 
         return elements_to_delete
-
-
-    # def checkIfDuplicates(self, listOfElems):
-    #
-    #     ''' Check if given list contains any duplicates '''
-    #     # dupes = []
-    #     elements_to_delete = []
-    #     for elem in listOfElems:
-    #
-    #         if listOfElems.count(elem) > 1:
-    #             seen = set()
-    #             dupes = [x for x in listOfElems if x in seen or seen.add(x)]
-    #             for elements in dupes:
-    #                 indices = [i for i, x in enumerate(listOfElems) if x == elements]
-    #                 for index in indices:
-    #                     elements_to_delete.append(index)
-    #                     #listOfElems.pop(listOfElems[index])
-    #             return elements_to_delete
-    #     return elements_to_delete
-
 
     def rotate_horizontals(self):
         #self.check_path()

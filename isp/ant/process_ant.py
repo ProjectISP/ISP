@@ -747,7 +747,7 @@ class disp_maps_tools:
 
 
 class clock_process:
-    def __init__(self, matrix, metadata, name, common_dates_list):
+    def __init__(self, stack_day, metadata, name, common_dates_list, dims):
 
         """
                 Process ANT,
@@ -757,10 +757,11 @@ class clock_process:
                 :param No params required to initialize the class
         """
 
-        self.matrix = matrix
+        self.stack_day = stack_day
         self.metadata = metadata
         self.name = name
         self.common_date_list = common_dates_list
+        self.dims = dims
 
     def sort_dates(self):
         # extract years
@@ -809,15 +810,15 @@ class clock_process:
         return old_index, new_index
 
     def daily_stack_part(self, part_day=20, type="Linear", power=2, overlap=75):
-        stack_day = np.sum(self.matrix, axis=0)
+
         all_years, old_index, new_index = self.sort_dates()
         self.common_date_list = all_years
-        stack_day = stack_day.transpose()
+        stack_day = self.stack_day.transpose()
         stack_day[:, [old_index]] = stack_day[:, [new_index]]
         stack_day = stack_day.transpose()
         stack_partial = []
         part_day_overlap = int(part_day*(1-overlap/100))
-        numeration = [x for x in range(0, self.matrix.shape[1], part_day_overlap)]
+        numeration = [x for x in range(0, self.dims[0], part_day_overlap)]
         numeration_days = []
 
         for days in numeration[0:-1]:
@@ -827,12 +828,12 @@ class clock_process:
                 # take the day of self.common_date_list
                 numeration_days.append(self.common_date_list[days])
                 if type == "Linear":
-                    data_new = np.zeros(self.matrix.shape[2])
+                    data_new = np.zeros(self.dims[1])
                 if type == "PWS":
-                    data_new = np.zeros((part_day, self.matrix.shape[2]))
+                    data_new = np.zeros((part_day, self.dims[1]))
                 index = 0
                 for day in range(days, part_day+days):
-                    if day < self.matrix.shape[1]:
+                    if day < self.dims[1]:
                         if type == "Linear":
                             data = stack_day[day, :]
                             data_new = data_new + data
@@ -856,7 +857,7 @@ class clock_process:
                 #data_new = (np.roll(data_new, int(len(data_new) / 2)))/part_day
                 self.metadata['location'] = str(days+int(part_day/2))
                 stack_partial.append(Trace(data=data_new, header=self.metadata))
-                np.zeros(self.matrix.shape[2])
+                np.zeros(self.dims[1])
                 if type == "Linear":
                     del data
 
@@ -870,8 +871,8 @@ class clock_process:
 
         # clean memory
         try:
-            del self.matrix
             del stack_day
+            del self.stack_day
             gc.collect()
         except:
             pass
