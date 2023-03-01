@@ -1,3 +1,4 @@
+import gc
 import multiprocessing
 import os
 import pickle
@@ -10,7 +11,6 @@ from isp.ant.signal_processing_tools import noise_processing, noise_processing_h
 from isp import DISP_MAPS
 from isp.arrayanalysis.array_analysis import array
 from datetime import datetime
-import gc
 
 class process_ant:
 
@@ -81,6 +81,7 @@ class process_ant:
             if channel[2] == "Z" or channel[2] == "H":
                 channels.append(list_item[0][2])
                 key_info = list_item[0][0] + list_item[0][1] + list_item[0][2]  # Data, Metadata, dates 'XTCAPCBHE', ...
+                list_item, info = noise_processing.sort_verticals(list_item, info)
                 self.create_dict_matrix(list_item, info[key_info])
 
             else:
@@ -867,9 +868,14 @@ class clock_process:
         file_to_store = open(self.name, "wb")
         pickle.dump(data_to_save, file_to_store)
 
+        # clean memory
+        try:
+            del self.matrix
+            del stack_day
+            gc.collect()
+        except:
+            pass
 
-        # new save as a pickle to have control of dates
-        #st.write(self.name, format='h5')
 
 
     def check_listdays_gaps(self, dates, part_day, days):

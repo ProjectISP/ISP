@@ -20,7 +20,7 @@ class noisestack:
         """
                 Process ANT, Cross + Stack
 
-                :param No params required to initialize the class
+                :param params required to initialize the class
         """
         self.__metadata_manager = None
         self.output_files_path = output_files_path
@@ -121,7 +121,12 @@ class noisestack:
                         data_matrix_file_j = dict_matrix_file_j[key1_j]
                         metadata_list_file_i = dict_matrix_file_i[key2_i]
                         metadata_list_file_j = dict_matrix_file_j[key2_j]
-
+                        date_list_file_i = dict_matrix_file_i[key3_i]
+                        date_list_file_j = dict_matrix_file_j[key3_j]
+                        # realease memory
+                        del dict_matrix_file_i
+                        del dict_matrix_file_j
+                        gc.collect()
                         # coordinates
                         net_i = metadata_list_file_i[0]
                         net_j = metadata_list_file_j[0]
@@ -138,15 +143,10 @@ class noisestack:
 
                         dist, bazim, azim = self.__coords2azbazinc(lat_i, lon_i, lat_j, lon_j)
                         if (dist/1000) <= self.min_dist:
-                            date_list_file_i = dict_matrix_file_i[key3_i]
-                            date_list_file_j = dict_matrix_file_j[key3_j]
-
-                            # check type of header
 
                             # Lista de días de cada fichero
                             print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
                             print("dict_matrix_file_j['date_list']: " + str(date_list_file_j))
-
 
                             if (len(date_list_file_i) > 0 and len(date_list_file_j) > 0):
                                 date_list_file_i = self.check_header(date_list_file_i)
@@ -212,6 +212,13 @@ class noisestack:
                                         del data_matrix_file_i_corr
                                         del data_matrix_file_j_corr
                                         del corr_ij_freq
+                                        gc.collect()
+                                    except:
+                                        pass
+                                else:
+                                    try:
+                                        del data_matrix_file_i_corr
+                                        del data_matrix_file_j_corr
                                         gc.collect()
                                     except:
                                         pass
@@ -287,8 +294,6 @@ class noisestack:
                                 print("Empty date_list.")
                             print("-----")
                         else:
-                            del dict_matrix_file_i
-                            del dict_matrix_file_j
                             del metadata_list_file_i
                             del metadata_list_file_j
                             gc.collect()
@@ -335,6 +340,12 @@ class noisestack:
                     data_matrix_file_j = dict_matrix_file_j[key1_j]
                     metadata_list_file_i = dict_matrix_file_i[key2_i]
                     metadata_list_file_j = dict_matrix_file_j[key2_j]
+                    date_list_file_i = dict_matrix_file_i[key3_i]
+                    date_list_file_j = dict_matrix_file_j[key3_j]
+                    # realease memory
+                    del dict_matrix_file_i
+                    del dict_matrix_file_j
+                    gc.collect()
 
                     # coordinates
                     net_i = metadata_list_file_i[0]
@@ -353,8 +364,6 @@ class noisestack:
                     dist, bazim, azim = self.__coords2azbazinc(lat_i, lon_i, lat_j, lon_j)
 
                     if (dist/1000) <= self.min_dist:
-                        date_list_file_i = dict_matrix_file_i[key3_i]
-                        date_list_file_j = dict_matrix_file_j[key3_j]
 
                         # Lista de días de cada fichero
                         print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
@@ -432,7 +441,13 @@ class noisestack:
                                     gc.collect()
                                 except:
                                     pass
-
+                            else:
+                                try:
+                                    del data_matrix_file_i_corr
+                                    del data_matrix_file_j_corr
+                                    gc.collect()
+                                except:
+                                    pass
 
                             if self.stack == "nrooth":
                                 corr_ij_time = (np.abs(corr_ij_time) ** (1 / self.power)) * np.sign(corr_ij_time)
@@ -506,8 +521,6 @@ class noisestack:
                         print("-----")
 
                     else:
-                        del dict_matrix_file_i
-                        del dict_matrix_file_j
                         del metadata_list_file_i
                         del metadata_list_file_j
                         gc.collect()

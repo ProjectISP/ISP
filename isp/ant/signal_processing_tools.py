@@ -11,6 +11,18 @@ class noise_processing:
         self.tr = tr
 
     @classmethod
+    def sort_verticals(cls, list_item, info):
+
+        data = list_item[1:]
+        starts = info[2]
+        # # Sort lists
+        data = [x for _, x in sorted(zip(starts, data))]
+        starts.sort()
+        list_item[1:] = data
+        info = starts
+        return list_item, info
+
+    @classmethod
     def clean_horizontals_unique(cls, list_item_horizontals, info_N, info_E):
 
         data_N = list_item_horizontals["North"][1:]
@@ -18,13 +30,14 @@ class noise_processing:
         starts_N = info_N[2]
         starts_E = info_E[2]
 
-        #starts_E.sort()
-        #starts_N.sort()
         idx_N_delete = []
         idx_E_delete = []
         # Sort lists
         data_N = [x for _, x in sorted(zip(starts_N, data_N))]
         data_E = [x for _, x in sorted(zip(starts_E, data_E))]
+        starts_N.sort()
+        starts_E.sort()
+
         for idx_N, value1 in enumerate(starts_N):
             value1_valid = False
             for value2 in starts_E:
