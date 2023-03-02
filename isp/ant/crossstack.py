@@ -192,8 +192,14 @@ class noisestack:
                                 # ###########
                                 # Correlación: multiplicación de matrices elemento a elemento
                                 # ###########
-                                # if j >= i:
+
+                                # introduce sort matrix columns
+                                ######
+                                all_years, old_index, new_index = self.sort_dates(common_dates_list)
+                                data_matrix_file_i_corr[:, [old_index], :] = data_matrix_file_i_corr[:, [new_index], :]
+                                data_matrix_file_j_corr[:, [old_index], :] = data_matrix_file_j_corr[:, [new_index], :]
                                 corr_ij_freq = data_matrix_file_i_corr * np.conj(data_matrix_file_j_corr)
+                                ######
 
                                 # La matriz resultante se pasa al dominio del tiempo
                                 # Se reserva el espacio para la matriz de correlaciones en el dominio del tiempo
@@ -420,7 +426,12 @@ class noisestack:
                             # ###########
                             # Correlación: multiplicación de matrices elemento a elemento
                             # ###########
-                            # if j >= i:
+                            
+                            # introduce sort columns
+                            all_years, old_index, new_index = self.sort_dates(common_dates_list)
+                            data_matrix_file_i_corr[:, [old_index], :] = data_matrix_file_i_corr[:, [new_index], :]
+                            data_matrix_file_j_corr[:, [old_index], :] = data_matrix_file_j_corr[:, [new_index], :]
+
                             corr_ij_freq = data_matrix_file_i_corr * np.conj(data_matrix_file_j_corr)
 
                             # La matriz resultante se pasa al dominio del tiempo
@@ -769,3 +780,49 @@ class noisestack:
             print(path_name)
             st.write(path_name, format='H5')
             j = j+1
+
+    def sort_dates(self, common_date_list):
+        # extract years
+        years = {}
+        all_years = []
+        list_iterate = common_date_list
+        for date in list_iterate:
+            date = date.split(".")
+            julday = date[0]
+            year = date[1]
+            if year not in years.keys():
+                years[year] = [julday+"."+year]
+            else:
+                years[year].append(julday+"."+year)
+
+        for keys in years:
+            date_index = years[keys]
+            date_index = sorted(date_index, key=float)
+            all_years = all_years+date_index
+
+        old_index, new_index = self.help_swap(all_years, list_iterate)
+
+        return all_years, old_index, new_index
+
+
+    def help_swap(self, sort_list, raw_list):
+
+        l1 = sort_list
+        l2 = raw_list
+
+        index1_list = []  # lista de indices incorrectos en la matriz original
+        items1_list = []
+
+        index2_list = []
+        for index1, item1 in enumerate(l1):
+            index_check = l2.index(item1)
+            if index1 != index_check:
+                index1_list.append(index1)
+                items1_list.append(item1)
+                index2_list.append(index_check)
+
+        # arr[(:,index1_list)] = arr[:, index2_list] #swap index
+        old_index = index1_list
+        new_index = index2_list
+
+        return old_index, new_index
