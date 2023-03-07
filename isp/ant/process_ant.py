@@ -137,7 +137,7 @@ class process_ant:
             self.sampling_rate_new = self.factor
         else:
             self.sampling_rate_new = sampling_rate
-        self.sampling_rate_new = 20
+
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = self.sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
@@ -231,7 +231,7 @@ class process_ant:
             self.sampling_rate_new = self.factor
         else:
             self.sampling_rate_new = sampling_rate
-        self.sampling_rate_new = 20
+        
         self.dict_matrix_N['metadata_list_N'][0][0][0].sample_rate = self.sampling_rate_new
         self.dict_matrix_E['metadata_list_E'][0][0][0].sample_rate = self.sampling_rate_new
 

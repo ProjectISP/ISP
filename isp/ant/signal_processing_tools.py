@@ -19,7 +19,7 @@ class noise_processing:
         data = [x for _, x in sorted(zip(starts, data))]
         starts.sort()
         list_item[1:] = data
-        info = starts
+        info[2] = starts
         return list_item, info
 
     @classmethod
