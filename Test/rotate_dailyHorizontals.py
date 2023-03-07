@@ -1,8 +1,6 @@
 import collections
 import os
 import pickle
-
-from obspy import read, UTCDateTime, Stream, Trace
 import numpy as np
 from obspy.geodetics import gps2dist_azimuth
 
@@ -29,12 +27,11 @@ class RotataDailyHorizontals:
 
             if sta1 != sta2:
                 list_st = []
-
                 for file in obsfiles:
 
                     try:
                         st, dates = self.read_daily(file)
-                        list_st.append([st, dates])
+
                         tr = st[0]
                         station_i = tr.stats.station
 
@@ -42,7 +39,7 @@ class RotataDailyHorizontals:
 
                         if station_i == station_pair and chn in channel_check:
                             data = []
-
+                            list_st.append([st, dates])
                             for j in range(len(st)):
                                 tr1 = st[j]
                                 data.append([tr1.data])
@@ -53,16 +50,16 @@ class RotataDailyHorizontals:
                             # method to rotate the dictionary
                     except:
                         pass
-            stacked_days = len(st)
-            def_rotated["rotated_matrix"] = self.__rotate(matrix_data, stacked_days)
+                def_rotated["rotated_matrix"] = self.__rotate(matrix_data)
 
-            if len(matrix_data) > 0 and def_rotated["rotated_matrix"] is not None:
-                def_rotated["geodetic"] = matrix_data['geodetic']
-                def_rotated["net"] = matrix_data["net"]
-                def_rotated["station_pair"] = station_pair
-                def_rotated['sampling_rate'] = matrix_data["sampling_rate"]
-                print(station_pair, "rotated")
-                self.save_rotated_new(def_rotated, list_st)
+                if len(matrix_data) > 0 and def_rotated["rotated_matrix"] is not None:
+                    def_rotated["geodetic"] = matrix_data['geodetic']
+                    def_rotated["net"] = matrix_data["net"]
+                    def_rotated["station_pair"] = station_pair
+                    def_rotated['sampling_rate'] = matrix_data["sampling_rate"]
+                    print(station_pair, "rotated")
+                    self.save_rotated_new(def_rotated, list_st)
+
                 #print(station_pair, "saved")
 
 
@@ -95,7 +92,7 @@ class RotataDailyHorizontals:
         return check, dims
 
 
-    def __rotate(self, data_matrix, stacked_days):
+    def __rotate(self, data_matrix):
         rotated = None
         rotated_complete = None
         data_matrix_check = data_matrix.copy()
@@ -111,7 +108,9 @@ class RotataDailyHorizontals:
         if validation:
             # Here we make the loop
             rotated_complete = []
-            for day in range(stacked_days):
+            n = min(len(data_matrix["EE"]), len(data_matrix["NN"]), len(data_matrix["NE"]),len(data_matrix["NE"]))
+            for day in range(n):
+
                 data_array_ne = np.zeros((dim[0], 4, 1))
                 data_array_ne[:, 0, 0] = data_matrix["EE"][day][0][:]
                 data_array_ne[:, 1, 0] = data_matrix["EN"][day][0][:]
@@ -198,40 +197,45 @@ class RotataDailyHorizontals:
 
     def save_rotated_new(self, def_rotated, list_st):
         print("saving")
-        for item in list_st:
-            date = item[1]
-            st = item[0]
-            network = st[0].stats.network
-            channel = st[0].stats.channel
-            stations = st[0].stats.station
+        for i, item in enumerate(list_st):
+            if i < 4:
+                date = item[1]
+                st = item[0]
+                network = st[0].stats.network
+                channel = st[0].stats.channel
+                stations = st[0].stats.station
 
-            if channel == "EE":
-                channel_new = "TT"
-                for index, trace in enumerate(st):
-                    st[index].data = def_rotated["rotated_matrix"][index][:, 0, 0]
-                    st[index].stats.channel = channel_new
-            elif channel == "EN":
-                channel_new = "RR"
-                for index, trace in enumerate(st):
-                    st[index].data = def_rotated["rotated_matrix"][index][:, 1, 0]
-                    st[index].stats.channel = channel_new
-            elif channel == "NN":
-                channel_new = "TR"
-                for index, trace in enumerate(st):
-                    st[index].data = def_rotated["rotated_matrix"][index][:, 2, 0]
-                    st[index].stats.channel = channel_new
-            elif channel == "NE":
-                channel_new = "RT"
-                for index, trace in enumerate(st):
-                    st[index].data = def_rotated["rotated_matrix"][index][:, 3, 0]
-                    st[index].stats.channel = channel_new
+                if channel == "EE":
+                    channel_new = "TT"
+                    for index, trace in enumerate(st):
+                        if index < len(def_rotated["rotated_matrix"]):
+                            st[index].data = def_rotated["rotated_matrix"][index][:, 0, 0]
+                            st[index].stats.channel = channel_new
+                elif channel == "EN":
+                    channel_new = "RR"
+                    for index, trace in enumerate(st):
+                        if index < len(def_rotated["rotated_matrix"]):
+                            st[index].data = def_rotated["rotated_matrix"][index][:, 1, 0]
+                            st[index].stats.channel = channel_new
+                elif channel == "NN":
+                    channel_new = "TR"
+                    for index, trace in enumerate(st):
+                        if index < len(def_rotated["rotated_matrix"]):
+                            st[index].data = def_rotated["rotated_matrix"][index][:, 2, 0]
+                            st[index].stats.channel = channel_new
+                elif channel == "NE":
+                    channel_new = "RT"
+                    for index, trace in enumerate(st):
+                        if index < len(def_rotated["rotated_matrix"]):
+                            st[index].data = def_rotated["rotated_matrix"][index][:, 3, 0]
+                            st[index].stats.channel = channel_new
 
-            # saving
-            data_to_save = {"dates": date, "stream": st}
-            name = network+"."+stations+"."+channel_new+"_"+"daily"
-            path_name = os.path.join(self.stack_rotated_files_path,name)
-            file_to_store = open(path_name, "wb")
-            pickle.dump(data_to_save, file_to_store)
+                # saving
+                data_to_save = {"dates": date, "stream": st}
+                name = network+"."+stations+"."+channel_new+"_"+"daily"
+                path_name = os.path.join(self.stack_rotated_files_path,name)
+                file_to_store = open(path_name, "wb")
+                pickle.dump(data_to_save, file_to_store)
 
 
     def list_directory(self, path):
@@ -287,7 +291,7 @@ class RotataDailyHorizontals:
 
 if __name__ == "__main__":
     #stack_path_files = "/Volumes/LaCie/UPFLOW_resample/EGFs_test/NEW/horizontals/stack"
-    stack_path_files = "/Volumes/LaCie/UPFLOW_resample/EGFs_test/NEW/horizontals/daily"
-    stack_rotated_files_path = "/Volumes/LaCie/UPFLOW_resample/EGFs_test/NEW/horizontals/daily_rotated"
+    stack_path_files = "/Volumes/LaCie/UPFLOW_resample/EGFs_Horizontals/full_matrices_def/stack_daily"
+    stack_rotated_files_path = "/Volumes/LaCie/UPFLOW_resample/EGFs_Horizontals/full_matrices_def/stack_rotated_daily"
     rth = RotataDailyHorizontals(stack_path_files, stack_rotated_files_path)
     rth.rotate_horizontals()

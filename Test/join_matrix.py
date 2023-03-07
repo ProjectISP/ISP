@@ -32,11 +32,11 @@ def check_header(list_files):
 
 
 if __name__ == "__main__":
-    path_mini_matrix = "/Volumes/LaCie/UPFLOW_resample/mini_matrix"
-    path_partial_matrix= "/Volumes/LaCie/UPFLOW_resample/EGFs_Horizontals/HORIZONTAL_MATRICIES"
-    output_path = "/Volumes/LaCie/UPFLOW_resample/EGFs_Horizontals/full_matrices"
+    path_mini_matrix = "/Volumes/LaCie/UPFLOW_resample/EGFs_Horizontals/mini_matrix"
+    path_partial_matrix= "/Volumes/LaCie/UPFLOW_resample/EGFs_Horizontals/horizontals_land"
+    output_path = "/Volumes/LaCie/UPFLOW_resample/EGFs_Horizontals/full_matrices_def"
     obsfiles_mini = list_directory(path_mini_matrix)
-    obsfiles_partial = list_directory( path_partial_matrix)
+    obsfiles_partial = list_directory(path_partial_matrix)
 
     for mini_file in obsfiles_mini:
         full_matrix = {}
@@ -45,6 +45,7 @@ if __name__ == "__main__":
         for partial_file in obsfiles_partial:
             partial_name = os.path.basename(partial_file)
             if partial_name == mini_name and mini_name != ".DS_Store":
+                print("working on ", mini_name)
                 mini_matrix = MseedUtil.load_project(file=mini_file)
                 partial_matrix = MseedUtil.load_project(file=partial_file)
 
@@ -54,16 +55,16 @@ if __name__ == "__main__":
                 key3 = 'date_list' + "_" + mini_name[-1]
 
                 # concatenate matrix
-                try:
-                    full_matrix[key1] = np.concatenate((partial_matrix[key1], mini_matrix[key1]), axis=1)
-                    full_matrix[key2] = partial_matrix[key2]+mini_matrix[key2]
-                    partial_matrix[key3] = check_header(partial_matrix[key3])
-                    full_matrix[key3] = partial_matrix[key3] + mini_matrix[key3]
-                    del mini_matrix
-                    del partial_matrix
-                    gc.collect()
-                    # write full matrix in output directory
-                    file_to_store = open(os.path.join(output_path, mini_name), "wb")
-                    pickle.dump(full_matrix, file_to_store)
-                except:
-                    print("An exception ocurred at ", mini_name)
+                #try:
+                full_matrix[key1] = np.concatenate((partial_matrix[key1], mini_matrix[key1]), axis=1)
+                full_matrix[key2] = partial_matrix[key2]+mini_matrix[key2]
+                partial_matrix[key3] = check_header(partial_matrix[key3])
+                full_matrix[key3] = partial_matrix[key3] + mini_matrix[key3]
+                del mini_matrix
+                del partial_matrix
+                gc.collect()
+                # write full matrix in output directory
+                file_to_store = open(os.path.join(output_path, mini_name), "wb")
+                pickle.dump(full_matrix, file_to_store)
+                #except:
+                #    print("An exception ocurred at ", mini_name)

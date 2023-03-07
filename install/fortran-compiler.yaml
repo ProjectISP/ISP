@@ -1,0 +1,14 @@
+name: fortran-compiler  # name it what you want
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - fortran-compiler
+  - cxx-compiler
+  - libpng
+  - libgd
+  - jpeg
+  - libnetcdf
+  - openlibm
+  - xorg-libx11
+# include the other required libraries

@@ -195,7 +195,7 @@ class noisestack:
 
                                 # introduce sort matrix columns
                                 ######
-                                all_years, old_index, new_index = self.sort_dates(common_dates_list)
+                                common_dates_list, old_index, new_index = self.sort_dates(common_dates_list)
                                 data_matrix_file_i_corr[:, [old_index], :] = data_matrix_file_i_corr[:, [new_index], :]
                                 data_matrix_file_j_corr[:, [old_index], :] = data_matrix_file_j_corr[:, [new_index], :]
                                 corr_ij_freq = data_matrix_file_i_corr * np.conj(data_matrix_file_j_corr)
@@ -428,7 +428,7 @@ class noisestack:
                             # ###########
                             
                             # introduce sort columns
-                            all_years, old_index, new_index = self.sort_dates(common_dates_list)
+                            common_dates_list, old_index, new_index = self.sort_dates(common_dates_list)
                             data_matrix_file_i_corr[:, [old_index], :] = data_matrix_file_i_corr[:, [new_index], :]
                             data_matrix_file_j_corr[:, [old_index], :] = data_matrix_file_j_corr[:, [new_index], :]
 
