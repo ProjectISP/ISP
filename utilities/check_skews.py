@@ -78,11 +78,23 @@ class CheckSkews():
 
         self.df_polynom = pd.read_pickle(self.input_path)
         self.polynom = self.df_polynom[self.obspair]
-        self.skew_estimated_ini = self.PolyCoefficients(self.date_ini, self.polynom)
-        self.skew_estimated_end = self.PolyCoefficients(self.date_end, self.polynom)
+        default_ini = self.df_polynom['Drift'][0]
+        self.skew_estimated_ini = self.PolyCoefficients(self.date_ini, self.polynom)-default_ini
+        self.skew_estimated_end = self.PolyCoefficients(self.date_end, self.polynom)-default_ini
         self.err_skew_ini = self.skew_estimated_ini
         self.skew = self.df_polynom["skew"]
-        self.err_skew_end = self.skew_estimated_end-(self.df_polynom["skew"][1]-self.df_polynom["skew"][0]) - self.df_polynom['Drift'][0]
+        #self.err_skew_end = self.skew_estimated_end-(self.df_polynom["skew"][1]-self.df_polynom["skew"][0]) - self.df_polynom['Drift'][0]
+        try:
+            self.skew2 = float(self.df_polynom["skew"][1])
+        except:
+            self.skew2 = 0.0
+
+        try:
+            self.skew1 = float(self.df_polynom["skew"][0])
+        except:
+            self.skew1 = 0.0
+
+        self.err_skew_end = self.skew_estimated_end - (self.skew2-self.skew1)
         print(self.err_skew_ini, self.err_skew_end)
 
     def plot_polynom(self):
@@ -97,7 +109,7 @@ class CheckSkews():
 
         # End Points
         cs = ax.scatter(self.date_ini, 0, c="blue", marker='o', edgecolors='k', s=24, vmin=0.0, vmax=1.0, alpha= 0.5)
-        cs = ax.scatter(self.date_end, self.df_polynom["skew"][1]-self.df_polynom["skew"][0], c="blue", marker='o',
+        cs = ax.scatter(self.date_end, self.skew2-self.skew1, c="blue", marker='o',
                         edgecolors='k', s=24, vmin=0.0, vmax=1.0, alpha=0.5)
 
         # Extrapolated
@@ -109,14 +121,14 @@ class CheckSkews():
 
         # Plot Polynom
         polynom_points = self.PolyCoefficients(dates_selected, self.polynom)
-        ax.plot(dates_selected, polynom_points, linewidth = 1.5, color="red", alpha = 0.5)
+        ax.plot(dates_selected, polynom_points - self.df_polynom['Drift'][0], linewidth = 1.5, color="red", alpha = 0.5)
         skew_ini = "{:.4f}".format(self.err_skew_ini)
         skew_end = "{:.4f}".format(self.err_skew_end)
 
-        ax.annotate('Skew Ini  ' + str(skew_ini), xy=(0.1, 0.1), xycoords='axes fraction',
-                    xytext=(0.85, 0.19), textcoords='axes fraction', va='top', ha='left')
-        ax.annotate('Skew End  ' + str(skew_end), xy=(0.1, 0.1), xycoords='axes fraction',
-                    xytext=(0.85, 0.15), textcoords='axes fraction', va='top', ha='left')
+        ax.annotate('Diff Skew Ini  ' + str(skew_ini), xy=(0.1, 0.1), xycoords='axes fraction',
+                    xytext=(0.80, 0.19), textcoords='axes fraction', va='top', ha='left')
+        ax.annotate('Diff Skew End  ' + str(skew_end), xy=(0.1, 0.1), xycoords='axes fraction',
+                    xytext=(0.80, 0.15), textcoords='axes fraction', va='top', ha='left')
         #ax.legend(handler_map={cs: HandlerLine2D(numpoints=1)})
         fig.colorbar(cs, ax=ax, orientation='horizontal', fraction=0.05,
                                                        extend='both', pad=0.15, label='Normalized Cross Correlation')
@@ -126,9 +138,9 @@ class CheckSkews():
 
         file_name = os.path.join(self.plots_output, self.obspair)+".pdf"
         plt.savefig(file_name, dpi=150)
-        line = 'Skew ' + self.obspair + " " + str(self.err_skew_ini) + " " + str(self.err_skew_end)
+        line = 'Skew ' + self.obspair + " " + str(skew_ini) + " " + str(skew_end)
         output_file = os.path.join(self.output,"skews.txt")
-        with open(output_file, 'w+') as f:
+        with open(output_file, 'a') as f:
             f.write(line)
             f.write('\n')
         plt.show()
@@ -139,7 +151,7 @@ if __name__ == "__main__":
     plots_output = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/plots"
     output = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/output"
     # example
-    obs_pair = "UP09_UP13_ZZ"
+    obs_pair = "UP09_X25H_ZZ"
 
     # example
     cs = CheckSkews(input_path, obs_pair, skews_path, plots_output,output)
