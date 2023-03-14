@@ -1,13 +1,13 @@
 import math
 import os
 import re
+from datetime import datetime
 import pandas as pd
 import numpy as np
+import collections
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerLine2D
-
 from isp.ant.signal_processing_tools import noise_processing
-
 
 class JoinClocks():
     def __init__(self, input_path, obs_pair):
@@ -21,6 +21,8 @@ class JoinClocks():
         self.join_curve = None
         self.input_path = input_path
         self.obspair = obs_pair
+
+
     def find_nearest(self, a, a0):
         "Element in nd array `a` closest to the scalar value `a0`"
 
@@ -60,11 +62,57 @@ class JoinClocks():
         df = pd.read_pickle(self.file_end[0])
         self.skew = df["skew"]
 
+    def convert_date_to_julday(self, date):
+
+        # example of use date_end = '2022-08-11T00:00:00'
+        date_jul = datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S').timetuple().tm_yday
+
+        return date_jul
+
+    def PolyCoefficients(self, x, coeffs):
+        """ Returns a polynomial for ``x`` values for the ``coeffs`` provided.
+
+        The coefficients must be in ascending order (``x**0`` to ``x**o``).
+        """
+        x = np.array(x)
+        o = len(coeffs)
+        # coeffs = np.flip(coeffs)
+        # print(f'# This is a polynomial of order {o-1}.')
+        y = 0
+        for i in range(o):
+            y += coeffs[i] * x ** i
+        return y
+
+    def get_straigt_line(self,gps_skew_1, gps_skew_2, date_ini_1 = '2021-07-16T00:00:00',
+                         date_ini_2 = '2021-07-16T00:00:00',  date_end_1 = '2022-08-05T00:00:00',
+                         date_end_2 = '2022-08-05T00:00:00'):
+        jul_date_ini_1 = self.convert_date_to_julday(self, date_ini_1) + 365
+        jul_date_end_1 = self.convert_date_to_julday(self, date_end_1)
+
+        jul_date_ini_2 = self.convert_date_to_julday(self, date_ini_1) + 365
+        jul_date_end_2 = self.convert_date_to_julday(self, date_end_1)
+
+        jul_date_ini = max(jul_date_ini_1, jul_date_ini_2)
+        jul_date_end = min(jul_date_end_1, jul_date_end_2)
+        gps_skew = gps_skew_2-gps_skew_1
+        x = np.array([jul_date_ini, jul_date_end])
+        y = np.array([0, gps_skew])
+        deg = 1
+        p = np.polyfit(x, y, deg)
+
+
+        m = p[0]
+        c = p[1]
+        p = np.flip(p)
+        print(f'The fitted straight line has equation y = {m:.3f}x {c:=+6.3f}')
+        # straight_line{"polynom":p,}
+        return p
+
     def create_grid(self):
         min_dates = []
         max_dates = []
         join_curve = {}
-
+        obs_pair = self.obspair.split("_")
         for file in self.file_end:
             name = os.path.basename(file)
             sta1 = name.split("_")[0]
@@ -74,23 +122,31 @@ class JoinClocks():
             min_dates.append(min(df["Dates_selected"]))
             max_dates.append(max(df["Dates_selected"]))
             dates_selected = df["Dates_selected"]
-            drift = df['Drift']
+            drift = df['Drift']-df['Drift'][0]
+
+            if sta2 == obs_pair[0] and sta1 == obs_pair[1]:
+                drift = -1*drift
+
             cc = df['cross_correlation']
 
-            # fill dicttionary
+            # fill dictionary
             for i, value in enumerate(dates_selected):
                 if str(value) not in join_curve:
-                    join_curve[str(value)] = [(drift[i],cc[i], chn)]
+                    join_curve[str(value)] = [[drift[i], cc[i], chn]]
                 else:
-                    join_curve[str(value)].append((drift[i],cc[i], chn))
+                    join_curve[str(value)].append([drift[i],cc[i], chn])
 
         #join_curve["min_max_dates"] = [max(min_dates), min(max_dates)]
+        join_curve = collections.OrderedDict(sorted(join_curve.items()))
         self.join_curve = join_curve
+        self.correct_grid()
 
     def create_join_polynom(self, plot = True):
         avarage1 = []
         avarage2 = []
         all_dates = []
+
+        #TODO correct for minimumdate
 
         # 1 Loop over days
         for key, value in self.join_curve.items():
@@ -127,6 +183,7 @@ class JoinClocks():
 
 
         self.plot_polynom_scatter(x, y_model)
+
     def extract_components(self):
         # First plot the points might be better in another method
         ZZ = []
@@ -180,22 +237,26 @@ class JoinClocks():
         fig, ax = plt.subplots(figsize=(12, 8))
         title = "Skew drift "+self.obspair+"  // "+str(-1*self.skew[0])+" "+str(-1*self.skew[1])
         fig.suptitle(title, fontsize=16)
-        ZZ, HH, RR, TT = self.extract_components()
 
-        if len(ZZ) > 0:
+
+        self.ZZ, self.HH, self.RR, self.TT = self.extract_components()
+        ZZ, HH, RR, TT = self.ZZ, self.HH, self.RR, self.TT
+        self.correct_grid()
+
+        if len(self.ZZ) > 0:
             cs = ax.scatter(ZZ[0][0], ZZ[0][1], c=ZZ[0][2], marker='o', edgecolors='k', s=18, vmin=0.0, vmax=1.0,
                             label='ZZ')
         #
-        if len(HH) > 0:
+        if len(self.HH) > 0:
             cs = ax.scatter(HH[0][0], HH[0][1], c=HH[0][2], marker='*', edgecolors='k', s=18, vmin=0.0, vmax=1.0,
                             label='HH')
 
-        if len(RR) > 0:
+        if len(self.RR) > 0:
             cs = ax.scatter(RR[0][0], RR[0][1], c=RR[0][2], marker="v", edgecolors='k', s=18, vmin=0.0, vmax=1.0,
                             label='RR & TT')
 
-        if len(TT) > 0:
-            cs = ax.scatter(TT[0][0], TT[0][1], c=TT[0][2], marker="v", edgecolors='k', s=18, vmin=0.0, vmax=1.0)
+        if len(self.TT) > 0:
+            cs = ax.scatter(TT[0][0], TT[0][1], c=TT[0][2], marker=">", edgecolors='k', s=18, vmin=0.0, vmax=1.0)
 
 
         ax.plot(x, y, linewidth = 1.5, color="red", alpha = 0.5)
@@ -208,9 +269,103 @@ class JoinClocks():
         plt.show()
 
 
+    def check_components(self):
+
+        ZZ, HH, RR, TT = self.ZZ, self.HH, self.RR, self.TT
+        check_list = []
+        min_list = []
+        if len(ZZ)>0:
+            min_date_z = min(ZZ[0][0])
+            min_list.append(min_date_z)
+            check_list.append("ZZ")
+
+        if len(HH)>0:
+            min_date_h = min(HH[0][0])
+            min_list.append(min_date_h)
+            check_list.append("HH")
+
+        if len(RR)>0:
+            min_date_r = min(RR[0][0])
+            min_list.append(min_date_r)
+            check_list.append("RR")
+
+        if len(TT)>0:
+            min_date_t = min(TT[0][0])
+            min_list.append(min_date_t)
+            check_list.append("TT")
+
+        check_list = [x for _, x in sorted(zip(min_list, check_list))]
+        min_list.sort()
+
+        return check_list, min_list
+
+    def correct_grid(self):
+
+        components_check = []
+        ref_hydro = 0
+        ref_tt = 0
+        ref_rr = 0
+        for key, value in self.join_curve.items():
+            for index, item in enumerate(value):
+                if item[2] == "HH" and item[2] not in components_check:
+                    ref_vertical = self.find_nearest_ref(key)
+                    ref_hydro = ref_vertical
+                    components_check.append("HH")
+
+        for key, value in self.join_curve.items():
+            for index, item in enumerate(value):
+                if item[2] == "TT" and item[2] not in components_check:
+                    ref_tt = self.find_nearest_ref(key)
+                    components_check.append("TT")
+
+        for key, value in self.join_curve.items():
+            for index, item in enumerate(value):
+                if item[2] == "RR" and item[2] not in components_check:
+                    ref_rr = self.find_nearest_ref(key)
+                    components_check.append("RR")
+
+        for key, value in self.join_curve.items():
+            for index, item in enumerate(value):
+                if item[2] == "HH":
+                    item[0] = item[0] + ref_hydro
+                    self.join_curve[key][index] = item
+                elif item[2] == "RR":
+                    item[0] = item[0] + ref_rr
+                    self.join_curve[key][index] = item
+                elif item[2] == "TT":
+                    item[0] = item[0] + ref_tt
+                    self.join_curve[key][index] = item
+
+
+    def find_nearest_ref(self, key_to_find):
+        ref_vertical = 0
+        for key, value in self.join_curve.items():
+            #tolerance = float(key) - float(key_to_find)
+
+            if key == key_to_find:
+                for index, item in enumerate(value):
+                    if item[2] == "ZZ":
+                        ref_def = self.join_curve[key][index][0]
+                    else:
+                        ref_def = ref_vertical
+
+            else:
+                for index, item in enumerate(value):
+                    if item[2] == "ZZ":
+                        ref_vertical = self.join_curve[key][index][0]
+
+        return ref_def
+
+
 if __name__ == "__main__":
-    input_path = "/Users/admin/Documents/Documentos - iMac de Admin/ISP/isp/ant/clock_dir"
-    obs_pair = "UP09_UP13"
+    input_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/all_components"
+    # example
+    obs_pair = "UP12_UP13"
+    date_ini_1 = '2021-07-16T00:00:00'
+    date_ini_2 = '2021-07-16T00:00:00'
+    date_end_1 = '2022-08-05T00:00:00'
+    date_end_2 = '2022-08-05T00:00:00'
+    # example
     jc = JoinClocks(input_path, obs_pair)
     jc.list_dir()
     jc.find_obs_pair()

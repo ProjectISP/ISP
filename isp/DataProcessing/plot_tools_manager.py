@@ -230,7 +230,7 @@ class PlotToolsManager:
         plt.ylabel('Skew [s]')
         plt.xlabel('Jul day')
 
-        # Correction by the refence point
+        # Correction by the reference point
         y = y-y[0]
 
         self.mpf = MatplotlibFrame(fig, window_title="Fit Plot")
