@@ -7,7 +7,7 @@ from matplotlib.legend_handler import HandlerLine2D
 
 
 class CheckSkews():
-    def __init__(self, input_path, obs_pair, dates_path):
+    def __init__(self, input_path, obs_pair, dates_path, plots_output, output):
 
         """
         polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Dates_selected': x, 'Drift': y, 'Ref': ref,
@@ -19,7 +19,8 @@ class CheckSkews():
         self.input_path = os.path.join(input_path,obs_pair)
         self.obspair = obs_pair
         self.dates_path = dates_path
-
+        self.plots_output = plots_output
+        self.output = output
 
     def find_nearest(self, a, a0):
         "Element in nd array `a` closest to the scalar value `a0`"
@@ -91,7 +92,7 @@ class CheckSkews():
         dates_selected = self.df_polynom["Dates_selected"]
         data = self.df_polynom['Drift'] - self.df_polynom['Drift'][0]
         cc = self.df_polynom['cross_correlation']
-        cs = ax.scatter(dates_selected, data, c=cc, marker='o', edgecolors='k', s=18, vmin=0.0, vmax=1.0,
+        ax.scatter(dates_selected, data, c=cc, marker='o', edgecolors='k', s=18, vmin=0.0, vmax=1.0,
                         label='ZZ')
 
         # End Points
@@ -109,22 +110,39 @@ class CheckSkews():
         # Plot Polynom
         polynom_points = self.PolyCoefficients(dates_selected, self.polynom)
         ax.plot(dates_selected, polynom_points, linewidth = 1.5, color="red", alpha = 0.5)
+        skew_ini = "{:.4f}".format(self.err_skew_ini)
+        skew_end = "{:.4f}".format(self.err_skew_end)
+
+        ax.annotate('Skew Ini  ' + str(skew_ini), xy=(0.1, 0.1), xycoords='axes fraction',
+                    xytext=(0.85, 0.19), textcoords='axes fraction', va='top', ha='left')
+        ax.annotate('Skew End  ' + str(skew_end), xy=(0.1, 0.1), xycoords='axes fraction',
+                    xytext=(0.85, 0.15), textcoords='axes fraction', va='top', ha='left')
         #ax.legend(handler_map={cs: HandlerLine2D(numpoints=1)})
         fig.colorbar(cs, ax=ax, orientation='horizontal', fraction=0.05,
                                                        extend='both', pad=0.15, label='Normalized Cross Correlation')
 
         plt.ylabel('Skew [s]')
         plt.xlabel('Jul day')
+
+        file_name = os.path.join(self.plots_output, self.obspair)+".pdf"
+        plt.savefig(file_name, dpi=150)
+        line = 'Skew ' + self.obspair + " " + str(self.err_skew_ini) + " " + str(self.err_skew_end)
+        output_file = os.path.join(self.output,"skews.txt")
+        with open(output_file, 'w+') as f:
+            f.write(line)
+            f.write('\n')
         plt.show()
 
 if __name__ == "__main__":
     input_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/vertical_component"
     skews_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/skews/skews.txt"
+    plots_output = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/plots"
+    output = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/output"
     # example
     obs_pair = "UP09_UP13_ZZ"
 
     # example
-    cs = CheckSkews(input_path, obs_pair, skews_path)
+    cs = CheckSkews(input_path, obs_pair, skews_path, plots_output,output)
     cs.retrive_dates()
     cs.estimate_error()
     cs.plot_polynom()
