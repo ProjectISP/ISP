@@ -99,7 +99,7 @@ class CheckSkews():
 
     def plot_polynom(self):
         fig, ax = plt.subplots(figsize=(12, 8))
-        title = "Skew drift " + self.obspair + "  // " + str(self.skew[0]) + " " + str(-1 * self.skew[1])
+        title = "Skew drift " + self.obspair + "  // " + str(self.skew1) + " " + str(-1 * self.skew2)
         fig.suptitle(title, fontsize=16)
         dates_selected = self.df_polynom["Dates_selected"]
         data = self.df_polynom['Drift'] - self.df_polynom['Drift'][0]
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     plots_output = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/plots"
     output = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/output"
     # example
-    obs_pair = "UP09_X25H_ZZ"
+    obs_pair = "X25H_OB12_ZZ"
 
     # example
     cs = CheckSkews(input_path, obs_pair, skews_path, plots_output,output)
