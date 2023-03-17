@@ -267,7 +267,7 @@ class PlotToolsManager:
                 #print(selector.xys[selector.ind])
                 x = selector.xys[selector.ind][:,0]
                 y = selector.xys[selector.ind][:,1]
-                m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err, x, y = \
+                m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err,ci, pi, x, y = \
                     noise_processing.statisics_fit(x, y, type, deg)
                 if type == "Logarithmic":
                    x = np.log(x)

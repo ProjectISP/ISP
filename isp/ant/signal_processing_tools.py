@@ -246,7 +246,12 @@ class noise_processing:
         # Standard deviation of the error
         std_err = np.sqrt(sum(resid ** 2) / dof)
 
-        return m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err, x_new, y_new
+        # Confidence interval
+        ci = t_critical * std_err * np.sqrt(1 / n + (x_new - np.mean(x)) ** 2 / np.sum((x - np.mean(x)) ** 2))
+        # Prediction Interval
+        pi = t_critical * std_err * np.sqrt(1 + 1 / n + (x_new - np.mean(x)) ** 2 / np.sum((x - np.mean(x)) ** 2))
+
+        return m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err, ci, pi, x_new, y_new
 
     def phase_matched_filter(self, type, phaseMacthmodel, distance, filter_parameter = 2):
 
