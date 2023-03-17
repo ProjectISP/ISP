@@ -1,5 +1,6 @@
 import math
 import os
+import pickle
 import re
 from datetime import datetime
 import pandas as pd
@@ -10,7 +11,7 @@ from matplotlib.legend_handler import HandlerLine2D
 from isp.ant.signal_processing_tools import noise_processing
 
 class JoinClocks():
-    def __init__(self, input_path, skews_path, obs_pair):
+    def __init__(self, input_path, skews_path, output_path, obs_pair):
 
         """
         polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Dates_selected': x, 'Drift': y, 'Ref': ref,
@@ -22,6 +23,7 @@ class JoinClocks():
         self.input_path = input_path
         self.obspair = obs_pair
         self.skews_path = skews_path
+        self.output_path = output_path
 
 
     def retrive_dates(self):
@@ -191,9 +193,21 @@ class JoinClocks():
         m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err,ci,pi, x, y = \
                                  noise_processing.statisics_fit(all_dates, avarage1, "Polynom", 3)
 
+        self.m = m
+        self.n = n
+        self.R2 = R2
         self.polynom = p
-        self.all_dates = all_dates
         self.y_model = y_model
+        self.model = model
+        self.c = c
+        self.t_critical = t_critical
+        self.resid = resid
+        self.chi2_red = chi2_red
+        self.ci = ci
+        self.pi = pi
+        self.std_err = std_err
+        self.all_dates = all_dates
+        self.avarage1 = avarage1
         self.estimate_error()
         self.plot_polynom_scatter(x, y_model, ci, pi)
 
@@ -302,7 +316,10 @@ class JoinClocks():
 
         plt.ylabel('Skew [s]')
         plt.xlabel('Jul day')
+        file_name = os.path.join(self.output_path, self.obspair)+".pdf"
+        plt.savefig(file_name, dpi=150)
         plt.show()
+        self.save_results()
 
 
     def check_components(self):
@@ -393,13 +410,31 @@ class JoinClocks():
         return ref_def
 
 
+    def save_results(self):
+        print("Do you want to save this curve?, y or n? ")
+        answer = input()
+        if answer == "y":
+            name = self.obspair + "_" + "join"
+            polynom = {name: self.polynom.tolist(), 'Dates': self.all_dates, 'Drift': self.avarage1, 'R2': self.R2,
+                't_critical':self.t_critical, 'resid': self.resid, 'chi2_red': self.chi2_red, 'std_err': self.std_err,
+            'confidence_interval':self.ci, 'prediction_interval':self.pi, 'c':self.c, 'm':self.m, 'n':self.n, 'model':self.model,
+                       'y_model':self.y_model, 'skews':[self.skew1,self.skew2],'juldays':[self.date_ini,self.date_end]}
+
+            path = os.path.join(self.output_path, name)
+            file_to_store = open(path, "wb")
+            pickle.dump(polynom, file_to_store)
+        else:
+            print("Curve not saved")
+
+
 if __name__ == "__main__":
     input_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/all_components"
+    output_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/output_join"
     skews_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/skews/skews.txt"
     # example
-    obs_pair = "UP09_UP13"
+    obs_pair = "UP01_UP02"
     # example
-    jc = JoinClocks(input_path, skews_path, obs_pair)
+    jc = JoinClocks(input_path, skews_path,output_path, obs_pair)
     jc.list_dir()
     jc.find_obs_pair()
     jc.create_grid()
