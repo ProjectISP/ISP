@@ -1,4 +1,7 @@
+from obspy import UTCDateTime
 from obspy.geodetics import gps2dist_azimuth
+from obspy.taup import TauPyModel
+
 from isp.Structures.structures import StationCoordinates
 from isp.DataProcessing.automag_additional_tools import AddMagTools
 import numpy as np
@@ -24,7 +27,7 @@ class Indmag:
         self.st_deconv.trim(starttime=pickP_time-5, endtime=pickP_time+300)
         self.st_wood.trim(starttime=pickP_time-5, endtime=pickP_time + 300)
 
-    def extrac_coordinates_from_station_name(self, inventory, name):
+    def extract_coordinates_from_station_name(self, inventory, name):
         selected_inv = inventory.select(station=name)
         cont = selected_inv.get_contents()
         coords = selected_inv.get_coordinates(cont['channels'][0])
@@ -174,3 +177,54 @@ class Indmag:
                 t1 = min(t1, t2)
             trace.stats.arrivals['N1'] = ('N1', t1)
             trace.stats.arrivals['N2'] = ('N2', t2)
+
+class preprocess_tools:
+
+    pick_info = None
+    model = None
+    arrival = None
+    st = None
+
+    def __init__(self, st, pick_info, event_info, arrival, inventory):
+
+        self.st = st
+        self.inventory = inventory
+        self.pick_info = pick_info
+        self.arrival = arrival
+        self.event_info = event_info
+        self.model = TauPyModel(model="iasp91")
+
+    @classmethod
+    def cut_waveform(cls):
+
+        # Cut waveform taking as reference the P wave and S wave if is picked, otherwise estimates the theoretical S.
+        # If distance is inside 1º, hardcoded to 10 seconds time window
+
+        pickP_time = None
+        pickS_time = None
+        for item in cls.pick_info:
+            if item[0] == "P":
+                pickP_time = item[1]
+            elif item[0] == "S":
+                pickS_time = item[1]
+
+        if cls.arrival[0].distance > 1.0:
+            if isinstance(pickS_time, UTCDateTime):
+                signal_window_time = pickP_time + (pickS_time-pickP_time)*0.95
+                noise_window_time = signal_window_time/3
+            else:
+                # Calculate distance in degree
+                arrivals = cls.model.get_travel_times(source_depth_in_km=cls.pick_info[3],
+                            distance_in_degree=cls.arrival[0].distance, phase_list=["S"])
+
+                pickS_time = cls.pick_info[3]+arrivals[0].time
+
+                signal_window_time = pickP_time + (pickS_time-pickP_time)*0.95
+                noise_window_time = signal_window_time / 3
+        else:
+            signal_window_time = pickP_time + 10
+            noise_window_time = signal_window_time / 3
+
+        cls.st.trim(starttime=pickP_time - noise_window_time, endtime=pickP_time + signal_window_time)
+
+        return cls.st

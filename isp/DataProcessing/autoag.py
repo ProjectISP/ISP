@@ -7,6 +7,7 @@ from isp import ALL_LOCATIONS
 from isp.DataProcessing.automag_tools import Indmag
 from isp.Utils import MseedUtil
 from isp.DataProcessing.metadata_manager import MetadataManager
+from isp.Utils import read_nll_performance
 
 class Automag:
 
@@ -91,11 +92,15 @@ class Automag:
         tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=True, fill_value=0)
         return tr
 
-    def remove_response(self, st, pick_info):
+    def preprocess_stream(self, st, pick_info, arrival, focal_parameters, regional=True):
 
+        #TODO CHECK IS VALID THE WAVEFORM
+        if regional:
+            st.trim(starttime=pick_info[0][1]-60, endtime=pick_info[0][1]+3*60)
+        else:
+            #Teleseism time window
+            st.trim(starttime=pick_info[0][1] - 1300, endtime=pick_info[0][1] + 3600)
 
-        #trim the waveforms for regional events
-        st.trim(starttime=pick_info[0][1]-60, endtime=pick_info[0][1]+3*60)
         st.detrend(type="simple")
         st.taper(type="blackman", max_percentage=0.05)
         f1 = 0.05
@@ -149,6 +154,13 @@ class Automag:
         self.ML_mean = MLs.mean()
         self.ML_deviation = MLs.std()
         print("Local Magnitude", str(self.ML_mean)+str(self.ML_deviation))
+
+    def get_arrival(self,arrivals, sta_name):
+        arrival_return = []
+        for arrival in arrivals:
+            if arrival.station == sta_name:
+                arrival_return.append(arrival)
+        return arrival_return
 
     def get_now_files(self, date, station):
 
@@ -205,9 +217,13 @@ class Automag:
             self.make_stream()
             #TODO search mseeds for this date and cut it ensure 24 and deconv, return a stream
             for event in events:
-                cat = read_events(event, format="NLLOC_HYP")
+                #cat = read_events(event, format="NLLOC_HYP")
+                cat = read_nll_performance.read_nlloc_hyp_ISP(event)
+                event = cat[0]
+                arrivals = event["origins"][0]["arrivals"]
+                arrival = self.get_arrival("WMELI")
                 picks = cat[0].picks
-                focal_parameters = [cat[0].origins[0]["time"],cat[0].origins[0]["latitude"],cat[0].origins[0]["longitude"],
+                focal_parameters = [cat[0].origins[0]["time"], cat[0].origins[0]["latitude"], cat[0].origins[0]["longitude"],
                 cat[0].origins[0]["depth"]]
                 print(focal_parameters)
                 for pick in picks:
@@ -219,7 +235,7 @@ class Automag:
                 for key in events_picks:
                     pick_info = events_picks[key]
                     st2 = self.st.select(station=key)
-                    st_deconv, st_wood = self.remove_response(st2, pick_info)
+                    st_deconv, st_wood = self.preprocess_stream(st2, pick_info, arrival, focal_parameters)
                     mag = Indmag(st_deconv, st_wood, pick_info, focal_parameters, self.inventory)
                     self.ML.append(mag.magnitude_local())
                 self.statistics()
@@ -265,8 +281,8 @@ if __name__ == "__main__":
                       spectral_model_params, postinversion_params, radiated_energy_params, avarage_params)
 
     #project_path = "/Users/admin/Documents/test_data/alboran_project"
-    project_path = "/Users/admin/Documents/test_meli/MELI_Project"
-    inv_path = "/Users/admin/Documents/test_meli/metadata/metadata.xml"
+    project_path = "/Users/robertocabieces/Documents/test_meli/MELI_Project"
+    inv_path = "/Users/robertocabieces/Documents/test_meli/metadata/metadata.xml"
     project = MseedUtil.load_project(project_path)
     mg = Automag(project, inv_path, ["HHE, HHN, HHZ"])
     mg.load_metadata()
