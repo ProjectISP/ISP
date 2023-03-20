@@ -1,0 +1,48 @@
+FROM ubuntu:18.04
+#FROM alpine:3.14
+#https://gist.github.com/SomajitDey/aeb6eb4c8083185e06800e1ece4be1bd
+LABEL maintainer="Roberto Cabieces (popipopa@hotmail.com)"
+
+# install packages
+RUN apt-get -yq update
+RUN apt-get install -yq git curl && \
+    apt-get install --no-install-recommends -yq make cmake gfortran libcoarrays-dev libopenmpi-dev open-coarrays-bin && \
+    apt-get install -yq fort77 && \
+    apt-get clean -q
+
+#RUN apk add --no-cache fort77
+WORKDIR /source
+
+# Build focmec
+COPY ./focmec /source/focmec/
+WORKDIR /source/focmec/src/
+RUN bash build_package_sh
+RUN cp /source/focmec/bin/* /bin
+
+# Build mti
+COPY ./mti /source/mti/
+WORKDIR /source/mti/
+RUN bash compile_mti.sh
+RUN cp bin/* /bin
+
+#copy mti files to bin
+RUN mkdir -p /app/mti
+RUN cp -rf ./* /app/mti
+RUN cp bin/* /app/mti
+#RUN cp -rf ./* /app
+COPY ./test /app
+COPY ./test /app/mti
+
+# Build nil
+COPY ./nll /source/nll/
+WORKDIR /source/nll/src/
+#RUN cmake .
+#RUN make
+#RUN cp bin/* /bin
+
+# Remove source code
+RUN rm -rf /source
+
+# Final workdir directory
+WORKDIR /app
+COPY ./test /bin
