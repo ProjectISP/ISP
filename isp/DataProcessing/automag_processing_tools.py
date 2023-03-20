@@ -1,9 +1,7 @@
 import math
-
 import numpy as np
 from obspy.taup import TauPyModel
 from scipy.interpolate import interp1d
-
 
 class signal_preprocess_tools:
 
@@ -22,7 +20,7 @@ class signal_preprocess_tools:
             # Density (kg/m3):
             # warning for now is hardcoded
             self.rho = rho
-            self.rho = 2500
+            #self.rho = 2500
             self.spectral_smooth_width_decades = spectral_smooth_width_decades
 
         def do_spectrum(self):
