@@ -20,10 +20,12 @@ class preprocess_tools:
         self.event_info = event_info
         self.model = TauPyModel(model="iasp91")
         self.valid_stream = True
+        self.valid_spectrum = True
         self.signal_window_time = None
         self.noise_window_time = None
         # Parameters
         self.scale = "Regional"
+        self.ML = []
 
     def check_signal_level(self, rmsmin):
         validation = []
@@ -225,12 +227,13 @@ class preprocess_tools:
     def deconv_waveform(self, gap_max, overlap_max, rmsmin, clipping_sensitivity):
 
         self.__get_timespan()
-        self.merge_stream(gap_max, overlap_max)
+        self.merge_stream(gap_max, overlap_max) # this process includes cut around earthquake
         self.check_signal_level(rmsmin=rmsmin)
         st = self.__cut_waveform(cutstream=False)
         self.check_clipping(st, clipping_sensitivity=clipping_sensitivity)
 
         if self.valid_stream:
+
             self.st.detrend(type="simple")
             self.st.taper(type="blackman", max_percentage=0.05)
             f1 = 0.05
@@ -273,8 +276,6 @@ class preprocess_tools:
                     print("Coudn't deconvolve", tr.stats)
                     tr.data = np.array([])
 
-
-
             print("Finished Deconvolution")
             self.st_deconv = Stream(traces=st_deconv)
             self.st_wood = Stream(traces=st_wood)
@@ -286,11 +287,38 @@ class preprocess_tools:
 
         if cutstream:
             self.st_devonv.trim(starttime=self.pickP_time - self.noise_window_time, endtime=self.pickP_time + self.signal_window_time)
-            self.st_wood.trim(starttime=self.pickP_time - self.noise_window_time, endtime=self.pickP_time + self.signal_window_time)
+            #self.st_wood.trim(starttime=self.pickP_time - self.noise_window_time, endtime=self.pickP_time + self.signal_window_time)
         else:
             st = self.st.copy()
             st.trim(starttime=self.pickP_time - self.noise_window_time, endtime=self.pickP_time + self.signal_window_time)
             return st
+
+    def _check_noise_level(self):
+
+        for tr_signal, tr_noise in zip(self.st_cut_signal, self.st_cut_noise):
+            traceId = tr_signal.get_id()
+            trace_signal_rms = ((tr_signal.data ** 2).sum()) ** 0.5
+            # Scale trace_noise_rms to length of signal window,
+            # based on length of non-zero noise window
+            try:
+                scale_factor = float(len(tr_signal)) / len(tr_noise.data != 0)
+            except ZeroDivisionError:
+                scale_factor = 1
+            trace_noise_rms = ((tr_noise.data ** 2 * scale_factor).sum()) ** 0.5
+            if trace_noise_rms / trace_signal_rms < 1e-6:
+                # Skip trace if noise level is too low and if noise weighting is used
+                msg = \
+                    '{}: Noise level is too low or zero: station will be skipped'
+                msg = msg.format(traceId)
+                self.valid_spectrum = False
+                raise RuntimeError(msg)
+    def __split_noise2signal(self):
+        st1 = self.st_deconv.copy()
+        st2 = self.st_deconv.copy()
+        self.st_cut_signal = st1.trim(starttime=(self.pickP_time - 0.05*len(self.signal_window_time)),
+                            endtime=self.pickP_time + self.signal_window_time)
+        self.st_cut_noise = st2.trim(starttime=self.pickP_time - self.noise_window_time,
+                                                 endtime=self.pickP_time+self.noise_window_time)
 
     def __cut_earthquake(self, scale="Regional"):
         # check minimum span
@@ -312,36 +340,36 @@ class preprocess_tools:
             if start_diff > 0 and end_diff > 0:
                 self.st.trim(starttime=self.pick_info[0][1] - 1300, endtime=self.pick_info[0][1] + 3600)
             else:
-                self.valid_stream =False
+                self.valid_stream = False
+    def compute_spectrum(self):
 
-class Indmag:
-    def __init__(self, st_deconv, st_wood, pick_info, event_info, inventory):
-        self.st_deconv = st_deconv
-        self.st_wood = st_wood
-        self.inventory = inventory
-        self.pick_info = pick_info
-        self.event_info = event_info
-        self.ML = []
+         if isinstance(self.st_deconv, Stream) and self.valid_stream:
+            self.__cut_waveform()
+            self.__split_noise2signal()
+
 
     def extract_coordinates_from_station_name(self, inventory, name):
-        selected_inv = inventory.select(station=name)
-        cont = selected_inv.get_contents()
-        coords = selected_inv.get_coordinates(cont['channels'][0])
-        return StationCoordinates.from_dict(coords)
+         selected_inv = inventory.select(station=name)
+         cont = selected_inv.get_contents()
+         coords = selected_inv.get_coordinates(cont['channels'][0])
+         return StationCoordinates.from_dict(coords)
+    #
+    # def magnitude_local(self):
+    #     print("Calculating Local Magnitude")
+    #     tr_E = self.st_wood.select(component="E")
+    #     tr_E = tr_E[0]
+    #     tr_N = self.st_deconv.select(component="N")
+    #     tr_N = tr_N[0]
+    #     coords = self.extract_coordinates_from_station_name(self.inventory, self.st_deconv[0].stats.station)
+    #     dist, _, _ = gps2dist_azimuth(coords.Latitude, coords.Longitude, self.event_info[1], self.event_info[2])
+    #     dist = dist / 1000
+    #     max_amplitude_N = np.max(tr_N.data)*1e3 # convert to  mm --> nm
+    #     max_amplitude_E = np.max(tr_E.data) * 1e3  # convert to  mm --> nm
+    #     max_amplitude = max([max_amplitude_E, max_amplitude_N])
+    #     ML_value = np.log10(max_amplitude)+1.11*np.log10(dist)+0.00189*dist-2.09
+    #     print(ML_value)
+    #     self.ML.append(ML_value)
 
-    def magnitude_local(self):
-        print("Calculating Local Magnitude")
-        tr_E = self.st_wood.select(component="E")
-        tr_E = tr_E[0]
-        tr_N = self.st_deconv.select(component="N")
-        tr_N = tr_N[0]
-        coords = self.extrac_coordinates_from_station_name(self.inventory, self.st_deconv[0].stats.station)
-        dist, _, _ = gps2dist_azimuth(coords.Latitude, coords.Longitude, self.event_info[1], self.event_info[2])
-        dist = dist / 1000
-        max_amplitude_N = np.max(tr_N.data)*1e3 # convert to  mm --> nm
-        max_amplitude_E = np.max(tr_E.data) * 1e3  # convert to  mm --> nm
-        max_amplitude = max([max_amplitude_E, max_amplitude_N])
-        ML_value = np.log10(max_amplitude)+1.11*np.log10(dist)+0.00189*dist-2.09
-        print(ML_value)
-        self.ML.append(ML_value)
+
+
 
