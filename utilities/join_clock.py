@@ -432,7 +432,7 @@ if __name__ == "__main__":
     output_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/output_join"
     skews_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/skews/skews.txt"
     # example
-    obs_pair = "UP01_UP02"
+    obs_pair = "UP02_UP03"
     # example
     jc = JoinClocks(input_path, skews_path,output_path, obs_pair)
     jc.list_dir()
