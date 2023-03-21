@@ -3,6 +3,8 @@ from obspy.geodetics import gps2dist_azimuth
 from obspy.taup import TauPyModel
 from scipy.signal import find_peaks
 from scipy.stats import gaussian_kde
+
+from isp.DataProcessing.automag_processing_tools import signal_preprocess_tools
 from isp.Structures.structures import StationCoordinates
 import numpy as np
 import logging
@@ -155,22 +157,24 @@ class preprocess_tools:
         self.pickP_time = pickP_time
         self.pickS_time = pickS_time
 
-        if self.arrival[0].distance > 1.0:
-            if isinstance(pickS_time, UTCDateTime):
-                self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
-                self.noise_window_time = self.signal_window_time / 3
-            else:
-                # Calculate distance in degree
-                arrivals = self.model.get_travel_times(source_depth_in_km=self.pick_info[3],
-                                                       distance_in_degree=self.arrival[0].distance, phase_list=["S"])
-
-                pickS_time = self.pick_info[3] + arrivals[0].time
-
-                self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
-                self.noise_window_time = self.signal_window_time / 3
+        #if self.arrival[0].distance_degrees > 1.0:
+        if isinstance(pickS_time, UTCDateTime):
+            self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
+            self.signal_window_duration = self.signal_window_time - pickP_time
+            self.noise_window_duration = self.signal_window_duration / 3
+            self.noise_window_time = pickP_time - self.noise_window_duration
         else:
-            self.signal_window_time = pickP_time + 10
-            self.noise_window_time = self.signal_window_time / 3
+            # Calculate distance in degree
+            arrivals = self.model.get_travel_times(source_depth_in_km=self.pick_info[3],
+                                                   distance_in_degree=self.arrival[0].distance_degrees, phase_list=["S"])
+
+            pickS_time = self.pick_info[3] + arrivals[0].time
+            self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
+            self.signal_window_duration = self.signal_window_time - pickP_time
+            self.noise_window_duration = self.signal_window_duration / 3
+        #else:
+            #self.signal_window_time = 6.0
+            #self.noise_window_time = 2.0
 
     def merge_stream(self, gap_max, overlap_max):
 
@@ -227,11 +231,12 @@ class preprocess_tools:
     def deconv_waveform(self, gap_max, overlap_max, rmsmin, clipping_sensitivity):
 
         self.__get_timespan()
-        self.merge_stream(gap_max, overlap_max) # this process includes cut around earthquake
+        self.merge_stream(gap_max, overlap_max) #this process includes cut around earthquake
         self.check_signal_level(rmsmin=rmsmin)
-        st = self.__cut_waveform(cutstream=False)
+        st = self.__cut_waveform(cutstream=False) #this process is just to check that it is not clipped
         self.check_clipping(st, clipping_sensitivity=clipping_sensitivity)
-
+        #self.st.plot()
+        #st.plot()
         if self.valid_stream:
 
             self.st.detrend(type="simple")
@@ -278,6 +283,7 @@ class preprocess_tools:
 
             print("Finished Deconvolution")
             self.st_deconv = Stream(traces=st_deconv)
+            self.st_deconv.plot()
             self.st_wood = Stream(traces=st_wood)
 
     def __cut_waveform(self, cutstream=True):
@@ -286,11 +292,12 @@ class preprocess_tools:
         # If distance is inside 1º, hardcoded to 10 seconds time window
 
         if cutstream:
-            self.st_devonv.trim(starttime=self.pickP_time - self.noise_window_time, endtime=self.pickP_time + self.signal_window_time)
-            #self.st_wood.trim(starttime=self.pickP_time - self.noise_window_time, endtime=self.pickP_time + self.signal_window_time)
+            self.st_deconv.trim(starttime=self.pickP_time - self.noise_window_duration,
+                                endtime=self.pickP_time + self.signal_window_duration)
         else:
             st = self.st.copy()
-            st.trim(starttime=self.pickP_time - self.noise_window_time, endtime=self.pickP_time + self.signal_window_time)
+            st.trim(starttime=self.pickP_time - self.noise_window_duration,
+                    endtime=self.pickP_time + self.signal_window_duration)
             return st
 
     def _check_noise_level(self):
@@ -315,10 +322,11 @@ class preprocess_tools:
     def __split_noise2signal(self):
         st1 = self.st_deconv.copy()
         st2 = self.st_deconv.copy()
-        self.st_cut_signal = st1.trim(starttime=(self.pickP_time - 0.05*len(self.signal_window_time)),
-                            endtime=self.pickP_time + self.signal_window_time)
-        self.st_cut_noise = st2.trim(starttime=self.pickP_time - self.noise_window_time,
-                                                 endtime=self.pickP_time+self.noise_window_time)
+
+        self.st_cut_signal = st1.trim(starttime=(self.pickP_time - 0.05*self.signal_window_duration),
+                            endtime=self.pickP_time + self.signal_window_duration)
+        self.st_cut_noise = st2.trim(starttime=self.pickP_time - self.noise_window_duration,
+                                                 endtime=self.pickP_time+self.noise_window_duration)
 
     def __cut_earthquake(self, scale="Regional"):
         # check minimum span
@@ -341,11 +349,15 @@ class preprocess_tools:
                 self.st.trim(starttime=self.pick_info[0][1] - 1300, endtime=self.pick_info[0][1] + 3600)
             else:
                 self.valid_stream = False
-    def compute_spectrum(self):
+    def compute_spectrum(self, geom_spread_model, geom_spread_n_exponent,
+                         geom_spread_cutoff_distance,rho, spectral_smooth_width_decades):
 
          if isinstance(self.st_deconv, Stream) and self.valid_stream:
             self.__cut_waveform()
             self.__split_noise2signal()
+            spt = signal_preprocess_tools(self.st_cut_noise, self.st_cut_signal, self.arrival[0].distance_km,
+                geom_spread_model, geom_spread_n_exponent, geom_spread_cutoff_distance, self.event_info, rho,
+                                          spectral_smooth_width_decades)
 
 
     def extract_coordinates_from_station_name(self, inventory, name):

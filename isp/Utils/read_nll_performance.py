@@ -22,7 +22,7 @@ from obspy import Catalog, UTCDateTime, __version__
 from obspy.core.event import (Arrival, Comment, CreationInfo, Event, Origin,
                               OriginQuality, OriginUncertainty, Pick,
                               WaveformStreamID)
-from obspy.geodetics import kilometer2degrees
+from obspy.geodetics import kilometer2degrees, degrees2kilometers
 
 
 ONSETS = {"i": "impulsive", "e": "emergent"}
@@ -323,7 +323,8 @@ def _read_single_hypocenter(lines, coordinate_converter, original_picks):
         setattr(arrival, "polarity_impulse", line[6])
         setattr(arrival, "travel_time", line[15])
         arrival.phase = phase
-        arrival.distance = kilometer2degrees(float(line[21]))
+        arrival.distance_km = degrees2kilometers(float(line[21]))
+        arrival.distance_degrees = float(line[21])
         arrival.azimuth = float(line[23])
         arrival.takeoff_angle = float(line[24])
         arrival.time_residual = float(line[16])

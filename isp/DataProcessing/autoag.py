@@ -4,7 +4,8 @@ import numpy as np
 from datetime import datetime
 from obspy import read, read_events, UTCDateTime, Stream
 from isp import ALL_LOCATIONS
-from isp.DataProcessing.automag_tools import Indmag
+from isp.DataProcessing.automag_tools import preprocess_tools
+#from isp.DataProcessing.automag_tools import Indmag
 from isp.Utils import MseedUtil
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Utils import read_nll_performance
@@ -92,7 +93,7 @@ class Automag:
         tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=True, fill_value=0)
         return tr
 
-    def preprocess_stream(self, st, pick_info, arrival, focal_parameters, regional=True):
+    def preprocess_stream(self, st, pick_info, regional=True):
 
         #TODO CHECK IS VALID THE WAVEFORM
         if regional:
@@ -146,7 +147,8 @@ class Automag:
         print("Finished Deconvolution")
         st_deconv = Stream(traces=st_deconv)
         st_wood = Stream(traces=st_wood)
-
+        st_deconv.plot()
+        st_wood.plot()
         return st_deconv, st_wood
 
     def statistics(self):
@@ -155,7 +157,7 @@ class Automag:
         self.ML_deviation = MLs.std()
         print("Local Magnitude", str(self.ML_mean)+str(self.ML_deviation))
 
-    def get_arrival(self,arrivals, sta_name):
+    def get_arrival(self, arrivals, sta_name):
         arrival_return = []
         for arrival in arrivals:
             if arrival.station == sta_name:
@@ -209,19 +211,20 @@ class Automag:
 
         self.dates=dates
 
-    def info_event(self):
-        events_picks = {}
+    def info_event(self, config):
+
         for date in self.dates:
             events = self.dates[date]
-            self.get_now_files(date, "WMELI")
+            self.get_now_files(date, ".") #this is just for test
             self.make_stream()
             #TODO search mseeds for this date and cut it ensure 24 and deconv, return a stream
             for event in events:
+                events_picks = {}
                 #cat = read_events(event, format="NLLOC_HYP")
                 cat = read_nll_performance.read_nlloc_hyp_ISP(event)
                 event = cat[0]
                 arrivals = event["origins"][0]["arrivals"]
-                arrival = self.get_arrival("WMELI")
+                arrival = self.get_arrival(arrivals, "WMELI")
                 picks = cat[0].picks
                 focal_parameters = [cat[0].origins[0]["time"], cat[0].origins[0]["latitude"], cat[0].origins[0]["longitude"],
                 cat[0].origins[0]["depth"]]
@@ -235,10 +238,17 @@ class Automag:
                 for key in events_picks:
                     pick_info = events_picks[key]
                     st2 = self.st.select(station=key)
-                    st_deconv, st_wood = self.preprocess_stream(st2, pick_info, arrival, focal_parameters)
-                    mag = Indmag(st_deconv, st_wood, pick_info, focal_parameters, self.inventory)
-                    self.ML.append(mag.magnitude_local())
-                self.statistics()
+                    inv_selected = self.inventory.select(station=key)
+                    #st_deconv, st_wood = self.preprocess_stream(st2, pick_info, arrival, focal_parameters)
+                    pt = preprocess_tools(st2, pick_info, focal_parameters, arrival, inv_selected)
+                    pt.deconv_waveform(config['gap_max'], config['overlap_max'], config['rmsmin'],
+                                       config['clipping_sensitivity'])
+                    #geom_spread_model, geom_spread_n_exponent,
+                    #geom_spread_cutoff_distance, rho, spectral_smooth_width_decades
+                    pt.compute_spectrum(config['geom_spread_model'], config['geom_spread_n_exponent'],
+                            config['geom_spread_cutoff_distance'], config['rho'], config['spectral_smooth_width_decades'])
+                    #self.ML.append(mag.magnitude_local())
+                #self.statistics()
 
 
 if __name__ == "__main__":
@@ -258,7 +268,7 @@ if __name__ == "__main__":
 
     signal_noise_ratio_params = {"rmsmin": 0.0, "sn_min": 1.0, "clip_max_percent": 5.0, "gap_max": None,
                                  "overlap_max": None,
-                                 "spectral_sn_min": 0.0, "spectral_sn_freq_range": (0.1, 2.0)}
+                                 "spectral_sn_min": 0.0, "spectral_sn_freq_range": (0.1, 2.0), "clipping_sensitivity": 3}
 
     source_model_parameters = {"vp_source": 6.0, "vs_source": 3.5, "vp_stations": None, "vs_stations": None,
                                "rho": 2500.0,
@@ -281,11 +291,11 @@ if __name__ == "__main__":
                       spectral_model_params, postinversion_params, radiated_energy_params, avarage_params)
 
     #project_path = "/Users/admin/Documents/test_data/alboran_project"
-    project_path = "/Users/robertocabieces/Documents/test_meli/MELI_Project"
-    inv_path = "/Users/robertocabieces/Documents/test_meli/metadata/metadata.xml"
+    project_path = "/Users/admin/Documents/test_meli/test_meli_work"
+    inv_path = "/Users/admin/Documents/test_meli/metadata/meli.xml"
     project = MseedUtil.load_project(project_path)
     mg = Automag(project, inv_path, ["HHE, HHN, HHZ"])
     mg.load_metadata()
     mg.scan_folder()
-    mg.info_event()
+    mg.info_event(config)
     #mg.get_now_files()
