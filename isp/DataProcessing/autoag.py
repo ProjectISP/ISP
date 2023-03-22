@@ -227,7 +227,7 @@ class Automag:
                 arrival = self.get_arrival(arrivals, "WMELI")
                 picks = cat[0].picks
                 focal_parameters = [cat[0].origins[0]["time"], cat[0].origins[0]["latitude"], cat[0].origins[0]["longitude"],
-                cat[0].origins[0]["depth"]]
+                cat[0].origins[0]["depth"]*1E-3]
                 print(focal_parameters)
                 for pick in picks:
                     if pick.waveform_id["station_code"] not in events_picks.keys():
@@ -246,7 +246,8 @@ class Automag:
                     #geom_spread_model, geom_spread_n_exponent,
                     #geom_spread_cutoff_distance, rho, spectral_smooth_width_decades
                     pt.compute_spectrum(config['geom_spread_model'], config['geom_spread_n_exponent'],
-                            config['geom_spread_cutoff_distance'], config['rho'], config['spectral_smooth_width_decades'])
+                            config['geom_spread_cutoff_distance'], config['rho'], config['spectral_smooth_width_decades'],
+                                        config['spectral_sn_min'], config['spectral_sn_freq_range'])
                     #self.ML.append(mag.magnitude_local())
                 #self.statistics()
 

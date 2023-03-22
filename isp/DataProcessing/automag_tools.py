@@ -283,7 +283,7 @@ class preprocess_tools:
 
             print("Finished Deconvolution")
             self.st_deconv = Stream(traces=st_deconv)
-            self.st_deconv.plot()
+            #self.st_deconv.plot()
             self.st_wood = Stream(traces=st_wood)
 
     def __cut_waveform(self, cutstream=True):
@@ -350,14 +350,17 @@ class preprocess_tools:
             else:
                 self.valid_stream = False
     def compute_spectrum(self, geom_spread_model, geom_spread_n_exponent,
-                         geom_spread_cutoff_distance,rho, spectral_smooth_width_decades):
+                         geom_spread_cutoff_distance, rho, spectral_smooth_width_decades, spectral_sn_min, spectral_sn_freq_range):
 
          if isinstance(self.st_deconv, Stream) and self.valid_stream:
             self.__cut_waveform()
             self.__split_noise2signal()
             spt = signal_preprocess_tools(self.st_cut_noise, self.st_cut_signal, self.arrival[0].distance_km,
                 geom_spread_model, geom_spread_n_exponent, geom_spread_cutoff_distance, self.event_info, rho,
-                                          spectral_smooth_width_decades)
+                                          spectral_smooth_width_decades, spectral_sn_min, spectral_sn_freq_range)
+
+            # convert the spectral amplitudes to moment magnitude
+            spectrum = spt.do_spectrum()
 
 
     def extract_coordinates_from_station_name(self, inventory, name):
