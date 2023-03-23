@@ -3,8 +3,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.legend_handler import HandlerLine2D
-
+from isp.ant.signal_processing_tools import noise_processing
 
 class CheckSkews():
     def __init__(self, input_path, obs_pair, dates_path, plots_output, output):
@@ -46,7 +45,7 @@ class CheckSkews():
         self.obsfiles = obsfiles
 
     def retrive_dates(self):
-
+        land_list = ["PGRA", "ADHB", "CALA", "ROSA", "SRBC", "PMOZ", "PMAR", "PMPS", "HORB", "PICO"]
         df_dates = pd.read_csv(self.dates_path, sep="\t", index_col="Station")
         obs_pair = self.obspair.split("_")
         sta1 = obs_pair[0]
@@ -56,6 +55,13 @@ class CheckSkews():
 
         date_end_1 = self.convert_date_to_julday(df_dates.loc[sta1]['Recovery'])
         date_end_2 = self.convert_date_to_julday(df_dates.loc[sta2]['Recovery'])
+
+        if sta1 in land_list:
+            date_ini_1 = date_ini_2
+            date_end_1 = date_end_2
+        elif sta2 in land_list:
+            date_ini_2 = date_ini_1
+            date_end_2 = date_end_1
 
         self.date_ini = max([date_ini_1, date_ini_2])
         self.date_end = min([date_end_1, date_end_2])+365
@@ -74,9 +80,21 @@ class CheckSkews():
             y += coeffs[i] * x ** i
         return y
 
-    def estimate_error(self):
-
+    def estimate_error(self, revaluate=False, degree=3):
+        """
+        polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Dates_selected': x, 'Drift': y, 'Ref': ref,
+                           'R2': R2, 'resid': resid, 'chi2_red': chi2_red, 'std_err': std_err, 'cross_correlation': cc,
+                           'skew': skew}
+        """
         self.df_polynom = pd.read_pickle(self.input_path)
+        self.order = degree
+        # reavaluate polynom
+        if revaluate:
+            m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err, ci, pi, x_new, y_new = \
+                noise_processing.statisics_fit(self.df_polynom['Dates_selected'], self.df_polynom['Drift'], "Polynom", degree)
+            self.df_polynom[self.obspair] = np.flip(p).tolist()
+
+
         self.polynom = self.df_polynom[self.obspair]
         default_ini = self.df_polynom['Drift'][0]
         self.skew_estimated_ini = self.PolyCoefficients(self.date_ini, self.polynom)-default_ini
@@ -99,10 +117,10 @@ class CheckSkews():
 
     def plot_polynom(self):
         fig, ax = plt.subplots(figsize=(12, 8))
-        title = "Skew drift " + self.obspair + "  // " + str(self.skew1) + " " + str(-1 * self.skew2)
+        title = "Skew drift " + self.obspair + "  // " + str(self.skew1) + " && " + str(self.skew2) + " = "+  str(self.skew2-self.skew1)
         fig.suptitle(title, fontsize=16)
         dates_selected = self.df_polynom["Dates_selected"]
-        data = self.df_polynom['Drift'] - self.df_polynom['Drift'][0]
+        data = self.df_polynom['Drift'] - self.df_polynom['Drift'][0]-self.err_skew_ini
         cc = self.df_polynom['cross_correlation']
         ax.scatter(dates_selected, data, c=cc, marker='o', edgecolors='k', s=18, vmin=0.0, vmax=1.0,
                         label='ZZ')
@@ -113,22 +131,28 @@ class CheckSkews():
                         edgecolors='k', s=24, vmin=0.0, vmax=1.0, alpha=0.5)
 
         # Extrapolated
-        cs = ax.scatter(self.date_ini, self.err_skew_ini, c="red", marker='o', edgecolors='k', s=24, vmin=0.0, vmax=1.0,
+        cs = ax.scatter(self.date_ini, self.err_skew_ini-self.err_skew_ini, c="red", marker='o', edgecolors='k', s=24, vmin=0.0, vmax=1.0,
                         alpha= 0.5)
-        cs = ax.scatter(self.date_end, self.skew_estimated_end, c="red", marker='o',
+        cs = ax.scatter(self.date_end, self.skew_estimated_end-self.err_skew_ini, c="red", marker='o',
                         edgecolors='k', s=24, vmin=0.0, vmax=1.0, alpha = 0.5)
 
 
         # Plot Polynom
         polynom_points = self.PolyCoefficients(dates_selected, self.polynom)
-        ax.plot(dates_selected, polynom_points - self.df_polynom['Drift'][0], linewidth = 1.5, color="red", alpha = 0.5)
+        ax.plot(dates_selected, polynom_points - self.df_polynom['Drift'][0]-self.err_skew_ini, linewidth = 1.5, color="red", alpha = 0.5)
         skew_ini = "{:.4f}".format(self.err_skew_ini)
         skew_end = "{:.4f}".format(self.err_skew_end)
-
+        skew_overall = "{:.4f}".format(self.err_skew_end - self.err_skew_ini)
         ax.annotate('Diff Skew Ini  ' + str(skew_ini), xy=(0.1, 0.1), xycoords='axes fraction',
                     xytext=(0.80, 0.19), textcoords='axes fraction', va='top', ha='left')
         ax.annotate('Diff Skew End  ' + str(skew_end), xy=(0.1, 0.1), xycoords='axes fraction',
                     xytext=(0.80, 0.15), textcoords='axes fraction', va='top', ha='left')
+
+        ax.annotate('Diff Skew Overall  ' + str(skew_overall), xy=(0.1, 0.1), xycoords='axes fraction',
+                    xytext=(0.80, 0.11), textcoords='axes fraction', va='top', ha='left')
+
+        ax.annotate('Order Polynomial  ' + str(self.order), xy=(0.1, 0.1), xycoords='axes fraction',
+                    xytext=(0.80, 0.05), textcoords='axes fraction', va='top', ha='left')
         #ax.legend(handler_map={cs: HandlerLine2D(numpoints=1)})
         fig.colorbar(cs, ax=ax, orientation='horizontal', fraction=0.05,
                                                        extend='both', pad=0.15, label='Normalized Cross Correlation')
@@ -136,26 +160,26 @@ class CheckSkews():
         plt.ylabel('Skew [s]')
         plt.xlabel('Jul day')
 
-        file_name = os.path.join(self.plots_output, self.obspair)+".pdf"
+        file_name = os.path.join(self.plots_output, self.obspair)+"_"+str(self.order)+".pdf"
         plt.savefig(file_name, dpi=150)
-        line = 'Skew ' + self.obspair + " " + str(skew_ini) + " " + str(skew_end)
-        output_file = os.path.join(self.output,"skews.txt")
+        line = 'Skew ' + self.obspair + " " + str(skew_ini) + " " + str(skew_end)+" " + str(skew_overall) + " " + str(self.order)
+        output_file = os.path.join(self.output, "skews.txt")
         with open(output_file, 'a') as f:
             f.write(line)
             f.write('\n')
         plt.show()
 
 if __name__ == "__main__":
-    input_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/vertical_component"
-    skews_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/skews/skews.txt"
-    plots_output = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/plots"
-    output = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/output"
+    input_path = "/Users/robertocabieces/Documents/Documentos - iMac de Admin/clock_dir_def/vertical_component"
+    skews_path = "/Users/robertocabieces/Documents/Documentos - iMac de Admin/clock_dir_def/skews/skews.txt"
+    plots_output = "/Users/robertocabieces/Documents/Documentos - iMac de Admin/clock_dir_def/plots"
+    output = "/Users/robertocabieces/Documents/Documentos - iMac de Admin/clock_dir_def/output"
     # example
-    obs_pair = "X25H_OB12_ZZ"
+    obs_pair = "UP16_UP18_ZZ"
 
     # example
     cs = CheckSkews(input_path, obs_pair, skews_path, plots_output,output)
     cs.retrive_dates()
-    cs.estimate_error()
+    cs.estimate_error(revaluate=True, degree=1)
     cs.plot_polynom()
 
