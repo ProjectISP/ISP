@@ -5,6 +5,62 @@ import numpy as np
 from matplotlib import pyplot as plt
 from isp.ant.signal_processing_tools import noise_processing
 
+
+def list_all_dir(input_path):
+    obsfiles = []
+    for top_dir, sub_dir, files in os.walk(input_path):
+        for file in files:
+            if os.path.basename(file) != ".DS_Store":
+                obsfiles.append(os.path.join(top_dir, file))
+
+    return obsfiles
+def list_stations(files):
+    stations =[]
+    for name in files:
+        try:
+            name = os.path.basename(name)
+            info = name.split("_")
+            sta1 = info[0]
+            sta2 = info[1]
+            if sta1 not in stations:
+                stations.append(sta1)
+            elif sta2 not in stations:
+                stations.append(sta2)
+        except:
+            pass
+
+    return stations
+def plot_results(input_path, station_list):
+    data = np.loadtxt(input_path, dtype=np.str)
+    fig, ax = plt.subplots(figsize=(16, 12))
+    station_list.sort()
+    for i, sta in enumerate(station_list):
+        sta_idx = i
+        for k in range(len(data[:, 0])):
+
+            name = data[k, 1].split("_")
+            sta1 = name[0]
+            sta2 = name[1]
+            if sta == sta1 or sta == sta2:
+                y = data[k, 4]
+                y = np.abs(y.astype(np.float))
+                z = data[k, 5]
+                z = z.astype(np.float)
+                cs = ax.scatter(sta_idx, y, c=z, marker='o', edgecolors='k', s=24, vmin=1.0, vmax=3.0,
+                                alpha=0.5)
+
+    major_ticks = np.arange(0, len(station_list), 1)
+    #ax.xaxis.set_ticklabels(station_list, rotation=90)
+    ax.set_xticks(major_ticks)
+    ax.set_xticklabels(labels=station_list, rotation=90)
+    ax.set_ylim([0, 0.5])
+    plt.ylabel('Skew [s]')
+    plt.xlabel('Station')
+    fig.colorbar(cs, ax=ax, orientation='horizontal', fraction=0.05, ticks=np.arange(1, 4),
+                 extend='both', pad=0.15, spacing='proportional', label='Order Polynomial')
+    plt.show()
+        #y = x.astype(np.float)
+
 class CheckSkews():
     def __init__(self, input_path, obs_pair, dates_path, plots_output, output):
 
@@ -43,6 +99,7 @@ class CheckSkews():
                     obsfiles.append(os.path.join(top_dir, file))
 
         self.obsfiles = obsfiles
+
 
     def retrive_dates(self):
         land_list = ["PGRA", "ADHB", "CALA", "ROSA", "SRBC", "PMOZ", "PMAR", "PMPS", "HORB", "PICO"]
@@ -167,19 +224,30 @@ class CheckSkews():
         with open(output_file, 'a') as f:
             f.write(line)
             f.write('\n')
-        plt.show()
+        #plt.show()
 
 if __name__ == "__main__":
-    input_path = "/Users/robertocabieces/Documents/Documentos - iMac de Admin/clock_dir_def/vertical_component"
-    skews_path = "/Users/robertocabieces/Documents/Documentos - iMac de Admin/clock_dir_def/skews/skews.txt"
-    plots_output = "/Users/robertocabieces/Documents/Documentos - iMac de Admin/clock_dir_def/plots"
-    output = "/Users/robertocabieces/Documents/Documentos - iMac de Admin/clock_dir_def/output"
+    input_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/vertical_component"
+    skews_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/skews/skews.txt"
+    plots_output = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/plots"
+    output = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/output"
     # example
-    obs_pair = "UP16_UP18_ZZ"
+    #obs_pair = "UP16_UP18_ZZ"
 
     # example
-    cs = CheckSkews(input_path, obs_pair, skews_path, plots_output,output)
-    cs.retrive_dates()
-    cs.estimate_error(revaluate=True, degree=1)
-    cs.plot_polynom()
 
+    # list_of_files = list_all_dir(input_path)
+    # for obs_pair in list_of_files:
+    #     try:
+    #         obs_pair = os.path.basename(obs_pair)
+    #         cs = CheckSkews(input_path, obs_pair, skews_path, plots_output, output)
+    #         cs.retrive_dates()
+    #         cs.estimate_error(revaluate=True, degree=1)
+    #         cs.plot_polynom()
+    #     except:
+    #         pass
+
+    list_of_files = list_all_dir(input_path)
+    stations_list = list_stations(list_of_files)
+    path_skew_def = os.path.join(output, "skews.txt")
+    plot_results(path_skew_def, stations_list)

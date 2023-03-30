@@ -4,6 +4,7 @@ import numpy as np
 from datetime import datetime
 from obspy import read, read_events, UTCDateTime, Stream
 from isp import ALL_LOCATIONS
+from isp.DataProcessing.automag_processing_tools import ssp_inversion
 from isp.DataProcessing.automag_tools import preprocess_tools
 #from isp.DataProcessing.automag_tools import Indmag
 from isp.Utils import MseedUtil
@@ -243,13 +244,18 @@ class Automag:
                     pt = preprocess_tools(st2, pick_info, focal_parameters, arrival, inv_selected)
                     pt.deconv_waveform(config['gap_max'], config['overlap_max'], config['rmsmin'],
                                        config['clipping_sensitivity'])
-                    #geom_spread_model, geom_spread_n_exponent,
-                    #geom_spread_cutoff_distance, rho, spectral_smooth_width_decades
+
                     pt.compute_spectrum(config['geom_spread_model'], config['geom_spread_n_exponent'],
                             config['geom_spread_cutoff_distance'], config['rho'], config['spectral_smooth_width_decades'],
                                         config['spectral_sn_min'], config['spectral_sn_freq_range'])
+
+
+                    #TODO: Debugg final inversion and statistics
+                    #ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0, event_info, arrival,
+                    #inv_selected, bound_config, inv_algorithm, pi_misfit_max, pi_t_star_min_max, pi_fc_min_max,
+                    #pi_bsd_min_max)
                     #self.ML.append(mag.magnitude_local())
-                #self.statistics()
+                    #self.statistics()
 
 
 if __name__ == "__main__":
