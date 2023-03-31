@@ -245,15 +245,28 @@ class Automag:
                     pt.deconv_waveform(config['gap_max'], config['overlap_max'], config['rmsmin'],
                                        config['clipping_sensitivity'])
 
-                    pt.compute_spectrum(config['geom_spread_model'], config['geom_spread_n_exponent'],
+                    spectrum_dict = pt.compute_spectrum(config['geom_spread_model'], config['geom_spread_n_exponent'],
                             config['geom_spread_cutoff_distance'], config['rho'], config['spectral_smooth_width_decades'],
                                         config['spectral_sn_min'], config['spectral_sn_freq_range'])
 
 
                     #TODO: Debugg final inversion and statistics
-                    #ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0, event_info, arrival,
-                    #inv_selected, bound_config, inv_algorithm, pi_misfit_max, pi_t_star_min_max, pi_fc_min_max,
-                    #pi_bsd_min_max)
+                    if spectrum_dict is not None:
+                        t_star_0_variability = config["t_star_0_variability"]
+                        invert_t_star_0 = config["invert_t_star_0"]
+                        t_star_0 = config["t_star_0"]
+                        bound_config = {"Qo_min_max": config["Qo_min_max"], "t_star_min_max": config["t_star_min_max"],
+                                        "wave_type": config["wave_type"], "fc_min_max": config["fc_min_max"]}
+                        inv_algorithm = config["inv_algorithm"]
+                        pi_misfit_max = config["pi_misfit_max"]
+                        pi_t_star_min_max = config["pi_t_star_min_max"]
+                        pi_fc_min_max = config["pi_fc_min_max"]
+                        pi_bsd_min_max = config["pi_bsd_min_max"]
+                        ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0, focal_parameters,
+                                            arrival, inv_selected, bound_config, inv_algorithm, pi_misfit_max, pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max)
+
+                        magnitudes = ssp.run_estimate_all_traces()
+                        print("end")
                     #self.ML.append(mag.magnitude_local())
                     #self.statistics()
 
@@ -264,7 +277,7 @@ if __name__ == "__main__":
                           "s_arrival_tolerance": 4.0, "noise_pre_time": 15.0, "signal_pre_time": 1.0,
                           "win_length": 10.0}
 
-    spectrum_params = {"wave_type": "S", "time_domain_int": False, "ignore_vertical": False, "taper_halfwidth": 0.05,
+    spectrum_params = {"wave_type": "P", "time_domain_int": False, "ignore_vertical": False, "taper_halfwidth": 0.05,
                        "spectral_win_length": 20.0, "spectral_smooth_width_decades": 0.2, "residuals_filepath": None,
                        "bp_freqmin_acc": 1.0,
                        "bp_freqmax_acc": 50.0, "bp_freqmin_shortp": 1.0, "bp_freqmax_shortp": 40.0,
@@ -286,10 +299,10 @@ if __name__ == "__main__":
     spectral_model_params = {"weighting": "noise", "f_weight": 7.0, "weight": 10.0, "t_star_0": 0.045,
                              "invert_t_star_0": False,
                              "t_star_0_variability": 0.1, "Mw_0_variability": 0.1, "inv_algorithm": "TNC",
-                             "t_star_min_max": (0.0, 0.1),
-                             "Qo_min_max": None}
+                             "t_star_min_max": (0.0, 0.1), "fc_min_max" : (1.0, 50.0), "Qo_min_max": None}
 
-    postinversion_params = {"pi_fc_min_max": None, "pi_bsd_min_max": None, "pi_misfit_max": None}
+    postinversion_params = {"pi_fc_min_max": None, "pi_bsd_min_max": None, "pi_misfit_max": None,
+                            "pi_t_star_min_max": None}
 
     radiated_energy_params = {"max_freq_Er": None}
     avarage_params = {"nIQR": 1.5}

@@ -352,7 +352,7 @@ class preprocess_tools:
     def compute_spectrum(self, geom_spread_model, geom_spread_n_exponent,
                          geom_spread_cutoff_distance, rho, spectral_smooth_width_decades, spectral_sn_min,
                          spectral_sn_freq_range):
-
+         spectrum = None
          if isinstance(self.st_deconv, Stream) and self.valid_stream:
             self.__cut_waveform()
             self.__split_noise2signal()
@@ -362,6 +362,8 @@ class preprocess_tools:
 
             # convert the spectral amplitudes to moment magnitude
             spectrum = spt.do_spectrum()
+
+         return spectrum
 
 
     def extract_coordinates_from_station_name(self, inventory, name):

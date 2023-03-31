@@ -38,8 +38,8 @@ class signal_preprocess_tools:
             self.spectral_sn_min = spectral_sn_min
             self.spectral_sn_freq_range = spectral_sn_freq_range
             self.spectral_sn = True
-            self.weights = None
-            self.weigh_log = None
+            self.weight = None
+            self.weight_log = None
             self.spectral_snratio = None
 
         def do_spectrum(self):
@@ -87,15 +87,11 @@ class signal_preprocess_tools:
 
                     spectrum[tr_signal.id] = {"amp_signal": amp_signal, "freq_signal": freq_signal, "amp_noise": amp_noise,
                     "freq_noise":freq_noise, "amp_signal_log": amp_signal_log, "freq_signal_log":freq_signal_log,
-                    "amp_noise_log":amp_noise_log, "freq_noise_log": freq_noise_log, "weights": self.weights, "weigh_log": self.weigh_log,
+                    "amp_noise_log":amp_noise_log, "freq_noise_log": freq_noise_log, "weights": self.weight, "weigh_log": self.weight_log,
                     "spectral_snratio": self.spectral_snratio,"mag_signal": mag_signal, "mag_noise": mag_noise}
 
                 else:
                     spectrum[tr_signal.id] = None
-
-            # if len(Id_list) > 0:
-            #     spectrum["Ids"] = Id_list
-
 
             return spectrum
 
@@ -141,7 +137,7 @@ class signal_preprocess_tools:
 
             # TODO: needs to ask to Claudio, why multiply by delta the fft?
             fft = np.fft.rfft(signal, n=npts) * delta
-            fftfreq = np.fft.rfftfreq(npts, d=npts)
+            fftfreq = np.fft.rfftfreq(npts, d=delta)
 
             return fft, fftfreq
 
@@ -198,7 +194,7 @@ class signal_preprocess_tools:
             return data_logspace, freq_log
 
         def __check_spectral_sn_ratio(self, spec, specnoise, freqs, freqs_log, delta):
-            self.weight, self.weigh_log = self._build_weight_from_noise(spec, specnoise, freqs, freqs_log, delta)
+            self.weight, self.weight_log = self._build_weight_from_noise(spec, specnoise, freqs, freqs_log, delta)
             if self.spectral_sn_freq_range is not None:
                 sn_fmin, sn_fmax = self.spectral_sn_freq_range
                 idx = np.where((sn_fmin <= freqs) * (freqs <= sn_fmax))
@@ -363,19 +359,18 @@ class ssp_inversion:
 
         def run_estimate_all_traces(self):
 
-            all_channels_station_pars = None
+            all_channels_station_pars = []
             for keyId, trace_dict in self.spectrum_dict.items():
 
                 spec = trace_dict["amp_signal"]
                 spec_log_mag = trace_dict["amp_signal_log"]
                 weight = trace_dict["weights"]
                 weight_log = trace_dict["weigh_log"]
-                bounds_config = trace_dict["bounds_config"]
                 freq_log = trace_dict["freq_signal_log"]
                 station_pars = self.run_estimate(keyId, self.inv_algorithm, spec, spec_log_mag, weight, weight_log,
-                        bounds_config, freq_log, self.t_star_0, self.pi_misfit_max, self.pi_t_star_min_max,
+                        self.bound_config, freq_log, self.t_star_0, self.pi_misfit_max, self.pi_t_star_min_max,
                         self.pi_fc_min_max, self.pi_bsd_min_max, invert_t_star_0=True)
-                all_channels_station_pars.append(all_channels_station_pars)
+                all_channels_station_pars.append(station_pars)
             return all_channels_station_pars
 
 
@@ -416,27 +411,34 @@ class ssp_inversion:
                                     freq_log, t_star_0, pi_misfit_max, pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max,
                                     invert_t_star_0=True):
 
-            yerr = self._set_parameters(weight)
+            hyp_dist = self.arrival[0].distance_km
+            epi_dist = self.arrival[0].distance_km
+            stla = self.event_info[1]
+            stlo = self.event_info[2]
+            az = self.arrival[0].azimuth
+            travel_time = self.arrival[0].travel_time
+
+            yerr = self._set_parameters(weight_log)
             idx0, idx1, fc_0 = self._freq_ranges_for_Mw0_and_tstar0(weight_log, freq_log, keyId)
+            t_star_min = t_star_max = None
+            # if invert_t_star_0:
+            #     # fit t_star_0 and Mw on the initial part of the spectrum,
+            #     # corrected for the effect of fc
+            #     ydata_corr = spec_log_mag - magnitude_aux_tools.spectral_model(freq_log, Mw=0, fc=fc_0, t_star=0)
+            #     ydata_corr = magnitude_aux_tools.smooth(ydata_corr, window_len=18)
+            #     slope, Mw_0 = np.polyfit(freq_log[idx0: idx1], ydata_corr[idx0: idx1], deg=1)
+            #     t_star_0 = -3. / 2 * slope / (np.pi * np.log10(np.e))
+            #     t_star_min = t_star_0 * (1 - self.t_star_0_variability)
+            #     t_star_max = t_star_0 * (1 + self.t_star_0_variability)
 
-            if invert_t_star_0 and t_star_0 >= 0:
-                # fit t_star_0 and Mw on the initial part of the spectrum,
-                # corrected for the effect of fc
-                ydata_corr = spec_log_mag - magnitude_aux_tools.spectral_model(freq_log, Mw=0, fc=fc_0, t_star=0)
-                ydata_corr = magnitude_aux_tools.smooth(ydata_corr, window_len=18)
-                slope, Mw_0 = np.polyfit(freq_log[idx0: idx1], ydata_corr[idx0: idx1], deg=1)
-                t_star_0 = -3. / 2 * slope / (np.pi * np.log10(np.e))
-                t_star_min = t_star_0 * (1 - self.t_star_0_variability)
-                t_star_max = t_star_0 * (1 + self.t_star_0_variability)
-
-            if not self.invert_t_star_0 or t_star_0 < 0:
-                # we calculate the initial value for Mw as an average
-                Mw_0 = np.nanmean(spec_log_mag[idx0: idx1])
-                t_star_0 = self.t_star_0
+            #if not invert_t_star_0 or t_star_0 < 0:
+                 # we calculate the initial value for Mw as an average
+            Mw_0 = np.nanmean(spec_log_mag[idx0: idx1])
+            t_star_0 = self.t_star_0
 
             initial_values = InitialValues(Mw_0, fc_0, t_star_0)
             logger.info('{}: initial values: {}'.format(keyId, str(initial_values)))
-            bounds = Bounds(bounds_config, spec, initial_values)
+            bounds = Bounds(keyId, bounds_config, spec, hyp_dist, initial_values)
             bounds.Mw_min = np.nanmin(spec_log_mag[idx0: idx1]) * 0.9
             bounds.Mw_max = np.nanmax(spec_log_mag[idx0: idx1]) * 1.1
             if t_star_min is not None:
@@ -445,8 +447,9 @@ class ssp_inversion:
                 bounds.t_star_max = t_star_max
             logger.info('{}: bounds: {}'.format(keyId, str(bounds)))
             try:
-                params_opt, params_err, misfit = magnitude_aux_tools._curve_fit(inv_algorithm, spec, weight_log, yerr,
-                                                                                 initial_values, bounds)
+
+                params_opt, params_err, misfit = magnitude_aux_tools._curve_fit(inv_algorithm, freq_log, spec_log_mag,
+                                                    weight_log, yerr, initial_values, bounds)
             except (RuntimeError, ValueError) as m:
                 msg = str(m) + '\n'
                 msg += '{}: unable to fit spectral model'.format(keyId)
@@ -494,12 +497,6 @@ class ssp_inversion:
                 msg = msg.format(keyId, fc, pi_fc_min, pi_fc_max)
                 raise ValueError(msg)
 
-            hyp_dist = self.arrival[0].distance_km
-            epi_dist = self.arrival[0].distance_km
-            stla = self.event_info[1]
-            stlo = self.event_info[2]
-            az = self.arrival[0].azimuth
-            travel_time = self.arrival[0].travel_time
             vs = signal_preprocess_tools.get_vel_from_taup(depth_event_km=self.event_info[3])
 
             station_pars = StationParameters(id=keyId, instrument_type=spec.stats.instrtype,
@@ -715,7 +712,7 @@ class magnitude_aux_tools:
             pass
 
         @classmethod
-        def _curve_fit(cls, inv_algorithm, spec, weight, yerr, initial_values, bounds):
+        def _curve_fit(cls, inv_algorithm, freq_log, data_log_mag, weight, yerr, initial_values, bounds):
 
             """
             Curve fitting.
@@ -728,17 +725,22 @@ class magnitude_aux_tools:
               - Grid search (GS)
             """
 
-            freq_log = spec.freq_log
-            ydata = spec.data_log_mag
+            ydata = data_log_mag
             minimize_func = cls.objective_func(freq_log, ydata, weight)
+            x0 = initial_values.get_params0()
             if inv_algorithm == 'TNC':
-                res = minimize(minimize_func, x0=initial_values.get_params0(), method='TNC', callback=cls.callback,
+                res = minimize(minimize_func, x0=x0, method='TNC', callback=cls.callback,
                                bounds=bounds.bounds)
                 params_opt = res.x
                 # trick: use curve_fit() bounded to params_opt
                 # to get the covariance
+                #, xdata, ydata, p0 = None, sigma = None, absolute_sigma = False,
+                #check_finite = True, bounds = (-np.inf, np.inf), method = None,
+                #jac = None, ** kwargs
+                #_, params_cov = curve_fit(cls.spectral_model, freq_log, ydata, p0=params_opt, sigma=yerr,
+                #    bounds=(params_opt - (1e-10), params_opt + (1e-10)))
                 _, params_cov = curve_fit(cls.spectral_model, freq_log, ydata, p0=params_opt, sigma=yerr,
-                    bounds=(params_opt - (1e-10), params_opt + (1e-10)))
+                    bounds=(params_opt - (0.01*params_opt), params_opt + (0.01*params_opt)))
                 err = np.sqrt(params_cov.diagonal())
                 # symmetric error
                 params_err = ((e, e) for e in err)
@@ -799,22 +801,26 @@ class InitialValues():
         return s
 
     def get_params0(self):
+        Mw_0 = self.Mw_0
+        fc_0 = self.fc_0
+        t_star_0 = self.t_star_0
         return (self.Mw_0, self.fc_0, self.t_star_0)
 
 
 class Bounds(object):
     """Bounds for bounded spectral inversion."""
 
-    def __init__(self, config, spec, initial_values):
+    def __init__(self, keyId, config, spec, hypo_dist, initial_values):
         self.config = config
+        self.keyId = keyId
         self.spec = spec
-        self.hd = spec.stats.hypo_dist
+        self.hd = hypo_dist
         self.ini_values = initial_values
         self.Mw_min = self.Mw_max = None
-        self._set_fc_min_max(config)
-        if config.Qo_min_max is None:
+        self._set_fc_min_max()
+        if config["Qo_min_max"] is None:
             self.t_star_min, self.t_star_max =\
-                self._check_minmax(config.t_star_min_max)
+                self._check_minmax(config["t_star_min_max"])
         else:
             self.t_star_min, self.t_star_max = self._Qo_to_t_star()
         self._fix_initial_values_t_star()
@@ -829,30 +835,24 @@ class Bounds(object):
             *[round(x, 4) if x is not None else x for x in self.bounds[2]])
         return s
 
-    def _set_fc_min_max(self, config):
+    def _set_fc_min_max(self):
         fc_0 = self.ini_values.fc_0
-        if config.fc_min_max is None:
+        if self.config["fc_min_max"] is None:
             # If no bound is given, set it to fc_0 +/- a decade
             scale = 10.  # a decade
             self.fc_min = fc_0/scale
             self.fc_max = fc_0*scale
         else:
-            self.fc_min, self.fc_max = config.fc_min_max
+            self.fc_min, self.fc_max = self.config["fc_min_max"]
         if self.fc_min > fc_0:
             logger.warning(
-                '{} {}: fc_min ({}) larger than fc_0 ({}). '
-                'Using fc_0 instead.'.format(
-                    self.spec.id, self.spec.stats.instrtype,
-                    self.fc_min, round(fc_0, 4))
-            )
+                '{} : fc_min ({}) larger than fc_0 ({}). '
+                'Using fc_0 instead.'.format(self.keyId, self.fc_min, round(fc_0, 4)))
             self.fc_min = fc_0
         if self.fc_max < fc_0:
             logger.warning(
-                '{} {}: fc_max ({}) smaller than fc_0 ({}). '
-                'Using fc_0 instead.'.format(
-                    self.spec.id, self.spec.stats.instrtype,
-                    self.fc_max, round(fc_0, 4))
-            )
+                '{}: fc_max ({}) smaller than fc_0 ({}). ''Using fc_0 instead.'.format(self.spec.id, self.fc_max,
+                                                                                       round(fc_0, 4)))
             self.fc_max = fc_0
 
     def _check_minmax(self, minmax):
