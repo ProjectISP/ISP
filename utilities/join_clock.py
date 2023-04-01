@@ -297,10 +297,13 @@ class JoinClocks():
         ZZ, HH, RR, TT = self.ZZ, self.HH, self.RR, self.TT
         self.correct_grid()
 
+        self.skew_overall = self.err_skew_end - self.err_skew_ini
         self.skew_estimated_end_original = self.skew_estimated_end
         self.skew_estimated_end = self.skew_estimated_end - self.err_skew_ini
         self.err_skew_ini_original = self.err_skew_ini
         self.err_skew_ini = self.err_skew_ini - self.err_skew_ini
+
+
 
         if len(self.ZZ) > 0:
 
@@ -338,10 +341,18 @@ class JoinClocks():
 
         skew_ini = "{:.4f}".format(self.err_skew_ini_original)
         skew_end = "{:.4f}".format(self.err_skew_end)
+        skew_overall = "{:.4f}".format(self.skew_overall)
+
         ax.annotate('Diff Skew Ini  ' + str(skew_ini), xy=(0.1, 0.1), xycoords='axes fraction',
                     xytext=(0.80, 0.19), textcoords='axes fraction', va='top', ha='left')
         ax.annotate('Diff Skew End  ' + str(skew_end), xy=(0.1, 0.1), xycoords='axes fraction',
                     xytext=(0.80, 0.15), textcoords='axes fraction', va='top', ha='left')
+
+        ax.annotate('Diff Skew Overall  ' + str(skew_overall), xy=(0.1, 0.1), xycoords='axes fraction',
+                    xytext=(0.80, 0.11), textcoords='axes fraction', va='top', ha='left')
+
+        ax.annotate('Order Polynomial  ' + str(self.order), xy=(0.1, 0.1), xycoords='axes fraction',
+                    xytext=(0.80, 0.05), textcoords='axes fraction', va='top', ha='left')
 
         #ax.legend(handler_map={cs: HandlerLine2D(numpoints=1)})
         ax.legend()
@@ -454,11 +465,20 @@ class JoinClocks():
             'confidence_interval':self.ci, 'prediction_interval': self.pi, 'c': self.c, 'm': self.m, 'n': self.n,
                        'model': self.model, 'y_model': self.y_model, 'skews': [self.skew1, self.skew2],
                        'juldays': [self.date_ini,self.date_end], 'components': self.components, 'order': self.order,
-                       'skews_diff': [self.err_skew_ini_original, self.skew_estimated_end_original ]}
+                       'skews_diff': [self.err_skew_ini_original, self.skew_estimated_end_original, self.skew_overall]}
 
             path = os.path.join(self.output_path, name)
             file_to_store = open(path, "wb")
             pickle.dump(polynom, file_to_store)
+
+            file_name = os.path.join(self.output_path, self.obspair) + "_" + str(self.order) + ".pdf"
+            plt.savefig(file_name, dpi=150)
+            line = 'Skew ' + self.obspair + " " + str(self.err_skew_ini_original) + " " + str(self.err_skew_end) + " " + str(
+                self.skew_overall) + " " + str(self.order)
+            output_file = os.path.join(self.output_path, "skews.txt")
+            with open(output_file, 'a') as f:
+                f.write(line)
+                f.write('\n')
         else:
             print("Curve not saved")
 
