@@ -7,11 +7,11 @@ import pandas as pd
 import numpy as np
 import collections
 from matplotlib import pyplot as plt
-from matplotlib.legend_handler import HandlerLine2D
+#from matplotlib.legend_handler import HandlerLine2D
 from isp.ant.signal_processing_tools import noise_processing
 
 class JoinClocks():
-    def __init__(self, input_path, skews_path, output_path, obs_pair):
+    def __init__(self, input_path, skews_path, output_path, obs_pair, components, degree = 3):
 
         """
         polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Dates_selected': x, 'Drift': y, 'Ref': ref,
@@ -24,10 +24,12 @@ class JoinClocks():
         self.obspair = obs_pair
         self.skews_path = skews_path
         self.output_path = output_path
-
+        self.components = components
+        self.order = degree
 
     def retrive_dates(self):
 
+        land_list = ["PGRA", "ADHB", "CALA", "ROSA", "SRBC", "PMOZ", "PMAR", "PMPS", "HORB", "PICO"]
         df_dates = pd.read_csv(self.skews_path, sep="\t", index_col="Station")
         obs_pair = self.obspair.split("_")
         sta1 = obs_pair[0]
@@ -38,8 +40,16 @@ class JoinClocks():
         date_end_1 = self.convert_date_to_julday(df_dates.loc[sta1]['Recovery'])
         date_end_2 = self.convert_date_to_julday(df_dates.loc[sta2]['Recovery'])
 
+        if sta1 in land_list:
+            date_ini_1 = date_ini_2
+            date_end_1 = date_end_2
+        elif sta2 in land_list:
+            date_ini_2 = date_ini_1
+            date_end_2 = date_end_1
+
         self.date_ini = max([date_ini_1, date_ini_2])
         self.date_end = min([date_end_1, date_end_2])+365
+
 
     def retrieve_skews(self):
         df_dates = pd.read_csv(self.skews_path, sep="\t", index_col="Station")
@@ -120,7 +130,7 @@ class JoinClocks():
             y += coeffs[i] * x ** i
         return y
 
-    def create_grid(self):
+    def create_grid(self, revaluate = False):
         min_dates = []
         max_dates = []
         join_curve = {}
@@ -130,30 +140,31 @@ class JoinClocks():
             sta1 = name.split("_")[0]
             sta2 = name.split("_")[1]
             chn = name.split("_")[2]
-            df = pd.read_pickle(file)
-            min_dates.append(min(df["Dates_selected"]))
-            max_dates.append(max(df["Dates_selected"]))
-            dates_selected = df["Dates_selected"]
-            drift = df['Drift']-df['Drift'][0]
+            if chn in self.components:
+                df = pd.read_pickle(file)
+                min_dates.append(min(df["Dates_selected"]))
+                max_dates.append(max(df["Dates_selected"]))
+                dates_selected = df["Dates_selected"]
+                drift = df['Drift']-df['Drift'][0]
 
-            if sta2 == obs_pair[0] and sta1 == obs_pair[1]:
-                drift = -1*drift
+                if sta2 == obs_pair[0] and sta1 == obs_pair[1]:
+                    drift = -1*drift
 
-            cc = df['cross_correlation']
+                cc = df['cross_correlation']
 
-            # fill dictionary
-            for i, value in enumerate(dates_selected):
-                if str(value) not in join_curve:
-                    join_curve[str(value)] = [[drift[i], cc[i], chn]]
-                else:
-                    join_curve[str(value)].append([drift[i],cc[i], chn])
+                # fill dictionary
+                for i, value in enumerate(dates_selected):
+                    if str(value) not in join_curve:
+                        join_curve[str(value)] = [[drift[i], cc[i], chn]]
+                    else:
+                        join_curve[str(value)].append([drift[i], cc[i], chn])
 
         #join_curve["min_max_dates"] = [max(min_dates), min(max_dates)]
         join_curve = collections.OrderedDict(sorted(join_curve.items()))
         self.join_curve = join_curve
         self.correct_grid()
 
-    def create_join_polynom(self, plot = True):
+    def create_join_polynom(self):
         avarage1 = []
         avarage2 = []
         all_dates = []
@@ -169,13 +180,15 @@ class JoinClocks():
             all_dates.append(float(key))
             # Loop over components daily skew
             for j_term in value:
-                drif_j = j_term[0]
-                cc_j = j_term[1]**2
-                cc_jj = j_term[1]**3
-                num1.append(cc_j*drif_j)
-                den1.append(cc_j)
-                num2.append(cc_jj)
-                den2.append(cc_j)
+                check = j_term[2]
+                if check in self.components:
+                    drif_j = j_term[0]
+                    cc_j = j_term[1]**2
+                    cc_jj = j_term[1]**3
+                    num1.append(cc_j*drif_j)
+                    den1.append(cc_j)
+                    num2.append(cc_jj)
+                    den2.append(cc_j)
 
             num1 = np.mean(np.array(num1))
             den1 = np.mean(np.array(den1))
@@ -191,7 +204,7 @@ class JoinClocks():
         avarage1 = [x for _, x in sorted(zip(all_dates, avarage1))]
         all_dates.sort()
         m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err,ci,pi, x, y = \
-                                 noise_processing.statisics_fit(all_dates, avarage1, "Polynom", 3)
+                                 noise_processing.statisics_fit(all_dates, avarage1, "Polynom", self.order)
 
         self.m = m
         self.n = n
@@ -258,6 +271,8 @@ class JoinClocks():
         if len(TT_dates)>0:
             TT.append([TT_dates, TT_drift, TT_cross])
 
+
+
         return ZZ, HH, RR, TT
 
     def plot_polynom_scatter(self, x, y, ci, pi):
@@ -266,12 +281,29 @@ class JoinClocks():
         title = "Skew drift "+self.obspair+"  // "+str(-1*self.skew[0])+" "+str(-1*self.skew[1])
         fig.suptitle(title, fontsize=16)
 
-
         self.ZZ, self.HH, self.RR, self.TT = self.extract_components()
+
+        # set last correction
+        y = y - self.err_skew_ini
+        if len(self.ZZ) > 0:
+            self.ZZ = self.ZZ - self.err_skew_ini
+        if len(self.HH) > 0:
+            self.HH = self.HH - self.err_skew_ini
+        if len(self.RR) > 0:
+            self.RR = self.RR - self.err_skew_ini
+        if len(self.TT) > 0:
+            self.TT = self.TT - self.err_skew_ini
+
         ZZ, HH, RR, TT = self.ZZ, self.HH, self.RR, self.TT
         self.correct_grid()
 
+        self.skew_estimated_end_original = self.skew_estimated_end
+        self.skew_estimated_end = self.skew_estimated_end - self.err_skew_ini
+        self.err_skew_ini_original = self.err_skew_ini
+        self.err_skew_ini = self.err_skew_ini - self.err_skew_ini
+
         if len(self.ZZ) > 0:
+
             cs = ax.scatter(ZZ[0][0], ZZ[0][1], c=ZZ[0][2], marker='o', edgecolors='k', s=18, vmin=0.0, vmax=1.0,
                             label='ZZ')
         #
@@ -281,10 +313,11 @@ class JoinClocks():
 
         if len(self.RR) > 0:
             cs = ax.scatter(RR[0][0], RR[0][1], c=RR[0][2], marker="v", edgecolors='k', s=18, vmin=0.0, vmax=1.0,
-                            label='RR & TT')
+                            label='RR')
 
         if len(self.TT) > 0:
-            cs = ax.scatter(TT[0][0], TT[0][1], c=TT[0][2], marker=">", edgecolors='k', s=18, vmin=0.0, vmax=1.0)
+            cs = ax.scatter(TT[0][0], TT[0][1], c=TT[0][2], marker=">", edgecolors='k', s=18, vmin=0.0, vmax=1.0,
+                            label='TT')
 
 
         ax.plot(x, y, linewidth = 1.5, color="red", alpha = 0.5)
@@ -303,14 +336,15 @@ class JoinClocks():
         ax.scatter(self.date_end, self.skew_estimated_end, c="red", marker='o',
                         edgecolors='k', s=24, vmin=0.0, vmax=1.0, alpha=0.5)
 
-        skew_ini = "{:.4f}".format(self.err_skew_ini)
+        skew_ini = "{:.4f}".format(self.err_skew_ini_original)
         skew_end = "{:.4f}".format(self.err_skew_end)
         ax.annotate('Diff Skew Ini  ' + str(skew_ini), xy=(0.1, 0.1), xycoords='axes fraction',
                     xytext=(0.80, 0.19), textcoords='axes fraction', va='top', ha='left')
         ax.annotate('Diff Skew End  ' + str(skew_end), xy=(0.1, 0.1), xycoords='axes fraction',
                     xytext=(0.80, 0.15), textcoords='axes fraction', va='top', ha='left')
 
-        ax.legend(handler_map={cs: HandlerLine2D(numpoints=1)})
+        #ax.legend(handler_map={cs: HandlerLine2D(numpoints=1)})
+        ax.legend()
         fig.colorbar(cs, ax=ax, orientation='horizontal', fraction=0.05,
                                                        extend='both', pad=0.15, label='Normalized Cross Correlation')
 
@@ -417,8 +451,10 @@ class JoinClocks():
             name = self.obspair + "_" + "join"
             polynom = {name: self.polynom.tolist(), 'Dates': self.all_dates, 'Drift': self.avarage1, 'R2': self.R2,
                 't_critical':self.t_critical, 'resid': self.resid, 'chi2_red': self.chi2_red, 'std_err': self.std_err,
-            'confidence_interval':self.ci, 'prediction_interval':self.pi, 'c':self.c, 'm':self.m, 'n':self.n, 'model':self.model,
-                       'y_model':self.y_model, 'skews':[self.skew1,self.skew2],'juldays':[self.date_ini,self.date_end]}
+            'confidence_interval':self.ci, 'prediction_interval': self.pi, 'c': self.c, 'm': self.m, 'n': self.n,
+                       'model': self.model, 'y_model': self.y_model, 'skews': [self.skew1, self.skew2],
+                       'juldays': [self.date_ini,self.date_end], 'components': self.components, 'order': self.order,
+                       'skews_diff': [self.err_skew_ini_original, self.skew_estimated_end_original ]}
 
             path = os.path.join(self.output_path, name)
             file_to_store = open(path, "wb")
@@ -428,13 +464,16 @@ class JoinClocks():
 
 
 if __name__ == "__main__":
-    input_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/all_components"
-    output_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/output_join"
-    skews_path = "/Users/admin/Documents/Documentos - iMac de Admin/clock_dir_def/skews/skews.txt"
+    input_path = "/Users/robertocabieces/Documents/iMacROA/clock_dir_def/all_components_new"
+    output_path = "/Users/robertocabieces/Documents/iMacROA/clock_dir_def/output_join"
+    skews_path = "/Users/robertocabieces/Documents/iMacROA/clock_dir_def/skews/skews.txt"
     # example
-    obs_pair = "UP02_UP03"
+    #list_of_files = list_all_dir(input_path)
+    obs_pair = "UP01_UP03"
+    components = ["ZZ", "HH", "TT", "RR"]
+    order = 2
     # example
-    jc = JoinClocks(input_path, skews_path,output_path, obs_pair)
+    jc = JoinClocks(input_path, skews_path, output_path, obs_pair, components, order)
     jc.list_dir()
     jc.find_obs_pair()
     jc.create_grid()

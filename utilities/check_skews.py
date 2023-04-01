@@ -189,7 +189,7 @@ class CheckSkews():
 
         # Extrapolated
         cs = ax.scatter(self.date_ini, self.err_skew_ini-self.err_skew_ini, c="red", marker='o', edgecolors='k', s=24, vmin=0.0, vmax=1.0,
-                        alpha= 0.5)
+                        alpha=0.5)
         cs = ax.scatter(self.date_end, self.skew_estimated_end-self.err_skew_ini, c="red", marker='o',
                         edgecolors='k', s=24, vmin=0.0, vmax=1.0, alpha = 0.5)
 
