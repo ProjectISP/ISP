@@ -474,7 +474,7 @@ class JoinClocks():
             file_name = os.path.join(self.output_path, self.obspair) + "_" + str(self.order) + ".pdf"
             plt.savefig(file_name, dpi=150)
             line = 'Skew ' + self.obspair + " " + str(self.err_skew_ini_original) + " " + str(self.err_skew_end) + " " + str(
-                self.skew_overall) + " " + str(self.order)
+                self.skew_overall) + " " + str(self.order) + " " + str(self.R2) + " " + str(self.std_err)
             output_file = os.path.join(self.output_path, "skews.txt")
             with open(output_file, 'a') as f:
                 f.write(line)
@@ -491,7 +491,7 @@ if __name__ == "__main__":
     #list_of_files = list_all_dir(input_path)
     obs_pair = "UP01_UP03"
     components = ["ZZ", "HH", "TT", "RR"]
-    order = 2
+    order = 3
     # example
     jc = JoinClocks(input_path, skews_path, output_path, obs_pair, components, order)
     jc.list_dir()

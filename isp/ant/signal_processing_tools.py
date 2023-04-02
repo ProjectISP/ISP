@@ -235,7 +235,6 @@ class noise_processing:
         # Coefficient of determination, R²
         R2 = np.sum((y_model - y_bar) ** 2) / np.sum((y_new - y_bar) ** 2)
 
-        print(f'R² = {R2:.2f}')
         #print("Straight line coefficients and R^2", m, c, R2)
         # Calculate the residuals (the error in the data, according to the model)
         resid = y_new - y_model
@@ -245,7 +244,7 @@ class noise_processing:
         chi2_red = chi2 / dof
         # Standard deviation of the error
         std_err = np.sqrt(sum(resid ** 2) / dof)
-
+        print(f'R² = {R2:.2f}', f'std_err = {std_err:.2f}')
         # Confidence interval
         ci = t_critical * std_err * np.sqrt(1 / n + (x_new - np.mean(x)) ** 2 / np.sum((x - np.mean(x)) ** 2))
         # Prediction Interval
