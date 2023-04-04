@@ -71,16 +71,17 @@ class signal_preprocess_tools:
                 geom_spread_noise = self.geometrical_spreading_coefficient(freq_noise)
                 amp_signal *= geom_spread_signal
                 amp_noise *= geom_spread_noise
-                coeff_signal_rp, coeff_signal_rp = self.__displacement_to_moment()
-                coeff_noise_rp, coeff_noise_rs = self.__displacement_to_moment()
+                coeff_signal_rp, coeff_signal_rp, vs = self.__displacement_to_moment()
+                coeff_noise_rp, coeff_noise_rs, vs = self.__displacement_to_moment()
                 amp_signal *= coeff_signal_rp
-                amp_noise *= coeff_noise_rs
+                amp_noise *= coeff_noise_rp
                 amp_signal_log, freq_signal_log = self.__smooth_spectrum(amp_signal, freq_signal,
                                                         smooth_width_decades=self.spectral_smooth_width_decades)
                 amp_noise_log, freq_noise_log = self.__smooth_spectrum(amp_noise, freq_noise,
                                                         smooth_width_decades=self.spectral_smooth_width_decades)
 
                 mag_signal = magnitude_aux_tools.moment_to_mag(amp_signal)
+                mag_signal_log = magnitude_aux_tools.moment_to_mag(amp_signal_log)
                 mag_noise = magnitude_aux_tools.moment_to_mag(amp_noise)
                 Id_list.append(tr_signal.id)
                 if self.__check_spectral_sn_ratio(amp_signal, amp_noise, freq_signal, freq_signal_log, delta):
@@ -88,7 +89,8 @@ class signal_preprocess_tools:
                     spectrum[tr_signal.id] = {"amp_signal": amp_signal, "freq_signal": freq_signal, "amp_noise": amp_noise,
                     "freq_noise":freq_noise, "amp_signal_log": amp_signal_log, "freq_signal_log":freq_signal_log,
                     "amp_noise_log":amp_noise_log, "freq_noise_log": freq_noise_log, "weights": self.weight, "weigh_log": self.weight_log,
-                    "spectral_snratio": self.spectral_snratio,"mag_signal": mag_signal, "mag_noise": mag_noise}
+                    "spectral_snratio": self.spectral_snratio, "mag_signal": mag_signal, "mag_noise": mag_noise,
+                                              "mag_signal_log":mag_signal_log, "vs":vs}
 
                 else:
                     spectrum[tr_signal.id] = None
@@ -148,8 +150,8 @@ class signal_preprocess_tools:
             From Aki&Richards,1980
             """
 
-            v_hypo = self.get_vel_from_taup(depth_event_km=self.event_info[3])
-            v_station = self.get_vel_from_taup()
+            v_hypo, vs = self.get_vel_from_taup(depth_event_km=self.event_info[3])
+            v_station, vs = self.get_vel_from_taup()
 
             v_hypo *= 1000.
             v_station *= 1000.
@@ -158,7 +160,7 @@ class signal_preprocess_tools:
             coeff_rp = 4 * math.pi * v3 * self.rho / (2 * rpp)
             coeff_rs = 4 * math.pi * v3 * self.rho / (2 * rps)
 
-            return coeff_rp, coeff_rs
+            return coeff_rp, coeff_rs, vs
 
         def __smooth_spectrum(self, amplitude, freq, smooth_width_decades=0.2):
             """Smooth spectrum in a log10-freq space."""
@@ -272,9 +274,12 @@ class signal_preprocess_tools:
             return signal
 
         def get_vel_from_taup(self, **kwargs):
-            depth_event_km = kwargs.pop('depth_event_km', 1e-3)
 
-            return self.v_model.evaluate_above(depth_event_km, "P")[0]
+            depth_event_km = kwargs.pop('depth_event_km', 1e-3)
+            vp = self.v_model.evaluate_above(depth_event_km, "P")[0]
+            vs = self.v_model.evaluate_above(depth_event_km, "S")[0]
+
+            return vp, vs
 
         def __get_radiation_pattern_coefficient(self):
 
@@ -348,7 +353,6 @@ class ssp_inversion:
             self.pi_fc_min_max = pi_fc_min_max
             self.pi_bsd_min_max = pi_bsd_min_max
 
-
             """
             spectrum[tr_signal.id] = {"amp_signal": amp_signal, "freq_signal": freq_signal, "amp_noise": amp_noise,
                     "freq_noise":freq_noise, "amp_signal_log": amp_signal_log, "freq_signal_log":freq_signal_log,
@@ -363,14 +367,19 @@ class ssp_inversion:
             for keyId, trace_dict in self.spectrum_dict.items():
 
                 spec = trace_dict["amp_signal"]
-                spec_log_mag = trace_dict["amp_signal_log"]
+                spec_log_mag = trace_dict["mag_signal_log"]
                 weight = trace_dict["weights"]
                 weight_log = trace_dict["weigh_log"]
                 freq_log = trace_dict["freq_signal_log"]
-                station_pars = self.run_estimate(keyId, self.inv_algorithm, spec, spec_log_mag, weight, weight_log,
-                        self.bound_config, freq_log, self.t_star_0, self.pi_misfit_max, self.pi_t_star_min_max,
-                        self.pi_fc_min_max, self.pi_bsd_min_max, invert_t_star_0=True)
-                all_channels_station_pars.append(station_pars)
+                vs = trace_dict["vs"]
+                try:
+                    station_pars = self.run_estimate(keyId, self.inv_algorithm, spec, spec_log_mag, weight, weight_log,
+                            self.bound_config, freq_log, self.t_star_0, self.pi_misfit_max, self.pi_t_star_min_max,
+                            self.pi_fc_min_max, self.pi_bsd_min_max, vs, invert_t_star_0=True)
+                    all_channels_station_pars.append(station_pars)
+                except:
+                    pass
+
             return all_channels_station_pars
 
 
@@ -408,7 +417,7 @@ class ssp_inversion:
             return yerr
 
         def run_estimate(self, keyId, inv_algorithm, spec, spec_log_mag, weight, weight_log, bounds_config,
-                                    freq_log, t_star_0, pi_misfit_max, pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max,
+                                    freq_log, t_star_0, pi_misfit_max, pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max, vs,
                                     invert_t_star_0=True):
 
             hyp_dist = self.arrival[0].distance_km
@@ -497,9 +506,8 @@ class ssp_inversion:
                 msg = msg.format(keyId, fc, pi_fc_min, pi_fc_max)
                 raise ValueError(msg)
 
-            vs = signal_preprocess_tools.get_vel_from_taup(depth_event_km=self.event_info[3])
 
-            station_pars = StationParameters(id=keyId, instrument_type=spec.stats.instrtype,
+            station_pars = StationParameters(id=keyId, instrument_type="N/A",
                                              latitude=stla, longitude=stlo, hypo_dist_in_km=hyp_dist,
                                              epi_dist_in_km=epi_dist, azimuth=az)
 
@@ -529,6 +537,7 @@ class ssp_inversion:
                 id='bsd', value=moment_tools.bsd(station_pars.Mo.value, station_pars.radius.value),
                 format='{:.3e}')
             # quality factor
+
             station_pars.Qo = SpectralParameter(
                 id='Qo', value=moment_tools.quality_factor(travel_time, t_star), format='{:.1f}')
 
@@ -585,6 +594,7 @@ class magnitude_aux_tools:
 
         def __init__(self):
             self.moment = None
+
         @classmethod
         def moment_to_mag(cls, moment):
             """Convert moment to magnitude."""
@@ -737,10 +747,10 @@ class magnitude_aux_tools:
                 #, xdata, ydata, p0 = None, sigma = None, absolute_sigma = False,
                 #check_finite = True, bounds = (-np.inf, np.inf), method = None,
                 #jac = None, ** kwargs
-                #_, params_cov = curve_fit(cls.spectral_model, freq_log, ydata, p0=params_opt, sigma=yerr,
-                #    bounds=(params_opt - (1e-10), params_opt + (1e-10)))
                 _, params_cov = curve_fit(cls.spectral_model, freq_log, ydata, p0=params_opt, sigma=yerr,
-                    bounds=(params_opt - (0.01*params_opt), params_opt + (0.01*params_opt)))
+                   bounds=(params_opt - (1e-10), params_opt + (1e-10)))
+                # _, params_cov = curve_fit(cls.spectral_model, freq_log, ydata, p0=params_opt, sigma=yerr,
+                #     bounds=(params_opt - (0.01*params_opt), params_opt + (0.01*params_opt)))
                 err = np.sqrt(params_cov.diagonal())
                 # symmetric error
                 params_err = ((e, e) for e in err)
@@ -801,9 +811,7 @@ class InitialValues():
         return s
 
     def get_params0(self):
-        Mw_0 = self.Mw_0
-        fc_0 = self.fc_0
-        t_star_0 = self.t_star_0
+
         return (self.Mw_0, self.fc_0, self.t_star_0)
 
 
@@ -1288,4 +1296,5 @@ class moment_tools:
         """Compute quality factor from travel time and t_star."""
         if t_star_in_s == 0:
             return np.inf
-        return travel_time_in_s / t_star_in_s
+        qf = float(travel_time_in_s) / t_star_in_s
+        return qf

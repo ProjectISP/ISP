@@ -260,6 +260,7 @@ class preprocess_tools:
                 try:
                     print("Removing Instrument")
                     tr_deconv.remove_response(inventory=self.inventory, pre_filt=pre_filt, output="DISP", water_level=90)
+                    #tr_deconv.plot()
                     print(tr_deconv)
                     # tr_deconv.plot()
                     st_deconv.append(tr_deconv)

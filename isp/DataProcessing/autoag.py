@@ -262,8 +262,9 @@ class Automag:
                         pi_t_star_min_max = config["pi_t_star_min_max"]
                         pi_fc_min_max = config["pi_fc_min_max"]
                         pi_bsd_min_max = config["pi_bsd_min_max"]
-                        ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0, focal_parameters,
-                                            arrival, inv_selected, bound_config, inv_algorithm, pi_misfit_max, pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max)
+                        ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0,
+                            focal_parameters, arrival, inv_selected, bound_config, inv_algorithm, pi_misfit_max,
+                                            pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max)
 
                         magnitudes = ssp.run_estimate_all_traces()
                         print("end")
