@@ -44,7 +44,7 @@ class NllManager:
 
     @property
     def nll_bin_path(self):
-        bin_path = os.path.join(ROOT_DIR, "NLL7", "bin")
+        bin_path = os.path.join(ROOT_DIR, "NLL7", "src/bin")
         if not os.path.isdir(bin_path):
             raise FileNotFoundError("The dir {} doesn't exist. Please make sure to run: "
                                     "python setup.py build_ext --inplace. These should create a bin folder fo nll."

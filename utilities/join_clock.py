@@ -489,9 +489,9 @@ if __name__ == "__main__":
     skews_path = "/Users/robertocabieces/Documents/iMacROA/clock_dir_def/skews/skews.txt"
     # example
     #list_of_files = list_all_dir(input_path)
-    obs_pair = "UP01_UP03"
-    components = ["ZZ", "HH", "TT", "RR"]
-    order = 3
+    obs_pair = "X25H_UP15"
+    components = ["ZZ", "HH", "RR", "TT"]
+    order = 1
     # example
     jc = JoinClocks(input_path, skews_path, output_path, obs_pair, components, order)
     jc.list_dir()
