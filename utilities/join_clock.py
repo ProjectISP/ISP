@@ -71,6 +71,7 @@ class JoinClocks():
 
 
     def find_nearest(self, a, a0):
+
         "Element in nd array `a` closest to the scalar value `a0`"
 
         a = np.array(a)
