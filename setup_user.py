@@ -100,6 +100,15 @@ def mti_create_folders():
     except:
         pass
 
+
+    try:
+        folder_work_mti = os.path.join(ROOT_DIR, "mti","green")
+        if os.path.isdir(older_work_mti):
+            shutil.rmtree(older_work_mti)
+    except:
+        pass
+
+    folder_work_create = os.path.join(ROOT_DIR,"mti","green")
     folder_create = os.path.join(ROOT_DIR,"mti","green_source")
     source_code = os.path.join(sytem_path, "mti_green")
     print(sytem_path, source_code, folder_create)
@@ -108,7 +117,7 @@ def mti_create_folders():
         os.makedirs(folder_create)
     except IOError as error:
         print(error)
-    return source_code, folder_create
+    return source_code, folder_create, folder_work_create
 
 class CustomBuildExtCommand(build_ext):
     def run(self):
@@ -121,8 +130,9 @@ class CustomBuildExtCommand(build_ext):
         source_code, destination = focmec_create_folders()
         self.copy_focmec_binaries(source_code, destination)
 
-        source_code, destination = mti_create_folders()
+        source_code, destination, work_dir= mti_create_folders()
         self.copy_mti_binaries(source_code, destination)
+        self.copy_mti_binaries(source_code, work_dir)
 
         # run cython build
         build_ext.run(self)

@@ -1,4 +1,6 @@
 import os
+from os import listdir
+from os.path import isfile, join
 import shutil
 from distutils.core import setup
 from setuptools.command.build_ext import build_ext
@@ -95,8 +97,14 @@ def extract_mti():
     except:
         pass
 
+    try:
+        folder_work_mti = os.path.join(ROOT_DIR, "mti","green")
+        if os.path.isdir(older_work_mti):
+            shutil.rmtree(older_work_mti)
+    except:
+        pass
+
     extract_at = os.path.join(ROOT_DIR, "mti")
-    print("mti_folder", extract_at)
 
     try:
         if not os.path.isdir(extract_at):
@@ -104,8 +112,10 @@ def extract_mti():
             shutil.unpack_archive("isola2023_src.tgz", extract_at)
         else:
             shutil.unpack_archive("isola2023_src.tgz", extract_at)
-            #shutil.rmtree(extract_at)
-            #os.mkdir(extract_at)
+
+        if not os.path.isdir(folder_work_mti):
+            os.mkdir(folder_work_mti)
+
         
     except IOError as error:
         print(error)
@@ -158,16 +168,29 @@ class CustomBuildExtCommand(build_ext):
     def make_mti(self, mti_dir):
 
         green_path = os.path.join(mti_dir,"green_source")
+        work_dir = os.path.join(mti_dir,"green")
         command = "sh compile_mti_ifort.sh"
 
         try:
             exc_cmd(command, cwd=green_path, shell=True)
             print("MTI successfully installed")
+            self.copy_mti_binaries(green_path, work_dir)
+
         except sb.CalledProcessError as e:  # this is a bad error.
             print("Error on trying to run MTI make file.")
             print(e)
         except sb.SubprocessError:  # some warnings nothing so bad.
             print("MTI successfully installed")
+
+
+    def copy_mti_binaries(self, source_code, destination):
+
+        allfiles = [f for f in listdir(source_code) if isfile(join(source_code, f))]
+        # iterate on all files to move them to destination folder
+        for f in allfiles:
+            src_path = os.path.join(source_code, f)
+            dst_path = os.path.join(destination, f)
+            shutil.copy(src_path, dst_path)
 
 
 setup(
