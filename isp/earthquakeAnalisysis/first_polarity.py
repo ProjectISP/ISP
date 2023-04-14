@@ -57,7 +57,7 @@ class FirstPolarity:
         Dip = []
         Motion = []
         location_file = os.path.join(self.get_loc_dir, "last.hyp")
-        df = pd.read_csv(location_file, delim_whitespace=True, skiprows=16)
+        df = pd.read_csv(location_file, delim_whitespace=True, skiprows=17)
         for i in range(len(df)):
             if df.iloc[i].RAz > 0:
                 sta = str(df.iloc[i].PHASE)
