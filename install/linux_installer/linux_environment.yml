@@ -207,4 +207,3 @@ dependencies:
     - paramiko==3.0.0
     - pynacl==1.5.0
     - pysftp==0.2.9
-prefix: /home/rcabdia/anaconda3/envs/isp_test
