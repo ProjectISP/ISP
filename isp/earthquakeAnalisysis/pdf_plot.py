@@ -30,25 +30,28 @@ class PDFmanger:
 
             fig = plt.figure(figsize=(10, 8))
             self.mpf = MatplotlibFrame(fig)
+
+            # plot lon,lat
             ax_scatter = plt.axes(rect_scatter)
             ax_scatter.tick_params(direction='in', top=True, right=True, labelsize=10)
             plt.scatter(self.x, self.y, s=10, c=pdf, alpha=0.5, marker=".", cmap=plt.cm.jet)
             plt.xlabel("Longitude", fontsize=10)
             plt.ylabel("Latitude", fontsize=10)
+
+            # plot lon, depth
             ax_scatx = plt.axes(rect_scatterlon)
             ax_scatx.tick_params(direction='in', labelbottom=False, labelsize=10)
             plt.scatter(self.x, self.z, s=10, c=pdf, alpha=0.5, marker=".", cmap=plt.cm.jet)
             plt.ylabel("Depth (km)", fontsize=10)
-            plt.gca().invert_yaxis()
+            #plt.gca().invert_yaxis()
+
+            # plot depth, lat
             ax_scatx = plt.axes(rect_scatterlat)
-            ax_scatx.tick_params(direction='in', labelleft=False, labelsize=10)
-            ax_scaty = plt.axes(rect_scatterlat)
-            ax_scaty.tick_params(direction='in')
-            ax_scaty.tick_params(which='major', labelsize=10)
+            ax_scatx.tick_params(direction='in', labeltop=False, labelleft=False, labelsize=10)
             plt.scatter(self.z, self.y, s=10, c=pdf, alpha=0.5, marker=".", cmap=plt.cm.jet)
-            ax_scaty = plt.axes(rect_scatterlat)
-            ax_scaty.tick_params(direction='in', labelsize=10)
             plt.xlabel("Depth (km)", fontsize=10)
+
             cax = plt.axes([0.95, 0.1, 0.02, 0.8])
             plt.colorbar(cax=cax)
+            #plt.clim(0, 1)
             self.mpf.show()
