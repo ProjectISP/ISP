@@ -117,6 +117,7 @@ def mti_create_folders():
     try:
         #shutil.rmtree(folder_create)
         os.makedirs(folder_create)
+        os.makedirs(folder_work_create)
     except IOError as error:
         print(error)
     return source_code, folder_create, folder_work_create
