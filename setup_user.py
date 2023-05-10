@@ -12,8 +12,10 @@ from isp import ROOT_DIR
 from sys import platform
 if platform == "linux" or platform == "linux2":
     system_path = os.path.join(ROOT_DIR,"linux_bin")
+    print(system_path)
 elif platform == "darwin":
-    sytem_path = os.path.join(ROOT_DIR,"mac_bin")
+    system_path = os.path.join(ROOT_DIR,"mac_bin")
+    print(system_path)
 
 
 cy_path = os.path.join(ROOT_DIR, 'cython_code')
@@ -61,8 +63,8 @@ def nll_create_folders():
         pass
 
     folder_create = os.path.join(ROOT_DIR,"NLL7","src","bin")
-    source_code = os.path.join(sytem_path, "NLL_new")
-    print(sytem_path, source_code, folder_create)
+    source_code = os.path.join(system_path, "NLL_new")
+    print(system_path, source_code, folder_create)
     try:
         #shutil.rmtree(folder_create)
         os.makedirs(folder_create)
@@ -82,8 +84,8 @@ def focmec_create_folders():
 
 
     folder_create = os.path.join(ROOT_DIR,"focmec","bin")
-    source_code = os.path.join(sytem_path, "FOCMEC/bin")
-    print(sytem_path, source_code, folder_create)
+    source_code = os.path.join(system_path, "FOCMEC/bin")
+    print(system_path, source_code, folder_create)
     try:
         os.makedirs(folder_create)
     except IOError as error:
@@ -103,18 +105,19 @@ def mti_create_folders():
 
     try:
         folder_work_mti = os.path.join(ROOT_DIR, "mti","green")
-        if os.path.isdir(older_work_mti):
-            shutil.rmtree(older_work_mti)
+        if os.path.isdir(folder_work_mti):
+            shutil.rmtree(folder_work_mti)
     except:
         pass
 
     folder_work_create = os.path.join(ROOT_DIR,"mti","green")
     folder_create = os.path.join(ROOT_DIR,"mti","green_source")
-    source_code = os.path.join(sytem_path, "mti_green")
-    print(sytem_path, source_code, folder_create)
+    source_code = os.path.join(system_path, "mti_green")
+    print(system_path, source_code, folder_create)
     try:
         #shutil.rmtree(folder_create)
         os.makedirs(folder_create)
+        os.makedirs(folder_work_create)
     except IOError as error:
         print(error)
     return source_code, folder_create, folder_work_create
