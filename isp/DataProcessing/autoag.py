@@ -14,13 +14,12 @@ from isp.Utils import read_nll_performance
 
 class Automag:
 
-    def __init__(self, project, inventory_path, working_chnnels):
+    def __init__(self, project, inventory_path):
         self.project = project
         self.all_traces = []
         self.st = None
         self.ML = []
         self.inventory_path = inventory_path
-        self.working_channels = working_chnnels
 
     def load_metadata(self):
 
@@ -346,18 +345,17 @@ if __name__ == "__main__":
 
     radiated_energy_params = {"max_freq_Er": None}
 
-    statistics = {"reference_statistics": 'weighted_mean', "n_sigma":1, "lower_percentage": 15.9, "mid_percentage": 50,
+    statistics = {"reference_statistics": 'weighted_mean', "n_sigma": 1, "lower_percentage": 15.9, "mid_percentage": 50,
                   "upper_percentage": 84.1, "nIQR": 1.5}
 
     config = ChainMap(time_window_params, spectrum_params, signal_noise_ratio_params, source_model_parameters,
                       spectral_model_params, postinversion_params, radiated_energy_params, statistics)
 
-    #print(config.maps[7])
     project_path = "/Users/admin/Documents/test_data/alboran_project"
     project_path = "/Users/admin/Documents/test_meli/test_meli_full"
     inv_path = "/Users/admin/Documents/test_meli/metadata/metadata.xml"
     project = MseedUtil.load_project(project_path)
-    mg = Automag(project, inv_path, ["HHE, HHN, HHZ"])
+    mg = Automag(project, inv_path)
     mg.load_metadata()
     mg.scan_folder()
     mg.estimate_magnitudes(config)
