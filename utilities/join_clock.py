@@ -29,8 +29,12 @@ class JoinClocks():
 
     def retrive_dates(self):
 
+<<<<<<< HEAD
         land_list = ["PGRA", "ADHB", "CALA", "ROSA", "SRBC", "PMOZ", "PMAR", "PMPS", "HORB", "PICO", "PSMN",
                      "PDAB", "CMLA"]
+=======
+        land_list = ["PGRA", "ADHB", "CALA", "ROSA", "SRBC", "PMOZ", "PMAR", "PMPS", "HORB", "PICO", "PMPS"]
+>>>>>>> 5bf5425d614c6040972674376d72e70480c3dbb3
         df_dates = pd.read_csv(self.skews_path, sep="\t", index_col="Station")
         obs_pair = self.obspair.split("_")
         sta1 = obs_pair[0]
@@ -326,7 +330,7 @@ class JoinClocks():
 
 
         ax.plot(x, y, linewidth = 1.5, color="red", alpha = 0.5)
-        ax.fill_between(x, y + ci, y - ci, facecolor='#b9cfe7', zorder=0,label=r'95 % Confidence Interval')
+        ax.fill_between(x, y + ci, y - ci, facecolor='#b9cfe7', zorder=0, label=r'95 % Confidence Interval')
         plt.plot(x, y - pi, '--', color='0.5', label=r'95 % Prediction Limits')
         plt.plot(x, y + pi, '--', color='0.5')
 
@@ -474,7 +478,7 @@ class JoinClocks():
             pickle.dump(polynom, file_to_store)
 
             file_name = os.path.join(self.output_path, self.obspair) + "_" + str(self.order) + ".pdf"
-            plt.savefig(file_name, dpi=150)
+            #plt.savefig(file_name, dpi=150)
             line = 'Skew ' + self.obspair + " " + str(self.err_skew_ini_original) + " " + str(self.err_skew_end) + " " + str(
                 self.skew_overall) + " " + str(self.order) + " " + str(self.R2) + " " + str(self.std_err)
             output_file = os.path.join(self.output_path, "skews.txt")
@@ -486,14 +490,20 @@ class JoinClocks():
 
 
 if __name__ == "__main__":
-    input_path = "/Users/robertocabieces/Documents/iMacROA/clock_dir_def/all_components_new"
-    output_path = "/Users/robertocabieces/Documents/iMacROA/clock_dir_def/output_join"
-    skews_path = "/Users/robertocabieces/Documents/iMacROA/clock_dir_def/skews/skews.txt"
+    input_path = "/Users/admin/Documents/iMacROA/clock_dir_def/all_components_new"
+    output_path = "/Volumes/LaCie/UPFLOW_resample/clock_dir_def/join_poly"
+    skews_path = "/Users/admin/Documents/iMacROA/clock_dir_def/skews/skews.txt"
     # example
     #list_of_files = list_all_dir(input_path)
+<<<<<<< HEAD
     obs_pair = "UP27_UP30"
     components = ["ZZ", "HH", "RR", "TT"]
     order = 2
+=======
+    obs_pair = "UP09_UP13"
+    components = ["ZZ","RR", "TT", "HH"]
+    order = 3
+>>>>>>> 5bf5425d614c6040972674376d72e70480c3dbb3
     # example
     jc = JoinClocks(input_path, skews_path, output_path, obs_pair, components, order)
     jc.list_dir()

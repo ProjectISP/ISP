@@ -46,6 +46,7 @@ class signal_preprocess_tools:
             """Compute the spectrum of an ObsPy Trace object."""
             spectrum = {}
             Id_list = []
+            #print(self.tr_signal)
             for tr_signal, tr_noise in zip(self.tr_signal, self.tr_noise):
 
                 N = max([len(tr_signal.data), len(tr_noise.data)])
