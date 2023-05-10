@@ -27,7 +27,6 @@ class preprocess_tools:
         self.noise_window_time = None
         # Parameters
         self.scale = "Regional"
-        self.ML = []
 
     def check_signal_level(self, rmsmin):
         validation = []
@@ -358,28 +357,27 @@ class preprocess_tools:
 
          return spectrum
 
-
     def extract_coordinates_from_station_name(self, inventory, name):
          selected_inv = inventory.select(station=name)
          cont = selected_inv.get_contents()
          coords = selected_inv.get_coordinates(cont['channels'][0])
          return StationCoordinates.from_dict(coords)
     #
-    # def magnitude_local(self):
-    #     print("Calculating Local Magnitude")
-    #     tr_E = self.st_wood.select(component="E")
-    #     tr_E = tr_E[0]
-    #     tr_N = self.st_deconv.select(component="N")
-    #     tr_N = tr_N[0]
-    #     coords = self.extract_coordinates_from_station_name(self.inventory, self.st_deconv[0].stats.station)
-    #     dist, _, _ = gps2dist_azimuth(coords.Latitude, coords.Longitude, self.event_info[1], self.event_info[2])
-    #     dist = dist / 1000
-    #     max_amplitude_N = np.max(tr_N.data)*1e3 # convert to  mm --> nm
-    #     max_amplitude_E = np.max(tr_E.data) * 1e3  # convert to  mm --> nm
-    #     max_amplitude = max([max_amplitude_E, max_amplitude_N])
-    #     ML_value = np.log10(max_amplitude)+1.11*np.log10(dist)+0.00189*dist-2.09
-    #     print(ML_value)
-    #     self.ML.append(ML_value)
+    def magnitude_local(self):
+        #print("Calculating Local Magnitude")
+        tr_E = self.st_wood.select(component="E")
+        tr_E = tr_E[0]
+        tr_N = self.st_wood.select(component="N")
+        tr_N = tr_N[0]
+        coords = self.extract_coordinates_from_station_name(self.inventory, self.st_wood[0].stats.station)
+        dist, _, _ = gps2dist_azimuth(coords.Latitude, coords.Longitude, self.event_info[1], self.event_info[2])
+        dist = dist / 1000
+        max_amplitude_N = np.max(tr_N.data)*1e3 # convert to  mm --> nm
+        max_amplitude_E = np.max(tr_E.data) * 1e3  # convert to  mm --> nm
+        max_amplitude = max([max_amplitude_E, max_amplitude_N])
+        ML_value = np.log10(max_amplitude)+1.11*np.log10(dist)+0.00189*dist-2.09
+        #print(ML_value)
+        return ML_value
 
 
 

@@ -7,7 +7,6 @@ from isp import ALL_LOCATIONS
 from isp.DataProcessing.automag_processing_tools import ssp_inversion
 from isp.DataProcessing.automag_statistics import compute_summary_statistics, SourceSpecOutput
 from isp.DataProcessing.automag_tools import preprocess_tools
-#from isp.DataProcessing.automag_tools import Indmag
 from isp.Utils import MseedUtil
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Utils import read_nll_performance
@@ -19,7 +18,6 @@ class Automag:
         self.all_traces = []
         self.st = None
         self.ML = []
-        self.ML_std = []
         self.inventory_path = inventory_path
         self.working_channels = working_chnnels
 
@@ -153,11 +151,12 @@ class Automag:
         st_wood.plot()
         return st_deconv, st_wood
 
-    def statistics(self):
-        MLs =np.array(self.ML)
-        self.ML_mean = MLs.mean()
-        self.ML_deviation = MLs.std()
-        print("Local Magnitude", str(self.ML_mean)+str(self.ML_deviation))
+    def ML_statistics(self):
+        MLs = np.array(self.ML)
+        ML_mean = MLs.mean()
+        ML_deviation = MLs.std()
+        #print("Local Magnitude", str(self.ML_mean)+str(self.ML_deviation))
+        return ML_mean, ML_deviation
 
     def get_arrival(self, arrivals, sta_name):
         arrival_return = []
@@ -262,7 +261,6 @@ class Automag:
                 sspec_output.event_info.depth_in_km = cat[0].origins[0]["depth"]*1E-3
                 sspec_output.event_info.origin_time = cat[0].origins[0]["time"]
 
-
                 for pick in picks:
                     if pick.waveform_id["station_code"] not in events_picks.keys():
                         events_picks[pick.waveform_id["station_code"]]=[[pick.phase_hint, pick.time]]
@@ -276,8 +274,12 @@ class Automag:
                         inv_selected = self.inventory.select(station=key)
                         pt = preprocess_tools(st2, pick_info, focal_parameters, arrival, inv_selected)
                         pt.deconv_waveform(gap_max, overlap_max, rmsmin, clipping_sensitivity)
+                        pt.st_deconv = pt.st_deconv.select(component="Z")
                         if pt.st_deconv.count() > 0 and pt.st_wood.count() > 0:
                             spectrum_dict = None
+                            # TODO:
+
+                            self.ML.append(pt.magnitude_local())
                             spectrum_dict = pt.compute_spectrum(geom_spread_model, geom_spread_n_exponent,
                                             geom_spread_cutoff_distance, rho, spectral_smooth_width_decades,
                                             spectral_sn_min, spectral_sn_freq_range)
@@ -285,8 +287,6 @@ class Automag:
 
                             #TODO: Debugg final inversion and statistics
                             if spectrum_dict is not None:
-
-
                                 ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0,
                                     focal_parameters, arrival, inv_selected, bound_config, inv_algorithm, pi_misfit_max,
                                                     pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max)
@@ -295,9 +295,9 @@ class Automag:
                                 for chn in magnitudes:
                                     sspec_output.station_parameters[chn._id] = chn
                 magnitude_statistics = compute_summary_statistics(statistics_config, sspec_output)
+                ML_mean, ML_std = self.ML_statistics()
                 print("end")
-                    #self.ML.append(mag.magnitude_local())
-                    #self.statistics()
+
 
 
 if __name__ == "__main__":
