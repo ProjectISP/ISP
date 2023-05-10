@@ -29,7 +29,8 @@ class JoinClocks():
 
     def retrive_dates(self):
 
-        land_list = ["PGRA", "ADHB", "CALA", "ROSA", "SRBC", "PMOZ", "PMAR", "PMPS", "HORB", "PICO"]
+        land_list = ["PGRA", "ADHB", "CALA", "ROSA", "SRBC", "PMOZ", "PMAR", "PMPS", "HORB", "PICO", "PSMN",
+                     "PDAB", "CMLA"]
         df_dates = pd.read_csv(self.skews_path, sep="\t", index_col="Station")
         obs_pair = self.obspair.split("_")
         sta1 = obs_pair[0]
@@ -490,9 +491,9 @@ if __name__ == "__main__":
     skews_path = "/Users/robertocabieces/Documents/iMacROA/clock_dir_def/skews/skews.txt"
     # example
     #list_of_files = list_all_dir(input_path)
-    obs_pair = "X25H_UP15"
+    obs_pair = "UP27_UP30"
     components = ["ZZ", "HH", "RR", "TT"]
-    order = 1
+    order = 2
     # example
     jc = JoinClocks(input_path, skews_path, output_path, obs_pair, components, order)
     jc.list_dir()
