@@ -72,6 +72,8 @@ class signal_preprocess_tools:
                 geom_spread_noise = self.geometrical_spreading_coefficient(freq_noise)
                 amp_signal *= geom_spread_signal
                 amp_noise *= geom_spread_noise
+                amp_signal_moment = amp_signal
+                amp_noise_moment = amp_noise
                 coeff_signal_rp, coeff_signal_rp, vs = self.__displacement_to_moment()
                 coeff_noise_rp, coeff_noise_rs, vs = self.__displacement_to_moment()
                 amp_signal *= coeff_signal_rp
@@ -88,10 +90,10 @@ class signal_preprocess_tools:
                 if self.__check_spectral_sn_ratio(amp_signal, amp_noise, freq_signal, freq_signal_log, delta):
 
                     spectrum[tr_signal.id] = {"amp_signal": amp_signal, "freq_signal": freq_signal, "amp_noise": amp_noise,
-                    "freq_noise":freq_noise, "amp_signal_log": amp_signal_log, "freq_signal_log":freq_signal_log,
-                    "amp_noise_log":amp_noise_log, "freq_noise_log": freq_noise_log, "weights": self.weight, "weigh_log": self.weight_log,
+                    "freq_noise": freq_noise, "amp_signal_log": amp_signal_log, "freq_signal_log": freq_signal_log,
+                    "amp_noise_log": amp_noise_log, "freq_noise_log": freq_noise_log, "weights": self.weight, "weigh_log": self.weight_log,
                     "spectral_snratio": self.spectral_snratio, "mag_signal": mag_signal, "mag_noise": mag_noise,
-                                              "mag_signal_log":mag_signal_log, "vs":vs}
+                    "mag_signal_log": mag_signal_log, "vs": vs, "amp_signal_moment": amp_signal_moment, "amp_noise_moment": amp_noise_moment}
 
                 else:
                     spectrum[tr_signal.id] = None
@@ -322,15 +324,15 @@ class signal_preprocess_tools:
             yy[nanindexes] = x[nanindexes]
             return yy
 
-
-        def __select_spectra(spec_st, specid):
-            """Select spectra from stream, based on specid."""
-            network, station, location, channel = specid.split('.')
-            channel = channel + '?' * (3 - len(channel))
-            spec_st_sel = spec_st.select(
-                network=network, station=station, location=location, channel=channel)
-            spec_st_sel = Stream(sp for sp in spec_st_sel if not sp.stats.ignore)
-            return spec_st_sel
+        #
+        # def __select_spectra(spec_st, specid):
+        #     """Select spectra from stream, based on specid."""
+        #     network, station, location, channel = specid.split('.')
+        #     channel = channel + '?' * (3 - len(channel))
+        #     spec_st_sel = spec_st.select(
+        #         network=network, station=station, location=location, channel=channel)
+        #     spec_st_sel = Stream(sp for sp in spec_st_sel if not sp.stats.ignore)
+        #     return spec_st_sel
 
 
 class ssp_inversion:

@@ -7,6 +7,7 @@ from isp import ALL_LOCATIONS
 from isp.DataProcessing.automag_processing_tools import ssp_inversion
 from isp.DataProcessing.automag_statistics import compute_summary_statistics, SourceSpecOutput
 from isp.DataProcessing.automag_tools import preprocess_tools
+from isp.DataProcessing.radiated_energy import Energy
 from isp.Utils import MseedUtil
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Utils import read_nll_performance
@@ -234,6 +235,8 @@ class Automag:
         pi_t_star_min_max = config["pi_t_star_min_max"]
         pi_fc_min_max = config["pi_fc_min_max"]
         pi_bsd_min_max = config["pi_bsd_min_max"]
+        max_freq_Er = config["max_freq_Er"]
+
         bound_config = {"Qo_min_max": config["Qo_min_max"], "t_star_min_max": config["t_star_min_max"],
                         "wave_type": config["wave_type"], "fc_min_max": config["fc_min_max"]}
         statistics_config = config.maps[7]
@@ -254,7 +257,6 @@ class Automag:
                 picks = cat[0].picks
                 focal_parameters = [cat[0].origins[0]["time"], cat[0].origins[0]["latitude"], cat[0].origins[0]["longitude"],
                 cat[0].origins[0]["depth"]*1E-3]
-                print(focal_parameters)
                 sspec_output.event_info.event_id = "Id_Local"
                 sspec_output.event_info.longitude = cat[0].origins[0]["longitude"]
                 sspec_output.event_info.latitude = cat[0].origins[0]["latitude"]
@@ -263,10 +265,10 @@ class Automag:
 
                 for pick in picks:
                     if pick.waveform_id["station_code"] not in events_picks.keys():
-                        events_picks[pick.waveform_id["station_code"]]=[[pick.phase_hint, pick.time]]
+                        events_picks[pick.waveform_id["station_code"]] = [[pick.phase_hint, pick.time]]
                     else:
                         events_picks[pick.waveform_id["station_code"]].append([pick.phase_hint, pick.time])
-                print("end event")
+
                 for key in events_picks:
                     pick_info = events_picks[key]
                     st2 = self.st.select(station=key)
@@ -277,7 +279,6 @@ class Automag:
                         pt.st_deconv = pt.st_deconv.select(component="Z")
                         if pt.st_deconv.count() > 0 and pt.st_wood.count() > 0:
                             spectrum_dict = None
-                            # TODO:
 
                             self.ML.append(pt.magnitude_local())
                             spectrum_dict = pt.compute_spectrum(geom_spread_model, geom_spread_n_exponent,
@@ -285,7 +286,6 @@ class Automag:
                                             spectral_sn_min, spectral_sn_freq_range)
 
 
-                            #TODO: Debugg final inversion and statistics
                             if spectrum_dict is not None:
                                 ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0,
                                     focal_parameters, arrival, inv_selected, bound_config, inv_algorithm, pi_misfit_max,
@@ -294,6 +294,17 @@ class Automag:
                                 magnitudes = ssp.run_estimate_all_traces()
                                 for chn in magnitudes:
                                     sspec_output.station_parameters[chn._id] = chn
+                                    # for now just for vertical component
+                                    for keyId, trace_dict in spectrum_dict.items():
+                                        spec = trace_dict["amp_signal_moment"]
+                                        specnoise = trace_dict["amp_signal_moment"]
+                                        freq_signal = trace_dict["freq_signal"]
+                                        freq_noise = trace_dict["freq_noise"]
+                                        vs = trace_dict["vs"]
+                                    # compute and implement energy
+                                    sspec_output.station_parameters[chn._id] = Energy.radiated_energy(chn._id, spec,
+                                        specnoise, freq_signal, freq_noise, chn.fc, vs, max_freq_Er, rho, chn.t_star, chn)
+
                 magnitude_statistics = compute_summary_statistics(statistics_config, sspec_output)
                 ML_mean, ML_std = self.ML_statistics()
                 print("end")

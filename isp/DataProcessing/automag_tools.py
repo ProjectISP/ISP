@@ -355,7 +355,7 @@ class preprocess_tools:
             # convert the spectral amplitudes to moment magnitude
             spectrum = spt.do_spectrum()
 
-         return spectrum
+         return spectrum, spt
 
     def extract_coordinates_from_station_name(self, inventory, name):
          selected_inv = inventory.select(station=name)
