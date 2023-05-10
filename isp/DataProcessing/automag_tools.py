@@ -53,8 +53,8 @@ class preprocess_tools:
         validation = []
         for i, tr in enumerate(st):
             if self._is_clipped(tr, clipping_sensitivity):
-                msg = ('{} {}: Trace is clipped or significantly distorted: '
-                       'skipping trace'.format(tr.id, tr.stats.instrtype))
+                msg = ('{}: Trace is clipped or significantly distorted: '
+                       'skipping trace'.format(tr.id))
                 logger.warning(msg)
             else:
                 validation.append(i)
@@ -114,36 +114,38 @@ class preprocess_tools:
         bool
             True if trace is clipped, False otherwise.
         """
-        sensitivity = int(sensitivity)
-        if sensitivity < 1 or sensitivity > 5:
-            raise ValueError('sensitivity must be between 1 and 5')
-        trace = trace.copy().detrend('demean')
-        npts = len(trace.data)
-        # Compute data histogram with a number of bins equal to 0.5% of data points
-        nbins = int(npts * 0.005)
-        counts, bins = np.histogram(trace.data, bins=nbins)
-        counts = counts / np.max(counts)
-        # Compute gaussian kernel density
-        kde = gaussian_kde(trace.data, bw_method=0.2)
-        max_data = np.max(np.abs(trace.data)) * 1.2
-        density_points = np.linspace(-max_data, max_data, 100)
-        density = kde.pdf(density_points)
-        maxdensity = np.max(density)
-        density /= maxdensity
-        # Distance weight, parabolic, between 1 and 5
-        dist_weight = np.abs(density_points) ** 2
-        dist_weight *= 4 / dist_weight.max()
-        dist_weight += 1
-        density_weight = density * dist_weight
-        # find peaks with minimum prominence based on clipping sensitivity
-        min_prominence = [0.1, 0.05, 0.03, 0.02, 0.01]
-        peaks, _ = find_peaks(density_weight, prominence=min_prominence[sensitivity - 1])
-        # If more than one peak, then the signal is probably clipped or distorted
-        if len(peaks) > 1:
+        try:
+            sensitivity = int(sensitivity)
+            if sensitivity < 1 or sensitivity > 5:
+                raise ValueError('sensitivity must be between 1 and 5')
+            trace = trace.copy().detrend('demean')
+            npts = len(trace.data)
+            # Compute data histogram with a number of bins equal to 0.5% of data points
+            nbins = int(npts * 0.005)
+            counts, bins = np.histogram(trace.data, bins=nbins)
+            counts = counts / np.max(counts)
+            # Compute gaussian kernel density
+            kde = gaussian_kde(trace.data, bw_method=0.2)
+            max_data = np.max(np.abs(trace.data)) * 1.2
+            density_points = np.linspace(-max_data, max_data, 100)
+            density = kde.pdf(density_points)
+            maxdensity = np.max(density)
+            density /= maxdensity
+            # Distance weight, parabolic, between 1 and 5
+            dist_weight = np.abs(density_points) ** 2
+            dist_weight *= 4 / dist_weight.max()
+            dist_weight += 1
+            density_weight = density * dist_weight
+            # find peaks with minimum prominence based on clipping sensitivity
+            min_prominence = [0.1, 0.05, 0.03, 0.02, 0.01]
+            peaks, _ = find_peaks(density_weight, prominence=min_prominence[sensitivity - 1])
+            # If more than one peak, then the signal is probably clipped or distorted
+            if len(peaks) > 1:
+                return True
+            else:
+                return False
+        except:
             return True
-        else:
-            return False
-
     def __get_timespan(self):
 
         pickP_time = None
@@ -229,14 +231,16 @@ class preprocess_tools:
                 raise RuntimeError(msg)
 
     def deconv_waveform(self, gap_max, overlap_max, rmsmin, clipping_sensitivity):
-
+        self.st_deconv = Stream([])
+        self.st_wood = Stream([])
         self.__get_timespan()
         self.merge_stream(gap_max, overlap_max) #this process includes cut around earthquake
         self.check_signal_level(rmsmin=rmsmin)
         st = self.__cut_waveform(cutstream=False) #this process is just to check that it is not clipped
         self.check_clipping(st, clipping_sensitivity=clipping_sensitivity)
-        #self.st.plot()
-        #st.plot()
+        paz_wa = {'sensitivity': 2800, 'zeros': [0j], 'gain': 1,
+                  'poles': [-6.2832 - 4.7124j, -6.2832 + 4.7124j]}
+
         if self.valid_stream:
 
             self.st.detrend(type="simple")
@@ -249,8 +253,7 @@ class preprocess_tools:
 
             st_deconv = []
             st_wood = []
-            paz_wa = {'sensitivity': 2800, 'zeros': [0j], 'gain': 1,
-                      'poles': [-6.2832 - 4.7124j, -6.2832 + 4.7124j]}
+
 
             for tr in self.st:
 
@@ -258,17 +261,10 @@ class preprocess_tools:
                 tr_wood = tr.copy()
 
                 try:
-                    print("Removing Instrument")
                     tr_deconv.remove_response(inventory=self.inventory, pre_filt=pre_filt, output="DISP", water_level=90)
-                    #tr_deconv.plot()
-                    print(tr_deconv)
-                    # tr_deconv.plot()
                     st_deconv.append(tr_deconv)
                 except:
-                    print("Coudn't deconvolve", tr.stats)
                     tr.data = np.array([])
-
-                print("Simulating Wood Anderson Seismograph")
 
                 try:
                     resp = self.inventory.get_response(tr.id, tr.stats.starttime)
@@ -276,15 +272,11 @@ class preprocess_tools:
                     paz_mine = {'sensitivity': resp.stage_gain * resp.normalization_factor, 'zeros': resp.zeros,
                                 'gain': resp.stage_gain, 'poles': resp.poles}
                     tr_wood.simulate(paz_remove=paz_mine, paz_simulate=paz_wa, water_level=90)
-                    # tr_wood.plot()
                     st_wood.append(tr_wood)
                 except:
-                    print("Coudn't deconvolve", tr.stats)
                     tr.data = np.array([])
 
-            print("Finished Deconvolution")
             self.st_deconv = Stream(traces=st_deconv)
-            #self.st_deconv.plot()
             self.st_wood = Stream(traces=st_wood)
 
     def __cut_waveform(self, cutstream=True):

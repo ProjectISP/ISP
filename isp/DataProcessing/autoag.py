@@ -5,6 +5,7 @@ from datetime import datetime
 from obspy import read, read_events, UTCDateTime, Stream
 from isp import ALL_LOCATIONS
 from isp.DataProcessing.automag_processing_tools import ssp_inversion
+from isp.DataProcessing.automag_statistics import compute_summary_statistics, SourceSpecOutput
 from isp.DataProcessing.automag_tools import preprocess_tools
 #from isp.DataProcessing.automag_tools import Indmag
 from isp.Utils import MseedUtil
@@ -212,7 +213,31 @@ class Automag:
 
         self.dates=dates
 
-    def info_event(self, config):
+    def estimate_magnitudes(self, config):
+
+        # extract info from config:
+        gap_max = config['gap_max']
+        overlap_max = config['overlap_max']
+        rmsmin = config['rmsmin']
+        clipping_sensitivity = config['clipping_sensitivity']
+        geom_spread_model = config['geom_spread_model']
+        geom_spread_n_exponent = config['geom_spread_n_exponent']
+        geom_spread_cutoff_distance = config['geom_spread_cutoff_distance']
+        rho = config['rho']
+        spectral_smooth_width_decades = config['spectral_smooth_width_decades']
+        spectral_sn_min = config['spectral_sn_min']
+        spectral_sn_freq_range = config['spectral_sn_freq_range']
+        t_star_0_variability = config["t_star_0_variability"]
+        invert_t_star_0 = config["invert_t_star_0"]
+        t_star_0 = config["t_star_0"]
+        inv_algorithm = config["inv_algorithm"]
+        pi_misfit_max = config["pi_misfit_max"]
+        pi_t_star_min_max = config["pi_t_star_min_max"]
+        pi_fc_min_max = config["pi_fc_min_max"]
+        pi_bsd_min_max = config["pi_bsd_min_max"]
+        bound_config = {"Qo_min_max": config["Qo_min_max"], "t_star_min_max": config["t_star_min_max"],
+                        "wave_type": config["wave_type"], "fc_min_max": config["fc_min_max"]}
+        statistics_config = config.maps[7]
 
         for date in self.dates:
             events = self.dates[date]
@@ -221,6 +246,7 @@ class Automag:
             #TODO search mseeds for this date and cut it ensure 24 and deconv, return a stream
             for event in events:
                 events_picks = {}
+                sspec_output = SourceSpecOutput()
                 #cat = read_events(event, format="NLLOC_HYP")
                 cat = read_nll_performance.read_nlloc_hyp_ISP(event)
                 event = cat[0]
@@ -230,6 +256,13 @@ class Automag:
                 focal_parameters = [cat[0].origins[0]["time"], cat[0].origins[0]["latitude"], cat[0].origins[0]["longitude"],
                 cat[0].origins[0]["depth"]*1E-3]
                 print(focal_parameters)
+                sspec_output.event_info.event_id = "Id_Local"
+                sspec_output.event_info.longitude = cat[0].origins[0]["longitude"]
+                sspec_output.event_info.latitude = cat[0].origins[0]["latitude"]
+                sspec_output.event_info.depth_in_km = cat[0].origins[0]["depth"]*1E-3
+                sspec_output.event_info.origin_time = cat[0].origins[0]["time"]
+
+
                 for pick in picks:
                     if pick.waveform_id["station_code"] not in events_picks.keys():
                         events_picks[pick.waveform_id["station_code"]]=[[pick.phase_hint, pick.time]]
@@ -239,35 +272,30 @@ class Automag:
                 for key in events_picks:
                     pick_info = events_picks[key]
                     st2 = self.st.select(station=key)
-                    inv_selected = self.inventory.select(station=key)
-                    #st_deconv, st_wood = self.preprocess_stream(st2, pick_info, arrival, focal_parameters)
-                    pt = preprocess_tools(st2, pick_info, focal_parameters, arrival, inv_selected)
-                    pt.deconv_waveform(config['gap_max'], config['overlap_max'], config['rmsmin'],
-                                       config['clipping_sensitivity'])
+                    if st2.count() > 0:
+                        inv_selected = self.inventory.select(station=key)
+                        pt = preprocess_tools(st2, pick_info, focal_parameters, arrival, inv_selected)
+                        pt.deconv_waveform(gap_max, overlap_max, rmsmin, clipping_sensitivity)
+                        if pt.st_deconv.count() > 0 and pt.st_wood.count() > 0:
+                            spectrum_dict = None
+                            spectrum_dict = pt.compute_spectrum(geom_spread_model, geom_spread_n_exponent,
+                                            geom_spread_cutoff_distance, rho, spectral_smooth_width_decades,
+                                            spectral_sn_min, spectral_sn_freq_range)
 
-                    spectrum_dict = pt.compute_spectrum(config['geom_spread_model'], config['geom_spread_n_exponent'],
-                            config['geom_spread_cutoff_distance'], config['rho'], config['spectral_smooth_width_decades'],
-                                        config['spectral_sn_min'], config['spectral_sn_freq_range'])
+
+                            #TODO: Debugg final inversion and statistics
+                            if spectrum_dict is not None:
 
 
-                    #TODO: Debugg final inversion and statistics
-                    if spectrum_dict is not None:
-                        t_star_0_variability = config["t_star_0_variability"]
-                        invert_t_star_0 = config["invert_t_star_0"]
-                        t_star_0 = config["t_star_0"]
-                        bound_config = {"Qo_min_max": config["Qo_min_max"], "t_star_min_max": config["t_star_min_max"],
-                                        "wave_type": config["wave_type"], "fc_min_max": config["fc_min_max"]}
-                        inv_algorithm = config["inv_algorithm"]
-                        pi_misfit_max = config["pi_misfit_max"]
-                        pi_t_star_min_max = config["pi_t_star_min_max"]
-                        pi_fc_min_max = config["pi_fc_min_max"]
-                        pi_bsd_min_max = config["pi_bsd_min_max"]
-                        ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0,
-                            focal_parameters, arrival, inv_selected, bound_config, inv_algorithm, pi_misfit_max,
-                                            pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max)
+                                ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0,
+                                    focal_parameters, arrival, inv_selected, bound_config, inv_algorithm, pi_misfit_max,
+                                                    pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max)
 
-                        magnitudes = ssp.run_estimate_all_traces()
-                        print("end")
+                                magnitudes = ssp.run_estimate_all_traces()
+                                for chn in magnitudes:
+                                    sspec_output.station_parameters[chn._id] = chn
+                magnitude_statistics = compute_summary_statistics(statistics_config, sspec_output)
+                print("end")
                     #self.ML.append(mag.magnitude_local())
                     #self.statistics()
 
@@ -306,17 +334,20 @@ if __name__ == "__main__":
                             "pi_t_star_min_max": None}
 
     radiated_energy_params = {"max_freq_Er": None}
-    avarage_params = {"nIQR": 1.5}
+
+    statistics = {"reference_statistics": 'weighted_mean', "n_sigma":1, "lower_percentage": 15.9, "mid_percentage": 50,
+                  "upper_percentage": 84.1, "nIQR": 1.5}
 
     config = ChainMap(time_window_params, spectrum_params, signal_noise_ratio_params, source_model_parameters,
-                      spectral_model_params, postinversion_params, radiated_energy_params, avarage_params)
+                      spectral_model_params, postinversion_params, radiated_energy_params, statistics)
 
-    #project_path = "/Users/admin/Documents/test_data/alboran_project"
-    project_path = "/Users/admin/Documents/test_meli/test_meli_work"
-    inv_path = "/Users/admin/Documents/test_meli/metadata/meli.xml"
+    #print(config.maps[7])
+    project_path = "/Users/admin/Documents/test_data/alboran_project"
+    project_path = "/Users/admin/Documents/test_meli/test_meli_full"
+    inv_path = "/Users/admin/Documents/test_meli/metadata/metadata.xml"
     project = MseedUtil.load_project(project_path)
     mg = Automag(project, inv_path, ["HHE, HHN, HHZ"])
     mg.load_metadata()
     mg.scan_folder()
-    mg.info_event(config)
+    mg.estimate_magnitudes(config)
     #mg.get_now_files()
