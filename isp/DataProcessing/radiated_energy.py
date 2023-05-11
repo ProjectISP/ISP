@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__.split('.')[-1])
 class Energy:
 
     @classmethod
-    def radiated_energy(cls, id, spec, specnoise, freq_signal, freq_noise, fc, vel, f_max, rho, t_star,
-                        station_pars):
+    def radiated_energy(cls, id, spec, specnoise, freq_signal, freq_noise, delta_signal, delta_noise,
+                        fc, vel, f_max, rho, t_star, station_pars):
 
         """Compute radiated energy, using eq. (3) in Lancieri et al. (2012)."""
 
@@ -38,15 +38,18 @@ class Energy:
 
         # Compute signal and noise integrals and subtract noise from signal,
         # under the hypothesis that energy is additive and noise is stationary
-        signal_integral = cls.spectral_integral(spec, t_star, freq_signal, f_max)
-        noise_integral = cls.spectral_integral(specnoise, t_star, freq_noise, f_max)
+        signal_integral = cls.spectral_integral(spec, t_star, freq_signal, f_max, delta_signal)
+        noise_integral = cls.spectral_integral(specnoise, t_star, freq_noise, f_max, delta_noise)
         coeff = cls.radiated_energy_coefficient(rho, vel)
-        Er = coeff * (signal_integral - noise_integral)
-        if Er < 0:
-            msg = '{} {}: noise energy is larger than signal energy: '.format(
-                id, spec.stats.instrtype)
-            msg += 'skipping spectrum.'
-            logger.warning(msg)
+        k = delta_signal/delta_noise
+        Er = coeff * (signal_integral - k*noise_integral)
+        if Er <= 0:
+            Er = coeff * (signal_integral)
+            # msg = '{} {}: noise energy is larger than signal energy: '.format(
+            #     id, spec.stats.instrtype)
+            # msg += 'skipping spectrum.'
+            # logger.warning(msg)
+
 
         R = cls.finite_bandwidth_correction(freq_signal, fc, f_max)
         Er /= R
@@ -55,18 +58,21 @@ class Energy:
         try:
             param_Er = station_pars.Er
         except KeyError:
-            param_Er = SpectralParameter(
-                id='Er', value=np.nan, format='{:.3e}')
-            station_pars.Er = param_Er
+
+            station_pars.Er = SpectralParameter(
+                 id='Er', value=Er, format='{:.3f}')
+            station_pars._params['Er'] = Er
+            station_pars._params_err['Er'] = (None,None)
+            station_pars._is_outlier['Er'] = False
+
         return station_pars
 
     @classmethod
-    def spectral_integral(cls, spec, t_star, freq, f_max):
+    def spectral_integral(cls, spec, t_star, freq, f_max, period_full):
         """Compute spectral integral in eq. (3) from Lancieri et al. (2012)."""
         # Note: eq. (3) from Lancieri et al. (2012) is the same as
         # eq. (1) in Boatwright et al. (2002), but expressed in frequency,
         # instead of angular frequency (2pi factor).
-        delta_f = 1/(freq[1]-freq[0])
 
         # Data must be in displacement units,
         # and derive it to velocity through multiplication by 2*pi*freq:
@@ -77,7 +83,7 @@ class Energy:
         # Compute the energy integral, up to f_max:
         if f_max is not None:
             data[freq > f_max] = 0.
-        integral = np.sum((data ** 2) * delta_f)
+        integral = np.sum((data ** 2) * period_full)
         return integral
 
     @classmethod

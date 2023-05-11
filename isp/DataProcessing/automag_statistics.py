@@ -205,11 +205,14 @@ class SourceSpecOutput(OrderedAttribDict):
         self.summary_spectral_parameters = OrderedAttribDict()
         self.station_parameters = OrderedAttribDict()
 
+    def value_energy_array(self, key, filter_outliers=False):
+        vals = np.array([x.Er.value for x in self.station_parameters.values()])
+        if filter_outliers:
+            outliers = self.outlier_array(key)
+            vals = vals[~outliers]
+        return vals
     def value_array(self, key, filter_outliers=False):
-        vals = np.array([
-            x._params.get(key, np.nan)
-            for x in self.station_parameters.values()
-        ])
+        vals = np.array([x._params.get(key, np.nan) for x in self.station_parameters.values()])
         if filter_outliers:
             outliers = self.outlier_array(key)
             vals = vals[~outliers]
@@ -223,6 +226,9 @@ class SourceSpecOutput(OrderedAttribDict):
         if filter_outliers:
             outliers = self.outlier_array(key)
             errs = errs[~outliers]
+        else:
+            errs[:] = np.nan
+            errs = errs.astype(float)
         return errs
 
     def outlier_array(self, key):
@@ -432,13 +438,12 @@ def compute_summary_statistics(config, sspec_output):
             logarithmic=False
         )
 
-    # # Er (N.m)
-    # sspec_output.summary_spectral_parameters.Er = \
-    #     _param_summary_statistics(
-    #         config, sspec_output,
-    #         id='Er', name='radiated energy', units='N.m', format='{:.3e}',
-    #         logarithmic=True
-    #     )
+    # Er (N.m)
+    sspec_output.summary_spectral_parameters.Er = \
+         _param_summary_statistics(
+             config, sspec_output,
+             id='Er', name='radiated energy', units='N.m', format='{:.3e}',
+             logarithmic=True, filter_outliers=False)
     #
     # # Ml
     # if config.compute_local_magnitude:
@@ -463,19 +468,23 @@ def compute_summary_statistics(config, sspec_output):
     return sspec_output
 
 def _param_summary_statistics(
-        config, sspec_output, id, name, format, units=None, logarithmic=False):
+        config, sspec_output, id, name, format, units=None, logarithmic=False, filter_outliers=True):
     """Compute summary statistics for one spectral parameter."""
     nIQR = config["nIQR"]
     summary = SummarySpectralParameter(
         id=id, name=name, format=format, units=units)
     sspec_output.find_outliers(id, n=nIQR)
     values = sspec_output.value_array(id, filter_outliers=True)
-    errors = sspec_output.error_array(id, filter_outliers=True)
+    errors = sspec_output.error_array(id, filter_outliers=filter_outliers)
     # put to NaN infinite values and values whose errors are infinite
     values[np.isinf(values)] = np.nan
-    _cond_err = np.logical_or(np.isinf(errors[:, 0]), np.isinf(errors[:, 1]))
-    values[_cond_err] = np.nan
-    errors[_cond_err] = np.nan
+    try:
+        _cond_err = np.logical_or(np.isinf(errors[:, 0]), np.isinf(errors[:, 1]))
+        values[_cond_err] = np.nan
+        errors[_cond_err] = np.nan
+    except:
+        pass
+
     # only count non-NaN values
     nobs = len(values[~np.isnan(values)])
     # mean

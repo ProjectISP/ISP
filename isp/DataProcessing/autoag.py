@@ -299,10 +299,13 @@ class Automag:
                                         specnoise = trace_dict["amp_signal_moment"]
                                         freq_signal = trace_dict["freq_signal"]
                                         freq_noise = trace_dict["freq_noise"]
+                                        full_period_signal = trace_dict["full_period_signal"]
+                                        full_period_noise = trace_dict["full_period_noise"]
                                         vs = trace_dict["vs"]
                                     # compute and implement energy
                                     sspec_output.station_parameters[chn._id] = Energy.radiated_energy(chn._id, spec,
-                                        specnoise, freq_signal, freq_noise, chn.fc, vs, max_freq_Er, rho, chn.t_star, chn)
+                                        specnoise, freq_signal, freq_noise, full_period_signal, full_period_noise,
+                                        chn.fc.value, vs, max_freq_Er, rho, chn.t_star.value, chn)
 
                 magnitude_statistics = compute_summary_statistics(statistics_config, sspec_output)
                 ML_mean, ML_std = self.ML_statistics()

@@ -61,6 +61,10 @@ class signal_preprocess_tools:
                 signal = tr_signal.data
                 noise = tr_noise.data
                 delta = tr_signal.stats.delta
+
+                full_period_signal = 1/(delta*len(signal))
+                full_period_noise = 1 / (delta*len(noise))
+
                 amp_signal, freq_signal = self.__dofft(signal, delta, DD)
                 amp_noise, freq_noise = self.__dofft(noise, delta, DD)
                 # remove DC component (freq=0)
@@ -93,7 +97,9 @@ class signal_preprocess_tools:
                     "freq_noise": freq_noise, "amp_signal_log": amp_signal_log, "freq_signal_log": freq_signal_log,
                     "amp_noise_log": amp_noise_log, "freq_noise_log": freq_noise_log, "weights": self.weight, "weigh_log": self.weight_log,
                     "spectral_snratio": self.spectral_snratio, "mag_signal": mag_signal, "mag_noise": mag_noise,
-                    "mag_signal_log": mag_signal_log, "vs": vs, "amp_signal_moment": amp_signal_moment, "amp_noise_moment": amp_noise_moment}
+                    "mag_signal_log": mag_signal_log, "vs": vs, "amp_signal_moment": amp_signal_moment,
+                    "amp_noise_moment": amp_noise_moment, "full_period_signal":full_period_signal,
+                                              "full_period_noise":full_period_noise}
 
                 else:
                     spectrum[tr_signal.id] = None
