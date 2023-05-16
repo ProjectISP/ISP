@@ -268,6 +268,23 @@ class Automag:
                     else:
                         events_picks[pick.waveform_id["station_code"]].append([pick.phase_hint, pick.time])
 
+                # TODO Include methods to filter possible outlier phases baed on time residuals and weight
+                # for pick in picks:
+                #     events_picks_test = []
+                #     if pick.waveform_id["station_code"] not in events_picks.keys():
+                #         for arrival_time in arrivals:
+                #             if arrival_time.station == pick.waveform_id["station_code"]:
+                #                 time_residual = arrival_time.time_residual
+                #                 time_weight = arrival_time.time_weight
+                #                 events_picks_test.append([pick.phase_hint, pick.time, time_residual, time_weight])
+                #                 #events_picks[pick.waveform_id["station_code"]] = [[pick.phase_hint, pick.time, time_residual, time_weight]]
+                #     else:
+                #         for arrival_time in arrivals:
+                #             if arrival_time.station == pick.waveform_id["station_code"]:
+                #                 time_residual = arrival_time.time_residual
+                #                 time_weight = time_residual.time_weight
+                #                 events_picks[pick.waveform_id["station_code"]].append([pick.phase_hint, pick.time, time_residual, time_weight])
+
                 for key in events_picks:
                     pick_info = events_picks[key]
                     st2 = self.st.select(station=key)
@@ -354,7 +371,7 @@ if __name__ == "__main__":
     config = ChainMap(time_window_params, spectrum_params, signal_noise_ratio_params, source_model_parameters,
                       spectral_model_params, postinversion_params, radiated_energy_params, statistics)
 
-    project_path = "/Users/admin/Documents/test_data/alboran_project"
+
     project_path = "/Users/admin/Documents/test_meli/test_meli_full"
     inv_path = "/Users/admin/Documents/test_meli/metadata/metadata.xml"
     project = MseedUtil.load_project(project_path)
