@@ -212,6 +212,48 @@ class Automag:
 
         self.dates=dates
 
+
+    def _filter_picks(self, picks, arrivals):
+        events_picks = {}
+        pass
+
+    def _get_stations(self, arrivals):
+        stations = []
+        for pick in arrivals:
+            if pick.station not in stations:
+                stations.append(pick.station)
+
+        return stations
+
+    def _get_info_in_arrivals(self, station, arrivals):
+        data = {}
+
+        for arrival in arrivals:
+            if station == arrival.station:
+                if arrival.phase in data.keys():
+                    data[arrival.phase]["time_residual"] = [arrival.time_residual]
+                    data[arrival.phase]["date"] = [arrival.date]
+                else:
+                    data[arrival.phase] = {}
+                    data[arrival.phase]["time_residual"] = []
+                    data[arrival.phase]["date"] = []
+                    data[arrival.phase]["time_residual"].append(arrival.time_residual)
+                    data[arrival.phase]["date"].append(arrival.date)
+        output = {}
+        for key, value in data.items():
+             residual_min = min(data[key]["time_residual"])
+             residual_min_index = data[key]["time_residual"].index(residual_min)
+             #data[key]["time_residual"] = [i for i in data[key]["time_residual"] if i == residual_min]
+             if station in output.keys():
+                 output[station].append([key, data[key]["date"][residual_min_index]])
+             else:
+                 output[station] = [key, data[key]["date"][residual_min_index]]
+
+
+        # get the minimum phase residual
+        return output
+
+
     def estimate_magnitudes(self, config):
 
         # extract info from config:
@@ -252,38 +294,36 @@ class Automag:
                 cat = read_nll_performance.read_nlloc_hyp_ISP(event)
                 event = cat[0]
                 arrivals = event["origins"][0]["arrivals"]
-                arrival = self.get_arrival(arrivals, "WMELI")
-                picks = cat[0].picks
-                focal_parameters = [cat[0].origins[0]["time"], cat[0].origins[0]["latitude"], cat[0].origins[0]["longitude"],
-                cat[0].origins[0]["depth"]*1E-3]
-                sspec_output.event_info.event_id = "Id_Local"
-                sspec_output.event_info.longitude = cat[0].origins[0]["longitude"]
-                sspec_output.event_info.latitude = cat[0].origins[0]["latitude"]
-                sspec_output.event_info.depth_in_km = cat[0].origins[0]["depth"]*1E-3
-                sspec_output.event_info.origin_time = cat[0].origins[0]["time"]
+                stations = self._get_stations(arrivals)
+                pick = {}
+                for station in stations:
+                    if station not in pick.keys():
+                        data = self._get_info_in_arrivals(station, arrivals)
 
-                for pick in picks:
-                    if pick.waveform_id["station_code"] not in events_picks.keys():
-                        events_picks[pick.waveform_id["station_code"]] = [[pick.phase_hint, pick.time]]
-                    else:
-                        events_picks[pick.waveform_id["station_code"]].append([pick.phase_hint, pick.time])
-
-                # TODO Include methods to filter possible outlier phases baed on time residuals and weight
                 # for pick in picks:
-                #     events_picks_test = []
                 #     if pick.waveform_id["station_code"] not in events_picks.keys():
-                #         for arrival_time in arrivals:
-                #             if arrival_time.station == pick.waveform_id["station_code"]:
-                #                 time_residual = arrival_time.time_residual
-                #                 time_weight = arrival_time.time_weight
-                #                 events_picks_test.append([pick.phase_hint, pick.time, time_residual, time_weight])
-                #                 #events_picks[pick.waveform_id["station_code"]] = [[pick.phase_hint, pick.time, time_residual, time_weight]]
+                #         events_picks[pick.waveform_id["station_code"]] = [[pick.phase_hint, pick.time]]
                 #     else:
-                #         for arrival_time in arrivals:
-                #             if arrival_time.station == pick.waveform_id["station_code"]:
-                #                 time_residual = arrival_time.time_residual
-                #                 time_weight = time_residual.time_weight
-                #                 events_picks[pick.waveform_id["station_code"]].append([pick.phase_hint, pick.time, time_residual, time_weight])
+                #         events_picks[pick.waveform_id["station_code"]].append([pick.phase_hint, pick.time])
+
+                for station in stations:
+                    arrival = self.get_arrival(arrivals, station)
+                    picks = cat[0].picks
+                    focal_parameters = [cat[0].origins[0]["time"], cat[0].origins[0]["latitude"], cat[0].origins[0]["longitude"],
+                    cat[0].origins[0]["depth"]*1E-3]
+                    sspec_output.event_info.event_id = "Id_Local"
+                    sspec_output.event_info.longitude = cat[0].origins[0]["longitude"]
+                    sspec_output.event_info.latitude = cat[0].origins[0]["latitude"]
+                    sspec_output.event_info.depth_in_km = cat[0].origins[0]["depth"]*1E-3
+                    sspec_output.event_info.origin_time = cat[0].origins[0]["time"]
+
+                    events_picks = self._filter_picks(picks, arrivals)
+
+                # for pick in picks:
+                #     if pick.waveform_id["station_code"] not in events_picks.keys():
+                #         events_picks[pick.waveform_id["station_code"]] = [[pick.phase_hint, pick.time]]
+                #     else:
+                #         events_picks[pick.waveform_id["station_code"]].append([pick.phase_hint, pick.time])
 
                 for key in events_picks:
                     pick_info = events_picks[key]
