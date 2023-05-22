@@ -37,7 +37,8 @@ class preprocess_tools:
             if rms <= rms_min:
                 msg = '{} {}: Trace RMS smaller than {:g}: skipping trace'
                 msg = msg.format(tr.id, tr.stats.instrtype, rms_min)
-                raise RuntimeError(msg)
+                self.valid_stream = False
+                #raise RuntimeError(msg)
             else:
                 validation.append(i)
         if len(validation) > 0:
@@ -167,7 +168,7 @@ class preprocess_tools:
         else:
             # Calculate distance in degree
             arrivals = self.model.get_travel_times(source_depth_in_km=self.pick_info[3],
-                                                   distance_in_degree=self.arrival[0].distance_degrees, phase_list=["S"])
+                                                   distance_in_degree=self.arrival["distance_degrees"], phase_list=["S"])
 
             pickS_time = self.pick_info[3] + arrivals[0].time
             self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
@@ -328,7 +329,7 @@ class preprocess_tools:
 
         if scale == "Regional":
             start_diff = (self.pick_info[0][1] - 60) - maxstart
-            end_diff = minend  - (self.pick_info[0][1] + 3 * 60)
+            end_diff = minend - (self.pick_info[0][1] + 3 * 60)
             if start_diff > 0 and end_diff > 0:
                 self.st.trim(starttime=self.pick_info[0][1] - 60, endtime=self.pick_info[0][1] + 3 * 60)
             else:
@@ -348,7 +349,7 @@ class preprocess_tools:
          if isinstance(self.st_deconv, Stream) and self.valid_stream:
             self.__cut_waveform()
             self.__split_noise2signal()
-            spt = signal_preprocess_tools(self.st_cut_noise, self.st_cut_signal, self.arrival[0].distance_km,
+            spt = signal_preprocess_tools(self.st_cut_noise, self.st_cut_signal, self.arrival["distance_km"],
                 geom_spread_model, geom_spread_n_exponent, geom_spread_cutoff_distance, self.event_info, rho,
                                           spectral_smooth_width_decades, spectral_sn_min, spectral_sn_freq_range)
 

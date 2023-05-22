@@ -212,11 +212,6 @@ class Automag:
 
         self.dates=dates
 
-
-    def _filter_picks(self, picks, arrivals):
-        events_picks = {}
-        pass
-
     def _get_stations(self, arrivals):
         stations = []
         for pick in arrivals:
@@ -227,31 +222,34 @@ class Automag:
 
     def _get_info_in_arrivals(self, station, arrivals):
         data = {}
-
+        geodetics = {}
         for arrival in arrivals:
             if station == arrival.station:
+                geodetics["distance_km"] = arrival.distance_km
+                geodetics["distance_degrees"] = arrival.distance_degrees
+                geodetics["azimuth"] = arrival.azimuth
+                geodetics["takeoff_angle"] = arrival.takeoff_angle
+                if arrival.phase[0] == "P":
+                    geodetics["travel_time"] = float(arrival.travel_time)
                 if arrival.phase in data.keys():
-                    data[arrival.phase]["time_residual"] = [arrival.time_residual]
-                    data[arrival.phase]["date"] = [arrival.date]
+                    data[arrival.phase]["time_weight"].append(arrival.time_weight)
+                    data[arrival.phase]["date"].append(arrival.date)
                 else:
                     data[arrival.phase] = {}
-                    data[arrival.phase]["time_residual"] = []
+                    data[arrival.phase]["time_weight"] = []
                     data[arrival.phase]["date"] = []
-                    data[arrival.phase]["time_residual"].append(arrival.time_residual)
+                    data[arrival.phase]["time_weight"].append(arrival.time_weight)
                     data[arrival.phase]["date"].append(arrival.date)
+
         output = {}
+        output[station] = []
         for key, value in data.items():
-             residual_min = min(data[key]["time_residual"])
-             residual_min_index = data[key]["time_residual"].index(residual_min)
-             #data[key]["time_residual"] = [i for i in data[key]["time_residual"] if i == residual_min]
-             if station in output.keys():
-                 output[station].append([key, data[key]["date"][residual_min_index]])
-             else:
-                 output[station] = [key, data[key]["date"][residual_min_index]]
+             residual_min = list(map(abs, data[key]["time_weight"]))
+             residual_min = max(residual_min)
+             residual_min_index = data[key]["time_weight"].index(residual_min)
+             output[station].append([key, data[key]["date"][residual_min_index]])
 
-
-        # get the minimum phase residual
-        return output
+        return output, geodetics
 
 
     def estimate_magnitudes(self, config):
@@ -277,74 +275,50 @@ class Automag:
         pi_fc_min_max = config["pi_fc_min_max"]
         pi_bsd_min_max = config["pi_bsd_min_max"]
         max_freq_Er = config["max_freq_Er"]
-
         bound_config = {"Qo_min_max": config["Qo_min_max"], "t_star_min_max": config["t_star_min_max"],
                         "wave_type": config["wave_type"], "fc_min_max": config["fc_min_max"]}
         statistics_config = config.maps[7]
 
         for date in self.dates:
             events = self.dates[date]
-            self.get_now_files(date, ".") #this is just for test
+            self.get_now_files(date, ".")
             self.make_stream()
-            #TODO search mseeds for this date and cut it ensure 24 and deconv, return a stream
             for event in events:
-                events_picks = {}
                 sspec_output = SourceSpecOutput()
-                #cat = read_events(event, format="NLLOC_HYP")
+
                 cat = read_nll_performance.read_nlloc_hyp_ISP(event)
+                focal_parameters = [cat[0].origins[0]["time"], cat[0].origins[0]["latitude"],
+                                    cat[0].origins[0]["longitude"],
+                                    cat[0].origins[0]["depth"] * 1E-3]
+                sspec_output.event_info.event_id = "Id_Local"
+                sspec_output.event_info.longitude = cat[0].origins[0]["longitude"]
+                sspec_output.event_info.latitude = cat[0].origins[0]["latitude"]
+                sspec_output.event_info.depth_in_km = cat[0].origins[0]["depth"] * 1E-3
+                sspec_output.event_info.origin_time = cat[0].origins[0]["time"]
                 event = cat[0]
                 arrivals = event["origins"][0]["arrivals"]
                 stations = self._get_stations(arrivals)
-                pick = {}
-                for station in stations:
-                    if station not in pick.keys():
-                        data = self._get_info_in_arrivals(station, arrivals)
-
-                # for pick in picks:
-                #     if pick.waveform_id["station_code"] not in events_picks.keys():
-                #         events_picks[pick.waveform_id["station_code"]] = [[pick.phase_hint, pick.time]]
-                #     else:
-                #         events_picks[pick.waveform_id["station_code"]].append([pick.phase_hint, pick.time])
 
                 for station in stations:
-                    arrival = self.get_arrival(arrivals, station)
-                    picks = cat[0].picks
-                    focal_parameters = [cat[0].origins[0]["time"], cat[0].origins[0]["latitude"], cat[0].origins[0]["longitude"],
-                    cat[0].origins[0]["depth"]*1E-3]
-                    sspec_output.event_info.event_id = "Id_Local"
-                    sspec_output.event_info.longitude = cat[0].origins[0]["longitude"]
-                    sspec_output.event_info.latitude = cat[0].origins[0]["latitude"]
-                    sspec_output.event_info.depth_in_km = cat[0].origins[0]["depth"]*1E-3
-                    sspec_output.event_info.origin_time = cat[0].origins[0]["time"]
 
-                    events_picks = self._filter_picks(picks, arrivals)
-
-                # for pick in picks:
-                #     if pick.waveform_id["station_code"] not in events_picks.keys():
-                #         events_picks[pick.waveform_id["station_code"]] = [[pick.phase_hint, pick.time]]
-                #     else:
-                #         events_picks[pick.waveform_id["station_code"]].append([pick.phase_hint, pick.time])
-
-                for key in events_picks:
-                    pick_info = events_picks[key]
-                    st2 = self.st.select(station=key)
+                    events_picks, geodetics = self._get_info_in_arrivals(station, arrivals)
+                    pick_info = events_picks[station]
+                    st2 = self.st.select(station=station)
                     if st2.count() > 0:
-                        inv_selected = self.inventory.select(station=key)
-                        pt = preprocess_tools(st2, pick_info, focal_parameters, arrival, inv_selected)
+                        inv_selected = self.inventory.select(station=station)
+                        pt = preprocess_tools(st2, pick_info, focal_parameters, geodetics, inv_selected)
                         pt.deconv_waveform(gap_max, overlap_max, rmsmin, clipping_sensitivity)
                         pt.st_deconv = pt.st_deconv.select(component="Z")
                         if pt.st_deconv.count() > 0 and pt.st_wood.count() > 0:
-                            spectrum_dict = None
 
                             self.ML.append(pt.magnitude_local())
                             spectrum_dict = pt.compute_spectrum(geom_spread_model, geom_spread_n_exponent,
                                             geom_spread_cutoff_distance, rho, spectral_smooth_width_decades,
                                             spectral_sn_min, spectral_sn_freq_range)
 
-
                             if spectrum_dict is not None:
                                 ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0,
-                                    focal_parameters, arrival, inv_selected, bound_config, inv_algorithm, pi_misfit_max,
+                                    focal_parameters, geodetics, inv_selected, bound_config, inv_algorithm, pi_misfit_max,
                                                     pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max)
 
                                 magnitudes = ssp.run_estimate_all_traces()
@@ -412,8 +386,8 @@ if __name__ == "__main__":
                       spectral_model_params, postinversion_params, radiated_energy_params, statistics)
 
 
-    project_path = "/Users/admin/Documents/test_meli/test_meli_full"
-    inv_path = "/Users/admin/Documents/test_meli/metadata/metadata.xml"
+    project_path = "/Volumes/LaCie/test_meli/test_meli_casa"
+    inv_path = "/Volumes/LaCie/test_meli/metadata/metadata.xml"
     project = MseedUtil.load_project(project_path)
     mg = Automag(project, inv_path)
     mg.load_metadata()

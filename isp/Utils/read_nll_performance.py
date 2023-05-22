@@ -320,11 +320,7 @@ def _read_single_hypocenter(lines, coordinate_converter, original_picks):
         setattr(arrival, "station", line[0])
         setattr(arrival, "instrument", line[2])
         setattr(arrival, "polarity", line[5])
-        date = UTCDateTime(line[6][0:4]+"-"+line[6][4:6]+"-"+line[6][6:8]+"T"+line[7][0:2]+":"+line[7][2:4]+":"+line[8])
-        setattr(arrival, "date", date)
-        #setattr(arrival, "date", line[6])
-        #setattr(arrival, "HrMn", line[7])
-        #setattr(arrival, "Sec", line[8])
+        #date = UTCDateTime(line[6][0:4]+"-"+line[6][4:6]+"-"+line[6][6:8]+"T"+line[7][0:2]+":"+line[7][2:4]+":"+line[8])
         setattr(arrival, "travel_time", line[15])
         arrival.phase = phase
         arrival.distance_km = degrees2kilometers(float(line[21]))
@@ -343,6 +339,7 @@ def _read_single_hypocenter(lines, coordinate_converter, original_picks):
         ymd = [int(date[:4]), int(date[4:6]), int(date[6:8])]
         hm = [int(hourmin[:2]), int(hourmin[2:4])]
         t = UTCDateTime(*(ymd + hm), strict=False) + float(sec)
+        setattr(arrival, "date", t)
         pick.waveform_id = wid
         pick.time = t
         pick.time_errors.uncertainty = float(line[10])

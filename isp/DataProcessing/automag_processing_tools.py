@@ -429,12 +429,12 @@ class ssp_inversion:
                                     freq_log, t_star_0, pi_misfit_max, pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max, vs,
                                     invert_t_star_0=True):
 
-            hyp_dist = self.arrival[0].distance_km
-            epi_dist = self.arrival[0].distance_km
+            hyp_dist = self.arrival["distance_km"]
+            epi_dist = self.arrival["distance_km"]
             stla = self.event_info[1]
             stlo = self.event_info[2]
-            az = self.arrival[0].azimuth
-            travel_time = self.arrival[0].travel_time
+            az = self.arrival["azimuth"]
+            travel_time = self.arrival["travel_time"]
 
             yerr = self._set_parameters(weight_log)
             idx0, idx1, fc_0 = self._freq_ranges_for_Mw0_and_tstar0(weight_log, freq_log, keyId)
