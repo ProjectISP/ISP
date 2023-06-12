@@ -1,7 +1,8 @@
 import os
-from collections import ChainMap
 import numpy as np
 from datetime import datetime
+from isp import MAGNITUDE_DICT_PATH
+import pandas as pd
 from obspy import read, read_events, UTCDateTime, Stream
 from isp import ALL_LOCATIONS
 from isp.DataProcessing.automag_processing_tools import ssp_inversion
@@ -9,28 +10,16 @@ from isp.DataProcessing.automag_statistics import compute_summary_statistics, So
 from isp.DataProcessing.automag_tools import preprocess_tools
 from isp.DataProcessing.radiated_energy import Energy
 from isp.Utils import MseedUtil
-from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Utils import read_nll_performance
 
 class Automag:
 
-    def __init__(self, project, inventory_path):
+    def __init__(self, project, inventory):
         self.project = project
         self.all_traces = []
         self.st = None
         self.ML = []
-        self.inventory_path = inventory_path
-
-    def load_metadata(self):
-
-        try:
-
-            self.__metadata_manager = MetadataManager(self.inventory_path)
-            self.inventory = self.__metadata_manager.get_inventory()
-            print(self.inventory)
-        except:
-            raise FileNotFoundError("The metadata is not valid")
-
+        self.inventory = inventory
 
     def make_stream(self):
 
@@ -93,69 +82,12 @@ class Automag:
         tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=True, fill_value=0)
         return tr
 
-    def preprocess_stream(self, st, pick_info, regional=True):
-
-        #TODO CHECK IS VALID THE WAVEFORM
-        if regional:
-            st.trim(starttime=pick_info[0][1]-60, endtime=pick_info[0][1]+3*60)
-        else:
-            #Teleseism time window
-            st.trim(starttime=pick_info[0][1] - 1300, endtime=pick_info[0][1] + 3600)
-
-        st.detrend(type="simple")
-        st.taper(type="blackman", max_percentage=0.05)
-        f1 = 0.05
-        f2 = 0.08
-        f3 = 0.35 * st[0].stats.sampling_rate
-        f4 = 0.40 * st[0].stats.sampling_rate
-        pre_filt = (f1, f2, f3, f4)
-
-        st_deconv = []
-        st_wood = []
-        paz_wa = {'sensitivity': 2800, 'zeros': [0j], 'gain': 1,
-                  'poles': [-6.2832 - 4.7124j, -6.2832 + 4.7124j]}
-
-        for tr in st:
-
-            tr_deconv = tr.copy()
-            tr_wood = tr.copy()
-
-            try:
-                print("Removing Instrument")
-                tr_deconv.remove_response(inventory=self.inventory, pre_filt=pre_filt, output="DISP", water_level=90)
-                print(tr_deconv)
-                # tr_deconv.plot()
-                st_deconv.append(tr_deconv)
-            except:
-                print("Coudn't deconvolve", tr.stats)
-                tr.data = np.array([])
-
-            print("Simulating Wood Anderson Seismograph")
-
-            try:
-                resp = self.inventory.get_response(tr.id, tr.stats.starttime)
-                resp = resp.response_stages[0]
-                paz_mine = {'sensitivity': resp.stage_gain * resp.normalization_factor, 'zeros': resp.zeros,
-                            'gain': resp.stage_gain, 'poles': resp.poles}
-                tr_wood.simulate(paz_remove=paz_mine, paz_simulate=paz_wa, water_level=90)
-                # tr_wood.plot()
-                st_wood.append(tr_wood)
-            except:
-                print("Coudn't deconvolve", tr.stats)
-                tr.data = np.array([])
-
-        print("Finished Deconvolution")
-        st_deconv = Stream(traces=st_deconv)
-        st_wood = Stream(traces=st_wood)
-        st_deconv.plot()
-        st_wood.plot()
-        return st_deconv, st_wood
-
     def ML_statistics(self):
+
         MLs = np.array(self.ML)
         ML_mean = MLs.mean()
         ML_deviation = MLs.std()
-        #print("Local Magnitude", str(self.ML_mean)+str(self.ML_deviation))
+
         return ML_mean, ML_deviation
 
     def get_arrival(self, arrivals, sta_name):
@@ -211,6 +143,12 @@ class Automag:
                     pass
 
         self.dates=dates
+
+    def scan_from_origin(self, origin):
+
+        date = origin["time"]
+        self.dates = str(date.julday) + "." + str(date.year)
+
 
     def _get_stations(self, arrivals):
         stations = []
@@ -275,6 +213,7 @@ class Automag:
         pi_fc_min_max = config["pi_fc_min_max"]
         pi_bsd_min_max = config["pi_bsd_min_max"]
         max_freq_Er = config["max_freq_Er"]
+
         bound_config = {"Qo_min_max": config["Qo_min_max"], "t_star_min_max": config["t_star_min_max"],
                         "wave_type": config["wave_type"], "fc_min_max": config["fc_min_max"]}
         statistics_config = config.maps[7]
@@ -311,7 +250,7 @@ class Automag:
                         pt.st_deconv = pt.st_deconv.select(component="Z")
                         if pt.st_deconv.count() > 0 and pt.st_wood.count() > 0:
 
-                            self.ML.append(pt.magnitude_local())
+                            self.ML.append(pt.magnitude_local(config))
                             spectrum_dict = pt.compute_spectrum(geom_spread_model, geom_spread_n_exponent,
                                             geom_spread_cutoff_distance, rho, spectral_smooth_width_decades,
                                             spectral_sn_min, spectral_sn_freq_range)
@@ -345,52 +284,12 @@ class Automag:
 
 
 if __name__ == "__main__":
-    time_window_params = {"channels": ["HHE, HHN, HHZ"], "max_epi_dist": 300, "vp_tt": None, "vs_tt": None,
-                          "p_arrival_tolerance": 4.0,
-                          "s_arrival_tolerance": 4.0, "noise_pre_time": 15.0, "signal_pre_time": 1.0,
-                          "win_length": 10.0}
-
-    spectrum_params = {"wave_type": "P", "time_domain_int": False, "ignore_vertical": False, "taper_halfwidth": 0.05,
-                       "spectral_win_length": 20.0, "spectral_smooth_width_decades": 0.2, "residuals_filepath": None,
-                       "bp_freqmin_acc": 1.0,
-                       "bp_freqmax_acc": 50.0, "bp_freqmin_shortp": 1.0, "bp_freqmax_shortp": 40.0,
-                       "bp_freqmin_broadb": 0.4,
-                       "bp_freqmax_broadb": 40.0, "freq1_acc": 1, "freq2_acc": 30.0, "freq1_shortp": 1.0,
-                       "freq2_shortp": 30.0,
-                       "freq1_broadb": 0.5, "freq2_broadb": 10.0}
-
-    signal_noise_ratio_params = {"rmsmin": 0.0, "sn_min": 1.0, "clip_max_percent": 5.0, "gap_max": None,
-                                 "overlap_max": None,
-                                 "spectral_sn_min": 0.0, "spectral_sn_freq_range": (0.1, 2.0), "clipping_sensitivity": 3}
-
-    source_model_parameters = {"vp_source": 6.0, "vs_source": 3.5, "vp_stations": None, "vs_stations": None,
-                               "rho": 2500.0,
-                               "rpp": 0.52, "rps": 0.62, "rp_from_focal_mechanism": False,
-                               "geom_spread_model": "r_power_n",
-                               "geom_spread_n_exponent": 1.0, "geom_spread_cutoff_distance": 100.0}
-
-    spectral_model_params = {"weighting": "noise", "f_weight": 7.0, "weight": 10.0, "t_star_0": 0.045,
-                             "invert_t_star_0": False,
-                             "t_star_0_variability": 0.1, "Mw_0_variability": 0.1, "inv_algorithm": "TNC",
-                             "t_star_min_max": (0.0, 0.1), "fc_min_max" : (1.0, 50.0), "Qo_min_max": None}
-
-    postinversion_params = {"pi_fc_min_max": None, "pi_bsd_min_max": None, "pi_misfit_max": None,
-                            "pi_t_star_min_max": None}
-
-    radiated_energy_params = {"max_freq_Er": None}
-
-    statistics = {"reference_statistics": 'weighted_mean', "n_sigma": 1, "lower_percentage": 15.9, "mid_percentage": 50,
-                  "upper_percentage": 84.1, "nIQR": 1.5}
-
-    config = ChainMap(time_window_params, spectrum_params, signal_noise_ratio_params, source_model_parameters,
-                      spectral_model_params, postinversion_params, radiated_energy_params, statistics)
-
-
+    file = os.path.join(MAGNITUDE_DICT_PATH, "automag_config")
+    config = pd.read_pickle(file)
     project_path = "/Volumes/LaCie/test_meli/test_meli_casa"
-    inv_path = "/Volumes/LaCie/test_meli/metadata/metadata.xml"
+    inv = "/Volumes/LaCie/test_meli/metadata/metadata.xml"
     project = MseedUtil.load_project(project_path)
-    mg = Automag(project, inv_path)
-    mg.load_metadata()
+    mg = Automag(project, inv)
     mg.scan_folder()
     mg.estimate_magnitudes(config)
     #mg.get_now_files()

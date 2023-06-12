@@ -43,6 +43,7 @@ from isp.seismogramInspector.signal_processing_advanced import spectrumelement, 
     correlate_maxlag, get_lags
 from sys import platform
 
+
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     value_entropy_init = pyc.pyqtSignal(int)
@@ -2021,9 +2022,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def open_magnitudes_calculator(self):
         hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")
-        origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file)
+        origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file, modified=True)
+        #origin: Origin = read_nll_performance.read_nlloc_hyp_ISP(hyp_file)
         if isinstance(origin, Origin):
-            self._magnitude_calc = MagnitudeCalc(origin, self.inventory, self.chop)
+            self._magnitude_calc = MagnitudeCalc(origin, self.inventory, self.chop, self.project)
             self._magnitude_calc.show()
 
     def open_solutions(self):

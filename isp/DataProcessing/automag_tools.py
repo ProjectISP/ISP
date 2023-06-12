@@ -364,7 +364,7 @@ class preprocess_tools:
          coords = selected_inv.get_coordinates(cont['channels'][0])
          return StationCoordinates.from_dict(coords)
     #
-    def magnitude_local(self):
+    def magnitude_local(self, config):
         #print("Calculating Local Magnitude")
         tr_E = self.st_wood.select(component="E")
         tr_E = tr_E[0]
@@ -376,7 +376,8 @@ class preprocess_tools:
         max_amplitude_N = np.max(tr_N.data)*1e3 # convert to  mm --> nm
         max_amplitude_E = np.max(tr_E.data) * 1e3  # convert to  mm --> nm
         max_amplitude = max([max_amplitude_E, max_amplitude_N])
-        ML_value = np.log10(max_amplitude)+1.11*np.log10(dist)+0.00189*dist-2.09
+
+        ML_value = np.log10(max_amplitude)+config[0]["local_magnitude"]*np.log10(dist)+config[1]*dist+config[2]
         #print(ML_value)
         return ML_value
 

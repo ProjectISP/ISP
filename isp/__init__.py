@@ -17,6 +17,7 @@ AUTOMATIC_PHASES = os.path.join(ROOT_DIR, 'earthquakeAnalisysis/auto_detect/phas
 DISP_MAPS = os.path.join(ROOT_DIR, 'ant/data_tomo')
 DISP_REF_CURVES = os.path.join(ROOT_DIR, 'ant/disp_curv_ref')
 CLOCK_PATH = os.path.join(ROOT_DIR, 'ant/clock_dir')
+MAGNITUDE_DICT_PATH = os.path.join(ROOT_DIR, 'DataProcessing/MagnitudesConfig')
 
 def create_logger():
 

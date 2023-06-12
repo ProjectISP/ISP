@@ -22,7 +22,7 @@ import os
 import re
 from pathlib import Path
 from obspy.io.nlloc.core import read_nlloc_hyp
-
+from isp.Utils import read_nll_performance
 @unique
 class Filters(Enum):
 
@@ -251,7 +251,32 @@ class ObspyUtil:
                 st.trim(endtime=end_time)
 
     @staticmethod
-    def reads_hyp_to_origin(hyp_file_path: str) -> Origin:
+    def reads_hyp_to_origin(hyp_file_path: str, modified=False) -> Origin:
+        """
+        Reads an hyp file and returns the Obspy Origin.
+        :param hyp_file_path: The file path to the .hyp file
+        :param modified: To use the modified version of read_events, including more info into Origin
+        :return: An Obspy Origin
+        """
+
+        if os.path.isfile(hyp_file_path):
+            if modified==False:
+                cat = read_events(hyp_file_path)
+            else:
+                cat = read_nll_performance.read_nlloc_hyp_ISP(hyp_file_path)
+            event = cat[0]
+            origin = event.origins[0]
+            modified_origin_90 = computeOriginErrors(origin)
+            origin.depth_errors["uncertainty"] = modified_origin_90['depth_errors'].uncertainty
+            origin.origin_uncertainty.max_horizontal_uncertainty = modified_origin_90['origin_uncertainty'].max_horizontal_uncertainty
+            origin.origin_uncertainty.min_horizontal_uncertainty = modified_origin_90[
+                'origin_uncertainty'].min_horizontal_uncertainty
+            origin.origin_uncertainty.azimuth_max_horizontal_uncertainty = modified_origin_90['origin_uncertainty'].azimuth_max_horizontal_uncertainty
+
+        return origin
+
+    @staticmethod
+    def reads_hyp_to_origin_modified(hyp_file_path: str) -> Origin:
         """
         Reads an hyp file and returns the Obspy Origin.
         :param hyp_file_path: The file path to the .hyp file
@@ -259,15 +284,18 @@ class ObspyUtil:
         """
 
         if os.path.isfile(hyp_file_path):
+
             cat = read_events(hyp_file_path)
             event = cat[0]
             origin = event.origins[0]
             modified_origin_90 = computeOriginErrors(origin)
-            origin.depth_errors["uncertainty"]=modified_origin_90['depth_errors'].uncertainty
-            origin.origin_uncertainty.max_horizontal_uncertainty = modified_origin_90['origin_uncertainty'].max_horizontal_uncertainty
+            origin.depth_errors["uncertainty"] = modified_origin_90['depth_errors'].uncertainty
+            origin.origin_uncertainty.max_horizontal_uncertainty = modified_origin_90[
+                'origin_uncertainty'].max_horizontal_uncertainty
             origin.origin_uncertainty.min_horizontal_uncertainty = modified_origin_90[
                 'origin_uncertainty'].min_horizontal_uncertainty
-            origin.origin_uncertainty.azimuth_max_horizontal_uncertainty = modified_origin_90['origin_uncertainty'].azimuth_max_horizontal_uncertainty
+            origin.origin_uncertainty.azimuth_max_horizontal_uncertainty = modified_origin_90[
+                'origin_uncertainty'].azimuth_max_horizontal_uncertainty
 
         return origin
 
@@ -371,7 +399,7 @@ class MseedUtil:
         else:
 
             if self.robust and self.is_valid_mseed(self.pos_file[i]):
-                
+
                 result = self.pos_file[i]
 
             elif not self.robust:
@@ -451,7 +479,7 @@ class MseedUtil:
     def estimate_size(self, rooth_path):
 
         nbytes = sum(file.stat().st_size for file in Path(rooth_path).rglob('*')) * 1E-6
-        
+
         return nbytes
 
     def convert2dict(self, project):

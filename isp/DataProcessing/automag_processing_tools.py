@@ -12,7 +12,8 @@ from scipy.interpolate import griddata
 from scipy.signal._peak_finding_utils import PeakPropertyWarning
 import itertools
 import warnings
-from automag_statistics import SpectralParameter, StationParameters, SourceSpecOutput
+#from automag_statistics import SpectralParameter, StationParameters, SourceSpecOutput
+from isp.DataProcessing.automag_statistics import SpectralParameter, StationParameters, SourceSpecOutput
 logger = logging.getLogger(__name__.split('.')[-1])
 
 class signal_preprocess_tools:

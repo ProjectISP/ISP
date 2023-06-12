@@ -1,7 +1,8 @@
+import pandas as pd
 from obspy.geodetics import gps2dist_azimuth, locations2degrees
 from obspy import UTCDateTime
 from isp.Gui import pw
-from isp.Gui.Frames import MatplotlibCanvas, SettingsLoader
+from isp.Gui.Frames import MatplotlibCanvas, SettingsLoader, MessageDialog
 from isp.Gui.Frames.uis_frames import UiMagnitudeFrame
 from mtspec import mtspec
 import numpy as np
@@ -11,6 +12,8 @@ import matplotlib.dates as mdt
 from isp.Gui.Utils.pyqt_utils import add_save_load
 from isp.Structures.structures import StationCoordinates
 from isp import ROOT_DIR
+from isp import MAGNITUDE_DICT_PATH
+from isp.DataProcessing.autoag import Automag
 import os
 
 def fit_spectrum(spectrum, frequencies, traveltime, initial_omega_0, initial_f_c, QUALITY_FACTOR):
@@ -76,7 +79,7 @@ def get_coordinates_from_metadata(inventory, stats):
 
 @add_save_load()
 class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
-    def __init__(self, origin, inventory, chop):
+    def __init__(self, origin, inventory, chop, project):
         super(MagnitudeCalc, self).__init__()
         self.setupUi(self)
         self.spectrum_Widget_Canvas = MatplotlibCanvas(self.spectrumWidget, nrows=2, ncols=1,
@@ -84,12 +87,13 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         self.event = origin
         self.chop = chop
         self.inventory = inventory
+        self.project = project
         self.runBtn.clicked.connect(self.run_magnitudes)
         self.saveBtn.clicked.connect(self.save_results)
         self.plotBtn.clicked.connect(self.plot_comparison)
         self.Mw = []
-        self.Mw_std=[]
-        self.Ms= []
+        self.Mw_std = []
+        self.Ms = []
         self.Ms_std = []
         self.Mb = []
         self.Mb_std = []
@@ -99,11 +103,14 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         self.Mc_std = []
         self.ML = []
         self.ML_std = []
-        self.Magnitude_Ws= []
+        self.Magnitude_Ws = []
         self.Mss = []
         self.Mcs = []
         self.Mcs = []
         self.MLs = []
+        self.config_automag = {}
+        self.file_automag_config = os.path.join(MAGNITUDE_DICT_PATH, "automag_config")
+        self.runAutomagBtn.clicked(self.run_automag)
 
     def closeEvent(self, ce):
         self.save_values()
@@ -459,12 +466,43 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         k = 0
         for magnitude in list_magnitudes:
             label = labels[k]
-            x =np.arange(len(magnitude))+1
-            ax1.scatter(x, magnitude, s=15, alpha = 0.5, label=label)
+            x = np.arange(len(magnitude))+1
+            ax1.scatter(x, magnitude, s=15, alpha=0.5, label=label)
             ax1.tick_params(direction='in', labelsize=10)
             ax1.legend(loc='upper right')
-            plt.ylabel('Magnitudes',fontsize=10)
+            plt.ylabel('Magnitudes', fontsize=10)
             plt.xlabel('Counts', fontsize=10)
             k = k+1
 
         self.mpf.show()
+
+########### AutoMag#########
+
+    def run_automag(self):
+
+        self.load_config_automag()
+        mg = Automag(self.event, self.project)
+        mg.scan_from_origin(self.event)
+        mg.estimate_magnitudes(self.config_automag)
+
+    def load_config_automag(self):
+        try:
+            self.config_automag = pd.read_pickle(self.file_automag_config)
+            self.modify_pred_config()
+        except:
+            md = MessageDialog(self)
+            md.set_error_message("Coundn't open magnitude file")
+
+
+    def modify_pred_config(self):
+
+        self.config_automag["max_epi_dist"] = self.mag_max_distDB.value()
+        self.config_automag["mag_vpweight"] = self.mag_vpweightDB.value()
+        self.config_automag["mag_vsweight"] = self.mag_vsweightDB.value()
+        self.config_automag["rho"] = self.automag_density_DB.value()
+        self.config_automag["automag_rpp"] = self.automag_rppDB.value()
+        self.config_automag["automag_rps"] = self.automag_rpsDB.value()
+        self.config_automag["geom_spread_model"] = self.r_power_nRB.isChecked()
+        self.config_automag["geom_spread_n_exponent"] = self.geom_spread_n_exponentDB.value()
+        self.config_automag["geom_spread_cutoff_distance"] = self.geom_spread_cutoff_distanceDB.value()
+        self.config_automag["local_magnitude"] = [self.mag_aDB.value(), self.mag_bDB.value(), self.mag_cDB.value()]
