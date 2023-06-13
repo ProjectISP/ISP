@@ -487,20 +487,23 @@ class JoinClocks():
 
 
 if __name__ == "__main__":
-    input_path = "/Users/admin/Documents/iMacROA/clock_dir_def/all_components_new"
-    output_path = "/Volumes/LaCie/UPFLOW_resample/clock_dir_def/join_poly"
-    skews_path = "/Users/admin/Documents/iMacROA/clock_dir_def/skews/skews.txt"
+    input_path = "/Users/admin/Documents/iMacROA/clock_dir/all_components_new"
+    output_path = "/Volumes/LaCie/UPFLOW_resample/clock_dir/output_join"
+    skews_path = "/Users/admin/Documents/iMacROA/clock_dir/skews/skews.txt"
     # example
     #list_of_files = list_all_dir(input_path)
 
-    obs_pair = "UP27_UP30"
-    components = ["ZZ", "HH", "RR", "TT"]
+    # obs_pair = "UP27_UP30"
+    # components = ["ZZ", "HH", "RR", "TT"]
+    # order = 2
+
+    # obs_pair = "UP09_UP13"
+    # components = ["ZZ","RR", "TT", "HH"]
+    # order = 3
+
+    obs_pair = "OB19_ROSA"
+    components = ["ZZ", "RR", "TT", "HH"]
     order = 2
-
-    obs_pair = "UP09_UP13"
-    components = ["ZZ","RR", "TT", "HH"]
-    order = 3
-
     # example
     jc = JoinClocks(input_path, skews_path, output_path, obs_pair, components, order)
     jc.list_dir()

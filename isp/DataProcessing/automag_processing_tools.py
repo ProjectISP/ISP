@@ -143,6 +143,7 @@ class signal_preprocess_tools:
                 coeff = cutoff_dist * (dist / cutoff_dist) ** exponent
             return coeff
 
+
         def __dofft(self, signal, delta, npts):
             """Compute the complex Fourier transform of a signal."""
 
