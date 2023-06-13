@@ -1,3 +1,5 @@
+import warnings
+
 from obspy import UTCDateTime
 from obspy.geodetics import gps2dist_azimuth
 from obspy.taup import TauPyModel
@@ -13,7 +15,7 @@ logger = logging.getLogger(__name__.split('.')[-1])
 
 class preprocess_tools:
 
-    def __init__(self, st, pick_info, event_info, arrival, inventory):
+    def __init__(self, st, pick_info, event_info, arrival, inventory, scale):
 
         self.st = st.copy()
         self.inventory = inventory
@@ -26,7 +28,7 @@ class preprocess_tools:
         self.signal_window_time = None
         self.noise_window_time = None
         # Parameters
-        self.scale = "Regional"
+        self.scale = scale
 
     def check_signal_level(self, rmsmin):
         validation = []
@@ -150,6 +152,7 @@ class preprocess_tools:
 
         pickP_time = None
         pickS_time = None
+
         for item in self.pick_info:
             if item[0] == "P":
                 pickP_time = item[1]
@@ -159,29 +162,30 @@ class preprocess_tools:
         self.pickP_time = pickP_time
         self.pickS_time = pickS_time
 
-        #if self.arrival[0].distance_degrees > 1.0:
-        if isinstance(pickS_time, UTCDateTime):
-            self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
-            self.signal_window_duration = self.signal_window_time - pickP_time
-            self.noise_window_duration = self.signal_window_duration / 3
-            self.noise_window_time = pickP_time - self.noise_window_duration
-        else:
-            # Calculate distance in degree
-            arrivals = self.model.get_travel_times(source_depth_in_km=self.pick_info[3],
-                                                   distance_in_degree=self.arrival["distance_degrees"], phase_list=["S"])
+        if self.scale == "Regional":
+            if isinstance(pickS_time, UTCDateTime):
+                self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
+                self.signal_window_duration = self.signal_window_time - pickP_time
+                self.noise_window_duration = self.signal_window_duration / 3
+                self.noise_window_time = pickP_time - self.noise_window_duration
+            else:
+                # Calculate distance in degree
+                arrivals = self.model.get_travel_times(source_depth_in_km=self.event_info[3],
+                                                       distance_in_degree=self.arrival["distance_degrees"], phase_list=["S"])
 
-            pickS_time = self.pick_info[3] + arrivals[0].time
-            self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
-            self.signal_window_duration = self.signal_window_time - pickP_time
+                pickS_time = self.event_info[0] + arrivals[0].time
+                self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
+                self.signal_window_duration = self.signal_window_time - pickP_time
+                self.noise_window_duration = self.signal_window_duration / 3
+        else:
+            self.signal_window_time = pickP_time+20
             self.noise_window_duration = self.signal_window_duration / 3
-        #else:
-            #self.signal_window_time = 6.0
-            #self.noise_window_time = 2.0
+
 
     def merge_stream(self, gap_max, overlap_max):
 
         """
-        cut earthquake (regional /teleseism), Check for gaps and overlaps; remove mean; merge stream;
+        cut earthquake (regional or teleseism), Check for gaps and overlaps; remove mean; merge stream;
         """
 
         self.__cut_earthquake(scale=self.scale)
@@ -234,7 +238,8 @@ class preprocess_tools:
         self.st_deconv = Stream([])
         self.st_wood = Stream([])
         self.__get_timespan()
-        self.merge_stream(gap_max, overlap_max) #this process includes cut around earthquake
+        # Cut signal around earthquake and check if the signal have too much gaps, if not interpolate
+        self.merge_stream(gap_max, overlap_max)
         self.check_signal_level(rmsmin=rmsmin)
         st = self.__cut_waveform(cutstream=False) #this process is just to check that it is not clipped
         self.check_clipping(st, clipping_sensitivity=clipping_sensitivity)
@@ -250,10 +255,8 @@ class preprocess_tools:
             f3 = 0.35 * self.st[0].stats.sampling_rate
             f4 = 0.40 * self.st[0].stats.sampling_rate
             pre_filt = (f1, f2, f3, f4)
-
             st_deconv = []
             st_wood = []
-
 
             for tr in self.st:
 
@@ -261,7 +264,8 @@ class preprocess_tools:
                 tr_wood = tr.copy()
 
                 try:
-                    tr_deconv.remove_response(inventory=self.inventory, pre_filt=pre_filt, output="DISP", water_level=90)
+                    tr_deconv.remove_response(inventory=self.inventory, pre_filt=pre_filt, output="DISP",
+                                              water_level=90)
                     st_deconv.append(tr_deconv)
                 except:
                     tr.data = np.array([])
@@ -322,7 +326,17 @@ class preprocess_tools:
                                                  endtime=self.pickP_time+self.noise_window_duration)
 
     def __cut_earthquake(self, scale="Regional"):
-        # check minimum span
+
+        """
+
+        Parameters:scale
+        ----------
+        scale
+
+        Returns: cut a stream if is regional P-60: P+180, Teleseism P-1300:P+3600
+        -------
+
+        """
 
         maxstart = np.max([tr.stats.starttime for tr in self.st])
         minend = np.min([tr.stats.endtime for tr in self.st])
@@ -366,19 +380,35 @@ class preprocess_tools:
     #
     def magnitude_local(self, config):
         #print("Calculating Local Magnitude")
-        tr_E = self.st_wood.select(component="E")
-        tr_E = tr_E[0]
-        tr_N = self.st_wood.select(component="N")
-        tr_N = tr_N[0]
-        coords = self.extract_coordinates_from_station_name(self.inventory, self.st_wood[0].stats.station)
-        dist, _, _ = gps2dist_azimuth(coords.Latitude, coords.Longitude, self.event_info[1], self.event_info[2])
-        dist = dist / 1000
-        max_amplitude_N = np.max(tr_N.data)*1e3 # convert to  mm --> nm
-        max_amplitude_E = np.max(tr_E.data) * 1e3  # convert to  mm --> nm
-        max_amplitude = max([max_amplitude_E, max_amplitude_N])
+        ML_value = None
+        try:
 
-        ML_value = np.log10(max_amplitude)+config[0]["local_magnitude"]*np.log10(dist)+config[1]*dist+config[2]
-        #print(ML_value)
+            coords = self.extract_coordinates_from_station_name(self.inventory, self.st_wood[0].stats.station)
+            dist, _, _ = gps2dist_azimuth(coords.Latitude, coords.Longitude, self.event_info[1], self.event_info[2])
+            dist = dist / 1000
+
+            tr_E = self.st_wood.select(component="E")
+            tr_E = tr_E[0]
+            tr_N = self.st_wood.select(component="N")
+            tr_N = tr_N[0]
+            if len(tr_N.data) > 0 and len(tr_E.data) > 0:
+
+                max_amplitude_N = np.max(tr_N.data) * 1e3  # convert to  mm --> nm
+                max_amplitude_E = np.max(tr_E.data) * 1e3  # convert to  mm --> nm
+                max_amplitude = max([max_amplitude_E, max_amplitude_N])
+            else:
+                tr_Z = self.st_wood.select(component="Z")
+                tr_Z = tr_Z[0]
+                max_amplitude = np.max(tr_Z.data) * 1e3 # convert to  mm --> nm
+
+            ML_value = np.log10(max_amplitude) + config[0]["local_magnitude"] * np.log10(dist) + config[1] * dist + \
+                       config[2]
+
+        except:
+            warnings.warn("Couldn't estimate local magnitude")
+
+        return ML_value
+
         return ML_value
 
 

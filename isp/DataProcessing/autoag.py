@@ -1,8 +1,6 @@
 import os
 import numpy as np
 from datetime import datetime
-from isp import MAGNITUDE_DICT_PATH
-import pandas as pd
 from obspy import read, read_events, UTCDateTime, Stream
 from isp import ALL_LOCATIONS
 from isp.DataProcessing.automag_processing_tools import ssp_inversion
@@ -10,16 +8,18 @@ from isp.DataProcessing.automag_statistics import compute_summary_statistics, So
 from isp.DataProcessing.automag_tools import preprocess_tools
 from isp.DataProcessing.radiated_energy import Energy
 from isp.Utils import MseedUtil
-from isp.Utils import read_nll_performance
+#from isp.Utils import read_nll_performance
 
 class Automag:
 
-    def __init__(self, project, inventory):
+    def __init__(self, origin, event, project, inventory):
+        self.origin = origin
+        self.event = event
         self.project = project
+        self.inventory = inventory
         self.all_traces = []
         self.st = None
         self.ML = []
-        self.inventory = inventory
 
     def make_stream(self):
 
@@ -83,7 +83,7 @@ class Automag:
         return tr
 
     def ML_statistics(self):
-
+        self.ML = list(filter(lambda item: item is not None, self.ML))
         MLs = np.array(self.ML)
         ML_mean = MLs.mean()
         ML_deviation = MLs.std()
@@ -158,7 +158,7 @@ class Automag:
 
         return stations
 
-    def _get_info_in_arrivals(self, station, arrivals):
+    def _get_info_in_arrivals(self, station, arrivals, min_residual_threshold):
         data = {}
         geodetics = {}
         for arrival in arrivals:
@@ -182,16 +182,19 @@ class Automag:
         output = {}
         output[station] = []
         for key, value in data.items():
+
              residual_min = list(map(abs, data[key]["time_weight"]))
              residual_min = max(residual_min)
              residual_min_index = data[key]["time_weight"].index(residual_min)
-             output[station].append([key, data[key]["date"][residual_min_index]])
+             if data[key]["date"][residual_min_index] >= min_residual_threshold:
+                output[station].append([key, data[key]["date"][residual_min_index]])
 
         return output, geodetics
 
 
     def estimate_magnitudes(self, config):
-
+        magnitude_mw_statistics = {}
+        magnitude_ml_statistics = {}
         # extract info from config:
         gap_max = config['gap_max']
         overlap_max = config['overlap_max']
@@ -213,83 +216,88 @@ class Automag:
         pi_fc_min_max = config["pi_fc_min_max"]
         pi_bsd_min_max = config["pi_bsd_min_max"]
         max_freq_Er = config["max_freq_Er"]
+        min_residual_threshold = config["min_residual_threshold"]
+        scale = config["scale"]
 
         bound_config = {"Qo_min_max": config["Qo_min_max"], "t_star_min_max": config["t_star_min_max"],
                         "wave_type": config["wave_type"], "fc_min_max": config["fc_min_max"]}
         statistics_config = config.maps[7]
 
-        for date in self.dates:
-            events = self.dates[date]
-            self.get_now_files(date, ".")
-            self.make_stream()
-            for event in events:
-                sspec_output = SourceSpecOutput()
+        #for date in self.dates:
+        #events = self.dates[date]
+        self.get_now_files(self.dates, ".")
+        self.make_stream()
+        #for event in events:
+        sspec_output = SourceSpecOutput()
 
-                cat = read_nll_performance.read_nlloc_hyp_ISP(event)
-                focal_parameters = [cat[0].origins[0]["time"], cat[0].origins[0]["latitude"],
-                                    cat[0].origins[0]["longitude"],
-                                    cat[0].origins[0]["depth"] * 1E-3]
-                sspec_output.event_info.event_id = "Id_Local"
-                sspec_output.event_info.longitude = cat[0].origins[0]["longitude"]
-                sspec_output.event_info.latitude = cat[0].origins[0]["latitude"]
-                sspec_output.event_info.depth_in_km = cat[0].origins[0]["depth"] * 1E-3
-                sspec_output.event_info.origin_time = cat[0].origins[0]["time"]
-                event = cat[0]
-                arrivals = event["origins"][0]["arrivals"]
-                stations = self._get_stations(arrivals)
+        #cat = read_nll_performance.read_nlloc_hyp_ISP(event)
+        focal_parameters = [self.event.origins[0]["time"], self.event.origins[0]["latitude"],
+                            self.event.origins[0]["longitude"],
+                            self.event.origins[0]["depth"] * 1E-3]
+        sspec_output.event_info.event_id = "Id_Local"
+        sspec_output.event_info.longitude = self.event.origins[0]["longitude"]
+        sspec_output.event_info.latitude = self.event.origins[0]["latitude"]
+        sspec_output.event_info.depth_in_km = self.event.origins[0]["depth"] * 1E-3
+        sspec_output.event_info.origin_time = self.event.origins[0]["time"]
 
-                for station in stations:
+        arrivals = self.event["origins"][0]["arrivals"]
+        stations = self._get_stations(arrivals)
 
-                    events_picks, geodetics = self._get_info_in_arrivals(station, arrivals)
-                    pick_info = events_picks[station]
-                    st2 = self.st.select(station=station)
-                    if st2.count() > 0:
-                        inv_selected = self.inventory.select(station=station)
-                        pt = preprocess_tools(st2, pick_info, focal_parameters, geodetics, inv_selected)
-                        pt.deconv_waveform(gap_max, overlap_max, rmsmin, clipping_sensitivity)
-                        pt.st_deconv = pt.st_deconv.select(component="Z")
-                        if pt.st_deconv.count() > 0 and pt.st_wood.count() > 0:
+        for station in stations:
 
-                            self.ML.append(pt.magnitude_local(config))
-                            spectrum_dict = pt.compute_spectrum(geom_spread_model, geom_spread_n_exponent,
-                                            geom_spread_cutoff_distance, rho, spectral_smooth_width_decades,
-                                            spectral_sn_min, spectral_sn_freq_range)
+            events_picks, geodetics = self._get_info_in_arrivals(station, arrivals, min_residual_threshold)
+            pick_info = events_picks[station]
+            st2 = self.st.select(station=station)
+            if st2.count() > 0:
+                inv_selected = self.inventory.select(station=station)
+                pt = preprocess_tools(st2, pick_info, focal_parameters, geodetics, inv_selected, scale)
+                pt.deconv_waveform(gap_max, overlap_max, rmsmin, clipping_sensitivity)
+                pt.st_deconv = pt.st_deconv.select(component="Z")
+                if pt.st_deconv.count() > 0 and pt.st_wood.count() > 0:
 
-                            if spectrum_dict is not None:
-                                ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0,
-                                    focal_parameters, geodetics, inv_selected, bound_config, inv_algorithm, pi_misfit_max,
-                                                    pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max)
+                    self.ML.append(pt.magnitude_local(config))
+                    spectrum_dict = pt.compute_spectrum(geom_spread_model, geom_spread_n_exponent,
+                                    geom_spread_cutoff_distance, rho, spectral_smooth_width_decades,
+                                    spectral_sn_min, spectral_sn_freq_range)
 
-                                magnitudes = ssp.run_estimate_all_traces()
-                                for chn in magnitudes:
-                                    sspec_output.station_parameters[chn._id] = chn
-                                    # for now just for vertical component
-                                    for keyId, trace_dict in spectrum_dict.items():
-                                        spec = trace_dict["amp_signal_moment"]
-                                        specnoise = trace_dict["amp_signal_moment"]
-                                        freq_signal = trace_dict["freq_signal"]
-                                        freq_noise = trace_dict["freq_noise"]
-                                        full_period_signal = trace_dict["full_period_signal"]
-                                        full_period_noise = trace_dict["full_period_noise"]
-                                        vs = trace_dict["vs"]
-                                    # compute and implement energy
-                                    sspec_output.station_parameters[chn._id] = Energy.radiated_energy(chn._id, spec,
-                                        specnoise, freq_signal, freq_noise, full_period_signal, full_period_noise,
-                                        chn.fc.value, vs, max_freq_Er, rho, chn.t_star.value, chn)
+                    if spectrum_dict is not None:
+                        ssp = ssp_inversion(spectrum_dict, t_star_0_variability, invert_t_star_0, t_star_0,
+                            focal_parameters, geodetics, inv_selected, bound_config, inv_algorithm, pi_misfit_max,
+                                            pi_t_star_min_max, pi_fc_min_max, pi_bsd_min_max)
 
-                magnitude_statistics = compute_summary_statistics(statistics_config, sspec_output)
-                ML_mean, ML_std = self.ML_statistics()
-                print("end")
+                        magnitudes = ssp.run_estimate_all_traces()
+                        for chn in magnitudes:
+                            sspec_output.station_parameters[chn._id] = chn
+                            # for now just for vertical component
+                            for keyId, trace_dict in spectrum_dict.items():
+                                spec = trace_dict["amp_signal_moment"]
+                                specnoise = trace_dict["amp_signal_moment"]
+                                freq_signal = trace_dict["freq_signal"]
+                                freq_noise = trace_dict["freq_noise"]
+                                full_period_signal = trace_dict["full_period_signal"]
+                                full_period_noise = trace_dict["full_period_noise"]
+                                vs = trace_dict["vs"]
+                            # compute and implement energy
+                            sspec_output.station_parameters[chn._id] = Energy.radiated_energy(chn._id, spec,
+                                specnoise, freq_signal, freq_noise, full_period_signal, full_period_noise,
+                                chn.fc.value, vs, max_freq_Er, rho, chn.t_star.value, chn)
+
+        magnitude_mw_statistics = compute_summary_statistics(statistics_config, sspec_output)
+        ML_mean, ML_std = self.ML_statistics()
+        magnitude_ml_statistics["ML_mean"] = ML_mean
+        magnitude_ml_statistics["ML_std"] = ML_std
+
+        return magnitude_mw_statistics, magnitude_ml_statistics
 
 
 
-if __name__ == "__main__":
-    file = os.path.join(MAGNITUDE_DICT_PATH, "automag_config")
-    config = pd.read_pickle(file)
-    project_path = "/Volumes/LaCie/test_meli/test_meli_casa"
-    inv = "/Volumes/LaCie/test_meli/metadata/metadata.xml"
-    project = MseedUtil.load_project(project_path)
-    mg = Automag(project, inv)
-    mg.scan_folder()
-    mg.estimate_magnitudes(config)
+#if __name__ == "__main__":
+    # file = os.path.join(MAGNITUDE_DICT_PATH, "automag_config")
+    # config = pd.read_pickle(file)
+    # project_path = "/Volumes/LaCie/test_meli/test_meli_casa"
+    # inv = "/Volumes/LaCie/test_meli/metadata/metadata.xml"
+    # project = MseedUtil.load_project(project_path)
+    # mg = Automag(project, inv)
+    # mg.scan_folder()
+    # mg.estimate_magnitudes(config)
     #mg.get_now_files()

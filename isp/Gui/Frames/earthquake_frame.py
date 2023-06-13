@@ -2024,8 +2024,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")
         origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file, modified=True)
         #origin: Origin = read_nll_performance.read_nlloc_hyp_ISP(hyp_file)
-        if isinstance(origin, Origin):
-            self._magnitude_calc = MagnitudeCalc(origin, self.inventory, self.chop, self.project)
+        if isinstance(origin[0], Origin):
+            self._magnitude_calc = MagnitudeCalc(origin[0], origin[1], self.inventory, self.project, self.chop)
             self._magnitude_calc.show()
 
     def open_solutions(self):

@@ -7,7 +7,7 @@ from isp import MAGNITUDE_DICT_PATH
 time_window_params = {"max_epi_dist": 300, "vp_tt": None, "vs_tt": None,
                       "p_arrival_tolerance": 4.0,
                       "s_arrival_tolerance": 4.0, "noise_pre_time": 15.0, "signal_pre_time": 1.0,
-                      "win_length": 10.0}
+                      "win_length": 10.0, "min_residual_threshold": 0.7, "scale": "Regional"}
 
 spectrum_params = {"wave_type": "P", "time_domain_int": False, "ignore_vertical": False, "taper_halfwidth": 0.05,
                    "spectral_win_length": 20.0, "spectral_smooth_width_decades": 0.2, "residuals_filepath": None,

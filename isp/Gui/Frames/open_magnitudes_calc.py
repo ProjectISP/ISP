@@ -79,18 +79,20 @@ def get_coordinates_from_metadata(inventory, stats):
 
 @add_save_load()
 class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
-    def __init__(self, origin, inventory, chop, project):
+    def __init__(self, origin, event, inventory, project, chop):
         super(MagnitudeCalc, self).__init__()
         self.setupUi(self)
         self.spectrum_Widget_Canvas = MatplotlibCanvas(self.spectrumWidget, nrows=2, ncols=1,
                                                        sharex=False, constrained_layout=True)
-        self.event = origin
+        self.event = event
+        self.origin = origin
         self.chop = chop
         self.inventory = inventory
         self.project = project
         self.runBtn.clicked.connect(self.run_magnitudes)
         self.saveBtn.clicked.connect(self.save_results)
         self.plotBtn.clicked.connect(self.plot_comparison)
+        self.runAutomagBtn.clicked.connect(self.run_automag)
         self.Mw = []
         self.Mw_std = []
         self.Ms = []
@@ -110,7 +112,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         self.MLs = []
         self.config_automag = {}
         self.file_automag_config = os.path.join(MAGNITUDE_DICT_PATH, "automag_config")
-        self.runAutomagBtn.clicked(self.run_automag)
+
 
     def closeEvent(self, ce):
         self.save_values()
@@ -437,7 +439,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         print(df)
         df.to_csv(path_output, sep=' ', index=False)
 
-    def plot_histograms(self,magnitudes,label):
+    def plot_histograms(self, magnitudes, label):
 
         self.ax2.hist(magnitudes, bins=4*len(magnitudes), alpha=0.5, label=label)
         self.ax2.set_xlabel("Magnitude", size=12)
@@ -481,8 +483,8 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
     def run_automag(self):
 
         self.load_config_automag()
-        mg = Automag(self.event, self.project)
-        mg.scan_from_origin(self.event)
+        mg = Automag(self.origin, self.event, self.project, self.inventory)
+        mg.scan_from_origin(self.origin)
         mg.estimate_magnitudes(self.config_automag)
 
     def load_config_automag(self):

@@ -273,31 +273,10 @@ class ObspyUtil:
                 'origin_uncertainty'].min_horizontal_uncertainty
             origin.origin_uncertainty.azimuth_max_horizontal_uncertainty = modified_origin_90['origin_uncertainty'].azimuth_max_horizontal_uncertainty
 
-        return origin
-
-    @staticmethod
-    def reads_hyp_to_origin_modified(hyp_file_path: str) -> Origin:
-        """
-        Reads an hyp file and returns the Obspy Origin.
-        :param hyp_file_path: The file path to the .hyp file
-        :return: An Obspy Origin
-        """
-
-        if os.path.isfile(hyp_file_path):
-
-            cat = read_events(hyp_file_path)
-            event = cat[0]
-            origin = event.origins[0]
-            modified_origin_90 = computeOriginErrors(origin)
-            origin.depth_errors["uncertainty"] = modified_origin_90['depth_errors'].uncertainty
-            origin.origin_uncertainty.max_horizontal_uncertainty = modified_origin_90[
-                'origin_uncertainty'].max_horizontal_uncertainty
-            origin.origin_uncertainty.min_horizontal_uncertainty = modified_origin_90[
-                'origin_uncertainty'].min_horizontal_uncertainty
-            origin.origin_uncertainty.azimuth_max_horizontal_uncertainty = modified_origin_90[
-                'origin_uncertainty'].azimuth_max_horizontal_uncertainty
-
-        return origin
+        if modified:
+            return origin, event
+        else:
+            return origin
 
     @staticmethod
     def reads_pick_info(hyp_file_path: str):
