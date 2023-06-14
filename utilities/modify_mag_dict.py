@@ -41,8 +41,9 @@ radiated_energy_params = {"max_freq_Er": None}
 statistics = {"reference_statistics": 'weighted_mean', "n_sigma": 1, "lower_percentage": 15.9, "mid_percentage": 50,
               "upper_percentage": 84.1, "nIQR": 1.5}
 
+local_magnitude = {"a_local_magnitude":1.11, "b_local_magnitude":0.001890, "c_local_magnitude":-2.09}
 config = ChainMap(time_window_params, spectrum_params, signal_noise_ratio_params, source_model_parameters,
-                      spectral_model_params, postinversion_params, radiated_energy_params, statistics)
+                      spectral_model_params, postinversion_params, radiated_energy_params, statistics, local_magnitude)
 
 file = os.path.join(MAGNITUDE_DICT_PATH, "automag_config")
 file_to_store = open(file, "wb")

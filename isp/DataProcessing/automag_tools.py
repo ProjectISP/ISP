@@ -5,7 +5,6 @@ from obspy.geodetics import gps2dist_azimuth
 from obspy.taup import TauPyModel
 from scipy.signal import find_peaks
 from scipy.stats import gaussian_kde
-
 from isp.DataProcessing.automag_processing_tools import signal_preprocess_tools
 from isp.Structures.structures import StationCoordinates
 import numpy as np
@@ -31,39 +30,45 @@ class preprocess_tools:
         self.scale = scale
 
     def check_signal_level(self, rmsmin):
-        validation = []
-        for i, tr in enumerate(self.st):
-            rms2 = np.power(tr.data, 2).sum()
-            rms = np.sqrt(rms2)
-            rms_min = rmsmin
-            if rms <= rms_min:
-                msg = '{} {}: Trace RMS smaller than {:g}: skipping trace'
-                msg = msg.format(tr.id, tr.stats.instrtype, rms_min)
-                self.valid_stream = False
-                #raise RuntimeError(msg)
+        if self.valid_stream:
+            validation = []
+            for i, tr in enumerate(self.st):
+                rms2 = np.power(tr.data, 2).sum()
+                rms = np.sqrt(rms2)
+                rms_min = rmsmin
+                if rms <= rms_min:
+                    msg = '{} {}: Trace RMS smaller than {:g}: skipping trace'
+                    msg = msg.format(tr.id, tr.stats.instrtype, rms_min)
+                    self.valid_stream = False
+                    #raise RuntimeError(msg)
+                else:
+                    validation.append(i)
+            if len(validation) > 0:
+                pass
             else:
-                validation.append(i)
-        if len(validation) > 0:
-            pass
-        else:
-            self.valid_stream = False
+                self.valid_stream = False
 
-    def check_clipping(self, st, clipping_sensitivity):
+    def check_clipping(self, clipping_sensitivity):
 
         # before this process needs to be cut the trace between the end of noise window
         # and the end of the signal window
-        validation = []
-        for i, tr in enumerate(st):
-            if self._is_clipped(tr, clipping_sensitivity):
-                msg = ('{}: Trace is clipped or significantly distorted: '
-                       'skipping trace'.format(tr.id))
-                logger.warning(msg)
-            else:
-                validation.append(i)
-        if len(validation) > 0:
-            pass
-        else:
-            self.valid_stream = False
+        if self.valid_stream:
+            try:
+                st = self.__cut_waveform(cutstream=False)
+                validation = []
+                for i, tr in enumerate(st):
+                    if self._is_clipped(tr, clipping_sensitivity):
+                        msg = ('{}: Trace is clipped or significantly distorted: '
+                               'skipping trace'.format(tr.id))
+                        logger.warning(msg)
+                    else:
+                        validation.append(i)
+                if len(validation) > 0:
+                    pass
+                else:
+                    self.valid_stream = False
+            except:
+                self.valid_stream = False
 
     def _check_sn_ratio(self, st_noise, st_signal, snratio_min):
 
@@ -148,7 +153,7 @@ class preprocess_tools:
                 return False
         except:
             return True
-    def __get_timespan(self):
+    def __get_timespan(self, max_win_duration):
 
         pickP_time = None
         pickS_time = None
@@ -162,24 +167,36 @@ class preprocess_tools:
         self.pickP_time = pickP_time
         self.pickS_time = pickS_time
 
-        if self.scale == "Regional":
-            if isinstance(pickS_time, UTCDateTime):
-                self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
-                self.signal_window_duration = self.signal_window_time - pickP_time
-                self.noise_window_duration = self.signal_window_duration / 3
-                self.noise_window_time = pickP_time - self.noise_window_duration
-            else:
-                # Calculate distance in degree
-                arrivals = self.model.get_travel_times(source_depth_in_km=self.event_info[3],
-                                                       distance_in_degree=self.arrival["distance_degrees"], phase_list=["S"])
+        if self.pickP_time != None:
+            if self.scale == "Regional":
+                if isinstance(pickS_time, UTCDateTime):
+                    if (pickS_time-pickP_time) <= max_win_duration:
+                        self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
+                    else:
+                        self.signal_window_time = pickP_time + max_win_duration
+                    self.signal_window_duration = self.signal_window_time - pickP_time
+                    self.noise_window_duration = self.signal_window_duration / 3
+                    self.noise_window_time = pickP_time - self.noise_window_duration
+                else:
+                    # Calculate distance in degree
+                    arrivals = self.model.get_travel_times(source_depth_in_km=self.event_info[3],
+                                                           distance_in_degree=self.arrival["distance_degrees"])
 
-                pickS_time = self.event_info[0] + arrivals[0].time
-                self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
-                self.signal_window_duration = self.signal_window_time - pickP_time
+                    if (arrivals[1].time - arrivals[0].time) < max_win_duration:
+                        pickS_time = self.event_info[0] + arrivals[1].time
+                        self.pickS_time = pickS_time
+                        self.signal_window_time = pickP_time + (pickS_time - pickP_time) * 0.95
+                    else:
+                        self.signal_window_time = pickP_time + max_win_duration
+
+                    self.signal_window_duration = self.signal_window_time - pickP_time
+                    self.noise_window_duration = self.signal_window_duration / 3
+            else:
+                self.signal_window_time = pickP_time+20
                 self.noise_window_duration = self.signal_window_duration / 3
         else:
-            self.signal_window_time = pickP_time+20
-            self.noise_window_duration = self.signal_window_duration / 3
+            self.valid_stream = False
+
 
 
     def merge_stream(self, gap_max, overlap_max):
@@ -188,7 +205,7 @@ class preprocess_tools:
         cut earthquake (regional or teleseism), Check for gaps and overlaps; remove mean; merge stream;
         """
 
-        self.__cut_earthquake(scale=self.scale)
+
         if self.valid_stream:
             traceid = self.st[0].id
 
@@ -234,15 +251,16 @@ class preprocess_tools:
                 msg = '{}: unable to fill gaps: skipping trace'.format(traceid)
                 raise RuntimeError(msg)
 
-    def deconv_waveform(self, gap_max, overlap_max, rmsmin, clipping_sensitivity):
+    def deconv_waveform(self, gap_max, overlap_max, rmsmin, clipping_sensitivity, max_win_duration):
         self.st_deconv = Stream([])
         self.st_wood = Stream([])
-        self.__get_timespan()
+        self.__get_timespan(max_win_duration)
         # Cut signal around earthquake and check if the signal have too much gaps, if not interpolate
+        self.__cut_earthquake(scale=self.scale)
         self.merge_stream(gap_max, overlap_max)
         self.check_signal_level(rmsmin=rmsmin)
-        st = self.__cut_waveform(cutstream=False) #this process is just to check that it is not clipped
-        self.check_clipping(st, clipping_sensitivity=clipping_sensitivity)
+        #this process is just to check that it is not clipped
+        self.check_clipping(clipping_sensitivity=clipping_sensitivity)
         paz_wa = {'sensitivity': 2800, 'zeros': [0j], 'gain': 1,
                   'poles': [-6.2832 - 4.7124j, -6.2832 + 4.7124j]}
 
@@ -291,6 +309,7 @@ class preprocess_tools:
         if cutstream:
             self.st_deconv.trim(starttime=self.pickP_time - self.noise_window_duration,
                                 endtime=self.pickP_time + self.signal_window_duration)
+
         else:
             st = self.st.copy()
             st.trim(starttime=self.pickP_time - self.noise_window_duration,
@@ -337,31 +356,31 @@ class preprocess_tools:
         -------
 
         """
+        if self.valid_stream:
+            maxstart = np.max([tr.stats.starttime for tr in self.st])
+            minend = np.min([tr.stats.endtime for tr in self.st])
 
-        maxstart = np.max([tr.stats.starttime for tr in self.st])
-        minend = np.min([tr.stats.endtime for tr in self.st])
+            if scale == "Regional":
+                start_diff = (self.pick_info[0][1] - 60) - maxstart
+                end_diff = minend - (self.pick_info[0][1] + 3 * 60)
+                if start_diff > 0 and end_diff > 0:
+                    self.st.trim(starttime=self.pick_info[0][1] - 60, endtime=self.pick_info[0][1] + 3 * 60)
+                else:
+                    self.valid_stream =False
 
-        if scale == "Regional":
-            start_diff = (self.pick_info[0][1] - 60) - maxstart
-            end_diff = minend - (self.pick_info[0][1] + 3 * 60)
-            if start_diff > 0 and end_diff > 0:
-                self.st.trim(starttime=self.pick_info[0][1] - 60, endtime=self.pick_info[0][1] + 3 * 60)
             else:
-                self.valid_stream =False
-
-        else:
-            start_diff = (self.pick_info[0][1] - 1300) - maxstart
-            end_diff = minend  - (self.pick_info[0][1] + 3600)
-            if start_diff > 0 and end_diff > 0:
-                self.st.trim(starttime=self.pick_info[0][1] - 1300, endtime=self.pick_info[0][1] + 3600)
-            else:
-                self.valid_stream = False
+                start_diff = (self.pick_info[0][1] - 1300) - maxstart
+                end_diff = minend  - (self.pick_info[0][1] + 3600)
+                if start_diff > 0 and end_diff > 0:
+                    self.st.trim(starttime=self.pick_info[0][1] - 1300, endtime=self.pick_info[0][1] + 3600)
+                else:
+                    self.valid_stream = False
     def compute_spectrum(self, geom_spread_model, geom_spread_n_exponent,
                          geom_spread_cutoff_distance, rho, spectral_smooth_width_decades, spectral_sn_min,
                          spectral_sn_freq_range):
          spectrum = None
          if isinstance(self.st_deconv, Stream) and self.valid_stream:
-            self.__cut_waveform()
+            self.__cut_waveform() # Now cut the waveform that already has the instrument removed
             self.__split_noise2signal()
             spt = signal_preprocess_tools(self.st_cut_noise, self.st_cut_signal, self.arrival["distance_km"],
                 geom_spread_model, geom_spread_n_exponent, geom_spread_cutoff_distance, self.event_info, rho,
@@ -378,7 +397,7 @@ class preprocess_tools:
          coords = selected_inv.get_coordinates(cont['channels'][0])
          return StationCoordinates.from_dict(coords)
     #
-    def magnitude_local(self, config):
+    def magnitude_local(self, a, b, c):
         #print("Calculating Local Magnitude")
         ML_value = None
         try:
@@ -401,15 +420,13 @@ class preprocess_tools:
                 tr_Z = tr_Z[0]
                 max_amplitude = np.max(tr_Z.data) * 1e3 # convert to  mm --> nm
 
-            ML_value = np.log10(max_amplitude) + config[0]["local_magnitude"] * np.log10(dist) + config[1] * dist + \
-                       config[2]
+            ML_value = np.log10(max_amplitude) + a * np.log10(dist) + b * dist + c
 
         except:
             warnings.warn("Couldn't estimate local magnitude")
 
         return ML_value
 
-        return ML_value
 
 
 

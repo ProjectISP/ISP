@@ -25,7 +25,7 @@ class Automag:
 
          for file in self.files_path:
              try:
-                 st = read(file)
+                 st = read(file[0])
                  st = self.fill_gaps(st, 60)
                  tr = self.ensure_24(st[0])
                  self.all_traces.append(tr)
@@ -78,8 +78,7 @@ class Automag:
 
         check_starttime = UTCDateTime(year=year, month=month, day=day, hour=00, minute=00, microsecond=00)
         check_endtime = check_starttime + 24 * 3600
-        tr.detrend(type="simple")
-        tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=True, fill_value=0)
+        tr.trim(starttime=check_starttime, endtime=check_endtime, pad=False, nearest_sample=True, fill_value=None)
         return tr
 
     def ML_statistics(self):
@@ -103,11 +102,11 @@ class Automag:
 
         _, self.files_path = MseedUtil.filter_project_keys(self.project, net=selection[0], station=selection[1],
                                                        channel=selection[2])
-        start = date.split(".")
-        start = UTCDateTime(year=int(start[1]), julday=int(start[0]), hour=00, minute=00, second=00)+3600
-        end = start+23*3600
-        self.files_path = MseedUtil.filter_time(list_files=self.files_path, starttime=start, endtime=end)
-        print(self.files_path)
+        #start = date.split(".")
+        #start = UTCDateTime(year=int(start[1]), julday=int(start[0]), hour=00, minute=00, second=00)+3600
+        #end = start+23*3600
+        #self.files_path = MseedUtil.filter_time(list_files=self.files_path, starttime=start, endtime=end)
+        print(date, self.files_path)
 
     def filter_station(self, station):
 
@@ -218,7 +217,10 @@ class Automag:
         max_freq_Er = config["max_freq_Er"]
         min_residual_threshold = config["min_residual_threshold"]
         scale = config["scale"]
-
+        max_win_duration = config["win_length"]
+        a = config["a_local_magnitude"]
+        b = config["b_local_magnitude"]
+        c = config["c_local_magnitude"]
         bound_config = {"Qo_min_max": config["Qo_min_max"], "t_star_min_max": config["t_star_min_max"],
                         "wave_type": config["wave_type"], "fc_min_max": config["fc_min_max"]}
         statistics_config = config.maps[7]
@@ -251,11 +253,11 @@ class Automag:
             if st2.count() > 0:
                 inv_selected = self.inventory.select(station=station)
                 pt = preprocess_tools(st2, pick_info, focal_parameters, geodetics, inv_selected, scale)
-                pt.deconv_waveform(gap_max, overlap_max, rmsmin, clipping_sensitivity)
+                pt.deconv_waveform(gap_max, overlap_max, rmsmin, clipping_sensitivity, max_win_duration)
                 pt.st_deconv = pt.st_deconv.select(component="Z")
                 if pt.st_deconv.count() > 0 and pt.st_wood.count() > 0:
 
-                    self.ML.append(pt.magnitude_local(config))
+                    self.ML.append(pt.magnitude_local(a, b, c))
                     spectrum_dict = pt.compute_spectrum(geom_spread_model, geom_spread_n_exponent,
                                     geom_spread_cutoff_distance, rho, spectral_smooth_width_decades,
                                     spectral_sn_min, spectral_sn_freq_range)
@@ -286,18 +288,6 @@ class Automag:
         ML_mean, ML_std = self.ML_statistics()
         magnitude_ml_statistics["ML_mean"] = ML_mean
         magnitude_ml_statistics["ML_std"] = ML_std
-
+        print(magnitude_mw_statistics, ML_mean, ML_std)
+        
         return magnitude_mw_statistics, magnitude_ml_statistics
-
-
-
-#if __name__ == "__main__":
-    # file = os.path.join(MAGNITUDE_DICT_PATH, "automag_config")
-    # config = pd.read_pickle(file)
-    # project_path = "/Volumes/LaCie/test_meli/test_meli_casa"
-    # inv = "/Volumes/LaCie/test_meli/metadata/metadata.xml"
-    # project = MseedUtil.load_project(project_path)
-    # mg = Automag(project, inv)
-    # mg.scan_folder()
-    # mg.estimate_magnitudes(config)
-    #mg.get_now_files()

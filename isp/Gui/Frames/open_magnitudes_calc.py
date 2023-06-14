@@ -499,12 +499,24 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
     def modify_pred_config(self):
 
         self.config_automag["max_epi_dist"] = self.mag_max_distDB.value()
+
+        if self.mag_max_distDB.value() < 700:
+            self.config_automag["scale"] = "Regional"
+        else:
+            self.config_automag["scale"] = "Teleseism"
+
         self.config_automag["mag_vpweight"] = self.mag_vpweightDB.value()
-        self.config_automag["mag_vsweight"] = self.mag_vsweightDB.value()
         self.config_automag["rho"] = self.automag_density_DB.value()
         self.config_automag["automag_rpp"] = self.automag_rppDB.value()
         self.config_automag["automag_rps"] = self.automag_rpsDB.value()
-        self.config_automag["geom_spread_model"] = self.r_power_nRB.isChecked()
+
+        if self.r_power_nRB.isChecked():
+            self.config_automag["geom_spread_model"] = "r_power_n"
+        else:
+            self.config_automag["geom_spread_model"] = "boatwright"
         self.config_automag["geom_spread_n_exponent"] = self.geom_spread_n_exponentDB.value()
         self.config_automag["geom_spread_cutoff_distance"] = self.geom_spread_cutoff_distanceDB.value()
-        self.config_automag["local_magnitude"] = [self.mag_aDB.value(), self.mag_bDB.value(), self.mag_cDB.value()]
+        self.config_automag["a_local_magnitude"] = self.mag_aDB.value()
+        self.config_automag["b_local_magnitude"] = self.mag_bDB.value()
+        self.config_automag["c_local_magnitude"] = self.mag_cDB.value()
+        self.config_automag["win_length"] = self.win_lengthDB.value()

@@ -323,8 +323,8 @@ def _read_single_hypocenter(lines, coordinate_converter, original_picks):
         #date = UTCDateTime(line[6][0:4]+"-"+line[6][4:6]+"-"+line[6][6:8]+"T"+line[7][0:2]+":"+line[7][2:4]+":"+line[8])
         setattr(arrival, "travel_time", line[15])
         arrival.phase = phase
-        arrival.distance_km = degrees2kilometers(float(line[21]))
-        arrival.distance_degrees = float(line[21])
+        arrival.distance_km = float(line[21])
+        arrival.distance_degrees = kilometer2degrees(float(line[21]))
         arrival.azimuth = float(line[23])
         arrival.takeoff_angle = float(line[24])
         arrival.time_residual = float(line[16])

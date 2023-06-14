@@ -389,6 +389,13 @@
              <string>Time Window Parameters</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_4">
+             <item row="0" column="2" alignment="Qt::AlignHCenter">
+              <widget class="QLabel" name="label_18">
+               <property name="text">
+                <string>Max waveform time window</string>
+               </property>
+              </widget>
+             </item>
              <item row="0" column="1">
               <widget class="QDoubleSpinBox" name="mag_max_distDB">
                <property name="prefix">
@@ -421,14 +428,7 @@
              <item row="1" column="0" alignment="Qt::AlignHCenter">
               <widget class="QLabel" name="label_29">
                <property name="text">
-                <string>Vp arrival time weight</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0" alignment="Qt::AlignHCenter">
-              <widget class="QLabel" name="label_30">
-               <property name="text">
-                <string>Vs arrival time weight</string>
+                <string>Arrival time weight</string>
                </property>
               </widget>
              </item>
@@ -445,10 +445,16 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="1">
-              <widget class="QDoubleSpinBox" name="mag_vsweightDB">
+             <item row="0" column="3">
+              <widget class="QDoubleSpinBox" name="win_lengthDB">
+               <property name="suffix">
+                <string> (s)</string>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
                <property name="value">
-                <double>0.750000000000000</double>
+                <double>8.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -484,7 +490,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QRadioButton" name="radioButton_2">
+                   <widget class="QRadioButton" name="boatwrightRB">
                     <property name="text">
                      <string>boatwright</string>
                     </property>
