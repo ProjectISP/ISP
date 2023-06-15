@@ -93,6 +93,9 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         self.saveBtn.clicked.connect(self.save_results)
         self.plotBtn.clicked.connect(self.plot_comparison)
         self.runAutomagBtn.clicked.connect(self.run_automag)
+
+        self.constan_rad_patternRB.toggled.connect(self.get_rad_pattern_const)
+        self.focmec_rad_patternRB.toggled.connect(self.get_rad_pattern_focmec)
         #self.set_default_btn.clicked.connect(self.set_default)
         self.Mw = []
         self.Mw_std = []
@@ -571,3 +574,15 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
 
         self.automagnitudesText.appendPlainText("Local Magnitude: " " ML {ML:.3f} "
                                                 " ML_std {std:.3f} ".format(ML=ML, std=ML_std))
+
+    def get_rad_pattern_const(self, enable):
+        self.automag_rppDB.setEnabled(enable)
+        self.automag_rpsDB.setEnabled(enable)
+
+    def get_rad_pattern_focmec(self, enable):
+        self.automag_strikeDB.setEnabled(enable)
+        self.automag_dipDB.setEnabled(enable)
+        self.automag_rakeDB.setEnabled(enable)
+
+
+

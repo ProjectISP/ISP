@@ -471,7 +471,87 @@
              <string>Source Parameters</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_13">
-             <item row="0" column="2">
+             <item row="4" column="6">
+              <widget class="QGroupBox" name="groupBox_15">
+               <property name="title">
+                <string>Local Magnitude</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_16">
+                <item row="0" column="1">
+                 <widget class="QDoubleSpinBox" name="mag_aDB">
+                  <property name="value">
+                   <double>1.110000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="4" alignment="Qt::AlignRight">
+                 <widget class="QLabel" name="label_38">
+                  <property name="text">
+                   <string>c</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0" alignment="Qt::AlignRight">
+                 <widget class="QLabel" name="label_36">
+                  <property name="text">
+                   <string>a</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2" alignment="Qt::AlignRight">
+                 <widget class="QLabel" name="label_37">
+                  <property name="text">
+                   <string>b</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QDoubleSpinBox" name="mag_bDB">
+                  <property name="decimals">
+                   <number>6</number>
+                  </property>
+                  <property name="value">
+                   <double>0.001890000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="5">
+                 <widget class="QDoubleSpinBox" name="mag_cDB">
+                  <property name="minimum">
+                   <double>-10.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>-2.090000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="6" column="6">
+              <widget class="QGroupBox" name="groupBox">
+               <property name="title">
+                <string>Action</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout">
+                <item row="0" column="1">
+                 <widget class="QPushButton" name="runAutomagBtn">
+                  <property name="text">
+                   <string>Run Auto Mag</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QPushButton" name="set_default_btn">
+                  <property name="text">
+                   <string>Set Default Values</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="0" column="6">
               <widget class="QGroupBox" name="groupBox_14">
                <property name="title">
                 <string>Geometrical spreading correction</string>
@@ -532,108 +612,7 @@
                </layout>
               </widget>
              </item>
-             <item row="1" column="2">
-              <widget class="QGroupBox" name="groupBox_15">
-               <property name="title">
-                <string>Local Magnitude</string>
-               </property>
-               <layout class="QGridLayout" name="gridLayout_16">
-                <item row="0" column="1">
-                 <widget class="QDoubleSpinBox" name="mag_aDB">
-                  <property name="value">
-                   <double>1.110000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="4" alignment="Qt::AlignRight">
-                 <widget class="QLabel" name="label_38">
-                  <property name="text">
-                   <string>c</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0" alignment="Qt::AlignRight">
-                 <widget class="QLabel" name="label_36">
-                  <property name="text">
-                   <string>a</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="2" alignment="Qt::AlignRight">
-                 <widget class="QLabel" name="label_37">
-                  <property name="text">
-                   <string>b</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="3">
-                 <widget class="QDoubleSpinBox" name="mag_bDB">
-                  <property name="decimals">
-                   <number>6</number>
-                  </property>
-                  <property name="value">
-                   <double>0.001890000000000</double>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="5">
-                 <widget class="QDoubleSpinBox" name="mag_cDB">
-                  <property name="minimum">
-                   <double>-10.000000000000000</double>
-                  </property>
-                  <property name="value">
-                   <double>-2.090000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item row="2" column="2">
-              <widget class="QGroupBox" name="groupBox">
-               <property name="title">
-                <string>Action</string>
-               </property>
-               <layout class="QGridLayout" name="gridLayout">
-                <item row="0" column="1">
-                 <widget class="QPushButton" name="runAutomagBtn">
-                  <property name="text">
-                   <string>Run Auto Mag</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QPushButton" name="set_default_btn">
-                  <property name="text">
-                   <string>Set Default Values</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QDoubleSpinBox" name="automag_rpsDB">
-               <property name="value">
-                <double>0.620000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0" alignment="Qt::AlignHCenter">
-              <widget class="QLabel" name="label_33">
-               <property name="text">
-                <string>Density</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0" alignment="Qt::AlignHCenter">
-              <widget class="QLabel" name="label_34">
-               <property name="text">
-                <string>rpp</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
+             <item row="0" column="2" colspan="2">
               <widget class="QDoubleSpinBox" name="automag_density_DB">
                <property name="suffix">
                 <string> (kg/m3)</string>
@@ -649,7 +628,84 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="0" alignment="Qt::AlignHCenter">
+             <item row="1" column="0" colspan="3">
+              <widget class="QRadioButton" name="constan_rad_patternRB">
+               <property name="text">
+                <string>Constant Radiation Pattern</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroup</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="5" column="0" alignment="Qt::AlignRight">
+              <widget class="QLabel" name="label_19">
+               <property name="text">
+                <string>Strike</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QDoubleSpinBox" name="automag_strikeDB"/>
+             </item>
+             <item row="5" column="2" alignment="Qt::AlignRight">
+              <widget class="QLabel" name="label_20">
+               <property name="text">
+                <string>Dip</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="3">
+              <widget class="QDoubleSpinBox" name="automag_dipDB"/>
+             </item>
+             <item row="5" column="4" alignment="Qt::AlignRight">
+              <widget class="QLabel" name="label_21">
+               <property name="text">
+                <string>Rake</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="5">
+              <widget class="QDoubleSpinBox" name="automag_rakeDB"/>
+             </item>
+             <item row="2" column="0" colspan="2" alignment="Qt::AlignRight">
+              <widget class="QLabel" name="label_34">
+               <property name="text">
+                <string>rpp</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
+              <widget class="QLabel" name="label_33">
+               <property name="text">
+                <string>Density</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0" colspan="2">
+              <widget class="QRadioButton" name="focmec_rad_patternRB">
+               <property name="text">
+                <string>Using Focal Mechanism</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroup</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QDoubleSpinBox" name="automag_rppDB">
+               <property name="toolTip">
+                <string>P-wave average radiation pattern coefficient</string>
+               </property>
+               <property name="value">
+                <double>0.520000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="3" alignment="Qt::AlignRight">
               <widget class="QLabel" name="label_35">
                <property name="toolTip">
                 <string>S-wave average radiation pattern coefficient</string>
@@ -659,13 +715,10 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
-              <widget class="QDoubleSpinBox" name="automag_rppDB">
-               <property name="toolTip">
-                <string>P-wave average radiation pattern coefficient</string>
-               </property>
+             <item row="2" column="4">
+              <widget class="QDoubleSpinBox" name="automag_rpsDB">
                <property name="value">
-                <double>0.520000000000000</double>
+                <double>0.620000000000000</double>
                </property>
               </widget>
              </item>
@@ -704,4 +757,7 @@
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="buttonGroup"/>
+ </buttongroups>
 </ui>
