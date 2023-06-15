@@ -18,14 +18,16 @@ class Automag:
         self.project = project
         self.inventory = inventory
         self.all_traces = []
+        self.files_path = []
         self.st = None
+        self.date = None
         self.ML = []
 
     def make_stream(self):
 
          for file in self.files_path:
              try:
-                 st = read(file[0])
+                 st = read(file)
                  st = self.fill_gaps(st, 60)
                  tr = self.ensure_24(st[0])
                  self.all_traces.append(tr)
@@ -96,17 +98,17 @@ class Automag:
                 arrival_return.append(arrival)
         return arrival_return
 
-    def get_now_files(self, date, station):
+    def get_now_files(self):
 
-        selection = [".", station, "."]
+        selection = [".", ".", "."]
 
         _, self.files_path = MseedUtil.filter_project_keys(self.project, net=selection[0], station=selection[1],
                                                        channel=selection[2])
-        #start = date.split(".")
-        #start = UTCDateTime(year=int(start[1]), julday=int(start[0]), hour=00, minute=00, second=00)+3600
-        #end = start+23*3600
-        #self.files_path = MseedUtil.filter_time(list_files=self.files_path, starttime=start, endtime=end)
-        print(date, self.files_path)
+
+        start = self.date
+        end = start+3600
+        self.files_path = MseedUtil.filter_time(list_files=self.files_path, starttime=start, endtime=end)
+
 
     def filter_station(self, station):
 
@@ -131,7 +133,7 @@ class Automag:
                     cat = read_events(file_hyp, format="NLLOC_HYP")
                     ev = cat[0]
                     date = ev.origins[0]["time"]
-                    date = str(date.julday)+ "."+ str(date.year)
+                    date = str(date.julday) + "." + str(date.year)
 
                     obsfiles1.append(file_hyp)
                     if date not in dates:
@@ -145,8 +147,7 @@ class Automag:
 
     def scan_from_origin(self, origin):
 
-        date = origin["time"]
-        self.dates = str(date.julday) + "." + str(date.year)
+        self.date = origin["time"]
 
 
     def _get_stations(self, arrivals):
@@ -227,7 +228,7 @@ class Automag:
 
         #for date in self.dates:
         #events = self.dates[date]
-        self.get_now_files(self.dates, ".")
+        self.get_now_files()
         self.make_stream()
         #for event in events:
         sspec_output = SourceSpecOutput()
@@ -249,7 +250,9 @@ class Automag:
 
             events_picks, geodetics = self._get_info_in_arrivals(station, arrivals, min_residual_threshold)
             pick_info = events_picks[station]
+            # TODO it could be possible more than one day
             st2 = self.st.select(station=station)
+            st2.merge()
             if st2.count() > 0:
                 inv_selected = self.inventory.select(station=station)
                 pt = preprocess_tools(st2, pick_info, focal_parameters, geodetics, inv_selected, scale)
@@ -289,5 +292,5 @@ class Automag:
         magnitude_ml_statistics["ML_mean"] = ML_mean
         magnitude_ml_statistics["ML_std"] = ML_std
         print(magnitude_mw_statistics, ML_mean, ML_std)
-        
+
         return magnitude_mw_statistics, magnitude_ml_statistics

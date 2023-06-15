@@ -485,7 +485,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         self.load_config_automag()
         mg = Automag(self.origin, self.event, self.project, self.inventory)
         mg.scan_from_origin(self.origin)
-        mg.estimate_magnitudes(self.config_automag)
+        magnitude_mw_statistics, magnitude_ml_statistics = mg.estimate_magnitudes(self.config_automag)
 
     def load_config_automag(self):
         try:
