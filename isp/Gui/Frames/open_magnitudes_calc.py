@@ -93,6 +93,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         self.saveBtn.clicked.connect(self.save_results)
         self.plotBtn.clicked.connect(self.plot_comparison)
         self.runAutomagBtn.clicked.connect(self.run_automag)
+        #self.set_default_btn.clicked.connect(self.set_default)
         self.Mw = []
         self.Mw_std = []
         self.Ms = []
@@ -481,12 +482,13 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
 ########### AutoMag#########
 
     def run_automag(self):
-
+        magnitude_mw_statistics = ""
+        magnitude_ml_statistics = ""
         self.load_config_automag()
         mg = Automag(self.origin, self.event, self.project, self.inventory)
         mg.scan_from_origin(self.origin)
         magnitude_mw_statistics, magnitude_ml_statistics = mg.estimate_magnitudes(self.config_automag)
-
+        self.print_automag_results(magnitude_mw_statistics, magnitude_ml_statistics)
     def load_config_automag(self):
         try:
             self.config_automag = pd.read_pickle(self.file_automag_config)
@@ -520,3 +522,52 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         self.config_automag["b_local_magnitude"] = self.mag_bDB.value()
         self.config_automag["c_local_magnitude"] = self.mag_cDB.value()
         self.config_automag["win_length"] = self.win_lengthDB.value()
+
+    def print_automag_results(self, magnitude_mw_statistics, magnitude_ml_statistics):
+
+
+        Mw = magnitude_mw_statistics.summary_spectral_parameters.Mw.weighted_mean.value
+        Mw_std = magnitude_mw_statistics.summary_spectral_parameters.Mw.weighted_mean.uncertainty
+
+        Mo = magnitude_mw_statistics.summary_spectral_parameters.Mo.mean.value
+        Mo_units = magnitude_mw_statistics.summary_spectral_parameters.Mo.units
+
+        fc = magnitude_mw_statistics.summary_spectral_parameters.fc.weighted_mean.value
+        fc_units = "Hz"
+
+        t_star = magnitude_mw_statistics.summary_spectral_parameters.t_star.weighted_mean.value
+        t_star_std = magnitude_mw_statistics.summary_spectral_parameters.t_star.weighted_mean.uncertainty
+        t_star_units = magnitude_mw_statistics.summary_spectral_parameters.t_star.units
+
+        source_radius = magnitude_mw_statistics.summary_spectral_parameters.radius.mean.value
+        radius_units = magnitude_mw_statistics.summary_spectral_parameters.radius.units
+
+        bsd = magnitude_mw_statistics.summary_spectral_parameters.bsd.mean.value
+        bsd_units = magnitude_mw_statistics.summary_spectral_parameters.bsd.units
+
+        Qo =  magnitude_mw_statistics.summary_spectral_parameters.Qo.mean.value
+        Qo_std = magnitude_mw_statistics.summary_spectral_parameters.Qo.mean.uncertainty
+        Qo_units = magnitude_mw_statistics.summary_spectral_parameters.Qo.units
+
+        Er = magnitude_mw_statistics.summary_spectral_parameters.Er.mean.value
+        Er_units = "jul"
+
+        ML = magnitude_ml_statistics["ML_mean"]
+        ML_std = magnitude_ml_statistics["ML_std"]
+
+        self.automagnitudesText.clear()
+        self.automagnitudesText.appendPlainText("Moment Magnitude: " " Mw {Mw:.3f} "
+                                                " std {std:.3f} ".format(Mw=Mw, std=Mw_std))
+
+        self.automagnitudesText.appendPlainText("Seismic Moment and Source radius: " " Mo {Mo:e} Nm"
+                                           ", R {std:.3f} km".format(Mo=Mo, std=source_radius/1000))
+
+        self.automagnitudesText.appendPlainText("Brune stress Drop: " "{bsd:.3f} MPa".format(bsd=bsd))
+
+        self.automagnitudesText.appendPlainText("Quality factor: " " Qo {Qo:.3f} " " Q_std {Qo_std:.3f} ".format(Qo=Qo, Qo_std=Qo_std))
+
+        self.automagnitudesText.appendPlainText(
+            "t_star: " "{t_star:.3f} s" " t_star_std {t_star_std:.3f} ".format(t_star=t_star, t_star_std=t_star_std))
+
+        self.automagnitudesText.appendPlainText("Local Magnitude: " " ML {ML:.3f} "
+                                                " ML_std {std:.3f} ".format(ML=ML, std=ML_std))

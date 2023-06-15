@@ -304,16 +304,6 @@
             </property>
            </spacer>
           </item>
-          <item row="10" column="0" colspan="5">
-           <widget class="QPlainTextEdit" name="magnitudesText">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
           <item row="9" column="1">
            <widget class="QPushButton" name="saveBtn">
             <property name="text">
@@ -352,6 +342,16 @@
             </item>
            </widget>
           </item>
+          <item row="10" column="0" colspan="9">
+           <widget class="QPlainTextEdit" name="magnitudesText">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item>
@@ -373,7 +373,7 @@
         <rect>
          <x>10</x>
          <y>0</y>
-         <width>1491</width>
+         <width>1471</width>
          <height>751</height>
         </rect>
        </property>
@@ -589,6 +589,29 @@
                </layout>
               </widget>
              </item>
+             <item row="2" column="2">
+              <widget class="QGroupBox" name="groupBox">
+               <property name="title">
+                <string>Action</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout">
+                <item row="0" column="1">
+                 <widget class="QPushButton" name="runAutomagBtn">
+                  <property name="text">
+                   <string>Run Auto Mag</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QPushButton" name="set_default_btn">
+                  <property name="text">
+                   <string>Set Default Values</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
              <item row="2" column="1">
               <widget class="QDoubleSpinBox" name="automag_rpsDB">
                <property name="value">
@@ -646,30 +669,28 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="2">
-              <widget class="QGroupBox" name="groupBox">
-               <property name="title">
-                <string>Action</string>
-               </property>
-               <layout class="QGridLayout" name="gridLayout">
-                <item row="0" column="1">
-                 <widget class="QPushButton" name="runAutomagBtn">
-                  <property name="text">
-                   <string>Run Auto Mag</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QPushButton" name="pushButton_2">
-                  <property name="text">
-                   <string>Set Default Values</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
             </layout>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="gridLayout_5">
+          <item row="0" column="0">
+           <widget class="QGroupBox" name="groupBox_2">
+            <property name="title">
+             <string>Results</string>
+            </property>
+            <widget class="QPlainTextEdit" name="automagnitudesText">
+             <property name="geometry">
+              <rect>
+               <x>3</x>
+               <y>28</y>
+               <width>1431</width>
+               <height>161</height>
+              </rect>
+             </property>
+            </widget>
            </widget>
           </item>
          </layout>
