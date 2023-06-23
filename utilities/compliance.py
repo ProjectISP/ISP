@@ -210,7 +210,7 @@ class RemoveComplianceTilt:
         axs.set_xlim(0.001, 0.1)
         axs.grid(True, which="both", ls="-", color='grey')
         axs.set_xlabel('Frequency [Hz]')
-        axs.set_ylabel('Amplitude Acceleration [counts/s]^2')
+        axs.set_ylabel('Amplitude Acceleration [$m^2/s^4/Hz$] [dB]')
         axs.legend()
         if save_fig:
             name = label+"."+str(s.stats.starttime.julday)+"."+str(s.stats.starttime.year)+".Tilt"+".png"

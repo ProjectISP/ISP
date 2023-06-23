@@ -155,7 +155,7 @@ class process_ant:
         self.DD_half_point = int(((DD) / 2) + 1)
         self.dict_matrix['data_matrix'] = np.zeros((self.num_rows, num_columns, self.DD_half_point), dtype=np.complex64)
         self.inc_time = [i * 60 * num_minutes for i in range(self.num_rows + 1)]
-        with Pool(processes=multiprocessing.cpu_count()) as pool:
+        with Pool(processes=self.cpuCount) as pool:
             r = pool.map(self.process_col_matrix, range(num_columns))
 
         j = 0
