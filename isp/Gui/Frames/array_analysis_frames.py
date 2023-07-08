@@ -84,12 +84,15 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.plotBtn.clicked.connect(lambda: self.plot_seismograms())
         self.plotBtnBP.clicked.connect(lambda: self.plot_seismograms(FK=False))
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
+        self.fk_macroBtn.clicked.connect(lambda: self.open_parameters_settings())
         self.actionProcessed_Seimograms.triggered.connect(self.write)
         self.actionStacked_Seismograms.triggered.connect(self.write_stack)
         self.stationsBtn.clicked.connect(lambda: self.stationsInfo())
         self.stationsBtnBP.clicked.connect(lambda: self.stationsInfo(FK=False))
         self.mapBtn.clicked.connect(self.stations_map)
         self.actionCreate_Stations_File.triggered.connect(self.stations_coordinates)
+        self.arf_write_coordsBtn.clicked.connect(self.stations_coordinates)
+        self.arfLoad_coordsBtn.clicked.connect(self.load_path)
         self.actionLoad_Stations_File.triggered.connect(self.load_path)
         self.actionRunVespagram.triggered.connect(self.open_vespagram)
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'), self)
@@ -221,14 +224,17 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
         if self.path_file:
             df = pd.read_csv(self.path_file, delim_whitespace=True)
+            Lat_mean = sum(df["Lat"].tolist())/len(df["Lat"].tolist())
+            Long_mean = sum(df["Lon"].tolist())/len(df["Lon"].tolist())
             n = len(df)
             self.coords = np.zeros([n, 3])
             for i in range(n):
-                 coords[df['Name'][i]]=[df['Lat'][i], df['Lon'][i],]
-        #try:
-            self.cartopy_canvas.plot_map(df['Lon'][0], df['Lat'][0], 0, 0, 0, 0, resolution = "low", stations = coords)
-        #except:
-        #    pass
+                 coords[df['Name'][i]]=[df['Lon'][i],df['Lat'][i]]
+        try:
+            self.cartopy_canvas.plot_map(Long_mean, Lat_mean, 0, 0, 0, 0, resolution="low", stations=coords)
+        except:
+            md = MessageDialog(self)
+            md.set_info_message("Please load a stations file with array coordinates")
 
     def FK_plot(self):
         self.canvas_stack.set_new_subplot(nrows=1, ncols=1)
