@@ -801,12 +801,12 @@ class ISOLA:
                 self.models[model] = 1
             else:
                 self.models[model] += 1
-            net = network;
-            loc = location;
+            net = network
+            loc = location
             ch = channelcode  # default values given by function parameters
             if ":" in sta:
                 l = sta.split(':')
-                net = l[0];
+                net = l[0]
                 sta = l[1]
                 if len(l) > 2: loc = l[2]
                 if len(l) > 3: ch = l[3]
@@ -850,7 +850,7 @@ class ISOLA:
                     if ch == 'E' or "1" or "X":
                         self.stations[j]['useE'] = checked
 
-                    elif  ch == 'N' or "2" or "Y":
+                    elif ch == 'N' or "2" or "Y":
                         self.stations[j]['useN'] = checked
 
                     elif ch == 'Z':
