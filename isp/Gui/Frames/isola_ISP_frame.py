@@ -231,12 +231,12 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
         if len(self.stream) and len(stations_map)> 0:
 
-            isola = ISOLA(self.stream, self.deltas, location_unc = parameters['location_unc'], depth_unc = parameters['depth_unc'],
-                           time_unc = parameters['time_unc'], deviatoric =  parameters['deviatoric'], threads = 8,
-                           circle_shape = parameters['circle_shape'], use_precalculated_Green = parameters['GFs'])
+            isola = ISOLA(self.stream, self.deltas, location_unc=parameters['location_unc'], depth_unc=parameters['depth_unc'],
+                           time_unc=parameters['time_unc'], deviatoric=parameters['deviatoric'], threads=8,
+                           circle_shape=parameters['circle_shape'], use_precalculated_Green=parameters['GFs'])
             #
             isola.set_event_info(parameters['latitude'], parameters['longitude'], parameters['depth'],
-                                 parameters['magnitude'],parameters['origin_time'])
+                                 parameters['magnitude'], parameters['origin_time'])
             #
             print(isola.event)
             #

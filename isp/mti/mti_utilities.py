@@ -56,7 +56,7 @@ class MTIManager:
             if ind.count(station):
                 pass
             else:
-                [dist, az1, az1] = gps2dist_azimuth(self.lat, self.lon, lat, lon, a=6378137.0, f=0.0033528106647474805)
+                [dist, _, _] = gps2dist_azimuth(self.lat, self.lon, lat, lon, a=6378137.0, f=0.0033528106647474805)
                 ind.append(station)
                 item = '{net}:{station}::{channel}    {lat}    {lon}'.format(net=net,
                         station=station, channel=channel[0:2], lat=lat, lon=lon)
@@ -94,7 +94,7 @@ class MTIManager:
         outstations_path = os.path.join(self.get_stations_dir, "stations.txt")
         #print(outstations_path)
         df.to_csv(outstations_path, header=False, index=False)
-        return self.stream, deltas, outstations_path
+        return self.stream , deltas, outstations_path
 
 
     def sort_stream(self, dist1):
