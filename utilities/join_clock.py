@@ -501,7 +501,7 @@ if __name__ == "__main__":
     # components = ["ZZ","RR", "TT", "HH"]
     # order = 3
 
-    obs_pair = "OB19_ROSA"
+    obs_pair = "UP21_UP01"
     components = ["ZZ", "RR", "TT", "HH"]
     order = 2
     # example
