@@ -348,10 +348,15 @@ class process_ant:
         if self.decimationCB and check_process:
             #print("decimating ", tr.id)
             try:
+                # Anti-aliasing before decimation
                 tr.detrend(type="simple")
                 tr.taper(type="blackman", max_percentage=0.05)
-                tr.filter(type="lowpass", freq=0.4*self.factor, zerophase=True, corners=4)
+                tr.filter(type="lowpass", freq=0.4 * self.factor, zerophase=True, corners=4)
+                # while (tr.stats.sampling_rate//self.factor) >= 16:
+                #
+                #         tr.resample(sampling_rate=tr.stats.sampling_rate//10, no_filter=True)
                 tr.resample(sampling_rate=self.factor, no_filter=True)
+
             except:
                 check_process = False
                 print("Couldn't decimate")
@@ -937,7 +942,3 @@ class clock_process:
             j = j + 1
 
         return days
-
-
-
-

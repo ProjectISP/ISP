@@ -43,7 +43,6 @@ class noise_organize(pyc.QObject):
 
         data_map = {}
         info = {}
-        info_starts = []
         data_map['nets'] = {}
         size = 0
 
@@ -52,6 +51,7 @@ class noise_organize(pyc.QObject):
             if _is_mseed(paths):
 
                 header = read(paths, headlonly=True)
+                #self.send_message.emit(header.id)
                 net = header[0].stats.network
                 network = {net: {}}
                 sta = header[0].stats.station

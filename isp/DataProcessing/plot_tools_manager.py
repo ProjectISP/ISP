@@ -240,7 +240,7 @@ class PlotToolsManager:
                 p = np.flip(p)
                 polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Dates_selected': x, 'Drift': y, 'Ref': ref,
                            'R2': R2, 'resid': resid, 'chi2_red': chi2_red, 'std_err': std_err, 'cross_correlation': cc,
-                           'skew': skew}
+                           'skew': skew, 'model': model, 'y_model':y_model}
                 print(polynom)
                 file_to_store = open(path, "wb")
                 pickle.dump(polynom, file_to_store)
