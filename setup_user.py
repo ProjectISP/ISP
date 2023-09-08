@@ -181,7 +181,7 @@ setup(
     cmdclass={
         'build_ext': CustomBuildExtCommand,
     },
-    ext_modules=cythonize(os.path.join(cy_path, 'ccwt_cy.pyx'), os.path.join(cy_path, 'whiten.pyx')),
+    ext_modules=cythonize(os.path.join(cy_path, 'ccwt_cy.pyx')),
     include_dirs=[numpy.get_include()],
     ext_package='isp.c_lib'
 )

@@ -268,8 +268,11 @@ class NllManager:
         data = pd.read_csv(file_path)
         df = pd.DataFrame(data)
         df.iloc[1, 0] = 'TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}'.format(lat=latitude, lon=longitude, depth=depth)
-        df.iloc[2, 0] = 'VGGRID {xnd} {ynd} {znd} 0.0 0.0 -1.0  {dx:.2f} ' \
-                        '{dy:.2f} {dz:.2f} {type}'.format(xnd=x_node, ynd=y_node, znd=z_node, dx=dx,
+        # df.iloc[2, 0] = 'VGGRID {xnd} {ynd} {znd} 0.0 0.0 -1.0  {dx:.2f} ' \
+        #                 '{dy:.2f} {dz:.2f} {type}'.format(xnd=x_node, ynd=y_node, znd=z_node, dx=dx,
+        #                                                   dy=dy, dz=dz, type=grid_type)
+        df.iloc[2, 0] = 'VGGRID {xnd} {ynd} {znd} 0.0 0.0 {depth:.2f}  {dx:.2f} ' \
+                        '{dy:.2f} {dz:.2f} {type}'.format(xnd=x_node, ynd=y_node, znd=z_node, depth=depth, dx=dx,
                                                           dy=dy, dz=dz, type=grid_type)
         df.iloc[3, 0] = 'VGOUT {}'.format(os.path.join(self.get_model_dir, "layer"))
         df.iloc[4, 0] = 'VGTYPE {wavetype}'.format(wavetype=wave_type)
@@ -545,9 +548,10 @@ class NllManager:
             file_name = os.path.join(self.get_local_models_dir3D,"layer.S.mod.hdr")
 
 
-        shift_x = -0.5*float(x_node)
-        shift_y = -0.5*float(y_node)
-
+        # shift_x = -0.5*float(x_node)
+        # shift_y = -0.5*float(y_node)
+        shift_x = -0.5*float((x_node-1)*dx) #shift to south
+        shift_y = -0.5*float((y_node-1)*dy) #shift to east
         coords = '{xnd} {ynd} {znd} {shift_x} {shift_y}  {depth} {dx:.2f} {dy:.2f} {dz:.2f} SLOW_LEN FLOAT\n'.format(xnd=x_node,
                     ynd=y_node,znd=z_node,shift_x=shift_x, shift_y=shift_y, depth = depth, dx=dx,dy=dy, dz=dz)
         transf = 'TRANSFORM SIMPLE LatOrig {xorig:.2f} LongOrig {yorig:.2f} RotCW 0.000000'.format(xorig=latitude, yorig=longitude)
