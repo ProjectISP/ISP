@@ -227,20 +227,21 @@ class NllManager:
         travetimepath = os.path.join(self.get_time_dir, "layer")
         locationpath = os.path.join(self.get_loc_dir, "location")
         df = pd.DataFrame(data)
-        df.iloc[1, 0] = 'TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}'.format(lat=latitude, lon=longitude, depth=depth)
+        df.iloc[1, 0] = 'TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}'.format(lat=latitude, lon=longitude, depth=0.0)
         df.iloc[3, 0] = 'LOCFILES {obspath} NLLOC_OBS {timepath} {locpath}'.format(obspath=self.__obs_file_path,
                             timepath=travetimepath,locpath=locationpath)
-        if xNum == 2:
-           xNum = int(yNum/2)
-           yNum = int(yNum/2)
+        if xNum == 2: # 1D Grid
+
+           xNum = int(yNum)
+           yNum = int(yNum)
            df.iloc[6, 0] = 'LOCGRID  {x} {y} {z} {xo} {yo} {zo} {dx} {dy} {dz} PROB_DENSITY  SAVE'.format(x=xNum,
-                            y=yNum,z=zNum,xo=xOrig,yo=yOrig,zo=zOrig,dx=dx, dy=dy,dz=dz)
+                            y=yNum, z=zNum, xo=xOrig, yo=yOrig, zo=zOrig, dx=dx, dy=dy, dz=dz)
         else:
 
-
-
-            df.iloc[6, 0] = 'LOCGRID  {x} {y} {z} {xo} {yo} {zo} {dx} {dy} {dz} PROB_DENSITY  SAVE'.format(x=xNum, y=yNum, z=zNum,xo=xOrig, yo=yOrig, zo=zOrig,
-                                                                                    dx=dx, dy=dy, dz=dz)
+            #xNum = int(yNum / 2)
+            #yNum = int(yNum / 2)
+            df.iloc[6, 0] = 'LOCGRID  {x} {y} {z} {xo} {yo} {zo} {dx} {dy} {dz} PROB_DENSITY  SAVE'.format(x=xNum,
+                        y=yNum, z=zNum, xo=xOrig, yo=yOrig, zo=zOrig, dx=dx, dy=dy, dz=dz)
 
         output = os.path.join(self.get_temp_dir, "run_temp.txt")
         df.to_csv(output, index=False, header=False, encoding='utf-8')
@@ -267,10 +268,7 @@ class NllManager:
         file_path = self.get_vel_template_file_path
         data = pd.read_csv(file_path)
         df = pd.DataFrame(data)
-        df.iloc[1, 0] = 'TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}'.format(lat=latitude, lon=longitude, depth=depth)
-        # df.iloc[2, 0] = 'VGGRID {xnd} {ynd} {znd} 0.0 0.0 -1.0  {dx:.2f} ' \
-        #                 '{dy:.2f} {dz:.2f} {type}'.format(xnd=x_node, ynd=y_node, znd=z_node, dx=dx,
-        #                                                   dy=dy, dz=dz, type=grid_type)
+        df.iloc[1, 0] = 'TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}'.format(lat=latitude, lon=longitude, depth=0.0)
         df.iloc[2, 0] = 'VGGRID {xnd} {ynd} {znd} 0.0 0.0 {depth:.2f}  {dx:.2f} ' \
                         '{dy:.2f} {dz:.2f} {type}'.format(xnd=x_node, ynd=y_node, znd=z_node, depth=depth, dx=dx,
                                                           dy=dy, dz=dz, type=grid_type)
@@ -286,7 +284,7 @@ class NllManager:
         data = pd.read_csv(file_path)
         df = pd.DataFrame(data)
 
-        df.iloc[1, 0] = "TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}".format(lat=latitude, lon=longitude, depth=depth)
+        df.iloc[1, 0] = "TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}".format(lat=latitude, lon=longitude, depth=0.0)
         df.iloc[2, 0] = "GTFILES {modelpath} {timepath} {wavetype}".\
             format(modelpath=os.path.join(self.get_model_dir, "layer"),
                    timepath=os.path.join(self.get_time_dir, "layer"), wavetype=wave_type)
@@ -548,12 +546,11 @@ class NllManager:
             file_name = os.path.join(self.get_local_models_dir3D,"layer.S.mod.hdr")
 
 
-        # shift_x = -0.5*float(x_node)
-        # shift_y = -0.5*float(y_node)
-        shift_x = -0.5*float((x_node-1)*dx) #shift to south
-        shift_y = -0.5*float((y_node-1)*dy) #shift to east
+        shift_x = -0.5*float((x_node-1)*dx)
+        shift_y = -0.5*float((y_node-1)*dy)
+
         coords = '{xnd} {ynd} {znd} {shift_x} {shift_y}  {depth} {dx:.2f} {dy:.2f} {dz:.2f} SLOW_LEN FLOAT\n'.format(xnd=x_node,
-                    ynd=y_node,znd=z_node,shift_x=shift_x, shift_y=shift_y, depth = depth, dx=dx,dy=dy, dz=dz)
+                    ynd=y_node,znd=z_node,shift_x=shift_x, shift_y=shift_y, depth=depth, dx=dx, dy=dy, dz=dz)
         transf = 'TRANSFORM SIMPLE LatOrig {xorig:.2f} LongOrig {yorig:.2f} RotCW 0.000000'.format(xorig=latitude, yorig=longitude)
         new_file = open(file_name, mode="w+", encoding="utf-8")
         new_file.write(coords)
