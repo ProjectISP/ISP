@@ -365,7 +365,7 @@ class JoinClocks():
         plt.ylabel('Skew [s]')
         plt.xlabel('Jul day')
         file_name = os.path.join(self.output_path, self.obspair)+".pdf"
-        plt.savefig(file_name, dpi=150)
+        #plt.savefig(file_name, dpi=150)
         plt.show()
         self.save_results()
 
@@ -501,9 +501,10 @@ if __name__ == "__main__":
     # components = ["ZZ","RR", "TT", "HH"]
     # order = 3
 
-    obs_pair = "UP21_UP01"
-    components = ["ZZ", "RR", "TT", "HH"]
-    order = 2
+    #obs_pair = "UP21_UP01"
+    #components = ["ZZ", "RR", "TT", "HH"]
+    #order = 2
+
     # example
     jc = JoinClocks(input_path, skews_path, output_path, obs_pair, components, order)
     jc.list_dir()

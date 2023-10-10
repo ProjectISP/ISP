@@ -839,7 +839,7 @@ class ISOLA:
                 stats[i]
 
     def set_use_components(self, map):
-
+        # map is a list of [[station_name1, channel1, ch1, checked1], [station_name1, channel1, ch1, checked1],....]
         for i in map:
             station_name = i[0]
             channel = i[1]
