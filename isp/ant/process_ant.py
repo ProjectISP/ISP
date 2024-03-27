@@ -396,11 +396,11 @@ class process_ant:
                         if self.time_normalizationCB and self.timenorm == "running avarage":
                             process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
                             if self.whitheningCB:
-                                process.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+                                process.whiten_new(freq_width=self.freqbandwidth)
 
                         elif self.time_normalizationCB and self.timenorm == "1 bit":
                             if self.whitheningCB:
-                                process.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+                                process.whiten_new(freq_width=self.freqbandwidth)
                             if self.time_normalizationCB:
                                 process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
 
@@ -539,11 +539,11 @@ class process_ant:
                             if self.time_normalizationCB and self.timenorm == "running avarage":
                                 process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
                                 if self.whitheningCB:
-                                    process_horizontals.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+                                    process_horizontals.whiten_new(freq_width=self.freqbandwidth)
 
                             elif self.time_normalizationCB and self.timenorm == "1 bit":
                                 if self.whitheningCB:
-                                    process_horizontals.whiten_new(freq_width=self.freqbandwidth, taper_edge=True)
+                                    process_horizontals.whiten_new(freq_width=self.freqbandwidth)
                                 if self.time_normalizationCB:
                                     process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
 

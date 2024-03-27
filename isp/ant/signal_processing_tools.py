@@ -4,7 +4,7 @@ import math
 from scipy import stats
 # Cython code
 #from isp.cython_code.whiten import whiten_aux, whiten_aux_horizontals
-
+from numba import jit
 class noise_processing:
 
     def __init__(self, tr):
@@ -349,7 +349,7 @@ class noise_processing:
         return window
 
 
-    def whiten_new(self, freq_width=0.02, taper_edge=False):
+    def whiten_new(self, freq_width=0.02):
 
         """"
         freq_width: Frequency smoothing windows [Hz] / both sides
@@ -387,32 +387,29 @@ class noise_processing:
         data_f_whiten = data_f.copy()
         index = np.arange(0, N_rfft - half_width, 1)
 
-        # Calling Cython version
-        #data_f_whiten = whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos)
+        # Calling Cython / numba version
+        # data_f_whiten = whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos)
 
         # with no pre-compilation
         for j in index:
+
             den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
-            # den = np.mean(np.abs(data_f[j:j + 2 * half_width]))
-            data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
+            if den != 0: # it can be 0 because rfft is padding to 0 data_f
+                # den = np.mean(np.abs(data_f[j:j + 2 * half_width]))
+                data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
 
         # Taper (optional) and remove mean diffs in edges of the frequency domain
 
         wf = (np.cos(np.linspace(np.pi / 2, np.pi, half_width)) ** 2)
+        mean_1 = np.mean(np.abs(data_f[0:half_width]))
+        mean_2 = np.mean(np.abs(data_f[(N_rfft - half_width):]))
+        wf_flip = np.flip(wf)
 
-        if taper_edge:
+        if mean_1 != 0:
+            data_f_whiten[0:half_width] = (data_f[0:half_width]/mean_1) * wf   # First part of spectrum
+        if mean_2 != 0:
+            data_f_whiten[(N_rfft - half_width):] = (data_f[(N_rfft - half_width):]/mean_2) * wf_flip # end of spectrum
 
-            diff_mean = np.abs(np.mean(np.abs(data_f[0:half_width])) - np.mean(np.abs(data_f_whiten[half_width:])) * wf)
-
-        else:
-
-            diff_mean = np.abs(np.mean(np.abs(data_f[0:half_width])) - np.mean(np.abs(data_f_whiten[half_width:])))
-
-        diff_mean2 = np.abs(
-            np.mean(np.abs(data_f[(N_rfft - half_width):])) - np.mean(np.abs(data_f_whiten[(N_rfft - half_width):])))
-
-        data_f_whiten[0:half_width] = ((data_f[0:half_width]) / diff_mean)  # First part of spectrum
-        data_f_whiten[(N_rfft - half_width):] = (data_f[(N_rfft - half_width):]) / diff_mean2  # end of spectrum
         try:
             data = np.fft.irfft(data_f_whiten)
             data = data[0:N]
@@ -421,6 +418,18 @@ class noise_processing:
 
 
         self.tr.data = data
+
+# def whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos):
+#     return __whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos)
+#
+# def __whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos):
+#     for j in index:
+#         den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
+#         if den != 0:
+#             data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
+#     return data_f_whiten
+#
+# __whiten_aux = jit(nopython=True, parallel=True)(__whiten_aux)
 
     # @jit(nopython=True, parallel=True)
     # def whiten_aux(self, data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos):
@@ -482,7 +491,7 @@ class noise_processing_horizontals:
         return window
 
 
-    def whiten_new(self, freq_width=0.02, taper_edge=False):
+    def whiten_new(self, freq_width=0.02):
 
         """"
         freq_width: Frequency smoothing windows [Hz] / both sides
@@ -526,35 +535,30 @@ class noise_processing_horizontals:
         # whitout cython
         for j in index:
             den = 0.5*(np.sum(np.abs(data_f_N[j:j + 2 * half_width]) + np.abs(data_f_E[j:j + 2 * half_width]))/avarage_window_width)
-            data_f_whiten_N[j + half_width_pos] = data_f_whiten_N[j + half_width_pos] / den
-            data_f_whiten_E[j + half_width_pos] = data_f_whiten_E[j + half_width_pos] / den
+            if den != 0:
+                data_f_whiten_N[j + half_width_pos] = data_f_whiten_N[j + half_width_pos] / den
+                data_f_whiten_E[j + half_width_pos] = data_f_whiten_E[j + half_width_pos] / den
 
         # Taper (optional) and remove mean diffs in edges of the frequency domain
 
         wf = (np.cos(np.linspace(np.pi / 2, np.pi, half_width)) ** 2)
+        wf_flip = np.flip(wf)
+        mean_1_N = np.mean(np.abs(data_f_N[0:half_width]))
+        mean_1_E = np.mean(np.abs(data_f_N[0:half_width]))
+        mean_2_N = np.mean(np.abs(data_f_N[(N_rfft - half_width):]))
+        mean_2_E = np.mean(np.abs(data_f_E[(N_rfft - half_width):]))
 
-        if taper_edge:
+        if mean_1_E !=0:
+            data_f_whiten_E[0:half_width] = (data_f_E[0:half_width] / mean_1_E) * wf
+        if mean_1_N != 0:
+            data_f_whiten_N[0:half_width] = (data_f_N[0:half_width] / mean_1_N) * wf
 
-            diff_mean_N = np.abs(np.mean(np.abs(data_f_N[0:half_width])) - np.mean(np.abs(data_f_whiten_N[half_width:])) * wf)
-            diff_mean_E = np.abs(np.mean(np.abs(data_f_E[0:half_width])) - np.mean(np.abs(data_f_whiten_E[half_width:])) * wf)
+        if mean_2_E != 0:
+            data_f_whiten_E[(N_rfft - half_width):] = (data_f_E[(N_rfft - half_width):] / mean_2_E) * wf_flip
 
+        if mean_2_N != 0:
+            data_f_whiten_N[(N_rfft - half_width):] = (data_f_N[(N_rfft - half_width):] / mean_2_N) * wf_flip
 
-        else:
-
-            diff_mean_N = np.abs(np.mean(np.abs(data_f_N[0:half_width])) - np.mean(np.abs(data_f_whiten_N[half_width:])))
-            diff_mean_E = np.abs(np.mean(np.abs(data_f_E[0:half_width])) - np.mean(np.abs(data_f_whiten_E[half_width:])))
-
-        diff_mean2_N = np.abs(
-            np.mean(np.abs(data_f_N[(N_rfft - half_width):])) - np.mean(np.abs(data_f_whiten_N[(N_rfft - half_width):])))
-        diff_mean2_E = np.abs(
-            np.mean(np.abs(data_f_E[(N_rfft - half_width):])) - np.mean(
-                np.abs(data_f_whiten_E[(N_rfft - half_width):])))
-
-        data_f_whiten_E[0:half_width] = ((data_f_E[0:half_width]) / diff_mean_E)  # First part of spectrum
-        data_f_whiten_N[0:half_width] = ((data_f_N[0:half_width]) / diff_mean_N)  # First part of spectrum
-
-        data_f_whiten_E[(N_rfft - half_width):] = (data_f_E[(N_rfft - half_width):]) / diff_mean2_E  # end of spectrum
-        data_f_whiten_N[(N_rfft - half_width):] = (data_f_N[(N_rfft - half_width):]) / diff_mean2_N  # end of spectrum
         data_N = np.fft.irfft(data_f_whiten_N)
         data_E = np.fft.irfft(data_f_whiten_E)
         data_N = data_N[0:N]
