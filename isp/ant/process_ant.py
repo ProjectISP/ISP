@@ -838,7 +838,7 @@ class clock_process:
                     data_new = np.zeros((part_day, self.dims[1]))
                 index = 0
                 for day in range(days, part_day+days):
-                    if day < self.dims[1]:
+                    if day <= self.dims[0]-1:
                         if type == "Linear":
                             data = stack_day[day, :]
                             data_new = data_new + data
@@ -894,7 +894,8 @@ class clock_process:
         if len(dates) >= days[-1]:
 
             for day in days:
-                all_dates.append(dates[day])
+                if day <= len(dates)-1:
+                    all_dates.append(dates[day])
 
             all_dates = np.array(self.extract_list_days(all_dates))
             sum_all = np.sum(np.diff(all_dates))
