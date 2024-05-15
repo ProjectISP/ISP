@@ -139,7 +139,7 @@ class process_ant:
         else:
             self.sampling_rate_new = sampling_rate
 
-        self.sampling_rate_new = 5 #hacking
+        # self.sampling_rate_new = 5 #hacking
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = self.sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
@@ -564,9 +564,19 @@ class process_ant:
                                 process_horizontals.tr_E.data = xaN / np.abs(xaE)  # normalize
 
                             try:
-                                # self.dict_matrix['data_matrix'][i, j, :] = np.fft.rfft(process.tr.data, D)
-                                res_N.append(np.fft.rfft(process_horizontals.tr_N.data, D))
-                                res_E.append(np.fft.rfft(process_horizontals.tr_E.data, D))
+                                if self.timenorm == "PCC":
+
+                                    rfft_N = np.fft.rfft(process_horizontals.tr_N.data, D)
+                                    rfft_N[1:D // 2] = 2 * rfft_N[1:D // 2]
+                                    res_N.append(rfft_N)
+
+                                    rfft_E = np.fft.rfft(process_horizontals.tr_E.data, D)
+                                    rfft_E[1:D // 2] = 2 * rfft_E[1:D // 2]
+                                    res_E.append(rfft_E)
+
+                                else:
+                                    res_N.append(np.fft.rfft(process_horizontals.tr_N.data, D))
+                                    res_E.append(np.fft.rfft(process_horizontals.tr_E.data, D))
                             except:
                                 res_N.append(np.zeros(self.DD_half_point, dtype=np.complex64))
                                 res_E.append(np.zeros(self.DD_half_point, dtype=np.complex64))
