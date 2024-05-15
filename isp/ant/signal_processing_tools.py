@@ -312,26 +312,14 @@ class noise_processing:
                 self.tr.data[self.tr.data < -lim] /= clip_weight
 
         elif norm_method == 'running avarage':
-            lwin = int(self.tr.stats.sampling_rate * norm_win)
-            st = 0  # starting point
-            N = lwin  # ending point
-
-            while N < self.tr.stats.npts:
-                win = self.tr.data[st:N]
-                w = np.mean(np.abs(win)) / (2. * lwin + 1)
-
-                # weight center of window
-                self.tr.data[int(st + lwin / 2)] /= w
-
-                # shift window
-                st += 1
-                N += 1
-
-            # taper edges
-            #taper = self.get_window(self.tr.stats.npts)
-            #self.tr.data *= taper
-            # ensure no glitches in the extremes due to previous pre-filt
-            self.tr.taper(type="blackman", max_percentage=0.05)
+            try:
+                fs = self.tr.stats.sampling_rate
+                norm_win = int(norm_win*fs)
+                window = np.ones(norm_win) / norm_win
+                self.tr.data = np.convolve(self.tr.data, window, mode='same')
+                self.tr.taper(type="blackman", max_percentage=0.05)
+            except:
+                print("Cannot compute time normalization at", self.tr.id)
 
         elif norm_method == "1 bit":
             self.tr.data = np.sign(self.tr.data)
