@@ -1,5 +1,4 @@
 import gc
-import multiprocessing
 import os
 import pickle
 from obspy import read, Trace, Stream, UTCDateTime
@@ -11,6 +10,8 @@ from isp.ant.signal_processing_tools import noise_processing, noise_processing_h
 from isp import DISP_MAPS
 from isp.arrayanalysis.array_analysis import array
 from datetime import datetime
+from scipy.signal import hilbert
+
 
 class process_ant:
 
@@ -138,6 +139,7 @@ class process_ant:
         else:
             self.sampling_rate_new = sampling_rate
 
+        self.sampling_rate_new = 5 #hacking
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = self.sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
@@ -404,9 +406,17 @@ class process_ant:
                             if self.time_normalizationCB:
                                 process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
 
+                        elif self.timenorm == "PCC":
+                            xaZ = hilbert(process.tr.data)
+                            process.tr.data = xaZ/np.abs(xaZ) # normalize
+
                         try:
-                            # self.dict_matrix['data_matrix'][i, j, :] = np.fft.rfft(process.tr.data, D)
-                            res.append(np.fft.rfft(process.tr.data, D))
+                            if self.timenorm == "PCC":
+                                rfft = np.fft.rfft(process.tr.data, D)
+                                rfft[1:D//2] = 2*rfft[1:D//2]
+                                res.append(rfft)
+                            else:
+                                res.append(np.fft.rfft(process.tr.data, D))
                         except:
                             res.append(np.zeros(self.DD_half_point, dtype=np.complex64))
                             print("dimensions does not agree")
@@ -546,6 +556,12 @@ class process_ant:
                                     process_horizontals.whiten_new(freq_width=self.freqbandwidth)
                                 if self.time_normalizationCB:
                                     process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
+
+                            elif self.time_normalizationCB and self.timenorm == "PCC":
+                                xaN = hilbert(process_horizontals.tr_N.data)
+                                xaE = hilbert(process_horizontals.tr_E.data)
+                                process_horizontals.tr_N.data = xaN / np.abs(xaN)  # normalize
+                                process_horizontals.tr_E.data = xaN / np.abs(xaE)  # normalize
 
                             try:
                                 # self.dict_matrix['data_matrix'][i, j, :] = np.fft.rfft(process.tr.data, D)

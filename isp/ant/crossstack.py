@@ -246,6 +246,9 @@ class noisestack:
                                     signal_rfft_mod[1:d // 2] = 2 * signal_rfft_mod[1:d // 2]
                                     # Generate the analytic function matrix
                                     analytic_signal = np.fft.ifft(signal_rfft_mod, size_3d, axis=2)
+                                    # instantaneous_phase = np.unwrap(np.angle(analytic_signal))
+                                    # instantaneous_frequency = (np.diff(instantaneous_phase) /
+                                    #                          (2.0 * np.pi) * fs)
                                     # Compute linear stack
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
                                     phase_stack = np.sum(np.sum(analytic_signal, axis=1), axis=0) / size_2d_all
