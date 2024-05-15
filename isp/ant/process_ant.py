@@ -139,7 +139,7 @@ class process_ant:
         else:
             self.sampling_rate_new = sampling_rate
 
-        self.sampling_rate_new = 5 #hacking
+        #self.sampling_rate_new = 5 #hacking
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = self.sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
