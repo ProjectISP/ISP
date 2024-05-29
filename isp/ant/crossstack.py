@@ -117,6 +117,17 @@ class noisestack:
                         dict_matrix_file_i = pickle.load(h_i)
                         dict_matrix_file_j = pickle.load(h_j)
 
+                        normalization_i = dict_matrix_file_i["CC"]
+                        normalization_j = dict_matrix_file_j["CC"]
+                        if normalization_i == normalization_j and normalization_i == "PCC":
+                            normalization = "PCC"
+                        else:
+                            normalization = "CC"
+
+                        # 28-05-2024, important 2n - 1
+                        cross_length = int(dict_matrix_file_i["data_length"] +
+                                           dict_matrix_file_j["data_length"] - 1)
+
                         data_matrix_file_i_corr = dict_matrix_file_i[key1_i]
                         data_matrix_file_j_corr = dict_matrix_file_j[key1_j]
                         metadata_list_file_i = dict_matrix_file_i[key2_i]
@@ -206,10 +217,15 @@ class noisestack:
                                 size_1d = corr_ij_freq.shape[0]
                                 size_2d = corr_ij_freq.shape[1]
                                 size_2d_all = size_1d + size_2d
-                                # 7-7-2021, important 2n - 1
-                                size_3d = 2 * corr_ij_freq.shape[2] - 1
+
+
                                 corr_ij_freq[np.isnan(corr_ij_freq)] = 0.0 + 0.0j
-                                corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, size_3d, axis=2))
+                                if normalization == "PCC":
+                                    corr_ij_time = np.real(np.fft.ifft(corr_ij_freq, cross_length, axis=2))
+                                    corr_ij_time = np.fft.ifftshift(corr_ij_time)
+                                else:
+                                    corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, cross_length, axis=2))
+                                    corr_ij_time = np.fft.ifftshift(corr_ij_time)
 
                                 # save memory
                                 if self.stack != "PWS":
@@ -236,37 +252,49 @@ class noisestack:
                                     # Stack: Linear stack
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
 
+
                                 elif self.stack == "PWS":
+
                                     # estimate the analytic function and then the instantaneous phase matrix
                                     # analytic_signal = np.zeros((size_1d, size_2d, size_3d), dtype=np.complex64)
-                                    f, c, d = corr_ij_freq.shape
-                                    c = np.zeros((f, c, (d // 2) - 1), dtype=np.complex64)
-                                    signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
-                                    signal_rfft_mod[((d // 2) + 1):] = signal_rfft_mod[((d // 2) + 1):] * 0
-                                    signal_rfft_mod[1:d // 2] = 2 * signal_rfft_mod[1:d // 2]
-                                    # Generate the analytic function matrix
-                                    analytic_signal = np.fft.ifft(signal_rfft_mod, size_3d, axis=2)
-                                    # instantaneous_phase = np.unwrap(np.angle(analytic_signal))
-                                    # instantaneous_frequency = (np.diff(instantaneous_phase) /
-                                    #                          (2.0 * np.pi) * fs)
+                                    if normalization == "CC":
+                                        f, c, d = corr_ij_freq.shape
+                                        dim_full = 2*d-1
+                                        non_real_dim = (dim_full - d)
+                                        c = np.zeros((f, c,  non_real_dim), dtype=np.complex64)
+                                        signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
+                                        signal_rfft_mod[((non_real_dim // 2) + 1):] = signal_rfft_mod[((non_real_dim // 2) + 1):] * 0
+                                        signal_rfft_mod[1:non_real_dim // 2] = 2 * signal_rfft_mod[1:non_real_dim // 2]
+
+                                        # Generate the analytic function matrix
+                                        analytic_signal = np.fft.ifft(signal_rfft_mod, cross_length, axis=2)
+                                        analytic_signal = np.fft.ifftshift(analytic_signal)
+
+                                    elif normalization != "CC":
+
+                                        # Generate the analytic function matrix
+                                        analytic_signal = np.fft.ifft(corr_ij_freq, cross_length, axis=2)
+                                        analytic_signal = np.fft.ifftshift(analytic_signal)
+
                                     # Compute linear stack
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
                                     phase_stack = np.sum(np.sum(analytic_signal, axis=1), axis=0) / size_2d_all
+
                                     # this point proceed to the PWS
                                     phase_stack = (np.abs(phase_stack)) ** self.power
                                     c_stack = c_stack * phase_stack
 
                                 # c_stack par, impar ...
-                                num = len(c_stack)
-                                if (num % 2) == 0:
-
-                                    #print(“Thenumber is even”)
-                                    c = int(np.ceil(num / 2.) + 1)
-                                else:
-                                    #print(“The providednumber is odd”)
-                                    c = int(np.ceil((num + 1)/2))
-
-                                c_stack = np.roll(c_stack, c)
+                                # num = len(c_stack)
+                                # if (num % 2) == 0:
+                                #
+                                #     #print(“Thenumber is even”)
+                                #     c = int(np.ceil(num / 2.) + 1)
+                                # else:
+                                #     #print(“The providednumber is odd”)
+                                #     c = int(np.ceil((num + 1)/2))
+                                #
+                                # c_stack = np.roll(c_stack, c)
                                 print("stack[" + str(i) + "," + str(j) + "]:")
                                 # print(c_stack)
 
@@ -348,6 +376,17 @@ class noisestack:
                     dict_matrix_file_i = pickle.load(h_i)
                     dict_matrix_file_j = pickle.load(h_j)
 
+                    normalization_i = dict_matrix_file_i["CC"]
+                    normalization_j = dict_matrix_file_j["CC"]
+                    if normalization_i == normalization_j and normalization_i == "PCC":
+                        normalization = "PCC"
+                    else:
+                        normalization = "CC"
+
+                    # 28-05-2024, important 2n - 1
+                    cross_length = int(dict_matrix_file_i["data_length"] +
+                                       dict_matrix_file_j["data_length"] - 1)
+
                     data_matrix_file_i_corr = dict_matrix_file_i[key1_i]
                     data_matrix_file_j_corr = dict_matrix_file_j[key1_j]
                     metadata_list_file_i = dict_matrix_file_i[key2_i]
@@ -415,7 +454,8 @@ class noisestack:
                                     elements_i_to_delete.append(date_list_file_i.index(date_i))
 
                             if len(elements_i_to_delete) > 0:
-                                data_matrix_file_i_corr = np.delete(data_matrix_file_i_corr, elements_i_to_delete, 1)
+                                data_matrix_file_i_corr = np.delete(data_matrix_file_i_corr,
+                                                                    elements_i_to_delete, 1)
 
                             for date_j in date_list_file_j:
                                 if not date_j in common_dates_list:
@@ -442,10 +482,14 @@ class noisestack:
                             size_1d = corr_ij_freq.shape[0]
                             size_2d = corr_ij_freq.shape[1]
                             size_2d_all = size_1d + size_2d
-                            # 7-7-2021, important 2n - 1
-                            size_3d = 2 * corr_ij_freq.shape[2] - 1
+
                             corr_ij_freq[np.isnan(corr_ij_freq)] = 0.0 + 0.0j
-                            corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, size_3d, axis=2))
+                            if normalization == "PCC":
+                                corr_ij_time = np.real(np.fft.ifft(corr_ij_freq, cross_length, axis=2))
+                                corr_ij_time = np.fft.ifftshift(corr_ij_time)
+                            else:
+                                corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, cross_length, axis=2))
+                                corr_ij_time = np.fft.ifftshift(corr_ij_time)
 
                             # save memory
                             if self.stack != "PWS":
@@ -473,33 +517,48 @@ class noisestack:
                                 c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
 
                             elif self.stack == "PWS":
+
                                 # estimate the analytic function and then the instantaneous phase matrix
                                 # analytic_signal = np.zeros((size_1d, size_2d, size_3d), dtype=np.complex64)
-                                f, c, d = corr_ij_freq.shape
-                                c = np.zeros((f, c, (d // 2) - 1), dtype=np.complex64)
-                                signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
-                                signal_rfft_mod[((d // 2) + 1):] = signal_rfft_mod[((d // 2) + 1):] * 0
-                                signal_rfft_mod[1:d // 2] = 2 * signal_rfft_mod[1:d // 2]
-                                # Generate the analytic function matrix
-                                analytic_signal = np.fft.ifft(signal_rfft_mod, size_3d, axis=2)
+                                if normalization == "CC":
+                                    f, c, d = corr_ij_freq.shape
+                                    dim_full = 2 * d - 1
+                                    non_real_dim = (dim_full - d)
+                                    c = np.zeros((f, c, non_real_dim), dtype=np.complex64)
+                                    signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
+                                    signal_rfft_mod[((non_real_dim // 2) + 1):] = signal_rfft_mod[
+                                                                                  ((non_real_dim // 2) + 1):] * 0
+                                    signal_rfft_mod[1:non_real_dim // 2] = 2 * signal_rfft_mod[1:non_real_dim // 2]
+
+                                    # Generate the analytic function matrix
+                                    analytic_signal = np.fft.ifft(signal_rfft_mod, cross_length, axis=2)
+                                    analytic_signal = np.fft.ifftshift(analytic_signal)
+
+                                elif normalization != "CC":
+
+                                    # Generate the analytic function matrix
+                                    analytic_signal = np.fft.ifft(corr_ij_freq, cross_length, axis=2)
+                                    analytic_signal = np.fft.ifftshift(analytic_signal)
+
                                 # Compute linear stack
                                 c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
                                 phase_stack = np.sum(np.sum(analytic_signal, axis=1), axis=0) / size_2d_all
+
                                 # this point proceed to the PWS
                                 phase_stack = (np.abs(phase_stack)) ** self.power
                                 c_stack = c_stack * phase_stack
 
                             # c_stack par, impar ...
-                            num = len(c_stack)
-                            if (num % 2) == 0:
+                            # num = len(c_stack)
+                            # if (num % 2) == 0:
+                            #
+                            #     #print(“Thenumber is even”)
+                            #     c = int(np.ceil(num / 2.) + 1)
+                            # else:
+                            #     #print(“The providednumber is odd”)
+                            #     c = int(np.ceil((num + 1)/2))
 
-                                #print(“Thenumber is even”)
-                                c = int(np.ceil(num / 2.) + 1)
-                            else:
-                                #print(“The providednumber is odd”)
-                                c = int(np.ceil((num + 1)/2))
-
-                            c_stack = np.roll(c_stack, c)
+                            #c_stack = np.roll(c_stack, c)
                             print("stack[" + str(i) + "," + str(j) + "]:")
                             # print(c_stack)
 

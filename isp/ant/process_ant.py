@@ -139,7 +139,7 @@ class process_ant:
         else:
             self.sampling_rate_new = sampling_rate
 
-        #self.sampling_rate_new = 5 #hacking
+        # self.sampling_rate_new = 5 #hacking
         self.dict_matrix['metadata_list'][0][0][0].sample_rate = self.sampling_rate_new
 
         # 3.- dict_matrix['data_matrix']
@@ -148,6 +148,7 @@ class process_ant:
         self.num_rows = int((24 * 60) / num_minutes)
         num_columns = len(list_item) - 1
         N = num_minutes * 60 * self.sampling_rate_new  # seconds*fs
+        self.dict_matrix['data_length'] = N
         DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
         self.list_item = list_item
         # ······
@@ -155,7 +156,18 @@ class process_ant:
         # f = [0, 1, ..., (n - 1) / 2 - 1, (n - 1) / 2] / (d * n) if n is odd
         # ······
         self.DD_half_point = int(((DD) / 2) + 1)
-        self.dict_matrix['data_matrix'] = np.zeros((self.num_rows, num_columns, self.DD_half_point), dtype=np.complex64)
+
+        if self.timenorm == "PCC":
+            self.dict_matrix['data_matrix'] = np.zeros((self.num_rows, num_columns, DD),
+                                                       dtype=np.complex64)
+            self.dict_matrix['CC'] = "PCC"
+            self.DD_half_point = DD
+
+        else:
+            self.dict_matrix['data_matrix'] = np.zeros((self.num_rows, num_columns, self.DD_half_point),
+                                                       dtype=np.complex64)
+            self.dict_matrix['CC'] = "CC"
+
         self.inc_time = [i * 60 * num_minutes for i in range(self.num_rows + 1)]
         with Pool(processes=self.cpuCount) as pool:
             r = pool.map(self.process_col_matrix, range(num_columns))
@@ -234,6 +246,7 @@ class process_ant:
         else:
             self.sampling_rate_new = sampling_rate
 
+        # self.sampling_rate_new = 5 # hacking
         self.dict_matrix_N['metadata_list_N'][0][0][0].sample_rate = self.sampling_rate_new
         self.dict_matrix_E['metadata_list_E'][0][0][0].sample_rate = self.sampling_rate_new
 
@@ -244,7 +257,8 @@ class process_ant:
         num_columns_N = len(list_item_horizonrals["North"]) - 1
         num_columns_E = len(list_item_horizonrals["East"]) - 1
         N = num_minutes * 60 * self.sampling_rate_new  # segundos*fs
-
+        self.dict_matrix_N['data_length'] = N
+        self.dict_matrix_E['data_length'] = N
         DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
         self.list_item_N = list_item_horizonrals["North"]
         self.list_item_E = list_item_horizonrals["East"]
@@ -253,10 +267,28 @@ class process_ant:
         # f = [0, 1, ..., (n - 1) / 2 - 1, (n - 1) / 2] / (d * n) if n is odd
         """
         self.DD_half_point = int(((DD) / 2) + 1)
-        self.dict_matrix_N['data_matrix_N'] = np.zeros((self.num_rows, num_columns_N, self.DD_half_point),
+
+        if self.timenorm == "PCC":
+            self.dict_matrix_N['data_matrix_N'] = np.zeros((self.num_rows, num_columns_N, DD),
                                                        dtype=np.complex64)
-        self.dict_matrix_E['data_matrix_E'] = np.zeros((self.num_rows, num_columns_E, self.DD_half_point),
-                                                       dtype=np.complex64)
+            self.dict_matrix_N['CC'] = "PCC"
+
+            self.dict_matrix_E['data_matrix_E'] = np.zeros((self.num_rows, num_columns_E, DD),
+                                                           dtype=np.complex64)
+            self.dict_matrix_E['CC'] = "PCC"
+
+            self.DD_half_point = DD
+
+        else:
+            self.dict_matrix_N['data_matrix_N'] = np.zeros((self.num_rows, num_columns_N, self.DD_half_point),
+                                                           dtype=np.complex64)
+            self.dict_matrix_E['data_matrix_E'] = np.zeros((self.num_rows, num_columns_E, self.DD_half_point),
+                                                           dtype=np.complex64)
+            self.dict_matrix_N['CC'] = "CC"
+            self.dict_matrix_E['CC'] = "CC"
+
+
+
         self.inc_time = [i * 60 * num_minutes for i in range(self.num_rows + 1)]
         num_columns = min(num_columns_N, num_columns_E)
         with Pool(processes=self.cpuCount) as pool:
@@ -407,18 +439,23 @@ class process_ant:
                                 process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
 
                         elif self.timenorm == "PCC":
+                            process.tr.filter(type="bandpass", freqmin=0.025, freqmax=0.166,
+                                           zerophase=True, corners=4)
                             xaZ = hilbert(process.tr.data)
                             process.tr.data = xaZ/np.abs(xaZ) # normalize
 
                         try:
                             if self.timenorm == "PCC":
-                                rfft = np.fft.rfft(process.tr.data, D)
-                                rfft[1:D//2] = 2*rfft[1:D//2]
-                                res.append(rfft)
+                                fft = np.fft.fft(process.tr.data, D)
+                                res.append(fft)
                             else:
                                 res.append(np.fft.rfft(process.tr.data, D))
                         except:
-                            res.append(np.zeros(self.DD_half_point, dtype=np.complex64))
+                            if self.timenorm == "PCC":
+                                res.append(np.zeros(D, dtype=np.complex64))
+                            else:
+                                res.append(np.zeros(self.DD_half_point, dtype=np.complex64))
+
                             print("dimensions does not agree")
                     else:
                         res.append(np.zeros(self.DD_half_point, dtype=np.complex64))
@@ -558,29 +595,36 @@ class process_ant:
                                     process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
 
                             elif self.time_normalizationCB and self.timenorm == "PCC":
+
+                                process_horizontals.tr_N.filter(type="bandpass", freqmin=0.025, freqmax=0.166,
+                                                  zerophase=True, corners=4)
+
+                                process_horizontals.tr_E.filter(type="bandpass", freqmin=0.025, freqmax=0.166,
+                                                                zerophase=True, corners=4)
+
                                 xaN = hilbert(process_horizontals.tr_N.data)
                                 xaE = hilbert(process_horizontals.tr_E.data)
                                 process_horizontals.tr_N.data = xaN / np.abs(xaN)  # normalize
-                                process_horizontals.tr_E.data = xaN / np.abs(xaE)  # normalize
+                                process_horizontals.tr_E.data = xaE / np.abs(xaE)  # normalize
 
                             try:
                                 if self.timenorm == "PCC":
-
-                                    rfft_N = np.fft.rfft(process_horizontals.tr_N.data, D)
-                                    rfft_N[1:D // 2] = 2 * rfft_N[1:D // 2]
-                                    res_N.append(rfft_N)
-
-                                    rfft_E = np.fft.rfft(process_horizontals.tr_E.data, D)
-                                    rfft_E[1:D // 2] = 2 * rfft_E[1:D // 2]
-                                    res_E.append(rfft_E)
-
+                                    fft = np.fft.fft(process_horizontals.tr_N.data, D)
+                                    res_N.append(fft)
+                                    fft = np.fft.fft(process_horizontals.tr_E.data, D)
+                                    res_E.append(fft)
                                 else:
                                     res_N.append(np.fft.rfft(process_horizontals.tr_N.data, D))
                                     res_E.append(np.fft.rfft(process_horizontals.tr_E.data, D))
                             except:
-                                res_N.append(np.zeros(self.DD_half_point, dtype=np.complex64))
-                                res_E.append(np.zeros(self.DD_half_point, dtype=np.complex64))
+                                if self.timenorm == "PCC":
+                                    res_N.append(np.zeros(D, dtype=np.complex64))
+                                    res_E.append(np.zeros(D, dtype=np.complex64))
+                                else:
+                                    res_N.append(np.zeros(self.DD_half_point, dtype=np.complex64))
+                                    res_E.append(np.zeros(self.DD_half_point, dtype=np.complex64))
                                 print("dimensions does not agree")
+
                         else:
                             res_N.append(np.zeros(self.DD_half_point, dtype=np.complex64))
                             res_E.append(np.zeros(self.DD_half_point, dtype=np.complex64))
