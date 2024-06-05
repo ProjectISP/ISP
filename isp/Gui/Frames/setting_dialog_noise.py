@@ -38,4 +38,10 @@ class SettingsDialogNoise(pw.QDialog, UiSettingsDialogNoise):
         param_dict["max_distance"] = self.max_distanceBtn.value()
         param_dict["dailyStacks"] = self.dailyStacksCB.isChecked()
         param_dict["overlap"] = self.overlapSB.value()
+        param_dict["prefilter"] = self.preFilterCB.isChecked()
+        param_dict["filter_freqmin"] = self.freqminFilterDB.value()
+        param_dict["filter_freqmax"] = self.freqmaxFilterDB.value()
+        param_dict["filter_corners"] = self.cornersFilterDB.value()
+
+
         return param_dict

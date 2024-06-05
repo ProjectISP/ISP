@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1680</width>
-    <height>924</height>
+    <height>921</height>
    </rect>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,3">
@@ -31,38 +31,6 @@
         <string>Clock Synchronization</string>
        </property>
        <layout class="QGridLayout" name="gridLayout_3">
-        <item row="5" column="1">
-         <widget class="QDoubleSpinBox" name="phaseMatchCB">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="prefix">
-           <string>Gauss Pulse Width </string>
-          </property>
-          <property name="suffix">
-           <string> s</string>
-          </property>
-          <property name="decimals">
-           <number>1</number>
-          </property>
-          <property name="value">
-           <double>10.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="0">
-         <widget class="QCheckBox" name="phase_matchCB">
-          <property name="text">
-           <string>Phase Match Filter</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
         <item row="4" column="0" alignment="Qt::AlignHCenter">
          <widget class="QLabel" name="label_5">
           <property name="text">
@@ -70,20 +38,20 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QPushButton" name="searchSyncFileBtn">
+        <item row="1" column="3">
+         <widget class="QPushButton" name="SyncBtn">
           <property name="text">
-           <string>Search file </string>
+           <string>Sync</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="clockLE"/>
-        </item>
-        <item row="3" column="0" alignment="Qt::AlignHCenter">
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Fit Curve Type</string>
+        <item row="4" column="1">
+         <widget class="QSpinBox" name="refSB">
+          <property name="prefix">
+           <string>Trace </string>
+          </property>
+          <property name="maximum">
+           <number>1000</number>
           </property>
          </widget>
         </item>
@@ -128,6 +96,13 @@
           </property>
          </widget>
         </item>
+        <item row="1" column="0">
+         <widget class="QPushButton" name="searchSyncFileBtn">
+          <property name="text">
+           <string>Search file </string>
+          </property>
+         </widget>
+        </item>
         <item row="1" column="2">
          <widget class="QPushButton" name="plot_dailyBtn">
           <property name="text">
@@ -135,20 +110,10 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="3">
-         <widget class="QPushButton" name="SyncBtn">
+        <item row="3" column="0" alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="label">
           <property name="text">
-           <string>Sync</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="1">
-         <widget class="QSpinBox" name="refSB">
-          <property name="prefix">
-           <string>Trace </string>
-          </property>
-          <property name="maximum">
-           <number>1000</number>
+           <string>Fit Curve Type</string>
           </property>
          </widget>
         </item>
@@ -185,6 +150,41 @@
             <string/>
            </property>
           </item>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="clockLE"/>
+        </item>
+        <item row="5" column="0">
+         <widget class="QCheckBox" name="phase_matchCB">
+          <property name="text">
+           <string>Phase Match Filter</string>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QDoubleSpinBox" name="phaseMatchCB">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="prefix">
+           <string>Gauss Pulse Width </string>
+          </property>
+          <property name="suffix">
+           <string> s</string>
+          </property>
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="value">
+           <double>10.000000000000000</double>
+          </property>
          </widget>
         </item>
        </layout>
@@ -263,98 +263,6 @@
        <property name="text">
         <string>output</string>
        </property>
-      </widget>
-     </item>
-     <item row="13" column="0" colspan="5">
-      <widget class="QGroupBox" name="groupBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>100</width>
-         <height>175</height>
-        </size>
-       </property>
-       <property name="title">
-        <string>Plot Correlations</string>
-       </property>
-       <layout class="QGridLayout" name="gridLayout">
-        <item row="2" column="2">
-         <widget class="QCheckBox" name="autorefreshCB">
-          <property name="text">
-           <string>Auto-Refresh</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QComboBox" name="comboBox_sort">
-          <item>
-           <property name="text">
-            <string>Distance</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Back Azimuth</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QCheckBox" name="sortCB">
-          <property name="text">
-           <string>Sort</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QPushButton" name="readFilesBtn">
-          <property name="text">
-           <string>Read files</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QLineEdit" name="rootPathForm2"/>
-        </item>
-        <item row="0" column="1">
-         <widget class="QPushButton" name="selectDirBtn2">
-          <property name="text">
-           <string>Set Path</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="2">
-         <widget class="QPushButton" name="mapBtn">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Stations Map</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QPushButton" name="updateBtn">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Process and Plot</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
       </widget>
      </item>
      <item row="3" column="3" colspan="2">
@@ -545,6 +453,151 @@
        </layout>
       </widget>
      </item>
+     <item row="13" column="0" colspan="5">
+      <widget class="QGroupBox" name="groupBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>190</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>Plot Correlations</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="2" column="2">
+         <widget class="QLineEdit" name="channelLE"/>
+        </item>
+        <item row="3" column="1">
+         <widget class="QComboBox" name="comboBox_sort">
+          <item>
+           <property name="text">
+            <string>Distance</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Back Azimuth</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="1" column="0" alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>Net</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QCheckBox" name="sortCB">
+          <property name="text">
+           <string>Sort</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLineEdit" name="netLE"/>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="stationLE"/>
+        </item>
+        <item row="0" column="2">
+         <widget class="QLineEdit" name="rootPathForm2"/>
+        </item>
+        <item row="0" column="0">
+         <widget class="QPushButton" name="readFilesBtn">
+          <property name="text">
+           <string>Read and Filter files</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2" alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>Channels</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QPushButton" name="selectDirBtn2">
+          <property name="text">
+           <string>Set Path</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1" alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>Stations</string>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="0">
+         <widget class="QPushButton" name="recordSectionBtn">
+          <property name="text">
+           <string>Record Section</string>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="2">
+         <widget class="QSpinBox" name="amplificationDB">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="maximum">
+           <number>1000</number>
+          </property>
+          <property name="value">
+           <number>25</number>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1" alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>Amplification</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="2">
+         <widget class="QPushButton" name="updateBtn">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Process and Plot</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QPushButton" name="mapBtn">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Stations Map</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
@@ -560,8 +613,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1013</width>
-        <height>898</height>
+        <width>1025</width>
+        <height>895</height>
        </rect>
       </property>
      </widget>

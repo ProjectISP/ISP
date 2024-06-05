@@ -22,6 +22,7 @@ class noisestack:
 
                 :param params required to initialize the class
         """
+
         self.__metadata_manager = None
         self.output_files_path = output_files_path
         self.channel = channels
@@ -123,6 +124,7 @@ class noisestack:
                             normalization = "PCC"
                         else:
                             normalization = "CC"
+                        
 
                         # 28-05-2024, important 2n - 1
                         cross_length = int(dict_matrix_file_i["data_length"] +
@@ -217,9 +219,11 @@ class noisestack:
                                 size_1d = corr_ij_freq.shape[0]
                                 size_2d = corr_ij_freq.shape[1]
                                 size_2d_all = size_1d + size_2d
-
-
                                 corr_ij_freq[np.isnan(corr_ij_freq)] = 0.0 + 0.0j
+                                zero_vectors = np.all(corr_ij_freq == 0.0 + 0.0j, axis=2)
+                                count_zero_vectors = np.sum(zero_vectors)
+                                size_2d_all = size_2d_all - count_zero_vectors
+
                                 if normalization == "PCC":
                                     corr_ij_time = np.real(np.fft.ifft(corr_ij_freq, cross_length, axis=2))
                                     corr_ij_time = np.fft.ifftshift(corr_ij_time)
@@ -278,11 +282,14 @@ class noisestack:
 
                                     # Compute linear stack
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
+                                    c_stack_max = np.max(c_stack)
+
                                     phase_stack = np.sum(np.sum(analytic_signal, axis=1), axis=0) / size_2d_all
 
                                     # this point proceed to the PWS
                                     phase_stack = (np.abs(phase_stack)) ** self.power
                                     c_stack = c_stack * phase_stack
+                                    c_stack = (c_stack*c_stack_max)/np.max(c_stack)
 
                                 # c_stack par, impar ...
                                 # num = len(c_stack)
@@ -484,6 +491,10 @@ class noisestack:
                             size_2d_all = size_1d + size_2d
 
                             corr_ij_freq[np.isnan(corr_ij_freq)] = 0.0 + 0.0j
+                            zero_vectors = np.all(corr_ij_freq == 0.0 + 0.0j, axis=2)
+                            count_zero_vectors = np.sum(zero_vectors)
+                            size_2d_all = size_2d_all - count_zero_vectors
+
                             if normalization == "PCC":
                                 corr_ij_time = np.real(np.fft.ifft(corr_ij_freq, cross_length, axis=2))
                                 corr_ij_time = np.fft.ifftshift(corr_ij_time)
@@ -542,11 +553,14 @@ class noisestack:
 
                                 # Compute linear stack
                                 c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
+                                c_stack_max = np.max(c_stack)
+
                                 phase_stack = np.sum(np.sum(analytic_signal, axis=1), axis=0) / size_2d_all
 
                                 # this point proceed to the PWS
                                 phase_stack = (np.abs(phase_stack)) ** self.power
                                 c_stack = c_stack * phase_stack
+                                c_stack = (c_stack * c_stack_max) / np.max(c_stack)
 
                             # c_stack par, impar ...
                             # num = len(c_stack)
@@ -571,6 +585,7 @@ class noisestack:
                             stats['channel'] = file_i[-1]+file_j[-1]
                             stats['sampling_rate'] = self.sampling_rate
                             stats['npts'] = len(c_stack)
+
                             stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim],
                                               'cross_channels': file_i[-1] + file_j[-1],
                                               'coordinates': [lat_i, lon_i, lat_j, lon_j]}
@@ -736,10 +751,12 @@ class noisestack:
 
         if validation:
             data_array_ne = np.zeros((dim[0], 4, 1))
+
             data_array_ne[:, 0, 0] = data_matrix["EE"][:]
             data_array_ne[:, 1, 0] = data_matrix["EN"][:]
             data_array_ne[:, 2, 0] = data_matrix["NN"][:]
             data_array_ne[:, 3, 0] = data_matrix["NE"][:]
+
 
             rotate_matrix = self.__generate_matrix_rotate(data_matrix['geodetic'], dim)
 

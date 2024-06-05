@@ -19,7 +19,7 @@ from isp.ant.crossstack import noisestack
 from sys import platform
 from isp.Gui.Utils.pyqt_utils import add_save_load
 from isp.earthquakeAnalisysis.stations_map import StationsMap
-from isp.ant.signal_processing_tools import noise_processing
+from isp.ant.signal_processing_tools import noise_processing, ManageEGF
 from isp.seismogramInspector.signal_processing_advanced import correlate_maxlag, get_lags
 
 import numpy as np
@@ -79,6 +79,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         self.saveProjectBtn.clicked.connect(self.save_project)
         self.searchSyncFileBtn.clicked.connect(self.load_file_sync)
         self.plot_dailyBtn.clicked.connect(self.plot_daily)
+        self.recordSectionBtn.clicked.connect(self.plot_record)
         self.macroBtn.clicked.connect(self.open_parameters_settings)
         self.SyncBtn.clicked.connect(self.cross)
 
@@ -310,6 +311,67 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
 
         md.show()
 
+    def plot_record(self):
+
+        self.canvas.clear()
+        # filter
+        FE = ManageEGF()
+        self.files_path = FE.filter_project_keys(self.files_path, net=self.netLE.text(), station=self.stationLE.text(),
+                                                 channel=self.channelLE.text())
+
+        self.canvas.set_new_subplot(nrows=1, ncols=1)
+        parameters = self.parameters.getParameters()
+        min_starttime = []
+        max_endtime = []
+        for index, file_path in enumerate(self.files_path):
+            sd = SeismogramDataAdvanced(file_path)
+
+            tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                          filter_error_callback=self.filter_error_message, trace_number=0)
+
+            if len(tr) > 0:
+                t = tr.times("matplotlib")
+                tr.detrend(type="simple")
+                s = (tr.data/np.max(tr.data))*self.amplificationDB.value()
+                geodetic = MseedUtil.get_geodetic(file_path)
+                s = (s+(geodetic[0]/1000))
+                self.canvas.plot_date(t, s, 0, clear_plot=False, color="black", fmt='-', alpha=0.5,
+                                      linewidth=0.5, label="")
+                num = len(tr.data)
+                if (num % 2) == 0:
+
+                    # print(“Thenumber is even”)
+                    c = int(np.ceil(num / 2.) + 1)
+                else:
+                    # print(“The provided number is odd”)
+                    c = int(np.ceil((num + 1) / 2))
+                #half_point = (tr.stats.starttime + int(len(tr.data) / (2 * tr.stats.sampling_rate))).matplotlib_date
+                half_point = (tr.stats.starttime+(c/tr.stats.sampling_rate)).matplotlib_date
+
+
+                try:
+                    min_starttime.append(min(t))
+                    max_endtime.append(max(t))
+                except:
+                    print("Empty traces")
+
+        try:
+            if min_starttime and max_endtime is not None:
+                auto_start = min(min_starttime)
+                auto_end = max(max_endtime)
+                self.auto_start = auto_start
+                self.auto_end = auto_end
+
+            ax = self.canvas.get_axe(0)
+            ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(0, "Date")
+            self.canvas.set_ylabel(0, "Distance [km]")
+            self.canvas.draw_arrow(half_point,0, arrow_label="", color="blue")
+        except:
+            pass
+
     def plot_egfs(self):
         if self.st:
             del self.st
@@ -318,6 +380,10 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         ##
         self.nums_clicks = 0
         all_traces = []
+        # filter
+        FE = ManageEGF()
+        self.files_path = FE.filter_project_keys(self.files_path, net=self.netLE.text(), station=self.stationLE.text(),
+                                                 channel=self.channelLE.text())
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":
                 self.files_path.sort(key=self.sort_by_distance_advance)
@@ -710,6 +776,5 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             set_qdatetime(tt, self.dateTimeEdit_2)
             # for index, file_path in enumerate(files_at_page):
             self.canvas.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--', picker=False)
-
 
 

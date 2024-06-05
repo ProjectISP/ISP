@@ -31,16 +31,17 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.parameters = ParametersSettings()
         # Binds
         self.root_path_bind = BindPyqtObject(self.rootPathForm_2, self.onChange_root_path)
-        self.canvas_plot1 = MatplotlibCanvas(self.widget_plot_up, ncols=2, sharey  = True)
+        self.canvas_plot1 = MatplotlibCanvas(self.widget_plot_up, ncols=1)
         top = 0.900
         bottom = 0.180
         left = 0.045
         right = 0.720
         wspace = 0.135
-        self.canvas_plot1.figure.subplots_adjust(left=left, bottom=bottom, right=right, top=top, wspace=wspace, hspace=0.0)
+        self.canvas_plot1.figure.subplots_adjust(left=left, bottom=bottom, right=right, top=top,
+                                                 wspace=wspace, hspace=0.0)
 
         ax = self.canvas_plot1.get_axe(0)
-        left,width = 0.2, 0.55
+        left, width = 0.2, 0.55
         bottom, height = 0.180, 0.72
         spacing = 0.02
         coords_ax = [left+width+spacing, bottom, 0.2, height]
@@ -245,23 +246,63 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
     #@AsycTime.run_async()
     def plot_seismogram(self):
 
+        modes = ["fundamental", "first", "second"]
+        feature = ["-.","-",  "--"]
         [tr1, t] = self.get_data()
         tr = tr1.copy()
         fs = tr1.stats.sampling_rate
+
         selection = self.time_frequencyCB.currentText()
-        # take into acount causality
+        # take into account causality
+        # c_stack par, impar ...
+        num = len(tr.data)
+        if (num % 2) == 0:
+
+            #print(“Thenumber is even”)
+            c = int(np.ceil(num / 2.) + 1)
+            even = True
+        else:
+            #print(“The providednumber is odd”)
+            c = int(np.ceil((num + 1)/2))
+            even = False
 
         if self.causalCB.currentText() == "Causal":
             starttime = tr.stats.starttime
             endtime = tr.stats.starttime+len(tr.data) / (2*fs)
-            tr.trim(starttime=starttime,endtime=endtime)
+            tr.trim(starttime=starttime, endtime=endtime)
             data = np.flip(tr.data)
             tr.data = data
 
-        else:
+        elif self.causalCB.currentText() == "Acausal":
             starttime = tr.stats.starttime + len(tr.data) / (2*fs)
             endtime = tr.stats.endtime
             tr.trim(starttime=starttime, endtime=endtime)
+
+        elif self.causalCB.currentText() == "Both":
+            tr_causal = tr1.copy()
+            tr_acausal = tr1.copy()
+
+            "Causal"
+            starttime = tr_causal.stats.starttime
+            endtime = tr_causal.stats.starttime + (c / fs)
+            tr_causal.trim(starttime=starttime, endtime=endtime)
+            data_causal = np.flip(tr_causal.data)
+            tr_causal.data = data_causal
+
+            "Acausal"
+            starttime = tr_acausal.stats.starttime + (c / fs)
+            endtime = tr_acausal.stats.endtime
+            tr_acausal.trim(starttime=starttime, endtime=endtime)
+            N_cut = min(len(tr_causal.data), len(tr_acausal.data))
+
+            "Both"
+            tr.data = (tr_causal.data[0:N_cut] + tr_acausal.data[0:N_cut]) / 2
+
+        # 4-06-2024
+        # get dispersion curve
+        ns = noise_processing(tr)
+        all_curves = ns.get_disp(self.typeCB.currentText(), self.phaseMacthmodelCB.currentText())
+
 
         if self.phase_matchCB.isChecked():
             distance = tr.stats.mseed['geodetic'][0]
@@ -371,18 +412,27 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             self.ax_seism1.set_xlabel("Amplitude")
             self.ax_seism1.set_ylabel("Time (s)")
             self.canvas_plot1.clear()
-            self.canvas_plot1.plot_contour(period, vel, scalogram2, axes_index=1, levels = 100, clabel="Power [dB]",
-                        cmap=plt.get_cmap("jet"), vmin=min_cwt, vmax=max_cwt, antialiased=True, xscale = "log")
+            self.canvas_plot1.plot_contour(period, vel, scalogram2, axes_index=0, levels=100, clabel="Power [dB]",
+                        cmap=plt.get_cmap("jet"), vmin=min_cwt, vmax=max_cwt, antialiased=True, xscale="log")
 
-            self.canvas_plot1.set_xlabel(1, "Period (s)")
-            self.canvas_plot1.set_ylabel(1, "Group Velocity (km/s)")
+
+            for i, mode in enumerate(modes):
+                T = all_curves["period"]
+                vel = all_curves[mode]["U"]
+                self.canvas_plot1.plot(T, vel, axes_index=0, clear_plot=False,
+                                       color="gray", linewidth=1.0, linestyle=feature[i], label=mode)
+
+            info = "Disp. Fundamental mode " + "-.-"
+            self.canvas_plot1.set_plot_label(0, info)
+            self.canvas_plot1.set_xlabel(0, "Period (s)")
+            self.canvas_plot1.set_ylabel(0, "Group Velocity (km/s)")
 
             # Plot ridges and create lasso selectors
 
             self.selectors_group_vel = []
             self.group_vel = group_vel
             self.periods = period[0, :]
-            ax = self.canvas_plot1.get_axe(1)
+            ax = self.canvas_plot1.get_axe(0)
 
             for k in range(self.numridgeSB.value()):
                 #self.canvas_plot1.plot(period[0,:], group_vel[k], axes_index=1, marker=".", color = self.colors[k],

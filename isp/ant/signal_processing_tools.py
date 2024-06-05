@@ -1,3 +1,5 @@
+import os.path
+import re
 import numpy as np
 import math
 #from numba import jit
@@ -129,6 +131,51 @@ class noise_processing:
         plt.legend()
         self.mpf.show()
 
+
+    def get_disp(self, type, phaseMacthmodel):
+        import pandas as pd
+        import os
+        from isp import DISP_REF_CURVES
+
+        modes = ["fundamental", "first", "second"]
+        if phaseMacthmodel == "ak-135f":
+            curves = ["ak135_earth_velocity.txt", "ak135_earth_velocity_first_mode.txt",
+                      "ak135_earth_velocity_second_mode.txt"]
+
+        elif phaseMacthmodel == "ak-135f (Ocean-shallow waters)":
+            curves = ["ak135_earth_ocean_shallow_velocity.txt",
+                      "ak135_earth_ocean_shallow_velocity_first_mode.txt",
+                      "ak135_earth_ocean_shallow_velocity_second_mode.txt"]
+
+        elif phaseMacthmodel == "ak-135f (Ocean-intermediate waters)":
+
+            curves = ["ak135_earth_ocean_intermediate_velocity.txt",
+                      "ak135_earth_ocean_intermediate_velocity_first_mode.txt",
+                      "ak135_earth_ocean_intermediate_velocity_second_mode.txt"]
+
+        elif phaseMacthmodel == "ak-135f (Ocean-deep waters)":
+            curves = ["ak135_earth_ocean_deep_velocity.txt",
+                      "ak135_earth_ocean_deep_velocity_first_mode.txt",
+                      "ak135_earth_ocean_deep_velocity_second_mode.txt"]
+
+        all_curves = {}
+        for i, curve in enumerate(curves):
+            path = os.path.join(DISP_REF_CURVES, curve)
+            df = pd.read_csv(path)
+            all_curves[modes[i]] = {}
+
+            if type == "Rayleigh":
+                all_curves[modes[i]]["U"] = df['group_velocity_rayleigh'].to_numpy()
+                all_curves[modes[i]]["PHV"] = df['phase_velocity_rayleigh'].to_numpy()
+
+            if type == "Love":
+                all_curves[modes[i]]["U"] = df['group_velocity_love'].to_numpy()
+                all_curves[modes[i]]["PHV"] = df['phase_velocity_love'].to_numpy()
+
+            all_curves["period"] = df['period'].to_numpy()
+
+        return all_curves
+
     def __get_reference_disp(self, type, phaseMacthmodel, fft_bins):
         import pandas as pd
         import os
@@ -178,7 +225,7 @@ class noise_processing:
         vel = np.flip(vel)
         f = interpolate.interp1d(freq_ref, vel, fill_value="extrapolate")
         vel2 = f(fft_bins)
-        return vel2
+        return freq_ref, vel2
 
     @staticmethod
     def statisics_fit(x, y, type, deg):
@@ -252,7 +299,7 @@ class noise_processing:
 
         return m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err, ci, pi, x_new, y_new
 
-    def phase_matched_filter(self, type, phaseMacthmodel, distance, filter_parameter = 2):
+    def phase_matched_filter(self, type, phaseMacthmodel, distance, filter_parameter=2):
 
         distance = distance/1000
         #reference_c es un scipy.interpolate.interp1d
@@ -263,7 +310,7 @@ class noise_processing:
 
         fft = np.fft.rfft(signal)
         fft_bins = np.fft.rfftfreq(len(signal), d=dt)
-        reference_disp_phase_vel = self.__get_reference_disp(type, phaseMacthmodel, fft_bins)
+        freq_ref, reference_disp_phase_vel = self.__get_reference_disp(type, phaseMacthmodel, fft_bins)
 
         # Compute and apply the phase correction and time shifts, return to the time domain 2*pi*[distance/phase_Vel]
         #phase_correction = np.exp(1j * 2 * np.pi * fft_bins * np.divide(distance, reference_disp_phase_vel(fft_bins), out=np.zeros_like(fft_bins),
@@ -312,14 +359,35 @@ class noise_processing:
                 self.tr.data[self.tr.data < -lim] /= clip_weight
 
         elif norm_method == 'running avarage':
+
+            # lwin = int(self.tr.stats.sampling_rate * norm_win)
+            # st = 0  # starting point
+            # N = lwin  # ending point
+            #
+            # while N < self.tr.stats.npts:
+            #     win = self.tr.data[st:N]
+            #     w = np.sum(np.abs(win)) / (2. * lwin + 1)
+            #
+            #     # weight center of window
+            #     if w > 0.0:
+            #         self.tr.data[int(st + lwin / 2)] /= w
+            #
+            #
+            #     # shift window
+            #     st += 1
+            #     N += 1
+
             try:
                 fs = self.tr.stats.sampling_rate
                 norm_win = int(norm_win*fs)
-                window = np.ones(norm_win) / norm_win
-                self.tr.data = np.convolve(self.tr.data, window, mode='same')
+                window = np.ones(norm_win)/norm_win
+                self.tr.data = self.tr.data/np.convolve(np.abs(self.tr.data), window, mode='same')
                 self.tr.taper(type="blackman", max_percentage=0.05)
             except:
                 print("Cannot compute time normalization at", self.tr.id)
+
+        # if norm_method == 'running avarage' or "clipping_iter" or 'clipping':
+        #     self.tr.taper(type="blackman", max_percentage=0.05)
 
         elif norm_method == "1 bit":
             self.tr.data = np.sign(self.tr.data)
@@ -434,27 +502,61 @@ class noise_processing_horizontals:
 
     def normalize(self, clip_factor=6, clip_weight=10, norm_win=None, norm_method='ramn'):
 
+        if norm_method == 'clipping':
+            lim_N = clip_factor * np.std(self.tr_N.data)
+            lim_E = clip_factor * np.std(self.tr_N.data)
+            self.tr_N.data[self.tr_N.data > lim_N] = lim_N
+            self.tr_E.data[self.tr_E.data > lim_E] = lim_E
+            self.tr_N.data[self.tr_N.data < -lim_N] = -lim_N
+            self.tr_E.data[self.tr_N.data < -lim_E] = -lim_N
+
+        # elif norm_method == "clipping_iter":
+        #     lim_N = clip_factor * np.std(np.abs(self.tr_N.data))
+        #
+        #     # as long as still values left above the waterlevel, clip_weight
+        #     while self.tr.data[np.abs(self.tr.data) > lim_N] != []:
+        #         self.tr_N.data[self.tr.data > lim] /= clip_weight
+        #         self.tr_E.data[self.tr.data > lim] /= clip_weight
+        #
+        #         self.tr_N.data[self.tr.data < -lim] /= clip_weight
+        #         self.tr_E.data[self.tr.data < -lim] /= clip_weight
 
         # modified to compare maximum of both means
         if norm_method == 'ramn':
-            lwin = int(self.tr_N.stats.sampling_rate * norm_win)
-            st = 0  # starting point
-            N = lwin  # ending point
+            # lwin = int(self.tr_N.stats.sampling_rate * norm_win)
+            # st = 0  # starting point
+            # N = lwin  # ending point
+            #
+            # while N < self.tr_N.stats.npts and N < self.tr_E.stats.npts:
+            #     win_N = self.tr_N.data[st:N]
+            #     win_E = self.tr_E.data[st:N]
+            #
+            #     w_N = np.sum(np.abs(win_N)) / (2. * lwin + 1)
+            #     w_E = np.sum(np.abs(win_E)) / (2. * lwin + 1)
+            #     max_value = max(w_N, w_E)
+            #     # weight center of window
+            #     if max_value > 0.0:
+            #         self.tr_N.data[int(st + lwin / 2)] /= max_value
+            #         self.tr_E.data[int(st + lwin / 2)] /= max_value
+            #
+            #     # shift window
+            #     st += 1
+            #     N += 1
+            try:
+                fs = self.tr_N.stats.sampling_rate
+                norm_win = int(norm_win*fs)
+                window = np.ones(norm_win)/norm_win
+                norm_data_N = np.convolve(np.abs(self.tr_N.data), window, mode='same')
+                norm_data_E = np.convolve(np.abs(self.tr_E.data), window, mode='same')
+                norm_data = np.maximum(norm_data_N, norm_data_E)
+                self.tr_N.data = self.tr_N.data/norm_data
+                self.tr_E.data = self.tr_E.data/norm_data
+                self.tr_N.taper(type="blackman", max_percentage=0.05)
+                self.tr_E.taper(type="blackman", max_percentage=0.05)
+            except:
+                print("Cannot compute time normalization at", self.tr_N.id, self.tr_E.id)
 
-            while N < self.tr_N.stats.npts and N < self.tr_E.stats.npts:
-                win_N = self.tr_N.data[st:N]
-                win_E = self.tr_E.data[st:N]
 
-                w_N = np.mean(np.abs(win_N)) / (2. * lwin + 1)
-                w_E = np.mean(np.abs(win_E)) / (2. * lwin + 1)
-                max_value = max(w_N, w_E)
-                # weight center of window
-                self.tr_N.data[int(st + lwin / 2)] /= max_value
-                self.tr_E.data[int(st + lwin / 2)] /= max_value
-
-                # shift window
-                st += 1
-                N += 1
 
             # taper edges
             #taper = self.get_window(self.tr_N.stats.npts)
@@ -462,8 +564,14 @@ class noise_processing_horizontals:
             #taper = self.get_window(self.tr_E.stats.npts)
             #self.tr_E.data *= taper
 
-            self.tr_N.taper(type="blackman", max_percentage=0.05)
-            self.tr_E.taper(type="blackman", max_percentage=0.05)
+            if norm_method == "1 bit":
+                self.tr_N.data = np.sign(self.tr_N.data)
+                self.tr_E.data = np.float32(self.tr_E.data)
+
+            # if norm_method == 'running avarage' or "clipping_iter" or 'clipping':
+            #     self.tr_N.taper(type="blackman", max_percentage=0.05)
+            #     self.tr_E.taper(type="blackman", max_percentage=0.05)
+
 
 
 
@@ -581,3 +689,38 @@ class noise_processing_horizontals:
             self.tr_E.data = x1
         except:
             pass
+
+
+class ManageEGF:
+
+    def filter_project_keys(self, files_list, **kwargs):
+
+        # filter dict by python wilcards remind
+
+        # * --> .+
+        # ? --> .
+
+        net = kwargs.pop('net', '.+')
+        station = kwargs.pop('station', '.+')
+        channel = kwargs.pop('channel', '.+')
+        if net == '':
+            net = '.+'
+        if station == '':
+            station = '.+'
+        if channel == '':
+            channel = '.+'
+
+
+        # filter for regular expresions
+        event = [net, station, channel]
+        filtered_list = []
+        for file in files_list:
+            key = os.path.basename(file)
+            name_list = key.split('.')
+            net = name_list[0]
+            sta = name_list[1]
+            channel = name_list[2]
+            if re.search(event[0], net) and re.search(event[1], sta) and re.search(event[2], channel):
+                filtered_list.append(file)
+
+        return filtered_list
