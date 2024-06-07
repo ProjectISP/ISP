@@ -1,8 +1,7 @@
 import pickle
-
 from scipy.signal import find_peaks
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
-from isp.Gui import pw, pqg
+from isp.Gui import pw
 import matplotlib.pyplot as plt
 from isp.Gui.Frames import MatplotlibCanvas, MessageDialog
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -31,6 +30,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.colors = ["white", "green", "black"]
         self._stations_info = {}
         self.parameters = ParametersSettings()
+
         # Binds
         self.root_path_bind = BindPyqtObject(self.rootPathForm_2, self.onChange_root_path)
         self.canvas_plot1 = MatplotlibCanvas(self.widget_plot_up, ncols=1)
@@ -51,7 +51,6 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         #self.ax_seism1 = self.fig.add_axes(coords_ax, sharey = ax)
         self.ax_seism1 = self.fig.add_axes(coords_ax)
         self.ax_seism1.yaxis.tick_right()
-
 
         # Add file selector to the widget
         #self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget_2,
@@ -74,9 +73,6 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         # shortcuts
         self.selectors_phase_vel = []
         self.selectors_group_vel = []
-
-        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('P'), self)
-        self.shortcut_open.activated.connect(self.check_collection)
 
 
     def save_to_project(self):
@@ -412,22 +408,12 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             # extract ridge
 
-            ridge = np.max(scalogram2, axis=0)
-
             distance = self.dist_ridgDB.value()*vel.shape[0]/(max_vel-min_vel)
             height = (self.minlevelCB.value(),0)
             ridges, peaks, group_vel = self.find_ridges(scalogram2, vel, height, distance, self.numridgeSB.value())
 
-            #print(ridges)
-            #ridge_vel = []
-            # for j in range(len(ridge)):
-             #   value, idx = self.find_nearest(scalogram2[:,j],ridge[j])
-             #    ridge_vel.append(vel[idx,j])
-
             self.t = dist/(1000*vel)
             self.dist = dist/1000
-            # phase_vel = self.phase_vel(scalogram2, ridge, phase, inst_freq, t, dist/1000, n)
-            # phase_vel = np.flipud(phase_vel)
 
             # Plot
             self.ax_seism1.cla()
@@ -531,22 +517,12 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             # extract ridge
 
-            ridge = np.max(scalogram2, axis=0)
-
             distance = self.dist_ridgDB.value() * vel.shape[0] / (max_vel - min_vel)
             height = (self.minlevelCB.value(), 0)
             ridges, peaks, group_vel = self.find_ridges(scalogram2, vel, height, distance, self.numridgeSB.value())
 
-            # print(ridges)
-            # ridge_vel = []
-            # for j in range(len(ridge)):
-            #   value, idx = self.find_nearest(scalogram2[:,j],ridge[j])
-            #    ridge_vel.append(vel[idx,j])
-
             self.t = dist / (1000 * vel)
             self.dist = dist / 1000
-            # phase_vel = self.phase_vel(scalogram2, ridge, phase, inst_freq, t, dist/1000, n)
-            # phase_vel = np.flipud(phase_vel)
 
             # Plot
             self.ax_seism1.cla()
@@ -574,14 +550,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             ax = self.canvas_plot1.get_axe(1)
 
             for k in range(self.numridgeSB.value()):
-                # self.canvas_plot1.plot(period[0,:], group_vel[k], axes_index=1, marker=".", color = self.colors[k],
-                #                      clear_plot=False)
 
                 pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
                 self.selectors_group_vel.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
-
-
-
 
     def run_phase_vel(self):
 
@@ -602,21 +573,16 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.phase_vel = []
 
         for k in range(len(test)):
-            pts = ax2.scatter(self.periods_now, phase_vel_array[k, :], marker=".", s=60)
+            pts = ax2.scatter(self.period_grp, phase_vel_array[k, :], marker=".", s=60)
             self.selectors_phase_vel.append(CollectionLassoSelector(ax2, pts, [0.5, 0., 0.5, 1.]))
 
-
         # plotting corresponding group vel
-        self.canvas_plot1.plot(self.periods_now, self.solutions, axes_index=0, clear_plot=False,
+        self.canvas_plot1.plot(self.period_grp,  self.group_vel_def, axes_index=0, clear_plot=False,
                                 linewidth=1.0, linestyle="-.", label="Ref. Group Velocity")
 
         ax2.set_xscale('log')
 
         self.canvas_plot1.set_plot_label(0, "Ref. Group Velocity -.-")
-
-        data = self.selectors_phase_vel[0].xys
-        idx = self.selectors_phase_vel[0].ind
-
 
         if self.ftCB.isChecked():
           ax2.set_xlim(self.period_min_cwtDB.value(), self.period_max_cwtDB.value())
@@ -629,18 +595,15 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
     def phase_velocity(self):
         self.periods_now = []
         self.solutions = []
-        for i, selector in enumerate(self.selectors_group_vel):
-            for idx in selector.ind:
-                self.periods_now.append(self.periods[idx])
-                self.solutions.append(self.group_vel[i, idx])
 
+        self.period_grp, self.group_vel_def
         # TODO WHAT IS THE OPTIMUM LAMBDA
         landa = -1*np.pi/4
-        phase_vel_array = np.zeros([len(np.arange(-5, 5, 1)), len(self.solutions)])
+        phase_vel_array = np.zeros([len(np.arange(-5, 5, 1)), len(self.group_vel_def)])
         for k in np.arange(-5, 5, 1):
-            for j in range(len(self.solutions)):
-                value_period, idx_period = self.find_nearest(self.periods, self.periods_now[j])
-                value_group_vel, idx_group_vel = self.find_nearest(self.vel[:,0], self.solutions[j])
+            for j in range(len(self.group_vel_def)):
+                value_period, idx_period = self.find_nearest(self.periods, self.period_grp[j])
+                value_group_vel, idx_group_vel = self.find_nearest(self.vel[:, 0], self.group_vel_def[j])
                 to = self.t[idx_group_vel , 0]
                 phase_test = self.phase[idx_group_vel, idx_period]
                 inst_freq_test = self.inst_freq[idx_group_vel, idx_period]
@@ -751,7 +714,6 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                     vel.append(phase_collection.xys[idx_selected_phase, 1])
                     period.append(phase_collection.xys[idx_selected_phase, 0])
 
-
         elif selector == "group":
             for group_collection in self.selectors_group_vel:
                 for idx_selected_group in group_collection.ind:
@@ -761,33 +723,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         period.sort()
         vel.sort()
 
-
         return period, vel
 
 
-    def check_collection(self):
-        period_phv = []
-        period_grp = []
-        phv = []
-        grp = []
-
-        for phase_collection in self.selectors_phase_vel:
-            for idx_selected_phase in phase_collection.ind:
-                phv.append(phase_collection.xys[idx_selected_phase, 1])
-                period_phv.append(phase_collection.xys[idx_selected_phase, 0])
-
-        phv.sort()
-        period_phv.sort()
-
-        for group_collection in self.selectors_group_vel:
-            for idx_selected_group in group_collection.ind:
-                grp.append(group_collection.xys[idx_selected_group, 1])
-                period_grp.append(group_collection.xys[idx_selected_group, 0])
-
-        grp.sort()
-        period_grp.sort()
-
-        return period_phv, phv, period_grp, grp
 
 
 

@@ -114,7 +114,7 @@ class Project(pw.QDialog, UiProject_Dispersion):
 
     def save_project2txt(self):
 
-        path_basename = os.path.basename(self.current_project_file)
+        path_basename = os.path.dirname(self.current_project_file)
         path_txt_files = os.path.join(path_basename, "dispersion_txt")
         if not os.path.exists(path_txt_files):
            os.makedirs(path_txt_files)
