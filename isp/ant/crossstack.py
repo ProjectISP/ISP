@@ -261,24 +261,26 @@ class noisestack:
 
                                     # estimate the analytic function and then the instantaneous phase matrix
                                     # analytic_signal = np.zeros((size_1d, size_2d, size_3d), dtype=np.complex64)
-                                    if normalization == "CC":
-                                        f, c, d = corr_ij_freq.shape
-                                        dim_full = 2*d-1
-                                        non_real_dim = (dim_full - d)
-                                        c = np.zeros((f, c,  non_real_dim), dtype=np.complex64)
-                                        signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
-                                        signal_rfft_mod[((non_real_dim // 2) + 1):] = signal_rfft_mod[((non_real_dim // 2) + 1):] * 0
-                                        signal_rfft_mod[1:non_real_dim // 2] = 2 * signal_rfft_mod[1:non_real_dim // 2]
+                                    #if normalization == "CC":
+                                    f, c, d = corr_ij_freq.shape
+                                    dim_full = 2*d-1
+                                    non_real_dim = (dim_full - d)
 
-                                        # Generate the analytic function matrix
-                                        analytic_signal = np.fft.ifft(signal_rfft_mod, cross_length, axis=2)
-                                        analytic_signal = np.fft.ifftshift(analytic_signal)
+                                    c = np.zeros((f, c,  non_real_dim), dtype=np.complex64)
+                                    signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
+                                    signal_rfft_mod[((non_real_dim // 2) + 1):] = signal_rfft_mod[((non_real_dim
+                                                                                        // 2) + 1):] * 0
+                                    signal_rfft_mod[1:non_real_dim // 2] = 2 * signal_rfft_mod[1:non_real_dim // 2]
 
-                                    elif normalization != "CC":
+                                    # Generate the analytic function matrix
+                                    analytic_signal = np.fft.ifft(signal_rfft_mod, cross_length, axis=2)
+                                    analytic_signal = np.fft.ifftshift(analytic_signal)
 
-                                        # Generate the analytic function matrix
-                                        analytic_signal = np.fft.ifft(corr_ij_freq, cross_length, axis=2)
-                                        analytic_signal = np.fft.ifftshift(analytic_signal)
+                                    # elif normalization != "CC":
+                                    #
+                                    #     # Generate the analytic function matrix
+                                    #     analytic_signal = np.fft.ifft(corr_ij_freq, cross_length, axis=2)
+                                    #     analytic_signal = np.fft.ifftshift(analytic_signal)
 
                                     # Compute linear stack
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
