@@ -1,15 +1,12 @@
 import os
 import pickle
-from concurrent.futures.thread import ThreadPoolExecutor
-
 from isp import ROOT_DIR
 from isp.Gui import pw, pqg, pyc
 from isp.Gui.Frames import MessageDialog
 from isp.Gui.Frames.uis_frames import UiProject_Dispersion
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from sys import platform
-
-from isp.Utils import MseedUtil
+import pandas as pd
 
 
 class Project(pw.QDialog, UiProject_Dispersion):
@@ -74,7 +71,7 @@ class Project(pw.QDialog, UiProject_Dispersion):
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
             try:
                 self.current_project_file = selected[0]
-                self.project_dispersion = self.load_project(file = selected[0])
+                self.project_dispersion = self.load_project(file=selected[0])
                 project_name = os.path.basename(selected[0])
                 md.set_info_message("Project {} loaded  ".format(project_name))
             except:
@@ -95,16 +92,39 @@ class Project(pw.QDialog, UiProject_Dispersion):
 
 
     def saveProject(self):
+
         new_project = {}
+        md = MessageDialog(self)
         try:
-
-            file_to_store = open(os.path.join(self.rootPathForm.text(),self.nameForm.text()), "wb")
-            pickle.dump(new_project, file_to_store)
-
-            md = MessageDialog(self)
-            md.set_info_message("Project saved successfully")
+            file_path = os.path.join(self.rootPathForm.text(),self.nameForm.text())
+            if len(self.rootPathForm.text()) > 0 and len(self.nameForm.text()) > 0:
+                file_to_store = open(file_path, "wb")
+                pickle.dump(new_project, file_to_store)
+                self.project_dispersion = new_project
+                self.current_project_file = file_path
+                md.set_info_message("Project saved successfully")
+            else:
+                md.set_info_message("Please set a valid path to open and save the new project")
 
         except:
 
             md = MessageDialog(self)
             md.set_info_message("No data to save in Project")
+
+
+    def save_project2txt(self):
+
+        path_basename = os.path.basename(self.current_project_file)
+        path_txt_files = os.path.join(path_basename, "dispersion_txt")
+        if not os.path.exists(path_txt_files):
+           os.makedirs(path_txt_files)
+
+        project = pickle.load(open(self.current_project_file, "rb"))
+
+        # loop over pickle
+        for key in project.keys():
+            key_name = key+".txt"
+            output_path = os.path.join(path_txt_files, key_name)
+            disp_dict = {'period': project[key]['period'], 'velocity':project[key]['velocity']}
+            df_disp = pd.DataFrame.from_dict(disp_dict)
+            df_disp.to_csv(output_path, sep=";", index=False)

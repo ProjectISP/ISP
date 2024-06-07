@@ -111,7 +111,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.register_on_select(self.on_select, rectprops=dict(alpha=0.2, facecolor='red'))
         # That's how you can register a right click selector
         self.canvas.register_on_select(self.on_multiple_select,
-                                       button=MouseButton.RIGHT, sharex=True, rectprops=dict(alpha=0.2, facecolor='blue'))
+                                       button=MouseButton.RIGHT, sharex=True, rectprops=dict(alpha=0.2,
+                                                                                             facecolor='blue'))
 
         self.canvas.mpl_connect('key_press_event', self.key_pressed)
         self.canvas.mpl_connect('axes_enter_event', self.enter_axes)
