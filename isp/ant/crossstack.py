@@ -34,12 +34,15 @@ class noisestack:
         self.dailyStacks = dailyStacks
         self.overlap = overlap
 
+
     def check_path(self):
     # Se crea la carpeta si no existe:
 
         self.stack_files_path = os.path.join(self.output_files_path, "stack")
         self.stack_rotated_files_path = os.path.join(self.output_files_path, "stack_rotated")
         self.stack_daily_files_path = os.path.join(self.output_files_path, "stack_daily")
+
+
 
         if not os.path.exists(self.stack_files_path):
            os.makedirs(self.stack_files_path)
@@ -669,7 +672,7 @@ class noisestack:
 
     def rotate_horizontals(self):
         #self.check_path()
-        self.stack_files_path = "/Volumes/LaCie/toy_noise/new_test/time_norm/stack"
+
         obsfiles = self.list_directory(self.stack_files_path)
         station_list = self.list_stations(self.stack_files_path)
         channel_check = ["EE", "EN", "NN", "NE"]
@@ -691,6 +694,7 @@ class noisestack:
                         station_i = tr.stats.station
 
                         chn = tr.stats.mseed['cross_channels']
+                        #tr.stats['mseed']
 
                         if station_i == station_pair and chn in channel_check:
 
@@ -698,7 +702,9 @@ class noisestack:
                             matrix_data["net"] = tr.stats.network
                             matrix_data[chn] = data
                             matrix_data['geodetic'] = tr.stats.mseed['geodetic']
+                            matrix_data['coordinates'] = tr.stats.mseed['coordinates']
                             matrix_data["sampling_rate"] = tr.stats.sampling_rate
+
                             # method to rotate the dictionary
                     except:
                         pass
@@ -711,6 +717,7 @@ class noisestack:
                 def_rotated["net"] = matrix_data["net"]
                 def_rotated["station_pair"] = station_pair
                 def_rotated['sampling_rate'] = matrix_data["sampling_rate"]
+                def_rotated['coordinates'] = matrix_data["coordinates"]
                 print(station_pair, "rotated")
                 self.save_rotated(def_rotated)
                 print(station_pair, "saved")
@@ -741,6 +748,7 @@ class noisestack:
                         net = st[0].stats.network
                         geodetic = st[0].stats.mseed['geodetic']
                         location = st[0].stats.location
+                        coordinates = st[0].stats.mseed['coordinates']
                         fs = st[0].stats.sampling_rate
                         if station_i == station_pair and chn in channel_check:
                             dates = file_pickle["dates"]
@@ -749,6 +757,7 @@ class noisestack:
                             matrix_data["sampling_rate"] = fs
                             matrix_data["location"] = location
                             matrix_data["dates"] = dates
+                            matrix_data["coordinates"] = coordinates
                             data = []
                             for tr in st:
                                 # loop to take data from all traces
@@ -770,6 +779,7 @@ class noisestack:
                         def_rotated['sampling_rate'] = matrix_data["sampling_rate"]
                         def_rotated['location'] = matrix_data['location']
                         def_rotated['dates'] = matrix_data['dates']
+                        def_rotated['coordinates'] = matrix_data['coordinates']
                         print(station_pair, "rotated")
 
                         self.save_rotated_specific(def_rotated)
@@ -958,7 +968,7 @@ class noisestack:
             stats['channel'] = chn
             stats['npts'] = len(def_rotated["rotated_matrix"][:,j,0])
             stats['mseed'] = {'dataquality': 'D', 'geodetic': def_rotated["geodetic"],
-                              'cross_channels': def_rotated["station_pair"]}
+                              'cross_channels': def_rotated["station_pair"], 'coordinates': def_rotated['coordinates']}
             stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
             # stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
             st = Stream([Trace(data=def_rotated["rotated_matrix"][:,j,0], header=stats)])
@@ -983,7 +993,7 @@ class noisestack:
             stats['channel'] = chn
             #stats['npts'] = len(def_rotated["rotated_matrix"][:, j, 0][0])
             stats['mseed'] = {'dataquality': 'D', 'geodetic': def_rotated["geodetic"],
-                          'cross_channels': def_rotated["station_pair"]}
+                          'cross_channels': def_rotated["station_pair"], "coordinates": def_rotated['coordinates']}
             stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
 
             for iter in def_rotated["rotated_matrix"]:
