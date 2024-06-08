@@ -250,9 +250,11 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         overlap = self.params["overlap"]
         stack = noisestack(self.output_bind.value, channels, stack_method, power, autocorr=autocorr,
                            min_distance=min_distance, dailyStacks=dailyStacks, overlap=overlap)
+
         stack.run_cross_stack()
-        #if autocorr:
         stack.rotate_horizontals()
+        if dailyStacks:
+            stack.rotate_specific_daily()
 
     @pyc.pyqtSlot(str)
     def receive_messages(self, message):

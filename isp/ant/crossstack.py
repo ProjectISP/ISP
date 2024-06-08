@@ -261,7 +261,7 @@ class noisestack:
 
                                     # estimate the analytic function and then the instantaneous phase matrix
                                     # analytic_signal = np.zeros((size_1d, size_2d, size_3d), dtype=np.complex64)
-                                    #if normalization == "CC":
+                                #if normalization == "CC":
                                     f, c, d = corr_ij_freq.shape
                                     dim_full = 2*d-1
                                     non_real_dim = (dim_full - d)
@@ -669,6 +669,7 @@ class noisestack:
 
     def rotate_horizontals(self):
         #self.check_path()
+        self.stack_files_path = "/Volumes/LaCie/toy_noise/new_test/time_norm/stack"
         obsfiles = self.list_directory(self.stack_files_path)
         station_list = self.list_stations(self.stack_files_path)
         channel_check = ["EE", "EN", "NN", "NE"]
@@ -714,8 +715,72 @@ class noisestack:
                 self.save_rotated(def_rotated)
                 print(station_pair, "saved")
 
+    def rotate_specific_daily(self):
 
-    def __validation(self, data_matrix):
+        obsfiles = self.list_directory(self.stack_daily_files_path)
+        station_list = self.list_stations_daily(self.stack_daily_files_path)
+        channel_check = ["EE", "EN", "NN", "NE"]
+        matrix_data = {}
+
+        for station_pair in station_list:
+
+            def_rotated = {}
+            info = station_pair.split("_")
+            sta1 = info[0]
+            sta2 = info[1]
+
+            if sta1 != sta2:
+                for file in obsfiles:
+                    try:
+                        file_pickle = pickle.load(open(file, "rb"))
+                        st = file_pickle["stream"]
+
+                        # just for checking
+                        station_i = st[0].stats.station
+                        chn = st[0].stats.mseed['cross_channels']
+                        net = st[0].stats.network
+                        geodetic = st[0].stats.mseed['geodetic']
+                        location = st[0].stats.location
+                        fs = st[0].stats.sampling_rate
+                        if station_i == station_pair and chn in channel_check:
+                            dates = file_pickle["dates"]
+                            matrix_data["net"] = net
+                            matrix_data['geodetic'] = geodetic
+                            matrix_data["sampling_rate"] = fs
+                            matrix_data["location"] = location
+                            matrix_data["dates"] = dates
+                            data = []
+                            for tr in st:
+                                # loop to take data from all traces
+                                data.append(tr.data)
+                            matrix_data[chn] = data
+
+                                # method to rotate the dictionary
+                    except:
+                        pass
+
+                def_rotated["rotated_matrix"] = self.__rotate_specific(matrix_data)
+
+                try:
+                    if len(matrix_data) > 0 and len(def_rotated["rotated_matrix"]) > 0:
+
+                        def_rotated["geodetic"] = matrix_data['geodetic']
+                        def_rotated["net"] = matrix_data["net"]
+                        def_rotated["station_pair"] = station_pair
+                        def_rotated['sampling_rate'] = matrix_data["sampling_rate"]
+                        def_rotated['location'] = matrix_data['location']
+                        def_rotated['dates'] = matrix_data['dates']
+                        print(station_pair, "rotated")
+
+                        self.save_rotated_specific(def_rotated)
+
+                        print(station_pair, "saved")
+                except:
+                    print("Coudn't save ", station_pair)
+
+
+
+    def __validation(self, data_matrix, specific=False):
 
         channel_check = ["EE", "EN", "NN", "NE"]
         check1 = False
@@ -723,10 +788,13 @@ class noisestack:
         check = False
         dims = []
 
-        for j in channel_check:
-            if j in data_matrix:
+        for chn in channel_check:
+            if chn in data_matrix:
                 check1 = True
-                dims.append(len(data_matrix[j]))
+                if specific:
+                    dims.append(len(data_matrix[chn][0]))
+                else:
+                    dims.append(len(data_matrix[chn]))
             else:
                 check1 = False
 
@@ -766,6 +834,27 @@ class noisestack:
 
         return rotated
 
+    def __rotate_specific(self, data_matrix):
+
+        rotated = None
+        all_rotated = []
+        validation, dim = self.__validation((data_matrix), specific=True)
+
+        if validation:
+            n = len(data_matrix["NN"])
+            rotate_matrix = self.__generate_matrix_rotate(data_matrix['geodetic'], dim)
+
+            for iter in range(n):
+                data_array_ne = np.zeros((dim[0], 4, 1))
+                data_array_ne[:, 0, 0] = data_matrix["EE"][iter][:]
+                data_array_ne[:, 1, 0] = data_matrix["EN"][iter][:]
+                data_array_ne[:, 2, 0] = data_matrix["NN"][iter][:]
+                data_array_ne[:, 3, 0] = data_matrix["NE"][iter][:]
+
+                rotated = np.matmul(rotate_matrix, data_array_ne)
+                all_rotated.append(rotated)
+
+        return all_rotated
 
     def __generate_matrix_rotate(self, geodetic, dim):
 
@@ -814,6 +903,24 @@ class noisestack:
 
         return stations
 
+    def list_stations_daily(self, path):
+        stations = []
+        files = self.list_directory(path)
+        for file in files:
+            try:
+                file_pickle = pickle.load(open(file, "rb"))
+                st = file_pickle["stream"]
+                name = st[0].stats.station
+                info = name.split("_")
+                flip_name = info[1] + "_" + info[0]
+                if name not in stations and flip_name not in stations and info[0] != info[1]:
+                    stations.append(name)
+            except:
+                pass
+
+        return stations
+
+
     def __coords2azbazinc(self, station1_latitude, station1_longitude, station2_latitude,
                         station2_longitude):
 
@@ -861,6 +968,57 @@ class noisestack:
             print(path_name)
             st.write(path_name, format='H5')
             j = j+1
+
+    def save_rotated_specific(self, def_rotated):
+
+        stats = {}
+        channels = ["TT", "RR", "TR", "RT"]
+        stats['network'] = def_rotated["net"]
+        stats['station'] = def_rotated["station_pair"]
+        stats['sampling_rate'] = def_rotated['sampling_rate']
+        stats['location'] = def_rotated['location']
+
+        for i, chn in enumerate(channels):
+            stack_partial = []
+            stats['channel'] = chn
+            #stats['npts'] = len(def_rotated["rotated_matrix"][:, j, 0][0])
+            stats['mseed'] = {'dataquality': 'D', 'geodetic': def_rotated["geodetic"],
+                          'cross_channels': def_rotated["station_pair"]}
+            stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
+
+            for iter in def_rotated["rotated_matrix"]:
+
+                data = iter[:, i, 0]
+                stack_partial.append(Trace(data=data, header=stats))
+
+            st = Stream(stack_partial)
+            # Nombre del fichero = XT.STA1_STA2.BHZE
+            filename = def_rotated["net"] + "." + def_rotated["station_pair"] + "." + chn+"_"+"daily"
+            path_name = os.path.join(self.stack_daily_files_path, filename)
+            print(path_name)
+            data_to_save = {"dates": def_rotated['dates'], "stream": st}
+
+            file_to_store = open(path_name, "wb")
+            pickle.dump(data_to_save, file_to_store)
+
+
+        # j = 0
+        # for chn in channels:
+        #     stats['channel'] = chn
+        #     stats['npts'] = len(def_rotated["rotated_matrix"][:, j, 0])
+        #     stats['mseed'] = {'dataquality': 'D', 'geodetic': def_rotated["geodetic"],
+        #                       'cross_channels': def_rotated["station_pair"]}
+        #     stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
+        #
+        #     for data in def_rotated:
+        #
+        #     st = Stream([Trace(data=def_rotated["rotated_matrix"][:, j, 0], header=stats)])
+        #     # Nombre del fichero = XT.STA1_STA2.BHZE
+        #     filename = def_rotated["net"] + "." + def_rotated["station_pair"] + "." + chn
+        #     path_name = os.path.join(self.stack_rotated_files_path, filename)
+        #     print(path_name)
+        #     st.write(path_name, format='H5')
+        #     j = j + 1
 
     def sort_dates(self, common_date_list):
         # extract years
