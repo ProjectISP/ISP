@@ -251,7 +251,7 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         stack = noisestack(self.output_bind.value, channels, stack_method, power, autocorr=autocorr,
                            min_distance=min_distance, dailyStacks=dailyStacks, overlap=overlap)
 
-        #stack.run_cross_stack()
+        stack.run_cross_stack()
         stack.rotate_horizontals()
         if dailyStacks:
             stack.rotate_specific_daily()

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
-
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,7 +9,7 @@ from obspy import read
 from obspy.io.sac import SACTrace
 from stackmaster.core import stack
 
-class PlotEnergyMro():
+class SynchEnergy():
     def __init__(self, path_ref, path_to_polynom, output_path, plots):
 
         self.obsfiles_daily = []
@@ -193,6 +191,7 @@ class PlotEnergyMro():
                     else:
                         shift = model(date)
 
+                    print("Clock shifted by ", shift, " s")
                     shift_int = int(shift*d_rate)
 
                     st["stream"][i].data = np.roll(st["stream"][i].data, -1*shift_int)
@@ -229,12 +228,12 @@ class PlotEnergyMro():
 
 
 if __name__ == "__main__":
-    root_path = "/Volumes/LaCie/UPFLOW_5HZ/toy/final_stack/stack"
+    root_path = "/Volumes/LaCie/UPFLOW_5HZ/toy/final_stack/stack_pcc"
     path_to_polynom = "/Volumes/LaCie/UPFLOW_5HZ/toy/polynom/UP09_UP13_join"
     plots = "/Volumes/LaCie/UPFLOW_5HZ/toy/final_stack/plots"
-    outputs = "/Volumes/LaCie/UPFLOW_5HZ/toy/final_stack/output"
-    pe = PlotEnergyMro(root_path, path_to_polynom, output_path=outputs, plots=plots)
+    outputs = "/Volumes/LaCie/UPFLOW_5HZ/toy/final_stack/stack_synch_pcc"
+    pe = SynchEnergy(root_path, path_to_polynom, output_path=outputs, plots=plots)
     #"linear", "pws", "robust", "acf", "nroot", "selective",
     #"cluster", "tfpws","tfpws-dost"
     pe.create_matrix(filter=False, correct=True, plot=True, save=True,
-                     trim=False, stack_type="cluster", f1=0.033, f2=0.333, format="H5")
+                     trim=False, stack_type="robust", f1=0.033, f2=0.333, format="H5")
