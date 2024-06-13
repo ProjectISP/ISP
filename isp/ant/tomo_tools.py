@@ -96,10 +96,10 @@ class tomotools:
 
         node_pairs = np.array(list(itertools.combinations_with_replacement(flattened_grid, 2)))
 
-        lons_A = np.radians(node_pairs[:,0,0])
-        lats_A = np.radians(node_pairs[:,0,1])
-        lons_B = np.radians(node_pairs[:,1,0])
-        lats_B = np.radians(node_pairs[:,1,1])
+        lons_A = np.radians(node_pairs[:, 0, 0])
+        lats_A = np.radians(node_pairs[:, 0, 1])
+        lons_B = np.radians(node_pairs[:, 1, 0])
+        lats_B = np.radians(node_pairs[:, 1, 1])
 
         dfi = lats_B - lats_A
         dlambd = lons_B - lons_A
@@ -172,7 +172,7 @@ class tomotools:
         path_ds, path_great_circle_distances, interstation_paths = cls.compute_paths(path_start_points, path_end_points, path_npts)
 
         if checkerboard_test:
-            f_checkerboard = cls.checkerboard(reference_velocity-reference_velocity*0.1, reference_velocity+reference_velocity*0.1, reference_velocity, 2*reference_wavelength)
+            f_checkerboard = cls.checkerboard(station_info, reference_velocity-reference_velocity*0.1, reference_velocity+reference_velocity*0.1, reference_velocity, 2*reference_wavelength)
             traveltimes = np.zeros(len(interstation_paths))
             for i, path in enumerate(interstation_paths):
                 lons = interstation_paths[i,:,0]
@@ -294,7 +294,7 @@ class tomotools:
         # for a path is larger than three times the standard deviation, that path
         # is discarded:
         if not checkerboard_test:
-            overdamped_residuals =  traveltimes - overdamped_traveltimes
+            overdamped_residuals = traveltimes - overdamped_traveltimes
             overdamped_residuals_std = np.std(overdamped_residuals)
 
             accept_index = np.where(np.abs(overdamped_residuals) < 3*overdamped_residuals_std)[0]
@@ -356,6 +356,7 @@ class tomotools:
         absolute_velocity_map = np.reshape(absolute_velocities, (np.shape(grid)[0], np.shape(grid)[1]))
 
         # Resolution analysis
+
         resolution_matrix = np.einsum('ij,jk->ik', np.einsum('ij,jk->ik', np.einsum('ij,kj->ik', cov_m_est, G, optimize=True),
                                      C_inv, optimize=True), G, optimize=True)
 
@@ -453,9 +454,24 @@ class tomotools:
         return ds, c*6371.0, interstation_paths
 
     @staticmethod
-    def checkerboard(vmin, vmax, vmid, squaresize):
+    def checkerboard(stations_info, vmin, vmax, vmid, squaresize):
         d2rad = np.pi/180
-        midlat = 0.5 * (6.4861 + 14.0497)
+
+        station_lats = []
+        station_lons = []
+
+
+        for key in stations_info.keys():
+            station_lons.append(stations_info[key][0])
+            station_lats.append(stations_info[key][1])
+
+        min_lon = np.min(station_lons)
+        max_lon = np.max(station_lons)
+        min_lat = np.min(station_lats)
+        max_lat = np.max(station_lats)
+
+        midlat = np.mean(station_lats)
+
         latwidth = squaresize / 6371 / d2rad
         lonwidth = squaresize / (6371.0 * np.cos(midlat * d2rad)) / d2rad
 
@@ -465,12 +481,12 @@ class tomotools:
             outside_square = (np.abs(x) >= 0.5) | (np.abs(y) >= 0.5)
             return np.where(outside_square, 0.0, np.cos(np.pi*x) * np.cos(np.pi*y))
 
-        startlon = -67.7513 + lonwidth/2
-        stoplon = -61.5392 + lonwidth
+        startlon = min_lon + lonwidth/2
+        stoplon = max_lon + lonwidth
         centerlons = list(np.arange(startlon, stoplon, lonwidth))
 
-        startlat = 6.4861 + latwidth/2
-        stoplat = 14.0497 + latwidth
+        startlat = min_lat + latwidth/2
+        stoplat = max_lat + latwidth
         centerlats = list(np.arange(startlat, stoplat, latwidth))
 
         centerlonlats = list(itertools.product(centerlons, centerlats))
@@ -480,6 +496,12 @@ class tomotools:
 
         factors = np.where(np.array(polarities) == 1, vmax - vmid, vmin - vmid)
 
+        def func(lons, lats):
+            lowhighs = [f * basis_func(lons, lats, lon0, lat0) for f, (lon0, lat0)
+                        in zip(factors, centerlonlats)]
+            return vmid + sum(lowhighs)
+
+        return func
     @staticmethod
     def compute_path_density(grid, interstation_paths, pixel_width=0.05):
         densities = np.zeros(np.shape(grid)[0] * np.shape(grid)[1])
@@ -635,7 +657,7 @@ class tomotools:
         return barycentric_coords
 
     @classmethod
-    def save_results(cls, result_dict,period, wave_type, dispersion_type):
+    def save_results(cls, result_dict, period, wave_type, dispersion_type):
         plt.ioff()
         if result_dict != 1:
             path = Path("isp/ant/data_tomo/{}/{}/pickles/".format(wave_type, dispersion_type))

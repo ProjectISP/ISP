@@ -125,6 +125,6 @@ class Project(pw.QDialog, UiProject_Dispersion):
         for key in project.keys():
             key_name = key+".txt"
             output_path = os.path.join(path_txt_files, key_name)
-            disp_dict = {'period': project[key]['period'], 'velocity':project[key]['velocity']}
+            disp_dict = {'period': project[key]['period'], 'velocity': project[key]['velocity']}
             df_disp = pd.DataFrame.from_dict(disp_dict)
             df_disp.to_csv(output_path, sep=";", index=False)

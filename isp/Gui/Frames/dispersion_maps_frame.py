@@ -1,6 +1,5 @@
 import os
 import pickle
-
 import numpy as np
 from platform import platform
 from isp.Exceptions import parse_excepts
@@ -156,12 +155,12 @@ class EGFDispersion(pw.QWidget, UiDispersionMaps):
 
         for wave_type in self.wave_type:
             for dispersion_type in self.dispersion_type:
-                for period in np.arange(self.min_periodCB.value(), self.max_periodCB.value(), self.periods_stepCB.value()):
+                for period in np.arange(self.min_periodCB.value(), self.max_periodCB.value()+1, self.periods_stepCB.value()):
                     result_dict = tomotools.traveltime_tomography(period, self.stations_info[0], self.stations_info[1], self.data_info
                     ,self.grid, self.distance_matrix, self.alphaCB.value(), self.betaCB.value(), self.gammaCB.value(), path_npts=150,
-                            reg_lambda=0.1, density_pixel_size=0.05,  checkerboard_test=False)
+                            reg_lambda=0.1, density_pixel_size=0.05, checkerboard_test=self.checkerCB.isChecked())
 
-                    tomotools.save_results(result_dict, period, wave_type = wave_type, dispersion_type= dispersion_type)
+                    tomotools.save_results(result_dict, period, wave_type=wave_type, dispersion_type=dispersion_type)
 
 
     def plot_disp_maps(self):
@@ -182,10 +181,32 @@ class EGFDispersion(pw.QWidget, UiDispersionMaps):
             self.cartopy_canvas.set_new_subplot_cartopy(nrows=int((len(files_at_page)-1)/3)+1, ncols=ncols)
 
         for k , grid_file in enumerate(files_at_page):
+            #dispersion_ZZ_dsp_20.0s.pickle
+             name = os.path.basename(grid_file)
+             name_list = name.split("_")
+
+             if name_list[1] == "ZZ":
+                 wave_type = "Rayleigh"
+             elif name_list[1] == "TT":
+                 wave_type = "Love"
+
+             if name_list[2] == "dsp":
+                 vel_type = "Group Vel"
+             elif name_list[2] == "TT":
+                 vel_type = "Phase Vel"
 
              dsp_map = pickle.load(open(grid_file, "rb"))
-             self.cartopy_canvas.plot_disp_map(k, dsp_map, interp = self.interpCB.currentText(),
-                                               color = self.colorCB.currentText(),show_relief = self.reliefCB.isChecked())
+             self.cartopy_canvas.plot_disp_map(k, dsp_map, interp=self.interpCB.currentText(),
+                                               color=self.colorCB.currentText(), wave_type=wave_type, vel_type=vel_type,
+                                               show_relief=self.reliefCB.isChecked(),
+                                               map_type=self.mapTypeCB.currentText(), clip_scale=self.clipCB.isChecked(),
+                                               low_limit=self.lowlimitDB.value(), up_limit=self.uplimitDB.value())
+
+             period = str(dsp_map[0]["period"])
+             vel_ref = str(dsp_map[0]["ref_velocity"])
+             header = wave_type + " " + vel_type + " at period " + period + " s "
+             self.cartopy_canvas.set_plot_title(k, header)
+
              ax = self.cartopy_canvas.get_axe(k)
              ax.spines["top"].set_visible(False)
              ax.spines["bottom"].set_visible(False)

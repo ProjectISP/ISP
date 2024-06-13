@@ -351,7 +351,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf,
                                  use_wavelet=wavelet, m=m, decimate=False)
 
-            scalogram2 = cw.scalogram_in_dbs()
+            #scalogram2 = cw.scalogram_in_dbs()
+            scalogram2 = cw.scalogram()
+
             phase, inst_freq, ins_freq_hz = cw.phase() # phase in radians
             inst_freq = ins_freq_hz
 
@@ -368,6 +370,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             scalogram2 = scalogram2[:, 1:]
 
             if self.ftCB.isChecked():
+
+                min_period, idx_min_period = self.find_nearest(period[:, 0], self.period_min_cwtDB.value())
+                max_period, idx_max_period = self.find_nearest(period[:, 0], self.period_max_cwtDB.value())
                 min_vel, idx_min_vel = self.find_nearest(vel[0, :], self.min_velDB.value())
                 max_vel, idx_max_vel = self.find_nearest(vel[0, :], self.max_velDB.value())
                 self.min_vel = min_vel
@@ -378,6 +383,10 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                 phase = phase[:, idx_max_vel:idx_min_vel]
                 inst_freq = inst_freq[:, idx_max_vel:idx_min_vel]
 
+            # now we transform the scalogram to dB
+            
+            scalogram2 = np.abs(scalogram2) ** 2
+            scalogram2 = 10. * np.log10(scalogram2/np.max(scalogram2))
 
             scalogram2 = np.clip(scalogram2, a_min=self.minlevelCB.value(), a_max=0)
             min_cwt = self.minlevelCB.value()
