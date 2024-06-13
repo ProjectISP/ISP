@@ -106,8 +106,10 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             print(self.project.project_dispersion)
 
             # saving stage
+
             file_to_store = open(self.project.current_project_file, "wb")
             pickle.dump(self.project.project_dispersion, file_to_store)
+            print("Saved Dispersion measures at ", self.project.current_project_file)
 
             self.project.save_project2txt()
             #send check signal

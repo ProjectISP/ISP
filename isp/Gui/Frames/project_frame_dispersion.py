@@ -119,12 +119,13 @@ class Project(pw.QDialog, UiProject_Dispersion):
         if not os.path.exists(path_txt_files):
            os.makedirs(path_txt_files)
 
-        project = pickle.load(open(self.current_project_file, "rb"))
+        #project = pickle.load(open(self.current_project_file, "rb"))
 
         # loop over pickle
-        for key in project.keys():
+        for key in self.project_dispersion.keys():
             key_name = key+".txt"
             output_path = os.path.join(path_txt_files, key_name)
-            disp_dict = {'period': project[key]['period'], 'velocity': project[key]['velocity']}
+            disp_dict = {'period': self.project_dispersion[key]['period'], 'velocity':
+                self.project_dispersion[key]['velocity']}
             df_disp = pd.DataFrame.from_dict(disp_dict)
             df_disp.to_csv(output_path, sep=";", index=False)
