@@ -314,8 +314,10 @@ class noisestack:
                                 # print(metadata_list_file_i)
                                 # print(metadata_list_file_j)
                                 stats = {}
+                                x_station = len(file_i)-3
+                                y_station = len(file_j)-3
                                 stats['network'] = file_i[:2]
-                                stats['station'] = file_i[2:6] + "_" + file_j[2:6]
+                                stats['station'] = file_i[2:x_station] + "_" + file_j[2:y_station]
                                 stats['channel'] = file_i[-1]+file_j[-1]
                                 stats['sampling_rate'] = self.sampling_rate
                                 stats['npts'] = len(c_stack)
@@ -325,8 +327,8 @@ class noisestack:
                                 stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
                                 # stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
                                 st = Stream([Trace(data=c_stack, header=stats)])
-                                # Nombre del fichero = XT.STA1_STA2.BHZE
-                                filename = file_i[:2] + "." + file_i[2:6] + "_" + file_j[2:6] + "." + file_i[-1] + file_j[-1]
+                                # Nombre del fichero = XT.STA1_STA2.ZE
+                                filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + file_j[-1]
                                 path_name = os.path.join(self.stack_files_path, filename)
                                 print(path_name)
                                 st.write(path_name, format='H5')
@@ -585,8 +587,10 @@ class noisestack:
                             # print(metadata_list_file_i)
                             # print(metadata_list_file_j)
                             stats = {}
+                            x_station = len(file_i) - 3
+                            y_station = len(file_j) - 3
                             stats['network'] = file_i[:2]
-                            stats['station'] = file_i[2:6] + "_" + file_j[2:6]
+                            stats['station'] = file_i[2:x_station] + "_" + file_j[2:y_station]
                             stats['channel'] = file_i[-1]+file_j[-1]
                             stats['sampling_rate'] = self.sampling_rate
                             stats['npts'] = len(c_stack)
@@ -598,7 +602,7 @@ class noisestack:
                             # stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
                             st = Stream([Trace(data=c_stack, header=stats)])
                             # Nombre del fichero = XT.STA1_STA2.BHZE
-                            filename = file_i[:2] + "." + file_i[2:6] + "_" + file_j[2:6] + "." + file_i[-1] + file_j[
+                            filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + file_j[
                                 -1]
                             path_name = os.path.join(self.stack_files_path, filename)
                             print(path_name)

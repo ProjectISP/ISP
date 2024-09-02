@@ -228,10 +228,11 @@ class SynchEnergy():
 
 
 if __name__ == "__main__":
-    root_path = "/Volumes/LaCie/UPFLOW_5HZ/toy/final_stack/stack_hydro"
-    path_to_polynom = "/Volumes/LaCie/UPFLOW_5HZ/toy/polynom/UP09_UP13_join"
-    plots = "/Volumes/LaCie/UPFLOW_5HZ/toy/final_stack/plots"
-    outputs = "/Volumes/LaCie/UPFLOW_5HZ/toy/final_stack/stack_synch_hydro"
+    # best test using robust
+    root_path = "/Users/robertocabiecesdiaz/Desktop/test_denoise/stack"
+    path_to_polynom = "/Users/robertocabiecesdiaz/Desktop/test_denoise/polynom/UP09_UP13_join"
+    plots = "/Users/robertocabiecesdiaz/Desktop/test_denoise/plots"
+    outputs = "/Users/robertocabiecesdiaz/Desktop/test_denoise/stack_synch"
     pe = SynchEnergy(root_path, path_to_polynom, output_path=outputs, plots=plots)
     #"linear", "pws", "robust", "acf", "nroot", "selective",
     #"cluster", "tfpws","tfpws-dost"
