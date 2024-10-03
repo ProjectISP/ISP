@@ -24,7 +24,8 @@ from isp import RESOURCE_PATH
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Utils import ExtendSpanSelector
 from isp.Utils import ObspyUtil, AsycTime
-
+from isp import ROOT_DIR
+import os
 
 class MatplotlibWidget(pw.QWidget):
 
@@ -354,6 +355,19 @@ class BasePltPyqtCanvas(FigureCanvas):
         if ax:
             ax.set_ylabel(value)
             self.draw()  # force to update label
+
+    def set_plot_title(self, ax: Axes or int, text: str):
+        """
+                Sets an label box at the upper right corner of the axes.
+
+                :param ax: The axes or axes_index to add the annotation.
+                :param text: The text
+                :return:
+                """
+        if type(ax) == int:
+            ax = self.get_axe(ax)
+        #bbox = dict(boxstyle="round", fc="white")
+        return ax.set_title(text)
 
     def set_plot_label(self, ax: Axes or int, text: str):
         """
@@ -1311,12 +1325,31 @@ class CartopyCanvas(BasePltPyqtCanvas):
         if update:
             self.draw()
 
-    def plot_disp_map(self, axes_index, grid, interp, color, plot_global_map =False, show_relief = False):
+    def plot_disp_map(self, axes_index, grid, interp, color, wave_type, vel_type, plot_global_map=False, show_relief=False,
+                      map_type="Relative Velocities", clip_scale=False, low_limit=-10,
+                      up_limit=10):
 
-        import numpy as np
-        from isp import ROOT_DIR
-        import os
 
+        if map_type == "Relative Velocities":
+            map_disp = grid[0]['m_opt_relative']
+            label = "Deviation [km/s]"
+            # header = wave_type+" "+vel_type+" at period " + period+" s " +" Ref Vel = "+" "+vel_ref+"km/s"
+        if map_type == "Absolute Velocities":
+            map_disp = grid[0]['m_opt_absolute']
+            label = "Velocity [km/s]"
+        if map_type == "Resolution Map":
+            map_disp = grid[0]['resolution_map']
+            label = "Resolution"
+        if map_type == "Checkerboard":
+            map_disp = grid[0]['m_opt_relative']
+            label = "Deviation [km/s]"
+
+        vmin = np.min(map_disp) + 0.05 * np.min(map_disp)
+        vmax = np.max(map_disp) - 0.05 * np.max(map_disp)
+
+        if clip_scale:
+            vmin = low_limit
+            vmax = up_limit
         os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
 
         #resolution = kwargs.pop('resolution', 'low')
@@ -1343,13 +1376,14 @@ class CartopyCanvas(BasePltPyqtCanvas):
         #map = ax.contourf(lons, lats, grid[0]['m_opt_relative'], transform=ccrs.PlateCarree(), cmap="RdBu",
         #                    vmin=-10, vmax=10, alpha=0.7)
         img_extent = (xmin, xmax, ymin, ymax)
-        map = ax.imshow(grid[0]['m_opt_relative'], interpolation=interp, origin='lower', extent=img_extent,
-                        transform=ccrs.PlateCarree(), cmap=color, vmin=-10, vmax=10, alpha=0.7)
+        map = ax.imshow(map_disp, interpolation=interp, origin='lower', extent=img_extent,
+                        transform=ccrs.PlateCarree(), cmap=color, vmin=vmin, vmax=vmax, alpha=0.7)
 
+        # ax.legend(loc="upper right", title=header)
         self.__cbar: Colorbar = self.figure.colorbar(map, ax=ax, orientation='vertical', fraction=0.05,
                                                      extend='both', pad=0.08)
 
-        self.__cbar.ax.set_ylabel("Velocity [km/s]")
+        self.__cbar.ax.set_ylabel(label)
 
         # Create an inset GeoAxes showing the Global location
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))

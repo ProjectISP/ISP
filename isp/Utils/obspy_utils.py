@@ -755,6 +755,7 @@ class MseedUtil:
             paths = os.path.join(files_path, i)
             if _is_mseed(paths):
 
+                print("Processing Waveform at", os.path.basename(paths))
                 header = read(paths, headlonly=True)
                 gap = header.get_gaps()
                 net = header[0].stats.network

@@ -1,3 +1,4 @@
+import pickle
 from scipy.signal import find_peaks
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.Gui import pw
@@ -9,7 +10,7 @@ from isp.Gui.Frames.uis_frames import UiFrequencyTime
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
 from sys import platform
 from isp.Utils import ObspyUtil
-from isp.seismogramInspector.MTspectrogram import MTspectrogram, hilbert_gauss
+from isp.seismogramInspector.MTspectrogram import hilbert_gauss
 from isp.ant.signal_processing_tools import noise_processing
 import numpy as np
 from obspy import read
@@ -29,18 +30,20 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.colors = ["white", "green", "black"]
         self._stations_info = {}
         self.parameters = ParametersSettings()
+
         # Binds
         self.root_path_bind = BindPyqtObject(self.rootPathForm_2, self.onChange_root_path)
-        self.canvas_plot1 = MatplotlibCanvas(self.widget_plot_up, ncols=2, sharey  = True)
+        self.canvas_plot1 = MatplotlibCanvas(self.widget_plot_up, ncols=1)
         top = 0.900
         bottom = 0.180
         left = 0.045
         right = 0.720
         wspace = 0.135
-        self.canvas_plot1.figure.subplots_adjust(left=left, bottom=bottom, right=right, top=top, wspace=wspace, hspace=0.0)
+        self.canvas_plot1.figure.subplots_adjust(left=left, bottom=bottom, right=right, top=top,
+                                                 wspace=wspace, hspace=0.0)
 
         ax = self.canvas_plot1.get_axe(0)
-        left,width = 0.2, 0.55
+        left, width = 0.2, 0.55
         bottom, height = 0.180, 0.72
         spacing = 0.02
         coords_ax = [left+width+spacing, bottom, 0.2, height]
@@ -48,7 +51,6 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         #self.ax_seism1 = self.fig.add_axes(coords_ax, sharey = ax)
         self.ax_seism1 = self.fig.add_axes(coords_ax)
         self.ax_seism1.yaxis.tick_right()
-
 
         # Add file selector to the widget
         #self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget_2,
@@ -68,6 +70,10 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         #self.canvas_plot1.on_double_click(self.on_click_matplotlib)
         #self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
 
+        # shortcuts
+        self.selectors_phase_vel = []
+        self.selectors_group_vel = []
+
 
     def save_to_project(self):
         md = MessageDialog(self)
@@ -77,26 +83,40 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
             st = read(file)
             tr = st[0]
-            wave_type = self.typeCB.currentText()
-            if wave_type == "Rayleigh":
-                wave_type = "ZZ"
-            elif wave_type == "Love":
-                wave_type = "TT"
+            wave_type = tr.stats.channel
 
             id_phase = tr.stats.station+"_"+wave_type+"_"+"phv"
             id_group = tr.stats.station+"_"+wave_type+"_"+"dsp"
 
             # save info to the project
-            if len(self.periods_group_vel) and len(self.group_vel_save):
-                self.project.project_dispersion[id_group] = {'period':self.periods_group_vel,'velocity':self.group_vel_save}
-            if len(self.periods_phase_vel) and len(self.phase_vel_save):
-                self.project.project_dispersion[id_phase] = {'period': self.periods_phase_vel, 'velocity': self.phase_vel_save}
+            # important modification 07/06/2024 loop over the data collections
+            if len(self.period_grp) == 0 and len(self.group_vel_def) == 0:
+                self.period_phv, self.phase_vel_def = self.get_def_velocities(selector="phase")
+            else:
+                self.period_phv, self.phase_vel_def = self.get_def_velocities(selector="phase")
+
+
+            if len(self.period_grp) > 0 and len(self.group_vel_def) > 0:
+                self.project.project_dispersion[id_group] = {'period': self.period_grp, 'velocity': self.group_vel_def}
+
+
+            if len(self.period_phv) and len(self.phase_vel_def):
+                self.project.project_dispersion[id_phase] = {'period': self.period_phv, 'velocity': self.phase_vel_def}
+
             print(self.project.project_dispersion)
+
+            # saving stage
+
+            file_to_store = open(self.project.current_project_file, "wb")
+            pickle.dump(self.project.project_dispersion, file_to_store)
+            print("Saved Dispersion measures at ", self.project.current_project_file)
+
+            self.project.save_project2txt()
             #send check signal
             check = self.tw_files.cellWidget(self.tw_files.currentRow(), 3)
             check.setChecked(True)
 
-            md.set_info_message("Saved data Succesfully")
+            md.set_info_message("Saved Dispersion data Succesfully")
         else:
             md.set_error_message("Something went wrong, ", "Please check you have creeated a project "
                                                            "and it is loaded in memory")
@@ -110,11 +130,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
             st = read(file)
             tr = st[0]
-            wave_type = self.typeCB.currentText()
-            if wave_type == "Rayleigh":
-                wave_type = "ZZ"
-            elif wave_type == "Love":
-                wave_type = "TT"
+            wave_type = tr.stats.channel
 
             id_phase = tr.stats.station+"_"+wave_type+"_"+"phv"
             id_group = tr.stats.station+"_"+wave_type+"_"+"dsp"
@@ -125,6 +141,13 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             if id_phase in self.project.project_dispersion:
                 self.project.project_dispersion.pop(id_phase)
             print(self.project.project_dispersion)
+
+            # saving stage
+
+            # saving stage
+            file_to_store = open(self.project.current_project_file, "wb")
+            pickle.dump(self.project.project_dispersion, file_to_store)
+
             #send check signal
             check = self.tw_files.cellWidget(self.tw_files.currentRow(), 3)
             check.setChecked(False)
@@ -245,23 +268,66 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
     #@AsycTime.run_async()
     def plot_seismogram(self):
 
+        self.period_grp = []
+        self.group_vel_def = []
+
+        modes = ["fundamental", "first", "second"]
+        feature = ["-.","-",  "--"]
         [tr1, t] = self.get_data()
         tr = tr1.copy()
         fs = tr1.stats.sampling_rate
+
         selection = self.time_frequencyCB.currentText()
-        # take into acount causality
+        # take into account causality
+        # c_stack par, impar ...
+        num = len(tr.data)
+        if (num % 2) == 0:
+
+            #print(“Thenumber is even”)
+            c = int(np.ceil(num / 2.) + 1)
+            even = True
+        else:
+            #print(“The providednumber is odd”)
+            c = int(np.ceil((num + 1)/2))
+            even = False
 
         if self.causalCB.currentText() == "Causal":
             starttime = tr.stats.starttime
             endtime = tr.stats.starttime+len(tr.data) / (2*fs)
-            tr.trim(starttime=starttime,endtime=endtime)
+            tr.trim(starttime=starttime, endtime=endtime)
             data = np.flip(tr.data)
             tr.data = data
 
-        else:
+        elif self.causalCB.currentText() == "Acausal":
             starttime = tr.stats.starttime + len(tr.data) / (2*fs)
             endtime = tr.stats.endtime
             tr.trim(starttime=starttime, endtime=endtime)
+
+        elif self.causalCB.currentText() == "Both":
+            tr_causal = tr1.copy()
+            tr_acausal = tr1.copy()
+
+            "Causal"
+            starttime = tr_causal.stats.starttime
+            endtime = tr_causal.stats.starttime + (c / fs)
+            tr_causal.trim(starttime=starttime, endtime=endtime)
+            data_causal = np.flip(tr_causal.data)
+            tr_causal.data = data_causal
+
+            "Acausal"
+            starttime = tr_acausal.stats.starttime + (c / fs)
+            endtime = tr_acausal.stats.endtime
+            tr_acausal.trim(starttime=starttime, endtime=endtime)
+            N_cut = min(len(tr_causal.data), len(tr_acausal.data))
+
+            "Both"
+            tr.data = (tr_causal.data[0:N_cut] + tr_acausal.data[0:N_cut]) / 2
+
+        # 4-06-2024
+        # get dispersion curve
+        ns = noise_processing(tr)
+        all_curves = ns.get_disp(self.typeCB.currentText(), self.phaseMacthmodelCB.currentText())
+
 
         if self.phase_matchCB.isChecked():
             distance = tr.stats.mseed['geodetic'][0]
@@ -287,7 +353,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf,
                                  use_wavelet=wavelet, m=m, decimate=False)
 
-            scalogram2 = cw.scalogram_in_dbs()
+            #scalogram2 = cw.scalogram_in_dbs()
+            scalogram2 = cw.scalogram()
+
             phase, inst_freq, ins_freq_hz = cw.phase() # phase in radians
             inst_freq = ins_freq_hz
 
@@ -304,6 +372,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             scalogram2 = scalogram2[:, 1:]
 
             if self.ftCB.isChecked():
+
+                min_period, idx_min_period = self.find_nearest(period[:, 0], self.period_min_cwtDB.value())
+                max_period, idx_max_period = self.find_nearest(period[:, 0], self.period_max_cwtDB.value())
                 min_vel, idx_min_vel = self.find_nearest(vel[0, :], self.min_velDB.value())
                 max_vel, idx_max_vel = self.find_nearest(vel[0, :], self.max_velDB.value())
                 self.min_vel = min_vel
@@ -314,6 +385,10 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                 phase = phase[:, idx_max_vel:idx_min_vel]
                 inst_freq = inst_freq[:, idx_max_vel:idx_min_vel]
 
+            # now we transform the scalogram to dB
+            
+            scalogram2 = np.abs(scalogram2) ** 2
+            scalogram2 = 10. * np.log10(scalogram2/np.max(scalogram2))
 
             scalogram2 = np.clip(scalogram2, a_min=self.minlevelCB.value(), a_max=0)
             min_cwt = self.minlevelCB.value()
@@ -344,22 +419,12 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             # extract ridge
 
-            ridge = np.max(scalogram2, axis=0)
-
             distance = self.dist_ridgDB.value()*vel.shape[0]/(max_vel-min_vel)
             height = (self.minlevelCB.value(),0)
             ridges, peaks, group_vel = self.find_ridges(scalogram2, vel, height, distance, self.numridgeSB.value())
 
-            #print(ridges)
-            #ridge_vel = []
-            # for j in range(len(ridge)):
-             #   value, idx = self.find_nearest(scalogram2[:,j],ridge[j])
-             #    ridge_vel.append(vel[idx,j])
-
             self.t = dist/(1000*vel)
             self.dist = dist/1000
-            # phase_vel = self.phase_vel(scalogram2, ridge, phase, inst_freq, t, dist/1000, n)
-            # phase_vel = np.flipud(phase_vel)
 
             # Plot
             self.ax_seism1.cla()
@@ -371,34 +436,38 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             self.ax_seism1.set_xlabel("Amplitude")
             self.ax_seism1.set_ylabel("Time (s)")
             self.canvas_plot1.clear()
-            self.canvas_plot1.plot_contour(period, vel, scalogram2, axes_index=1, levels = 100, clabel="Power [dB]",
-                        cmap=plt.get_cmap("jet"), vmin=min_cwt, vmax=max_cwt, antialiased=True, xscale = "log")
+            self.canvas_plot1.plot_contour(period, vel, scalogram2, axes_index=0, levels=100, clabel="Power [dB]",
+                        cmap=plt.get_cmap("jet"), vmin=min_cwt, vmax=max_cwt, antialiased=True, xscale="log")
 
-            self.canvas_plot1.set_xlabel(1, "Period (s)")
-            self.canvas_plot1.set_ylabel(1, "Group Velocity (km/s)")
+
+            for i, mode in enumerate(modes):
+                T = all_curves["period"]
+                vel = all_curves[mode]["U"]
+                self.canvas_plot1.plot(T, vel, axes_index=0, clear_plot=False,
+                                       color="gray", linewidth=1.0, linestyle=feature[i], label=mode)
+
+            info = "Disp. Fundamental mode " + "-.-"
+            self.canvas_plot1.set_plot_label(0, info)
+            self.canvas_plot1.set_xlabel(0, "Period (s)")
+            self.canvas_plot1.set_ylabel(0, "Group Velocity (km/s)")
 
             # Plot ridges and create lasso selectors
 
             self.selectors_group_vel = []
             self.group_vel = group_vel
             self.periods = period[0, :]
-            ax = self.canvas_plot1.get_axe(1)
+            ax = self.canvas_plot1.get_axe(0)
 
             for k in range(self.numridgeSB.value()):
-                #self.canvas_plot1.plot(period[0,:], group_vel[k], axes_index=1, marker=".", color = self.colors[k],
-                 #                      clear_plot=False)
 
                 pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
                 self.selectors_group_vel.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
-                data = self.selectors_group_vel[0].xys
-
-            self.periods_group_vel, self.group_vel_save = self.__get_vel_from_selection(data)
 
 
         if selection == "Hilbert-Multiband":
 
             f_min = 1 / self.period_max_mtDB.value()
-            f_max = 1/  self.period_min_mtDB.value()
+            f_max = 1/ self.period_min_mtDB.value()
 
             npts = len(tr.data)
             t = np.linspace(0, tr.stats.delta * npts, npts)
@@ -459,22 +528,12 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             # extract ridge
 
-            ridge = np.max(scalogram2, axis=0)
-
             distance = self.dist_ridgDB.value() * vel.shape[0] / (max_vel - min_vel)
             height = (self.minlevelCB.value(), 0)
             ridges, peaks, group_vel = self.find_ridges(scalogram2, vel, height, distance, self.numridgeSB.value())
 
-            # print(ridges)
-            # ridge_vel = []
-            # for j in range(len(ridge)):
-            #   value, idx = self.find_nearest(scalogram2[:,j],ridge[j])
-            #    ridge_vel.append(vel[idx,j])
-
             self.t = dist / (1000 * vel)
             self.dist = dist / 1000
-            # phase_vel = self.phase_vel(scalogram2, ridge, phase, inst_freq, t, dist/1000, n)
-            # phase_vel = np.flipud(phase_vel)
 
             # Plot
             self.ax_seism1.cla()
@@ -502,35 +561,39 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             ax = self.canvas_plot1.get_axe(1)
 
             for k in range(self.numridgeSB.value()):
-                # self.canvas_plot1.plot(period[0,:], group_vel[k], axes_index=1, marker=".", color = self.colors[k],
-                #                      clear_plot=False)
 
                 pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
                 self.selectors_group_vel.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
-                data = self.selectors_group_vel[0].xys
-
-            T, group_vel = self.__get_vel_from_selection(data)
-
-
 
     def run_phase_vel(self):
 
+        self.period_phv = []
+        self.phase_vel_def = []
+
+        # save info from collection
+        self.period_grp, self.group_vel_def = self.get_def_velocities(selector="group")
+
         phase_vel_array = self.phase_velocity()
         test = np.arange(-5, 5, 1) # natural ambiguity
-        # Plot phase vel
+
 
         ax2 = self.canvas_plot1.get_axe(0)
         ax2.cla()
+
         self.selectors_phase_vel = []
         self.phase_vel = []
+
         for k in range(len(test)):
-            pts = ax2.scatter(self.periods_now, phase_vel_array[k,:], marker=".", s = 60)
+            pts = ax2.scatter(self.period_grp, phase_vel_array[k, :], marker=".", s=60)
             self.selectors_phase_vel.append(CollectionLassoSelector(ax2, pts, [0.5, 0., 0.5, 1.]))
-            ax2.set_xscale('log')
 
-        data = self.selectors_phase_vel[0].xys
-        self.periods_phase_vel, self.phase_vel_save = self.__get_vel_from_selection(data)
+        # plotting corresponding group vel
+        self.canvas_plot1.plot(self.period_grp,  self.group_vel_def, axes_index=0, clear_plot=False,
+                                linewidth=1.0, linestyle="-.", label="Ref. Group Velocity")
 
+        ax2.set_xscale('log')
+
+        self.canvas_plot1.set_plot_label(0, "Ref. Group Velocity -.-")
 
         if self.ftCB.isChecked():
           ax2.set_xlim(self.period_min_cwtDB.value(), self.period_max_cwtDB.value())
@@ -540,21 +603,18 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.canvas_plot1.set_ylabel(0, "Phase Velocity (km/s)")
 
 
-
     def phase_velocity(self):
         self.periods_now = []
         self.solutions = []
-        for i, selector in enumerate(self.selectors_group_vel):
-            for idx in selector.ind:
-                self.periods_now.append(self.periods[idx])
-                self.solutions.append(self.group_vel[i, idx])
+
+        self.period_grp, self.group_vel_def
         # TODO WHAT IS THE OPTIMUM LAMBDA
         landa = -1*np.pi/4
-        phase_vel_array = np.zeros([len(np.arange(-5, 5, 1)), len(self.solutions)])
+        phase_vel_array = np.zeros([len(np.arange(-5, 5, 1)), len(self.group_vel_def)])
         for k in np.arange(-5, 5, 1):
-            for j in range(len(self.solutions)):
-                value_period, idx_period = self.find_nearest(self.periods, self.periods_now[j])
-                value_group_vel, idx_group_vel = self.find_nearest(self.vel[:,0], self.solutions[j])
+            for j in range(len(self.group_vel_def)):
+                value_period, idx_period = self.find_nearest(self.periods, self.period_grp[j])
+                value_group_vel, idx_group_vel = self.find_nearest(self.vel[:, 0], self.group_vel_def[j])
                 to = self.t[idx_group_vel , 0]
                 phase_test = self.phase[idx_group_vel, idx_period]
                 inst_freq_test = self.inst_freq[idx_group_vel, idx_period]
@@ -584,8 +644,8 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                     if len(peaks)>0:
                         ridges[k, j] = peaks[k]
 
-                        peak[k, j] =  properties['peak_heights'][k]
-                        group_vel[k,j] =vel[int(peaks[k]),0]
+                        peak[k, j] = properties['peak_heights'][k]
+                        group_vel[k,j] = vel[int(peaks[k]),0]
                     else:
                         ridges[k, j] = "NaN"
                         peak[k, j] = "NaN"
@@ -606,10 +666,10 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             x1_value, y1_value = event.xdata, event.ydata
 
-            period, pick_vel,_ = self.find_pos(x1_value, y1_value)
+            period, pick_vel, _ = self.find_pos(x1_value, y1_value)
             self.solutions.append(pick_vel)
             self.periods_now.append(period)
-            self.canvas_plot1.plot(period, pick_vel, color = "purple", axes_index = 1, clear_plot = False, marker = "." )
+            self.canvas_plot1.plot(period, pick_vel, color="purple", axes_index=1, clear_plot=False, marker="." )
 
     def find_pos(self, x1, y1):
 
@@ -643,77 +703,40 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
     #             self.canvas_plot1.plot(period, pick_vel, color=self.colors[idx], axes_index=1, clear_plot=False, marker=".")
 
     @staticmethod
-    def __get_vel_from_selection(data):
+    def __get_vel_from_selection(data, idx):
         period = []
         vel = []
-        for index in data:
-            if isinstance(index[0], float) and isinstance(index[0], float):
-                period.append(index[0])
-                vel.append(index[0])
+        for index in idx:
+            data_at_idx = data[index,:]
+            if isinstance(data_at_idx, float) and isinstance(data_at_idx, float):
+                period.append(data_at_idx[0])
+                vel.append(data_at_idx[1])
 
-        return period,vel
+        return period, vel
+
+    def get_def_velocities(self, selector):
+
+        period = []
+        vel = []
+
+        if selector == "phase":
+            for phase_collection in self.selectors_phase_vel:
+                for idx_selected_phase in phase_collection.ind:
+                    vel.append(phase_collection.xys[idx_selected_phase, 1])
+                    period.append(phase_collection.xys[idx_selected_phase, 0])
+
+        elif selector == "group":
+            for group_collection in self.selectors_group_vel:
+                for idx_selected_group in group_collection.ind:
+                    vel.append(group_collection.xys[idx_selected_group, 1])
+                    period.append(group_collection.xys[idx_selected_group, 0])
+
+        period.sort()
+        vel.sort()
+
+        return period, vel
 
 
-    # if selection == "Multitaper Spectrogram":
-    #
-    #     win = int(self.mt_window_lengthDB.value() * tr.stats.sampling_rate)
-    #     win_half = int(win / (2 * fs))
-    #     tbp = self.time_bandwidth_DB.value()
-    #     ntapers = self.number_tapers_mtSB.value()
-    #     f_min = 1 / self.period_max_mtDB.value()
-    #     f_max = 1 / self.period_min_mtDB.value()
-    #     mtspectrogram = MTspectrogram(self.file_selector.file_path, win, tbp, ntapers, f_min, f_max)
-    #     x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr)
-    #     # x in seconds, y in freqs
-    #     x = x + win_half
-    #     # chop cero division
-    #     dist = self.convert_2_vel(tr)
-    #     vel = (dist / (x[:, 1:] * 1000))
-    #     min_time_idx = fs * (dist / (self.max_velDB.value() * 1000))
-    #     min_time_idx = int(min_time_idx)
-    #     max_time_idx = fs * (dist / (self.min_velDB.value() * 1000))
-    #     max_time_idx = int(max_time_idx)
-    #     period = 1 / y[:, 1:]
-    #     log_spectrogram = log_spectrogram[:, 1:]
-    #
-    #     if self.ftCB.isChecked():
-    #         min_vel, idx_min_vel = self.find_nearest(vel[0, :], self.min_velDB.value())
-    #         max_vel, idx_max_vel = self.find_nearest(vel[0, :], self.max_velDB.value())
-    #         vel = vel[:, idx_max_vel:idx_min_vel]
-    #         period = period[:, idx_max_vel:idx_min_vel]
-    #         log_spectrogram = log_spectrogram[:, idx_max_vel:idx_min_vel]
-    #
-    #     log_spectrogram = np.clip(log_spectrogram, a_min=self.minlevelCB.value(), a_max=0.05)
-    #     min_log_spectrogram = self.minlevelCB.value()
-    #     max_log_spectrogram = 0.05
-    #     log_spectrogram = log_spectrogram + 0.05
-    #
-    #     # flips
-    #     log_spectrogram = log_spectrogram.T
-    #     log_spectrogram = np.fliplr(log_spectrogram)
-    #     log_spectrogram = np.flipud(log_spectrogram)
-    #
-    #     vel = vel.T
-    #     vel = np.flipud(vel)
-    #
-    #     period = period.T
-    #     period = np.fliplr(period)
-    #
-    #     # Plot
-    #     self.ax_seism1.cla()
-    #     self.ax_seism1.plot(tr.data, tr.times() / tr.stats.sampling_rate, linewidth=0.5)
-    #     self.ax_seism1.plot(tr.data[min_time_idx:max_time_idx],
-    #                         tr.times()[min_time_idx:max_time_idx] / tr.stats.sampling_rate,
-    #                         color='red', linewidth=0.5)
-    #
-    #     self.ax_seism1.set_xlabel("Amplitude")
-    #     self.ax_seism1.set_ylabel("Time (s)")
-    #     self.canvas_plot1.clear()
-    #     self.canvas_plot1.plot_contour(period, vel, log_spectrogram, axes_index=0, clabel="Power [dB]",
-    #                                    cmap=plt.get_cmap("jet"), vmin=min_log_spectrogram, vmax=max_log_spectrogram,
-    #                                    antialiased=True, xscale="log")
-    #
-    #     # ax = self.canvas_plot1.get_axe(0)
-    #     # ax.clabel(cs, levels = levels, fmt = '%2.1', colors = 'k', fontsize = 12)
-    #     self.canvas_plot1.set_xlabel(0, "Period (s)")
-    #     self.canvas_plot1.set_ylabel(0, "Group Velocity (m/s)")
+
+
+

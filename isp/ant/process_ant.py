@@ -54,6 +54,10 @@ class process_ant:
         self.time_normalizationCB = param_dict["time_normalizationCB"]
         self.whitheningCB = param_dict["whitheningCB"]
         self.water_level = param_dict["waterlevel"]
+        self.preFilter = param_dict["prefilter"]
+        self.freqminFilter = param_dict["filter_freqmin"]
+        self.freqmaxFilter = param_dict["filter_freqmax"]
+        self.cornersFilter = param_dict["filter_corners"]
 
 
     def create_all_dict_matrix(self, list_raw, info):
@@ -238,7 +242,7 @@ class process_ant:
 
         sampling_rate = info_N[1][0][0][0].sample_rate
         # take the azimuth
-
+        # TODO REVIEW IS TAKING THE CORRECT AZIMUTH CLOCKWISE FROM NORTH
         self.az = info_N[1][0][0][0].azimuth
 
         if self.decimationCB:
@@ -386,10 +390,15 @@ class process_ant:
                 tr.detrend(type="simple")
                 tr.taper(type="blackman", max_percentage=0.05)
                 tr.filter(type="lowpass", freq=0.4 * self.factor, zerophase=True, corners=4)
-                # while (tr.stats.sampling_rate//self.factor) >= 16:
-                #
-                #         tr.resample(sampling_rate=tr.stats.sampling_rate//10, no_filter=True)
+                while (tr.stats.sampling_rate//self.factor) >= 16:
+
+                        tr.resample(sampling_rate=tr.stats.sampling_rate//(tr.stats.sampling_rate*0.1), no_filter=True)
+                        tr.detrend(type="simple")
+                        tr.taper(type="blackman", max_percentage=0.05)
+
                 tr.resample(sampling_rate=self.factor, no_filter=True)
+                tr.detrend(type="simple")
+                tr.taper(type="blackman", max_percentage=0.05)
 
             except:
                 check_process = False
@@ -403,6 +412,7 @@ class process_ant:
                 # ensure the start and end to have 24 h
                 tr_test.trim(starttime=tr.stats.starttime + self.inc_time[i],
                                  endtime=tr.stats.starttime + self.inc_time[i + 1])
+
 
                # TODO "Make sense to check gaps every time window??"
                #  if fill_gaps:
@@ -425,6 +435,7 @@ class process_ant:
                         tr_test.filter(type="bandpass", freqmin=0.005, freqmax=0.4*self.sampling_rate_new,
                                        zerophase=True, corners=4)
 
+
                         process = noise_processing(tr_test)
 
                         if self.time_normalizationCB and self.timenorm == "running avarage":
@@ -432,16 +443,23 @@ class process_ant:
                             if self.whitheningCB:
                                 process.whiten_new(freq_width=self.freqbandwidth)
 
+
                         elif self.time_normalizationCB and self.timenorm == "1 bit":
                             if self.whitheningCB:
                                 process.whiten_new(freq_width=self.freqbandwidth)
                             if self.time_normalizationCB:
                                 process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
 
-                        elif self.timenorm == "PCC":
-                            process.tr.filter(type="bandpass", freqmin=0.025, freqmax=0.166,
-                                           zerophase=True, corners=4)
-                            xaZ = hilbert(process.tr.data)
+                        if self.preFilter:
+                            process.tr.detrend(type='simple')
+                            process.tr.taper(max_percentage=0.05)
+                            process.tr.filter(type="bandpass", freqmin=self.freqminFilter, freqmax=self.freqmaxFilter,
+                                           zerophase=True, corners=self.cornersFilter)
+
+                        if self.timenorm == "PCC":
+
+                            xaZ = hilbert(process.tr.data, N=D)
+                            xaZ = xaZ[0:n]
                             process.tr.data = xaZ/np.abs(xaZ) # normalize
 
                         try:
@@ -513,12 +531,29 @@ class process_ant:
                     tr_N.detrend(type="simple")
                     tr_N.taper(type="blackman", max_percentage=0.05)
                     tr_N.filter(type="lowpass", freq=0.4 * self.factor, zerophase=True, corners=4)
-                    tr_N.resample(sampling_rate=self.factor, no_filter=True)
-
                     tr_E.detrend(type="simple")
                     tr_E.taper(type="blackman", max_percentage=0.05)
                     tr_E.filter(type="lowpass", freq=0.4 * self.factor, zerophase=True, corners=4)
+
+                    while (tr_N.stats.sampling_rate // self.factor) >= 16:
+                        tr_N.resample(sampling_rate=tr_N.stats.sampling_rate // (tr_N.stats.sampling_rate * 0.1),
+                                    no_filter=True)
+                        tr_N.detrend(type="simple")
+                        tr_N.taper(type="blackman", max_percentage=0.05)
+
+                        tr_E.resample(sampling_rate=tr_N.stats.sampling_rate // (tr_N.stats.sampling_rate * 0.1),
+                                      no_filter=True)
+                        tr_E.detrend(type="simple")
+                        tr_E.taper(type="blackman", max_percentage=0.05)
+
+                    tr_N.resample(sampling_rate=self.factor, no_filter=True)
+                    tr_N.detrend(type="simple")
+                    tr_N.taper(type="blackman", max_percentage=0.05)
+
                     tr_E.resample(sampling_rate=self.factor, no_filter=True)
+                    tr_E.detrend(type="simple")
+                    tr_E.taper(type="blackman", max_percentage=0.05)
+
                 except:
                     check_process = False
                     print("Couldn't Decimate")
@@ -578,6 +613,7 @@ class process_ant:
                             tr_test_E.filter(type="bandpass", freqmin=0.005, freqmax=0.4*self.sampling_rate_new,
                                              zerophase=True, corners=4)
 
+
                             process_horizontals = noise_processing_horizontals(tr_test_N, tr_test_E)
 
                             # rotate to N & E, designed specially for OBSs
@@ -588,22 +624,32 @@ class process_ant:
                                 if self.whitheningCB:
                                     process_horizontals.whiten_new(freq_width=self.freqbandwidth)
 
+
                             elif self.time_normalizationCB and self.timenorm == "1 bit":
                                 if self.whitheningCB:
                                     process_horizontals.whiten_new(freq_width=self.freqbandwidth)
                                 if self.time_normalizationCB:
                                     process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
 
-                            elif self.time_normalizationCB and self.timenorm == "PCC":
+                            if self.preFilter:
+                                process_horizontals.tr_N.detrend(type='simple')
+                                process_horizontals.tr_E.detrend(type='simple')
+                                process_horizontals.tr_E.taper(max_percentage=0.05)
+                                process_horizontals.tr_E.taper(max_percentage=0.05)
 
-                                process_horizontals.tr_N.filter(type="bandpass", freqmin=0.025, freqmax=0.166,
-                                                  zerophase=True, corners=4)
+                                process_horizontals.tr_N.filter(type="bandpass", freqmin=self.freqminFilter,
+                                                 freqmax=self.freqmaxFilter,
+                                                 zerophase=True, corners=self.cornersFilter)
+                                process_horizontals.tr_E.filter(type="bandpass", freqmin=self.freqminFilter,
+                                                 freqmax=self.freqmaxFilter,
+                                                 zerophase=True, corners=self.cornersFilter)
 
-                                process_horizontals.tr_E.filter(type="bandpass", freqmin=0.025, freqmax=0.166,
-                                                                zerophase=True, corners=4)
+                            if self.time_normalizationCB and self.timenorm == "PCC":
 
-                                xaN = hilbert(process_horizontals.tr_N.data)
-                                xaE = hilbert(process_horizontals.tr_E.data)
+                                xaN = hilbert(process_horizontals.tr_N.data, N=D)
+                                xaN = xaN[0:n]
+                                xaE = hilbert(process_horizontals.tr_E.data, N=D)
+                                xaE = xaE[0:n]
                                 process_horizontals.tr_N.data = xaN / np.abs(xaN)  # normalize
                                 process_horizontals.tr_E.data = xaE / np.abs(xaE)  # normalize
 
@@ -920,15 +966,15 @@ class clock_process:
                     stack_obj = array()
                     data_new = stack_obj.stack(data_new, stack_type='Phase Weigth Stack', order=power)
 
-                num = len(data_new)
-                if (num % 2) == 0:
-
-                    # print(“Thenumber is even”)
-                    c = int(np.ceil(num / 2.) + 1)
-                else:
-                    # print(“The providednumber is odd”)
-                    c = int(np.ceil((num + 1) / 2))
-                data_new = (np.roll(data_new, c))/part_day
+                # num = len(data_new)
+                # if (num % 2) == 0:
+                #
+                #     # print(“Thenumber is even”)
+                #     c = int(np.ceil(num / 2.) + 1)
+                # else:
+                #     # print(“The providednumber is odd”)
+                #     c = int(np.ceil((num + 1) / 2))
+                # data_new = (np.roll(data_new, c))/part_day
                 #data_new = (np.roll(data_new, int(len(data_new) / 2)))/part_day
                 self.metadata['location'] = str(days+int(part_day/2))
                 stack_partial.append(Trace(data=data_new, header=self.metadata))
