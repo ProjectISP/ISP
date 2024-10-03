@@ -736,10 +736,10 @@ class noisestack:
 
         if validation:
             data_array_ne = np.zeros((dim[0], 4, 1))
-            data_array_ne[:, 0, 0] = data_matrix["EE"][:]
-            data_array_ne[:, 1, 0] = data_matrix["EN"][:]
-            data_array_ne[:, 2, 0] = data_matrix["NN"][:]
-            data_array_ne[:, 3, 0] = data_matrix["NE"][:]
+            data_array_ne[:, 0, 0] = data_matrix["EE"][:]/np.max(data_matrix["EE"][:])
+            data_array_ne[:, 1, 0] = data_matrix["EN"][:]/np.max(data_matrix["EN"][:])
+            data_array_ne[:, 2, 0] = data_matrix["NN"][:]/np.max(data_matrix["NN"][:])
+            data_array_ne[:, 3, 0] = data_matrix["NE"][:]/np.max(data_matrix["NE"][:])
 
             rotate_matrix = self.__generate_matrix_rotate(data_matrix['geodetic'], dim)
 
