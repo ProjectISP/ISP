@@ -257,13 +257,6 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="0" column="0">
-                   <widget class="QPushButton" name="newProjectBtn">
-                    <property name="text">
-                     <string>New Project</string>
-                    </property>
-                   </widget>
-                  </item>
                   <item row="0" column="1" colspan="4">
                    <widget class="QPushButton" name="selectDirBtn">
                     <property name="toolTip">
@@ -274,6 +267,20 @@
                     </property>
                     <property name="text">
                      <string>Load Project and Apply Seach Filters</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1" colspan="4">
+                   <widget class="QPushButton" name="filterProjectBtn">
+                    <property name="text">
+                     <string>Filter Project</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0" rowspan="2">
+                   <widget class="QPushButton" name="newProjectBtn">
+                    <property name="text">
+                     <string>New Project</string>
                     </property>
                    </widget>
                   </item>

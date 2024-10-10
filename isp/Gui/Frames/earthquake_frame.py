@@ -128,6 +128,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_file(self.metadata_path_bind))
         self.selectDirBtn.clicked.connect(lambda: self.load_project())
         self.updateBtn.clicked.connect(self.plot_seismogram)
+        self.filterProjectBtn.clicked.connect(self.reload_current_project)
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
         self.rotateBtn.clicked.connect(self.rotate)
         self.mapBtn.clicked.connect(self.plot_map_stations)
