@@ -67,6 +67,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.aligned_picks = False
         self.aligned_fixed = False
         self.shift_times = None
+        self.project = {}
         self.dist_all = []
         self.baz_all = []
         self.special_selection = []
@@ -321,22 +322,40 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if self.loaded_project:
             if isinstance(self.current_project_file, str) and os.path.isfile(self.current_project_file):
                 try:
-                    self.project = MseedUtil.load_project(file = self.current_project_file)
+                    self.project = MseedUtil.load_project(file=self.current_project_file)
+                    stations_channel, seismograms = MseedUtil.get_project_basic_info(self.project)
                     project_name = os.path.basename(self.current_project_file)
-                    md.set_info_message("Project {} reloaded  ".format(project_name))
+
+                    if stations_channel is not None and seismograms is not None:
+                        md.set_info_message("Project {} reloaded  ".format(project_name), "number of stations/channels included " +
+                                        str(stations_channel) +"\n"+ "Total number of seismograms " + str(seismograms))
+                    else:
+                        md.set_warning_message("Empty Project ", "Please provide a root path "
+                                                                 "with mseed files inside and check the query filters applied")
                 except:
-                    md.set_error_message("Project couldn't be reloaded ")
+                    md.set_error_message("Project couldn't be reloaded ", "Please provide a root path "
+                                                                 "with mseed files inside and check the wuery filters applied")
             else:
-                md.set_error_message("Project couldn't be reloaded ")
+                md.set_error_message("Project couldn't be reloaded ", "Please provide a root path "
+                                                                 "with mseed files inside and check the query filters applied")
             self.get_now_files()
 
         else:
             try:
                 if isinstance(self.project, dict):
                     self.get_now_files()
-                    md.set_info_message("New Project reloaded")
+                    stations_channel, seismograms = MseedUtil.get_project_basic_info(self.project)
+                    num_current_seismograms = len(self.files_path)
+                    if stations_channel is not None and seismograms is not None and num_current_seismograms > 0:
+                        md.set_info_message("New Project reloaded", "number of stations/channels included " +
+                                        str(stations_channel) +"\n"+ "Total number of seismograms " + str(seismograms)+"\n"+
+                                            "Number Seismograms to be process and plot " + str(num_current_seismograms))
+                    else:
+                        md.set_warning_message("Empty Filtered Project ", "Please provide a root path "
+                                                                 "with mseed files inside and check the query filters applied")
             except:
-                md.set_error_message("Project couldn't be reloaded ")
+                md.set_error_message("Project couldn't be reloaded ", "Please provide a root path "
+                                                                 "with mseed files inside and check the query filters applied")
 
 
     def open_earth_model_viewer(self):
@@ -593,7 +612,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         selection = [self.netForm.text(), self.stationForm.text(), self.channelForm.text()]
         _, self.files_path = MseedUtil.filter_project_keys(self.project, net=selection[0], station=selection[1], channel=selection[2])
 
-        if self.trimCB.isChecked():
+        if len(self.files_path)>0 and self.trimCB.isChecked():
             start = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
             end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             diff = end-start
@@ -602,8 +621,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         else:
             self.files_path = MseedUtil.filter_time(list_files=self.files_path)
 
-
-        self.set_pagination_files(self.files_path)
+        if len(self.files_path) > 0:
+            self.set_pagination_files(self.files_path)
 
 
 
@@ -731,106 +750,115 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
              return 0.
 
     def plot_seismogram(self):
-        self.workers = ParallelWorkers(os.cpu_count())
-        # Here we can disabled thing or make additional staff
-        self.workers.job(self.__plot_seismogram)
 
-        self.decimator = [None, False]
-        if self.st:
-            del self.st
+        stations_channel, seismograms = MseedUtil.get_project_basic_info(self.project)
+        num_current_seismograms = len(self.files_path)
 
-        self.canvas.clear()
+        if stations_channel > 0 and seismograms > 0 and num_current_seismograms > 0:
+            self.workers = ParallelWorkers(os.cpu_count())
 
-        #self.nums_clicks = 0
+            # Here we can disabled thing or make additional staff
+            self.workers.job(self.__plot_seismogram)
 
-        if self.trimCB.isChecked() and self.check_start_time != None and self.check_end_time != None:
-            if self.check_start_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_1) and \
-                    self.check_end_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_2):
-                self.get_now_files()
+            self.decimator = [None, False]
+            if self.st:
+                del self.st
 
-        if self.sortCB.isChecked():
-            if self.comboBox_sort.currentText() == "Distance":
-                self.files_path.sort(key=self.sort_by_distance_advance)
-                self.actionPlot_Record_Section.setEnabled(True)
-                self.message_dataless_not_found()
+            self.canvas.clear()
 
-            elif self.comboBox_sort.currentText() == "Back Azimuth":
-                self.files_path.sort(key=self.sort_by_baz_advance)
-                self.message_dataless_not_found()
+            #self.nums_clicks = 0
+
+            if self.trimCB.isChecked() and self.check_start_time != None and self.check_end_time != None:
+                if self.check_start_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_1) and \
+                        self.check_end_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_2):
+                    self.get_now_files()
+
+            if self.sortCB.isChecked():
+                if self.comboBox_sort.currentText() == "Distance":
+                    self.files_path.sort(key=self.sort_by_distance_advance)
+                    self.actionPlot_Record_Section.setEnabled(True)
+                    self.message_dataless_not_found()
+
+                elif self.comboBox_sort.currentText() == "Back Azimuth":
+                    self.files_path.sort(key=self.sort_by_baz_advance)
+                    self.message_dataless_not_found()
 
 
-        if len(self.special_selection)> 0:
-            self.set_pagination_files(self.special_selection)
-            self.files_at_page = self.get_files_at_page()
-        else:
-            self.set_pagination_files(self.files_path)
-            self.files_at_page = self.get_files_at_page()
-
-        ##
-        self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
-        self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-        self.check_start_time = self.start_time
-        self.check_end_time = self.end_time
-        ##
-        self.diff = self.end_time - self.start_time
-        if len(self.canvas.axes) != len(self.files_at_page) or self.autorefreshCB.isChecked():
-            self.canvas.set_new_subplot(nrows=len(self.files_at_page), ncols=1)
-        self.last_index = 0
-        self.min_starttime = []
-        self.max_endtime = []
-
-        tuple_files = [(i, file) for i, file in enumerate(self.files_at_page)]
-
-        self.all_traces = [None for i in range(len(self.files_at_page))]
-
-        self.parameters_list = self.parameters.getParameters()
-        self.min_starttime = [None for i in range(len(self.files_at_page))]
-        self.max_endtime = [None for i in range(len(self.files_at_page))]
-
-        prog_dialog = pw.QProgressDialog()
-        prog_dialog.setLabelText("Process and Plot")
-        prog_dialog.setValue(0)
-        prog_dialog.setRange(0, 0)
-
-        def prog_callback():
-            pyc.QMetaObject.invokeMethod(prog_dialog, "accept")
-
-        self.plot_progress.connect(prog_callback)
-        self.workers.start(tuple_files)
-
-        prog_dialog.exec()
-        for tuple_ind in tuple_files:
-            self.redraw_event_times(tuple_ind[0])
-            self.redraw_pickers(tuple_ind[1], tuple_ind[0])
-
-        self.st = Stream(traces=self.all_traces)
-
-        self.shift_times = None
-
-        try:
-            if self.min_starttime and self.max_endtime is not None:
-                auto_start = min(self.min_starttime)
-                auto_end = max(self.max_endtime)
-                self.auto_start = auto_start
-                self.auto_end = auto_end
-
-            ax = self.canvas.get_axe(len(self.files_at_page)-1)
-            # ax.callbacks.connect('xlim_changed', self.on_xlims_change)
-            if self.trimCB.isChecked() and self.aligned_picks == False:
-
-                ax.set_xlim(self.start_time.matplotlib_date, self.end_time.matplotlib_date)
+            if len(self.special_selection)> 0:
+                self.set_pagination_files(self.special_selection)
+                self.files_at_page = self.get_files_at_page()
             else:
+                self.set_pagination_files(self.files_path)
+                self.files_at_page = self.get_files_at_page()
 
-                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            ##
+            self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+            self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+            self.check_start_time = self.start_time
+            self.check_end_time = self.end_time
+            ##
+            self.diff = self.end_time - self.start_time
+            if len(self.canvas.axes) != len(self.files_at_page) or self.autorefreshCB.isChecked():
+                self.canvas.set_new_subplot(nrows=len(self.files_at_page), ncols=1)
+            self.last_index = 0
+            self.min_starttime = []
+            self.max_endtime = []
 
-            self.canvas.set_xlabel(len(self.files_at_page)-1, "Date")
+            tuple_files = [(i, file) for i, file in enumerate(self.files_at_page)]
 
-        except:
-            pass
-        self.special_selection = []
-        self.aligned_checked = False
-        self.aligned_picks = False
+            self.all_traces = [None for i in range(len(self.files_at_page))]
 
+            self.parameters_list = self.parameters.getParameters()
+            self.min_starttime = [None for i in range(len(self.files_at_page))]
+            self.max_endtime = [None for i in range(len(self.files_at_page))]
+
+            prog_dialog = pw.QProgressDialog()
+            prog_dialog.setLabelText("Process and Plot")
+            prog_dialog.setValue(0)
+            prog_dialog.setRange(0, 0)
+
+            def prog_callback():
+                pyc.QMetaObject.invokeMethod(prog_dialog, "accept")
+
+            self.plot_progress.connect(prog_callback)
+            self.workers.start(tuple_files)
+
+            prog_dialog.exec()
+            for tuple_ind in tuple_files:
+                self.redraw_event_times(tuple_ind[0])
+                self.redraw_pickers(tuple_ind[1], tuple_ind[0])
+
+            self.st = Stream(traces=self.all_traces)
+
+            self.shift_times = None
+
+            try:
+                if self.min_starttime and self.max_endtime is not None:
+                    auto_start = min(self.min_starttime)
+                    auto_end = max(self.max_endtime)
+                    self.auto_start = auto_start
+                    self.auto_end = auto_end
+
+                ax = self.canvas.get_axe(len(self.files_at_page)-1)
+                # ax.callbacks.connect('xlim_changed', self.on_xlims_change)
+                if self.trimCB.isChecked() and self.aligned_picks == False:
+
+                    ax.set_xlim(self.start_time.matplotlib_date, self.end_time.matplotlib_date)
+                else:
+
+                    ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+
+                self.canvas.set_xlabel(len(self.files_at_page)-1, "Date")
+
+            except:
+                pass
+            self.special_selection = []
+            self.aligned_checked = False
+            self.aligned_picks = False
+        else:
+            md = MessageDialog(self)
+            md.set_warning_message("Empty Project ", "Please provide a root path "
+                                                     "with mseed files inside and check the query filters applied")
 
     def __plot_seismogram(self, tuple_files):
 

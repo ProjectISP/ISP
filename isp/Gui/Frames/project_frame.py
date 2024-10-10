@@ -77,7 +77,14 @@ class Project(pw.QDialog, UiProject):
                 self.project = f.result()
                 f.cancel()
 
-            md.set_info_message("Created Project")
+            stations_channel, seismograms = ms.get_project_basic_info(self.project)
+
+            if stations_channel is not None and seismograms is not None:
+                md.set_info_message("Created Project ", "number of stations/channels included " +
+                                    str(stations_channel) +"\n"+ "Total number of seismograms " + str(seismograms))
+            else:
+                md.set_warning_message("Empty Project ", "Please provide a root path "
+                                                         "with mseed files inside and check the wuery filters applied")
 
         except:
 
@@ -118,7 +125,13 @@ class Project(pw.QDialog, UiProject):
                 self.project = f.result()
                 f.cancel()
 
-            md.set_info_message("Created Project")
+            stations_channel, seismograms = ms.get_project_basic_info(self.project)
+            if stations_channel is not None and seismograms is not None:
+                md.set_info_message("Created Project ", "number of stations/channels included " +
+                                    str(stations_channel) + "\n" + "Total number of seismograms " + str(seismograms))
+            else:
+                md.set_warning_message("Empty Project ", "Please provide a root path "
+                                                         "with mseed files inside and check the query filters applied")
 
         except:
 

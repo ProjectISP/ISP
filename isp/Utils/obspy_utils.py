@@ -351,6 +351,17 @@ class MseedUtil:
 
         return r
 
+    @staticmethod
+    def get_project_basic_info(project):
+
+        try:
+            total_components = sum(len(value_list) for value_list in project.values())
+            stations_channel = len(project)
+        except:
+            total_components = None
+            stations_channel = None
+
+        return stations_channel, total_components
 
     def loop_tree(self, i):
         result = None
