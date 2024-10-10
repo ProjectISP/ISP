@@ -19,6 +19,7 @@ from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
+from isp.Gui.Frames.plot_polarization import PlotPolarization
 from isp.Gui.Frames.uncertainity import UncertainityInfo
 from isp.Gui.Frames.project_frame import Project
 from isp.Gui.Frames.stations_info import StationsInfo
@@ -130,7 +131,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.updateBtn.clicked.connect(self.plot_seismogram)
         self.filterProjectBtn.clicked.connect(self.reload_current_project)
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
+        self.phaseUncertaintyBtn.clicked.connect(self.open_uncertainity_settings)
         self.rotateBtn.clicked.connect(self.rotate)
+        self.particleMotionBtn.clicked.connect(self.plot_particle_motion)
         self.mapBtn.clicked.connect(self.plot_map_stations)
         self.crossBtn.clicked.connect(self.cross)
         self.macroBtn.clicked.connect(self.open_parameters_settings)
@@ -358,6 +361,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 md.set_error_message("Project couldn't be reloaded ", "Please provide a root path "
                                                                  "with mseed files inside and check the query filters applied")
 
+    def plot_particle_motion(self):
+
+        if isinstance(self.st, Stream) and self.trimCB.isChecked():
+            for tr in self.st:
+                if tr.stats.channel[-1] == "Z":
+                    z = tr
+                elif tr.stats.channel[-1] == "1" or tr.stats.channel[-1] == "N" or tr.stats.channel[-1] == "Y":
+                    r = tr
+                elif tr.stats.channel[-1] == "2" or tr.stats.channel[-1] == "E" or tr.stats.channel[-1] == "X":
+                    t = tr
+
+            self._plot_polarization = PlotPolarization(z.data, r.data, t.data)
+            self._plot_polarization.show()
 
     def open_earth_model_viewer(self):
         self.earthmodel.show()

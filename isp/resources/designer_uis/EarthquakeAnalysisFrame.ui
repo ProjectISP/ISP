@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1680</width>
-    <height>1044</height>
+    <width>1942</width>
+    <height>1078</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -76,16 +76,6 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="1">
-                   <widget class="QLineEdit" name="stationForm">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                   </widget>
-                  </item>
                   <item row="6" column="1" colspan="4">
                    <widget class="QLineEdit" name="datalessPathForm">
                     <property name="sizePolicy">
@@ -151,19 +141,6 @@
                     </property>
                     <property name="text">
                      <string>Trim Time</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="1" alignment="Qt::AlignHCenter">
-                   <widget class="QLabel" name="label_5">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="text">
-                     <string>Stations</string>
                     </property>
                    </widget>
                   </item>
@@ -281,6 +258,29 @@
                    <widget class="QPushButton" name="newProjectBtn">
                     <property name="text">
                      <string>New Project</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1" colspan="2">
+                   <widget class="QLineEdit" name="stationForm">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1" colspan="2" alignment="Qt::AlignHCenter">
+                   <widget class="QLabel" name="label_5">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Stations</string>
                     </property>
                    </widget>
                   </item>
@@ -560,8 +560,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>1109</width>
-                  <height>802</height>
+                  <width>1371</width>
+                  <height>836</height>
                  </rect>
                 </property>
                </widget>
@@ -590,6 +590,13 @@
                </property>
                <property name="text">
                 <string>Process and Plot</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="particleMotionBtn">
+               <property name="text">
+                <string>Particle Motion</string>
                </property>
               </widget>
              </item>
@@ -688,6 +695,13 @@
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="phaseUncertaintyBtn">
+               <property name="text">
+                <string>Phase Uncertainty</string>
+               </property>
+              </widget>
              </item>
              <item>
               <widget class="QComboBox" name="comboBox_phases">
@@ -843,7 +857,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1680</width>
+     <width>1942</width>
      <height>24</height>
     </rect>
    </property>

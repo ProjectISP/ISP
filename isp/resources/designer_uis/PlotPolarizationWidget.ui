@@ -36,20 +36,6 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="1">
-     <widget class="QWidget" name="plotMatWidget_polarization" native="true">
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255);</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1">
-     <widget class="QPushButton" name="plotBtn">
-      <property name="text">
-       <string>Plot</string>
-      </property>
-     </widget>
-    </item>
     <item row="1" column="2">
      <widget class="QPlainTextEdit" name="polarizationText">
       <property name="sizePolicy">
@@ -57,6 +43,13 @@
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1" rowspan="2">
+     <widget class="QWidget" name="plotMatWidget_polarization" native="true">
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(255, 255, 255);</string>
       </property>
      </widget>
     </item>

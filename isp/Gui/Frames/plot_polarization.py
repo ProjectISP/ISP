@@ -22,7 +22,8 @@ class PlotPolarization(pw.QFrame, UiPlotPolarization ):
         self.canvas = MatplotlibCanvas(self.plotMatWidget_polarization)
         self.canvas2D = MatplotlibCanvas(self.plotMatWidget_polarization2, nrows=2, ncols=2, constrained_layout=True)
         self.canvas.figure.gca(projection='3d')
-        self.plotBtn.clicked.connect(lambda: self.plot_particle())
+        self.plot_particle()
+        #self.plotBtn.clicked.connect(lambda: self.plot_particle())
 
 
     def plot_particle(self):
