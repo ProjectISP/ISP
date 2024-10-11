@@ -174,6 +174,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.newProjectBtn.clicked.connect(lambda: self.new_project())
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
         self.actionPlot_Record_Section.triggered.connect(lambda: self.plot_prs())
+        self.actionWrite_CFs.triggered.connect(lambda: self.save_cf())
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -367,9 +368,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             for tr in self.st:
                 if tr.stats.channel[-1] == "Z":
                     z = tr
-                elif tr.stats.channel[-1] == "1" or tr.stats.channel[-1] == "N" or tr.stats.channel[-1] == "Y":
+                elif (tr.stats.channel[-1] == "1" or tr.stats.channel[-1] == "N" or tr.stats.channel[-1] == "Y"
+                      or tr.stats.channel[-1] == "R"):
                     r = tr
-                elif tr.stats.channel[-1] == "2" or tr.stats.channel[-1] == "E" or tr.stats.channel[-1] == "X":
+                elif (tr.stats.channel[-1] == "2" or tr.stats.channel[-1] == "E" or tr.stats.channel[-1] == "X"
+                      or tr.stats.channel[-1] == "T"):
                     t = tr
 
             self._plot_polarization = PlotPolarization(z.data, r.data, t.data)
@@ -993,7 +996,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             for k in range(len(stations)):
 
-                if self.angCB.isChecked():
+                if self.angCB.currentText() == "to this angle":
 
                     # Process the data
                     self.plot_seismogram()

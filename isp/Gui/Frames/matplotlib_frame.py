@@ -746,7 +746,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
 
             #ax = self.figure.gca(projection='3d')
             ax = Axes3D(self.figure)
-            ax.plot(x, y, z, **kwargs)
+            ax.plot(x, y, z, linewidth=0.75, **kwargs)
 
     def scatter3d(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
