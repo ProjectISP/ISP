@@ -18,7 +18,7 @@ qt = Qt
 qteng = QtWebEngineWidgets  # TODO Why use this? We should remove if not necessary.
 # file to save ui fields
 user_preferences = pyc.QSettings(pyc.QSettings.NativeFormat, pyc.QSettings.UserScope, "isp", "user_pref")
-print(user_preferences.fileName())
+#print(user_preferences.fileName())
 
 def controller():
     from isp.Gui.controllers import Controller

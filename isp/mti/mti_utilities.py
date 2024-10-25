@@ -56,20 +56,20 @@ class MTIManager:
             if ind.count(station):
                 pass
             else:
-                [dist, az1, az1] = gps2dist_azimuth(self.lat, self.lon, lat, lon, a=6378137.0, f=0.0033528106647474805)
+                [dist, _, _] = gps2dist_azimuth(self.lat, self.lon, lat, lon, a=6378137.0, f=0.0033528106647474805)
                 ind.append(station)
                 item = '{net}:{station}::{channel}    {lat}    {lon}'.format(net=net,
-                        station=station, channel=channel[0:2],lat=lat,lon=lon)
+                        station=station, channel=channel[0:2], lat=lat, lon=lon)
 
             # filter by distance
                 if self.min_dist and self.max_dist > 0:
                     # do the distance filter
-                    if dist>=self.min_dist:
+                    if dist >= self.min_dist:
                         file_list.append(item)
                         dist1.append(dist)
                         keydict = dict(zip(file_list, dist1))
                         file_list.sort(key=keydict.get)
-                    if dist<=self.max_dist:
+                    if dist <= self.max_dist:
                         file_list.append(item)
                         dist1.append(dist)
                         keydict = dict(zip(file_list, dist1))

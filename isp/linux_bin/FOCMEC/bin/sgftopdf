@@ -1,0 +1,54 @@
+#!/bin/csh -f
+
+# Script is sgftoeps plus one more step.  That step requires that perl
+#   scropt epstopdf is in the path.
+
+if ($#argv == 0) then
+  echo Syntax is sgftopdf ABCD.
+  echo where ABCD.sgf is the input SAC Graphics Format file.
+  echo Output is ABCD.pdf.  Assumes write access to current directory.
+  echo Creates but then deletes files ABCD.ps and ABCD.eps
+  exit
+endif
+
+set scalefact = 0.75
+
+while ($#argv > 0)
+  switch ($1)
+    case -scale
+      set scalefact = $2
+      shift
+      breaksw
+#Earlier version allowed a -scale 0.xx.  Still works, but not advertised.
+    default
+      set source = $1 #filename of the input SAC sgf file (source.sgf)
+      breaksw
+  endsw
+  shift
+end
+
+if ($?source == 0) then
+  echo no input file specified
+  exit
+else if (! -f ${source}.sgf) then
+  echo ${source}.sgf not found
+  exit
+endif
+
+sgftops ${source}.sgf ${source}.ps 1.0 s << END > /dev/null
+0.5
+0.5
+0
+$scalefact
+END
+
+if (! -f ${source}.ps) exit
+
+set newbbox = `gs -sDEVICE=bbox -dSAFER -dBATCH -dNOPAUSE ${source}.ps |& grep '^%%BoundingBox: '`
+cat ${source}.ps | sed -e "s/^%%BoundingBox:.*/${newbbox}/" \
+  -e "s/^%%Creator: /%%Creator: sgftoeps + /" > ${source}x.eps
+epstopdf ${source}x.eps
+
+\mv ${source}x.pdf ${source}.pdf
+\rm ${source}.ps ${source}x.eps
+exit

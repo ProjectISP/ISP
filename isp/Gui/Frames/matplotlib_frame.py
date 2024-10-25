@@ -1,5 +1,4 @@
 from __future__ import unicode_literals
-
 from typing import Optional
 import cartopy
 import cartopy.crs as ccrs
@@ -20,12 +19,13 @@ from matplotlib.widgets import SpanSelector, MultiCursor
 from mpl_toolkits.mplot3d import Axes3D
 from obspy import Stream
 from owslib.wms import WebMapService
-
+import numpy as np
 from isp import RESOURCE_PATH
 from isp.Gui import pw, pyc, qt
-from isp.Gui.Utils import ExtendSpanSelector, Worker
+from isp.Gui.Utils import ExtendSpanSelector
 from isp.Utils import ObspyUtil, AsycTime
-
+from isp import ROOT_DIR
+import os
 
 class MatplotlibWidget(pw.QWidget):
 
@@ -356,6 +356,19 @@ class BasePltPyqtCanvas(FigureCanvas):
             ax.set_ylabel(value)
             self.draw()  # force to update label
 
+    def set_plot_title(self, ax: Axes or int, text: str):
+        """
+                Sets an label box at the upper right corner of the axes.
+
+                :param ax: The axes or axes_index to add the annotation.
+                :param text: The text
+                :return:
+                """
+        if type(ax) == int:
+            ax = self.get_axe(ax)
+        #bbox = dict(boxstyle="round", fc="white")
+        return ax.set_title(text)
+
     def set_plot_label(self, ax: Axes or int, text: str):
         """
         Sets an label box at the upper right corner of the axes.
@@ -597,6 +610,11 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             area = 10.*z**2  # points size from 0 to 5
             cs = ax.scatter(x, y, s=area, c=z, cmap=cmap, alpha=0.5, vmin=vmin, vmax=vmax, marker=".", **kwargs)
 
+        elif plot_type == "imshow":
+            extent = [np.min(x),np.max(x), np.min(y), np.max(y)]
+            cs = ax.imshow(z, cmap=cmap, extent=extent, origin = 'lower', aspect='auto',
+                           vmin=vmin, vmax=vmax, **kwargs)
+            ax.set(yscale='log', aspect='auto')
         else:
             raise ValueError("Invalid value for plot_type it must be equal to either contourf or scatter.")
 
@@ -673,6 +691,23 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
             else:
                 return self.__plot_date(x, y, ax, clear_plot=clear_plot, update=update, **kwargs)
 
+    def image(self, x: object, y: object, z: object, axes_index: object, clear_plot: object = True, show_colorbar: object = True, **kwargs: object) -> object:
+        """
+         Wrapper for matplotlib contourf.
+
+         :param x: x-axis data.
+         :param y: y-axis data.
+         :param z: z-axis data.
+         :param axes_index: The subplot axes index.
+         :param clear_plot: True to clean plot, False to plot over.
+         :param show_colorbar: True to show colorbar, false otherwise.
+         :param kwargs: Valid Matplotlib kwargs for contourf.
+         :return:
+         """
+        if self.axes is not None:
+            ax = self.get_axe(axes_index)
+            self.__plot_3d(x, y, z, ax, "imshow", clear_plot=clear_plot, show_colorbar=show_colorbar, **kwargs)
+
     def plot_contour(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
         Wrapper for matplotlib contourf.
@@ -711,7 +746,7 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
 
             #ax = self.figure.gca(projection='3d')
             ax = Axes3D(self.figure)
-            ax.plot(x, y, z, **kwargs)
+            ax.plot(x, y, z, linewidth=0.75, **kwargs)
 
     def scatter3d(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
         """
@@ -770,6 +805,21 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
 
         imagebox = OffsetImage(img, zoom=0.08)
         ab = AnnotationBbox(imagebox, (0.05, 0.7), xycoords='axes fraction', frameon=False)
+        ax.add_artist(ab)
+        self.draw_idle()
+
+    def draw_selection_TF(self, axe_index):
+        from PIL import Image
+        from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+        import os
+        ax = self.get_axe(axe_index)
+
+        path_to_image = os.path.join(RESOURCE_PATH, 'images', 'waveform.png')
+        img = Image.open(path_to_image)
+
+
+        imagebox = OffsetImage(img, zoom=0.08)
+        ab = AnnotationBbox(imagebox, (0.05, 0.3), xycoords='axes fraction', frameon=False)
         ax.add_artist(ab)
         self.draw_idle()
 
@@ -1134,7 +1184,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         coordinates = kwargs.pop('coordinates', {})
         resolution = kwargs.pop('resolution', 'high')
         color = kwargs.pop('color', 'red')
-        size = kwargs.pop('size',8)
+        size = kwargs.pop('size', 10)
 
         extent = kwargs.pop("extent", [])
 
@@ -1193,7 +1243,10 @@ class CartopyCanvas(BasePltPyqtCanvas):
                     else:
                         pass
 
-            ax.scatter(lon, lat, s=size, marker="^", color=color, alpha=0.7, transform=ccrs.PlateCarree())
+            #ax.scatter(lon, lat, s=size, marker="^", edgecolors="white", color="black", alpha=0.7,
+            #           transform=ccrs.PlateCarree())
+            ax.scatter(lon, lat, s=size, marker="^", edgecolors="white", color="black", alpha=0.7,
+                       transform=ccrs.PlateCarree())
 
 
         if plot_earthquakes:
@@ -1272,12 +1325,31 @@ class CartopyCanvas(BasePltPyqtCanvas):
         if update:
             self.draw()
 
-    def plot_disp_map(self, axes_index, grid, interp, color, plot_global_map =False, show_relief = False):
+    def plot_disp_map(self, axes_index, grid, interp, color, wave_type, vel_type, plot_global_map=False, show_relief=False,
+                      map_type="Relative Velocities", clip_scale=False, low_limit=-10,
+                      up_limit=10):
 
-        import numpy as np
-        from isp import ROOT_DIR
-        import os
 
+        if map_type == "Relative Velocities":
+            map_disp = grid[0]['m_opt_relative']
+            label = "Deviation [km/s]"
+            # header = wave_type+" "+vel_type+" at period " + period+" s " +" Ref Vel = "+" "+vel_ref+"km/s"
+        if map_type == "Absolute Velocities":
+            map_disp = grid[0]['m_opt_absolute']
+            label = "Velocity [km/s]"
+        if map_type == "Resolution Map":
+            map_disp = grid[0]['resolution_map']
+            label = "Resolution"
+        if map_type == "Checkerboard":
+            map_disp = grid[0]['m_opt_relative']
+            label = "Deviation [km/s]"
+
+        vmin = np.min(map_disp) + 0.05 * np.min(map_disp)
+        vmax = np.max(map_disp) - 0.05 * np.max(map_disp)
+
+        if clip_scale:
+            vmin = low_limit
+            vmax = up_limit
         os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
 
         #resolution = kwargs.pop('resolution', 'low')
@@ -1304,13 +1376,14 @@ class CartopyCanvas(BasePltPyqtCanvas):
         #map = ax.contourf(lons, lats, grid[0]['m_opt_relative'], transform=ccrs.PlateCarree(), cmap="RdBu",
         #                    vmin=-10, vmax=10, alpha=0.7)
         img_extent = (xmin, xmax, ymin, ymax)
-        map = ax.imshow(grid[0]['m_opt_relative'], interpolation=interp, origin='lower', extent=img_extent,
-                        transform=ccrs.PlateCarree(), cmap=color, vmin=-10, vmax=10, alpha=0.7)
+        map = ax.imshow(map_disp, interpolation=interp, origin='lower', extent=img_extent,
+                        transform=ccrs.PlateCarree(), cmap=color, vmin=vmin, vmax=vmax, alpha=0.7)
 
+        # ax.legend(loc="upper right", title=header)
         self.__cbar: Colorbar = self.figure.colorbar(map, ax=ax, orientation='vertical', fraction=0.05,
                                                      extend='both', pad=0.08)
 
-        self.__cbar.ax.set_ylabel("Velocity [km/s]")
+        self.__cbar.ax.set_ylabel(label)
 
         # Create an inset GeoAxes showing the Global location
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))

@@ -1,7 +1,70 @@
 import math
+import os
+import pickle
+
 import numpy as np
 from mtspec import mtspec
+
+from isp import CLOCK_PATH
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement
+from matplotlib.path import Path
+from matplotlib.widgets import LassoSelector
+from isp.ant.signal_processing_tools import noise_processing
+
+class SelectFromCollection:
+    """
+    Select indices from a matplotlib collection using `LassoSelector`.
+
+    Selected indices are saved in the `ind` attribute. This tool fades out the
+    points that are not part of the selection (i.e., reduces their alpha
+    values). If your collection has alpha < 1, this tool will permanently
+    alter the alpha values.
+
+    Note that this tool selects collection objects based on their *origins*
+    (i.e., `offsets`).
+
+    Parameters
+    ----------
+    ax : `~matplotlib.axes.Axes`
+        Axes to interact with.
+    collection : `matplotlib.collections.Collection` subclass
+        Collection you want to select from.
+    alpha_other : 0 <= float <= 1
+        To highlight a selection, this tool sets all selected points to an
+        alpha value of 1 and non-selected points to *alpha_other*.
+    """
+
+    def __init__(self, ax, collection, alpha_other=0.3):
+        self.canvas = ax.figure.canvas
+        self.collection = collection
+        self.alpha_other = alpha_other
+
+        self.xys = collection.get_offsets()
+        self.Npts = len(self.xys)
+
+        # Ensure that we have separate colors for each object
+        self.fc = collection.get_facecolors()
+        if len(self.fc) == 0:
+            raise ValueError('Collection must have a facecolor')
+        elif len(self.fc) == 1:
+            self.fc = np.tile(self.fc, (self.Npts, 1))
+
+        self.lasso = LassoSelector(ax, onselect=self.onselect)
+        self.ind = []
+
+    def onselect(self, verts):
+        path = Path(verts)
+        self.ind = np.nonzero(path.contains_points(self.xys))[0]
+        self.fc[:, -1] = self.alpha_other
+        self.fc[self.ind, -1] = 1
+        self.collection.set_facecolors(self.fc)
+        self.canvas.draw_idle()
+
+    def disconnect(self):
+        self.lasso.disconnect_events()
+        self.fc[:, -1] = 1
+        self.collection.set_facecolors(self.fc)
+        self.canvas.draw_idle()
 
 
 class PlotToolsManager:
@@ -107,3 +170,86 @@ class PlotToolsManager:
       log_spectrogram = 10. * np.log(mt_spectrum / np.max(mt_spectrum))
       x, y = np.meshgrid(t, np.linspace(f_min, f_max, log_spectrogram.shape[0]))
       return x, y, log_spectrogram
+
+    def plot_fit(self, x, y, type, deg, clocks_station_name, ref, dates, crosscorrelate, skew):
+
+        import matplotlib.pyplot as plt
+        from isp.Gui.Frames import MatplotlibFrame
+        print(clocks_station_name)
+        sta1 = clocks_station_name.split("_")[0]
+        sta2 = clocks_station_name.split("_")[1]
+        fig, ax1 = plt.subplots(figsize=(6, 6))
+        plt.ylabel('Skew [s]')
+        plt.xlabel('Jul day')
+
+        # Correction by the reference point
+        y = y-y[0]
+
+        self.mpf = MatplotlibFrame(fig, window_title="Fit Plot")
+        if type == "Logarithmic":
+            x = np.log(x)
+            pts = ax1.scatter(x, y, c=crosscorrelate, marker='o', edgecolors='k', s=18, vmin = 0.0, vmax = 1.0)
+        else:
+            pts = ax1.scatter(x, y, c=crosscorrelate, marker='o', edgecolors='k', s=18, vmin = 0.0, vmax = 1.0)
+        fig.colorbar(pts, ax=ax1, orientation='horizontal', fraction=0.05,
+                                               extend='both', pad=0.15, label='Normalized Cross Correlation')
+
+        try:
+            skew1 = sta1 +" Skew " + str(skew[0])
+        except:
+            skew1 = "No"
+
+        try:
+            skew2 = sta2 + " Skew " + str(skew[1])
+        except:
+            skew2 = "No"
+
+        ax1.text(0.95, 0.08, skew1, verticalalignment='bottom', horizontalalignment='right', transform=ax1.transAxes,
+                color='black', fontsize=12)
+
+        ax1.text(0.95, 0.01, skew2, verticalalignment='bottom', horizontalalignment='right', transform=ax1.transAxes,
+                color='black', fontsize=12)
+
+        x_old = x
+        selector = SelectFromCollection(ax1, pts, )
+
+        def accept(event):
+            if event.key == "enter":
+                print("Selected points:")
+                #print(selector.xys[selector.ind])
+                x = selector.xys[selector.ind][:,0]
+                y = selector.xys[selector.ind][:,1]
+                m, n, R2, p, y_model, model, c, t_critical, resid, chi2_red, std_err,ci, pi, x, y = \
+                    noise_processing.statisics_fit(x, y, type, deg)
+                if type == "Logarithmic":
+                   x = np.log(x)
+                ax1.scatter(x, y, color="blue", linewidth=1)
+                ax1.plot(x, y_model, color="red", linewidth=1, label=f'Line of Best Fit, R² = {R2:.2f}')
+                idx = np.abs(np.array(x) - ref).argmin()
+                ax1.scatter(ref, y[idx], c="red", marker='o', edgecolors='k', s=18)
+                selector.disconnect()
+                ax1.set_title("")
+                fig.canvas.draw()
+
+                cc = []
+                for value in x:
+                    index = np.where(x_old == value)
+                    cc.append(crosscorrelate[int(index[0])])
+                cc = np.array(cc)
+                path = os.path.join(CLOCK_PATH, clocks_station_name)
+                p = np.flip(p)
+                polynom = {clocks_station_name: p.tolist(), 'Dates': dates, 'Dates_selected': x, 'Drift': y, 'Ref': ref,
+                           'R2': R2, 'resid': resid, 'chi2_red': chi2_red, 'std_err': std_err, 'cross_correlation': cc,
+                           'skew': skew, 'model': model, 'y_model':y_model}
+                print(polynom)
+                file_to_store = open(path, "wb")
+                pickle.dump(polynom, file_to_store)
+                #polynom = {clocks_station_name: p.tolist()}
+                #df = pd.DataFrame(polynom)
+                #df.to_csv(path)
+
+        fig.canvas.mpl_connect("key_press_event", accept)
+        ax1.set_title("Press enter to accept selected points.")
+
+        self.mpf.show()
+

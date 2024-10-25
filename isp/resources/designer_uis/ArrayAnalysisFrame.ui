@@ -42,66 +42,7 @@
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <layout class="QGridLayout" name="gridLayout_2">
-          <item row="3" column="2" colspan="2" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_5">
-            <property name="toolTip">
-             <string>Maximum Slowness of the ARF to be computed</string>
-            </property>
-            <property name="text">
-             <string>Smax (s/km)</string>
-            </property>
-            <property name="buddy">
-             <cstring>smaxSB</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0" colspan="2" alignment="Qt::AlignLeft">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Min Frequency</string>
-            </property>
-            <property name="buddy">
-             <cstring>label</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2" colspan="2" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>Max Frequency</string>
-            </property>
-            <property name="buddy">
-             <cstring>fmaxSB</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0" colspan="2" alignment="Qt::AlignLeft">
-           <widget class="QLabel" name="label_3">
-            <property name="toolTip">
-             <string>Resolution of the ARF Slowness Map</string>
-            </property>
-            <property name="text">
-             <string>Grid Size (s/km)</string>
-            </property>
-            <property name="buddy">
-             <cstring>gridSB</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0" colspan="2">
-           <widget class="QDoubleSpinBox" name="fminSB">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="2" colspan="2">
+          <item row="6" column="2" colspan="2">
            <widget class="QDoubleSpinBox" name="smaxSB">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -117,7 +58,17 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="0" colspan="2">
+          <item row="7" column="0" colspan="4">
+           <widget class="QPushButton" name="arfBtn">
+            <property name="toolTip">
+             <string>Plot the Array Response Funtion of the loaded coordinates [go to File -&gt; Stations Coordinates -&gt; Load Stations File]</string>
+            </property>
+            <property name="text">
+             <string>ARF</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0" colspan="2">
            <widget class="QDoubleSpinBox" name="gridSB">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -139,24 +90,66 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="0" colspan="4">
-           <widget class="QPushButton" name="arfBtn">
+          <item row="5" column="2" colspan="2" alignment="Qt::AlignHCenter">
+           <widget class="QLabel" name="label_5">
             <property name="toolTip">
-             <string>Plot the Array Response Funtion of the loaded coordinates [go to File -&gt; Stations Coordinates -&gt; Load Stations File]</string>
+             <string>Maximum Slowness of the ARF to be computed</string>
             </property>
             <property name="text">
-             <string>ARF</string>
+             <string>Smax (s/km)</string>
+            </property>
+            <property name="buddy">
+             <cstring>smaxSB</cstring>
             </property>
            </widget>
           </item>
-          <item row="0" column="0" colspan="4" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_4">
+          <item row="3" column="0" colspan="2" alignment="Qt::AlignLeft">
+           <widget class="QLabel" name="label">
             <property name="text">
-             <string>Parameters</string>
+             <string>Min Frequency</string>
+            </property>
+            <property name="buddy">
+             <cstring>label</cstring>
             </property>
            </widget>
           </item>
-          <item row="7" column="0" colspan="4">
+          <item row="4" column="0" colspan="2">
+           <widget class="QDoubleSpinBox" name="fminSB">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0" colspan="2" alignment="Qt::AlignLeft">
+           <widget class="QLabel" name="label_3">
+            <property name="toolTip">
+             <string>Resolution of the ARF Slowness Map</string>
+            </property>
+            <property name="text">
+             <string>Grid Size (s/km)</string>
+            </property>
+            <property name="buddy">
+             <cstring>gridSB</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2" colspan="2" alignment="Qt::AlignHCenter">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Max Frequency</string>
+            </property>
+            <property name="buddy">
+             <cstring>fmaxSB</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0" colspan="4">
            <spacer name="verticalSpacer">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
@@ -169,14 +162,14 @@
             </property>
            </spacer>
           </item>
-          <item row="6" column="0" colspan="4">
+          <item row="8" column="0" colspan="4">
            <widget class="QPushButton" name="mapBtn">
             <property name="text">
              <string>Plot Map</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="2" colspan="2">
+          <item row="4" column="2" colspan="2">
            <widget class="QDoubleSpinBox" name="fmaxSB">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -186,6 +179,27 @@
             </property>
             <property name="value">
              <double>5.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0" colspan="4" alignment="Qt::AlignHCenter">
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>Parameters</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2" colspan="2">
+           <widget class="QPushButton" name="arf_write_coordsBtn">
+            <property name="text">
+             <string>Write Coords</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QPushButton" name="arfLoad_coordsBtn">
+            <property name="text">
+             <string>Load Coords</string>
             </property>
            </widget>
           </item>
@@ -284,65 +298,6 @@
         <string>F-K Analysis</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_7">
-        <item row="1" column="0">
-         <layout class="QVBoxLayout" name="verticalLayout_4">
-          <item>
-           <widget class="QWidget" name="widget_slow_map" native="true">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>500</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item row="0" column="1" rowspan="2">
-         <layout class="QVBoxLayout" name="verticalLayout_5" stretch="3,1">
-          <property name="leftMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QWidget" name="widget_fk" native="true">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">background-color: rgb(255, 255, 255);</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QWidget" name="widget_stack" native="true">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">background-color: rgb(255, 255, 255);</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
         <item row="0" column="0">
          <widget class="QSplitter" name="splitter_3">
           <property name="sizePolicy">
@@ -413,14 +368,25 @@
              </layout>
             </item>
             <item>
-             <widget class="QPushButton" name="stationsBtn">
-              <property name="toolTip">
-               <string>Click to view header information of the loaded seismogram files</string>
-              </property>
-              <property name="text">
-               <string>Stations Info</string>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <item>
+               <widget class="QPushButton" name="stationsBtn">
+                <property name="toolTip">
+                 <string>Click to view header information of the loaded seismogram files</string>
+                </property>
+                <property name="text">
+                 <string>Stations Info</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="fk_macroBtn">
+                <property name="text">
+                 <string>Macro</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <layout class="QGridLayout" name="gridLayout_5">
@@ -749,6 +715,65 @@
            </layout>
           </widget>
          </widget>
+        </item>
+        <item row="0" column="1" rowspan="2">
+         <layout class="QVBoxLayout" name="verticalLayout_5" stretch="3,1">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QWidget" name="widget_fk" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(255, 255, 255);</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_stack" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(255, 255, 255);</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="0">
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QWidget" name="widget_slow_map" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>500</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -1336,9 +1361,16 @@
     </property>
     <addaction name="actionOpen_Help"/>
    </widget>
+   <widget class="QMenu" name="menuSlowness_Search">
+    <property name="title">
+     <string>Slowness Search</string>
+    </property>
+    <addaction name="actionOpenSlowness"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuParameters"/>
    <addaction name="menuVespagram"/>
+   <addaction name="menuSlowness_Search"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -1395,6 +1427,11 @@
   <action name="actionOpen_Help">
    <property name="text">
     <string>Open Help</string>
+   </property>
+  </action>
+  <action name="actionOpenSlowness">
+   <property name="text">
+    <string>Open Slowness Map</string>
    </property>
   </action>
  </widget>

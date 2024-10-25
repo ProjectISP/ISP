@@ -13,7 +13,9 @@
     <file alias="pen-icon.png">images/icons/Lapiz.png</file>
     <file alias="ppsd.png">images/icons/ppsd.png</file>
     <file alias="balcony-icon.png">images/icons/Balc¢n.png</file>
+    <file alias="analog.png">images/icons/analog.png</file>
   </qresource>
+  <qresource prefix="images/icons/analog.png"/>
   <qresource prefix="logo">
     <file alias="logo-image.png">images/LOGO.png</file>
   </qresource>

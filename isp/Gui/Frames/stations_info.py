@@ -12,8 +12,6 @@ class StationsInfo(pw.QFrame, UiStationInfo):
             for k, parameter in enumerate(info):
                 self.stations_table.setItem(i, k, pw.QTableWidgetItem(str(parameter)))
 
-
-
         if check:
             #Add new columns for check
             self.stations_table.setColumnCount(self.stations_table.columnCount()+1)
@@ -30,9 +28,8 @@ class StationsInfo(pw.QFrame, UiStationInfo):
     def get_stations_map(self):
         stations_map = []
         for i in range(self.stations_table.rowCount()):
-            station_name = self.stations_table.item(i,1).text()
-            channel = self.stations_table.item(i,3).text()
-            checked = self.stations_table.cellWidget(i,8).isChecked()
+            station_name = self.stations_table.item(i, 1).text()
+            channel = self.stations_table.item(i, 3).text()
+            checked = self.stations_table.cellWidget(i, 8).isChecked()
             stations_map.append([station_name, channel, checked])
-
         return stations_map

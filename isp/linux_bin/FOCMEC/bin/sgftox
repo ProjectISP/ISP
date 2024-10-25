@@ -1,0 +1,62 @@
+#!/bin/csh -f
+#
+# Purpose: To display a .sgf file on the screen
+# This script may have one of several names: sgftox.csh, sgftox.csh, sgftox
+# Syntax sgftox ABCD, where ABCD.sgf is the file to be displayed
+# sgftox has the functionality of the old sac program sgfplot.
+# Calls sgftoeps -- except puts ABCD.eps file in /tmp so do not need
+#   to own current directory.  Erases all files created.
+# 2 June 2006 snoke@vt.edu
+# 18 August 2006: made line thickness 2.0 (was 1.5)
+# 23 October 2007: To display image on the screen, uses X routine gs
+#
+if ($#argv == 0) then
+  echo This file has one of several names:  sgftox.csh, sgftox.csh, sgftox
+  echo Syntax is sgftox ABCD
+  echo where ABCD.sgf is the input sac graphics file.
+  echo Assumes sgftops is in the path and lpr goes to the desired printer
+  echo Assumes write access to the current directory
+  echo Output has a tight Boundingbox.  Requires and uses gs.
+  exit
+endif
+
+set scalefact = 0.75
+
+while ($#argv > 0)
+  switch ($1)
+    case -scale
+      set scalefact = $2
+      shift
+      breaksw
+#Earlier version allowed a -scale 0.xx.  Still works, but not advertised.
+    default
+      set source = $1 #filename of the input SAC sgf file (source.sgf)
+      breaksw
+  endsw
+  shift
+end
+
+if ($?source == 0) then
+  echo no input file specified
+  exit
+else if (! -f ${source}.sgf) then
+  echo ${source}.sgf not found
+  exit
+endif
+
+sgftops ${source}.sgf ${source}.ps 1.0 s << END > /dev/null
+0.5
+0.5
+0
+$scalefact
+END
+
+if (! -f ${source}.ps) exit
+
+set newbbox = `gs -sDEVICE=bbox -dSAFER -dBATCH -dNOPAUSE ${source}.ps |& grep '^%%BoundingBox: '`
+cat ${source}.ps | sed -e "s/^%%BoundingBox:.*/${newbbox}/" \
+  -e "s/^%%Creator: /%%Creator: sgftoeps + /" > ${source}x.eps
+epstopdf ${source}x.eps
+gs ${source}x.pdf
+\rm ${source}.ps ${source}x.eps ${source}x.pdf
+exit

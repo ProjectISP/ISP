@@ -1,9 +1,9 @@
+import pandas as pd
 from obspy.geodetics import gps2dist_azimuth, locations2degrees
-from obspy import UTCDateTime, Trace
+from obspy import UTCDateTime
 from isp.Gui import pw
-from isp.Gui.Frames import MatplotlibCanvas, BaseFrame, SettingsLoader
+from isp.Gui.Frames import MatplotlibCanvas, SettingsLoader, MessageDialog
 from isp.Gui.Frames.uis_frames import UiMagnitudeFrame
-from isp.Gui.Frames.qt_components import ParentWidget
 from mtspec import mtspec
 import numpy as np
 import scipy
@@ -12,6 +12,8 @@ import matplotlib.dates as mdt
 from isp.Gui.Utils.pyqt_utils import add_save_load
 from isp.Structures.structures import StationCoordinates
 from isp import ROOT_DIR
+from isp import MAGNITUDE_DICT_PATH
+from isp.DataProcessing.autoag import Automag
 import os
 
 def fit_spectrum(spectrum, frequencies, traveltime, initial_omega_0, initial_f_c, QUALITY_FACTOR):
@@ -77,20 +79,27 @@ def get_coordinates_from_metadata(inventory, stats):
 
 @add_save_load()
 class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
-    def __init__(self, origin, inventory, chop):
+    def __init__(self, origin, event, inventory, project, chop):
         super(MagnitudeCalc, self).__init__()
         self.setupUi(self)
         self.spectrum_Widget_Canvas = MatplotlibCanvas(self.spectrumWidget, nrows=2, ncols=1,
                                                        sharex=False, constrained_layout=True)
-        self.event = origin
+        self.event = event
+        self.origin = origin
         self.chop = chop
         self.inventory = inventory
+        self.project = project
         self.runBtn.clicked.connect(self.run_magnitudes)
         self.saveBtn.clicked.connect(self.save_results)
         self.plotBtn.clicked.connect(self.plot_comparison)
+        self.runAutomagBtn.clicked.connect(self.run_automag)
+
+        self.constan_rad_patternRB.toggled.connect(self.get_rad_pattern_const)
+        self.focmec_rad_patternRB.toggled.connect(self.get_rad_pattern_focmec)
+        #self.set_default_btn.clicked.connect(self.set_default)
         self.Mw = []
-        self.Mw_std=[]
-        self.Ms= []
+        self.Mw_std = []
+        self.Ms = []
         self.Ms_std = []
         self.Mb = []
         self.Mb_std = []
@@ -100,11 +109,14 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         self.Mc_std = []
         self.ML = []
         self.ML_std = []
-        self.Magnitude_Ws= []
+        self.Magnitude_Ws = []
         self.Mss = []
         self.Mcs = []
         self.Mcs = []
         self.MLs = []
+        self.config_automag = {}
+        self.file_automag_config = os.path.join(MAGNITUDE_DICT_PATH, "automag_config")
+
 
     def closeEvent(self, ce):
         self.save_values()
@@ -431,7 +443,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         print(df)
         df.to_csv(path_output, sep=' ', index=False)
 
-    def plot_histograms(self,magnitudes,label):
+    def plot_histograms(self, magnitudes, label):
 
         self.ax2.hist(magnitudes, bins=4*len(magnitudes), alpha=0.5, label=label)
         self.ax2.set_xlabel("Magnitude", size=12)
@@ -460,12 +472,117 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
         k = 0
         for magnitude in list_magnitudes:
             label = labels[k]
-            x =np.arange(len(magnitude))+1
-            ax1.scatter(x, magnitude, s=15, alpha = 0.5, label=label)
+            x = np.arange(len(magnitude))+1
+            ax1.scatter(x, magnitude, s=15, alpha=0.5, label=label)
             ax1.tick_params(direction='in', labelsize=10)
             ax1.legend(loc='upper right')
-            plt.ylabel('Magnitudes',fontsize=10)
+            plt.ylabel('Magnitudes', fontsize=10)
             plt.xlabel('Counts', fontsize=10)
             k = k+1
 
         self.mpf.show()
+
+########### AutoMag#########
+
+    def run_automag(self):
+        magnitude_mw_statistics = ""
+        magnitude_ml_statistics = ""
+        self.load_config_automag()
+        mg = Automag(self.origin, self.event, self.project, self.inventory)
+        mg.scan_from_origin(self.origin)
+        magnitude_mw_statistics, magnitude_ml_statistics = mg.estimate_magnitudes(self.config_automag)
+        self.print_automag_results(magnitude_mw_statistics, magnitude_ml_statistics)
+    def load_config_automag(self):
+        try:
+            self.config_automag = pd.read_pickle(self.file_automag_config)
+            self.modify_pred_config()
+        except:
+            md = MessageDialog(self)
+            md.set_error_message("Coundn't open magnitude file")
+
+
+    def modify_pred_config(self):
+
+        self.config_automag["max_epi_dist"] = self.mag_max_distDB.value()
+
+        if self.mag_max_distDB.value() < 700:
+            self.config_automag["scale"] = "Regional"
+        else:
+            self.config_automag["scale"] = "Teleseism"
+
+        self.config_automag["mag_vpweight"] = self.mag_vpweightDB.value()
+        self.config_automag["rho"] = self.automag_density_DB.value()
+        self.config_automag["automag_rpp"] = self.automag_rppDB.value()
+        self.config_automag["automag_rps"] = self.automag_rpsDB.value()
+
+        if self.r_power_nRB.isChecked():
+            self.config_automag["geom_spread_model"] = "r_power_n"
+        else:
+            self.config_automag["geom_spread_model"] = "boatwright"
+        self.config_automag["geom_spread_n_exponent"] = self.geom_spread_n_exponentDB.value()
+        self.config_automag["geom_spread_cutoff_distance"] = self.geom_spread_cutoff_distanceDB.value()
+        self.config_automag["a_local_magnitude"] = self.mag_aDB.value()
+        self.config_automag["b_local_magnitude"] = self.mag_bDB.value()
+        self.config_automag["c_local_magnitude"] = self.mag_cDB.value()
+        self.config_automag["win_length"] = self.win_lengthDB.value()
+
+    def print_automag_results(self, magnitude_mw_statistics, magnitude_ml_statistics):
+
+
+        Mw = magnitude_mw_statistics.summary_spectral_parameters.Mw.weighted_mean.value
+        Mw_std = magnitude_mw_statistics.summary_spectral_parameters.Mw.weighted_mean.uncertainty
+
+        Mo = magnitude_mw_statistics.summary_spectral_parameters.Mo.mean.value
+        Mo_units = magnitude_mw_statistics.summary_spectral_parameters.Mo.units
+
+        fc = magnitude_mw_statistics.summary_spectral_parameters.fc.weighted_mean.value
+        fc_units = "Hz"
+
+        t_star = magnitude_mw_statistics.summary_spectral_parameters.t_star.weighted_mean.value
+        t_star_std = magnitude_mw_statistics.summary_spectral_parameters.t_star.weighted_mean.uncertainty
+        t_star_units = magnitude_mw_statistics.summary_spectral_parameters.t_star.units
+
+        source_radius = magnitude_mw_statistics.summary_spectral_parameters.radius.mean.value
+        radius_units = magnitude_mw_statistics.summary_spectral_parameters.radius.units
+
+        bsd = magnitude_mw_statistics.summary_spectral_parameters.bsd.mean.value
+        bsd_units = magnitude_mw_statistics.summary_spectral_parameters.bsd.units
+
+        Qo =  magnitude_mw_statistics.summary_spectral_parameters.Qo.mean.value
+        Qo_std = magnitude_mw_statistics.summary_spectral_parameters.Qo.mean.uncertainty
+        Qo_units = magnitude_mw_statistics.summary_spectral_parameters.Qo.units
+
+        Er = magnitude_mw_statistics.summary_spectral_parameters.Er.mean.value
+        Er_units = "jul"
+
+        ML = magnitude_ml_statistics["ML_mean"]
+        ML_std = magnitude_ml_statistics["ML_std"]
+
+        self.automagnitudesText.clear()
+        self.automagnitudesText.appendPlainText("Moment Magnitude: " " Mw {Mw:.3f} "
+                                                " std {std:.3f} ".format(Mw=Mw, std=Mw_std))
+
+        self.automagnitudesText.appendPlainText("Seismic Moment and Source radius: " " Mo {Mo:e} Nm"
+                                           ", R {std:.3f} km".format(Mo=Mo, std=source_radius/1000))
+
+        self.automagnitudesText.appendPlainText("Brune stress Drop: " "{bsd:.3f} MPa".format(bsd=bsd))
+
+        self.automagnitudesText.appendPlainText("Quality factor: " " Qo {Qo:.3f} " " Q_std {Qo_std:.3f} ".format(Qo=Qo, Qo_std=Qo_std))
+
+        self.automagnitudesText.appendPlainText(
+            "t_star: " "{t_star:.3f} s" " t_star_std {t_star_std:.3f} ".format(t_star=t_star, t_star_std=t_star_std))
+
+        self.automagnitudesText.appendPlainText("Local Magnitude: " " ML {ML:.3f} "
+                                                " ML_std {std:.3f} ".format(ML=ML, std=ML_std))
+
+    def get_rad_pattern_const(self, enable):
+        self.automag_rppDB.setEnabled(enable)
+        self.automag_rpsDB.setEnabled(enable)
+
+    def get_rad_pattern_focmec(self, enable):
+        self.automag_strikeDB.setEnabled(enable)
+        self.automag_dipDB.setEnabled(enable)
+        self.automag_rakeDB.setEnabled(enable)
+
+
+

@@ -1,11 +1,10 @@
 import shutil
 from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
-
 from matplotlib.backend_bases import MouseButton
 from obspy import UTCDateTime, Stream, Trace
 from obspy.core.event import Origin
-from obspy.geodetics import gps2dist_azimuth
+from obspy.geodetics import gps2dist_azimuth, kilometers2degrees
 from obspy.signal.trigger import coincidence_trigger
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.NeuralNetwork import CNNPicker
@@ -20,10 +19,12 @@ from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
+from isp.Gui.Frames.plot_polarization import PlotPolarization
 from isp.Gui.Frames.uncertainity import UncertainityInfo
 from isp.Gui.Frames.project_frame import Project
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.settings_dialog import SettingsDialog
+from isp.Gui.Frames.search_catalog_frame import SearchCatalogViewer
 from isp.Gui.Utils import map_polarity_from_pressed_key, ParallelWorkers
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime, parallel_progress_run
 from isp.Structures.structures import PickerStructure
@@ -43,6 +44,7 @@ from isp.seismogramInspector.signal_processing_advanced import spectrumelement, 
     correlate_maxlag, get_lags
 from sys import platform
 
+
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     value_entropy_init = pyc.pyqtSignal(int)
@@ -59,10 +61,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         #finally:
         #print("Neural Network cannot be loaded")
         self.zoom_diff = None
+        self.phases = None
+        self.travel_times = None
         self.cancelled = False
         self.aligned_checked = False
+        self.aligned_picks = False
         self.aligned_fixed = False
         self.shift_times = None
+        self.project = {}
+        self.dist_all = []
+        self.baz_all = []
         self.special_selection = []
         self.lines = []
         self.progressbar = pw.QProgressDialog(self)
@@ -105,7 +113,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.canvas.register_on_select(self.on_select, rectprops=dict(alpha=0.2, facecolor='red'))
         # That's how you can register a right click selector
         self.canvas.register_on_select(self.on_multiple_select,
-                                       button=MouseButton.RIGHT, sharex=True, rectprops=dict(alpha=0.2, facecolor='blue'))
+                                       button=MouseButton.RIGHT, sharex=True, rectprops=dict(alpha=0.2,
+                                                                                             facecolor='blue'))
 
         self.canvas.mpl_connect('key_press_event', self.key_pressed)
         self.canvas.mpl_connect('axes_enter_event', self.enter_axes)
@@ -120,8 +129,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_file(self.metadata_path_bind))
         self.selectDirBtn.clicked.connect(lambda: self.load_project())
         self.updateBtn.clicked.connect(self.plot_seismogram)
+        self.filterProjectBtn.clicked.connect(self.reload_current_project)
         self.stations_infoBtn.clicked.connect(self.stationsInfo)
+        self.phaseUncertaintyBtn.clicked.connect(self.open_uncertainity_settings)
         self.rotateBtn.clicked.connect(self.rotate)
+        self.particleMotionBtn.clicked.connect(self.plot_particle_motion)
         self.mapBtn.clicked.connect(self.plot_map_stations)
         self.crossBtn.clicked.connect(self.cross)
         self.macroBtn.clicked.connect(self.open_parameters_settings)
@@ -139,7 +151,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionReceiver_Functions.triggered.connect(self.open_receiver_functions)
         self.actionRun_picker.triggered.connect(self._picker_thread)
         self.actionRun_Event_Detector.triggered.connect(self.detect_events)
-        self.actionOpen_Settings.triggered.connect(lambda : self.settings_dialog.show())
+        self.actionOpen_Settings.triggered.connect(lambda: self.settings_dialog.show())
+        self.actionSearch_in_Catalog.triggered.connect(lambda: self.open_catalog_viewer())
         self.actionStack.triggered.connect(lambda: self.stack_all_seismograms())
         #self.actionSpectral_Entropy.triggered.connect(lambda : self.spectral_entropy())
         self.actionSpectral_Entropy.triggered.connect(lambda: self.spectral_entropy_progress())
@@ -158,8 +171,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionUsing_MCCC.triggered.connect(lambda: self.alaign_mccc())
         self.actionPicks_from_file.triggered.connect(lambda: self.import_pick_from_file())
         self.actionNew_Project.triggered.connect(lambda: self.new_project())
+        self.newProjectBtn.clicked.connect(lambda: self.new_project())
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
-
+        self.actionPlot_Record_Section.triggered.connect(lambda: self.plot_prs())
+        self.actionWrite_CFs.triggered.connect(lambda: self.save_cf())
+        self.runScriptBtn.clicked.connect(self.run_process)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -169,7 +185,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # Uncertainity pick
         self.uncertainities = UncertainityInfo()
 
-        # Project Ingo
+        # Project
 
         self.project_dialog = Project()
 
@@ -180,6 +196,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # help Documentation
 
         self.help = HelpDoc()
+
+        # catalog viewer
+
+        self.catalog = SearchCatalogViewer()
+
+        # shortcuts test
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+D'), self)
+        self.shortcut_open.activated.connect(self.run_process)
+
 
         # shortcuts
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+U'), self)
@@ -203,6 +229,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+P'),self)
         self.shortcut_open.activated.connect(self.comboBox_phases.showPopup)
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('P'), self)
+        self.shortcut_open.activated.connect(self.plot_prs)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+K'), self)
         self.shortcut_open.activated.connect(self.save_cf)
@@ -234,7 +263,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('U'), self)
         self.shortcut_open.activated.connect(self.open_uncertainity_settings)
 
-
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('I'), self)
         self.shortcut_open.activated.connect(self.multi_cursor_on)
 
@@ -250,8 +278,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     #     t1 = UTCDateTime(mdt.num2date(self.zoom[0]))
     #     t2 = UTCDateTime(mdt.num2date(self.zoom[1]))
     #     self.zoom_diff = (t2-t1)
-
-
 
     def cancelled_callback(self):
         self.cancelled = True
@@ -273,22 +299,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def open_uncertainity_settings(self):
         self.uncertainities.show()
 
+    def run_process(self):
+        from isp.scripts.script import run_process as rp
+        st_new = rp(self.st)
+
     def new_project(self):
+        self.loaded_project = False
         self.setEnabled(False)
         self.project_dialog.exec()
         self.setEnabled(True)
         self.project = self.project_dialog.project
+
         self.get_now_files()
         # now we can access to #self.project_dialog.project
 
-
     def load_project(self):
-
-        if "darwin" == platform:
-            selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
-        else:
-            selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR,
-                                                      pw.QFileDialog.DontUseNativeDialog)
+        self.loaded_project = True
+        selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
 
         md = MessageDialog(self)
 
@@ -308,21 +335,65 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def reload_current_project(self):
 
         md = MessageDialog(self)
+        if self.loaded_project:
+            if isinstance(self.current_project_file, str) and os.path.isfile(self.current_project_file):
+                try:
+                    self.project = MseedUtil.load_project(file=self.current_project_file)
+                    stations_channel, seismograms = MseedUtil.get_project_basic_info(self.project)
+                    project_name = os.path.basename(self.current_project_file)
 
-        if isinstance(self.current_project_file, str) and os.path.isfile(self.current_project_file):
-            try:
-                self.current_project_file = self.current_project_file
-                self.project = MseedUtil.load_project(file = self.current_project_file)
-                project_name = os.path.basename(self.current_project_file)
-                md.set_info_message("Project {} loaded  ".format(project_name))
-            except:
-                md.set_error_message("Project couldn't be loaded ")
+                    if stations_channel is not None and seismograms is not None:
+                        md.set_info_message("Project {} reloaded  ".format(project_name), "number of stations/channels included " +
+                                        str(stations_channel) +"\n"+ "Total number of seismograms " + str(seismograms))
+                    else:
+                        md.set_warning_message("Empty Project ", "Please provide a root path "
+                                                                 "with mseed files inside and check the query filters applied")
+                except:
+                    md.set_error_message("Project couldn't be reloaded ", "Please provide a root path "
+                                                                 "with mseed files inside and check the wuery filters applied")
+            else:
+                md.set_error_message("Project couldn't be reloaded ", "Please provide a root path "
+                                                                 "with mseed files inside and check the query filters applied")
+            self.get_now_files()
+
         else:
-            md.set_error_message("Project couldn't be loaded ")
-        self.get_now_files()
+            try:
+                if isinstance(self.project, dict):
+                    self.get_now_files()
+                    stations_channel, seismograms = MseedUtil.get_project_basic_info(self.project)
+                    num_current_seismograms = len(self.files_path)
+                    if stations_channel is not None and seismograms is not None and num_current_seismograms > 0:
+                        md.set_info_message("New Project reloaded", "number of stations/channels included " +
+                                        str(stations_channel) +"\n"+ "Total number of seismograms " + str(seismograms)+"\n"+
+                                            "Number Seismograms to be process and plot " + str(num_current_seismograms))
+                    else:
+                        md.set_warning_message("Empty Filtered Project ", "Please provide a root path "
+                                                                 "with mseed files inside and check the query filters applied")
+            except:
+                md.set_error_message("Project couldn't be reloaded ", "Please provide a root path "
+                                                                 "with mseed files inside and check the query filters applied")
+
+    def plot_particle_motion(self):
+
+        if isinstance(self.st, Stream) and self.trimCB.isChecked():
+            for tr in self.st:
+                if tr.stats.channel[-1] == "Z":
+                    z = tr
+                elif (tr.stats.channel[-1] == "1" or tr.stats.channel[-1] == "N" or tr.stats.channel[-1] == "Y"
+                      or tr.stats.channel[-1] == "R"):
+                    r = tr
+                elif (tr.stats.channel[-1] == "2" or tr.stats.channel[-1] == "E" or tr.stats.channel[-1] == "X"
+                      or tr.stats.channel[-1] == "T"):
+                    t = tr
+
+            self._plot_polarization = PlotPolarization(z.data, r.data, t.data)
+            self._plot_polarization.show()
 
     def open_earth_model_viewer(self):
         self.earthmodel.show()
+
+    def open_catalog_viewer(self):
+        self.catalog.show()
     #@property
     #def event_info(self) -> EventInfoBox:
     #    return self.__event_info
@@ -343,12 +414,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 for t in times:
                     if k == "p":
                         line = self.canvas.draw_arrow(t.matplotlib_date, index + 2,
-                                               "P", color="blue", linestyles='--', picker=False)
+                                               "P", color="blue", linestyles='--', picker=True)
                         self.lines.append(line)
-                        with open(self.path_phases, "a+") as f:
-                            f.write(station + " " + k.upper() + " " + t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
 
-                        self.picked_at[str(line)] = PickerStructure(t,st2[2].stats.station, t.matplotlib_date,
+                        # TODO needs to be reviewed
+                        #with open(self.path_phases, "a+") as f:
+                        #    f.write(station + " " + k.upper() + " " + t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
+
+                        self.picked_at[str(line)] = PickerStructure(t, st2[2].stats.station, t.matplotlib_date,
                             0.2, 0, "blue", "P", self.get_file_at_index(index + 2))
 
                         self.pm.add_data(t, 0.2, 0, st2[2].stats.station, "P", Component=st2[2].stats.channel,
@@ -358,16 +431,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     if k == "s":
 
                         line1s = self.canvas.draw_arrow(t.matplotlib_date, index + 0,
-                                               "S", color="purple", linestyles='--', picker=False)
+                                               "S", color="purple", linestyles='--', picker=True)
                         line2s = self.canvas.draw_arrow(t.matplotlib_date, index + 1,
-                                               "S", color="purple", linestyles='--', picker=False)
+                                               "S", color="purple", linestyles='--', picker=True)
 
                         self.lines.append(line1s)
                         self.lines.append(line2s)
 
-
-                        with open(self.path_phases, "a+") as f:
-                                f.write(station+" "+k.upper()+" "+t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
+                        # TODO needs to be reviewed
+                        #with open(self.path_phases, "a+") as f:
+                        #    f.write(station+" "+k.upper()+" "+t.strftime(format="%Y-%m-%dT%H:%M:%S.%f") + "\n")
 
                         self.picked_at[str(line1s)] = PickerStructure(t, st2[1].stats.station, t.matplotlib_date,
                              0.2, 0, "blue", "S", self.get_file_at_index(index + 0))
@@ -389,8 +462,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def _run_picker(self):
         os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
         # Creates a new file
-        with open(self.path_phases, 'w') as fp:
-            pass
+        #with open(self.path_phases, 'w') as fp:
+        #    pass
         if self.st:
             stations = ObspyUtil.get_stations_from_stream(self.st)
             N = len(stations)
@@ -456,6 +529,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def alaign_picks(self):
+            self.aligned_picks = True
             phase = self.comboBox_phases.currentText()
             self.aligned_checked = True
             self.pick_times = MseedUtil.get_NLL_phase_picks(phase)
@@ -569,7 +643,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         selection = [self.netForm.text(), self.stationForm.text(), self.channelForm.text()]
         _, self.files_path = MseedUtil.filter_project_keys(self.project, net=selection[0], station=selection[1], channel=selection[2])
 
-        if self.trimCB.isChecked():
+        if len(self.files_path)>0 and self.trimCB.isChecked():
             start = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
             end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             diff = end-start
@@ -578,8 +652,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         else:
             self.files_path = MseedUtil.filter_time(list_files=self.files_path)
 
-
-        self.set_pagination_files(self.files_path)
+        if len(self.files_path) > 0:
+            self.set_pagination_files(self.files_path)
 
 
 
@@ -641,28 +715,64 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.plot_seismogram()
 
 
+
+    def sort_by_distance_traces(self, trace):
+
+        st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, trace)
+        if st_stats:
+
+            dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
+                                          self.event_info.longitude)
+            self.dist_all.append(dist/1000)
+
+            return dist
+        else:
+            self.dataless_not_found.add(trace)
+            print("No Metadata found for {} file.".format(trace))
+            return 0.
+
+    def sort_by_baz_traces(self, trace):
+        st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, trace)
+
+        if st_stats:
+
+            _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
+                                                 self.event_info.longitude)
+            self.baz_all.append(az_from_epi)
+            return az_from_epi
+        else:
+
+            self.dataless_not_found.add(trace)
+            print("No Metadata found for {} file.".format(trace))
+            return 0.
+
+
     def sort_by_distance_advance(self, file):
 
+         self.dist_all = []
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
          if st_stats:
 
              dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
                                            self.event_info.longitude)
-             # print("File, dist: ", file, dist)
+             self.dist_all.append(dist/1000)
              return dist
          else:
              self.dataless_not_found.add(file)
              print("No Metadata found for {} file.".format(file))
+             self.dist_all.append(-100)
              return 0.
 
     def sort_by_baz_advance(self, file):
 
+         self.baz_all = []
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
 
          if st_stats:
 
              _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
                                           self.event_info.longitude)
+             self.baz_all.append(az_from_epi)
              return az_from_epi
          else:
 
@@ -671,101 +781,115 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
              return 0.
 
     def plot_seismogram(self):
-        self.workers = ParallelWorkers(os.cpu_count())
-        # Here we can disabled thing or make additional staff
-        self.workers.job(self.__plot_seismogram)
 
-        self.decimator = [None, False]
-        if self.st:
-            del self.st
+        stations_channel, seismograms = MseedUtil.get_project_basic_info(self.project)
+        num_current_seismograms = len(self.files_path)
 
-        self.canvas.clear()
+        if stations_channel > 0 and seismograms > 0 and num_current_seismograms > 0:
+            self.workers = ParallelWorkers(os.cpu_count())
 
-        #self.nums_clicks = 0
+            # Here we can disabled thing or make additional staff
+            self.workers.job(self.__plot_seismogram)
 
-        if self.trimCB.isChecked() and self.check_start_time != None and self.check_end_time != None:
-            if self.check_start_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_1) and \
-                    self.check_end_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_2):
-                self.get_now_files()
+            self.decimator = [None, False]
+            if self.st:
+                del self.st
 
-        if self.sortCB.isChecked():
-            if self.comboBox_sort.currentText() == "Distance":
-                self.files_path.sort(key=self.sort_by_distance_advance)
-                self.message_dataless_not_found()
+            self.canvas.clear()
 
-            elif self.comboBox_sort.currentText() == "Back Azimuth":
-                self.files_path.sort(key=self.sort_by_baz_advance)
-                self.message_dataless_not_found()
+            #self.nums_clicks = 0
+
+            if self.trimCB.isChecked() and self.check_start_time != None and self.check_end_time != None:
+                if self.check_start_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_1) and \
+                        self.check_end_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_2):
+                    self.get_now_files()
+
+            if self.sortCB.isChecked():
+                if self.comboBox_sort.currentText() == "Distance":
+                    self.files_path.sort(key=self.sort_by_distance_advance)
+                    self.actionPlot_Record_Section.setEnabled(True)
+                    self.message_dataless_not_found()
+
+                elif self.comboBox_sort.currentText() == "Back Azimuth":
+                    self.files_path.sort(key=self.sort_by_baz_advance)
+                    self.message_dataless_not_found()
 
 
-        if len(self.special_selection)> 0:
-            self.set_pagination_files(self.special_selection)
-            self.files_at_page = self.get_files_at_page()
-        else:
-            self.set_pagination_files(self.files_path)
-            self.files_at_page = self.get_files_at_page()
-
-        ##
-        self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
-        self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-        self.check_start_time = self.start_time
-        self.check_end_time = self.end_time
-        ##
-        self.diff = self.end_time - self.start_time
-        if len(self.canvas.axes) != len(self.files_at_page) or self.autorefreshCB.isChecked():
-            self.canvas.set_new_subplot(nrows=len(self.files_at_page), ncols=1)
-        self.last_index = 0
-        self.min_starttime = []
-        self.max_endtime = []
-
-        tuple_files = [(i, file) for i, file in enumerate(self.files_at_page)]
-
-        self.all_traces = [None for i in range(len(self.files_at_page))]
-
-        self.parameters_list = self.parameters.getParameters()
-        self.min_starttime = [None for i in range(len(self.files_at_page))]
-        self.max_endtime = [None for i in range(len(self.files_at_page))]
-
-        prog_dialog = pw.QProgressDialog()
-        prog_dialog.setLabelText("Process and Plot")
-        prog_dialog.setValue(0)
-        prog_dialog.setRange(0, 0)
-
-        def prog_callback():
-            pyc.QMetaObject.invokeMethod(prog_dialog, "accept")
-
-        self.plot_progress.connect(prog_callback)
-        self.workers.start(tuple_files)
-
-        prog_dialog.exec()
-
-        self.st = Stream(traces=self.all_traces)
-
-        self.shift_times = None
-
-        try:
-            if self.min_starttime and self.max_endtime is not None:
-                auto_start = min(self.min_starttime)
-                auto_end = max(self.max_endtime)
-                self.auto_start = auto_start
-                self.auto_end = auto_end
-
-            ax = self.canvas.get_axe(len(self.files_at_page)-1)
-            # ax.callbacks.connect('xlim_changed', self.on_xlims_change)
-            if self.trimCB.isChecked():
-
-                ax.set_xlim(self.start_time.matplotlib_date, self.end_time.matplotlib_date)
+            if len(self.special_selection)> 0:
+                self.set_pagination_files(self.special_selection)
+                self.files_at_page = self.get_files_at_page()
             else:
+                self.set_pagination_files(self.files_path)
+                self.files_at_page = self.get_files_at_page()
 
-                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            ##
+            self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+            self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+            self.check_start_time = self.start_time
+            self.check_end_time = self.end_time
+            ##
+            self.diff = self.end_time - self.start_time
+            if len(self.canvas.axes) != len(self.files_at_page) or self.autorefreshCB.isChecked():
+                self.canvas.set_new_subplot(nrows=len(self.files_at_page), ncols=1)
+            self.last_index = 0
+            self.min_starttime = []
+            self.max_endtime = []
 
-            self.canvas.set_xlabel(len(self.files_at_page)-1, "Date")
+            tuple_files = [(i, file) for i, file in enumerate(self.files_at_page)]
 
-        except:
-            pass
-        self.special_selection = []
-        self.aligned_checked = False
+            self.all_traces = [None for i in range(len(self.files_at_page))]
 
+            self.parameters_list = self.parameters.getParameters()
+            self.min_starttime = [None for i in range(len(self.files_at_page))]
+            self.max_endtime = [None for i in range(len(self.files_at_page))]
+
+            prog_dialog = pw.QProgressDialog()
+            prog_dialog.setLabelText("Process and Plot")
+            prog_dialog.setValue(0)
+            prog_dialog.setRange(0, 0)
+
+            def prog_callback():
+                pyc.QMetaObject.invokeMethod(prog_dialog, "accept")
+
+            self.plot_progress.connect(prog_callback)
+            self.workers.start(tuple_files)
+
+            prog_dialog.exec()
+            for tuple_ind in tuple_files:
+                self.redraw_event_times(tuple_ind[0])
+                self.redraw_pickers(tuple_ind[1], tuple_ind[0])
+
+            self.st = Stream(traces=self.all_traces)
+
+            self.shift_times = None
+
+            try:
+                if self.min_starttime and self.max_endtime is not None:
+                    auto_start = min(self.min_starttime)
+                    auto_end = max(self.max_endtime)
+                    self.auto_start = auto_start
+                    self.auto_end = auto_end
+
+                ax = self.canvas.get_axe(len(self.files_at_page)-1)
+                # ax.callbacks.connect('xlim_changed', self.on_xlims_change)
+                if self.trimCB.isChecked() and self.aligned_picks == False:
+
+                    ax.set_xlim(self.start_time.matplotlib_date, self.end_time.matplotlib_date)
+                else:
+
+                    ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+
+                self.canvas.set_xlabel(len(self.files_at_page)-1, "Date")
+
+            except:
+                pass
+            self.special_selection = []
+            self.aligned_checked = False
+            self.aligned_picks = False
+        else:
+            md = MessageDialog(self)
+            md.set_warning_message("Empty Project ", "Please provide a root path "
+                                                     "with mseed files inside and check the query filters applied")
 
     def __plot_seismogram(self, tuple_files):
 
@@ -814,28 +938,26 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             t = tr.times("matplotlib")
             s = tr.data
 
-            self.canvas.plot_date(t, s, index, color="black", fmt = '-', linewidth=0.5)
-            #if  self.pagination.items_per_page>=16:
+            self.canvas.plot_date(t, s, index, color="black", fmt= '-', linewidth=0.5)
+
             ax = self.canvas.get_axe(index)
-            ax.spines["top"].set_visible(False)
-            ax.spines["bottom"].set_visible(False)
-            ax.tick_params(top=False)
-            ax.tick_params(labeltop=False)
-            ax.set_ylim(np.min(s),np.max(s))
-            if index!=(self.pagination.items_per_page-1):
-               ax.tick_params(bottom=False)
-
             try:
-                self.redraw_pickers(file_path, index)
-                #redraw_chop = 1 redraw chopped data, 2 update in case data chopped is midified
-                self.redraw_chop(tr, s, index)
-                self.redraw_event_times(index)
+                ax.spines["top"].set_visible(False)
+                ax.spines["bottom"].set_visible(False)
+                ax.tick_params(top=False)
+                ax.tick_params(labeltop=False)
             except:
-                print("It couldn't plot chop data")
-
-            last_index = index
+                pass
+            ax.set_ylim(np.min(s), np.max(s))
+            #
+            if index != (self.pagination.items_per_page-1):
+                try:
+                    ax.tick_params(bottom=False)
+                except:
+                    pass
 
             st_stats = ObspyUtil.get_stats(file_path)
+            self.redraw_chop(tr, s, index)
 
             if self.decimator[1]:
                 warning = "Decimated to " + str(self.decimator[0])+"  Hz"
@@ -870,13 +992,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
 
-
             self.all_traces[index] = tr
-
             self.plot_progress.emit()
-
-
-
 
 
     # Rotate to GAC #
@@ -890,7 +1007,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             for k in range(len(stations)):
 
-                if self.angCB.isChecked():
+                if self.angCB.currentText() == "to this angle":
 
                     # Process the data
                     self.plot_seismogram()
@@ -1264,7 +1381,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     self.events_times.append(time)
         # calling for 1D clustering more than one detection per earthquake //eps seconds span
         try:
-            self.events_times,str_times = MseedUtil.cluster_events(self.events_times, eps=cluster)
+            self.events_times, str_times = MseedUtil.cluster_events(self.events_times, eps=cluster)
 
             with open(self.path_detection, "w") as fp:
                 json.dump(str_times, fp)
@@ -1344,7 +1461,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def plot_all_seismograms(self):
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=1, ncols=1)
-        ax = self.canvas.get_axe(0)
         index = 0
         colors = ['black','indianred','chocolate','darkorange','olivedrab','lightseagreen',
                   'royalblue','darkorchid','magenta']
@@ -1379,6 +1495,108 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         except:
             pass
 
+    def plot_prs(self):
+
+        dist_all = []
+        baz_all = []
+        distance_in_km = True
+        depth = self.event_info.event_depth
+        otime = self.event_info.event_time
+
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=1, ncols=1)
+        index = 0
+        ##
+        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+
+
+        if len(self.st) > 0:
+
+            self.st.detrend(type="simple")
+            self.st.reverse()
+            if self.sortCB.isChecked():
+                if self.comboBox_sort.currentText() == "Distance":
+                    for tr in self.st:
+                        st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
+                        if st_stats:
+                            dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
+                                                          self.event_info.longitude)
+                            dist_all.append(dist / 1000)
+
+                    max_dist = kilometers2degrees(max(dist_all))
+                    min_dist = kilometers2degrees(min(dist_all))
+                    dist_all.sort()
+                    dist_all.reverse()
+
+                    if sum(dist_all)/len(dist_all) > 700:
+                        distance_in_km = False
+                        for index, dist in enumerate(dist_all):
+                            dist_all[index] = kilometers2degrees(dist)
+                        max_dist = max(dist_all)
+                        min_dist = min(dist_all)
+                    self.message_dataless_not_found()
+
+                    arrivals = ObspyUtil.get_trip_times(source_depth=depth, min_dist = min_dist, max_dist=max_dist)
+                    all_arrivals = ObspyUtil.convert_travel_times(arrivals, otime,
+                                                                  dist_km = distance_in_km)
+
+                # elif self.comboBox_sort.currentText() == "Back Azimuth":
+                #     for tr in self.st:
+                #         st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
+                #
+                #         if st_stats:
+                #             _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude,
+                #                                                  self.event_info.latitude,
+                #                                                  self.event_info.longitude)
+                #             baz_all.append(az_from_epi)
+                #
+                #     baz_all.sort()
+                #     baz_all.reverse()
+                #    self.message_dataless_not_found()
+
+            i = 0
+            for tr in self.st:
+                if len(tr) > 0:
+                    try:
+                        t = tr.times("matplotlib")
+                        if distance_in_km:
+                            s = 5*(tr.data/np.max(tr.data)) + dist_all[i]
+                        else:
+                            s = 0.5 * (tr.data / np.max(tr.data)) + dist_all[i]
+
+                        self.canvas.plot_date(t, s, 0, clear_plot=False, color="black", fmt='-', alpha=0.5,
+                                                      linewidth=0.5, label="")
+
+                    except:
+                        pass
+                    i = i + 1
+
+        if distance_in_km:
+            self.canvas.plot_date(all_arrivals["P"]["times"], all_arrivals["P"]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
+                              linewidth=1.0, label="P")
+
+            self.canvas.plot_date(all_arrivals["S"]["times"], all_arrivals["S"]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
+                              linewidth=1.0, label="S")
+
+        else:
+            for key in all_arrivals:
+                self.canvas.plot_date(all_arrivals[key]["times"], all_arrivals[key]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
+                                  linewidth=1.0, label=str(key))
+        try:
+            ax = self.canvas.get_axe(0)
+            if self.trimCB.isChecked():
+                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+            else:
+                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(0, "Date")
+            ax.legend()
+        except:
+            pass
+
+        self.actionPlot_Record_Section.setDisabled(True)
 
     def plot_map_stations(self):
 
@@ -1413,8 +1631,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         for key, value in picked_at.items():
             ps: PickerStructure = value
             if file_name == ps.FileName:
-                new_line = self.canvas.draw_arrow(ps.XPosition, axe_index, ps.Label,
-                                                  amplitude=ps.Amplitude, color=ps.Color, picker=True)
+                #new_line = self.canvas.draw_arrow(ps.XPosition, axe_index, ps.Label,
+                #                                  amplitude=ps.Amplitude, color=ps.Color, picker=True)
+                new_line = self.canvas.draw_arrow(ps.XPosition, axe_index, ps.Label, amplitude=ps.Amplitude,
+                                                  color=ps.Color, picker=True)
+                #picked_at.pop(key)
                 self.picked_at.pop(key)
                 self.picked_at[str(new_line)] = ps
 
@@ -1422,7 +1643,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if len(self.events_times)>0:
             for k in self.events_times:
                 k = k.matplotlib_date
-                self.canvas.draw_arrow(k ,index, "Event Detected", color="blue",linestyles='--', picker=False)
+                self.canvas.draw_arrow(k, index, "Event Detected", color="blue", linestyles='--', picker=False)
 
     def redraw_chop(self, tr, s, ax_index):
        self.kind_wave = self.ChopCB.currentText()
@@ -1487,6 +1708,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             #stats = ObspyUtil.get_stats(file_path)
             # TODO remove stats.StartTime and use the picked one from UI.
             self.event_info.plot_arrivals2(index, st_stats)
+
+    def get_arrivals_tf(self):
+
+        try:
+            st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, self.tr_tf)
+            self.phases, self.travel_times = self.event_info.get_station_travel_times(st_stats)
+            self.phases = list(self.phases)
+            self.travel_times = list(self.travel_times)
+            eventtime = self.event_info.event_time
+            for index, time in enumerate(self.travel_times):
+                self.travel_times[index] = (eventtime-self.tr_tf.stats.starttime)+self.travel_times[index]
+        except:
+            pass
 
     def stationsInfo(self):
 
@@ -1719,6 +1953,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.spectrum = PlotToolsManager(id)
             self.spectrum.plot_spectrum(freq, spec, jackknife_errors)
 
+
+        if event.key == 'm':
+            self.canvas.draw_selection_TF(self.ax_num)
+            self.tr_tf = self.st[self.ax_num]
+            self.get_arrivals_tf()
+
         if event.key == 'h':
 
             self.canvas.draw_selection(self.ax_num)
@@ -1793,7 +2033,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             #    self.cbar = fig.colorbar(cs, ax=axs[j], extend='both', orientation='horizontal', pad=0.2)
             #    self.cbar.ax.set_ylabel("Power [dB]")
 
-            tr=self.st[self.ax_num]
+            tr = self.st[self.ax_num]
             tt = tr.times("matplotlib")
             data = tr.data
             self.canvas.plot_date(tt, data, self.ax_num, clear_plot=False, color='black', fmt='-', linewidth=0.5)
@@ -1842,9 +2082,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def open_magnitudes_calculator(self):
         hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")
-        origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file)
-        if isinstance(origin, Origin):
-            self._magnitude_calc = MagnitudeCalc(origin, self.inventory, self.chop)
+        origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file, modified=True)
+        #origin: Origin = read_nll_performance.read_nlloc_hyp_ISP(hyp_file)
+        if isinstance(origin[0], Origin):
+            self._magnitude_calc = MagnitudeCalc(origin[0], origin[1], self.inventory, self.project, self.chop)
             self._magnitude_calc.show()
 
     def open_solutions(self):
@@ -1951,6 +2192,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def time_frequency_analysis(self):
         self.controller().open_seismogram_window()
+        answer = pw.QMessageBox.question(self, "Export Seismogram to TF Analysis",
+            "if you have selected a seismogram this will be automatically processed in TF Analysis module")
+
+        if pw.QMessageBox.Yes == answer:
+            if len(self.tr_tf) > 0 and self.phases!=None and self.travel_times!=None:
+
+                self.controller().time_frequency_frame.process_import_trace(self.tr_tf, phases=self.phases,
+                                                                            travel_times=self.travel_times)
+            else:
+                self.controller().time_frequency_frame.process_import_trace(self.tr_tf)
+
+            self.phases = None
+            self.travel_times = None
 
     def open_receiver_functions(self):
         self.controller().open_receiverFunctions()
@@ -1967,7 +2221,29 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                               self.spectral_entropy, self.cancelled_callback,
                               signalValue=self.value_entropy_init)
 
-    def retrieve_event(self, event_location: EventLocationModel):
-        print(event_location)
+    # def retrieve_event(self, event_location: EventLocationModel):
+    #     print(event_location)
 
+    def set_catalog_values(self, event_catalog):
+        print("Set event values", event_catalog)
+        otime = event_catalog[0]
+        lat = event_catalog[1]
+        lon = event_catalog[2]
+        depth = event_catalog[3]
 
+        set_qdatetime(otime, self.dateTimeEdit_1)
+        set_qdatetime(otime+900, self.dateTimeEdit_2)
+        self.event_info.set_time(otime)
+        self.event_info.set_coordinates([lat,lon,depth])
+
+    def set_event_download_values(self, event_catalog):
+        print("Set event values", event_catalog)
+        otime = event_catalog[0]
+        lat = event_catalog[1]
+        lon = event_catalog[2]
+        depth = event_catalog[3]
+
+        set_qdatetime(otime, self.dateTimeEdit_1)
+        set_qdatetime(otime+900, self.dateTimeEdit_2)
+        self.event_info.set_time(otime)
+        self.event_info.set_coordinates([lat,lon,depth])

@@ -1,0 +1,56 @@
+#!/bin/csh -f
+
+# Start with a SAC Graphics Format plot file (.sgf).  Calls sgftops to produce 
+#   a .ps file rotatedd from landscape to portrait format and scaled by 0.75
+#   (based on the 'normal" .sgf format that is a panel 10" wide and 7.5" high).
+#   Earlier versions (before June 2006) used gs and epstool to calculate the
+#   Boundingbox.  This version uses only gs.
+# Call is sgftoeps ABCD  -- input file is named ABCD.sgf No preview created.
+# 2 June 2006: Richard Godbee and Arthur Snoke (Virginia Tech)
+# 18 August 2006: made line thickness 2.0 (was 1.5) and took out /tmp/
+
+if ($#argv == 0) then
+  echo Syntax is sgftoeps ABCD
+  echo where ABCD.sgf is the input sac-format graphics file.
+  echo Output is ABCD.eps.  Assumes write access to current directory;
+  echo Assumes sgftops and gs -- ghostscript -- are in the path.
+  exit
+endif
+
+set scalefact = 0.75
+
+while ($#argv > 0)
+  switch ($1)
+    case -scale
+      set scalefact = $2
+      shift
+      breaksw
+#Earlier version allowed a -scale 0.xx.  Still works, but not advertised.
+    default
+      set source = $1 #filename of the input SAC sgf file (source.sgf)
+      breaksw
+  endsw
+  shift
+end
+
+if ($?source == 0) then
+  echo no input file specified
+  exit
+else if (! -f ${source}.sgf) then
+  echo ${source}.sgf not found
+  exit
+endif
+
+sgftops ${source}.sgf ${source}.ps 1.0 s << END > /dev/null
+0.5
+0.5
+0
+$scalefact
+END
+
+set newbbox = `gs -sDEVICE=bbox -dSAFER -dBATCH -dNOPAUSE ${source}.ps |& grep '^%%BoundingBox: '`
+cat ${source}.ps | sed -e "s/^%%BoundingBox:.*/${newbbox}/" \
+  -e "s/^%%Creator: /%%Creator: sgftoeps + /" > ${source}.eps
+
+\rm ${source}.ps
+exit

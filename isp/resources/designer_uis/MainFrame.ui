@@ -359,7 +359,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -397,6 +397,7 @@
    <addaction name="actionRetrieve_data"/>
    <addaction name="actionPPSDs"/>
    <addaction name="actionReal_Time"/>
+   <addaction name="action_analog"/>
   </widget>
   <action name="actionOpen_Project">
    <property name="icon">
@@ -467,6 +468,18 @@
    </property>
    <property name="text">
     <string>Real Time</string>
+   </property>
+  </action>
+  <action name="action_analog">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/analog.png</normaloff>:/icons/analog.png</iconset>
+   </property>
+   <property name="text">
+    <string>analog2digital</string>
+   </property>
+   <property name="toolTip">
+    <string>Analog to Digital Seismogram</string>
    </property>
   </action>
  </widget>

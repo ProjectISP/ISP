@@ -31,4 +31,17 @@ class SettingsDialogNoise(pw.QDialog, UiSettingsDialogNoise):
         param_dict["stack"] = self.stackCB.currentText()
         param_dict["power"] = self.powerSB.value()
         param_dict["processing_window"] = float(self.timeWindowCB.currentText())
+        param_dict["nets_list"] = self.lineEditNets.text()
+        param_dict["stations_list"] = self.lineEditStations.text()
+        param_dict["channels_list"] = self.lineEditChannels.text()
+        param_dict["autocorr"] = self.autocorrCB.isChecked()
+        param_dict["max_distance"] = self.max_distanceBtn.value()
+        param_dict["dailyStacks"] = self.dailyStacksCB.isChecked()
+        param_dict["overlap"] = self.overlapSB.value()
+        param_dict["prefilter"] = self.preFilterCB.isChecked()
+        param_dict["filter_freqmin"] = self.freqminFilterDB.value()
+        param_dict["filter_freqmax"] = self.freqmaxFilterDB.value()
+        param_dict["filter_corners"] = self.cornersFilterDB.value()
+
+
         return param_dict

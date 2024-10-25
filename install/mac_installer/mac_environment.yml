@@ -161,11 +161,16 @@ dependencies:
   - zlib=1.2.11=h1de35cc_3
   - zstd=1.5.0=h582d3a0_0
   - pip:
+    - bcrypt==4.0.1
     - geographiclib==1.52
+    - mysql-connector-python==8.0.31
     - nvector==0.7.7
     - obspyh5==0.5.0
+    - paramiko==2.12.0
+    - pynacl==1.5.0
     - pyqt5==5.15.6
     - pyqt5-qt5==5.15.2
     - pyqt5-sip==12.9.0
     - pyqtwebengine==5.15.5
     - pyqtwebengine-qt5==5.15.2
+    - pysftp==0.2.9

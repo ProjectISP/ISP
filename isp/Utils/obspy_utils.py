@@ -1,5 +1,4 @@
 import math
-import os
 import pickle
 from enum import unique, Enum
 from multiprocessing import Pool
@@ -9,13 +8,12 @@ from typing import List
 import pandas as pd
 import numpy as np
 from obspy import Stream, read, Trace, UTCDateTime, read_events
-# noinspection PyProtectedMember
 from obspy.core.event import Origin
-from obspy.geodetics import gps2dist_azimuth
+from obspy.geodetics import gps2dist_azimuth, degrees2kilometers
 from obspy.io.mseed.core import _is_mseed
 from obspy.io.stationxml.core import _is_stationxml
-#from obspy.io.sac.core import _is_sac
 from obspy.io.xseed.parser import Parser
+from obspy.taup import TauPyModel
 from isp import PICKING_DIR
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
@@ -24,7 +22,7 @@ import os
 import re
 from pathlib import Path
 from obspy.io.nlloc.core import read_nlloc_hyp
-
+from isp.Utils import read_nll_performance
 @unique
 class Filters(Enum):
 
@@ -111,6 +109,54 @@ class ObspyUtil:
 
         return stations
 
+    @staticmethod
+    def get_trip_times(source_depth, min_dist, max_dist):
+
+        model = TauPyModel(model="iasp91")
+        distances = np.linspace(min_dist, max_dist, 50)
+        arrivals_list = []
+
+        for value in distances:
+
+            arrival = model.get_travel_times(source_depth_in_km=source_depth, distance_in_degree= float(value))
+
+
+            arrivals_list.append(arrival)
+
+        return arrivals_list
+
+    @staticmethod
+    def convert_travel_times(arrivals, otime, dist_km = True):
+
+        all_arrival = {}
+
+        # Loop over arrivals objects in list
+        for arrival_set in arrivals:
+            # Loop over phases in list
+            for arrival in arrival_set:
+                phase_id = arrival.purist_name
+                time = otime + arrival.time
+
+                dist = arrival.purist_distance % 360.0
+                distance = arrival.distance
+                if distance < 0:
+                    distance = (distance % 360)
+                if abs(dist - distance) / dist > 1E-5:
+                    continue
+
+                if dist_km:
+                    distance = degrees2kilometers(distance)
+
+                if phase_id in all_arrival.keys():
+                    all_arrival[phase_id]["times"].append(time.matplotlib_date)
+                    all_arrival[phase_id]["distances"].append(distance)
+
+                else:
+                    all_arrival[phase_id] = {}
+                    all_arrival[phase_id]["times"] = [time.matplotlib_date]
+                    all_arrival[phase_id]["distances"] = [distance]
+
+        return all_arrival
 
     @staticmethod
     def coords2azbazinc(station_latitude, station_longitude,station_elevation, origin_latitude,
@@ -205,25 +251,32 @@ class ObspyUtil:
                 st.trim(endtime=end_time)
 
     @staticmethod
-    def reads_hyp_to_origin(hyp_file_path: str) -> Origin:
+    def reads_hyp_to_origin(hyp_file_path: str, modified=False) -> Origin:
         """
         Reads an hyp file and returns the Obspy Origin.
         :param hyp_file_path: The file path to the .hyp file
+        :param modified: To use the modified version of read_events, including more info into Origin
         :return: An Obspy Origin
         """
 
         if os.path.isfile(hyp_file_path):
-            cat = read_events(hyp_file_path)
+            if modified==False:
+                cat = read_events(hyp_file_path)
+            else:
+                cat = read_nll_performance.read_nlloc_hyp_ISP(hyp_file_path)
             event = cat[0]
             origin = event.origins[0]
             modified_origin_90 = computeOriginErrors(origin)
-            origin.depth_errors["uncertainty"]=modified_origin_90['depth_errors'].uncertainty
+            origin.depth_errors["uncertainty"] = modified_origin_90['depth_errors'].uncertainty
             origin.origin_uncertainty.max_horizontal_uncertainty = modified_origin_90['origin_uncertainty'].max_horizontal_uncertainty
             origin.origin_uncertainty.min_horizontal_uncertainty = modified_origin_90[
                 'origin_uncertainty'].min_horizontal_uncertainty
             origin.origin_uncertainty.azimuth_max_horizontal_uncertainty = modified_origin_90['origin_uncertainty'].azimuth_max_horizontal_uncertainty
 
-        return origin
+        if modified:
+            return origin, event
+        else:
+            return origin
 
     @staticmethod
     def reads_pick_info(hyp_file_path: str):
@@ -256,9 +309,11 @@ class MseedUtil:
         self.obsfiles = []
         self.pos_file = []
         self.robust = robust
+        self.use_ind_files = False
 
     @classmethod
     def get_mseed_files(cls, root_dir: str):
+
          """
          Get a list of valid mseed files inside the root_dir. If root_dir doesn't exists it returns a empty list.
          :param root_dir: The full path of the dir or a file.
@@ -276,13 +331,13 @@ class MseedUtil:
          return []
 
     def get_tree_mseed_files(self, root_dir: str):
+
         """
         Get a list of valid mseed files inside all folder tree from the the root_dir.
         If root_dir doesn't exists it returns a empty list.
         :param root_dir: The full path of the dir or a file.
         :return: A list of full path of mseed files.
         """
-
 
         for top_dir, sub_dir, files in os.walk(root_dir):
             for file in files:
@@ -296,6 +351,17 @@ class MseedUtil:
 
         return r
 
+    @staticmethod
+    def get_project_basic_info(project):
+
+        try:
+            total_components = sum(len(value_list) for value_list in project.values())
+            stations_channel = len(project)
+        except:
+            total_components = None
+            stations_channel = None
+
+        return stations_channel, total_components
 
     def loop_tree(self, i):
         result = None
@@ -323,7 +389,7 @@ class MseedUtil:
         else:
 
             if self.robust and self.is_valid_mseed(self.pos_file[i]):
-                
+
                 result = self.pos_file[i]
 
             elif not self.robust:
@@ -345,6 +411,17 @@ class MseedUtil:
             pass
         return project
 
+    def search_indiv_files(self, list_files: list):
+
+        self.use_ind_files = True
+        self.list_files = list_files
+        with Pool(processes=os.cpu_count()) as pool:
+            returned_list = pool.map(self.create_dict, range(len(self.list_files)))
+
+        project = self.convert2dict(returned_list)
+        self.use_ind_files = False
+
+        return project
 
     def search_files(self, rooth_path: str):
 
@@ -354,10 +431,9 @@ class MseedUtil:
                 self.search_file.append(os.path.join(top_dir, file))
 
         with Pool(processes=os.cpu_count()) as pool:
-            returned_list =  pool.map(self.create_dict, range(len(self.search_file)))
+            returned_list = pool.map(self.create_dict, range(len(self.search_file)))
 
         project = self.convert2dict(returned_list)
-        #project = dict(filter(None, returned_list))
 
         return project
 
@@ -366,12 +442,23 @@ class MseedUtil:
         data_map = None
 
         try:
-            header = read(self.search_file[i], headeronly=True)
-            net = header[0].stats.network
-            sta = header[0].stats.station
-            chn = header[0].stats.channel
-            key = net + "." + sta + "." + chn
-            data_map = [self.search_file[i], header[0].stats]
+            if self.use_ind_files:
+                header = read(self.list_files[i], headeronly=True)
+                print(self.list_files[i])
+                net = header[0].stats.network
+                sta = header[0].stats.station
+                chn = header[0].stats.channel
+                key = net + "." + sta + "." + chn
+                data_map = [self.list_files[i], header[0].stats]
+            else:
+                header = read(self.search_file[i], headeronly=True)
+                print(self.search_file[i])
+                net = header[0].stats.network
+                sta = header[0].stats.station
+                chn = header[0].stats.channel
+                key = net + "." + sta + "." + chn
+                data_map = [self.search_file[i], header[0].stats]
+
         except:
             pass
 
@@ -382,7 +469,7 @@ class MseedUtil:
     def estimate_size(self, rooth_path):
 
         nbytes = sum(file.stat().st_size for file in Path(rooth_path).rglob('*')) * 1E-6
-        
+
         return nbytes
 
     def convert2dict(self, project):
@@ -679,6 +766,7 @@ class MseedUtil:
             paths = os.path.join(files_path, i)
             if _is_mseed(paths):
 
+                print("Processing Waveform at", os.path.basename(paths))
                 header = read(paths, headlonly=True)
                 gap = header.get_gaps()
                 net = header[0].stats.network

@@ -115,7 +115,7 @@
      <item>
       <widget class="QPushButton" name="saveBtn">
        <property name="text">
-        <string>Save</string>
+        <string>Save for later</string>
        </property>
       </widget>
      </item>
@@ -123,6 +123,16 @@
       <widget class="QPushButton" name="loadBtn">
        <property name="text">
         <string>Load</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="accept_Btn">
+       <property name="text">
+        <string>Accept</string>
+       </property>
+       <property name="default">
+        <bool>false</bool>
        </property>
       </widget>
      </item>

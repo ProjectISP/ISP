@@ -34,7 +34,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.root_path_bind = BindPyqtObject(self.rootPathForm)
         #self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
-        self.earth_path_bind =  BindPyqtObject(self.earth_modelPathForm)
+        self.earth_path_bind = BindPyqtObject(self.earth_modelPathForm)
 
         # Binds
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
@@ -42,6 +42,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.earthmodelBtn.clicked.connect(lambda: self.on_click_select_file(self.earth_path_bind))
 
         # Action Buttons
+        self.macroBtn.clicked.connect(lambda: self.open_parameters_settings())
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
         self.plotBtn.clicked.connect(self.plot_seismograms)
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
@@ -155,13 +156,12 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         if self.st:
             min_dist = self.min_distCB.value()
             max_dist = self.max_distCB.value()
-            mt =  MTIManager(self.st, self.inventory, lat, lon, min_dist, max_dist)
+            mt = MTIManager(self.st, self.inventory, lat, lon, min_dist, max_dist)
             [self.stream, self.deltas, self.stations_isola_path] = mt.get_stations_index()
 
 
     def stationsInfo(self):
 
-        file_path = self.root_path_bind.value
         obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
         obsfiles.sort()
         sd = []
@@ -170,12 +170,12 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
             st = SeismogramDataAdvanced(file)
 
-            station = [st.stats.Network,st.stats.Station,st.stats.Location,st.stats.Channel,st.stats.StartTime,
+            station = [st.stats.Network, st.stats.Station, st.stats.Location, st.stats.Channel, st.stats.StartTime,
                        st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
 
             sd.append(station)
 
-        self._stations_info = StationsInfo(sd, check = True)
+        self._stations_info = StationsInfo(sd, check=True)
         self._stations_info.show()
 
     def write(self):
@@ -221,6 +221,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
     @AsycTime.run_async()
     def run_inversion(self):
         parameters = self.get_inversion_parameters()
+        self.infoTx.clear()
         try:
             stations_map = self._stations_info.get_stations_map()
         except:
@@ -230,12 +231,12 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
         if len(self.stream) and len(stations_map)> 0:
 
-            isola = ISOLA(self.stream, self.deltas, location_unc = parameters['location_unc'], depth_unc = parameters['depth_unc'],
-                           time_unc = parameters['time_unc'], deviatoric =  parameters['deviatoric'], threads = 8,
-                           circle_shape = parameters['circle_shape'], use_precalculated_Green = parameters['GFs'])
+            isola = ISOLA(self.stream, self.deltas, location_unc=parameters['location_unc'], depth_unc=parameters['depth_unc'],
+                           time_unc=parameters['time_unc'], deviatoric=parameters['deviatoric'], threads=8,
+                           circle_shape=parameters['circle_shape'], use_precalculated_Green=parameters['GFs'])
             #
             isola.set_event_info(parameters['latitude'], parameters['longitude'], parameters['depth'],
-                                 parameters['magnitude'],parameters['origin_time'])
+                                 parameters['magnitude'], parameters['origin_time'])
             #
             print(isola.event)
             #
@@ -243,7 +244,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
             if self.stations_isola_path:
                 isola.read_network_coordinates(self.stations_isola_path)
                 isola.set_use_components(stations_map)
-                #print(isola.stations)
+                print(isola.stations)
                 isola.read_crust(self.earth_path_bind.value)
 
                 isola.set_parameters(parameters['freq_max'], parameters['freq_min'])
@@ -368,7 +369,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
             obsfiles = MseedUtil.get_mseed_files(self.root_path_bind.value)
             obsfiles.sort()
             try:
-                if len(self.stream)>0:
+                if len(self.stream) > 0:
                     stations = ObspyUtil.get_stations_from_stream(self.stream)
             except:
                 pass

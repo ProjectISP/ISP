@@ -1,0 +1,20 @@
+#!/bin/csh -f
+#
+# Purpose: To convert a .sgf file to a postscript file, print
+#    and then erase that file.  Assumes sgftops is in the path
+#    and the desire3d printer is reached from lpr.
+#
+if ($#argv == 0) then
+  echo Syntax is plsgf ABCD 
+  echo where ABCD.sgf is the input sac graphics file.
+  echo Assumes sgf2ps is in the path and lpr goes to the desired printer
+  echo Assumes write-access to current directory
+  echo If want thicker/thinner lines or no label, edit the sgf2ps line
+  echo To understand about the options for sgf2ps, enter sgf2ps with
+  echo     no arguments.
+  exit
+endif
+
+sgftops $1.sgf ./plsgf.ps 1.5 i
+lpr ./plsgf.ps
+\rm ./plsgf.ps

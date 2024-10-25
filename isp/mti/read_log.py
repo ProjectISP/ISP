@@ -6,7 +6,6 @@ This is a temporary script file.
 """
 
 import re
-import obspy
 import numpy as np
 
 def read_log(file):

@@ -61,7 +61,7 @@ class ppsdsISP(pyc.QObject):
 
             #paths = os.path.join(self.files_path, i)
             if _is_mseed(paths):
-
+                print("Adding to DB ", paths)
                 header = read(paths, headlonly=True)
                 net = header[0].stats.network
                 network = {net: {}}
@@ -131,6 +131,7 @@ class ppsdsISP(pyc.QObject):
                             st = read(j)
                             files.append(st[0])
                         try:
+                            print("Processing", files[0].id)
                             ppsd = PPSD(files[0].stats, metadata=self.metadata, ppsd_length =self.length,
                                         overlap = self.overlap, period_smoothing_width_octaves = self.smoothing,
                                         period_step_octaves = self.period)
@@ -196,7 +197,7 @@ class ppsdsISP(pyc.QObject):
 
             #paths = os.path.join(self.files_path, i)
             if _is_mseed(paths):
-
+                print("Adding to DB ", paths)
                 header = read(paths, headlonly=True)
                 net = header[0].stats.network
                 network = {net: {}}

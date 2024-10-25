@@ -1,19 +1,16 @@
 import math
 import os
 from types import FunctionType
-
 from matplotlib.lines import Line2D
-from obspy import UTCDateTime
-
 from isp.DataProcessing import SeismogramAnalysis
 from isp.Exceptions import parse_excepts
 from isp.Gui import pw
 from isp.Gui.Frames import UiPaginationWidget, UiFilterDockWidget, UiEventInfoDockWidget, UiTimeSelectorDockWidget, \
     UiSpectrumDockWidget, UiStationInfoDockWidget
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, set_qdatetime, convert_qdatetime_utcdatetime
-from isp.Structures.structures import StationsStats, TracerStats
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, set_qdatetime, convert_qdatetime_utcdatetime, \
+    set_qcoordinates
+from isp.Structures.structures import TracerStats
 from isp.Utils import Filters
-import matplotlib.dates as mdt
 
 class ParentWidget:
 
@@ -475,6 +472,16 @@ class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
         """
         set_qdatetime(time, self.originDateTimeEdit)
 
+    def set_coordinates(self, coordinates):
+        """
+        Set the event coordinates (lat,lon and depth).
+
+        :param coordinates: A list with latitude, longitude and depth (km).
+
+        :return:
+        """
+        set_qcoordinates(coordinates, self.latitudeDsb, self.longitudeDsb, self.depthDsb)
+
     def add_arrivals_line(self, line: Line2D):
         self.__arrivals_lines.append(line)
 
@@ -517,6 +524,11 @@ class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
             line = self.__canvas.draw_arrow(time, axe_index, phase, color="green", linestyles='--',
                                             picker=False)
             self.add_arrivals_line(line)
+
+    def get_station_travel_times(self, station_stats):
+        sma = SeismogramAnalysis(station_stats.Latitude, station_stats.Longitude)
+        phases, times = sma.get_phases_and_arrivals(self.latitude, self.longitude, self.event_depth)
+        return phases, times
 
     def get_event_coordinates(self):
         return self.latitude,self.longitude,self.event_depth

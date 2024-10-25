@@ -1,11 +1,10 @@
-import numpy as np
+
 from obspy import Stream
 from obspy import UTCDateTime
 from obspy.signal.polarization import polarization_analysis
-
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.Gui.Frames import MessageDialog
-from isp.Utils import ObspyUtil, Filters
+from isp.Utils import ObspyUtil
 
 
 class PolarizationAnalyis:

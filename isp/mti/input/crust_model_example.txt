@@ -1,0 +1,10 @@
+Crustal model                Rigo (my rho)
+number of layers
+4
+Parameters of the layers
+depth of layer top(km)   Vp(km/s)    Vs(km/s)    Rho(g/cm**3)    Qp     Qs
+    0.0        6.1        3.49        2.92        300        300    
+    11.0        6.4        3.66        2.98        300        300    
+    24.0        6.9        3.94        3.08        300        300    
+    31.0        8.0        4.57        3.3        300        300    
+*******************************************************************
