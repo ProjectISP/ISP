@@ -175,6 +175,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
         self.actionPlot_Record_Section.triggered.connect(lambda: self.plot_prs())
         self.actionWrite_CFs.triggered.connect(lambda: self.save_cf())
+        self.runScriptBtn.clicked.connect(self.run_process)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -199,6 +200,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # catalog viewer
 
         self.catalog = SearchCatalogViewer()
+
+        # shortcuts test
+
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+D'), self)
+        self.shortcut_open.activated.connect(self.run_process)
+
 
         # shortcuts
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+U'), self)
@@ -291,6 +298,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def open_uncertainity_settings(self):
         self.uncertainities.show()
+
+    def run_process(self):
+        from isp.scripts.script import run_process as rp
+        st_new = rp(self.st)
 
     def new_project(self):
         self.loaded_project = False

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1942</width>
-    <height>1078</height>
+    <width>1542</width>
+    <height>944</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -318,19 +318,6 @@
                   <set>Qt::AlignCenter</set>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_6">
-                  <item row="2" column="1">
-                   <widget class="QCheckBox" name="sortCB">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="text">
-                     <string>Sort  Traces</string>
-                    </property>
-                   </widget>
-                  </item>
                   <item row="2" column="0">
                    <widget class="QComboBox" name="comboBox_sort">
                     <property name="sizePolicy">
@@ -357,6 +344,19 @@
                     </item>
                    </widget>
                   </item>
+                  <item row="2" column="1">
+                   <widget class="QCheckBox" name="sortCB">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Sort  Traces</string>
+                    </property>
+                   </widget>
+                  </item>
                   <item row="0" column="0" colspan="2">
                    <widget class="QWidget" name="eventInfoWidget" native="true">
                     <property name="sizePolicy">
@@ -368,7 +368,7 @@
                     <property name="minimumSize">
                      <size>
                       <width>415</width>
-                      <height>250</height>
+                      <height>150</height>
                      </size>
                     </property>
                     <property name="maximumSize">
@@ -489,13 +489,6 @@
                     </item>
                    </widget>
                   </item>
-                  <item row="0" column="0" colspan="3">
-                   <widget class="QPushButton" name="macroBtn">
-                    <property name="text">
-                     <string>Macro</string>
-                    </property>
-                   </widget>
-                  </item>
                   <item row="1" column="2">
                    <widget class="QComboBox" name="angCB">
                     <item>
@@ -508,6 +501,23 @@
                       <string>to GAC</string>
                      </property>
                     </item>
+                   </widget>
+                  </item>
+                  <item row="0" column="0" colspan="2">
+                   <widget class="QPushButton" name="macroBtn">
+                    <property name="text">
+                     <string>Macro</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2">
+                   <widget class="QPushButton" name="runScriptBtn">
+                    <property name="text">
+                     <string>Run Script</string>
+                    </property>
+                    <property name="shortcut">
+                     <string>Ctrl+D</string>
+                    </property>
                    </widget>
                   </item>
                  </layout>
@@ -570,8 +580,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>1371</width>
-                  <height>836</height>
+                  <width>971</width>
+                  <height>702</height>
                  </rect>
                 </property>
                </widget>
@@ -652,7 +662,7 @@
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
-                 <width>500</width>
+                 <width>150</width>
                  <height>20</height>
                 </size>
                </property>
@@ -696,11 +706,11 @@
                 <enum>Qt::Horizontal</enum>
                </property>
                <property name="sizeType">
-                <enum>QSizePolicy::Maximum</enum>
+                <enum>QSizePolicy::Preferred</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
-                 <width>200</width>
+                 <width>150</width>
                  <height>20</height>
                 </size>
                </property>
@@ -867,7 +877,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1942</width>
+     <width>1542</width>
      <height>24</height>
     </rect>
    </property>
