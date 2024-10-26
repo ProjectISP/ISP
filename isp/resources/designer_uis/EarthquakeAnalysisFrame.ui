@@ -515,9 +515,6 @@
                     <property name="text">
                      <string>Run Script</string>
                     </property>
-                    <property name="shortcut">
-                     <string>Ctrl+D</string>
-                    </property>
                    </widget>
                   </item>
                  </layout>
