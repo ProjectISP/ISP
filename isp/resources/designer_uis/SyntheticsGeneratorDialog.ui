@@ -37,6 +37,11 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <item>
+        <property name="text">
+         <string>ak135f_5s</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>
@@ -108,9 +113,23 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="loadFileBtn">
+         <property name="text">
+          <string>Load File</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="pushButtonRemStation">
          <property name="text">
           <string> Remove Station </string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="plotMapBtn">
+         <property name="text">
+          <string>Plot Map</string>
          </property>
         </widget>
        </item>

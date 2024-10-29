@@ -1,14 +1,17 @@
+import pandas as pd
 from isp.Gui import pw, pyc, qt
-from isp.Gui.Frames import UiSyntheticsGeneratorDialog, SettingsLoader
+from isp.Gui.Frames import UiSyntheticsGeneratorDialog, SettingsLoader, MessageDialog
 from isp.Gui.Utils.pyqt_utils import add_save_load
-
+from PyQt5 import QtWidgets
 from obspy.clients.syngine import Client
-
 from concurrent.futures.thread import ThreadPoolExecutor
 import os
 import pickle
 from sys import platform
 from datetime import datetime
+
+from isp.earthquakeAnalisysis.stations_map import StationsMap
+
 
 @add_save_load()
 class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metaclass=SettingsLoader):
@@ -28,7 +31,8 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
         self.progress_dialog.setWindowTitle(self.windowTitle())
         self.progress_dialog.close()
         self._client = Client()
-        self.comboBoxModels.addItems(self._client.get_available_models().keys())
+        # apparently is not working # 29-10-2024
+        #self.comboBoxModels.addItems(self._client.get_available_models().keys())
         self.radioButtonMT.toggled.connect(self._buttonMTFPClicked)
         self.radioButtonMT.setChecked(True)
         self._buttonMTFPClicked(True)
@@ -40,7 +44,8 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
             lambda : self.pushButtonRemStation.setEnabled(
                 bool(self.tableWidget.selectedIndexes())))
         self.buttonBox.clicked.connect(self._buttonBoxClicked)
-
+        self.loadFileBtn.clicked.connect(self.load_stations)
+        self.plotMapBtn.clicked.connect(self.plot_map_stations)
         # TODO Add inventory for selecting stations database location.
        
     def closeEvent(self, ce):
@@ -184,6 +189,26 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', qt.QueuedConnection)
         return st
 
+    def load_stations(self):
+        selected = pw.QFileDialog.getOpenFileName(self, "Select Stations Coordinates file")
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            df_stations = pd.read_csv(selected[0], sep=";")
+            for index, station in df_stations.iterrows():
+                lat = station["Latitude"]
+                lon = station["Longitude"]
+                network = station["Network"]
+                station = station["Station"]
+                self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QtWidgets.QTableWidgetItem(str(lat)))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QtWidgets.QTableWidgetItem(str(lon)))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QtWidgets.QTableWidgetItem(str(network)))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem(str(station)))
+
+
+        else:
+            pw.QMessageBox.information(self, self.windowTitle(),
+                                       "Stations Coordintes File Empty or not Valid !!!")
+
     def _buttonAddStationClicked(self):
         self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
         item = pw.QTableWidgetItem()
@@ -208,3 +233,72 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
         # and disable FP parameters and viceversa.
         self.groupBoxMT.setEnabled(mt_checked)
         self.groupBoxFP.setEnabled(not mt_checked)
+
+
+    def plot_map_stations(self):
+
+        stations_coords = self.__extract_table_data()
+
+        if len(stations_coords)>0:
+            try:
+                [lat,lon] = [self.doubleSBSrcLat.value(), self.doubleSBSrcLon.value()]
+
+                map_dict={}
+                sd = []
+
+                for tr in stations_coords:
+
+                    name = tr["Network"]+"." + tr["Station"]
+                    sd.append(name)
+                    map_dict[name] = [tr["Latitude"], tr["Longitude"]]
+
+                self.map_stations = StationsMap(map_dict)
+                self.map_stations.plot_stations_map(latitude = lat, longitude=lon)
+
+            except:
+                md = MessageDialog(self)
+                md.set_error_message("couldn't plot stations map, please check that you have correctly set stations coordinates in the table")
+        else:
+                md = MessageDialog(self)
+                md.set_info_message("couldn't plot stations map, stations table is empty")
+
+    def __extract_table_data(self):
+        # Determine the number of rows and columns
+        rows = self.tableWidget.rowCount()
+        columns = self.tableWidget.columnCount()
+
+        # Check that the table has 4 columns
+        if columns != 4:
+            raise ValueError("Table does not have exactly 4 columns.")
+
+        # Initialize list to store the extracted data
+        table_data = []
+
+        # Iterate over each row
+        for row in range(rows):
+            row_data = {}
+
+            # Retrieve each cell's content by column
+            for col in range(columns):
+                item = self.tableWidget.item(row, col)
+                if item is not None:
+                    cell_data = item.text()
+                else:
+                    cell_data = None  # Handle empty cells
+
+                # Add the cell data to the row_data dictionary with column keys
+                row_data[f'column_{col + 1}'] = cell_data
+                if col ==0:
+                    row_data['Latitude'] = cell_data
+                elif col ==1:
+                    row_data['Longitude'] = cell_data
+                elif col == 2:
+                    row_data['Network'] = cell_data
+                elif col == 3:
+                    row_data['Station'] = cell_data
+
+            # Append the row_data to table_data
+            table_data.append(row_data)
+        print(table_data)
+
+        return table_data
