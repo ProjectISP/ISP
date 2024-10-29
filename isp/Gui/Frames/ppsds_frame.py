@@ -28,8 +28,8 @@ class PPSDFrame(BaseFrame, UiPPSDs):
         self.page = None
         self.pages = None
         
-        self.ppsds_dialog = PPSDsGeneratorDialog(self) 
-        
+        self.ppsds_dialog = PPSDsGeneratorDialog(self)
+        self.ppsds_dialog.show()
         self.canvas_is_empty = True
         
         # Connect signals w/slots

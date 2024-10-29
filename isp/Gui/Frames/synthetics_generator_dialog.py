@@ -9,7 +9,6 @@ import os
 import pickle
 from sys import platform
 from datetime import datetime
-
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 
 
@@ -25,14 +24,20 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
         self.setWindowTitle('Synthetics Generator Dialog')
 
         self.progress_dialog = pw.QProgressDialog(self)
-        self.progress_dialog.setRange(0,0)
+        self.progress_dialog.setRange(0, 0)
         self.progress_dialog.setLabelText('Requesting synthetic waveforms.')
         self.progress_dialog.setWindowIcon(self.windowIcon())
         self.progress_dialog.setWindowTitle(self.windowTitle())
         self.progress_dialog.close()
         self._client = Client()
-        # apparently is not working # 29-10-2024
-        #self.comboBoxModels.addItems(self._client.get_available_models().keys())
+
+
+        try:
+            # apparently ocassionally is not working # 29-10-2024
+            self.comboBoxModels.addItems(self._client.get_available_models().keys())
+        except:
+
+            print("Coudn't load available models set ak135 5s instead")
         self.radioButtonMT.toggled.connect(self._buttonMTFPClicked)
         self.radioButtonMT.setChecked(True)
         self._buttonMTFPClicked(True)

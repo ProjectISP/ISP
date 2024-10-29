@@ -34,7 +34,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         parameters = {}
 
         self._generator = SyntheticsGeneratorDialog(self)
-
+        self._generator.show()
         # 3C_Component
         self.focmec_canvas = FocCanvas(self.widget_fp)
         self.canvas = MatplotlibCanvas(self.plotMatWidget_3C)
