@@ -16,7 +16,7 @@ from isp.Gui.Frames.array_analysis_frames import ArrayAnalysisFrame
 from isp.Gui.Frames.isola_ISP_frame import MTIFrame
 from isp.Gui.Frames.receiver_functions_frame import RecfFrame
 from isp.Gui.Frames.event_location_frame import EventLocationFrame
-from isp.Gui.Frames.synthetics_analysis_frame import SyntheticsAnalisysFrame
+from isp.Gui.Frames.synthetic_analysis_frame import SyntheticsAnalisysFrame
 from isp.Gui.Frames.data_download_tool import DataDownloadFrame
 from isp.Gui.Frames.realtime_frame import RealTimeFrame
 from isp.Gui.Frames.noise_frame import NoiseFrame
