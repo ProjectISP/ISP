@@ -103,15 +103,12 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=1, ncols=1)
-
         self.__map_coords()
-        # parameters = self.parameters.getParameters()
 
         parameters = []
         min_starttime = []
         max_endtime = []
-        choosen_color = []
-        selected_colors = []
+
 
         self.generationParams()
         if self.sortCB.isChecked():
@@ -125,8 +122,8 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
             sd = SeismogramDataAdvanced(file_path=None, stream=tr, realtime=True)
             tr = sd.get_waveform_advanced(parameters, self.inventory,
                                           filter_error_callback=self.filter_error_message, trace_number=0)
-
-            distance = stations_df.loc[index, 'Distance'] * 1e-3
+            distance = stations_df.loc[(stations_df['Network'] == tr.stats.network) &
+                                       (stations_df['Station'] == tr.stats.station), 'Distance'].values[0] * 1e-3
 
             if len(tr) > 0:
                 t = tr.times("matplotlib")
@@ -136,8 +133,10 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                     s = s * self.sizeSB.value() + distance
                 else:
                     s = s + index
-                self.canvas.plot_date(t, s, 0, clear_plot=False, color="black", fmt='-', alpha=0.5,
-                                      linewidth=0.5, label="")
+
+                label_trace = tr.stats.network+"."+tr.stats.station+"."+tr.stats.channel
+                self.canvas.plot_date(t, s, 0, clear_plot=False, fmt='-', alpha=0.5,
+                                      linewidth=0.5, label=label_trace)
 
                 try:
                     min_starttime.append(min(t))
@@ -320,7 +319,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                 if (trace.stats.network == station['Network'] and
                         trace.stats.station == station['Station']):
                     sorted_traces.append(trace)
-                    break  # Move to the next station after finding a match
+                    #break  # Move to the next station after finding a match
         return Stream(traces=sorted_traces)
 
     def get_phases_and_arrivals(self):
@@ -351,6 +350,8 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
         # Convert the list of dictionaries into a DataFrame
         travel_times_df = pd.DataFrame(travel_times)
+        # Remove duplicate rows
+        #travel_times_df_drop = travel_times_df.drop_duplicates(keep=False)
 
         return travel_times_df
 
