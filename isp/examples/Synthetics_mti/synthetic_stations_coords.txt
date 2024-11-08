@@ -1,0 +1,4 @@
+Latitude;Longitude;Network;Station
+35.8;-3.0;WM;ARNO
+36.9;-4.0;XX;OBS1
+37.2;-5.0;WM;SFS

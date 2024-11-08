@@ -863,3 +863,29 @@ class MseedUtil:
                     pick_times[id] = items
             return pick_times
 
+    @staticmethod
+    def get_stream(files_path: str, selection: dict):
+
+        traces = []
+
+        # List all files in the folder with full paths
+        files_in_directory = [os.path.join(files_path, f) for f in os.listdir(files_path) if
+                 os.path.isfile(os.path.join(files_path, f))]
+
+        for file in files_in_directory:
+            try:
+                tr = read(file)[0]
+                traces.append(tr)
+            except:
+                print(file, " not accepted as valid seismogram file")
+
+        # selection
+        if len(traces) > 0:
+            stream = Stream(traces)
+            stream.select(network=selection["network"], station=selection["station"], location=None,
+                          channel=selection["channel"], sampling_rate=None, npts=None,
+                          component=None, id=None, inventory=None)
+        else:
+            stream = []
+
+        return stream

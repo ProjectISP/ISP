@@ -300,8 +300,18 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.uncertainities.show()
 
     def run_process(self):
-        from isp.scripts.script import run_process as rp
-        st_new = rp(self.st)
+
+        from isp.scripts import run_process as rp
+
+        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        hypo_lat = self.event_info.latitude
+        hypo_lon = self.event_info.longitude
+        hypo_depth = self.event_info.depth
+        hypo_origin_time = self.event_info.event_time
+        rp(self.st, starttime=start_time, endtime=end_time, hypo_lat=hypo_lat, hypo_lon=hypo_lon,
+                    hypo_depth_km=hypo_depth, hypo_origin_time=hypo_origin_time)
+
 
     def new_project(self):
         self.loaded_project = False

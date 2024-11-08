@@ -249,6 +249,9 @@
                   </item>
                   <item row="1" column="1" colspan="4">
                    <widget class="QPushButton" name="filterProjectBtn">
+                    <property name="toolTip">
+                     <string>Filter the Project based on Nets, Stations and Channels. (Use valid wildcards)</string>
+                    </property>
                     <property name="text">
                      <string>Filter Project</string>
                     </property>
@@ -512,11 +515,11 @@
                   </item>
                   <item row="0" column="2">
                    <widget class="QPushButton" name="runScriptBtn">
+                    <property name="toolTip">
+                     <string>Run python scripts taking ObsPy Stream Waveforms, Start, End and Event Info. Example at ./isp/Scripts</string>
+                    </property>
                     <property name="text">
                      <string>Run Script</string>
-                    </property>
-                    <property name="shortcut">
-                     <string>Ctrl+D</string>
                     </property>
                    </widget>
                   </item>
@@ -615,6 +618,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="particleMotionBtn">
+               <property name="toolTip">
+                <string>Run Particle Motion of seismogram three components. Need to be trim to have same time reference and npts.</string>
+               </property>
                <property name="text">
                 <string>Particle Motion</string>
                </property>
@@ -643,6 +649,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Include autodecimation to 1 Hz and 5 Hz fro long span seismograms</string>
                </property>
                <property name="text">
                 <string>Fast View</string>
@@ -718,6 +727,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="phaseUncertaintyBtn">
+               <property name="toolTip">
+                <string>Open Associated phase picking uncertainty for earthquake location</string>
+               </property>
                <property name="text">
                 <string>Phase Uncertainty</string>
                </property>

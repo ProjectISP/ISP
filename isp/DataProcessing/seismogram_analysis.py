@@ -93,7 +93,7 @@ class SeismogramData:
 
 class SeismogramDataAdvanced:
 
-    def __init__(self, file_path, realtime = False, **kwargs):
+    def __init__(self, file_path, realtime=False, **kwargs):
 
         stream = kwargs.pop('stream', [])
 
@@ -112,7 +112,6 @@ class SeismogramDataAdvanced:
                 self.st.merge(fill_value="interpolate")
 
             self.__tracer = self.st[0]
-
 
         self.stats = TracerStats.from_dict(self.tracer.stats)
 

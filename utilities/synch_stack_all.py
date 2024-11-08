@@ -311,7 +311,7 @@ class SynchEnergy():
         header = {'b': 0, 'e': 1*(c/fs), 'npts': c, 'kstnm': tr_acausal.stats.station, 'kcmpnm': tr_acausal.stats.channel,
                    'stla': tr_acausal.stats.mseed['coordinates'][0], 'stlo': tr_acausal.stats.mseed['coordinates'][1],
                'evla': tr_acausal.stats.mseed['coordinates'][2], 'evlo': tr_acausal.stats.mseed['coordinates'][3], 'evdp': 0,
-                   'delta': 1.0, 'dist': tr_acausal.stats.mseed['geodetic'][0]*1E-3, 'baz':tr_acausal.stats.mseed['geodetic'][1],
+                   'delta': tr_acausal.stats.delta, 'dist': tr_acausal.stats.mseed['geodetic'][0]*1E-3, 'baz':tr_acausal.stats.mseed['geodetic'][1],
                    'az': tr_acausal.stats.mseed['geodetic'][2]}
 
         name = tr_acausal.stats.network + "." + tr_acausal.stats.station + "." + tr_acausal.stats.channel

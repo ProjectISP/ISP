@@ -6,7 +6,7 @@ from isp.Gui.Frames import BaseFrame, MessageDialog, CartopyCanvas
 import pandas as pd
 import os
 from PyQt5 import QtWidgets
-from obspy import UTCDateTime
+from obspy import UTCDateTime, read_events, Catalog
 
 from isp.seismogramInspector.signal_processing_advanced import find_nearest
 
@@ -42,6 +42,7 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
             self.cartopy_canvas.figure.subplots_adjust(left=0.00, bottom=0.055, right=0.97, top=0.920, wspace=0.0,
                                                        hspace=0.0)
             self.activated_colorbar = True
+            self.df_catalog = None
 
         def on_click_select_catalog_file(self, bind: BindPyqtObject):
             selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
@@ -50,17 +51,74 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
                 self.get_catalog()
 
         def get_catalog(self):
+
+            md = MessageDialog(self)
+            md.hide()
+
             try:
-                md = MessageDialog(self)
-                md.hide()
-                self.df_catalog = pd.read_csv(self.root_path_bind.value, sep=";")
-                self.set_catalog()
+                catalog = read_events(self.root_path_bind.value)
+                if isinstance(catalog, Catalog):
+                    print("File contains a valid ObsPy Catalog object. Extracting data...")
+                    self.df_catalog = self._extract_from_catalog(catalog)
+                    self.set_catalog()
+                else:
+                    self.df_catalog = pd.read_csv(self.root_path_bind.value, sep=";")
+                    self.set_catalog()
+
                 md.set_info_message("Catalog loaded succesfully!!!")
                 md.show()
 
             except:
-                md.set_error_message("Catalog coudn't be loade loaded")
+                md.set_error_message("Catalog coudn't be loaded!!!")
                 md.show()
+
+        def _extract_from_catalog(self, catalog):
+            # Initialize a list to store each event's data as a dictionary
+            events_data = {}
+            latitude_list = []
+            longitude_list = []
+            depth_list = []
+            event_date_list = []
+            event_time_list = []
+            mag_value_list = []
+            mag_type_list = []
+
+            for event in catalog:
+                # Extract latitude, longitude, depth, and origin time
+                origin = event.preferred_origin() or event.origins[0]
+                latitude = origin.latitude
+                latitude_list.append(latitude)
+                longitude = origin.longitude
+                longitude_list.append(longitude)
+                depth = origin.depth / 1000  # Convert depth to km
+                depth_list.append(depth)
+                # Format origin time
+                origin_time = origin.time.strftime("%d/%m/%YTT%H:%M:%S")
+                event_date = origin_time.split("TT")[0]
+                event_time = origin_time.split("TT")[1]
+                event_date_list.append(event_date)
+                event_time_list.append(event_time)
+                # Extract magnitude and magnitude type
+                magnitude = event.preferred_magnitude() or event.magnitudes[0]
+                mag_value = magnitude.mag
+                mag_value_list.append(mag_value)
+                mag_type = magnitude.magnitude_type
+                mag_type_list.append(mag_type)
+
+            # Store event data as a dictionary
+            event_data = {
+                "Latitude": latitude_list,
+                "Longitude": longitude_list,
+                "Depth": depth_list,
+                "Magnitude": mag_value_list,
+                "mag_type": mag_type_list,
+                "Date": event_date_list,
+                "Time": event_time_list
+            }
+                #events_data.append(event_data)
+
+            # Convert the list of dictionaries to a DataFrame
+            return pd.DataFrame(event_data)
 
         def set_catalog(self):
             latitudes = []
