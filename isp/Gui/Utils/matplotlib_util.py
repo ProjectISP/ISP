@@ -74,6 +74,7 @@ class CollectionLassoSelector(pyc.QObject):
         self.selected_color = selected_color
         self.xys = collection.get_offsets()
         self.Npts = len(self.xys)
+        self.alpha_other = 0.3
 
         # Ensure that we have separate colors for each object
         self.fc = collection.get_facecolors()
@@ -82,19 +83,20 @@ class CollectionLassoSelector(pyc.QObject):
         elif len(self.fc) == 1:
             self.fc = np.tile(self.fc, (self.Npts, 1))
         self.original_fc = np.copy(self.fc)
-        self.lasso = LassoSelector(ax, onselect=self.on_select)
+        self.lasso = LassoSelector(ax, onselect=self.on_select, useblit=True)
         self.ind = []
 
     def on_select(self, verts):
         path = Path(verts)
+
         indexes = np.nonzero(path.contains_points(self.xys))[0]
         if len(self.ind) == 0 or pw.QApplication.keyboardModifiers() != qt.ControlModifier:
             self.ind = indexes
         else:
             self.ind = np.unique(np.concatenate((self.ind, indexes)))
 
-        self.fc = np.copy(self.original_fc)
-        self.fc[self.ind] = self.selected_color
+        self.fc[:, -1] = self.alpha_other
+        self.fc[self.ind, -1] = 1
         self.collection.set_facecolors(self.fc)
         self.canvas.draw_idle()
         self.selection_changed.emit()

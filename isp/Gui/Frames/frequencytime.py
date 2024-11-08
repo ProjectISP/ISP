@@ -1,3 +1,4 @@
+import gc
 import pickle
 from scipy.signal import find_peaks
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
@@ -265,11 +266,25 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         return dist
 
 
+    def _clean_lasso(self):
+
+        if len(self.selectors_group_vel) > 0:
+            del self.selectors_group_vel
+            gc.collect()
+
+        if len(self.selectors_phase_vel) > 0:
+            del self.selectors_phase_vel
+            gc.collect()
+
+        self.selectors_group_vel = []
+        self.selectors_phase_vel = []
+
+
     #@AsycTime.run_async()
     def plot_seismogram(self):
-
         self.period_grp = []
         self.group_vel_def = []
+        self._clean_lasso()
 
         modes = ["fundamental", "first", "second"]
         feature = ["-.","-",  "--"]
@@ -601,6 +616,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
     #
         self.canvas_plot1.set_xlabel(0, "Period (s)")
         self.canvas_plot1.set_ylabel(0, "Phase Velocity (km/s)")
+
 
 
     def phase_velocity(self):
