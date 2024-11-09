@@ -882,10 +882,10 @@ class MseedUtil:
         # selection
         if len(traces) > 0:
             stream = Stream(traces)
-            stream.select(network=selection["network"], station=selection["station"], location=None,
+            stream_selected = stream.select(network=selection["network"], station=selection["station"], location=None,
                           channel=selection["channel"], sampling_rate=None, npts=None,
                           component=None, id=None, inventory=None)
         else:
-            stream = []
+            stream_selected = []
 
-        return stream
+        return stream_selected

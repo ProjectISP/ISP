@@ -7,7 +7,6 @@ mseed2sac
 """
 
 
-import numpy as np
 import os
 from obspy import read, read_inventory
 from obspy.geodetics import gps2dist_azimuth
@@ -31,26 +30,36 @@ def sac_mapping(folder_path, output_path, hipo: dict, metadata_path:str):
             lon_sta = station_coordinates['longitude']
             dist, bazim, azim = gps2dist_azimuth(lat_sta, lon_sta, latitude,
                                                  longitude)
-            # tr1.plot()
+
+            # SAC header requires start time components
+            starttime = tr.stats.starttime
+            year = starttime.year
+            julday = starttime.julday
+            hour = starttime.hour
+            minute = starttime.minute
+            second = starttime.second
+            msec = int(starttime.microsecond / 1000)  # Convert microseconds to milliseconds
+
             N = len(tr.data)
-            starttime=tr.stats.starttime
-            endtime=tr.stats.endtime
+            header = {
+                'b': 0, 'npts': N, 'kstnm': tr.stats.station,
+                'kcmpnm': tr.stats.channel,
+                'stla': lat_sta, 'stlo': lon_sta,
+                'evla': latitude, 'evlo': longitude,
+                'evdp': depth_km,
+                'delta': tr.stats.delta, 'dist': dist * 1E-3,
+                'baz': bazim, 'az': azim,
+                'nzyear': year, 'nzjday': julday,
+                'nzhour': hour, 'nzmin': minute,
+                'nzsec': second, 'nzmsec': msec
+            }
 
+            # Create a unique SAC file name
+            name = f"{tr.stats.network}.{tr.stats.station}.{tr.stats.channel}.{julday}.{year}"
+            path = os.path.join(output_path, name + ".sac")
 
-            header = {'b': 0,'npts': N, 'kstnm': tr.stats.station,
-                      'kcmpnm': tr.stats.channel,
-                      'stla': lat_sta, 'stlo': lon_sta,
-                      'evla': latitude, 'evlo': longitude,
-                      'evdp': depth_km,
-                      'delta': tr.stats.delta, 'dist': dist * 1E-3,
-                      'baz': bazim,
-                      'az': azim}
-            julday = tr.stats.starttime.julday
-            year = tr.stats.starttime.year
-            name = tr.stats.network + "." + tr.stats.station + "." + tr.stats.channel+"."+str(julday)+\
-                   "."+str(julday)
+            # Create SACTrace object and write to file
             sac = SACTrace(data=tr.data, **header)
-            path = os.path.join(output_path, name + "." + "sac")
             sac.write(path, byteorder='little', flush_headers=True)
 
         except:
@@ -58,8 +67,8 @@ def sac_mapping(folder_path, output_path, hipo: dict, metadata_path:str):
 
 
 metadata_path = '/Volumes/LaCie/UPFLOW_5HZ/metadata_upflow/meta.xml'
-files_path = '/Volumes/LaCie/surface_waves/FK_test/E2'
-output_path = '/Volumes/LaCie/surface_waves/FK_test/sac'
+files_path = '/Volumes/LaCie/surface_waves/FK_test/E2_full'
+output_path = '/Volumes/LaCie/surface_waves/FK_test/Ev2_sac'
 
 # coords ={}
 # coords["latitude"] = 55.36

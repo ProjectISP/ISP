@@ -1,6 +1,7 @@
 import pandas as pd
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Frames import UiSyntheticsGeneratorDialog, SettingsLoader, MessageDialog
+from isp.Gui.Frames.line_stations import CreateLineStations
 from isp.Gui.Utils.pyqt_utils import add_save_load
 from PyQt5 import QtWidgets
 from obspy.clients.syngine import Client
@@ -30,6 +31,7 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
         self.progress_dialog.setWindowTitle(self.windowTitle())
         self.progress_dialog.close()
         self._client = Client()
+        self.open_create_line_stations = CreateLineStations(self)
 
 
         try:
@@ -51,6 +53,8 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
         self.buttonBox.clicked.connect(self._buttonBoxClicked)
         self.loadFileBtn.clicked.connect(self.load_stations)
         self.plotMapBtn.clicked.connect(self.plot_map_stations)
+        self.createLineStationsBtn.clicked.connect(lambda: self.open_create_line_stations.show())
+
         # TODO Add inventory for selecting stations database location.
        
     def closeEvent(self, ce):
@@ -193,6 +197,9 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
 
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', qt.QueuedConnection)
         return st
+
+    def open_create_line_stations(self):
+        pass
 
     def load_stations(self):
         selected = pw.QFileDialog.getOpenFileName(self, "Select Stations Coordinates file")

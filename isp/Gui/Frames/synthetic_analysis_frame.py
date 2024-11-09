@@ -1,10 +1,9 @@
 import os
 import pickle
 from concurrent.futures import ThreadPoolExecutor
-from obspy.geodetics import gps2dist_azimuth, locations2degrees
+from obspy.geodetics import gps2dist_azimuth
 from obspy import Stream, UTCDateTime
 from obspy.taup import TauPyModel
-import random
 from isp.DataProcessing import SeismogramDataAdvanced
 from isp.Gui import pw, pqg, pyc, qt
 from isp.Gui.Frames import UiSyntheticsAnalisysFrame, MatplotlibCanvas, CartopyCanvas, FocCanvas
@@ -13,7 +12,7 @@ from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.synthetics_generator_dialog import SyntheticsGeneratorDialog
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
 from sys import platform
-from isp.Utils import MseedUtil, ObspyUtil
+from isp.Utils import MseedUtil
 import pandas as pd
 import numpy as np
 import matplotlib.dates as mdt
@@ -230,7 +229,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         if self.channelLE.text() != "":
             selection["channel"] = self.channelLE.text()
         else:
-            selection["channel"] = self.channelLE.text()
+            selection["channel"] = "*"
         stream = MseedUtil.get_stream(dir_path, selection=selection)
         pyc.QMetaObject.invokeMethod(self.progressbar, 'accept', qt.AutoConnection)
         return stream
@@ -280,9 +279,24 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
             if 'sourcemomenttensor' in self.params:
                 self.paramsTextEdit.appendPlainText("Source: {source}".format(source=self.params['sourcemomenttensor']))
 
+
+    def _get_stations(self):
+
+        self._stations = []
+        for treace in self.stream:
+            station = treace.stats.station
+            if station not in self._stations:
+                self._stations.append(station)
+
+
     def sort_traces(self):
 
         stations_df = pd.read_csv(self.stations_coords_path_bind.value, delimiter=';')
+        self._get_stations()
+
+        # Filter travel_times_df to include only rows where 'Station' is in the available_stations list
+        stations_df = stations_df[stations_df['Station'].isin(self._stations)]
+
         with open(self.generation_params_bind.value, 'rb') as f:
             self.params = pickle.load(f)
 
@@ -326,6 +340,9 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
         travel_times = []
         stations_df = pd.read_csv(self.stations_coords_path_bind.value, delimiter=';')
+        # Filter travel_times_df to include only rows where 'Station' is in the available_stations list
+        stations_df = stations_df[stations_df['Station'].isin(self._stations)]
+
         stations_df['Distance'] = stations_df.apply(self._calculate_distance, axis=1)
         stations_df = stations_df.sort_values(by='Distance').reset_index(drop=True)
 

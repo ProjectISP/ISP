@@ -120,6 +120,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="createLineStationsBtn">
+         <property name="text">
+          <string>Create Line Stations</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="pushButtonRemStation">
          <property name="text">
           <string> Remove Station </string>
