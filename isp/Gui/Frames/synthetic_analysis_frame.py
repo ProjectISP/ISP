@@ -68,6 +68,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
         self.readFilesBtn.clicked.connect(lambda: self.get_now_files())
         self.stationsBtn.clicked.connect(self.stationsInfo)
+        self.PABtn.clicked.connect(self.plotArrivals)
         ###
 
     def filter_error_message(self, msg):
@@ -95,7 +96,6 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         :param value: The path of the new directory.
         :return:
         """
-        # self.read_files(value)
         pass
 
     def plot(self):
@@ -108,19 +108,16 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         min_starttime = []
         max_endtime = []
 
-
         self.generationParams()
         if self.sortCB.isChecked():
             stations_df = self.sort_traces()
-
-        if self.sortCB.isChecked():
-            travel_times_df = self.get_phases_and_arrivals()
 
         for index, tr in enumerate(self.stream):
 
             sd = SeismogramDataAdvanced(file_path=None, stream=tr, realtime=True)
             tr = sd.get_waveform_advanced(parameters, self.inventory,
                                           filter_error_callback=self.filter_error_message, trace_number=0)
+
             distance = stations_df.loc[(stations_df['Network'] == tr.stats.network) &
                                        (stations_df['Station'] == tr.stats.station), 'Distance'].values[0] * 1e-3
 
@@ -143,8 +140,27 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                 except:
                     print("Empty traces")
 
-        # Now Plot the traveltimes
+        try:
+            if min_starttime and max_endtime is not None:
+                auto_start = min(min_starttime)
+                auto_end = max(max_endtime)
+                self.auto_start = auto_start
+                self.auto_end = auto_end
 
+            ax = self.canvas.get_axe(0)
+            ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(0, "Date")
+            self.canvas.set_ylabel(0, "Distance [km]")
+            ax.legend()
+        except:
+            pass
+
+
+    def plotArrivals(self):
+
+        travel_times_df = self.get_phases_and_arrivals()
         if isinstance(travel_times_df, pd.DataFrame):
 
             # Applying specific filter
@@ -183,23 +199,8 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                     phases_plot.append(phase)
 
                 print("------------------")
-
-        try:
-            if min_starttime and max_endtime is not None:
-                auto_start = min(min_starttime)
-                auto_end = max(max_endtime)
-                self.auto_start = auto_start
-                self.auto_end = auto_end
-
             ax = self.canvas.get_axe(0)
-            ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
-            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
-            ax.xaxis.set_major_formatter(formatter)
-            self.canvas.set_xlabel(0, "Date")
-            self.canvas.set_ylabel(0, "Distance [km]")
             ax.legend()
-        except:
-            pass
 
     def _get_unique_phases(self, group_df: pd.DataFrame) -> dict:
 
@@ -400,9 +401,6 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
                 elif key == "longitude":
                     lon = params["bulk"][j][key]
-
-                #elif key == "networkcode":
-                #    net = params["bulk"][j][key]
 
                 elif key == "stationcode":
                     sta = params["bulk"][j][key]
