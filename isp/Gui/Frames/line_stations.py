@@ -49,7 +49,7 @@ class CreateLineStations(pw.QDialog, UiLineStations):
 
             # Create a DataFrame to store the latitude and longitude points
             df = pd.DataFrame(columns=['Latitude', 'Longitude'])
-
+            test = self.latDB.value()
             # Define the starting point
             starting_point = wgs84.GeoPoint(latitude=self.latDB.value(), longitude=self.lonDB.value(), degrees=True)
 
@@ -61,12 +61,12 @@ class CreateLineStations(pw.QDialog, UiLineStations):
                 distance = self.shift_distance.value() + i * self.inter_station.value()
 
                 # Move the point by azimuth and distance from the starting point
-                new_point = starting_point.displace(distance=distance*1e3, azimuth=self.azimuth.value(), degrees=True)
+                new_point, _azimuthb = starting_point.displace(distance=distance*1e3, azimuth=self.azimuth.value(), degrees=True)
 
                 # Append the coordinates to the DataFrame
                 df = df.append({
-                    'Latitude': new_point[0].latitude,
-                    'Longitude': new_point[0].longitude,
+                    'Latitude': new_point.latitude_deg,
+                    'Longitude': new_point.longitude_deg,
                     'Network': network,
                     'Station': sta+str(i)
                 }, ignore_index=True)
