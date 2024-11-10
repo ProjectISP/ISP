@@ -193,13 +193,6 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QPushButton" name="stationsCoordsBtn">
-           <property name="text">
-            <string>Stations Coords</string>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="0">
           <widget class="QPushButton" name="selectDirBtn">
            <property name="sizePolicy">
@@ -226,10 +219,53 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="4" rowspan="4">
+         <item row="2" column="0">
+          <widget class="QPushButton" name="stationsCoordsBtn">
+           <property name="text">
+            <string>Stations Coords</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="5" rowspan="4">
           <widget class="QPlainTextEdit" name="paramsTextEdit"/>
          </item>
-         <item row="0" column="2" colspan="2">
+         <item row="2" column="1" colspan="4">
+          <widget class="QLineEdit" name="stationscoordsPathForm">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1" colspan="4">
+          <widget class="QLineEdit" name="paramsPathLineEdit">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="4">
+          <widget class="QWidget" name="gridWidget_6" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_6">
+            <property name="verticalSpacing">
+             <number>6</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QPushButton" name="mapBtn">
+              <property name="text">
+               <string>Map</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="0" column="2" colspan="3">
           <widget class="QLineEdit" name="rootPathForm">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -248,47 +284,18 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="1" colspan="3">
-          <widget class="QLineEdit" name="paramsPathLineEdit">
+         <item row="3" column="0">
+          <widget class="QPushButton" name="stationsBtn">
            <property name="text">
-            <string/>
+            <string>Stations Info</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="1" colspan="3">
-          <widget class="QLineEdit" name="stationscoordsPathForm">
+         <item row="3" column="1">
+          <widget class="QPushButton" name="spectrumBtn">
            <property name="text">
-            <string/>
+            <string>Spectrums</string>
            </property>
-          </widget>
-         </item>
-         <item row="3" column="3">
-          <widget class="QWidget" name="gridWidget_6" native="true">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <layout class="QGridLayout" name="gridLayout_6">
-            <property name="verticalSpacing">
-             <number>6</number>
-            </property>
-            <item row="0" column="2" colspan="2">
-             <widget class="QPushButton" name="plotBtn">
-              <property name="text">
-               <string>Plot</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="4">
-             <widget class="QPushButton" name="mapBtn">
-              <property name="text">
-               <string>Map</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
           </widget>
          </item>
          <item row="3" column="2">
@@ -304,10 +311,10 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0" colspan="2">
-          <widget class="QPushButton" name="stationsBtn">
+         <item row="3" column="3">
+          <widget class="QPushButton" name="plotBtn">
            <property name="text">
-            <string>Station Info</string>
+            <string>Plot</string>
            </property>
           </widget>
          </item>

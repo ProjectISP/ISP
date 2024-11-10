@@ -120,6 +120,28 @@ class PlotToolsManager:
             plt.legend()
         self.mpf.show()
 
+    def plot_spectrum_stream(self, stream):
+        import matplotlib.pyplot as plt
+        from isp.Gui.Frames import MatplotlibFrame
+        fig, ax1 = plt.subplots(figsize=(6, 6))
+        self.mpf = MatplotlibFrame(fig, window_title="Amplitude spectrum comparison")
+
+        for tr in stream:
+            data = tr.data
+            delta = tr.stats.delta
+            sta = tr.stats.station
+            [spec, freq, jackknife_errors] = spectrumelement(data, delta, sta)
+            info = "{}.{}.{}".format(tr.stats.network, tr.stats.station, tr.stats.channel)
+            ax1.loglog(freq, spec, linewidth=1.0, alpha=0.5, label=info)
+            ax1.frequencies = freq
+            ax1.spectrum = spec
+            ax1.set_ylim(spec.min() / 10.0, spec.max() * 100.0)
+            plt.ylabel('Amplitude')
+            plt.xlabel('Frequency [Hz]')
+            plt.grid(True, which="both", ls="-", color='grey')
+            plt.legend()
+        self.mpf.show()
+
 
 
 
