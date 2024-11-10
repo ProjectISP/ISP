@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Frames import UiSyntheticsGeneratorDialog, SettingsLoader, MessageDialog
@@ -7,7 +8,6 @@ from PyQt5 import QtWidgets
 from obspy.clients.syngine import Client
 from concurrent.futures.thread import ThreadPoolExecutor
 import os
-import pickle
 from sys import platform
 from datetime import datetime
 from isp.earthquakeAnalisysis.stations_map import StationsMap
@@ -105,16 +105,31 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
                                            message)
                     return
 
-            params = {"model" : self.comboBoxModels.currentText(),
-                      "bulk" : bulk,
-                      "sourcelatitude" : self.doubleSBSrcLat.value(),
-                      "sourcelongitude" : self.doubleSBSrcLon.value(),
-                      "sourcedepthinmeters" : self.doubleSBDep.value(),
-                      "units": self.unitsCB.currentText(),
-                      "origintime" : self.dateTimeEditOrigin.dateTime().toPyDateTime(),
-                      "starttime" : self.dateTimeEditStart.dateTime().toPyDateTime(),
-                      "endtime" : self.dateTimeEditEnd.dateTime().toPyDateTime(),
-                      "format" : "miniseed"}
+            # params = {"model" : self.comboBoxModels.currentText(),
+            #           "bulk" : bulk,
+            #           "sourcelatitude" : self.doubleSBSrcLat.value(),
+            #           "sourcelongitude" : self.doubleSBSrcLon.value(),
+            #           "sourcedepthinmeters" : self.doubleSBDep.value(),
+            #           "units": self.unitsCB.currentText(),
+            #           "origintime" : self.dateTimeEditOrigin.dateTime().toPyDateTime(),
+            #           "starttime" : self.dateTimeEditStart.dateTime().toPyDateTime(),
+            #           "endtime" : self.dateTimeEditEnd.dateTime().toPyDateTime(),
+            #           "format" : "miniseed"}
+
+            # Example dictionary with your provided data structure
+            params = {
+                "model": self.comboBoxModels.currentText(),
+                "bulk": bulk,
+                "sourcelatitude": self.doubleSBSrcLat.value(),
+                "sourcelongitude": self.doubleSBSrcLon.value(),
+                "sourcedepthinmeters": self.doubleSBDep.value(),
+                "units": self.unitsCB.currentText(),
+                "origintime": self.dateTimeEditOrigin.dateTime().toPyDateTime().isoformat(),
+                "starttime": self.dateTimeEditStart.dateTime().toPyDateTime().isoformat(),
+                "endtime": self.dateTimeEditEnd.dateTime().toPyDateTime().isoformat(),
+                "format": "miniseed"
+            }
+
 
             if self.radioButtonMT.isChecked() :
                 mrr_str = self.lineEditMrr.text()
@@ -179,9 +194,21 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
                         path_output = os.path.join(dir_path, tr.id)
                         tr.write(path_output, format="MSEED")
                     current = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-                    name = 'generation_params' + current + '.pkl'
-                    with open(os.path.join(dir_path, name), 'wb') as f:
-                        pickle.dump(params, f)
+                    name = 'generation_params' + current + '.json'
+
+                    # Convert the dictionary to JSON and save to a file
+                    with open(os.path.join(dir_path, name), 'w') as json_file:
+                        json.dump(params, json_file, indent=4)
+
+                    # with open(os.path.join(dir_path, name), 'wb') as f:
+                    #     pickle.dump(params, f)
+                    # save coordintates files at path
+                    _, coords = self.__extract_table_data()
+
+                    df = pd.DataFrame(coords, columns=["Latitude", "Longitude", "Network", "Station"])
+                    coords_path = os.path.join(dir_path, 'coordinates.txt')
+                    # Save to CSV
+                    df.to_csv(coords_path, index=False, sep=";")
 
                     self.save_values()
 
@@ -249,7 +276,7 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
 
     def plot_map_stations(self):
 
-        stations_coords = self.__extract_table_data()
+        stations_coords,_ = self.__extract_table_data()
 
         if len(stations_coords)>0:
             try:
@@ -279,6 +306,12 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
         rows = self.tableWidget.rowCount()
         columns = self.tableWidget.columnCount()
 
+        coords = {}
+        coords['Latitude'] = []
+        coords['Longitude'] = []
+        coords['Network'] = []
+        coords['Station'] = []
+
         # Check that the table has 4 columns
         if columns != 4:
             raise ValueError("Table does not have exactly 4 columns.")
@@ -300,17 +333,21 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
 
                 # Add the cell data to the row_data dictionary with column keys
                 row_data[f'column_{col + 1}'] = cell_data
-                if col ==0:
+                if col == 0:
                     row_data['Latitude'] = cell_data
-                elif col ==1:
+                    coords['Latitude'].append(cell_data)
+                elif col == 1:
                     row_data['Longitude'] = cell_data
+                    coords['Longitude'].append(cell_data)
                 elif col == 2:
                     row_data['Network'] = cell_data
+                    coords['Network'].append(cell_data)
                 elif col == 3:
                     row_data['Station'] = cell_data
+                    coords['Station'].append(cell_data)
 
             # Append the row_data to table_data
             table_data.append(row_data)
         print(table_data)
 
-        return table_data
+        return table_data, coords

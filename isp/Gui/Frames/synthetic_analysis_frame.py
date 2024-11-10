@@ -1,5 +1,5 @@
+import json
 import os
-import pickle
 from concurrent.futures import ThreadPoolExecutor
 from obspy.geodetics import gps2dist_azimuth
 from obspy import Stream, UTCDateTime
@@ -69,6 +69,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         self.readFilesBtn.clicked.connect(lambda: self.get_now_files())
         self.stationsBtn.clicked.connect(self.stationsInfo)
         self.PABtn.clicked.connect(self.plotArrivals)
+        self.mapBtn.clicked.connect(self.map_coords)
         ###
 
     def filter_error_message(self, msg):
@@ -102,7 +103,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=1, ncols=1)
-        self.__map_coords()
+        #self.__map_coords()
 
         parameters = []
         min_starttime = []
@@ -264,7 +265,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
     def generationParams(self):
         with open(self.generation_params_bind.value, 'rb') as f:
-            self.params = pickle.load(f)
+            self.params = json.load(f)
             depth_est = self.params['sourcedepthinmeters']
             depth_est = (float(depth_est)) / 1000
             # self.paramsTextEdit.setPlainText(str(params))
@@ -299,7 +300,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         stations_df = stations_df[stations_df['Station'].isin(self._stations)]
 
         with open(self.generation_params_bind.value, 'rb') as f:
-            self.params = pickle.load(f)
+            self.params = json.load(f)
 
         if self.sortbyCB.currentText() == "Distance":
             stations_df['Distance'] = stations_df.apply(self._calculate_distance, axis=1)
@@ -348,7 +349,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         stations_df = stations_df.sort_values(by='Distance').reset_index(drop=True)
 
         with open(self.generation_params_bind.value, 'rb') as f:
-            self.params = pickle.load(f)
+            self.params = json.load(f)
             depth_est = self.params['sourcedepthinmeters']
             depth_est = (float(depth_est)) / 1000
 
@@ -385,12 +386,13 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         self._stations_info = StationsInfo(sd)
         self._stations_info.show()
 
-    def __map_coords(self):
+    def map_coords(self):
+
         map_dict = {}
         sd = []
 
         with open(self.generation_params_bind.value, 'rb') as f:
-            params = pickle.load(f)
+            params = json.load(f)
 
         n = len(params["bulk"])
         for j in range(n):
@@ -409,10 +411,13 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                     map_dict[sta] = [lon, lat]
 
 
-        self.cartopy_canvas.plot_map(params['sourcelongitude'], params['sourcelatitude'], 0, 0, 0, 0,
-                                     resolution='low', stations=map_dict)
+        self.cartopy_canvas.plot_map(params['sourcelongitude'], params['sourcelatitude'],
+                                     0, 0, 0, 0, resolution='low',
+                                     stations=map_dict)
 
         if 'sourcedoublecouple' in params:
             self.focmec_canvas.drawSynthFocMec(0, first_polarity=params['sourcedoublecouple'], mti = [])
         if 'sourcemomenttensor' in params:
             self.focmec_canvas.drawSynthFocMec(0, first_polarity= [], mti=params['sourcemomenttensor'])
+
+        self.tabWidget.setCurrentIndex(1)

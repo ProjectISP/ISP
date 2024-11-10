@@ -1071,7 +1071,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         # ymax = int(y+4)
         xmin = min([x, min_lon])-1
         xmax = max([x, max_lon]) + 1
-        ymin = max([y, min_lat]) - 1
+        ymin = min([y, min_lat]) - 1
         ymax = max([y, max_lat]) + 1
         extent = [xmin, xmax, ymin, ymax]
 
