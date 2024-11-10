@@ -1,8 +1,7 @@
 from isp.Gui.Frames import BaseFrame, UiPPSDs
 from isp.Gui.Frames.ppsds_db_frame import PPSDsGeneratorDialog
 import isp.receiverfunctions.rf_dialogs as dialogs # using save_figure dialog
-
-from PyQt5 import uic, QtGui, QtCore, QtWidgets
+from PyQt5 import QtWidgets
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import io
@@ -11,7 +10,6 @@ import numpy as np
 import obspy.imaging.cm
 import obspy.signal.spectral_estimation as osse
 from functools import partial
-import copy
 from obspy.signal.spectral_estimation import earthquake_models
 from matplotlib.patheffects import withStroke
 from isp.Gui.Frames import MessageDialog
@@ -85,8 +83,7 @@ class PPSDFrame(BaseFrame, UiPPSDs):
         stations_per_page = self.spinBox.value()
         #mode = self.comboBox.currentText() # NOT YET IMPLEMENTED
         
-        self.mplwidget.figure.clf()  
-
+        self.mplwidget.figure.clf()
         # Retrieve selected stations from the tableWidget
         selected_ppsds = self.tableWidget.selectedItems()
         
@@ -121,8 +118,10 @@ class PPSDFrame(BaseFrame, UiPPSDs):
         # Initialize the plot with the necessary number of axes
         gs = gridspec.GridSpec(stations_per_page, 3)
         gs.update(left=0.10, right=0.95, top=0.95, bottom=0.075, hspace=0.35, wspace=0.35)
+
         for i in range(stations_per_page*3):
-            self.mplwidget.figure.add_subplot(gs[i])                    
+            self.mplwidget.figure.add_subplot(gs[i])
+
 
         # If necessary populate the page combobox
         try:
@@ -176,7 +175,8 @@ class PPSDFrame(BaseFrame, UiPPSDs):
                     meshgrid = np.meshgrid(xedges, yedges)
                     mode = ppsd.db_bin_centers[ppsd._current_hist_stack.argmax(axis=1)]
 
-                    self.mplwidget.figure.axes[j + c].pcolormesh(meshgrid[0], meshgrid[1], zdata.T, cmap=obspy.imaging.cm.pqlx)
+                    pcolor = self.mplwidget.figure.axes[j + c].pcolormesh(meshgrid[0], meshgrid[1], zdata.T,
+                                                                          cmap=obspy.imaging.cm.pqlx)
                     self.mplwidget.figure.axes[j + c].set_xscale("log")
 
                     #self.mplwidget.figure.axes[j + c].plot(ppsd.period_bin_centers, mode, color='black', linewidth=2, linestyle='--', label="Mode")
@@ -188,6 +188,14 @@ class PPSDFrame(BaseFrame, UiPPSDs):
                     
                     self.plot_statistics(self.mplwidget.figure.axes[j + c], ppsd)
                     self.mplwidget.figure.axes[j + c].set_xlim(0.02, 120)
+
+                    sum_check = j+c
+
+                    if sum_check == 2 or sum_check == 5 or sum_check == 8:
+                        cbar = self.mplwidget.figure.colorbar(pcolor, ax=self.mplwidget.figure.axes[sum_check],
+                                                              orientation='vertical', fraction=0.05, pad=0.05)
+                        cbar.set_label("Probability [%]")
+
                 
                 elif plot_mode == "variation":
                     variation = self.comboBox.currentText()
@@ -226,10 +234,21 @@ class PPSDFrame(BaseFrame, UiPPSDs):
                         x = ppsd.period_bin_centers
                         y = np.arange(1, 25, 1)
     
-                        self.mplwidget.figure.axes[j + c].contourf(y, x, np.array(modes).T, cmap=obspy.imaging.cm.pqlx, levels=200)
+                        contour = self.mplwidget.figure.axes[j + c].contourf(y, x, np.array(modes).T, cmap=obspy.imaging.cm.pqlx,
+                                                                   levels=200)
+
+
                         self.mplwidget.figure.axes[j + c].set_xlabel("GMT Hour")
                         self.mplwidget.figure.axes[j + c].set_ylabel("Period (s)")
                         self.mplwidget.figure.axes[j + c].set_ylim(0.02, 120)
+
+                        sum_check = j + c
+
+                        if sum_check == 2 or sum_check == 5 or sum_check == 8:
+                            cbar = self.mplwidget.figure.colorbar(contour, ax=self.mplwidget.figure.axes[sum_check],
+                                                                  orientation='vertical', fraction=0.05, pad=0.05)
+                            cbar.set_label("Power [db]")
+
                     elif variation == "Seasonal":
                         # Create blank 2D histogram for each hour
                         hist_dict = {}
@@ -264,11 +283,18 @@ class PPSDFrame(BaseFrame, UiPPSDs):
                         x = ppsd.period_bin_centers
                         y = np.arange(1, 13, 1)
 
-                        self.mplwidget.figure.axes[j + c].contourf(y, x, np.array(modes).T, cmap=obspy.imaging.cm.pqlx, levels=200)
+                        contour = self.mplwidget.figure.axes[j + c].contourf(y, x, np.array(modes).T, cmap=obspy.imaging.cm.pqlx, levels=200)
                         self.mplwidget.figure.axes[j + c].set_xlabel("Month")
                         self.mplwidget.figure.axes[j + c].set_ylabel("Period (s)")
                         self.mplwidget.figure.axes[j + c].set_ylim(0.02, 120)
                         self.mplwidget.figure.axes[j + c].set_xlim(1, 12)
+
+                        sum_check = j + c
+
+                        if sum_check == 2 or sum_check == 5 or sum_check == 8:
+                            cbar = self.mplwidget.figure.colorbar(contour, ax=self.mplwidget.figure.axes[sum_check],
+                                                                  orientation='vertical', fraction=0.05, pad=0.05)
+                            cbar.set_label("Power [db]")
 
                 self.mplwidget.figure.axes[j + c].set_title(chnm, fontsize=9, fontweight="medium")
 
@@ -289,10 +315,20 @@ class PPSDFrame(BaseFrame, UiPPSDs):
         if j < stations_per_page*3:
             for m in range(j, stations_per_page*3):
                 self.mplwidget.figure.axes[m].set_axis_off()
-                
-                
-            
+
+        if stations_per_page == 1:
+            self.mplwidget.figure.set_size_inches(11, 4)
+
+        elif stations_per_page == 2:
+            self.mplwidget.figure.set_size_inches(11, 6)
+
+        if stations_per_page == 3:
+            self.mplwidget.figure.set_size_inches(11, 8)
+
+        self.mplwidget.figure.set_constrained_layout(True)
         self.mplwidget.figure.canvas.draw()
+
+
     
     def plot_statistics(self, axis, ppsd):
         if self.checkBox.isChecked():
