@@ -1,5 +1,6 @@
 import json
 import pandas as pd
+from PyQt5.QtCore import pyqtSlot
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Frames import UiSyntheticsGeneratorDialog, SettingsLoader, MessageDialog
 from isp.Gui.Frames.line_stations import CreateLineStations
@@ -31,15 +32,16 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
         self.progress_dialog.setWindowTitle(self.windowTitle())
         self.progress_dialog.close()
         self._client = Client()
+
         self.open_create_line_stations = CreateLineStations(self)
+        self.open_create_line_stations.signal.connect(self.slot)
 
-
-        try:
+        #try:
             # apparently ocassionally is not working # 29-10-2024
-            self.comboBoxModels.addItems(self._client.get_available_models().keys())
-        except:
+            # self.comboBoxModels.addItems(self._client.get_available_models().keys())
+        #except:
+        #    print("Coudn't load available models set ak135 5s instead")
 
-            print("Coudn't load available models set ak135 5s instead")
         self.radioButtonMT.toggled.connect(self._buttonMTFPClicked)
         self.radioButtonMT.setChecked(True)
         self._buttonMTFPClicked(True)
@@ -56,7 +58,25 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
         self.createLineStationsBtn.clicked.connect(lambda: self.open_create_line_stations.show())
 
         # TODO Add inventory for selecting stations database location.
-       
+
+    @pyqtSlot(pd.DataFrame)
+    def slot(self, df):
+        self.tableWidget.clearContents()
+        # Update the row count based on data length
+        #rows, columns = df.shape
+        self.tableWidget.setRowCount(0)
+        print("Loading Line Coordinates")
+        for index, station in df.iterrows():
+            lat = station["Latitude"]
+            lon = station["Longitude"]
+            network = station["Network"]
+            station = station["Station"]
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QtWidgets.QTableWidgetItem(str(lat)))
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QtWidgets.QTableWidgetItem(str(lon)))
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QtWidgets.QTableWidgetItem(str(network)))
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem(str(station)))
+
     def closeEvent(self, ce):
         self.load_values()
 
@@ -232,6 +252,9 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
         selected = pw.QFileDialog.getOpenFileName(self, "Select Stations Coordinates file")
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
             df_stations = pd.read_csv(selected[0], sep=";")
+            self.tableWidget.clearContents()
+            # Update the row count based on data length
+            self.tableWidget.setRowCount(0)
             for index, station in df_stations.iterrows():
                 lat = station["Latitude"]
                 lon = station["Longitude"]
@@ -242,8 +265,6 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
                 self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QtWidgets.QTableWidgetItem(str(lon)))
                 self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QtWidgets.QTableWidgetItem(str(network)))
                 self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem(str(station)))
-
-
         else:
             pw.QMessageBox.information(self, self.windowTitle(),
                                        "Stations Coordintes File Empty or not Valid !!!")

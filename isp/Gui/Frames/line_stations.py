@@ -1,6 +1,6 @@
 import os
 from sys import platform
-from isp.Gui import pw
+from isp.Gui import pw, pyc
 from isp.Gui.Frames import MessageDialog
 from isp.Gui.Frames.uis_frames import UiLineStations
 import nvector as nv
@@ -10,6 +10,9 @@ from isp.Gui.Utils.pyqt_utils import add_save_load
 
 @add_save_load()
 class CreateLineStations(pw.QDialog, UiLineStations):
+
+    signal = pyc.pyqtSignal(pd.DataFrame)
+
     def __init__(self, parent=None):
         super(CreateLineStations, self).__init__(parent)
         self.setupUi(self)
@@ -21,6 +24,8 @@ class CreateLineStations(pw.QDialog, UiLineStations):
         self.df = None
         self.runDesignBtn.clicked.connect(self.generate_geographic_points)
         self.saveDesignBtn.clicked.connect(self.save_design)
+
+
 
 
     def generate_geographic_points(self):
@@ -71,8 +76,10 @@ class CreateLineStations(pw.QDialog, UiLineStations):
                     'Station': sta+str(i)
                 }, ignore_index=True)
 
+            self.send_df(df)
             self.df = df
             print(df)
+
             md = MessageDialog(self)
             md.set_info_message("Design done, proceed to save it")
 
@@ -104,7 +111,8 @@ class CreateLineStations(pw.QDialog, UiLineStations):
             md.set_error_message("Please first make a designn")
 
 
-
+    def send_df(self, df):
+        self.signal.emit(df)
 
 
 
