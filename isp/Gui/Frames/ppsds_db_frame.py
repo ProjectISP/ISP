@@ -8,14 +8,17 @@ from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.PPSDS_Utils.ppsds_utils import ppsdsISP
 from concurrent.futures.thread import ThreadPoolExecutor
 
-
 @add_save_load()
 class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
+
+    signal = pyc.pyqtSignal(dict)
+
     def __init__(self, parent=None):
         super(PPSDsGeneratorDialog, self).__init__(parent)
         self.setupUi(self)
         self.inventory = {}
         self.ppsds = None
+        self.db = None
         self.progressbar = pw.QProgressDialog(self)
         self.progressbar.setWindowTitle('PPSD Running')
         self.progressbar.setLabelText(" Computing PPSDs ")
@@ -36,6 +39,10 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
         self.loadBtn.clicked.connect(lambda: self.load_ppsd_db())
         #self.load_metadataBtn.clicked.connect(lambda: self.load_metadata())
         self.add_dataBtn.clicked.connect(lambda: self.add_data())
+        self.readyBtn.clicked.connect(self.readyGo)
+
+    def send_db(self):
+        self.signal.emit(self.db)
 
     def _stopBtnCallback(self):
         if self.ppsds is not None:
@@ -108,6 +115,7 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
             pyc.QMetaObject.invokeMethod(self.progressbar, 'setValue', qt.AutoConnection, pyc.Q_ARG(int, 0))
             self.db = self.ppsds.get_all_values(ini_dict)
             self.saveBtn.setEnabled(True)
+            self.readyBtn.setEnabled(True)
             print("PPSDs DB ready, now you can save your progress!!!")
             #md = MessageDialog(self)
             #md.set_info_message("PPSDs DB ready, now you can save your progress!!!")
@@ -121,7 +129,7 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
 
 
     def ppsd_continue(self):
-        self.ppsds.check= False
+        self.ppsds.check = False
         self.ppsds.processedFiles = 0
         size = ppsdsISP.size_db(self.db)
         self.ppsds.blockSignals(False)
@@ -143,6 +151,7 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
             pyc.QMetaObject.invokeMethod(self.progressbar, 'setMaximum', qt.AutoConnection, pyc.Q_ARG(int, size))
             pyc.QMetaObject.invokeMethod(self.progressbar, 'setValue', qt.AutoConnection, pyc.Q_ARG(int, 0))
             self.db = self.ppsds.get_all_values(ini_dict)
+            self.readyBtn.setEnabled(True)
             md = MessageDialog(self)
             md.set_info_message("Data incorporated and processed")
         else:
@@ -192,6 +201,7 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
                 self.continueBtn.setEnabled(True)
                 self.add_dataBtn.setEnabled(True)
                 self.saveBtn.setEnabled(True)
+                self.readyBtn.setEnabled(True)
                 self.ppsds = ppsdsISP(file_path, self.inventory, self.lenghtSB.value(), self.overlapSB.value(),
                                       self.smoothingSB.value(), self.periodSB.value())
                 self.ppsds.fileProcessed.connect(self.progressbar.setValue)
@@ -203,6 +213,15 @@ class PPSDsGeneratorDialog(pw.QDialog, UiPPSDs_dialog):
                 md.set_error_message("PPSDs DB cannot be loaded")
         else:
             pass
+
+    def readyGo(self):
+        if self.ppsds is not None and self.db is not None:
+            self.send_db()
+            md = MessageDialog(self)
+            md.set_info_message("PPSDs Ready to be plot")
+        else:
+            md = MessageDialog(self)
+            md.set_error_message("No a PPSDs DB available to be plot, please review the process")
 
 
 

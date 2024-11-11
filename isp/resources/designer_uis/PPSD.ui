@@ -10,6 +10,12 @@
     <height>901</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="windowTitle">
    <string>PPSD</string>
   </property>
@@ -153,6 +159,9 @@
               <number>1</number>
              </property>
              <property name="maximum">
+              <number>3</number>
+             </property>
+             <property name="value">
               <number>3</number>
              </property>
             </widget>
@@ -401,7 +410,7 @@
      <x>0</x>
      <y>0</y>
      <width>1484</width>
-     <height>21</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuGenerate">

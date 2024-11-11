@@ -261,6 +261,16 @@
            </property>
           </widget>
          </item>
+         <item row="15" column="2">
+          <widget class="QPushButton" name="readyBtn">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Ready to Go</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
       </layout>

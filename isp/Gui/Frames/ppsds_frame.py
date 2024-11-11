@@ -1,3 +1,4 @@
+from PyQt5.QtCore import pyqtSlot
 from isp.Gui.Frames import BaseFrame, UiPPSDs
 from isp.Gui.Frames.ppsds_db_frame import PPSDsGeneratorDialog
 import isp.receiverfunctions.rf_dialogs as dialogs # using save_figure dialog
@@ -27,19 +28,37 @@ class PPSDFrame(BaseFrame, UiPPSDs):
         self.pages = None
         
         self.ppsds_dialog = PPSDsGeneratorDialog(self)
+        self.ppsds_dialog.signal.connect(self.slot)
         self.ppsds_dialog.show()
         self.canvas_is_empty = True
         
         # Connect signals w/slots
         self.actionGenerate_synthetics.triggered.connect(self.run_ppsds)
-        self.ppsds_dialog.finished.connect(self.populate_list_widget)
-        
+        #self.ppsds_dialog.finished.connect(self.populate_list_widget)
+
         self.plotBtn.clicked.connect(self.plot_ppsds)
         self.comboBox_2.currentIndexChanged.connect(self.plot_ppsds)
         self.pushButton.clicked.connect(partial(self.change_page_index, "decrease_index"))
         self.pushButton_2.clicked.connect(partial(self.change_page_index, "increase_index"))
         self.pushButton_3.clicked.connect(self.save_plot)
         #self.comboBox_2.currentTextChanged.connect(self.plot_ppsds)
+
+
+    @pyqtSlot(dict)
+    def slot(self, data):
+        print("Running filling table")
+        try:
+             #self.ppsd_db = self.ppsds_dialog.db
+             self.ppsd_db = data
+             for network in self.ppsd_db['nets'].keys():
+                 for station in self.ppsd_db['nets'][network].keys():
+                     for channel in self.ppsd_db['nets'][network][station].keys():
+                         self.tableWidget.insertRow(self.tableWidget.rowCount())
+                         self.tableWidget.setItem(self.tableWidget.rowCount() - 1,0,QtWidgets.QTableWidgetItem(network))
+                         self.tableWidget.setItem(self.tableWidget.rowCount() - 1,1,QtWidgets.QTableWidgetItem(station))
+                         self.tableWidget.setItem(self.tableWidget.rowCount() - 1,2,QtWidgets.QTableWidgetItem(channel))
+        except:
+            pass
 
     def run_ppsds(self):
         self.ppsds_dialog.show()
