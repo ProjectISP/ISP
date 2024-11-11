@@ -101,7 +101,84 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         """
         pass
 
+
     def plot(self):
+        if self.sortCB.isChecked():
+            self.plot_dist_az()
+        else:
+            self.plot_current_Seismograms()
+
+    def plot_current_Seismograms(self):
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=len(self.stream), ncols=1, sharex=True, sharey=True)
+
+        parameters = []
+        min_starttime = []
+        max_endtime = []
+
+        self.generationParams()
+        if self.params['units'] == "velocity":
+            y_label = "cm/s"
+        elif self.params['units'] == "displacement":
+            y_label = "cm/s"
+        elif self.params['units'] == "acceleration":
+            y_label = "cm/s^2"
+
+        for index, tr in enumerate(self.stream):
+
+            sd = SeismogramDataAdvanced(file_path=None, stream=tr, realtime=True)
+            tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                          filter_error_callback=self.filter_error_message, trace_number=0)
+
+            if len(tr)>0:
+                t = tr.times("matplotlib")
+                tr.detrend(type="simple")
+                s = tr.data
+
+                info = "{}.{}.{}".format(tr.stats.network, tr.stats.station, tr.stats.channel)
+                self.canvas.set_plot_label(index, info)
+                self.canvas.plot_date(t, s, index, clear_plot=False, color="black", fmt='-',
+                                      linewidth=0.5, label=info)
+                self.canvas.set_ylabel(index, y_label)
+                ax = self.canvas.get_axe(index)
+                try:
+                    ax.spines["top"].set_visible(False)
+                    ax.spines["bottom"].set_visible(False)
+                    ax.tick_params(top=False)
+                    ax.tick_params(labeltop=False)
+                except:
+                    pass
+                #
+                if index != (len(self.stream) - 1):
+                    try:
+                        ax.tick_params(bottom=False)
+                    except:
+                        pass
+
+                try:
+                    min_starttime.append(min(t))
+                    max_endtime.append(max(t))
+                except:
+                    print("Empty traces")
+
+        try:
+            if min_starttime and max_endtime is not None:
+                auto_start = min(min_starttime)
+                auto_end = max(max_endtime)
+                self.auto_start = auto_start
+                self.auto_end = auto_end
+
+            ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
+            ax.xaxis.set_major_formatter(formatter)
+
+            self.canvas.set_xlabel(len(self.stream) - 1, "Date")
+        except:
+            pass
+
+
+
+    def plot_dist_az(self):
 
         distance = None
         azimuth = None
