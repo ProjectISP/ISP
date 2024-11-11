@@ -36,11 +36,11 @@ class SyntheticsGeneratorDialog(pw.QDialog, UiSyntheticsGeneratorDialog, metacla
         self.open_create_line_stations = CreateLineStations(self)
         self.open_create_line_stations.signal.connect(self.slot)
 
-        #try:
-            # apparently ocassionally is not working # 29-10-2024
-            # self.comboBoxModels.addItems(self._client.get_available_models().keys())
-        #except:
-        #    print("Coudn't load available models set ak135 5s instead")
+        try:
+            # Apparently ocassionally is not working # 29-10-2024
+            self.comboBoxModels.addItems(self._client.get_available_models().keys())
+        except:
+           print("Coudn't load available models set ak135 5s instead")
 
         self.radioButtonMT.toggled.connect(self._buttonMTFPClicked)
         self.radioButtonMT.setChecked(True)
