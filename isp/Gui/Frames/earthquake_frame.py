@@ -31,7 +31,7 @@ from isp.Structures.structures import PickerStructure
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.arrayanalysis import array_analysis
 from isp.arrayanalysis.backprojection_tools import backproj
-from isp.db.models import EventLocationModel
+# from isp.db.models import EventLocationModel
 from isp.earthquakeAnalisysis import PickerManager, NllManager
 import numpy as np
 import os
@@ -43,7 +43,6 @@ from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
     correlate_maxlag, get_lags
 from sys import platform
-
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
@@ -118,8 +117,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.canvas.mpl_connect('key_press_event', self.key_pressed)
         self.canvas.mpl_connect('axes_enter_event', self.enter_axes)
+
+        # Event info register
         self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
         self.event_info.register_plot_arrivals_click(self.on_click_plot_arrivals)
+        self.event_info.register_plot_record_section_click(self.on_click_plot_record_section)
+
         self.earthquake_3c_frame = Earthquake3CFrame(self.parentWidget3C)
         self.earthquake_location_frame = EarthquakeLocationFrame(self.parentWidgetLocation)
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
@@ -173,7 +176,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionNew_Project.triggered.connect(lambda: self.new_project())
         self.newProjectBtn.clicked.connect(lambda: self.new_project())
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
-        self.actionPlot_Record_Section.triggered.connect(lambda: self.plot_prs())
+        self.actionPlot_Record_Section.triggered.connect(lambda: self.on_click_plot_record_section())
         self.actionWrite_CFs.triggered.connect(lambda: self.save_cf())
         self.runScriptBtn.clicked.connect(self.run_process)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
@@ -231,7 +234,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open.activated.connect(self.comboBox_phases.showPopup)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('P'), self)
-        self.shortcut_open.activated.connect(self.plot_prs)
+        self.shortcut_open.activated.connect(self.on_click_plot_record_section)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+K'), self)
         self.shortcut_open.activated.connect(self.save_cf)
@@ -314,6 +317,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def new_project(self):
+        self.netForm.setText("")
+        self.stationForm.setText("")
+        self.channelForm.setText("")
+
         self.loaded_project = False
         self.setEnabled(False)
         self.project_dialog.exec()
@@ -324,7 +331,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # now we can access to #self.project_dialog.project
 
     def load_project(self):
+
+        self.netForm.setText("")
+        self.stationForm.setText("")
+        self.channelForm.setText("")
+
         self.loaded_project = True
+
         selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
 
         md = MessageDialog(self)
@@ -332,7 +345,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
             try:
                 self.current_project_file = selected[0]
-                self.project = MseedUtil.load_project(file = selected[0])
+                self.project = MseedUtil.load_project(file=selected[0])
                 project_name = os.path.basename(selected[0])
                 md.set_info_message("Project {} loaded  ".format(project_name))
             except:
@@ -817,7 +830,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             if self.sortCB.isChecked():
                 if self.comboBox_sort.currentText() == "Distance":
                     self.files_path.sort(key=self.sort_by_distance_advance)
-                    self.actionPlot_Record_Section.setEnabled(True)
+                    # self.actionPlot_Record_Section.setEnabled(True)
                     self.message_dataless_not_found()
 
                 elif self.comboBox_sort.currentText() == "Back Azimuth":
@@ -1505,108 +1518,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         except:
             pass
 
-    def plot_prs(self):
-
-        dist_all = []
-        baz_all = []
-        distance_in_km = True
-        depth = self.event_info.event_depth
-        otime = self.event_info.event_time
-
-        self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=1, ncols=1)
-        index = 0
-        ##
-        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
-        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-
-
-        if len(self.st) > 0:
-
-            self.st.detrend(type="simple")
-            self.st.reverse()
-            if self.sortCB.isChecked():
-                if self.comboBox_sort.currentText() == "Distance":
-                    for tr in self.st:
-                        st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
-                        if st_stats:
-                            dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
-                                                          self.event_info.longitude)
-                            dist_all.append(dist / 1000)
-
-                    max_dist = kilometers2degrees(max(dist_all))
-                    min_dist = kilometers2degrees(min(dist_all))
-                    dist_all.sort()
-                    dist_all.reverse()
-
-                    if sum(dist_all)/len(dist_all) > 700:
-                        distance_in_km = False
-                        for index, dist in enumerate(dist_all):
-                            dist_all[index] = kilometers2degrees(dist)
-                        max_dist = max(dist_all)
-                        min_dist = min(dist_all)
-                    self.message_dataless_not_found()
-
-                    arrivals = ObspyUtil.get_trip_times(source_depth=depth, min_dist = min_dist, max_dist=max_dist)
-                    all_arrivals = ObspyUtil.convert_travel_times(arrivals, otime,
-                                                                  dist_km = distance_in_km)
-
-                # elif self.comboBox_sort.currentText() == "Back Azimuth":
-                #     for tr in self.st:
-                #         st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
-                #
-                #         if st_stats:
-                #             _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude,
-                #                                                  self.event_info.latitude,
-                #                                                  self.event_info.longitude)
-                #             baz_all.append(az_from_epi)
-                #
-                #     baz_all.sort()
-                #     baz_all.reverse()
-                #    self.message_dataless_not_found()
-
-            i = 0
-            for tr in self.st:
-                if len(tr) > 0:
-                    try:
-                        t = tr.times("matplotlib")
-                        if distance_in_km:
-                            s = 5*(tr.data/np.max(tr.data)) + dist_all[i]
-                        else:
-                            s = 0.5 * (tr.data / np.max(tr.data)) + dist_all[i]
-
-                        self.canvas.plot_date(t, s, 0, clear_plot=False, color="black", fmt='-', alpha=0.5,
-                                                      linewidth=0.5, label="")
-
-                    except:
-                        pass
-                    i = i + 1
-
-        if distance_in_km:
-            self.canvas.plot_date(all_arrivals["P"]["times"], all_arrivals["P"]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
-                              linewidth=1.0, label="P")
-
-            self.canvas.plot_date(all_arrivals["S"]["times"], all_arrivals["S"]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
-                              linewidth=1.0, label="S")
-
-        else:
-            for key in all_arrivals:
-                self.canvas.plot_date(all_arrivals[key]["times"], all_arrivals[key]["distances"], 0, clear_plot=False, fmt='-', alpha=0.5,
-                                  linewidth=1.0, label=str(key))
-        try:
-            ax = self.canvas.get_axe(0)
-            if self.trimCB.isChecked():
-                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
-            else:
-                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
-            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
-            ax.xaxis.set_major_formatter(formatter)
-            self.canvas.set_xlabel(0, "Date")
-            ax.legend()
-        except:
-            pass
-
-        self.actionPlot_Record_Section.setDisabled(True)
 
     def plot_map_stations(self):
 
@@ -1710,6 +1621,97 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if picker_structure:
             self.pm.remove_data(picker_structure.Time, picker_structure.Station)
 
+    def on_click_plot_record_section(self, event_time: UTCDateTime, lat: float, long: float, depth: float):
+
+        if self.sortCB.isChecked() and self.trimCB.isChecked():
+            dist_all = []
+            params = self.settings_dialog.getParameters()
+            phases = params["prs_phases"]
+            distance_in_km = True
+            depth = self.event_info.event_depth
+            otime = self.event_info.event_time
+
+            self.canvas.clear()
+            self.canvas.set_new_subplot(nrows=1, ncols=1)
+
+            ##
+            start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+            end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+
+
+            if len(self.st) > 0:
+
+                self.st.detrend(type="simple")
+                self.st.reverse()
+                if self.sortCB.isChecked():
+                    if self.comboBox_sort.currentText() == "Distance":
+                        for tr in self.st:
+                            st_stats = self.__metadata_manager.extrac_coordinates_from_trace(self.inventory, tr)
+                            if st_stats:
+                                dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
+                                                              self.event_info.longitude)
+                                dist_all.append(dist / 1000)
+
+                        max_dist = kilometers2degrees(max(dist_all))
+                        min_dist = kilometers2degrees(min(dist_all))
+                        dist_all.sort()
+                        dist_all.reverse()
+
+                        if sum(dist_all)/len(dist_all) > 700:
+                            distance_in_km = False
+                            for index, dist in enumerate(dist_all):
+                                dist_all[index] = kilometers2degrees(dist)
+                            max_dist = max(dist_all)
+                            min_dist = min(dist_all)
+                        self.message_dataless_not_found()
+
+                        arrivals = ObspyUtil.get_trip_times(source_depth=depth, min_dist=min_dist, max_dist=max_dist,
+                                                            phases=phases)
+
+                        all_arrivals = ObspyUtil.convert_travel_times(arrivals, otime,
+                                                                      dist_km=distance_in_km)
+
+                i = 0
+                for tr in self.st:
+                    if len(tr) > 0:
+                        try:
+                            t = tr.times("matplotlib")
+                            if distance_in_km:
+                                s = 5*(tr.data/np.max(tr.data)) + dist_all[i]
+                            else:
+                                s = 0.5 * (tr.data / np.max(tr.data)) + dist_all[i]
+
+                            self.canvas.plot_date(t, s, 0, clear_plot=False, color="black", fmt='-', alpha=0.5,
+                                                          linewidth=0.5, label="")
+                        except:
+                            pass
+                        i = i + 1
+
+            for key in all_arrivals:
+                self.canvas.plot_date(all_arrivals[key]["times"], all_arrivals[key]["distances"], 0,
+                     clear_plot=False, fmt='-', alpha=0.5, linewidth=1.0, label=str(key))
+
+            try:
+                ax = self.canvas.get_axe(0)
+                if self.trimCB.isChecked():
+                    ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+                else:
+                    ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+                formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
+                ax.xaxis.set_major_formatter(formatter)
+                self.canvas.set_xlabel(0, "Date")
+                ax.legend()
+            except:
+                pass
+
+            # self.actionPlot_Record_Section.setDisabled(True)
+        else:
+            md = MessageDialog(self)
+            md.set_warning_message("This action is only allowed if you check trim, sort and plot your waveforms "
+                                   "by distance")
+
+
+
     def on_click_plot_arrivals(self, event_time: UTCDateTime, lat: float, long: float, depth: float):
         self.event_info.clear_arrivals()
         for index, file_path in enumerate(self.get_files_at_page()):
@@ -1717,7 +1719,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file_path)
             #stats = ObspyUtil.get_stats(file_path)
             # TODO remove stats.StartTime and use the picked one from UI.
-            self.event_info.plot_arrivals2(index, st_stats)
+            self.event_info.plot_arrivals(index, st_stats)
 
     def get_arrivals_tf(self):
 

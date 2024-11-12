@@ -390,6 +390,7 @@ class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
         self.__parent_name = parent.objectName()  # used to save values in a group.
         self.__canvas = None
         self.__on_click_plot_arrivals_callback = None
+        self.__on_click_plot_record_section_callback = None
         self.__arrivals_lines = []
 
         if canvas:
@@ -409,6 +410,7 @@ class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
         # button bind
         self.plotArrivalsBtn.clicked.connect(self.__on_click_plot_arrivals)
         self.clearArrivalsBtn.clicked.connect(self.__on_click_clear_arrivals)
+        self.plotRecordSectionBtn.clicked.connect(self.__on_click_plot_record_section)
 
     @property
     def parent_name(self):
@@ -458,6 +460,8 @@ class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
     def register_plot_arrivals_click(self, func):
         self.__on_click_plot_arrivals_callback = lambda time, lat, long, depth: func(time, lat, long, depth)
 
+    def register_plot_record_section_click(self, func):
+        self.__on_click_plot_record_section_callback = lambda time, lat, long, depth: func(time, lat, long, depth)
     def message(self, msg):
         md = MessageDialog(self)
         md.set_info_message(msg)
@@ -493,23 +497,16 @@ class EventInfoBox(pw.QDockWidget, UiEventInfoDockWidget):
         if self.__on_click_plot_arrivals_callback:
             self.__on_click_plot_arrivals_callback(self.event_time, self.latitude, self.longitude, self.event_depth)
 
+    def __on_click_plot_record_section(self):
+        if self.__on_click_plot_record_section_callback:
+            self.__on_click_plot_record_section_callback(self.event_time, self.latitude, self.longitude,
+                                                         self.event_depth)
+
     def __on_click_clear_arrivals(self):
         self.clear_arrivals()
 
-    # def plot_arrivals(self, axe_index: int, start_time: UTCDateTime, station_stats: StationsStats):
-    #     delta_time = self.event_time - start_time
-    #     line = self.__canvas.draw_arrow(delta_time, axe_index, "Event time", color="red", linestyles='--',
-    #                                     picker=False)
-    #
-    #     sma = SeismogramAnalysis(station_stats.Lat, station_stats.Lon)
-    #     phases, times = sma.get_phases_and_arrivals(self.latitude, self.longitude, self.event_depth)
-    #     self.add_arrivals_line(line)
-    #     for phase, time in zip(phases, times):
-    #         line = self.__canvas.draw_arrow(time + delta_time, axe_index, phase, color="green", linestyles='--',
-    #                                         picker=False)
-    #         self.add_arrivals_line(line)
 
-    def plot_arrivals2(self, axe_index: int, station_stats):
+    def plot_arrivals(self, axe_index: int, station_stats):
         delta_time = self.event_time.matplotlib_date
         #print(delta_time)
         line = self.__canvas.draw_arrow(delta_time, axe_index, "Event time", color="red", linestyles='--',

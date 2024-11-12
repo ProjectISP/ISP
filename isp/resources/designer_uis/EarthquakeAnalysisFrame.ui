@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1542</width>
-    <height>944</height>
+    <height>962</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -243,7 +243,7 @@
                      <number>-1</number>
                     </property>
                     <property name="text">
-                     <string>Load Project and Apply Seach Filters</string>
+                     <string>Load Project</string>
                     </property>
                    </widget>
                   </item>
@@ -253,7 +253,7 @@
                      <string>Filter the Project based on Nets, Stations and Channels. (Use valid wildcards)</string>
                     </property>
                     <property name="text">
-                     <string>Filter Project</string>
+                     <string>Apply Search Filters</string>
                     </property>
                    </widget>
                   </item>
@@ -584,7 +584,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>971</width>
-                  <height>702</height>
+                  <height>712</height>
                  </rect>
                 </property>
                </widget>

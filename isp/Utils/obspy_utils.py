@@ -110,15 +110,22 @@ class ObspyUtil:
         return stations
 
     @staticmethod
-    def get_trip_times(source_depth, min_dist, max_dist):
+    def get_trip_times(source_depth, min_dist, max_dist, phases):
 
         model = TauPyModel(model="iasp91")
-        distances = np.linspace(min_dist, max_dist, 50)
+        distances = np.linspace(min_dist, max_dist, 25)
         arrivals_list = []
+
+
 
         for value in distances:
 
-            arrival = model.get_travel_times(source_depth_in_km=source_depth, distance_in_degree= float(value))
+            if phases == ["ALL"]:
+                arrival = model.get_travel_times(source_depth_in_km=source_depth, distance_in_degree=float(value))
+
+            else:
+                arrival = model.get_travel_times(source_depth_in_km=source_depth, distance_in_degree=float(value),
+                                             phase_list = phases)
 
 
             arrivals_list.append(arrival)
@@ -126,35 +133,40 @@ class ObspyUtil:
         return arrivals_list
 
     @staticmethod
-    def convert_travel_times(arrivals, otime, dist_km = True):
+    def convert_travel_times(arrivals, otime, dist_km=True):
 
         all_arrival = {}
 
         # Loop over arrivals objects in list
         for arrival_set in arrivals:
             # Loop over phases in list
+            phase_id_check = []
             for arrival in arrival_set:
                 phase_id = arrival.purist_name
-                time = otime + arrival.time
 
-                dist = arrival.purist_distance % 360.0
-                distance = arrival.distance
-                if distance < 0:
-                    distance = (distance % 360)
-                if abs(dist - distance) / dist > 1E-5:
-                    continue
+                if phase_id not in phase_id_check:
+                    phase_id_check.append(phase_id)
 
-                if dist_km:
-                    distance = degrees2kilometers(distance)
+                    time = otime + arrival.time
 
-                if phase_id in all_arrival.keys():
-                    all_arrival[phase_id]["times"].append(time.matplotlib_date)
-                    all_arrival[phase_id]["distances"].append(distance)
+                    dist = arrival.purist_distance % 360.0
+                    distance = arrival.distance
+                    if distance < 0:
+                        distance = (distance % 360)
+                    if abs(dist - distance) / dist > 1E-5:
+                        continue
 
-                else:
-                    all_arrival[phase_id] = {}
-                    all_arrival[phase_id]["times"] = [time.matplotlib_date]
-                    all_arrival[phase_id]["distances"] = [distance]
+                    if dist_km:
+                        distance = degrees2kilometers(distance)
+
+                    if phase_id in all_arrival.keys():
+                        all_arrival[phase_id]["times"].append(time.matplotlib_date)
+                        all_arrival[phase_id]["distances"].append(distance)
+
+                    else:
+                        all_arrival[phase_id] = {}
+                        all_arrival[phase_id]["times"] = [time.matplotlib_date]
+                        all_arrival[phase_id]["distances"] = [distance]
 
         return all_arrival
 
