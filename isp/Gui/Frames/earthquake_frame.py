@@ -2,7 +2,7 @@ import shutil
 from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
 from matplotlib.backend_bases import MouseButton
-from obspy import UTCDateTime, Stream, Trace
+from obspy import UTCDateTime, Stream, Trace, Inventory
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth, kilometers2degrees
 from obspy.signal.trigger import coincidence_trigger
@@ -2197,7 +2197,25 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def open_array_analysis(self):
-        self.controller().open_array_window()
+
+        answer = pw.QMessageBox.question(self, "Export Seismograms to Array Analysis",
+                                         "Do you want export the current seismograms to Array Analysis?")
+
+        if pw.QMessageBox.Yes == answer:
+            if len(self.st) >= 0 and isinstance(self.inventory, Inventory) and self.trimCB.isChecked():
+                start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+                end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+                self.controller().open_array_window()
+                self.controller().array_analysis_frame.process_import_stream(self.st, self.inventory,
+                                                                             start_time, end_time)
+            else:
+                md = MessageDialog(self)
+                md.set_error_message("Please, review that you have procee and plot "
+                                     "seismograms and also trim it",
+                                    "Users need the following information: " +
+                                     + "\n" + "1. Seismograms" + "\n" + "2. Trim Seismograms"+ "\n"
+                                     + "3. Loaded a valid metadata")
+
 
     def open_moment_tensor(self):
         self.controller().open_momentTensor_window()

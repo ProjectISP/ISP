@@ -1,7 +1,7 @@
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
-from obspy import Stream, UTCDateTime, Trace
+from obspy import Stream, UTCDateTime, Trace, Inventory
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.seismogram_analysis import SeismogramDataAdvanced
 from isp.Gui.Frames import BaseFrame, \
@@ -11,7 +11,7 @@ from isp.Gui.Frames.stations_coordinates import StationsCoords
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.vespagram import Vespagram
 from isp.Gui.Frames.slowness_map import SlownessMap
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime
 from isp.Gui import pw, pqg, pyc
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import QStyle
@@ -52,7 +52,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         #Binding
         self.root_pathFK_bind = BindPyqtObject(self.rootPathFormFK)
         self.root_pathBP_bind = BindPyqtObject(self.rootPathFormBP)
-        self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
+        self.metadata_path_bind = BindPyqtObject(self.datalessPathForm)
         self.metadata_path_bindBP = BindPyqtObject(self.datalessPathFormBP, self.onChange_metadata_path)
         self.output_path_bindBP = BindPyqtObject(self.outputPathFormBP, self.onChange_metadata_path)
         self.fmin_bind = BindPyqtObject(self.fminSB)
@@ -101,6 +101,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.load_videoBtn.clicked.connect(self.loadvideoBP)
         self.actionOpenSlowness.triggered.connect(lambda: self.open_slownessMap())
+        self.readMetadataBtn.clicked.connect(self.read_FKinventory)
 
         # help Documentation
         self.help = HelpDoc()
@@ -182,6 +183,23 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
             md.set_error_message("Something went wrong. Please check your metada file is a correct one")
 
+    def read_FKinventory(self):
+
+        md = MessageDialog(self)
+        try:
+
+            self.__metadata_manager = MetadataManager(self.metadata_path_bind.value)
+            self.inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
+
+            if len(self.inventory) == 0:
+                md.set_warning_message("Please provide a valid metadata file path")
+            else:
+                md.set_info_message("Loaded Metadata, please check your terminal for further details")
+
+        except:
+
+            md.set_error_message("Something went wrong. Please check your metada file is a correct one")
 
     def on_click_select_metadata_file(self, bind: BindPyqtObject):
         selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
@@ -240,7 +258,9 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_stack.set_new_subplot(nrows=1, ncols=1)
         starttime = convert_qdatetime_utcdatetime(self.starttime_date)
         endtime = convert_qdatetime_utcdatetime(self.endtime_date)
-        selection = self.inventory.select(station=self.stationLE.text(), channel = self.channelLE.text())
+        #selection = self.inventory.select(station=self.stationLE.text(), channel = self.channelLE.text())
+        selection = MseedUtil.filter_inventory_by_stream(self.st, self.inventory)
+
         if self.trimCB.isChecked():
             wavenumber = array_analysis.array()
             relpower,abspower, AZ, Slowness, T = wavenumber.FK(self.st, selection, starttime, endtime,
@@ -270,7 +290,8 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         if isinstance(canvas, MatplotlibCanvas):
             st = self.st.copy()
             wavenumber = array_analysis.array()
-            selection = self.inventory.select(station=self.stationLE.text(), channel=self.channelLE.text())
+            #selection = self.inventory.select(station=self.stationLE.text(), channel=self.channelLE.text())
+            selection = MseedUtil.filter_inventory_by_stream(self.st, self.inventory)
             x1, y1 = event.xdata, event.ydata
             DT = x1
             Z, Sxpow, Sypow, coord = wavenumber.FKCoherence(st, selection, DT,
@@ -317,10 +338,24 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                 self.canvas_stack.set_ylabel(0, "Stack Amplitude")
 
 
-
     def filter_error_message(self, msg):
         md = MessageDialog(self)
         md.set_info_message(msg)
+
+
+    def process_import_stream(self, stream: Stream, inventory:Inventory, starttime:UTCDateTime, endtime:UTCDateTime):
+
+        self.bpWidget.setCurrentIndex(1)
+        self.st = stream
+        print(self.st)
+        self.inventory = inventory
+        # set times
+        set_qdatetime(starttime, self.starttime_date)
+        set_qdatetime(endtime, self.endtime_date)
+        self.trimCB.setChecked(True)
+        self.stream_frame = MatplotlibFrame(self.st, type='normal')
+        self.stream_frame.show()
+
 
     def plot_seismograms(self, FK = True):
 

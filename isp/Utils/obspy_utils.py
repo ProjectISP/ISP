@@ -7,8 +7,9 @@ from os.path import isfile, join
 from typing import List
 import pandas as pd
 import numpy as np
-from obspy import Stream, read, Trace, UTCDateTime, read_events
+from obspy import Stream, read, Trace, UTCDateTime, read_events, Inventory
 from obspy.core.event import Origin
+from obspy.core.inventory import Station, Network
 from obspy.geodetics import gps2dist_azimuth, degrees2kilometers
 from obspy.io.mseed.core import _is_mseed
 from obspy.io.stationxml.core import _is_stationxml
@@ -901,3 +902,56 @@ class MseedUtil:
             stream_selected = []
 
         return stream_selected
+
+    @staticmethod
+    def filter_inventory_by_stream(stream: Stream, inventory: Inventory) -> Inventory:
+
+        # Create an empty list to hold filtered networks
+        filtered_networks = []
+
+        # Loop through networks in the inventory
+        for network in inventory:
+            # Create a list to hold filtered stations for each network
+            filtered_stations = []
+
+            # Loop through stations in the network
+            for station in network:
+                # Find channels in this station that match the stream traces
+                filtered_channels = []
+
+                # Check if any trace in the stream matches the station and network
+                for trace in stream:
+                    # Extract network, station, location, and channel codes from trace
+                    trace_net, trace_sta, trace_loc, trace_chan = trace.id.split(".")
+
+                    # Check if the current station and network match the trace
+                    if station.code == trace_sta and network.code == trace_net:
+                        # Look for a channel in the station that matches the trace's channel code
+                        for channel in station.channels:
+                            if channel.code == trace_chan and (not trace_loc or channel.location_code == trace_loc):
+                                filtered_channels.append(channel)
+
+                # If there are any matching channels, create a filtered station
+                if filtered_channels:
+                    filtered_station = Station(
+                        code=station.code,
+                        latitude=station.latitude,
+                        longitude=station.longitude,
+                        elevation=station.elevation,
+                        creation_date=station.creation_date,
+                        site=station.site,
+                        channels=filtered_channels
+                    )
+                    filtered_stations.append(filtered_station)
+
+            # If there are any matching stations, create a filtered network
+            if filtered_stations:
+                filtered_network = Network(
+                    code=network.code,
+                    stations=filtered_stations
+                )
+                filtered_networks.append(filtered_network)
+
+        # Create a new inventory with the filtered networks
+        filtered_inventory = Inventory(networks=filtered_networks, source=inventory.source)
+        return filtered_inventory
