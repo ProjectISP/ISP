@@ -320,6 +320,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.netForm.setText("")
         self.stationForm.setText("")
         self.channelForm.setText("")
+        self.trimCB.setChecked(False)
 
         self.loaded_project = False
         self.setEnabled(False)
@@ -335,7 +336,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.netForm.setText("")
         self.stationForm.setText("")
         self.channelForm.setText("")
-
+        self.trimCB.setChecked(False)
         self.loaded_project = True
 
         selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
