@@ -3,12 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from obspy import Stream, UTCDateTime, Trace, Inventory
 from isp.DataProcessing.metadata_manager import MetadataManager
-from isp.DataProcessing.seismogram_analysis import SeismogramDataAdvanced
 from isp.Gui.Frames import BaseFrame, \
 MatplotlibCanvas, UiArrayAnalysisFrame, CartopyCanvas, MatplotlibFrame, MessageDialog
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_coordinates import StationsCoords
-from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.vespagram import Vespagram
 from isp.Gui.Frames.slowness_map import SlownessMap
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime
@@ -50,9 +48,9 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas.set_new_subplot(1, ncols=1)
 
         #Binding
-        self.root_pathFK_bind = BindPyqtObject(self.rootPathFormFK)
+
         self.root_pathBP_bind = BindPyqtObject(self.rootPathFormBP)
-        self.metadata_path_bind = BindPyqtObject(self.datalessPathForm)
+
         self.metadata_path_bindBP = BindPyqtObject(self.datalessPathFormBP, self.onChange_metadata_path)
         self.output_path_bindBP = BindPyqtObject(self.outputPathFormBP, self.onChange_metadata_path)
         self.fmin_bind = BindPyqtObject(self.fminSB)
@@ -69,9 +67,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.smaxFK_bind = BindPyqtObject(self.slowFKSB)
         self.slow_grid_bind = BindPyqtObject(self.gridFKSB)
 
-        # Bind buttons
-        self.selectDirBtnFK.clicked.connect(lambda: self.on_click_select_directory(self.root_pathFK_bind))
-        self.datalessBtn.clicked.connect(lambda: self.on_click_select_metadata_file(self.metadata_path_bind))
 
         # Bind buttons BackProjection
         self.selectDirBtnBP.clicked.connect(lambda: self.on_click_select_directory(self.root_pathBP_bind))
@@ -81,13 +76,10 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         #Action Buttons
         self.arfBtn.clicked.connect(lambda: self.arf())
         self.runFKBtn.clicked.connect(lambda: self.FK_plot())
-        self.plotBtn.clicked.connect(lambda: self.plot_seismograms())
         self.plotBtnBP.clicked.connect(lambda: self.plot_seismograms(FK=False))
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
-        self.fk_macroBtn.clicked.connect(lambda: self.open_parameters_settings())
         self.actionProcessed_Seimograms.triggered.connect(self.write)
         self.actionStacked_Seismograms.triggered.connect(self.write_stack)
-        self.stationsBtn.clicked.connect(lambda: self.stationsInfo())
         self.stationsBtnBP.clicked.connect(lambda: self.stationsInfo(FK=False))
         self.mapBtn.clicked.connect(self.stations_map)
         self.actionCreate_Stations_File.triggered.connect(self.stations_coordinates)
@@ -101,7 +93,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.load_videoBtn.clicked.connect(self.loadvideoBP)
         self.actionOpenSlowness.triggered.connect(lambda: self.open_slownessMap())
-        self.readMetadataBtn.clicked.connect(self.read_FKinventory)
 
         # help Documentation
         self.help = HelpDoc()
@@ -147,9 +138,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
     def open_slownessMap(self):
         self.__slownessMap.show()
 
-    def open_parameters_settings(self):
-        self.__parameters.show()
-
     def stations_coordinates(self):
         self.__stations_coords.show()
 
@@ -183,23 +171,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
             md.set_error_message("Something went wrong. Please check your metada file is a correct one")
 
-    def read_FKinventory(self):
-
-        md = MessageDialog(self)
-        try:
-
-            self.__metadata_manager = MetadataManager(self.metadata_path_bind.value)
-            self.inventory = self.__metadata_manager.get_inventory()
-            print(self.inventory)
-
-            if len(self.inventory) == 0:
-                md.set_warning_message("Please provide a valid metadata file path")
-            else:
-                md.set_info_message("Loaded Metadata, please check your terminal for further details")
-
-        except:
-
-            md.set_error_message("Something went wrong. Please check your metada file is a correct one")
 
     def on_click_select_metadata_file(self, bind: BindPyqtObject):
         selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
@@ -258,7 +229,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_stack.set_new_subplot(nrows=1, ncols=1)
         starttime = convert_qdatetime_utcdatetime(self.starttime_date)
         endtime = convert_qdatetime_utcdatetime(self.endtime_date)
-        #selection = self.inventory.select(station=self.stationLE.text(), channel = self.channelLE.text())
         selection = MseedUtil.filter_inventory_by_stream(self.st, self.inventory)
 
         if self.trimCB.isChecked():
@@ -343,7 +313,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         md.set_info_message(msg)
 
 
-    def process_import_stream(self, stream: Stream, inventory:Inventory, starttime:UTCDateTime, endtime:UTCDateTime):
+    def process_fk(self, stream: Stream, inventory:Inventory, starttime:UTCDateTime, endtime:UTCDateTime):
 
         self.bpWidget.setCurrentIndex(1)
         self.st = stream
@@ -356,84 +326,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.stream_frame = MatplotlibFrame(self.st, type='normal')
         self.stream_frame.show()
 
-
-    def plot_seismograms(self, FK = True):
-
-        if FK:
-            starttime = convert_qdatetime_utcdatetime(self.starttime_date)
-            endtime = convert_qdatetime_utcdatetime(self.endtime_date)
-        else:
-            starttime = convert_qdatetime_utcdatetime(self.starttime_date_BP)
-            endtime = convert_qdatetime_utcdatetime(self.endtime_date_BP)
-
-        diff = endtime - starttime
-
-        if FK:
-            file_path = self.root_pathFK_bind.value
-        else:
-            file_path = self.root_pathBP_bind.value
-
-        obsfiles = []
-
-        for dirpath, _, filenames in os.walk(file_path):
-            for f in filenames:
-                 if f != ".DS_Store":
-                    obsfiles.append(os.path.abspath(os.path.join(dirpath, f)))
-
-        obsfiles.sort()
-        parameters = self.__parameters.getParameters()
-        all_traces =[]
-        trace_number = 0
-
-        for file in obsfiles:
-            sd = SeismogramDataAdvanced(file)
-
-            if FK:
-                if self.trimCB.isChecked() and diff >= 0:
-                    tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
-                        start_time=starttime, end_time=endtime, trace_number=trace_number)
-                else:
-                    tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
-                                                  trace_number=trace_number)
-            else:
-                if self.trimCB_BP.isChecked() and diff >= 0:
-                    tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
-                        start_time=starttime, end_time=endtime, trace_number=trace_number)
-                else:
-                    tr = sd.get_waveform_advanced(parameters, self.inventory, filter_error_callback=self.filter_error_message,
-                                                  trace_number=trace_number)
-
-            all_traces.append(tr)
-            trace_number = trace_number  + 1
-
-        self.st = Stream(traces=all_traces)
-
-        if FK:
-            if self.selectCB.isChecked():
-                self.st = self.st.select(station=self.stationLE.text(), channel=self.channelLE.text())
-
-        else:
-            if self.selectCB_BP.isChecked():
-                self.st = self.st.select(network=self.stationLE_BP.text(),station=self.stationLE_BP.text(),
-                                         channel=self.channelLE_BP.text())
-
-        self.stream_frame = MatplotlibFrame(self.st, type='normal')
-        self.stream_frame.show()
-
-    def stationsInfo(self, FK = True):
-        if FK:
-            obsfiles = MseedUtil.get_mseed_files(self.root_pathFK_bind.value)
-        else:
-            obsfiles = MseedUtil.get_mseed_files(self.root_pathBP_bind.value)
-        obsfiles.sort()
-        sd = []
-        for file in obsfiles:
-            st = SeismogramDataAdvanced(file)
-            station = [st.stats.Network, st.stats.Station, st.stats.Location, st.stats.Channel, st.stats.StartTime,
-                       st.stats.EndTime, st.stats.Sampling_rate, st.stats.Npts]
-            sd.append(station)
-        self._stations_info = StationsInfo(sd, check=True)
-        self._stations_info.show()
 
     def write(self):
         root_path = os.path.dirname(os.path.abspath(__file__))

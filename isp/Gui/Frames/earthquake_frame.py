@@ -2196,26 +2196,49 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             md = MessageDialog(self)
             md.set_error_message("Coundn't remove location, please review ", output_path)
 
-
     def open_array_analysis(self):
+        # Confirm if the user wants to export to Array Analysis
+        answer = pw.QMessageBox.question(
+            self, "Export Seismograms to Array Analysis",
+            "Do you want to export the current seismograms to Array Analysis?"
+        )
 
-        answer = pw.QMessageBox.question(self, "Export Seismograms to Array Analysis",
-                                         "Do you want export the current seismograms to Array Analysis?")
+        if answer == pw.QMessageBox.Yes:
+            # Check required conditions: stream, inventory, and trim checkbox
+            if len(self.st) > 0 and isinstance(self.inventory, Inventory) and self.trimCB.isChecked():
+                # Prompt user to choose between FK process or BackProjection
+                choice, ok = pw.QInputDialog.getItem(
+                    self, "Select Array Analysis Process",
+                    "Please choose the analysis process:",
+                    ["FK process", "BackProjection"], 0, False
+                )
 
-        if pw.QMessageBox.Yes == answer:
-            if len(self.st) >= 0 and isinstance(self.inventory, Inventory) and self.trimCB.isChecked():
-                start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
-                end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-                self.controller().open_array_window()
-                self.controller().array_analysis_frame.process_import_stream(self.st, self.inventory,
-                                                                             start_time, end_time)
+                # If the user made a valid selection
+                if ok:
+                    start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+                    end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+                    self.controller().open_array_window()
+
+                    # Call process based on user's selection
+                    if choice == "FK process":
+                        self.controller().array_analysis_frame.process_fk(self.st, self.inventory, start_time, end_time)
+                    elif choice == "BackProjection":
+                        #self.controller().array_analysis_frame.process_backprojection(self.st, self.inventory,
+                        # start_time, end_time)
+                        # TODO CONEXION WITH BACKPROJECTION
+                        pass
+                else:
+                    # If the user cancels the choice dialog, do nothing
+                    return
             else:
+                # Show an error message if required conditions are not met
                 md = MessageDialog(self)
-                md.set_error_message("Please, review that you have procee and plot "
-                                     "seismograms and also trim it",
-                                    "Users need the following information: " +
-                                     + "\n" + "1. Seismograms" + "\n" + "2. Trim Seismograms"+ "\n"
-                                     + "3. Loaded a valid metadata")
+                md.set_error_message(
+                    "Please review the following requirements before proceeding:",
+                    "1. Ensure seismograms are loaded.\n"
+                    "2. Ensure seismograms are trimmed.\n"
+                    "3. Load a valid inventory metadata."
+                )
 
 
     def open_moment_tensor(self):
