@@ -51,26 +51,37 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
                 self.get_catalog()
 
         def get_catalog(self):
-
             md = MessageDialog(self)
             md.hide()
 
             try:
+                # Try reading the file as an ObsPy Catalog
                 catalog = read_events(self.root_path_bind.value)
                 if isinstance(catalog, Catalog):
                     print("File contains a valid ObsPy Catalog object. Extracting data...")
                     self.df_catalog = self._extract_from_catalog(catalog)
                     self.set_catalog()
+                    md.set_info_message("Catalog loaded successfully!")
+                    md.show()
                 else:
+                    raise ValueError("File is not a valid ObsPy Catalog.")  # Explicitly raise if not Catalog
+
+            except Exception as obspy_error:
+                # If ObsPy read fails, try reading with pandas
+                try:
                     self.df_catalog = pd.read_csv(self.root_path_bind.value, sep=";")
                     self.set_catalog()
+                    md.set_info_message("Text file loaded successfully!")
+                    md.show()
+                except Exception as pandas_error:
+                    # Handle the error if both attempts fail
+                    error_message = f"Failed to load catalog: {obspy_error} | Text file error: {pandas_error}"
+                    print(error_message)  # Optional: log error details
+                    md.set_error_message("Catalog couldn't be loaded. Please check the file format!")
+                    md.show()
 
-                md.set_info_message("Catalog loaded succesfully!!!")
-                md.show()
 
-            except:
-                md.set_error_message("Catalog coudn't be loaded!!!")
-                md.show()
+
 
         def _extract_from_catalog(self, catalog):
             # Initialize a list to store each event's data as a dictionary

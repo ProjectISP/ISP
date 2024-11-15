@@ -1428,12 +1428,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if self.st:
             n = len(self.st)
             for j in range(n):
-                tr = self.st[j]
-                t1 = tr.stats.starttime
-                id = tr.id+"."+"D"+"."+str(t1.year)+"."+str(t1.julday)
-                print(tr.id, "Writing data processed")
-                path_output = os.path.join(dir_path, id)
-                tr.write(path_output, format="MSEED")
+                try:
+                    tr = self.st[j]
+                    t1 = tr.stats.starttime
+                    id = tr.id+"."+"D"+"."+str(t1.year)+"."+str(t1.julday)
+                    print(tr.id, "Writing data processed")
+                    path_output = os.path.join(dir_path, id)
+                    tr.write(path_output, format="MSEED")
+                except:
+                    print("File cannot be written:", self.files_at_page[j])
 
     def save_cf(self):
         root_path = os.path.dirname(os.path.abspath(__file__))
