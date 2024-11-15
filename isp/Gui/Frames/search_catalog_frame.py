@@ -7,7 +7,6 @@ import pandas as pd
 import os
 from PyQt5 import QtWidgets
 from obspy import UTCDateTime, read_events, Catalog
-
 from isp.seismogramInspector.signal_processing_advanced import find_nearest
 
 
@@ -43,6 +42,7 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
                                                        hspace=0.0)
             self.activated_colorbar = True
             self.df_catalog = None
+            self.reLoadCatalogBtn.clicked.connect(self.get_catalog)
 
         def on_click_select_catalog_file(self, bind: BindPyqtObject):
             selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
@@ -132,6 +132,12 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
             return pd.DataFrame(event_data)
 
         def set_catalog(self):
+
+            self.tableWidget.clearContents()
+            # Update the row count based on data length
+            # rows, columns = df.shape
+            self.tableWidget.setRowCount(0)
+
             latitudes = []
             longitudes = []
             depths = []
@@ -172,34 +178,42 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
             self.activated_colorbar = False
 
         def select_event(self):
+            try:
+                selected_items = self.tableWidget.selectedItems()
+                event_dict = {}
+                errors = False
+                row = 0
+                column = 0
+                for i, item in enumerate(selected_items):
+                    event_dict.setdefault(row, {})
+                    header = self.tableWidget.horizontalHeaderItem(column).text()
+                    event_dict[row][header] = item.text()
+                    column += 1
+                    if i % 5 == 0 and i > 0:
+                        row += 1
+                        column = 0
 
-            selected_items = self.tableWidget.selectedItems()
-            event_dict = {}
-            errors = False
-            row = 0
-            column = 0
-            for i, item in enumerate(selected_items):
-                event_dict.setdefault(row, {})
-                header = self.tableWidget.horizontalHeaderItem(column).text()
-                event_dict[row][header] = item.text()
-                column += 1
-                if i % 5 == 0 and i > 0:
-                    row += 1
-                    column = 0
+                for event in event_dict.keys():
 
-            for event in event_dict.keys():
+                    date = event_dict[event]['otime']
+                    date_full = date.split("TT")
+                    date = date_full[0].split("/")
+                    time = date_full[1].split(":")
+                    tt = UTCDateTime(int(date[2]), int(date[1]), int(date[0]), int(time[0]), int(time[1]), float(time[2]))
 
-                date = event_dict[event]['otime']
-                date_full = date.split("TT")
-                date = date_full[0].split("/")
-                time = date_full[1].split(":")
-                tt = UTCDateTime(int(date[2]), int(date[1]), int(date[0]), int(time[0]), int(time[1]), float(time[2]))
+                    self.otime = UTCDateTime(tt)
+                    self.evla = float(event_dict[event]['lat'])
+                    self.evlo = float(event_dict[event]['lon'])
+                    self.evdp = float(event_dict[event]['depth'])
+                    self.export_event_location_to_earthquake_analysis()
 
-                self.otime = UTCDateTime(tt)
-                self.evla = float(event_dict[event]['lat'])
-                self.evlo = float(event_dict[event]['lon'])
-                self.evdp = float(event_dict[event]['depth'])
-                self.export_event_location_to_earthquake_analysis()
+                md = MessageDialog(self)
+                md.set_info_message("Send Event info to Earthquake Analysis, "
+                                    "Ready to filter your Project")
+            except:
+                md = MessageDialog(self)
+                md.set_info_message("Error Sending Event info to Earthquake Analysis \n "
+                                    "Please check that you have selected an event from the table")
 
         def key_pressed(self, event):
 
