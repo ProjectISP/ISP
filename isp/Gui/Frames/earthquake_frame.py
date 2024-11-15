@@ -143,7 +143,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.__metadata_manager = MetadataManager(self.metadata_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
         self.actionOpen_Earth_Model_Viewer.triggered.connect(lambda: self.open_earth_model_viewer())
-        self.actionWrite_Current_Page_2.triggered.connect(self.write_files_page)
+        self.actionSeismograms.triggered.connect(self.write_files_page)
         self.actionArray_Anlysis.triggered.connect(self.open_array_analysis)
         self.actionMoment_Tensor_Inversion.triggered.connect(self.open_moment_tensor)
         self.actionTime_Frequency_Analysis.triggered.connect(self.time_frequency_analysis)
@@ -177,7 +177,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.newProjectBtn.clicked.connect(lambda: self.new_project())
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
         self.actionPlot_Record_Section.triggered.connect(lambda: self.on_click_plot_record_section())
-        self.actionWrite_CFs.triggered.connect(lambda: self.save_cf())
+        self.actionCFs.triggered.connect(lambda: self.save_cf())
         self.runScriptBtn.clicked.connect(self.run_process)
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
