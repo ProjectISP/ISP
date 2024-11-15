@@ -1056,15 +1056,23 @@ class CartopyCanvas(BasePltPyqtCanvas):
         self.clear()
         ax = self.get_axe(axes_index)
 
+        min_lat = min(lat)
+        max_lat = max(lat)
+        min_lon = min(lon)
+        max_lon = max(lon)
 
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
         #layer = 'GEBCO_08 Hillshade'
         layer ='GEBCO_2020_Grid'
         #layer = 'shaded_relief'
-        xmin = int(x-6)
-        xmax = int(x+6)
-        ymin = int(y-4)
-        ymax = int(y+4)
+        # xmin = int(x-6)
+        # xmax = int(x+6)
+        # ymin = int(y-4)
+        # ymax = int(y+4)
+        xmin = min([x, min_lon])-1
+        xmax = max([x, max_lon]) + 1
+        ymin = min([y, min_lat]) - 1
+        ymax = max([y, max_lat]) + 1
         extent = [xmin, xmax, ymin, ymax]
 
         ax.set_extent(extent, crs=ccrs.PlateCarree())

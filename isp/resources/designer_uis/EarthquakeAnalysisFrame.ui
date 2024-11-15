@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1542</width>
-    <height>944</height>
+    <height>916</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -243,7 +243,7 @@
                      <number>-1</number>
                     </property>
                     <property name="text">
-                     <string>Load Project and Apply Seach Filters</string>
+                     <string>Load Project</string>
                     </property>
                    </widget>
                   </item>
@@ -253,7 +253,7 @@
                      <string>Filter the Project based on Nets, Stations and Channels. (Use valid wildcards)</string>
                     </property>
                     <property name="text">
-                     <string>Filter Project</string>
+                     <string>Apply Search Filters</string>
                     </property>
                    </widget>
                   </item>
@@ -584,7 +584,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>971</width>
-                  <height>702</height>
+                  <height>674</height>
                  </rect>
                 </property>
                </widget>
@@ -908,11 +908,17 @@
      <addaction name="actionNew_Project"/>
      <addaction name="actionLoad_Project"/>
     </widget>
+    <widget class="QMenu" name="actionWrite_Files">
+     <property name="title">
+      <string>Write Files</string>
+     </property>
+     <addaction name="actionSeismograms"/>
+     <addaction name="actionCFs"/>
+    </widget>
     <addaction name="menuProject"/>
     <addaction name="actionNew_location"/>
     <addaction name="actionOpen_Settings"/>
-    <addaction name="actionWrite_Current_Page_2"/>
-    <addaction name="actionWrite_CFs"/>
+    <addaction name="actionWrite_Files"/>
    </widget>
    <widget class="QMenu" name="menuActions">
     <property name="title">
@@ -1302,16 +1308,6 @@
     <string>Load Project</string>
    </property>
   </action>
-  <action name="actionWrite_Current_Page_2">
-   <property name="icon">
-    <iconset>
-     <normalon>../images/icons/save.png</normalon>
-    </iconset>
-   </property>
-   <property name="text">
-    <string>Write Files</string>
-   </property>
-  </action>
   <action name="actionLoad_Files">
    <property name="text">
     <string>Load Files</string>
@@ -1336,17 +1332,28 @@
     <string>P</string>
    </property>
   </action>
-  <action name="actionWrite_CFs">
+  <action name="actionSeismograms">
    <property name="icon">
     <iconset>
-     <normalon>../images/save.png</normalon>
+     <normaloff>../images/icons/file-save.png</normaloff>../images/icons/file-save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Seismograms</string>
+   </property>
+  </action>
+  <action name="actionCFs">
+   <property name="icon">
+    <iconset>
+     <normalon>../images/icons/file-save.png</normalon>
     </iconset>
    </property>
    <property name="text">
-    <string>Write CFs</string>
+    <string>CFs</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+K</string>
+  </action>
+  <action name="actionStack_Seismogram">
+   <property name="text">
+    <string>Stack Seismogram</string>
    </property>
   </action>
  </widget>

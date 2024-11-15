@@ -27,5 +27,9 @@ class SettingsDialog(pw.QDialog, UiSettingsDialog):
         param_dict["Cluster"] = self.ClusterSB.value()
         param_dict["transform"] = self.transformCB.currentText()
         param_dict["window pick"] = self.WindowPickSB.value()
+        param_dict["lineColor"] = self.colorCB.currentText()
+        param_dict["timeaxis"] = self.timeaxisCB.isChecked()
+        param_dict["amplitudeaxis"] = self.amplitudeaxisCB.isChecked()
+        param_dict["prs_phases"] = self.phasesLE.text().split(",")
         return param_dict
 

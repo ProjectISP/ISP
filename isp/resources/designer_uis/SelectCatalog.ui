@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>863</width>
-    <height>1055</height>
+    <height>1017</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -34,7 +34,7 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout" stretch="2,0,0,0,0">
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="2,0,0,0,0,0">
       <item>
        <widget class="QWidget" name="map" native="true">
         <property name="sizePolicy">
@@ -120,6 +120,13 @@
        <widget class="QPushButton" name="selectCatalogBtn">
         <property name="text">
          <string>Select Catalog</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="reLoadCatalogBtn">
+        <property name="text">
+         <string>ReLoad Catalog</string>
         </property>
        </widget>
       </item>

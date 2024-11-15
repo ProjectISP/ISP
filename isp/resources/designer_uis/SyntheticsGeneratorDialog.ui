@@ -120,6 +120,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="createLineStationsBtn">
+         <property name="text">
+          <string>Create Line Stations</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="pushButtonRemStation">
          <property name="text">
           <string> Remove Station </string>
@@ -361,7 +368,7 @@
      <item>
       <widget class="QGroupBox" name="groupBoxMT">
        <property name="title">
-        <string>Moment Tensor Parameters</string>
+        <string>Moment Tensor Parameters (Units Nm)</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -513,7 +520,7 @@
      <item>
       <widget class="QGroupBox" name="groupBoxFP">
        <property name="title">
-        <string>First Polarity Parameters</string>
+        <string>Double Couple (Units Nm)</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

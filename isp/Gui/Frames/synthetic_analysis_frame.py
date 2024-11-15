@@ -1,11 +1,11 @@
+import json
 import os
-import pickle
 from concurrent.futures import ThreadPoolExecutor
-from obspy.geodetics import gps2dist_azimuth, locations2degrees
+from obspy.geodetics import gps2dist_azimuth
 from obspy import Stream, UTCDateTime
 from obspy.taup import TauPyModel
-import random
 from isp.DataProcessing import SeismogramDataAdvanced
+from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Gui import pw, pqg, pyc, qt
 from isp.Gui.Frames import UiSyntheticsAnalisysFrame, MatplotlibCanvas, CartopyCanvas, FocCanvas
 from isp.Gui.Frames.qt_components import ParentWidget, MessageDialog
@@ -13,7 +13,7 @@ from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.synthetics_generator_dialog import SyntheticsGeneratorDialog
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
 from sys import platform
-from isp.Utils import MseedUtil, ObspyUtil
+from isp.Utils import MseedUtil
 import pandas as pd
 import numpy as np
 import matplotlib.dates as mdt
@@ -69,6 +69,9 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
         self.readFilesBtn.clicked.connect(lambda: self.get_now_files())
         self.stationsBtn.clicked.connect(self.stationsInfo)
+        self.PABtn.clicked.connect(self.plotArrivals)
+        self.mapBtn.clicked.connect(self.map_coords)
+        self.spectrumBtn.clicked.connect(self.spectrums)
         ###
 
     def filter_error_message(self, msg):
@@ -96,34 +99,115 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         :param value: The path of the new directory.
         :return:
         """
-        # self.read_files(value)
         pass
 
-    def plot(self):
 
+    def plot(self):
+        if self.sortCB.isChecked():
+            self.plot_dist_az()
+        else:
+            self.plot_current_Seismograms()
+
+    def plot_current_Seismograms(self):
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=1, ncols=1)
-        self.__map_coords()
+        self.canvas.set_new_subplot(nrows=len(self.stream), ncols=1, sharex=True, sharey=True)
 
         parameters = []
         min_starttime = []
         max_endtime = []
 
-
         self.generationParams()
-        if self.sortCB.isChecked():
-            stations_df = self.sort_traces()
-
-        if self.sortCB.isChecked():
-            travel_times_df = self.get_phases_and_arrivals()
+        if self.params['units'] == "velocity":
+            y_label = "cm/s"
+        elif self.params['units'] == "displacement":
+            y_label = "cm/s"
+        elif self.params['units'] == "acceleration":
+            y_label = "cm/s^2"
 
         for index, tr in enumerate(self.stream):
 
             sd = SeismogramDataAdvanced(file_path=None, stream=tr, realtime=True)
             tr = sd.get_waveform_advanced(parameters, self.inventory,
                                           filter_error_callback=self.filter_error_message, trace_number=0)
-            distance = stations_df.loc[(stations_df['Network'] == tr.stats.network) &
-                                       (stations_df['Station'] == tr.stats.station), 'Distance'].values[0] * 1e-3
+
+            if len(tr)>0:
+                t = tr.times("matplotlib")
+                tr.detrend(type="simple")
+                s = tr.data
+
+                info = "{}.{}.{}".format(tr.stats.network, tr.stats.station, tr.stats.channel)
+                self.canvas.set_plot_label(index, info)
+                self.canvas.plot_date(t, s, index, clear_plot=False, color="black", fmt='-',
+                                      linewidth=0.5, label=info)
+                self.canvas.set_ylabel(index, y_label)
+                ax = self.canvas.get_axe(index)
+                try:
+                    ax.spines["top"].set_visible(False)
+                    ax.spines["bottom"].set_visible(False)
+                    ax.tick_params(top=False)
+                    ax.tick_params(labeltop=False)
+                except:
+                    pass
+                #
+                if index != (len(self.stream) - 1):
+                    try:
+                        ax.tick_params(bottom=False)
+                    except:
+                        pass
+
+                try:
+                    min_starttime.append(min(t))
+                    max_endtime.append(max(t))
+                except:
+                    print("Empty traces")
+
+        try:
+            if min_starttime and max_endtime is not None:
+                auto_start = min(min_starttime)
+                auto_end = max(max_endtime)
+                self.auto_start = auto_start
+                self.auto_end = auto_end
+
+            ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
+            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S')
+            ax.xaxis.set_major_formatter(formatter)
+
+            self.canvas.set_xlabel(len(self.stream) - 1, "Date")
+        except:
+            pass
+
+
+
+    def plot_dist_az(self):
+
+        distance = None
+        azimuth = None
+
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=1, ncols=1)
+
+        parameters = []
+        min_starttime = []
+        max_endtime = []
+
+        self.generationParams()
+        if self.sortCB.isChecked():
+            stations_df = self.sort_traces()
+
+        for index, tr in enumerate(self.stream):
+
+            sd = SeismogramDataAdvanced(file_path=None, stream=tr, realtime=True)
+            tr = sd.get_waveform_advanced(parameters, self.inventory,
+                                          filter_error_callback=self.filter_error_message, trace_number=0)
+
+            if self.sortbyCB.currentText() == "Distance":
+
+                distance = stations_df.loc[(stations_df['Network'] == tr.stats.network) &
+                                           (stations_df['Station'] == tr.stats.station), 'Distance'].values[0] * 1e-3
+            else:
+                azimuth = stations_df.loc[(stations_df['Network'] == tr.stats.network) &
+                                           (stations_df['Station'] == tr.stats.station), 'Azimuth'].values[0]
+
 
             if len(tr) > 0:
                 t = tr.times("matplotlib")
@@ -132,7 +216,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                 if distance:
                     s = s * self.sizeSB.value() + distance
                 else:
-                    s = s + index
+                    s = s * int(self.sizeSB.value()/2) + azimuth
 
                 label_trace = tr.stats.network+"."+tr.stats.station+"."+tr.stats.channel
                 self.canvas.plot_date(t, s, 0, clear_plot=False, fmt='-', alpha=0.5,
@@ -143,47 +227,6 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                     max_endtime.append(max(t))
                 except:
                     print("Empty traces")
-
-        # Now Plot the traveltimes
-
-        if isinstance(travel_times_df, pd.DataFrame):
-
-            # Applying specific filter
-            phases_to_filter = self.phasesLE.text().split(",")
-            pp_phase_df = travel_times_df.query("Phase in @phases_to_filter")
-            all_plot_phases = []
-            # Loop through each unique Network and Station combination
-            for (network, station), group_df in pp_phase_df.groupby(['Network', 'Station']):
-                print(f"Network: {network}, Station: {station}")
-
-                # Extract distance (assuming distance is the same for all phases at this station)
-                distance = group_df['Distance_km'].iloc[0] * 1e-3
-
-                print(f"Distance (km): {distance}")
-
-                # Loop over each row in the group to get Phase and Time
-                phases_plot = []  # to select the first phase of one kind
-                unique_phases = self._get_unique_phases(group_df)
-                for _, row in group_df.iterrows():
-                    phase = row['Phase']
-                    if phase not in phases_plot:
-                        # if choosen_color not in selected_colors:
-
-                        arrival_time = UTCDateTime(self.params['origintime']) + float(row['Time_s'])
-
-                        print(f"  Phase: {phase}, Arrival Time (s): {arrival_time}")
-                        if phase not in all_plot_phases:
-                            self.canvas.plot_date(arrival_time, distance, 0, color=unique_phases[phase],
-                                                  clear_plot=False, fmt='.', markeredgecolor='black', markeredgewidth=1,
-                                                  linewidth=0.5, label=phase)
-                        else:
-                            self.canvas.plot_date(arrival_time, distance, 0, color=unique_phases[phase],
-                                                  clear_plot=False, fmt='.', markeredgecolor='black', markeredgewidth=1,
-                                                  linewidth=0.5, label="")
-                    all_plot_phases.append(phase)
-                    phases_plot.append(phase)
-
-                print("------------------")
 
         try:
             if min_starttime and max_endtime is not None:
@@ -201,6 +244,56 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
             ax.legend()
         except:
             pass
+
+
+    def plotArrivals(self):
+
+
+        if self.sortbyCB.currentText() == "Distance":
+            travel_times_df = self.get_phases_and_arrivals()
+            if isinstance(travel_times_df, pd.DataFrame):
+
+                # Applying specific filter
+                phases_to_filter = self.phasesLE.text().split(",")
+                pp_phase_df = travel_times_df.query("Phase in @phases_to_filter")
+                all_plot_phases = []
+                # Loop through each unique Network and Station combination
+                for (network, station), group_df in pp_phase_df.groupby(['Network', 'Station']):
+                    print(f"Network: {network}, Station: {station}")
+
+                    # Extract distance (assuming distance is the same for all phases at this station)
+                    distance = group_df['Distance_km'].iloc[0] * 1e-3
+
+                    print(f"Distance (km): {distance}")
+
+                    # Loop over each row in the group to get Phase and Time
+                    phases_plot = []  # to select the first phase of one kind
+                    unique_phases = self._get_unique_phases(group_df)
+                    for _, row in group_df.iterrows():
+                        phase = row['Phase']
+                        if phase not in phases_plot:
+                            # if choosen_color not in selected_colors:
+
+                            arrival_time = UTCDateTime(self.params['origintime']) + float(row['Time_s'])
+
+                            print(f"  Phase: {phase}, Arrival Time (s): {arrival_time}")
+                            if phase not in all_plot_phases:
+                                self.canvas.plot_date(arrival_time, distance, 0, color=unique_phases[phase],
+                                                      clear_plot=False, fmt='.', markeredgecolor='black', markeredgewidth=1,
+                                                      linewidth=0.5, label=phase)
+                            else:
+                                self.canvas.plot_date(arrival_time, distance, 0, color=unique_phases[phase],
+                                                      clear_plot=False, fmt='.', markeredgecolor='black', markeredgewidth=1,
+                                                      linewidth=0.5, label="")
+                        all_plot_phases.append(phase)
+                        phases_plot.append(phase)
+
+                    print("------------------")
+                ax = self.canvas.get_axe(0)
+                ax.legend()
+        else:
+            md = MessageDialog(self)
+            md.set_info_message("This action needs traces be sorted by distance")
 
     def _get_unique_phases(self, group_df: pd.DataFrame) -> dict:
 
@@ -230,7 +323,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         if self.channelLE.text() != "":
             selection["channel"] = self.channelLE.text()
         else:
-            selection["channel"] = self.channelLE.text()
+            selection["channel"] = "*"
         stream = MseedUtil.get_stream(dir_path, selection=selection)
         pyc.QMetaObject.invokeMethod(self.progressbar, 'accept', qt.AutoConnection)
         return stream
@@ -264,7 +357,7 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
     def generationParams(self):
         with open(self.generation_params_bind.value, 'rb') as f:
-            self.params = pickle.load(f)
+            self.params = json.load(f)
             depth_est = self.params['sourcedepthinmeters']
             depth_est = (float(depth_est)) / 1000
             # self.paramsTextEdit.setPlainText(str(params))
@@ -280,11 +373,26 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
             if 'sourcemomenttensor' in self.params:
                 self.paramsTextEdit.appendPlainText("Source: {source}".format(source=self.params['sourcemomenttensor']))
 
+
+    def _get_stations(self):
+
+        self._stations = []
+        for treace in self.stream:
+            station = treace.stats.station
+            if station not in self._stations:
+                self._stations.append(station)
+
+
     def sort_traces(self):
 
         stations_df = pd.read_csv(self.stations_coords_path_bind.value, delimiter=';')
+        self._get_stations()
+
+        # Filter travel_times_df to include only rows where 'Station' is in the available_stations list
+        stations_df = stations_df[stations_df['Station'].isin(self._stations)]
+
         with open(self.generation_params_bind.value, 'rb') as f:
-            self.params = pickle.load(f)
+            self.params = json.load(f)
 
         if self.sortbyCB.currentText() == "Distance":
             stations_df['Distance'] = stations_df.apply(self._calculate_distance, axis=1)
@@ -326,11 +434,14 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
 
         travel_times = []
         stations_df = pd.read_csv(self.stations_coords_path_bind.value, delimiter=';')
+        # Filter travel_times_df to include only rows where 'Station' is in the available_stations list
+        stations_df = stations_df[stations_df['Station'].isin(self._stations)]
+
         stations_df['Distance'] = stations_df.apply(self._calculate_distance, axis=1)
         stations_df = stations_df.sort_values(by='Distance').reset_index(drop=True)
 
         with open(self.generation_params_bind.value, 'rb') as f:
-            self.params = pickle.load(f)
+            self.params = json.load(f)
             depth_est = self.params['sourcedepthinmeters']
             depth_est = (float(depth_est)) / 1000
 
@@ -367,12 +478,16 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
         self._stations_info = StationsInfo(sd)
         self._stations_info.show()
 
-    def __map_coords(self):
+    def map_coords(self):
+
+        self.cartopy_canvas.clear()
+        self.focmec_canvas.clear()
+
         map_dict = {}
         sd = []
 
         with open(self.generation_params_bind.value, 'rb') as f:
-            params = pickle.load(f)
+            params = json.load(f)
 
         n = len(params["bulk"])
         for j in range(n):
@@ -384,9 +499,6 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                 elif key == "longitude":
                     lon = params["bulk"][j][key]
 
-                #elif key == "networkcode":
-                #    net = params["bulk"][j][key]
-
                 elif key == "stationcode":
                     sta = params["bulk"][j][key]
 
@@ -394,10 +506,19 @@ class SyntheticsAnalisysFrame(pw.QMainWindow, UiSyntheticsAnalisysFrame):
                     map_dict[sta] = [lon, lat]
 
 
-        self.cartopy_canvas.plot_map(params['sourcelongitude'], params['sourcelatitude'], 0, 0, 0, 0,
-                                     resolution='low', stations=map_dict)
+        self.cartopy_canvas.plot_map(params['sourcelongitude'], params['sourcelatitude'],
+                                     0, 0, 0, 0, resolution='low',
+                                     stations=map_dict)
 
         if 'sourcedoublecouple' in params:
             self.focmec_canvas.drawSynthFocMec(0, first_polarity=params['sourcedoublecouple'], mti = [])
         if 'sourcemomenttensor' in params:
             self.focmec_canvas.drawSynthFocMec(0, first_polarity= [], mti=params['sourcemomenttensor'])
+
+        self.tabWidget.setCurrentIndex(1)
+
+
+    def spectrums(self):
+        id = ""
+        self.spectrum = PlotToolsManager(id)
+        self.spectrum.plot_spectrum_stream(self.stream)
