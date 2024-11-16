@@ -775,7 +775,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
          self.dist_all = []
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
-         if st_stats:
+         if st_stats is not None:
 
              dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
                                            self.event_info.longitude)
@@ -784,7 +784,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
          else:
              self.dataless_not_found.add(file)
              print("No Metadata found for {} file.".format(file))
-             self.dist_all.append(-100)
+             self.dist_all.append(0)
              return 0.
 
     def sort_by_baz_advance(self, file):
@@ -792,7 +792,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
          self.baz_all = []
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
 
-         if st_stats:
+         if st_stats is not None:
 
              _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
                                           self.event_info.longitude)
@@ -802,6 +802,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
              self.dataless_not_found.add(file)
              print("No Metadata found for {} file.".format(file))
+             self.baz_all.append(0)
              return 0.
 
     def plot_seismogram(self):
@@ -1718,12 +1719,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def on_click_plot_arrivals(self, event_time: UTCDateTime, lat: float, long: float, depth: float):
         self.event_info.clear_arrivals()
+        check_warning = False
         for index, file_path in enumerate(self.get_files_at_page()):
             #st_stats = self.dataless_manager.get_station_stats_by_mseed_file(file_path)
             st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file_path)
-            #stats = ObspyUtil.get_stats(file_path)
-            # TODO remove stats.StartTime and use the picked one from UI.
-            self.event_info.plot_arrivals(index, st_stats)
+            if st_stats is not None:
+                self.event_info.plot_arrivals(index, st_stats)
+            elif st_stats is None:
+                check_warning = True
+
+        if check_warning:
+            md = MessageDialog(self)
+            md.set_warning_message("Check your Metadata, some traces does't match with your metadata info")
+
 
     def get_arrivals_tf(self):
 

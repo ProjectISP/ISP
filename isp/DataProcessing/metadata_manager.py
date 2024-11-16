@@ -25,12 +25,18 @@ class MetadataManager:
 
         stats = self.get_station_stats_by_mseed_file(file_path=file_path)
         selected_inv = inventory.select(network=stats.Network, station=stats.Station, channel=stats.Channel,
-                                        starttime = stats.StartTime, endtime = stats.EndTime)
-        #selected_inv = inventory.select(network=stats.Network, station=stats.Station, channel=stats.Channel)
-        cont = selected_inv.get_contents()
-        coords = selected_inv.get_coordinates(cont['channels'][0])
+                                        starttime=stats.StartTime, endtime=stats.EndTime)
 
-        return StationCoordinates.from_dict(coords)
+        # Check if the selected inventory has contents
+        cont = selected_inv.get_contents()
+        if not cont['channels']:
+            # Return None if there are no matches
+            return None
+        else:
+            # Extract coordinates using the first matching channel
+            coords = selected_inv.get_coordinates(cont['channels'][0])
+
+            return StationCoordinates.from_dict(coords)
 
     def extrac_coordinates_from_trace(self, inventory, trace):
         stats = ObspyUtil.get_stats_from_trace(trace)
