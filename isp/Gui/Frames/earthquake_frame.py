@@ -2226,18 +2226,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                 # If the user made a valid selection
                 if ok:
-                    start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
-                    end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+                    starttime = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+                    endtime = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
                     self.controller().open_array_window()
 
                     # Call process based on user's selection
                     if choice == "FK process":
-                        self.controller().array_analysis_frame.process_fk(self.st, self.inventory, start_time, end_time)
+                        self.controller().array_analysis_frame.process_fk(self.st, self.inventory, starttime, endtime)
                     elif choice == "BackProjection":
                         #self.controller().array_analysis_frame.process_backprojection(self.st, self.inventory,
                         # start_time, end_time)
                         # TODO CONEXION WITH BACKPROJECTION
-                        pass
+                        md = MessageDialog(self)
+                        md.set_info_message("This conexion is still not available, please go to directly the "
+                                            "Backproection Module")
                 else:
                     # If the user cancels the choice dialog, do nothing
                     return

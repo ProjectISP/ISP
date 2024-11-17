@@ -78,7 +78,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.runFKBtn.clicked.connect(lambda: self.FK_plot())
         self.plotBtnBP.clicked.connect(lambda: self.plot_seismograms(FK=False))
         self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
-        self.actionProcessed_Seimograms.triggered.connect(self.write)
         self.actionStacked_Seismograms.triggered.connect(self.write_stack)
         self.stationsBtnBP.clicked.connect(lambda: self.stationsInfo(FK=False))
         self.mapBtn.clicked.connect(self.stations_map)
@@ -227,31 +226,28 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
     def FK_plot(self):
         self.canvas_stack.set_new_subplot(nrows=1, ncols=1)
-        starttime = convert_qdatetime_utcdatetime(self.starttime_date)
-        endtime = convert_qdatetime_utcdatetime(self.endtime_date)
+
+        #starttime = convert_qdatetime_utcdatetime(self.starttime_date)
+        #endtime = convert_qdatetime_utcdatetime(self.endtime_date)
         selection = MseedUtil.filter_inventory_by_stream(self.st, self.inventory)
 
-        if self.trimCB.isChecked():
-            wavenumber = array_analysis.array()
-            relpower,abspower, AZ, Slowness, T = wavenumber.FK(self.st, selection, starttime, endtime,
-            self.fminFK_bind.value, self.fmaxFK_bind.value, self.smaxFK_bind.value, self.slow_grid_bind.value,
-            self.timewindow_bind.value, self.overlap_bind.value)
-            self.canvas_fk.scatter3d(T, relpower,relpower, axes_index=0, clabel="Power [dB]")
-            self.canvas_fk.scatter3d(T, abspower, relpower, axes_index=1, clabel="Power [dB]")
-            self.canvas_fk.scatter3d(T, AZ, relpower, axes_index=2, clabel="Power [dB]")
-            self.canvas_fk.scatter3d(T, Slowness, relpower, axes_index=3, clabel="Power [dB]")
-            self.canvas_fk.set_ylabel(0, " Rel Power ")
-            self.canvas_fk.set_ylabel(1, " Absolute Power ")
-            self.canvas_fk.set_ylabel(2, " Back Azimuth ")
-            self.canvas_fk.set_ylabel(3, " Slowness [s/km] ")
-            self.canvas_fk.set_xlabel(3, " Time [s] ")
-            ax = self.canvas_fk.get_axe(3)
-            formatter = mdt.DateFormatter('%H:%M:%S')
-            ax.xaxis.set_major_formatter(formatter)
-            ax.xaxis.set_tick_params(rotation = 30)
-        else:
-            md = MessageDialog(self)
-            md.set_info_message("Please select dates and then check Trim box")
+        wavenumber = array_analysis.array()
+        relpower,abspower, AZ, Slowness, T = wavenumber.FK(self.st, selection, self.starttime, self.endttime,
+        self.fminFK_bind.value, self.fmaxFK_bind.value, self.smaxFK_bind.value, self.slow_grid_bind.value,
+        self.timewindow_bind.value, self.overlap_bind.value)
+        self.canvas_fk.scatter3d(T, relpower,relpower, axes_index=0, clabel="Power [dB]")
+        self.canvas_fk.scatter3d(T, abspower, relpower, axes_index=1, clabel="Power [dB]")
+        self.canvas_fk.scatter3d(T, AZ, relpower, axes_index=2, clabel="Power [dB]")
+        self.canvas_fk.scatter3d(T, Slowness, relpower, axes_index=3, clabel="Power [dB]")
+        self.canvas_fk.set_ylabel(0, " Rel Power ")
+        self.canvas_fk.set_ylabel(1, " Absolute Power ")
+        self.canvas_fk.set_ylabel(2, " Back Azimuth ")
+        self.canvas_fk.set_ylabel(3, " Slowness [s/km] ")
+        self.canvas_fk.set_xlabel(3, " Time [s] ")
+        ax = self.canvas_fk.get_axe(3)
+        formatter = mdt.DateFormatter('%H:%M:%S')
+        ax.xaxis.set_major_formatter(formatter)
+        ax.xaxis.set_tick_params(rotation=30)
 
 
     def on_click_matplotlib(self, event, canvas):
@@ -319,37 +315,11 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.st = stream
         print(self.st)
         self.inventory = inventory
-        # set times
-        set_qdatetime(starttime, self.starttime_date)
-        set_qdatetime(endtime, self.endtime_date)
-        self.trimCB.setChecked(True)
+        self.starttime = starttime
+        self.endttime = endtime
         self.stream_frame = MatplotlibFrame(self.st, type='normal')
         self.stream_frame.show()
 
-
-    def write(self):
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        if "darwin" == platform:
-            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
-        else:
-            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
-                                                           pw.QFileDialog.DontUseNativeDialog)
-        if dir_path:
-            n=len(self.st)
-            try:
-                if len(n)>0:
-                    for j in range(n):
-                        tr = self.st[j]
-                        t1 = tr.stats.starttime
-                        id = tr.id+"."+"D"+"."+str(t1.year)+"."+str(t1.julday)
-                        print(tr.id, "Writing data processed")
-                        path_output = os.path.join(dir_path, id)
-                        tr.write(path_output, format="MSEED")
-                else:
-                    md = MessageDialog(self)
-                    md.set_info_message("Nothing to write")
-            except:
-                pass
 
     def write_stack(self):
         if self.stack is not None and len(self.stack) > 0:
