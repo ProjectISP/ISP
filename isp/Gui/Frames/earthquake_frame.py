@@ -1852,8 +1852,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             md.set_warning_message("Check correlation template and trim time")
 
     # TODO implement your logic here for multiple select
-    def on_multiple_select(self, ax_index, xmin, xmax):
-        pass
+    # def on_multiple_select(self, ax_index, xmin, xmax):
+    #     pass
 
     def on_select(self, ax_index, xmin, xmax):
         self.kind_wave = self.ChopCB.currentText()

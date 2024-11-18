@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1400</width>
-    <height>889</height>
+    <height>721</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -54,7 +54,7 @@
              <double>0.010000000000000</double>
             </property>
             <property name="value">
-             <double>0.030000000000000</double>
+             <double>0.400000000000000</double>
             </property>
            </widget>
           </item>
@@ -86,7 +86,7 @@
              <double>0.000100000000000</double>
             </property>
             <property name="value">
-             <double>0.050000000000000</double>
+             <double>0.010000000000000</double>
             </property>
            </widget>
           </item>
@@ -164,6 +164,9 @@
           </item>
           <item row="8" column="0" colspan="4">
            <widget class="QPushButton" name="mapBtn">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Plot Map</string>
             </property>
@@ -178,7 +181,7 @@
              </sizepolicy>
             </property>
             <property name="value">
-             <double>5.000000000000000</double>
+             <double>3.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -299,25 +302,12 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_7">
         <item row="0" column="2" rowspan="2">
-         <layout class="QVBoxLayout" name="verticalLayout_5" stretch="3,1">
+         <layout class="QVBoxLayout" name="verticalLayout_5" stretch="3">
           <property name="leftMargin">
            <number>0</number>
           </property>
           <item>
            <widget class="QWidget" name="widget_fk" native="true">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">background-color: rgb(255, 255, 255);</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QWidget" name="widget_stack" native="true">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
               <horstretch>0</horstretch>
@@ -370,43 +360,6 @@
           </property>
           <widget class="QWidget" name="layoutWidget">
            <layout class="QGridLayout" name="gridLayout_6">
-            <item row="5" column="2">
-             <widget class="QLabel" name="label_11">
-              <property name="text">
-               <string>F max</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="0" colspan="4" alignment="Qt::AlignHCenter">
-             <widget class="QLabel" name="label_6">
-              <property name="text">
-               <string>F-K Parameters</string>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="3">
-             <widget class="QDoubleSpinBox" name="fmaxFKSB">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="3">
-             <widget class="QDoubleSpinBox" name="gridFKSB">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="decimals">
-               <number>3</number>
-              </property>
-             </widget>
-            </item>
             <item row="1" column="2">
              <widget class="QLabel" name="label_8">
               <property name="toolTip">
@@ -414,40 +367,6 @@
               </property>
               <property name="text">
                <string>Time Win [s]</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="3">
-             <widget class="QDoubleSpinBox" name="timewindowSB">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="2">
-             <widget class="QLabel" name="label_15">
-              <property name="text">
-               <string>Slow Grid</string>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="0" alignment="Qt::AlignHCenter">
-             <widget class="QLabel" name="label_14">
-              <property name="text">
-               <string>Method</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QDoubleSpinBox" name="slowFKSB">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
               </property>
              </widget>
             </item>
@@ -461,20 +380,13 @@
               </property>
              </widget>
             </item>
-            <item row="5" column="1">
-             <widget class="QDoubleSpinBox" name="fminFKSB">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
+            <item row="3" column="0" alignment="Qt::AlignHCenter">
+             <widget class="QLabel" name="label_9">
+              <property name="toolTip">
+               <string>Sliding step = (Overlap*Time Win)</string>
               </property>
-             </widget>
-            </item>
-            <item row="5" column="0" alignment="Qt::AlignHCenter">
-             <widget class="QLabel" name="label_10">
               <property name="text">
-               <string>F min</string>
+               <string>Overlap</string>
               </property>
              </widget>
             </item>
@@ -498,23 +410,13 @@
               </item>
              </widget>
             </item>
-            <item row="3" column="0" alignment="Qt::AlignHCenter">
-             <widget class="QLabel" name="label_9">
-              <property name="toolTip">
-               <string>Sliding step = (Overlap*Time Win)</string>
-              </property>
-              <property name="text">
-               <string>Overlap</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0" alignment="Qt::AlignHCenter">
-             <widget class="QLabel" name="label_7">
-              <property name="toolTip">
-               <string>Maximum Slowness Map to be analyzed</string>
-              </property>
-              <property name="text">
-               <string>Slow Max [s/km]</string>
+            <item row="5" column="1">
+             <widget class="QDoubleSpinBox" name="fminFKSB">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
               </property>
              </widget>
             </item>
@@ -560,6 +462,87 @@
               </item>
              </widget>
             </item>
+            <item row="5" column="2">
+             <widget class="QLabel" name="label_11">
+              <property name="text">
+               <string>F max</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0" colspan="4" alignment="Qt::AlignHCenter">
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>F-K Parameters</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="3">
+             <widget class="QDoubleSpinBox" name="gridFKSB">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="decimals">
+               <number>3</number>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="2">
+             <widget class="QLabel" name="label_15">
+              <property name="text">
+               <string>Slow Grid</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="3">
+             <widget class="QDoubleSpinBox" name="fmaxFKSB">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QDoubleSpinBox" name="timewindowSB">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0" alignment="Qt::AlignHCenter">
+             <widget class="QLabel" name="label_7">
+              <property name="toolTip">
+               <string>Maximum Slowness Map to be analyzed</string>
+              </property>
+              <property name="text">
+               <string>Slow Max [s/km]</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="slowFKSB">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="0" alignment="Qt::AlignHCenter">
+             <widget class="QLabel" name="label_14">
+              <property name="text">
+               <string>Method</string>
+              </property>
+             </widget>
+            </item>
             <item row="8" column="1">
              <widget class="QComboBox" name="stackCB">
               <item>
@@ -574,7 +557,14 @@
               </item>
              </widget>
             </item>
-            <item row="7" column="2" rowspan="2" colspan="2">
+            <item row="5" column="0" alignment="Qt::AlignHCenter">
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>F min</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="2" colspan="2">
              <widget class="QPushButton" name="runFKBtn">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -587,6 +577,26 @@
               </property>
               <property name="text">
                <string>Run F-K</string>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="2">
+             <widget class="QCheckBox" name="showStackCB">
+              <property name="text">
+               <string>Shifts</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="3">
+             <widget class="QPushButton" name="runVespaBtn">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Run Vespagram</string>
               </property>
              </widget>
             </item>

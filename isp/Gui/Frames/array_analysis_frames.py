@@ -1,8 +1,10 @@
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.backend_bases import MouseButton
 from obspy import Stream, UTCDateTime, Trace, Inventory
 from isp.DataProcessing.metadata_manager import MetadataManager
+from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Gui.Frames import BaseFrame, \
 MatplotlibCanvas, UiArrayAnalysisFrame, CartopyCanvas, MatplotlibFrame, MessageDialog
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -25,6 +27,7 @@ from isp.Gui.Frames.help_frame import HelpDoc
 from sys import platform
 from isp.arrayanalysis.backprojection_tools import back_proj_organize, backproj
 from isp.arrayanalysis.plot_bp import plot_bp
+from isp.seismogramInspector.signal_processing_advanced import find_nearest
 
 
 class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
@@ -43,7 +46,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.canvas_fk = MatplotlibCanvas(self.widget_fk,nrows=4)
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
         self.canvas_fk.on_double_click(self.on_click_matplotlib)
-        self.canvas_stack = MatplotlibCanvas(self.widget_stack)
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
         self.canvas.set_new_subplot(1, ncols=1)
 
@@ -58,7 +60,9 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.smax_bind = BindPyqtObject(self.smaxSB)
 
         # On select
-        self.canvas_fk.register_on_select(self.on_select, rectprops=dict(alpha=0.2, facecolor='red'))
+        self.canvas_fk.register_on_select(self.on_multiple_select,
+                                       button=MouseButton.RIGHT, sharex=True, rectprops=dict(alpha=0.2,
+                                                                                             facecolor='blue'))
         self.fminFK_bind = BindPyqtObject(self.fminFKSB)
         self.fmaxFK_bind = BindPyqtObject(self.fmaxFKSB)
         self.overlap_bind = BindPyqtObject(self.overlapSB)
@@ -85,6 +89,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.arfLoad_coordsBtn.clicked.connect(self.load_path)
         self.actionLoad_Stations_File.triggered.connect(self.load_path)
         self.actionRunVespagram.triggered.connect(self.open_vespagram)
+        self.runVespaBtn.clicked.connect(self.open_vespagram)
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+O'), self)
         self.shortcut_open.activated.connect(self.open_solutions)
         self.create_gridBtn.clicked.connect(self.create_grid)
@@ -141,9 +146,24 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
     def open_vespagram(self):
         if self.st and self.inventory and self.t1 and self.t2:
-            self.__vespagram = Vespagram(self.st, self.inventory, self.t1, self.t2)
+            # TODO AUTOMATICALLY SET SLOWNESS AND AZIMUTH PLU FREQUENCIES
+            max_values = self.__get_max_values()
+            self.__vespagram = Vespagram(self.st, self.inventory, self.t1, self.t2, max_values, self.fminFK_bind.value,
+                                         self.fmaxFK_bind.value, self.timewindow_bind.value)
             self.__vespagram.show()
 
+
+    def __get_max_values(self):
+
+        max_values = {}
+        max_values["max_abs_power"] = np.max(self.abspower)
+        max_values["max_relpower"] = np.max(self.relpower)
+        idx_max_relpower, val = find_nearest(self.relpower, max_values["max_relpower"])
+
+        max_values["max_slowness"] = self.Slowness[idx_max_relpower]
+        max_values["max_azimuth"] = self.AZ[idx_max_relpower]
+
+        return max_values
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         if "darwin" == platform:
@@ -240,20 +260,20 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             md.set_info_message("Please load a stations file with array coordinates")
 
     def FK_plot(self):
-        self.canvas_stack.set_new_subplot(nrows=1, ncols=1)
 
         #starttime = convert_qdatetime_utcdatetime(self.starttime_date)
         #endtime = convert_qdatetime_utcdatetime(self.endtime_date)
         selection = MseedUtil.filter_inventory_by_stream(self.st, self.inventory)
 
         wavenumber = array_analysis.array()
-        relpower,abspower, AZ, Slowness, T = wavenumber.FK(self.st, selection, self.starttime, self.endttime,
+        self.relpower, self.abspower, self.AZ, self.Slowness, self.T = wavenumber.FK(self.st, selection, self.starttime, self.endttime,
         self.fminFK_bind.value, self.fmaxFK_bind.value, self.smaxFK_bind.value, self.slow_grid_bind.value,
         self.timewindow_bind.value, self.overlap_bind.value)
-        self.canvas_fk.scatter3d(T, relpower,relpower, axes_index=0, clabel="Power [dB]")
-        self.canvas_fk.scatter3d(T, abspower, relpower, axes_index=1, clabel="Power [dB]")
-        self.canvas_fk.scatter3d(T, AZ, relpower, axes_index=2, clabel="Power [dB]")
-        self.canvas_fk.scatter3d(T, Slowness, relpower, axes_index=3, clabel="Power [dB]")
+
+        self.canvas_fk.scatter3d(self.T, self.relpower, self.relpower, axes_index=0, clabel="Power [dB]")
+        self.canvas_fk.scatter3d(self.T, self.abspower, self.relpower, axes_index=1, clabel="Power [dB]")
+        self.canvas_fk.scatter3d(self.T, self.AZ, self.relpower, axes_index=2, clabel="Power [dB]")
+        self.canvas_fk.scatter3d(self.T, self.Slowness, self.relpower, axes_index=3, clabel="Power [dB]")
         self.canvas_fk.set_ylabel(0, " Rel Power ")
         self.canvas_fk.set_ylabel(1, " Absolute Power ")
         self.canvas_fk.set_ylabel(2, " Back Azimuth ")
@@ -308,15 +328,13 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             # Call Stack and Plot###
             #stream_stack, time = wavenumber.stack_stream(self.root_pathFK_bind.value, Sxpow, Sypow, coord)
 
-            if st:
+            if st and self.showStackCB.isChecked():
                 st2 = self.st.copy()
                 # Align for the maximum power and give the data of the traces
-                stream_stack, self.time, self.stats = wavenumber.stack_stream(st2, Sxpow, Sypow, coord)
-                # stack the traces
-                self.stack = wavenumber.stack(stream_stack, stack_type = self.stackCB.currentText())
-                self.canvas_stack.plot(self.time, self.stack, axes_index = 0, linewidth = 0.75)
-                self.canvas_stack.set_xlabel(0, " Time [s] ")
-                self.canvas_stack.set_ylabel(0, "Stack Amplitude")
+                st_shift, trace_stack = wavenumber.stack_stream(st2, Sxpow, Sypow,
+                                                                coord, stack_type = self.stackCB.currentText())
+                self.pt = PlotToolsManager(" ")
+                self.pt.multiple_shifts_array(trace_stack, st_shift)
 
 
     def filter_error_message(self, msg):
@@ -375,9 +393,39 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         t1 = UTCDateTime(DATE)
         return t1
 
-    def on_select(self, ax_index, xmin, xmax):
+
+
+    def on_multiple_select(self, ax_index, xmin, xmax):
+
         self.t1 = self.__to_UTC(xmin)
         self.t2 = self.__to_UTC(xmax)
+
+        idx1, val = find_nearest(self.T, xmin)
+        idx2, val = find_nearest(self.T, xmax)
+        T = self.T[idx1:idx2]
+
+        self.canvas_fk.plot_date(T, self.relpower[idx1:idx2], 0, color="purple", clear_plot=False, fmt='.',
+                                 markeredgecolor='black', markeredgewidth=0.5, alpha= 0.75,
+                                                      linewidth=0.5, label="selected for Vespagram")
+
+        self.canvas_fk.plot_date(T, self.abspower[idx1:idx2], 1, color="purple", clear_plot=False, fmt='.',
+                                 markeredgecolor='black', markeredgewidth=0.5, alpha= 0.75,
+                                                      linewidth=0.5, label="selected for Vespagram")
+
+        self.canvas_fk.plot_date(T, self.AZ[idx1:idx2], 2, color="purple", clear_plot=False, fmt='.',
+                                 markeredgecolor='black', markeredgewidth=0.5, alpha= 0.75,
+                                 linewidth=0.5, label="selected for Vespagram")
+
+        self.canvas_fk.plot_date(T, self.Slowness[idx1:idx2], 3, color="purple", clear_plot=False, fmt='.',
+                                 markeredgecolor='black', markeredgewidth=0.5, alpha= 0.75,
+                                 linewidth=0.5, label="selected for Vespagram")
+
+        ax = self.canvas_fk.get_axe(3)
+        formatter = mdt.DateFormatter('%H:%M:%S')
+        ax.xaxis.set_major_formatter(formatter)
+        ax.xaxis.set_tick_params(rotation=30)
+        ax.legend()
+        self.runVespaBtn.setEnabled(True)
 
     def open_solutions(self):
         output_path = os.path.join(ROOT_DIR,'arrayanalysis','dataframe.csv')

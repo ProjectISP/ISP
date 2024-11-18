@@ -142,8 +142,24 @@ class PlotToolsManager:
             plt.legend()
         self.mpf.show()
 
+    def multiple_shifts_array(self, stack, shifts):
+        import matplotlib.pyplot as plt
+        from isp.Gui.Frames import MatplotlibFrame
 
+        fig, ax = plt.subplots(2, figsize=(10, 5), sharex= True, layout='constrained')
+        self.mpf = MatplotlibFrame(fig, window_title="Stack and Shifted Waveforms")
 
+        for tr in shifts[0]:
+            info = "{}.{}.{}".format(tr.stats.network, tr.stats.station, tr.stats.channel)
+            ax[1].plot(tr.times(), tr.data, linewidth=0.75, alpha=0.5, label=info)
+
+        ax[0].plot(stack.times(), stack.data, linewidth=1.0, color='black', label="Stack")
+        ax[1].set_xlim(np.min(stack.times()), np.max(stack.times()))
+        ax[1].set_xlabel("Time")
+        ax[0].set_ylabel("Amplitude")
+        ax[1].set_ylabel("Amplitude")
+        legend = ax[0].legend(loc='upper right')
+        self.mpf.show()
 
 
     def find_nearest(self,array, value):
@@ -274,4 +290,8 @@ class PlotToolsManager:
         ax1.set_title("Press enter to accept selected points.")
 
         self.mpf.show()
+
+
+
+
 

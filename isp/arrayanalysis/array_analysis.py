@@ -18,8 +18,7 @@ from nitime import utils
 from datetime import date
 from scipy.signal import hilbert
 from scipy.fftpack import next_fast_len
-
-
+from obspy import Trace, Stream, UTCDateTime
 
 class array:
 
@@ -33,9 +32,6 @@ class array:
         """
 
 
-
-
-
     def arf(self, coords, fmin, flim, slim, sgrid):
 
 
@@ -46,16 +42,39 @@ class array:
 
         return transff
 
+    # def azimuth2mathangle(self, azimuth):
+    #     if azimuth <= 90:
+    #         mathangle = 90 - azimuth
+    #     elif 90 < azimuth <= 180:
+    #         mathangle = 270 + (180 - azimuth)
+    #     elif 180 < azimuth <= 270:
+    #         mathangle = 180 + (270 - azimuth)
+    #     else:
+    #         mathangle = 90 + (360 - azimuth)
+    #     return mathangle
+
     def azimuth2mathangle(self, azimuth):
+        """
+        Convert an azimuth (clockwise from North)
+        to a mathematical angle (counterclockwise from East).
+        """
         if azimuth <= 90:
             mathangle = 90 - azimuth
-        elif 90 < azimuth <= 180:
-            mathangle = 270 + (180 - azimuth)
-        elif 180 < azimuth <= 270:
-            mathangle = 180 + (270 - azimuth)
         else:
-            mathangle = 90 + (360 - azimuth)
+            mathangle = (450 - azimuth) % 360
         return mathangle
+
+    def mathangle2azimuth(self, mathangle):
+        """
+        Convert a mathematical angle (counterclockwise from East)
+        to an azimuth (clockwise from North).
+        """
+        if mathangle <= 90:
+            azimuth = 90 - mathangle
+        else:
+            azimuth = (450 - mathangle) % 360
+        return azimuth
+
 
     def gregorian2date(self, DT):
         #####Convert start from Greogorian to actual date###############
@@ -266,35 +285,51 @@ class array:
 
 
 
-    def stack_stream(self, st2, sx, sy, coord):
+    def stack_stream(self, st_shift, sx, sy, coord, stack_type = 'Linear Stack'):
+
         sx = -1*sx
         sy = -1*sy
         s = np.array([sx, sy, 0])
         r = []
+
         for i in range(len(coord) - 1):
             r.append(coord[i])
-        for j in range(len(st2)):
+
+        for j in range(len(st_shift)):
             TAU = np.dot(r[j], s)
             TAU= TAU[0]
-            st2[j].stats.starttime = st2[j].stats.starttime + TAU
+            st_shift[j].stats.starttime = st_shift[j].stats.starttime + TAU
 
 
-        maxstart = np.max([tr.stats.starttime for tr in st2])
-        minend = np.min([tr.stats.endtime for tr in st2])
-        st2.trim(maxstart, minend)
-        fs=st2[0].stats.sampling_rate
-        time = np.linspace(0, fs , num=len(st2[0].data))
-        mat = np.zeros([len(st2), len(st2[0].data)])
-        N = len(st2)
+        maxstart = np.max([tr.stats.starttime for tr in st_shift])
+        minend = np.min([tr.stats.endtime for tr in st_shift])
+        st_shift.trim(maxstart, minend)
+        fs = st_shift[0].stats.sampling_rate
+        mat = np.zeros([len(st_shift), len(st_shift[0].data)])
+        N = len(st_shift)
+
+        all_traces_shift = []
         for i in range(N - 1):
-            mat[i, :] = st2[i].data
+            mat[i, :] = st_shift[i].data
 
-        stats = {'network': st2[0].stats.station, 'station': 'STACK', 'location': '',
-                      'channel': st2[0].stats.channel, 'npts': st2[0].stats.npts,
-                      'sampling_rate':st2[0].stats.sampling_rate, 'mseed': {'dataquality': 'D'},
-                 'starttime': st2[0].stats.starttime}
+            stats = {'network': st_shift[i].stats.station, 'station': 'STACK', 'location': '',
+                          'channel': st_shift[i].stats.channel, 'npts': len(st_shift[i].data),
+                          'sampling_rate':fs, 'mseed': {'dataquality': 'D'},
+                     'starttime': maxstart}
 
-        return mat, time, stats
+            trace_shift = Trace(data=st_shift[i].data, header=stats)
+            all_traces_shift.append(trace_shift)
+
+        all_stream_shifted = Stream([all_traces_shift])
+        stack = self.stack(mat, stack_type=stack_type, order=2)
+        # Create the Trace object
+        stats = {'network': st_shift[i].stats.station, 'station': 'STACK', 'location': '',
+                 'channel': st_shift[i].stats.channel, 'npts': len(stack),
+                 'sampling_rate': fs, 'mseed': {'dataquality': 'D'},
+                 'starttime': maxstart}
+        trace_stack = Trace(data=stack, header=stats)
+
+        return all_stream_shifted, trace_stack
 
 
     def stack_seismograms(self, st):
@@ -334,6 +369,7 @@ class array:
 
         if stack_type == 'Linear Stack':
             stack = np.mean(data, axis=0)
+
         elif stack_type == 'Phase Weigth Stack':
             npts = np.shape(data)[1]
             nfft = next_fast_len(npts)
@@ -385,17 +421,28 @@ class vespagram_util:
             self.baz = baz - 180
 
 
-
     def azimuth2mathangle(self, azimuth):
+        """
+        Convert an azimuth (clockwise from North)
+        to a mathematical angle (counterclockwise from East).
+        """
         if azimuth <= 90:
             mathangle = 90 - azimuth
-        elif 90 < azimuth <= 180:
-            mathangle = 270 + (180 - azimuth)
-        elif 180 < azimuth <= 270:
-            mathangle = 180 + (270 - azimuth)
         else:
-            mathangle = 90 + (360 - azimuth)
+            mathangle = (450 - azimuth) % 360
         return mathangle
+
+    def mathangle2azimuth(self, mathangle):
+        """
+        Convert a mathematical angle (counterclockwise from East)
+        to an azimuth (clockwise from North).
+        """
+        if mathangle <= 90:
+            azimuth = 90 - mathangle
+        else:
+            azimuth = (450 - mathangle) % 360
+        return azimuth
+
 
     def vespa_deg(self):
         self.st.trim(starttime= self.t1, endtime=self.t2)
@@ -438,7 +485,7 @@ class vespagram_util:
         if self.selection == "Slowness":
             x, y = np.meshgrid(t, np.linspace(0, 360, vespa_spec.shape[0]))
         else:
-            x, y = np.meshgrid(t, np.linspace(0, self.slow, vespa_spec.shape[0]))
+            x, y = np.meshgrid(t, np.linspace(0, self.slow*(1+0.15), vespa_spec.shape[0]))
 
         return x, y, vespa_spec
 
@@ -505,6 +552,17 @@ class vespagram_util:
         Cx = np.ones((nr, nr, df), dtype=np.complex128)
 
         if self.method == "MTP.COHERENCE":
+            #####Coherence######
+            NW = 2  # the time-bandwidth product##Buena seleccion de 2-3
+            K = 2 * NW - 1
+            tapers, eigs = alg.dpss_windows(win, NW, K)
+            tdata = tapers[None, :, :] * pdata[:, None, :]
+            tspectra = fftpack.fft(tdata)
+
+            w = np.empty((nr, int(K), int(nfft)))
+            for i in range(nr):
+                w[i], _ = utils.adaptive_weights(tspectra[i], eigs, sides=sides)
+
             for i in range(nr):
                 for j in range(nr):
                     sxy = alg.mtm_cross_spectrum(tspectra[i], (tspectra[j]), (w[i], w[j]), sides='onesided')
@@ -607,20 +665,19 @@ class vespagram_util:
                 m[:, i] = (tr.data - np.mean(tr.data))
         pdata = np.transpose(m)
 
-        #####Coherence######
-        NW = 2  # the time-bandwidth product##Buena seleccion de 2-3
-        K = 2 * NW - 1
-        tapers, eigs = alg.dpss_windows(win, NW, K)
-        tdata = tapers[None, :, :] * pdata[:, None, :]
-        tspectra = fftpack.fft(tdata)
-
-        w = np.empty((nr, int(K), int(nfft)))
-        for i in range(nr):
-            w[i], _ = utils.adaptive_weights(tspectra[i], eigs, sides=sides)
-
         Cx = np.ones((nr, nr, df), dtype=np.complex128)
 
         if self.method == "MTP.COHERENCE":
+            #####Coherence######
+            NW = 2  # the time-bandwidth product ##Buena seleccion de 2-3
+            K = 2 * NW - 1
+            tapers, eigs = alg.dpss_windows(win, NW, K)
+            tdata = tapers[None, :, :] * pdata[:, None, :]
+            tspectra = fftpack.fft(tdata)
+
+            w = np.empty((nr, int(K), int(nfft)))
+            for i in range(nr):
+                w[i], _ = utils.adaptive_weights(tspectra[i], eigs, sides=sides)
             for i in range(nr):
                 for j in range(nr):
                     sxy = alg.mtm_cross_spectrum(tspectra[i], (tspectra[j]), (w[i], w[j]), sides='onesided')
@@ -656,7 +713,7 @@ class vespagram_util:
 
         rad = np.pi/180
 
-        slow_range = np.linspace(0, self.slow, 360)
+        slow_range = np.linspace(0, self.slow*(1+0.15), 360)
 
         for j in range(360):
 
