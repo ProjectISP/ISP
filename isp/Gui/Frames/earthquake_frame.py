@@ -42,7 +42,8 @@ import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
     correlate_maxlag, get_lags
-from sys import platform
+import subprocess
+import platform
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
@@ -2117,25 +2118,24 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
 
         try:
-
-            if platform == "darwin":
-
-                command = "{} {}".format('open', output_path)
-
+            # Determine the appropriate command based on the OS
+            if platform.system() == 'Darwin':  # macOS
+                command = ["open", output_path]
+            elif platform.system() == 'Linux':  # Linux
+                command = ["xdg-open", output_path]
             else:
+                raise OSError("Unsupported operating system")
 
-                command = "{} {}".format('xdg - open', output_path)
+            # Execute the command
+            subprocess.run(command, cwd=ROOT_DIR, check=True)
 
-            exc_cmd(command, cwd = ROOT_DIR)
-
-        except:
-
+        except Exception as e:
             md = MessageDialog(self)
-            md.set_error_message("Coundn't open pick file")
+            md.set_error_message(f"Couldn't open pick file: {str(e)}")
 
     def open_events(self):
 
-        output_path = os.path.join(EVENTS_DETECTED,'event_autodetects.txt')
+        output_path = os.path.join(EVENTS_DETECTED, 'event_autodetects.txt')
 
         try:
 
