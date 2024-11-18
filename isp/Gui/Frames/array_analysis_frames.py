@@ -9,7 +9,7 @@ from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.stations_coordinates import StationsCoords
 from isp.Gui.Frames.vespagram import Vespagram
 from isp.Gui.Frames.slowness_map import SlownessMap
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, convert_qdatetime_utcdatetime, set_qdatetime
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 from isp.Gui import pw, pqg, pyc
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import QStyle
@@ -50,7 +50,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         #Binding
 
         self.root_pathBP_bind = BindPyqtObject(self.rootPathFormBP)
-
         self.metadata_path_bindBP = BindPyqtObject(self.datalessPathFormBP, self.onChange_metadata_path)
         self.output_path_bindBP = BindPyqtObject(self.outputPathFormBP, self.onChange_metadata_path)
         self.fmin_bind = BindPyqtObject(self.fminSB)
@@ -179,13 +178,35 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
     def load_path(self):
         selected_file = pw.QFileDialog.getOpenFileName(self, "Select Stations Coordinates file")
         self.path_file = selected_file[0]
-        df = pd.read_csv(self.path_file, delim_whitespace=True)
-        n = len(df)
-        self.coords = np.zeros([n, 3])
-        for i in range(n):
-            #coords[i]=data[i]
-            self.coords[i] = np.array([df['Lon'][i], df['Lat'][i], df['Depth'][i]])
-        print(self.coords)
+        self.df_stations = pd.read_csv(self.path_file, delim_whitespace=True)
+        # List of columns to check
+        columns_to_check = ['Name', 'Lon', 'Lat', 'Depth']
+
+        # Check if each column exists in the DataFrame
+        exists = {col: col in self.df_stations.columns for col in columns_to_check}
+
+        if exists:
+
+            n = len(self.df_stations)
+            self.coords = np.zeros([n, 3])
+            self.coords_map = {}
+
+            for i in range(n):
+                self.coords[i] = np.array([self.df_stations['Lon'][i], self.df_stations['Lat'][i],
+                                           self.df_stations['Depth'][i]])
+                self.coords_map[self.df_stations['Name'][i]] = [self.df_stations['Lon'][i],
+                                                                self.df_stations['Lat'][i]]
+
+            print(self.coords_map)
+            self.mapBtn.setEnabled(True)
+            md = MessageDialog(self)
+            md.set_info_message("Ready to compute the Array Response Funtion", "Fill the parameters according to "
+                                                                              "your array aperture and interdistance, "
+                                                                               "Then click at ARF")
+        else:
+
+            md = MessageDialog(self)
+            md.set_error_message("Please check tat your file contains four columns", "Name, Lon, Lat and Depth")
 
     def arf(self):
         try:
@@ -198,7 +219,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                 x = y = np.linspace(-1 * slim, slim, len(arf))
 
                 self.canvas.clear()
-                #self.canvas.set_new_subplot(nrows=1, ncols=1)
+
                 self.canvas.plot_contour(x, y, arf, axes_index=0, clabel="Power [dB]", cmap=plt.get_cmap("jet"))
                 self.canvas.set_xlabel(0, "Sx (s/km)")
                 self.canvas.set_ylabel(0, "Sy (s/km)")
@@ -208,18 +229,12 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
 
     def stations_map(self):
-        coords = {}
 
-        if self.path_file:
-            df = pd.read_csv(self.path_file, delim_whitespace=True)
-            Lat_mean = sum(df["Lat"].tolist())/len(df["Lat"].tolist())
-            Long_mean = sum(df["Lon"].tolist())/len(df["Lon"].tolist())
-            n = len(df)
-            self.coords = np.zeros([n, 3])
-            for i in range(n):
-                 coords[df['Name'][i]]=[df['Lon'][i],df['Lat'][i]]
+        Lat_mean = sum(self.df_stations["Lat"].tolist())/len(self.df_stations["Lat"].tolist())
+        Long_mean = sum(self.df_stations["Lon"].tolist())/len(self.df_stations["Lon"].tolist())
+
         try:
-            self.cartopy_canvas.plot_map(Long_mean, Lat_mean, 0, 0, 0, 0, resolution="low", stations=coords)
+            self.cartopy_canvas.plot_map(Long_mean, Lat_mean, 0, 0, 0, 0, resolution="low", stations=self.coords_map)
         except:
             md = MessageDialog(self)
             md.set_info_message("Please load a stations file with array coordinates")
