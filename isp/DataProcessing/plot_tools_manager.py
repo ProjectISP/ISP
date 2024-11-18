@@ -158,7 +158,8 @@ class PlotToolsManager:
         ax[1].set_xlabel("Time")
         ax[0].set_ylabel("Amplitude")
         ax[1].set_ylabel("Amplitude")
-        legend = ax[0].legend(loc='upper right')
+        legend1 = ax[0].legend(loc='upper right')
+        legend2 = ax[1].legend(loc='upper right')
         self.mpf.show()
 
 
