@@ -22,25 +22,26 @@ def validate_dictionary(cls: NamedTuple, dic: dict):
     valid_dic = {}
     fields_list_lower = [k.lower() for k in cls._fields]
     for k in dic.keys():
-        index = fields_list_lower.index(k.lower())  # Compare all in lower case. Avoid Caps sensitive.
-        safe_key = cls._fields[index]
+        if k.lower() in fields_list_lower:
+            index = fields_list_lower.index(k.lower())  # Compare all in lower case. Avoid Caps sensitive.
+            safe_key = cls._fields[index]
 
-        if cls._field_types.get(safe_key) == int:
-            valid_dic[safe_key] = int(dic.get(k))
-        elif cls._field_types.get(safe_key) == float:
-            valid_dic[safe_key] = float(dic.get(k))
-        elif cls._field_types.get(safe_key) == bool:
-            if hasattr(dic.get(k), "capitalize"):
-                valid_dic[safe_key] = True if dic.get(k).capitalize() == "True" else False
+            if cls._field_types.get(safe_key) == int:
+                valid_dic[safe_key] = int(dic.get(k))
+            elif cls._field_types.get(safe_key) == float:
+                valid_dic[safe_key] = float(dic.get(k))
+            elif cls._field_types.get(safe_key) == bool:
+                if hasattr(dic.get(k), "capitalize"):
+                    valid_dic[safe_key] = True if dic.get(k).capitalize() == "True" else False
+                else:
+                    valid_dic[safe_key] = dic.get(k)
+            elif cls._field_types.get(safe_key) == str:
+                if dic.get(k) == "null":
+                    valid_dic[safe_key] = None
+                else:
+                    valid_dic[safe_key] = str(dic.get(k))
             else:
                 valid_dic[safe_key] = dic.get(k)
-        elif cls._field_types.get(safe_key) == str:
-            if dic.get(k) == "null":
-                valid_dic[safe_key] = None
-            else:
-                valid_dic[safe_key] = str(dic.get(k))
-        else:
-            valid_dic[safe_key] = dic.get(k)
     return valid_dic
 
 
@@ -75,13 +76,13 @@ class TracerStats(NamedTuple):
     Sampling_rate: float = None
     Delta: float = None
     Npts: int = None
-    Calib: float = None
-    Mseed: dict = None
-    Format: str = None
-    Dataquality: str = None
-    numsamples: float = None
-    samplecnt:float = None
-    sampletype: str = None
+    # Calib: float = None
+    # Mseed: dict = None
+     #Format: str = None
+    # Dataquality: str = None
+    # numsamples: float = None
+    # samplecnt:float = None
+    # sampletype: str = None
 
     def to_dict(self):
         return self._asdict()
@@ -95,7 +96,7 @@ class TracerStats(NamedTuple):
                 del dictionary['processing']
             file_format = dictionary.pop(ObspyStatsKeys.FORMAT, "mseed") #ISP 1.0
             new_d = validate_dictionary(cls, dictionary) #ISP 1.0
-            new_d["Format"] = file_format
+            #new_d["Format"] = file_format
             #dictionary[ObspyStatsKeys.FORMAT] = file_format
             return cls(**new_d)
 

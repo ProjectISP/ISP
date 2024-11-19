@@ -955,3 +955,48 @@ class MseedUtil:
         # Create a new inventory with the filtered networks
         filtered_inventory = Inventory(networks=filtered_networks, source=inventory.source)
         return filtered_inventory
+
+    @staticmethod
+    def check_stream_in_inventory(stream: Stream, inventory: Inventory) -> list:
+        """
+        Checks if any trace in the stream is not present in the inventory.
+
+        Parameters:
+            stream (Stream): The input ObsPy Stream to check.
+            inventory (Inventory): The input ObsPy Inventory to match against.
+
+        Returns:
+            list: A list of trace IDs (net.sta.loc.chan) that are not found in the inventory.
+        """
+        unmatched_traces = []
+
+        # Loop through each trace in the stream
+        for trace in stream:
+            trace_net, trace_sta, trace_loc, trace_chan = trace.id.split(".")
+            found = False
+
+            # Loop through networks, stations, and channels in the inventory
+            for network in inventory:
+                if network.code == trace_net:
+                    for station in network.stations:
+                        if station.code == trace_sta:
+                            for channel in station.channels:
+                                # Match channel code and location
+                                if channel.code == trace_chan and (not trace_loc or channel.location_code == trace_loc):
+                                    found = True
+                                    break
+                        if found:
+                            break
+                if found:
+                    break
+
+            # If the trace was not found, add it to the unmatched list
+            if not found:
+                unmatched_traces.append(trace.id)
+
+        if len(unmatched_traces) == 0:
+            return True
+        else:
+            print("Not matches with inventory")
+            print(unmatched_traces)
+            return False

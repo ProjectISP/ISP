@@ -2,10 +2,8 @@ from isp.Gui import pw
 from isp.Gui.Frames.uis_frames import UiStationCoords
 import pandas as pd
 from isp import ROOT_DIR
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject
 import os
 from sys import platform
-
 
 class StationsCoords(pw.QFrame, UiStationCoords):
     def __init__(self):
@@ -39,10 +37,10 @@ class StationsCoords(pw.QFrame, UiStationCoords):
         coordinates = []
         for i in range(self.stations_table.rowCount()):
             Name = self.stations_table.item(i, 1).data(0)
-            Latitude = self.stations_table.item(i, 2).data(0)
-            Longitude = self.stations_table.item(i, 3).data(0)
+            Longitude = self.stations_table.item(i, 2).data(0)
+            Latitude = self.stations_table.item(i, 3).data(0)
             Depth = self.stations_table.item(i, 4).data(0)
-            coordinates.append([Name, Latitude, Longitude, Depth])
+            coordinates.append([Name, Longitude, Latitude, Depth])
 
         return coordinates
 
@@ -64,12 +62,12 @@ class StationsCoords(pw.QFrame, UiStationCoords):
 
         for j in range(len(coordinates)):
             station_names.append(coordinates[j][0])
-            station_latitudes.append(coordinates[j][1])
-            station_longitudes.append(coordinates[j][2])
+            station_longitudes.append(coordinates[j][1])
+            station_latitudes.append(coordinates[j][2])
             station_depths.append(coordinates[j][3])
 
-        coord = {'Name': station_names, 'Lat': station_latitudes, 'Lon': station_longitudes, 'Depth': station_depths}
-        df = pd.DataFrame(coord, columns=['Name', 'Lat', 'Lon', 'Depth'])
+        coord = {'Name': station_names, 'Lon': station_longitudes, 'Lat': station_latitudes, 'Depth': station_depths}
+        df = pd.DataFrame(coord, columns=['Name', 'Lon', 'Lat', 'Depth'])
         df.to_csv(file_path, sep=' ', index=False)
 
 

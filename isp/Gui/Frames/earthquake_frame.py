@@ -42,7 +42,8 @@ import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
     correlate_maxlag, get_lags
-from sys import platform
+import subprocess
+import platform
 
 class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
@@ -775,7 +776,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
          self.dist_all = []
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
-         if st_stats:
+         if st_stats is not None:
 
              dist, _, _ = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
                                            self.event_info.longitude)
@@ -784,7 +785,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
          else:
              self.dataless_not_found.add(file)
              print("No Metadata found for {} file.".format(file))
-             self.dist_all.append(-100)
+             self.dist_all.append(0)
              return 0.
 
     def sort_by_baz_advance(self, file):
@@ -792,7 +793,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
          self.baz_all = []
          st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file)
 
-         if st_stats:
+         if st_stats is not None:
 
              _, _, az_from_epi = gps2dist_azimuth(st_stats.Latitude, st_stats.Longitude, self.event_info.latitude,
                                           self.event_info.longitude)
@@ -802,6 +803,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
              self.dataless_not_found.add(file)
              print("No Metadata found for {} file.".format(file))
+             self.baz_all.append(0)
              return 0.
 
     def plot_seismogram(self):
@@ -1718,12 +1720,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def on_click_plot_arrivals(self, event_time: UTCDateTime, lat: float, long: float, depth: float):
         self.event_info.clear_arrivals()
+        check_warning = False
         for index, file_path in enumerate(self.get_files_at_page()):
             #st_stats = self.dataless_manager.get_station_stats_by_mseed_file(file_path)
             st_stats = self.__metadata_manager.extract_coordinates(self.inventory, file_path)
-            #stats = ObspyUtil.get_stats(file_path)
-            # TODO remove stats.StartTime and use the picked one from UI.
-            self.event_info.plot_arrivals(index, st_stats)
+            if st_stats is not None:
+                self.event_info.plot_arrivals(index, st_stats)
+            elif st_stats is None:
+                check_warning = True
+
+        if check_warning:
+            md = MessageDialog(self)
+            md.set_warning_message("Check your Metadata, some traces does't match with your metadata info")
+
 
     def get_arrivals_tf(self):
 
@@ -1844,8 +1853,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             md.set_warning_message("Check correlation template and trim time")
 
     # TODO implement your logic here for multiple select
-    def on_multiple_select(self, ax_index, xmin, xmax):
-        pass
+    # def on_multiple_select(self, ax_index, xmin, xmax):
+    #     pass
 
     def on_select(self, ax_index, xmin, xmax):
         self.kind_wave = self.ChopCB.currentText()
@@ -2109,25 +2118,24 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
 
         try:
-
-            if platform == "darwin":
-
-                command = "{} {}".format('open', output_path)
-
+            # Determine the appropriate command based on the OS
+            if platform.system() == 'Darwin':  # macOS
+                command = ["open", output_path]
+            elif platform.system() == 'Linux':  # Linux
+                command = ["xdg-open", output_path]
             else:
+                raise OSError("Unsupported operating system")
 
-                command = "{} {}".format('xdg - open', output_path)
+            # Execute the command
+            subprocess.run(command, cwd=ROOT_DIR, check=True)
 
-            exc_cmd(command, cwd = ROOT_DIR)
-
-        except:
-
+        except Exception as e:
             md = MessageDialog(self)
-            md.set_error_message("Coundn't open pick file")
+            md.set_error_message(f"Couldn't open pick file: {str(e)}")
 
     def open_events(self):
 
-        output_path = os.path.join(EVENTS_DETECTED,'event_autodetects.txt')
+        output_path = os.path.join(EVENTS_DETECTED, 'event_autodetects.txt')
 
         try:
 
@@ -2218,18 +2226,20 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                 # If the user made a valid selection
                 if ok:
-                    start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
-                    end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+                    starttime = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+                    endtime = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
                     self.controller().open_array_window()
 
                     # Call process based on user's selection
                     if choice == "FK process":
-                        self.controller().array_analysis_frame.process_fk(self.st, self.inventory, start_time, end_time)
+                        self.controller().array_analysis_frame.process_fk(self.st, self.inventory, starttime, endtime)
                     elif choice == "BackProjection":
                         #self.controller().array_analysis_frame.process_backprojection(self.st, self.inventory,
                         # start_time, end_time)
                         # TODO CONEXION WITH BACKPROJECTION
-                        pass
+                        md = MessageDialog(self)
+                        md.set_info_message("This conexion is still not available, please go to directly the "
+                                            "Backproection Module")
                 else:
                     # If the user cancels the choice dialog, do nothing
                     return
