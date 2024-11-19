@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1469</width>
-    <height>924</height>
+    <height>784</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -48,46 +48,7 @@
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
          <layout class="QGridLayout" name="gridLayout_4">
-          <item row="1" column="0">
-           <widget class="QPushButton" name="selectDirBtn">
-            <property name="toolTip">
-             <string>Select the folder where you have the seismogram files</string>
-            </property>
-            <property name="text">
-             <string>File Directory</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QLineEdit" name="datalessPathForm">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QLineEdit" name="rootPathForm"/>
-          </item>
           <item row="0" column="0">
-           <widget class="QPushButton" name="datalessBtn">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>Set the Metadata File (*.dlsv or *.xml)</string>
-            </property>
-            <property name="text">
-             <string>Metadata File</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
            <widget class="QPushButton" name="earthmodelBtn">
             <property name="toolTip">
              <string>Select the folder where you have the 1D earth model. You can create one in Build --&gt;  Earth Model</string>
@@ -97,84 +58,14 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="2">
+          <item row="0" column="2">
            <widget class="QLineEdit" name="earth_modelPathForm"/>
           </item>
          </layout>
         </item>
         <item>
-         <widget class="QPushButton" name="stationsBtn">
-          <property name="toolTip">
-           <string>Click to view header information of the loaded seismogram files</string>
-          </property>
-          <property name="text">
-           <string>Station Info</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="stations_mapBtn">
-          <property name="toolTip">
-           <string>Plot stations map from the metadata and plot seismograms</string>
-          </property>
-          <property name="text">
-           <string>Stations Map</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <layout class="QGridLayout" name="gridLayout_5">
-          <item row="0" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_12">
-            <property name="text">
-             <string>Start Time             </string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QDateTimeEdit" name="starttime_date">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="displayFormat">
-             <string>yyyy/MM/dd hh:mm:ss UTC</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QCheckBox" name="trimCB">
-            <property name="toolTip">
-             <string>Checkd if you want trim the seismograms according to StartTime &amp; EndTime</string>
-            </property>
-            <property name="text">
-             <string>Trim</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_13">
-            <property name="text">
-             <string>           End Time    </string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QDateTimeEdit" name="endtime_date">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="displayFormat">
-             <string>yyyy/MM/dd hh:mm:ss UTC</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="1">
+          <item row="0" column="1">
            <widget class="QPushButton" name="run_inversionBtn">
             <property name="toolTip">
              <string>Click to run the MTI over the &quot;Process and Plot&quot; Seismograms. Please fill carefully the Parameters section</string>
@@ -184,27 +75,17 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="1">
-           <widget class="QPushButton" name="plotBtn">
-            <property name="toolTip">
-             <string>Process the methods set in the Macro and Plot</string>
-            </property>
-            <property name="text">
-             <string>Process and Plot</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1">
+          <item row="1" column="1">
            <widget class="QPushButton" name="plot_solutionBtn">
             <property name="text">
              <string>Plot Last solution</string>
             </property>
            </widget>
           </item>
-          <item row="5" column="0" rowspan="2">
-           <widget class="QPushButton" name="macroBtn">
+          <item row="0" column="0">
+           <widget class="QPushButton" name="stationSelectBtn">
             <property name="text">
-             <string>Macro</string>
+             <string>Station / Channel select</string>
             </property>
            </widget>
           </item>
@@ -498,7 +379,6 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionWrite"/>
    </widget>
    <widget class="QMenu" name="menuParameters">
     <property name="title">

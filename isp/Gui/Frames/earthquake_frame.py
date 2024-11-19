@@ -2255,7 +2255,30 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def open_moment_tensor(self):
-        self.controller().open_momentTensor_window()
+        # Check required conditions: stream, inventory, and trim checkbox
+        if len(self.st) > 0 and isinstance(self.inventory, Inventory) and self.trimCB.isChecked():
+            answer = pw.QMessageBox.question(self, "Export Seismogram to Moment Tensor Inversion Module ",
+                                         "if you have selected a seismogram and metadata this will be automatically "
+                                         "sent it")
+
+            if pw.QMessageBox.Yes == answer:
+                self.controller().open_momentTensor_window()
+                starttime = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+                endtime = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+                self.controller().moment_tensor_frame.send_mti(self.st, self.inventory, starttime, endtime)
+            else:
+                # If the user cancels the choice dialog, do nothing
+                return
+        else:
+            # Show an error message if required conditions are not met
+            md = MessageDialog(self)
+            md.set_error_message(
+                "Please review the following requirements before proceeding:",
+                "1. Ensure seismograms are loaded.\n"
+                "2. Ensure seismograms are trimmed.\n"
+                "3. Load a valid inventory metadata."
+            )
+
 
     def time_frequency_analysis(self):
         self.controller().open_seismogram_window()
