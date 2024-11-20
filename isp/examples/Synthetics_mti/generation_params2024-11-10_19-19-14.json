@@ -1,0 +1,37 @@
+{
+    "model": "ak135f_5s",
+    "bulk": [
+        {
+            "latitude": 35.8,
+            "longitude": -3.0,
+            "networkcode": "WM",
+            "stationcode": "ARNO"
+        },
+        {
+            "latitude": 36.9,
+            "longitude": -4.0,
+            "networkcode": "XX",
+            "stationcode": "OBS1"
+        },
+        {
+            "latitude": 37.2,
+            "longitude": -5.0,
+            "networkcode": "WM",
+            "stationcode": "SFS"
+        }
+    ],
+    "sourcelatitude": 35.0,
+    "sourcelongitude": -14.0,
+    "sourcedepthinmeters": 1000.0,
+    "units": "velocity",
+    "origintime": "2015-02-05T15:30:00",
+    "starttime": "2015-02-05T15:28:00",
+    "endtime": "2015-02-05T15:45:00",
+    "format": "miniseed",
+    "sourcedoublecouple": [
+        30.0,
+        45.0,
+        40.0,
+        1e+19
+    ]
+}

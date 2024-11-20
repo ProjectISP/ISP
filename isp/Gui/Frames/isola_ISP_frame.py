@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import QFileDialog
-
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QFileDialog, QLabel, QWidget, QVBoxLayout
 from isp import ROOT_DIR, LOGMTI
 from isp.Exceptions import InvalidFile
-from isp.Gui import pw, pyc
+from isp.Gui import pw, qt
 from isp.Gui.Frames import BaseFrame, MessageDialog, UiMomentTensor, MatplotlibFrame
 from isp.Gui.Frames.crustal_model_parameters_frame import CrustalModelParametersFrame
 from isp.Gui.Frames.stations_info import StationsInfo
@@ -13,6 +13,7 @@ from isp.mti.class_isola_new import *
 from isp.Gui.Frames.help_frame import HelpDoc
 import pandas as pd
 from obspy import Stream, UTCDateTime, Inventory
+
 
 @add_save_load()
 class MTIFrame(BaseFrame, UiMomentTensor):
@@ -27,6 +28,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.stream = None
         self.stations_check = False
 
+        self.scroll_area_widget.setWidgetResizable(True)
         # Binding
 
         self.earth_path_bind = BindPyqtObject(self.earth_modelPathForm)
@@ -87,12 +89,12 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
         all_stations = []
 
-        for st in self.stream:
-            tr = st[0]
-            station = [tr.stats.network, tr.stats.station, tr.stats.location, tr.stats.channel, tr.stats.starttime,
-                       tr.stats.endtime, tr.stats.sampling_rate, tr.stats.npts]
+        for stream in self.stream:
+            for tr in stream:
+                station = [tr.stats.network, tr.stats.station, tr.stats.location, tr.stats.channel, tr.stats.starttime,
+                           tr.stats.endtime, tr.stats.sampling_rate, tr.stats.npts]
 
-            all_stations.append(station)
+                all_stations.append(station)
 
         self._stations_info = StationsInfo(all_stations, check=True)
         self._stations_info.show()
@@ -270,29 +272,81 @@ class MTIFrame(BaseFrame, UiMomentTensor):
             )
 
 
+    # def plot_solution(self):
+    #
+    #     path = os.path.join(ROOT_DIR, 'mti/output/index.html')
+    #     url = pyc.QUrl.fromLocalFile(path)
+    #     self._load_log_file()
+    #     self.widget.load(url)
+
+    def load_images(self):
+        # Open folder dialog to select image folder
+        folder_path = QFileDialog.getExistingDirectory(self, "Select Image Folder")
+        if folder_path:
+            self.display_images(folder_path)
+
+
     def plot_solution(self):
 
-        path = os.path.join(ROOT_DIR, 'mti/output/index.html')
-        url = pyc.QUrl.fromLocalFile(path)
         self._load_log_file()
-        self.widget.load(url)
+        good_list = ['centroid.png', 'uncertainty_MT_DC.png', 'uncertainty_MT.png']
+        folder_path = os.path.join(ROOT_DIR, 'mti/output')
+
+        # Clear the grid layout
+        for i in reversed(range(self.pltGrid.count())):
+            widget = self.pltGrid.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+        # Load and display images with titles
+        row, col = 0, 0
+        for filename in os.listdir(folder_path):
+            if filename.lower().endswith('.png') and filename in good_list:  # Only load PNG images
+                image_path = os.path.join(folder_path, filename)
+                pixmap = QPixmap(image_path)
+
+                # Resize the image for thumbnails
+                pixmap = pixmap.scaled(280, 280, qt.KeepAspectRatio, qt.SmoothTransformation)
+
+                # Create a vertical layout for the image and title
+                vbox = QVBoxLayout()
+
+                # Add a title (filename without extension)
+                title = QLabel(self)
+                title.setText(os.path.splitext(filename)[0])  # Remove .png from the filename
+                title.setAlignment(qt.AlignCenter)  # Center-align the title
+                title.setStyleSheet("font-size: 14px; font-weight: bold; margin-bottom: 2px;")  # Optional styling
+                vbox.addWidget(title)
+
+                # Add the image
+                image_label = QLabel(self)
+                image_label.setPixmap(pixmap)
+                image_label.setAlignment(qt.AlignCenter)
+                vbox.addWidget(image_label)
+
+                # Add the vertical layout to the grid
+                container_widget = QWidget()
+                container_widget.setLayout(vbox)
+                self.pltGrid.addWidget(container_widget, row, col)
+
+                col += 1
+                if col > 1:  # Adjust column count for grid
+                    col = 0
+                    row += 1
 
     def get_inversion_parameters(self):
-        parameters = {'latitude': self.latDB.value(), 'longitude':self.lonDB.value(), 'depth':self.depthDB.value(),
-                      'origin_time':convert_qdatetime_utcdatetime(self.origin_time),
-                      'location_unc':self.location_uncDB.value(),'time_unc':self.timeDB.value(),
-                      'magnitude':self.magnitudeDB.value(),
-                      'depth_unc':self.depth_uncDB.value(),'freq_min':self.freq_min_DB.value(),
-                      'freq_max':self.freq_max_DB.value(),'deviatoric': self.deviatoricCB.isChecked(),
-                      'circle_shape':self.circle_shapeCB.isChecked(),'GFs':self.gfCB.isChecked(),
-                      'covariance':self.covarianceCB.isChecked()}
+        parameters = {'latitude': self.latDB.value(), 'longitude': self.lonDB.value(), 'depth': self.depthDB.value(),
+                      'origin_time': convert_qdatetime_utcdatetime(self.origin_time),
+                      'location_unc': self.location_uncDB.value(), 'time_unc': self.timeDB.value(),
+                      'magnitude': self.magnitudeDB.value(),
+                      'depth_unc': self.depth_uncDB.value(), 'freq_min': self.freq_min_DB.value(),
+                      'freq_max': self.freq_max_DB.value(), 'deviatoric': self.deviatoricCB.isChecked(),
+                      'circle_shape': self.circle_shapeCB.isChecked(), 'GFs': self.gfCB.isChecked(),
+                      'covariance': self.covarianceCB.isChecked()}
         return parameters
 
     def _load_log_file(self):
-        # Open a file dialog to select the log file
-        # options = QFileDialog.Options()
-        # file_path, _ = QFileDialog.getOpenFileName(self, "Open Log File", "", "Text Files (*.txt);;All Files (*)",
-        #                                            options=options)
+
         if LOGMTI:
             try:
                 # Read the content of the file
