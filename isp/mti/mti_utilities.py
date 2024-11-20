@@ -3,7 +3,7 @@ import shutil
 import pandas as pd
 from obspy.geodetics.base import gps2dist_azimuth
 import time
-from isp import GREEN_SOURCE, GREEN
+from isp import GREEN_SOURCE, GREEN, ROOT_DIR
 
 
 class MTIManager:
@@ -82,6 +82,34 @@ class MTIManager:
     #     except Exception as e:
     #         print(f"An error occurred: {e}")
 
+
+    @staticmethod
+    def move_files(destination_folder):
+        """
+        Moves all files from the source_folder to the destination_folder.
+        Creates the destination_folder if it doesn't exist.
+        """
+
+        source_folder = os.path.join(ROOT_DIR, 'mti/output/')
+
+        if not os.path.exists(source_folder):
+            print(f"Source folder '{source_folder}' does not exist.")
+            return
+
+        if not os.path.exists(destination_folder):
+            os.makedirs(destination_folder)
+
+        for filename in os.listdir(source_folder):
+            source_path = os.path.join(source_folder, filename)
+            destination_path = os.path.join(destination_folder, filename)
+
+            # Check if it's a file
+            if os.path.isfile(source_path):
+                try:
+                    shutil.move(source_path, destination_path)
+                    print(f"Moved: {source_path} -> {destination_path}")
+                except Exception as e:
+                    print(f"Error moving file {filename}: {e}")
     @staticmethod
     def clean_and_create_symlinks():
         """

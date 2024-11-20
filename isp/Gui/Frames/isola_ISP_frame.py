@@ -1,6 +1,5 @@
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QFileDialog, QLabel, QWidget, QVBoxLayout
-from isp import ROOT_DIR, LOGMTI
 from isp.Exceptions import InvalidFile
 from isp.Gui import pw, qt
 from isp.Gui.Frames import BaseFrame, MessageDialog, UiMomentTensor, MatplotlibFrame
@@ -8,12 +7,12 @@ from isp.Gui.Frames.crustal_model_parameters_frame import CrustalModelParameters
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime
 from isp.Utils import MseedUtil
+from isp.Utils.subprocess_utils import open_html_file, open_url
 from isp.mti.mti_utilities import MTIManager
 from isp.mti.class_isola_new import *
 from isp.Gui.Frames.help_frame import HelpDoc
-import pandas as pd
 from obspy import Stream, UTCDateTime, Inventory
-
+import platform
 
 @add_save_load()
 class MTIFrame(BaseFrame, UiMomentTensor):
@@ -27,27 +26,30 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self._stations_info = {}
         self.stream = None
         self.stations_check = False
-
+        self.url = 'https://projectisp.github.io/ISP_tutorial.github.io/mti/'
         self.scroll_area_widget.setWidgetResizable(True)
         # Binding
 
         self.earth_path_bind = BindPyqtObject(self.earth_modelPathForm)
-
+        self.output_path_bind = BindPyqtObject(self.outputLE)
         # Binds
         self.earthmodelBtn.clicked.connect(lambda: self.on_click_select_file(self.earth_path_bind))
+        self.setOutputBtn.clicked.connect(lambda: self.on_click_select_directory(self.output_path_bind))
 
         # Action Buttons
 
         self.actionEarth_Model.triggered.connect(lambda: self.open_earth_model())
-        self.actionFrom_File.triggered.connect(lambda: self.load_event_from_isolapath())
+        #self.actionFrom_File.triggered.connect(lambda: self.load_event_from_isolapath())
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.run_inversionBtn.clicked.connect(lambda: self.run_inversion())
         self.plot_solutionBtn.clicked.connect(lambda: self.plot_solution())
         self.stationSelectBtn.clicked.connect(lambda: self.stationsInfo())
+        self.openHTML.clicked.connect(lambda:self.load_HTML_file())
         self.earth_model = CrustalModelParametersFrame()
         # help Documentation
 
         self.help = HelpDoc()
+
 
     def open_earth_model(self):
         self.earth_model.show()
@@ -56,6 +58,14 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         md = MessageDialog(self)
         md.set_info_message(msg)
 
+    def on_click_select_directory(self, bind: BindPyqtObject):
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
+        if dir_path:
+            bind.value = dir_path
 
     def validate_file(self):
         if not MseedUtil.is_valid_mseed(self.file_selector.file_path):
@@ -104,28 +114,6 @@ class MTIFrame(BaseFrame, UiMomentTensor):
     #     model = self.earth_model.getParametersWithFormat()
     #     print(model)
 
-    ##In progress##
-    def load_event_from_isolapath(self):
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        file_path = pw.QFileDialog.getOpenFileName(self, 'Select Directory', root_path)
-        file =file_path[0]
-        frame = pd.read_csv(file, sep='\s+', header=None)
-        time = frame.iloc[3][0]
-        year = time[0:4]
-        mm = time[4:6]
-        dd = time[6:8]
-        hour = frame.iloc[4][0]
-        minute = frame.iloc[5][0]
-        sec = frame.iloc[6][0]
-        sec = float(sec)
-        dec = sec - int(sec)
-        dec = int(sec)
-
-        time = UTCDateTime(int(year), int(mm), int(dd), int(hour), int(minute), int(sec), dec)
-        event = {'lat': frame.iloc[0][0], 'lon': frame.iloc[0][1], 'depth': frame.iloc[1][0],
-                 'mag': frame.iloc[2][0], 'time': time, 'istitution': frame.iloc[7][0]}
-
-        return event
 
     def send_mti(self, stream: Stream, inventory: Inventory, starttime: UTCDateTime, endtime: UTCDateTime):
 
@@ -262,6 +250,9 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
 
             self.infoTx.appendPlainText("Moment Tensor Inversion Successfully done !!!, please plot last solution")
+
+            MTIManager.move_files(self.output_path_bind.value)
+
         else:
             md = MessageDialog(self)
             md.set_error_message(
@@ -271,13 +262,6 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                 "3. Ensure clicked at station channels"
             )
 
-
-    # def plot_solution(self):
-    #
-    #     path = os.path.join(ROOT_DIR, 'mti/output/index.html')
-    #     url = pyc.QUrl.fromLocalFile(path)
-    #     self._load_log_file()
-    #     self.widget.load(url)
 
     def load_images(self):
         # Open folder dialog to select image folder
@@ -289,24 +273,29 @@ class MTIFrame(BaseFrame, UiMomentTensor):
     def plot_solution(self):
 
         self._load_log_file()
-        good_list = ['centroid.png', 'uncertainty_MT_DC.png', 'uncertainty_MT.png']
-        folder_path = os.path.join(ROOT_DIR, 'mti/output')
+        beach_ball_list = ['centroid.png', 'uncertainty_MT_DC.png', 'uncertainty_MT.png']
+        synthetic_list = ['seismo.png', 'spectra.png']
+        self.__plot_grid(beach_ball_list, self.pltGrid, max_cols=1, size=250)
+        self.__plot_grid(synthetic_list, self.pltSynthetics, max_cols=0, size=550)
+
+
+    def __plot_grid(self, good_list, grid, max_cols, size):
 
         # Clear the grid layout
-        for i in reversed(range(self.pltGrid.count())):
-            widget = self.pltGrid.itemAt(i).widget()
+        for i in reversed(range(grid.count())):
+            widget = grid.itemAt(i).widget()
             if widget:
                 widget.deleteLater()
 
         # Load and display images with titles
         row, col = 0, 0
-        for filename in os.listdir(folder_path):
+        for filename in os.listdir(self.output_path_bind.value):
             if filename.lower().endswith('.png') and filename in good_list:  # Only load PNG images
-                image_path = os.path.join(folder_path, filename)
+                image_path = os.path.join(self.output_path_bind.value, filename)
                 pixmap = QPixmap(image_path)
 
                 # Resize the image for thumbnails
-                pixmap = pixmap.scaled(280, 280, qt.KeepAspectRatio, qt.SmoothTransformation)
+                pixmap = pixmap.scaled(size, size, qt.KeepAspectRatio, qt.SmoothTransformation)
 
                 # Create a vertical layout for the image and title
                 vbox = QVBoxLayout()
@@ -319,7 +308,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                 vbox.addWidget(title)
 
                 # Add the image
-                image_label = QLabel(self)
+                image_label = ImageLabel(image_path, self)  # Use custom QLabel
                 image_label.setPixmap(pixmap)
                 image_label.setAlignment(qt.AlignCenter)
                 vbox.addWidget(image_label)
@@ -327,12 +316,13 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                 # Add the vertical layout to the grid
                 container_widget = QWidget()
                 container_widget.setLayout(vbox)
-                self.pltGrid.addWidget(container_widget, row, col)
+                grid.addWidget(container_widget, row, col)
 
                 col += 1
-                if col > 1:  # Adjust column count for grid
+                if col > max_cols:  # Adjust column count for grid
                     col = 0
                     row += 1
+
 
     def get_inversion_parameters(self):
         parameters = {'latitude': self.latDB.value(), 'longitude': self.lonDB.value(), 'depth': self.depthDB.value(),
@@ -346,16 +336,22 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         return parameters
 
     def _load_log_file(self):
-
-        if LOGMTI:
+        logfile = os.path.join(self.output_path_bind.value, "log.txt")
+        if logfile:
             try:
                 # Read the content of the file
-                with open(LOGMTI, 'r') as file:
+                with open(logfile, 'r') as file:
                     log_content = file.read()
                     self.infoTx.setPlainText(log_content)  # Display the content in QPlainTextEdit
             except Exception as e:
                 self.infoTx.setPlainText(f"Failed to load file: {e}")
 
+    def open_help(self):
+        open_url(self.url)
+
+    def load_HTML_file(self):
+        html_path = os.path.join(self.output_path_bind.value, 'index.html')
+        open_html_file(html_path)
 
     #
     # def plot_map_stations(self):
@@ -408,11 +404,23 @@ class MTIFrame(BaseFrame, UiMomentTensor):
     #
     #     md.show()
 
-    def open_help(self):
-        self.help.show()
 
 
 
+class ImageLabel(QLabel):
+    def __init__(self, image_path, parent=None):
+        super().__init__(parent)
+        self.image_path = image_path  # Store the image file path
 
+    def mouseDoubleClickEvent(self, event):
+        if event.button() == qt.LeftButton:
+            # Open the image with the system's default image viewer
+            try:
+                if platform.system() == 'Darwin':
 
+                    subprocess.run(['open', self.image_path])
+                else:
+                    subprocess.run(['xdg-open', self.image_path])
 
+            except Exception as e:
+                print(f"Error opening image: {e}")
