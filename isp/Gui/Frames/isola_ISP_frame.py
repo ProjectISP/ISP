@@ -10,7 +10,6 @@ from isp.Utils import MseedUtil
 from isp.Utils.subprocess_utils import open_html_file, open_url
 from isp.mti.mti_utilities import MTIManager
 from isp.mti.class_isola_new import *
-from isp.Gui.Frames.help_frame import HelpDoc
 from obspy import Stream, UTCDateTime, Inventory
 import platform
 
@@ -46,9 +45,6 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.stationSelectBtn.clicked.connect(lambda: self.stationsInfo())
         self.openHTML.clicked.connect(lambda:self.load_HTML_file())
         self.earth_model = CrustalModelParametersFrame()
-        # help Documentation
-
-        self.help = HelpDoc()
 
 
     def open_earth_model(self):

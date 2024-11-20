@@ -4,7 +4,6 @@ import traceback
 from isp.Gui.Frames import MainFrame, TimeFrequencyFrame, EarthquakeAnalysisFrame, ArrayAnalysisFrame, MTIFrame, \
     RecfFrame, EventLocationFrame, SyntheticsAnalisysFrame, DataDownloadFrame, RealTimeFrame, NoiseFrame, MessageDialog
 from isp.Gui.Frames.ppsds_frame import PPSDFrame
-from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Utils import Singleton
 
 
@@ -23,7 +22,6 @@ class Controller:
         self.ppds_frame = None
         self.realtime_frame = None
         self.noise_frame = None
-        self.help = HelpDoc()
 
 
     def open_main_window(self):

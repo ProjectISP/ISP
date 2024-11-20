@@ -5,7 +5,6 @@ from isp.Gui.Frames.dispersion_maps_frame import EGFDispersion
 from isp.Gui.Frames.uis_frames import UiNoise
 from isp.Gui.Frames.efg_frame import EGFFrame
 from isp.Gui.Frames.parameters import ParametersSettings
-from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.setting_dialog_noise import SettingsDialogNoise
 from isp.Gui.Frames.project_frame_dispersion import Project
 
@@ -37,9 +36,6 @@ class NoiseFrame(BaseFrame, UiNoise):
         self.tabWidget.addTab(self.egf_frame, 'EGFs')
         self.tabWidget.addTab(self.ft_frame, 'Frequency Time Analysis')
         self.tabWidget.addTab(self.dsp_frame, 'Dispersion Maps')
-
-        # Help Documentation
-        self.help = HelpDoc()
 
         # Actions
         self.actionSet_Parameters.triggered.connect(self.open_parameters_settings)

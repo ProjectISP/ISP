@@ -15,7 +15,6 @@ from isp.Gui import pw, pqg, pyc, qt
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, EventInfoBox, \
     MatplotlibCanvas 
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
-from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -36,7 +35,7 @@ from isp.earthquakeAnalisysis import PickerManager, NllManager
 import numpy as np
 import os
 import json
-from isp.Utils.subprocess_utils import exc_cmd
+from isp.Utils.subprocess_utils import exc_cmd, open_url
 from isp import ROOT_DIR, EVENTS_DETECTED, AUTOMATIC_PHASES
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
@@ -60,6 +59,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cnn = CNNPicker()
         #finally:
         #print("Neural Network cannot be loaded")
+        self.url = 'https://projectisp.github.io/ISP_tutorial.github.io/el/'
         self.zoom_diff = None
         self.phases = None
         self.travel_times = None
@@ -197,10 +197,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.earthmodel = EarthModelViewer()
 
-        # help Documentation
-
-        self.help = HelpDoc()
-
         # catalog viewer
 
         self.catalog = SearchCatalogViewer()
@@ -295,7 +291,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def open_help(self):
-        self.help.show()
+        open_url(self.url)
 
     def open_parameters_settings(self):
         self.parameters.show()

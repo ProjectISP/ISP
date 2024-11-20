@@ -21,9 +21,9 @@ import matplotlib.dates as mdt
 from datetime import date
 import pandas as pd
 from isp.Utils import MseedUtil
+from isp.Utils.subprocess_utils import open_url
 from isp.arrayanalysis import array_analysis
 from isp import ROOT_DIR
-from isp.Gui.Frames.help_frame import HelpDoc
 from isp.arrayanalysis.backprojection_tools import back_proj_organize, backproj
 from isp.arrayanalysis.plot_bp import plot_bp
 from isp.seismogramInspector.signal_processing_advanced import find_nearest
@@ -41,6 +41,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self._stations_info = {}
         self._stations_coords = {}
         self.stack = None
+        self.url='https://projectisp.github.io/ISP_tutorial.github.io/aa/'
         self.canvas = MatplotlibCanvas(self.responseMatWidget)
         self.canvas_fk = MatplotlibCanvas(self.widget_fk, nrows=4)
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
@@ -92,10 +93,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.create_gridBtn.clicked.connect(self.create_grid)
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.load_videoBtn.clicked.connect(self.loadvideoBP)
-
-        # help Documentation
-        self.help = HelpDoc()
-
 
         # Parameters settings
         self.__parameters = ParametersSettings()
@@ -501,4 +498,4 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             self.player.play()
 
     def open_help(self):
-        self.help.show()
+        open_url(self.url)

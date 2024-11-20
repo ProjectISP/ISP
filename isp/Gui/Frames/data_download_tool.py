@@ -15,8 +15,8 @@ import obspy
 import obspy.clients.fdsn
 import obspy.taup
 from isp.Gui.Utils.pyqt_utils import convert_qdatetime_utcdatetime, convert_qdatetime_datetime
+from isp.Utils.subprocess_utils import open_url
 from isp.retrieve_events import retrieve
-from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.seiscom3conexion_frame import SeisCopm3connexion
 from sys import platform
 from isp.seismogramInspector.signal_processing_advanced import find_nearest
@@ -28,6 +28,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         self.setupUi(self)
         self.inventory = {}
         self.seiscomp3parameters = None
+        self.url = "https://projectisp.github.io/ISP_tutorial.github.io/rd/"
         self.network_list = []
         self.stations_list = []
         self.catalogBtn.clicked.connect(self.get_catalog)
@@ -49,9 +50,6 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         # signal doubleclick
         self.tableWidget.cellDoubleClicked.connect(self.get_coordinates)
 
-        # help Documentation
-
-        self.help = HelpDoc()
 
         # SeicomP3
 
@@ -494,7 +492,7 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         
 
     def open_help(self):
-        self.help.show()
+        open_url(self.url)
 
     # set conexion DataDownload with Eartuquake Analysis
     def select_event(self):
