@@ -1,6 +1,10 @@
 import os
+import shutil
 import pandas as pd
+from obspy.core.event import Origin
 from obspy.geodetics.base import gps2dist_azimuth
+import time
+from isp import GREEN_SOURCE, GREEN, ROOT_DIR
 
 
 class MTIManager:
@@ -40,7 +44,106 @@ class MTIManager:
         self.__validate_dir(stations_dir)
         return stations_dir
 
+    # @staticmethod
+    # def copy_and_clean_folder():
+    #     """
+    #     Copies all files from the source folder to the destination folder.
+    #     Cleans the destination folder before copying.
+    #
+    #     :param source_folder: Path to the source folder
+    #     :param destination_folder: Path to the destination folder
+    #     """
+    #     try:
+    #         # Ensure both folders exist
+    #         if not os.path.exists(GREEN_SOURCE):
+    #             raise FileNotFoundError(f"Source folder does not exist: {GREEN_SOURCE}")
+    #
+    #         if not os.path.exists(GREEN):
+    #             os.makedirs(GREEN)
+    #
+    #         # Clean the destination folder
+    #         for item in os.listdir(GREEN):
+    #             item_path = os.path.join(GREEN, item)
+    #             if os.path.isfile(item_path) or os.path.islink(item_path):
+    #                 os.unlink(item_path)  # Remove file or symbolic link
+    #             elif os.path.isdir(item_path):
+    #                 shutil.rmtree(item_path)  # Remove directory and contents
+    #
+    #         # Copy files from source to destination
+    #         for file_name in os.listdir(GREEN):
+    #             source_file_path = os.path.join(GREEN, file_name)
+    #             destination_file_path = os.path.join(GREEN, file_name)
+    #
+    #             if os.path.isfile(source_file_path):  # Only copy files, not directories
+    #                 shutil.copy2(source_file_path, destination_file_path)
+    #         print("Waiting for 10 seconds before starting the copy process...")
+    #
+    #         time.sleep(10)  # Wait for 10 seconds
+    #         print(f"All files from '{GREEN_SOURCE}' have been copied to '{GREEN}' successfully.")
+    #     except Exception as e:
+    #         print(f"An error occurred: {e}")
 
+
+    @staticmethod
+    def move_files(destination_folder):
+        """
+        Moves all files from the source_folder to the destination_folder.
+        Creates the destination_folder if it doesn't exist.
+        """
+
+        source_folder = os.path.join(ROOT_DIR, 'mti/output/')
+
+        if not os.path.exists(source_folder):
+            print(f"Source folder '{source_folder}' does not exist.")
+            return
+
+        if not os.path.exists(destination_folder):
+            os.makedirs(destination_folder)
+
+        for filename in os.listdir(source_folder):
+            source_path = os.path.join(source_folder, filename)
+            destination_path = os.path.join(destination_folder, filename)
+
+            # Check if it's a file
+            if os.path.isfile(source_path):
+                try:
+                    shutil.move(source_path, destination_path)
+                    print(f"Moved: {source_path} -> {destination_path}")
+                except Exception as e:
+                    print(f"Error moving file {filename}: {e}")
+    @staticmethod
+    def clean_and_create_symlinks():
+        """
+        Cleans the destination folder and creates symbolic links for all files in the source folder.
+
+        Args:
+            destination_folder (str): Path to the destination folder.
+            source_folder (str): Path to the source folder.
+
+        Raises:
+            ValueError: If source_folder does not exist.
+        """
+        if not os.path.exists(GREEN_SOURCE):
+            raise ValueError(f"The source folder '{GREEN_SOURCE}' does not exist.")
+        if not os.path.exists(GREEN):
+            os.makedirs(GREEN)  # Create destination folder if it doesn't exist
+
+        # Clean the destination folder
+        for item in os.listdir(GREEN):
+            item_path = os.path.join(GREEN, item)
+            if os.path.isfile(item_path) or os.path.islink(item_path):
+                os.unlink(item_path)  # Remove files or symbolic links
+            elif os.path.isdir(item_path):
+                shutil.rmtree(item_path)  # Remove directories
+
+        # Create symbolic links for all files in the source folder
+        for item in os.listdir(GREEN_SOURCE):
+            source_path = os.path.join(GREEN_SOURCE, item)
+            destination_path = os.path.join(GREEN, item)
+            if os.path.isfile(source_path):
+                os.symlink(source_path, destination_path)  # Create symbolic link
+
+        print(f"Symbolic links created for all files in '{GREEN_SOURCE}' to '{GREEN}'.")
     def get_stations_index(self):
 
         ind = []
@@ -125,6 +228,18 @@ class MTIManager:
             deltas.append(delta_unique)
 
         return deltas
+
+    @staticmethod
+    def get_hyp_values(origin: Origin):
+
+        hyp_values = {}
+        hyp_values["origin_time"] = origin.time
+        hyp_values["latitude"] = origin.latitude
+        hyp_values["longitude"] = origin.longitude
+        hyp_values["depth"] = origin.depth*1E-3
+
+        return hyp_values
+
 
 
 

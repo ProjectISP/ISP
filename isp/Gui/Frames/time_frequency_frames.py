@@ -11,9 +11,9 @@ from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Frames.time_frequency_advance_frame import TimeFrequencyAdvance
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime, set_qdatetime
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
+from isp.Utils.subprocess_utils import open_url
 from isp.seismogramInspector.MTspectrogram import MTspectrogram, WignerVille
 import numpy as np
-from isp.Gui.Frames.help_frame import HelpDoc
 import os
 from sys import platform
 
@@ -26,6 +26,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.setupUi(self)
         self.__stations_dir = None
         self.__metadata_manager = None
+        self.url="https://projectisp.github.io/ISP_tutorial.github.io/tf/"
         self.inventory = {}
         self._stations_info = {}
         self.tr1 = []
@@ -62,8 +63,6 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.plotBtn.clicked.connect(self.plot_seismogram)
         self.stationsBtn.clicked.connect(self.stations_info)
 
-        # help Documentation
-        self.help = HelpDoc()
 
         # Parameters settings
         self.parameters = ParametersSettings()
@@ -672,4 +671,4 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
 
     def open_help(self):
-        self.help.show()
+        open_url(self.url)

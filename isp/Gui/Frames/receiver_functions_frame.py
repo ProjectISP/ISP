@@ -29,7 +29,6 @@ from isp.Gui.Frames import BaseFrame
 import isp.receiverfunctions.rf_dialogs as dialogs
 import isp.receiverfunctions.rf_main_window_utils as mwu
 from isp.Gui.Frames.uis_frames import UiReceiverFunctions
-from isp.Gui.Frames.help_frame import HelpDoc
 # other imports
 import io
 import os
@@ -1027,6 +1026,3 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
                                           preferred_xlabel, preferred_ylabel, preferred_fname)
         dialog.exec_()
         return
-
-    def open_help(self):
-        self.help.show()

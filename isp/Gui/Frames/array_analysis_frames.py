@@ -20,10 +20,10 @@ import os
 import matplotlib.dates as mdt
 from datetime import date
 import pandas as pd
-from isp.Utils import MseedUtil
+from isp.Utils import MseedUtil, AsycTime
+from isp.Utils.subprocess_utils import open_url
 from isp.arrayanalysis import array_analysis
 from isp import ROOT_DIR
-from isp.Gui.Frames.help_frame import HelpDoc
 from isp.arrayanalysis.backprojection_tools import back_proj_organize, backproj
 from isp.arrayanalysis.plot_bp import plot_bp
 from isp.seismogramInspector.signal_processing_advanced import find_nearest
@@ -41,6 +41,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self._stations_info = {}
         self._stations_coords = {}
         self.stack = None
+        self.url='https://projectisp.github.io/ISP_tutorial.github.io/aa/'
         self.canvas = MatplotlibCanvas(self.responseMatWidget)
         self.canvas_fk = MatplotlibCanvas(self.widget_fk, nrows=4)
         self.canvas_slow_map = MatplotlibCanvas(self.widget_slow_map)
@@ -92,10 +93,6 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.create_gridBtn.clicked.connect(self.create_grid)
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.load_videoBtn.clicked.connect(self.loadvideoBP)
-
-        # help Documentation
-        self.help = HelpDoc()
-
 
         # Parameters settings
         self.__parameters = ParametersSettings()
@@ -244,8 +241,9 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             md = MessageDialog(self)
             md.set_info_message("Please load a stations file with array coordinates")
 
+    @AsycTime.run_async()
     def FK_plot(self):
-
+        print("Starting FK analysis")
         # starttime = convert_qdatetime_utcdatetime(self.starttime_date)
         # endtime = convert_qdatetime_utcdatetime(self.endtime_date)
         self.phaseLE.clear()
@@ -263,6 +261,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                                                                                      self.timewindow_bind.value,
                                                                                      self.overlap_bind.value)
 
+        print("Plotting FK analysis")
         self.canvas_fk.scatter3d(self.T, self.relpower, self.relpower, axes_index=0, clabel="Power [dB]")
         self.canvas_fk.scatter3d(self.T, self.abspower, self.relpower, axes_index=1, clabel="Power [dB]")
         self.canvas_fk.scatter3d(self.T, self.AZ, self.relpower, axes_index=2, clabel="Power [dB]")
@@ -276,6 +275,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         formatter = mdt.DateFormatter('%H:%M:%S')
         ax.xaxis.set_major_formatter(formatter)
         ax.xaxis.set_tick_params(rotation=30)
+        print("Finished FK analysis")
 
     def on_click_matplotlib(self, event, canvas):
         output_path = os.path.join(ROOT_DIR, 'arrayanalysis', 'array_picks.txt"')
@@ -353,7 +353,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.stream_frame.show()
 
     def write_stack(self):
-        if self.stack is not None and len(self.stack) > 0:
+        if isinstance(self.trace_stack, Trace):
             root_path = os.path.dirname(os.path.abspath(__file__))
             if "darwin" == platform:
                 dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
@@ -361,9 +361,11 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                 dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
                                                                pw.QFileDialog.DontUseNativeDialog)
 
-            if dir_path and isinstance(self.trace_stack, Trace):
+            if dir_path:
                 file = os.path.join(dir_path, self.trace_stack.id)
                 self.trace_stack.write(file, format="MSEED")
+                md = MessageDialog(self)
+                md.set_info_message("Written stack trace at: "+dir_path)
         else:
             md = MessageDialog(self)
             md.set_info_message("Nothing to write")
@@ -501,4 +503,4 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             self.player.play()
 
     def open_help(self):
-        self.help.show()
+        open_url(self.url)

@@ -1,12 +1,10 @@
 import os
 import tempfile
-from obspy import UTCDateTime, Stream
+from obspy import UTCDateTime
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced
 from isp.DataProcessing.metadata_manager import MetadataManager
-from isp.Exceptions import parse_excepts
 from isp.Gui import pw, pqg, pyc
 from isp.Gui.Frames import BaseFrame, UiRealTimeFrame, MessageDialog, MatplotlibCanvas
-from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.map_realtime_frame import MapRealTime
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -19,6 +17,8 @@ import matplotlib.dates as mdt
 import datetime
 import numpy as np
 from sys import platform
+
+from isp.Utils.subprocess_utils import open_url
 
 
 class RealTimeFrame(BaseFrame, UiRealTimeFrame):
@@ -36,6 +36,7 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.items_per_page = 1
         self.__dataless_manager = None
         self.__metadata_manager = None
+        self.url = "https://projectisp.github.io/ISP_tutorial.github.io/nrt/"
         self.st = None
         self.client = None
         self.stations_available = []
@@ -77,10 +78,11 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
         self.parameters = ParametersSettings()
         # Earth Model Viewer
         self.earthmodel = EarthModelViewer()
-        # help Documentation
-        self.help = HelpDoc()
+
 
         # shortcuts
+    def open_help(self):
+        open_url(self.url)
 
     @property
     def dataless_manager(self):

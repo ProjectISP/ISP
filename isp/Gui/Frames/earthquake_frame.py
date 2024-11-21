@@ -15,7 +15,6 @@ from isp.Gui import pw, pqg, pyc, qt
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, EventInfoBox, \
     MatplotlibCanvas 
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
-from isp.Gui.Frames.help_frame import HelpDoc
 from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -36,7 +35,7 @@ from isp.earthquakeAnalisysis import PickerManager, NllManager
 import numpy as np
 import os
 import json
-from isp.Utils.subprocess_utils import exc_cmd
+from isp.Utils.subprocess_utils import exc_cmd, open_url
 from isp import ROOT_DIR, EVENTS_DETECTED, AUTOMATIC_PHASES
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalisysis.stations_map import StationsMap
@@ -60,6 +59,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cnn = CNNPicker()
         #finally:
         #print("Neural Network cannot be loaded")
+        self.url = 'https://projectisp.github.io/ISP_tutorial.github.io/el/'
         self.zoom_diff = None
         self.phases = None
         self.travel_times = None
@@ -197,10 +197,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.earthmodel = EarthModelViewer()
 
-        # help Documentation
-
-        self.help = HelpDoc()
-
         # catalog viewer
 
         self.catalog = SearchCatalogViewer()
@@ -295,7 +291,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def open_help(self):
-        self.help.show()
+        open_url(self.url)
 
     def open_parameters_settings(self):
         self.parameters.show()
@@ -2255,7 +2251,43 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def open_moment_tensor(self):
-        self.controller().open_momentTensor_window()
+        # Check required conditions: stream, inventory, and trim checkbox
+        if len(self.st) > 0 and isinstance(self.inventory, Inventory) and self.trimCB.isChecked():
+            choice, ok = pw.QInputDialog.getItem(
+                self, "Export Seismogram to Moment Tensor Inversion "
+                      "Module if you have selected a seismogram and metadata this will be automatically sent it",
+                "Please How to set Hypocenter parameters:",
+                ["Manually after open MTI module", "Load last location", "Load other location"], 0, False
+            )
+
+
+            if ok:
+                option = "manually"
+                starttime = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+                endtime = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+                self.controller().open_momentTensor_window()
+
+                if choice == "Manually after open MTI module":
+                    option = "manually"
+                elif choice == "Load last location":
+                    option = "last"
+                elif choice == "Load other location":
+                    option = "other"
+
+                self.controller().moment_tensor_frame.send_mti(self.st, self.inventory, starttime, endtime, option)
+            else:
+                # If the user cancels the choice dialog, do nothing
+                return
+        else:
+            # Show an error message if required conditions are not met
+            md = MessageDialog(self)
+            md.set_error_message(
+                "Please review the following requirements before proceeding:",
+                "1. Ensure seismograms are loaded.\n"
+                "2. Ensure seismograms are trimmed.\n"
+                "3. Load a valid inventory metadata."
+            )
+
 
     def time_frequency_analysis(self):
         self.controller().open_seismogram_window()

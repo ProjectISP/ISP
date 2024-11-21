@@ -35,3 +35,40 @@ def exc_cmd(cmd, **kwargs):
         elif len(std_err) != 0:  # Some possible errors trowed by the running subprocess, but not critical.
             raise sb.SubprocessError(std_err)
         return std_out
+
+
+
+def open_html_file(html_file_path):
+    import webbrowser
+    import os
+
+    """
+    Opens an HTML file in the default web browser.
+
+    :param html_file_path: Path to the HTML file (e.g., 'path/to/index.html')
+    """
+
+    if not os.path.exists(html_file_path):
+        print(f"Error: The file '{html_file_path}' does not exist.")
+        return
+
+    try:
+        # Open the file in the default web browser
+        webbrowser.open(f"file://{os.path.abspath(html_file_path)}")
+        print(f"Opening: {html_file_path}")
+    except Exception as e:
+        print(f"Failed to open the file: {e}")
+
+def open_url(url):
+    import webbrowser
+    import os
+    """
+    Opens a specified URL in the default web browser.
+
+    :param url: The URL to open (e.g., 'https://isp.com')
+    """
+    try:
+        webbrowser.open(url)
+        print(f"Opening: {url}")
+    except Exception as e:
+        print(f"Failed to open the URL: {e}")
