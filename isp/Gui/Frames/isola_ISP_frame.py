@@ -1,12 +1,14 @@
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QFileDialog, QLabel, QWidget, QVBoxLayout
+from obspy.core.event import Origin
+from isp import ROOT_DIR, ALL_LOCATIONS
 from isp.Exceptions import InvalidFile
 from isp.Gui import pw, qt
 from isp.Gui.Frames import BaseFrame, MessageDialog, UiMomentTensor, MatplotlibFrame
 from isp.Gui.Frames.crustal_model_parameters_frame import CrustalModelParametersFrame
 from isp.Gui.Frames.stations_info import StationsInfo
-from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime
-from isp.Utils import MseedUtil
+from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime, set_qdatetime
+from isp.Utils import MseedUtil, ObspyUtil
 from isp.Utils.subprocess_utils import open_html_file, open_url
 from isp.mti.mti_utilities import MTIManager
 from isp.mti.class_isola_new import *
@@ -38,7 +40,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         # Action Buttons
 
         self.actionEarth_Model.triggered.connect(lambda: self.open_earth_model())
-        #self.actionFrom_File.triggered.connect(lambda: self.load_event_from_isolapath())
+        self.actionFrom_File.triggered.connect(lambda: self.load_event())
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.run_inversionBtn.clicked.connect(lambda: self.run_inversion())
         self.plot_solutionBtn.clicked.connect(lambda: self.plot_solution())
@@ -62,6 +64,27 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                                                            pw.QFileDialog.DontUseNativeDialog)
         if dir_path:
             bind.value = dir_path
+
+
+    def on_click_select_hyp_file(self):
+        file_path = pw.QFileDialog.getOpenFileName(self, 'Select Directory', ALL_LOCATIONS)
+        file_path = file_path[0]
+        if isinstance(file_path, str):
+            return file_path
+        else:
+            md = MessageDialog(self)
+            md.set_info_message("No selected any file, please set hypocenter parameters manually")
+            return None
+
+
+    def load_event(self):
+        hyp_file = self.on_click_select_hyp_file()
+        if isinstance(hyp_file, str):
+            origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file, modified=True)
+            hyp_values = MTIManager.get_hyp_values(origin[0])
+            self.__set_hyp(hyp_values)
+            md = MessageDialog(self)
+            md.set_info_message("Loaded information and set hypocenter parameters, please click stations info")
 
     def validate_file(self):
         if not MseedUtil.is_valid_mseed(self.file_selector.file_path):
@@ -111,7 +134,8 @@ class MTIFrame(BaseFrame, UiMomentTensor):
     #     print(model)
 
 
-    def send_mti(self, stream: Stream, inventory: Inventory, starttime: UTCDateTime, endtime: UTCDateTime):
+    def send_mti(self, stream: Stream, inventory: Inventory, starttime: UTCDateTime, endtime: UTCDateTime,
+                 option:str):
 
         self.st = stream
         print(self.st)
@@ -122,7 +146,39 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.stream_frame = MatplotlibFrame(self.st, type='normal')
         self.stream_frame.show()
 
-    #@AsycTime.run_async()
+        # next set the hypocenter parameters
+        if option == "manually":
+            md = MessageDialog(self)
+            md.set_info_message("Loaded information, please set hypocenter parameters by yourself, "
+                                "then click stations info")
+
+        elif option == "last":
+            hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")
+            origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file, modified=True)
+            hyp_values = MTIManager.get_hyp_values(origin[0])
+            self.__set_hyp(hyp_values)
+            md = MessageDialog(self)
+            md.set_info_message("Loaded information and set hypocenter parameters, please click stations info")
+
+        elif option == "other":
+            hyp_file = self.on_click_select_hyp_file()
+            if isinstance(hyp_file, str):
+                origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file, modified=True)
+                hyp_values = MTIManager.get_hyp_values(origin[0])
+                self.__set_hyp(hyp_values)
+                md = MessageDialog(self)
+                md.set_info_message("Loaded information and set hypocenter parameters, please click stations info")
+
+
+    def __set_hyp(self, hyp_values):
+        self.latDB.setValue(float(hyp_values["latitude"]))
+        self.lonDB.setValue(float(hyp_values["longitude"]))
+        self.depthDB.setValue(float(hyp_values["depth"]))
+        self.magnitudeDB.setValue(float(3.5))
+        set_qdatetime(hyp_values['origin_time'], self.origin_time)
+
+
+
     def run_inversion(self):
 
         parameters = self.get_inversion_parameters()
@@ -254,7 +310,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
             md.set_error_message(
                 "Please review the following requirements before proceeding:",
                 "1. Ensure seismograms are loaded.\n"
-                "2. Ensure fill the parametroization box\n"
+                "2. Ensure fill the parametrization box\n"
                 "3. Ensure clicked at station channels"
             )
 

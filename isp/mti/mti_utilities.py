@@ -1,6 +1,7 @@
 import os
 import shutil
 import pandas as pd
+from obspy.core.event import Origin
 from obspy.geodetics.base import gps2dist_azimuth
 import time
 from isp import GREEN_SOURCE, GREEN, ROOT_DIR
@@ -227,6 +228,18 @@ class MTIManager:
             deltas.append(delta_unique)
 
         return deltas
+
+    @staticmethod
+    def get_hyp_values(origin: Origin):
+
+        hyp_values = {}
+        hyp_values["origin_time"] = origin.time
+        hyp_values["latitude"] = origin.latitude
+        hyp_values["longitude"] = origin.longitude
+        hyp_values["depth"] = origin.depth*1E-3
+
+        return hyp_values
+
 
 
 

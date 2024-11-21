@@ -2253,15 +2253,28 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def open_moment_tensor(self):
         # Check required conditions: stream, inventory, and trim checkbox
         if len(self.st) > 0 and isinstance(self.inventory, Inventory) and self.trimCB.isChecked():
-            answer = pw.QMessageBox.question(self, "Export Seismogram to Moment Tensor Inversion Module ",
-                                         "if you have selected a seismogram and metadata this will be automatically "
-                                         "sent it")
+            choice, ok = pw.QInputDialog.getItem(
+                self, "Export Seismogram to Moment Tensor Inversion "
+                      "Module if you have selected a seismogram and metadata this will be automatically sent it",
+                "Please How to set Hypocenter parameters:",
+                ["Manually after open MTI module", "Load last location", "Load other location"], 0, False
+            )
 
-            if pw.QMessageBox.Yes == answer:
-                self.controller().open_momentTensor_window()
+
+            if ok:
+                option = "manually"
                 starttime = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
                 endtime = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-                self.controller().moment_tensor_frame.send_mti(self.st, self.inventory, starttime, endtime)
+                self.controller().open_momentTensor_window()
+
+                if choice == "Manually after open MTI module":
+                    option = "manually"
+                elif choice == "Load last location":
+                    option = "last"
+                elif choice == "Load other location":
+                    option = "other"
+
+                self.controller().moment_tensor_frame.send_mti(self.st, self.inventory, starttime, endtime, option)
             else:
                 # If the user cancels the choice dialog, do nothing
                 return
