@@ -3,7 +3,7 @@ from isp.Gui.Frames.uis_frames import UiEarth_model_viewer
 import numpy as np
 import matplotlib.pyplot as plt
 from isp.Gui.Utils.pyqt_utils import add_save_load
-from isp.earthquakeAnalisysis import NLLGrid
+from isp.earthquakeAnalysis import NLLGrid
 import os
 import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER

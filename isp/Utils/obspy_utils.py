@@ -265,6 +265,10 @@ class ObspyUtil:
 
     @staticmethod
     def reads_hyp_to_origin(hyp_file_path: str, modified=False) -> Origin:
+
+        import warnings
+        warnings.filterwarnings("ignore")
+
         """
         Reads an hyp file and returns the Obspy Origin.
         :param hyp_file_path: The file path to the .hyp file

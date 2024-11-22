@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1542</width>
+    <width>1661</width>
     <height>916</height>
    </rect>
   </property>
@@ -22,7 +22,7 @@
       </property>
       <widget class="QWidget" name="tab_pick">
        <attribute name="title">
-        <string>Pick event</string>
+        <string>Event Analysis</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
@@ -583,7 +583,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>971</width>
+                  <width>1090</width>
                   <height>674</height>
                  </rect>
                 </property>
@@ -706,6 +706,13 @@
                </property>
                <property name="text">
                 <string>Stations Map</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="locateBtn">
+               <property name="text">
+                <string>Locate</string>
                </property>
               </widget>
              </item>
@@ -868,18 +875,6 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="Event">
-       <attribute name="title">
-        <string>Event Location</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
-         <widget class="QWidget" name="parentWidgetLocation" native="true">
-          <layout class="QVBoxLayout" name="verticalLayout_9"/>
-         </widget>
-        </item>
-       </layout>
-      </widget>
      </widget>
     </item>
    </layout>
@@ -889,7 +884,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1542</width>
+     <width>1661</width>
      <height>24</height>
     </rect>
    </property>

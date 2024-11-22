@@ -11,7 +11,7 @@ import pandas as pd
 import os
 from obspy import read_events, Catalog
 from isp import FOC_MEC_PATH, ROOT_DIR
-from isp.earthquakeAnalisysis import focmecobspy
+from isp.earthquakeAnalysis import focmecobspy
 from isp.Utils.subprocess_utils import exc_cmd
 
 class FirstPolarity:

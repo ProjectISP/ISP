@@ -8,7 +8,7 @@ from obspy.core.event import Origin
 from isp.Structures.structures import Search
 from isp.Utils import ObspyUtil
 from isp.db import db
-from isp.earthquakeAnalisysis import PickerManager
+from isp.earthquakeAnalysis import PickerManager
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 db.set_db_url("sqlite:///{}/isp_test.db".format(dir_path))

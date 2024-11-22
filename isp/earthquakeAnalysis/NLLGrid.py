@@ -19,7 +19,7 @@ from ctypes import Union, c_float, c_ushort
 from copy import deepcopy
 from pyproj import Proj
 from collections import Iterable
-from isp.earthquakeAnalisysis import ellipsoid
+from isp.earthquakeAnalysis import ellipsoid
 
 valid_grid_types = (
     'VELOCITY',
@@ -700,7 +700,7 @@ class NLLGrid(object):
 
     def plot_ellipsoid(self, axes, ellipsoid=None, mean_xyz=None):
         """Plot an ellipsoid on the grid."""
-        from isp.earthquakeAnalisysis.ellipsoid import Vect3D, ellipsiod2Axes, toEllipsoid3D
+        from isp.earthquakeAnalysis.ellipsoid import Vect3D, ellipsiod2Axes, toEllipsoid3D
         # try:
         #     from .ellipsoid import Vect3D, ellipsiod2Axes, toEllipsoid3D
         # except ImportError:

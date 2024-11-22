@@ -18,7 +18,7 @@ from isp.ant.process_ant import process_ant
 from isp.ant.crossstack import noisestack
 from sys import platform
 from isp.Gui.Utils.pyqt_utils import add_save_load
-from isp.earthquakeAnalisysis.stations_map import StationsMap
+from isp.earthquakeAnalysis.stations_map import StationsMap
 from isp.ant.signal_processing_tools import noise_processing, ManageEGF
 from isp.seismogramInspector.signal_processing_advanced import correlate_maxlag, get_lags
 

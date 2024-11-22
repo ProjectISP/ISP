@@ -14,7 +14,8 @@ from isp.Exceptions import parse_excepts
 from isp.Gui import pw, pqg, pyc, qt
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, EventInfoBox, \
     MatplotlibCanvas 
-from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame, EarthquakeLocationFrame
+from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame
+from isp.Gui.Frames.locate_frame import Locate
 from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -31,14 +32,14 @@ from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.arrayanalysis import array_analysis
 from isp.arrayanalysis.backprojection_tools import backproj
 # from isp.db.models import EventLocationModel
-from isp.earthquakeAnalisysis import PickerManager, NllManager
+from isp.earthquakeAnalysis import PickerManager, NllManager
 import numpy as np
 import os
 import json
 from isp.Utils.subprocess_utils import exc_cmd, open_url
 from isp import ROOT_DIR, EVENTS_DETECTED, AUTOMATIC_PHASES
 import matplotlib.pyplot as plt
-from isp.earthquakeAnalisysis.stations_map import StationsMap
+from isp.earthquakeAnalysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
     correlate_maxlag, get_lags
 import subprocess
@@ -123,13 +124,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.event_info = EventInfoBox(self.eventInfoWidget, self.canvas)
         self.event_info.register_plot_arrivals_click(self.on_click_plot_arrivals)
         self.event_info.register_plot_record_section_click(self.on_click_plot_record_section)
-
         self.earthquake_3c_frame = Earthquake3CFrame(self.parentWidget3C)
-        self.earthquake_location_frame = EarthquakeLocationFrame(self.parentWidgetLocation)
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm, self.onChange_metadata_path)
 
         # Bind buttons
-
         self.selectDatalessDirBtn.clicked.connect(lambda: self.on_click_select_file(self.metadata_path_bind))
         self.selectDirBtn.clicked.connect(lambda: self.load_project())
         self.updateBtn.clicked.connect(self.plot_seismogram)
@@ -180,6 +178,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionPlot_Record_Section.triggered.connect(lambda: self.on_click_plot_record_section())
         self.actionCFs.triggered.connect(lambda: self.save_cf())
         self.runScriptBtn.clicked.connect(self.run_process)
+        self.locateBtn.clicked.connect(self.open_locate)
+
+
+
+
+
         self.pm = PickerManager()  # start PickerManager to save pick location to csv file.
 
         # Parameters settings
@@ -272,12 +276,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('R'), self)
         self.shortcut_open.activated.connect(self.reload_current_project)
 
-    # def on_xlims_change(self, event_ax):
-    #
-    #     self.zoom = event_ax.get_xlim()
-    #     t1 = UTCDateTime(mdt.num2date(self.zoom[0]))
-    #     t2 = UTCDateTime(mdt.num2date(self.zoom[1]))
-    #     self.zoom_diff = (t2-t1)
 
     def cancelled_callback(self):
         self.cancelled = True
@@ -2346,3 +2344,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         set_qdatetime(otime+900, self.dateTimeEdit_2)
         self.event_info.set_time(otime)
         self.event_info.set_coordinates([lat,lon,depth])
+
+    def open_locate(self):
+        if self.inventory:
+            self.__locate = Locate(self.inventory)
+            self.__locate.show()
