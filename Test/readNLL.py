@@ -12,6 +12,8 @@ readNLL
 """
 from obspy import read_events, read_inventory
 
+from isp.Utils import ObspyUtil
+
 
 def get_station_location_dict(origin, inventory):
     """
@@ -42,10 +44,13 @@ def get_station_location_dict(origin, inventory):
     return station_dict
 
 
-path = "/Users/admin/Documents/iMacROA/ISP/Test/test_data/last.hyp"
-inv_path = "/Users/admin/Documents/iMacROA/ISP/isp/Metadata/xml/metadata.xml"
+path = "/Users/robertocabiecesdiaz/Documents/ISP/loc_test/loc/last.hyp"
+inv_path = "/Users/robertocabiecesdiaz/Documents/ISP/isp/Metadata/xml/metadata.xml"
 catalog = read_events(path)
+origin, event = ObspyUtil.reads_hyp_to_origin(path, modified=True)
+print(origin.latitude, origin.longitude)
 inventory = read_inventory(inv_path)
-for event in catalog:
+
+#for event in catalog:
     #origin = event.preferred_origin() or event.origins[0]
-    get_station_location_dict(event, inventory)
+get_station_location_dict(event, inventory)

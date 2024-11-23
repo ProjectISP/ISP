@@ -1,6 +1,7 @@
 import shutil
 from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
+from PyQt5.QtWidgets import QMessageBox
 from matplotlib.backend_bases import MouseButton
 from obspy import UTCDateTime, Stream, Trace, Inventory
 from obspy.core.event import Origin
@@ -2346,6 +2347,38 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.event_info.set_coordinates([lat,lon,depth])
 
     def open_locate(self):
-        if self.inventory:
-            self.__locate = Locate(self.inventory)
+        # Add buttons
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Ready to Locate your event")
+        msg_box.setText("Have you reviewed your picks and polarities?")
+        yes_button = msg_box.addButton(pw.QMessageBox.Yes)
+        no_button = msg_box.addButton(pw.QMessageBox.No)
+
+        # Set the default button
+        msg_box.setDefaultButton(yes_button)
+
+        # Execute the message box and get the response
+        response = msg_box.exec_()
+
+        #response = QMessageBox.question(self, "Ready to Locate your event",
+        #                                 "Have you reviewed your picks and polarities?")
+
+        if response == QMessageBox.Yes:
+
+
+            if isinstance(self.metadata_path_bind.value, str) and os.path.exists(self.metadata_path_bind.value):
+                self.__locate = Locate(self.metadata_path_bind.value)
+
+            else:
+                self.__locate=Locate("")
+                md = MessageDialog(self)
+                md.set_error_message(
+                    "You have not selected any metadata to be export to locate",
+                    "1. Click on Load metadata\n"
+                    "2. Ensure that the metadata file is a valid Inventory\n")
+
             self.__locate.show()
+
+        else:
+            # If the user cancels the choice dialog, do nothing
+            return

@@ -64,15 +64,16 @@ class StationsMap:
             ax.add_wms(wms, layer)
 
         except:
+            print("Coudnt load web service")
 
             ax.background_img(name='ne_shaded', resolution="high")
 
 
-        #geodetic_transform = ccrs.Geodetic()._as_mpl_transform(ax)
         geodetic_transform = ccrs.PlateCarree()._as_mpl_transform(ax)
         text_transform = offset_copy(geodetic_transform, units='dots', x=-25)
         ax.scatter(lon, lat, s=12, marker="^", color='red', alpha=0.7, transform=ccrs.PlateCarree())
-        ax.plot(epi_lon, epi_lat, color='black', marker='*', markersize=8)
+        ax.scatter(epi_lon, epi_lat, s=18, marker="*", color='white', edgecolor='black')
+
         N=len(name_stations)
         for n in range(N):
             lon1=lon[n]
@@ -83,8 +84,6 @@ class StationsMap:
                 bbox=dict(facecolor='sandybrown', alpha=0.5, boxstyle='round'))
 
         # Create an inset GeoAxes showing the Global location
-        #sub_ax = self.mpf.canvas.figure.add_axes([0.70, 0.75, 0.28, 0.28],
-        #                      projection=ccrs.PlateCarree())
         sub_ax = self.mpf.canvas.figure.add_axes([0.70, 0.73, 0.28, 0.28], projection=ccrs.PlateCarree())
         sub_ax.set_extent([-179.9, 180, -89.9, 90], geodetic)
 

@@ -10,6 +10,7 @@ RESOURCE_PATH = os.path.join(ROOT_DIR, 'resources')
 IMAGES_PATH = os.path.join(RESOURCE_PATH, 'images')
 UIS_PATH = os.path.join(RESOURCE_PATH, 'designer_uis')
 FOC_MEC_PATH = os.path.join(ROOT_DIR, 'focmec/bin')
+FOC_MEC_BASH_PATH = os.path.join(ROOT_DIR, 'earthquakeAnalysis/loc_structure/first_polarity/focmec_run')
 MACROS_PATH = os.path.join(ROOT_DIR, 'macros')
 HELP_PATH = os.path.join(ROOT_DIR, 'ISP_Documentation')
 EVENTS_DETECTED = os.path.join(ROOT_DIR, 'earthquakeAnalysis/auto_detect/events')
@@ -23,7 +24,7 @@ GREEN = os.path.join(ROOT_DIR, 'mti/green')
 LOGMTI = os.path.join(ROOT_DIR, 'mti/output/log.txt')
 nll_templates = os.path.join(ROOT_DIR, "earthquakeAnalysis", "loc_structure/run")
 nll_ak135 = os.path.join(ROOT_DIR, "earthquakeAnalysis", "loc_structure/ak135")
-BINARY_NLL_DIR = os.path.join(ROOT_DIR, 'NLL7/bin')
+BINARY_NLL_DIR = os.path.join(ROOT_DIR, 'NLL7/src/bin')
 def create_logger():
 
     # create logger.

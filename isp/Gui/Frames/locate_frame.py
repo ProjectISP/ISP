@@ -7,21 +7,26 @@ locate_frame
 import os
 
 from obspy import Inventory
-
+from obspy.core.event import Origin
+import pandas as pd
+from isp import ROOT_DIR
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
 from isp.Gui import pw
-from isp.Gui.Frames import BaseFrame, MessageDialog
+from isp.Gui.Frames import BaseFrame, MessageDialog, CartopyCanvas, FocCanvas
 from isp.Gui.Frames.uis_frames import UiLocFlow
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
-from isp.earthquakeAnalysis import NllManager
+from isp.LocCore.pdf_plot import plot_scatter
+from isp.LocCore.plot_tool_loc import StationUtils
+from isp.Utils import ObspyUtil
+from isp.earthquakeAnalysis import NllManager, FirstPolarity
 from isp.earthquakeAnalysis.structures import TravelTimesConfiguration, LocationParameters, NLLConfig, \
     GridConfiguration
 from sys import platform
 
 @add_save_load()
 class Locate(BaseFrame, UiLocFlow):
-    def __init__(self, inv: Inventory):
+    def __init__(self, inv_path: str):
         super(Locate, self).__init__()
         self.setupUi(self)
 
@@ -32,12 +37,12 @@ class Locate(BaseFrame, UiLocFlow):
 
         """
 
-        self.inv = inv
+        self.datalessPathForm.setText(inv_path)
 
         ####### Metadata ##########
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm)
         self.setMetaBtn.clicked.connect(lambda: self.on_click_select_file(self.metadata_path_bind))
-        self.loadMetaBtn.clicked.connect(lambda: self.onChange_metadata_path(self.metadata_path_bind.value))
+        #self.loadMetaBtn.clicked.connect(lambda: self.onChange_metadata_path(self.metadata_path_bind.value))
 
 
         # NonLinLoc
@@ -59,9 +64,17 @@ class Locate(BaseFrame, UiLocFlow):
         self.genvelBtn.clicked.connect(lambda: self.on_click_run_vel_to_grid())
         self.grdtimeBtn.clicked.connect(lambda: self.on_click_run_grid_to_time())
         self.runlocBtn.clicked.connect(lambda: self.on_click_run_loc())
-        # self.plotmapBtn.clicked.connect(lambda: self.on_click_plot_map())
-        # self.stationsBtn.clicked.connect(lambda: self.on_click_select_metadata_file())
-        self.plotpdfBtn.clicked.connect(lambda: self.plot_pdf())
+        self.pltPDF.clicked.connect(lambda: self.plot_pdf())
+        self.pltMap.clicked.connect(lambda: self.on_click_plot_map())
+        self.runFocMecBtn.clicked.connect(lambda: self.first_polarity())
+        self.pltFocMecBtn.clicked.connect(lambda: self.pltFocMec())
+
+        # Map
+        self.cartopy_canvas = CartopyCanvas(self.widget_map)
+
+        # FocMec
+        self.focmec_canvas = FocCanvas(self.widget_focmec)
+
 
 
     def onChange_root_path(self, value):
@@ -183,7 +196,7 @@ class Locate(BaseFrame, UiLocFlow):
             nll_manager = NllManager(nllconfig, self.metadata_path_bind.value, self.loc_work_bind.value)
             nll_manager.grid_to_time()
 
-    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg, set_default_complete=False))
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def on_click_run_loc(self):
         nllconfig = self.get_nll_config()
         if isinstance(nllconfig, NLLConfig):
@@ -194,3 +207,133 @@ class Locate(BaseFrame, UiLocFlow):
             #nll_catalog = Nllcatalog(self.loc_work_bind.value)
             #nll_catalog.run_catalog(self.loc_work_bind.value)
 
+    def plot_pdf(self):
+
+        selected = pw.QFileDialog.getOpenFileName(self, "Select *hyp file")
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            ellipse = {}
+            file_Selected = selected[0]
+            origin: Origin = ObspyUtil.reads_hyp_to_origin(file_Selected)
+            latitude = origin.latitude
+            longitude = origin.longitude
+            smin = origin.origin_uncertainty.min_horizontal_uncertainty
+            smax = origin.origin_uncertainty.max_horizontal_uncertainty
+            azimuth = origin.origin_uncertainty.azimuth_max_horizontal_uncertainty
+            ellipse['latitude'] = latitude
+            ellipse['longitude'] = longitude
+            ellipse['smin'] = smin
+            ellipse['smax'] = smax
+            ellipse['azimuth'] = azimuth
+            if os.path.isfile(file_Selected):
+                print(file_Selected)
+                scatter_x, scatter_y, scatter_z, pdf = NllManager.get_NLL_scatter(file_Selected)
+                plot_scatter(scatter_x, scatter_y, scatter_z, pdf, ellipse)
+
+    def add_earthquake_info(self, origin: Origin):
+
+        self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     {origin_time}     {standard_error:.3f}".
+                                             format(origin_time=origin.time,
+                                                    standard_error=origin.quality.standard_error))
+        self.EarthquakeInfoText.appendPlainText("  Hypocenter Geographic Coordinates:     "
+                                                "Latitude {lat:.3f} "
+                                                "Longitude {long:.3f}     Depth {depth:.3f}     "
+                                                "Uncertainty {unc:.3f}".
+                                                format(lat=origin.latitude, long=origin.longitude,
+                                                       depth=origin.depth / 1000,
+                                                       unc=origin.depth_errors['uncertainty']))
+        self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err {:.3f}     "
+                                                "Min Horizontal Err {:.3f}     "
+                                                "Azimuth {:.3f}"
+                                                .format(origin.origin_uncertainty.max_horizontal_uncertainty,
+                                                        origin.origin_uncertainty.min_horizontal_uncertainty,
+                                                        origin.origin_uncertainty.azimuth_max_horizontal_uncertainty))
+
+        self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases {:.3f}     "
+                                                "Azimuthal GAP {:.3f}     Minimum Distance {:.3f}     "
+                                                "Maximum Distance {:.3f}"
+                                                .format(origin.quality.used_phase_count,
+                                                        origin.quality.azimuthal_gap,
+                                                        origin.quality.minimum_distance,
+                                                        origin.quality.maximum_distance))
+
+
+    def __get_last_hyp(self):
+
+        file_last = os.path.join(self.loc_work_bind.value, "loc", "last.hyp")
+        # check
+        if os.path.isfile(file_last):
+
+            return file_last
+        else:
+            return None
+
+    def __get_last_focmec(self):
+        file_last = os.path.join(self.loc_work_bind.value, "first_polarity/output", "focmec.lst")
+        return file_last
+
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
+    def on_click_plot_map(self):
+
+        file_last = self.__get_last_hyp()
+        if file_last is not None:
+            print("Plotting Map")
+
+            metadata_manager = MetadataManager(self.metadata_path_bind.value)
+            inventory: Inventory = metadata_manager.get_inventory()
+            origin, event = ObspyUtil.reads_hyp_to_origin(file_last, modified=True)
+            stations = StationUtils.get_station_location_dict(event, inventory)
+            self.add_earthquake_info(origin)
+            self.cartopy_canvas.clear()
+            self.cartopy_canvas.plot_map(origin.longitude, origin.latitude,0,
+                                         resolution='high', stations=stations)
+
+    def first_polarity(self):
+
+        file_last = self.__get_last_hyp()
+
+        if file_last is not None:
+            print("Plotting Map")
+            firstpolarity_manager = FirstPolarity()
+            file_input = firstpolarity_manager.create_input(file_last)
+            #if file_input is not None:
+            firstpolarity_manager.run_focmec(file_input)
+
+
+            #df = pd.DataFrame(first_polarity_results, columns=["First_Polarity", "results"])
+            #df.to_csv(path_output, sep=' ', index=False)
+
+
+
+    def pltFocMec(self):
+        location_file = self.__get_last_hyp()
+        focmec_file = self.__get_last_focmec()
+        if location_file is not None:
+            print("Plotting Map")
+        firstpolarity_manager = FirstPolarity()
+        Station, Az, Dip, Motion = firstpolarity_manager.get_dataframe(location_file)
+        cat, Plane_A = firstpolarity_manager.extract_focmec_info(focmec_file)
+        # #print(cat[0].focal_mechanisms[0])
+        strike_A = Plane_A.strike
+        dip_A = Plane_A.dip
+        rake_A = Plane_A.rake
+        misfit_first_polarity = cat[0].focal_mechanisms[0].misfit
+        azimuthal_gap = cat[0].focal_mechanisms[0].azimuthal_gap
+        number_of_polarities = cat[0].focal_mechanisms[0].station_polarity_count
+        #
+        first_polarity_results = {"First_Polarity": ["Strike", "Dip", "Rake", "misfit_first_polarity", "azimuthal_gap",
+                                                     "number_of_polarities"],
+                                  "results": [strike_A, dip_A, rake_A, misfit_first_polarity, azimuthal_gap,
+                                              number_of_polarities]}
+
+        self.add_first_polarity_info(first_polarity_results)
+        self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, 0)
+
+
+    def add_first_polarity_info(self, first_polarity_results):
+        self.FirstPolarityInfoText.setPlainText("First Polarity Results")
+        self.FirstPolarityInfoText.appendPlainText("Strike: {Strike:.3f}".format(Strike=first_polarity_results["results"][0]))
+        self.FirstPolarityInfoText.appendPlainText("Dip: {Dip:.3f}".format(Dip=first_polarity_results["results"][1]))
+        self.FirstPolarityInfoText.appendPlainText("Rake: {Rake:.3f}".format(Rake=first_polarity_results["results"][2]))
+        self.FirstPolarityInfoText.appendPlainText("Misfit: {Misfit:.3f}".format(Misfit=first_polarity_results["results"][3]))
+        self.FirstPolarityInfoText.appendPlainText("GAP: {GAP:.3f}".format(GAP=first_polarity_results["results"][4]))
+        self.FirstPolarityInfoText.appendPlainText("Number of polarities: {NP:.3f}".format(NP=first_polarity_results["results"][5]))

@@ -1025,7 +1025,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         c_layout = kwargs.pop("constrained_layout", False)
         super().__init__(parent, subplot_kw=dict(projection=proj), constrained_layout=c_layout, **kwargs)
 
-    def plot_map(self, x, y, scatter_x, scatter_y, scatter_z, axes_index, clear_plot=True, **kwargs):
+    def plot_map(self, x, y, axes_index, clear_plot=True, **kwargs):
+
         """
         Cartopy plot.
 
@@ -1039,6 +1040,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         :param kwargs:
         :return:
         """
+
         from isp import ROOT_DIR
         import os
 
@@ -1069,8 +1071,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         # xmax = int(x+6)
         # ymin = int(y-4)
         # ymax = int(y+4)
-        xmin = min([x, min_lon])-1
-        xmax = max([x, max_lon]) + 1
+        xmin = min([x, min_lon])-2
+        xmax = max([x, max_lon]) + 2
         ymin = min([y, min_lat]) - 1
         ymax = max([y, max_lat]) + 1
         extent = [xmin, xmax, ymin, ymax]
@@ -1109,7 +1111,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         # Plot stations
         geodetic_transform = ccrs.PlateCarree()._as_mpl_transform(ax)
         text_transform = offset_copy(geodetic_transform, units='dots', x=-25)
-        ax.scatter(lon, lat, s=12, marker="^", color='red', alpha=0.7, transform=ccrs.PlateCarree())
+        ax.scatter(lon, lat, s=12, marker="^", color='red', alpha=0.7, edgecolor='black',
+                   transform=ccrs.PlateCarree())
         N = len(name_stations)
         for n in range(N):
             lon1 = lon[n]
@@ -1120,12 +1123,11 @@ class CartopyCanvas(BasePltPyqtCanvas):
                     bbox=dict(facecolor='sandybrown', alpha=0.5, boxstyle='round'))
 
 
-        ax.plot(x, y, color='red', marker='*',markersize=3)
-        ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", alpha=0.3, cmap=plt.get_cmap('YlOrBr'))
+        ax.scatter(x, y, color='white', marker='*', s=60, edgecolor='black')
 
         # Create an inset GeoAxes showing the Global location
-        sub_ax = ax.figure.add_axes([0.70, 0.73, 0.28, 0.28], projection=ccrs.PlateCarree())
-        sub_ax.set_extent([-179.9, 180, -89.9, 90], geodetic)
+        sub_ax = ax.figure.add_axes([0.80, 0.80, 0.20, 0.20], projection=ccrs.PlateCarree())
+        sub_ax.set_extent([-179.99, 180, -89.99, 90], geodetic)
 
         # Make a nice border around the inset axes.
         effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
@@ -1137,7 +1139,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         extent_box = sgeom.box(extent[0], extent[2], extent[1], extent[3])
         sub_ax.add_geometries([extent_box], ccrs.PlateCarree(), facecolor='none',
                               edgecolor='blue', linewidth=1.0)
-
+        plt.tight_layout()
         self.draw()
 
     def plot_stations(self, x, y, depth, axes_index, show_colorbar=True, clear_plot=True, **kwargs):

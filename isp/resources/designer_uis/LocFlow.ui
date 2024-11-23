@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1250</width>
-    <height>869</height>
+    <height>1039</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -661,26 +661,17 @@
               <item row="1" column="2">
                <widget class="QWidget" name="widget_3" native="true">
                 <layout class="QGridLayout" name="gridLayout_5">
+                 <item row="3" column="1">
+                  <widget class="QLabel" name="label_17">
+                   <property name="text">
+                    <string>Method</string>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="6" column="0" colspan="2">
                   <widget class="QPushButton" name="runlocBtn">
                    <property name="text">
                     <string>Run Location</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="0">
-                  <widget class="QComboBox" name="loc_searchCB">
-                   <item>
-                    <property name="text">
-                     <string>OCT-TREE</string>
-                    </property>
-                   </item>
-                  </widget>
-                 </item>
-                 <item row="2" column="1">
-                  <widget class="QLabel" name="label_16">
-                   <property name="text">
-                    <string>Search</string>
                    </property>
                   </widget>
                  </item>
@@ -708,6 +699,22 @@
                    </item>
                   </widget>
                  </item>
+                 <item row="2" column="0">
+                  <widget class="QComboBox" name="loc_searchCB">
+                   <item>
+                    <property name="text">
+                     <string>OCT-TREE</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                 <item row="2" column="1">
+                  <widget class="QLabel" name="label_16">
+                   <property name="text">
+                    <string>Search</string>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="0" column="0" colspan="2" alignment="Qt::AlignHCenter">
                   <widget class="QLabel" name="label_15">
                    <property name="sizePolicy">
@@ -721,17 +728,10 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="3" column="1">
-                  <widget class="QLabel" name="label_17">
-                   <property name="text">
-                    <string>Method</string>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="7" column="0" colspan="2">
-                  <widget class="QPushButton" name="plotpdfBtn">
+                  <widget class="QPushButton" name="runFocMecBtn">
                    <property name="text">
-                    <string>Inspect Event Location</string>
+                    <string>Run Foc Mec</string>
                    </property>
                   </widget>
                  </item>
@@ -750,6 +750,112 @@
            </item>
           </layout>
          </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Event Location Map</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QScrollArea" name="scrollArea">
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>1176</width>
+               <height>911</height>
+              </rect>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_7">
+              <item>
+               <layout class="QGridLayout" name="gridLayout">
+                <item row="3" column="0" colspan="3">
+                 <widget class="QWidget" name="widget_map" native="true">
+                  <property name="styleSheet">
+                   <string notr="true">background-color: rgb(255, 255, 255);</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QPushButton" name="pltPDF">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Plot PDF</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QPushButton" name="pltMap">
+                  <property name="text">
+                   <string>Plot Map</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1" rowspan="2" colspan="2">
+                 <widget class="QPlainTextEdit" name="EarthquakeInfoText">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_4">
+       <attribute name="title">
+        <string>FocMec</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_11">
+        <item>
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="0" column="0">
+           <widget class="QPushButton" name="pltFocMecBtn">
+            <property name="text">
+             <string>Plot Foc Mec</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QPlainTextEdit" name="FirstPolarityInfoText">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QWidget" name="widget_focmec" native="true">
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(255, 255, 255);</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>

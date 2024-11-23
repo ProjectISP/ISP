@@ -10,7 +10,7 @@ import subprocess
 import pandas as pd
 import os
 from obspy import read_events, Catalog
-from isp import FOC_MEC_PATH, ROOT_DIR
+from isp import FOC_MEC_PATH, ROOT_DIR, FOC_MEC_BASH_PATH
 from isp.earthquakeAnalysis import focmecobspy
 from isp.Utils.subprocess_utils import exc_cmd
 
@@ -51,12 +51,11 @@ class FirstPolarity:
         self.__validate_dir(first_polarity_dir)
         return first_polarity_dir
 
-    def get_dataframe(self):
+    def get_dataframe(self, location_file):
         Station = []
         Az = []
         Dip = []
         Motion = []
-        location_file = os.path.join(self.get_loc_dir, "last.hyp")
         df = pd.read_csv(location_file, delim_whitespace=True, skiprows=17)
         for i in range(len(df)):
             if df.iloc[i].RAz > 0:
@@ -95,40 +94,60 @@ class FirstPolarity:
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
 
-    def create_input(self):
+    def create_input(self, file_last_hyp):
 
-        Station, Az, Dip, Motion= self.get_dataframe()
+        Station, Az, Dip, Motion = self.get_dataframe(file_last_hyp)
+
+        one_level_up = os.path.dirname(file_last_hyp)
+        two_levels_up = os.path.dirname(one_level_up)
+        dir_path = os.path.join(two_levels_up, "first_polarity")
+
+        if os.path.isdir(dir_path):
+            pass
+        else:
+
+            os.makedirs(dir_path)
+
+        temp_file = os.path.join(dir_path, "test.inp")
         N = len(Station)
 
-        with open(os.path.join(self.get_foc_dir,'test.inp'), 'wt') as f:
+        with open(temp_file, 'wt') as f:
             f.write("\n")  # first line should be skipped!
             for j in range(N):
                 f.write("{:4s}  {:6.2f}  {:6.2f}{:1s}\n".format(Station[j], Az[j], Dip[j], Motion[j]))
 
+        return temp_file
+
     def run_focmec_csh(self):
          #old_version, need bash or csh
-         command=os.path.join(self.get_foc_dir,'rfocmec_UW')
+         command=os.path.join(self.get_foc_dir, 'rfocmec_UW')
          exc_cmd(command)
 
-    def run_focmec(self):
+    def run_focmec(self, input_focmec_path):
 
-        command = os.path.join(FOC_MEC_PATH,'focmec')
-        input_run_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity/focmec_run')
-        input_focmec_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity/test.inp')
-        output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis/location_output/first_polarity')
+        command = os.path.join(FOC_MEC_PATH, 'focmec')
+        dir_name = os.path.dirname(input_focmec_path)
+        output_path = os.path.join(dir_name, "output")
+        if os.path.isdir(output_path):
+            pass
+        else:
+            os.makedirs(output_path)
+
+
         shutil.copy(input_focmec_path,'.')
-        with open(input_run_path, 'r') as f, open('./log.txt', 'w') as log:
+        with open(FOC_MEC_BASH_PATH, 'r') as f, open('./log.txt', 'w') as log:
             p = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=log)
-            f = open(input_run_path, 'r')
+            f = open(FOC_MEC_BASH_PATH, 'r')
             string = f.read()
+            # This action has created focmec.lst at ./isp
             out, errs = p.communicate(input=string.encode(), timeout=2.0)
-
+            # This action has created mechanism.out at ./isp
         shutil.move('mechanism.out', os.path.join(output_path, 'mechanism.out'))
         shutil.move('focmec.lst', os.path.join(output_path, 'focmec.lst'))
         shutil.move('./log.txt', os.path.join(output_path, 'log.txt'))
 
-    def extract_focmec_info(self):
-        catalog: Catalog = focmecobspy._read_focmec(os.path.join(self.get_foc_dir,'focmec.lst'))
+    def extract_focmec_info(self, focmec_path):
+        catalog: Catalog = focmecobspy._read_focmec(focmec_path)
         # TODO Change to read_events in new version of ObsPy >= 1.2.0
         #catalog = read_events(os.path.join(self.get_foc_dir, 'focmec.lst'),format="FOCMEC")
         plane_a = catalog[0].focal_mechanisms[0].nodal_planes.nodal_plane_1
