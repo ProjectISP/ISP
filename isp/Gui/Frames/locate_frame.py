@@ -4,12 +4,10 @@
 """
 locate_frame
 """
-import os
 
+import os
 from obspy import Inventory
 from obspy.core.event import Origin
-import pandas as pd
-from isp import ROOT_DIR
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
 from isp.Gui import pw
@@ -20,6 +18,7 @@ from isp.LocCore.pdf_plot import plot_scatter
 from isp.LocCore.plot_tool_loc import StationUtils
 from isp.Utils import ObspyUtil
 from isp.earthquakeAnalysis import NllManager, FirstPolarity
+from isp.earthquakeAnalysis.focmecobspy import parse_focmec_file
 from isp.earthquakeAnalysis.structures import TravelTimesConfiguration, LocationParameters, NLLConfig, \
     GridConfiguration
 from sys import platform
@@ -119,6 +118,7 @@ class Locate(BaseFrame, UiLocFlow):
 
 
     def subprocess_feedback(self, err_msg: str, set_default_complete=True):
+
         """
         This method is used as a subprocess feedback. It runs when a raise expect is detected.
 
@@ -127,6 +127,7 @@ class Locate(BaseFrame, UiLocFlow):
             be displayed.
         :return:
         """
+
         if err_msg:
             md = MessageDialog(self)
             if "Error code" in err_msg:
@@ -201,7 +202,7 @@ class Locate(BaseFrame, UiLocFlow):
         nllconfig = self.get_nll_config()
         if isinstance(nllconfig, NLLConfig):
             nll_manager = NllManager(nllconfig, self.metadata_path_bind.value, self.loc_work_bind.value)
-            for i in range(25):
+            for i in range(self.iterationsSB.value()):
                 print("Running Location iteration", i)
                 nll_manager.run_nlloc()
             #nll_catalog = Nllcatalog(self.loc_work_bind.value)
@@ -230,7 +231,7 @@ class Locate(BaseFrame, UiLocFlow):
                 plot_scatter(scatter_x, scatter_y, scatter_z, pdf, ellipse)
 
     def add_earthquake_info(self, origin: Origin):
-
+        self.EarthquakeInfoText.clear()
         self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     {origin_time}     {standard_error:.3f}".
                                              format(origin_time=origin.time,
                                                     standard_error=origin.quality.standard_error))
@@ -296,7 +297,7 @@ class Locate(BaseFrame, UiLocFlow):
             firstpolarity_manager = FirstPolarity()
             file_input = firstpolarity_manager.create_input(file_last)
             #if file_input is not None:
-            firstpolarity_manager.run_focmec(file_input)
+            firstpolarity_manager.run_focmec(file_input, self.accepted_polarities.value())
 
 
             #df = pd.DataFrame(first_polarity_results, columns=["First_Polarity", "results"])
@@ -311,29 +312,42 @@ class Locate(BaseFrame, UiLocFlow):
             print("Plotting Map")
         firstpolarity_manager = FirstPolarity()
         Station, Az, Dip, Motion = firstpolarity_manager.get_dataframe(location_file)
-        cat, Plane_A = firstpolarity_manager.extract_focmec_info(focmec_file)
+        cat, focal_mechanism = firstpolarity_manager.extract_focmec_info(focmec_file)
+        focmec_full_Data = parse_focmec_file(focmec_file)
+        PTax = focmec_full_Data.best_solution.lower_hemisphere['P,T']
         # #print(cat[0].focal_mechanisms[0])
+        Plane_A = focal_mechanism.nodal_planes.nodal_plane_1
         strike_A = Plane_A.strike
         dip_A = Plane_A.dip
         rake_A = Plane_A.rake
-        misfit_first_polarity = cat[0].focal_mechanisms[0].misfit
-        azimuthal_gap = cat[0].focal_mechanisms[0].azimuthal_gap
-        number_of_polarities = cat[0].focal_mechanisms[0].station_polarity_count
+        misfit_first_polarity = focal_mechanism.misfit
+        azimuthal_gap = focal_mechanism.azimuthal_gap
+        number_of_polarities = focal_mechanism.station_polarity_count
         #
         first_polarity_results = {"First_Polarity": ["Strike", "Dip", "Rake", "misfit_first_polarity", "azimuthal_gap",
-                                                     "number_of_polarities"],
+                                                     "number_of_polarities", "P_axis_Trend", "P_axis_Plunge",
+                                                     "T_axis_Trend", "T_axis_Plunge"],
                                   "results": [strike_A, dip_A, rake_A, misfit_first_polarity, azimuthal_gap,
-                                              number_of_polarities]}
+                                              number_of_polarities, PTax[0][0], PTax[0][1], PTax[1][0], PTax[1][1]]}
 
         self.add_first_polarity_info(first_polarity_results)
-        self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, 0)
-
+        self.focmec_canvas.clear()
+        self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, focmec_full_Data)
+        self.focmec_canvas.figure.subplots_adjust(left=0.240, bottom=0.105, right=0.785, top=0.937, wspace=0.0,
+                                                  hspace=0.0)
 
     def add_first_polarity_info(self, first_polarity_results):
+        self.FirstPolarityInfoText.clear()
         self.FirstPolarityInfoText.setPlainText("First Polarity Results")
         self.FirstPolarityInfoText.appendPlainText("Strike: {Strike:.3f}".format(Strike=first_polarity_results["results"][0]))
         self.FirstPolarityInfoText.appendPlainText("Dip: {Dip:.3f}".format(Dip=first_polarity_results["results"][1]))
         self.FirstPolarityInfoText.appendPlainText("Rake: {Rake:.3f}".format(Rake=first_polarity_results["results"][2]))
+        self.FirstPolarityInfoText.appendPlainText("P axis trend & plunge: {Ptrend:.1f} {Pplunge:.1f}".
+                                                   format(Ptrend=first_polarity_results["results"][6],
+                                                          Pplunge=first_polarity_results["results"][7]))
+        self.FirstPolarityInfoText.appendPlainText("T axis trend & plunge: {Ptrend:.1f} {Pplunge:.1f}".
+                                                   format(Ptrend=first_polarity_results["results"][8],
+                                                          Pplunge=first_polarity_results["results"][9]))
         self.FirstPolarityInfoText.appendPlainText("Misfit: {Misfit:.3f}".format(Misfit=first_polarity_results["results"][3]))
         self.FirstPolarityInfoText.appendPlainText("GAP: {GAP:.3f}".format(GAP=first_polarity_results["results"][4]))
         self.FirstPolarityInfoText.appendPlainText("Number of polarities: {NP:.3f}".format(NP=first_polarity_results["results"][5]))

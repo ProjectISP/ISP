@@ -10,9 +10,10 @@ import subprocess
 import pandas as pd
 import os
 from obspy import read_events, Catalog
-from isp import FOC_MEC_PATH, ROOT_DIR, FOC_MEC_BASH_PATH
+from isp import FOC_MEC_PATH, FOC_MEC_BASH_PATH
 from isp.earthquakeAnalysis import focmecobspy
 from isp.Utils.subprocess_utils import exc_cmd
+
 
 class FirstPolarity:
 
@@ -123,16 +124,19 @@ class FirstPolarity:
          command=os.path.join(self.get_foc_dir, 'rfocmec_UW')
          exc_cmd(command)
 
-    def run_focmec(self, input_focmec_path):
+    def run_focmec(self, input_focmec_path, num_wrong_polatities):
 
         command = os.path.join(FOC_MEC_PATH, 'focmec')
         dir_name = os.path.dirname(input_focmec_path)
         output_path = os.path.join(dir_name, "output")
+
         if os.path.isdir(output_path):
             pass
         else:
             os.makedirs(output_path)
 
+        # edit number of accepted wrong polarities
+        self.edit_focmec_run(num_wrong_polatities)
 
         shutil.copy(input_focmec_path,'.')
         with open(FOC_MEC_BASH_PATH, 'r') as f, open('./log.txt', 'w') as log:
@@ -145,12 +149,51 @@ class FirstPolarity:
         shutil.move('mechanism.out', os.path.join(output_path, 'mechanism.out'))
         shutil.move('focmec.lst', os.path.join(output_path, 'focmec.lst'))
         shutil.move('./log.txt', os.path.join(output_path, 'log.txt'))
+        shutil.move('./test.inp', os.path.join(output_path, 'test.inp'))
 
     def extract_focmec_info(self, focmec_path):
         catalog: Catalog = focmecobspy._read_focmec(focmec_path)
         # TODO Change to read_events in new version of ObsPy >= 1.2.0
         #catalog = read_events(os.path.join(self.get_foc_dir, 'focmec.lst'),format="FOCMEC")
-        plane_a = catalog[0].focal_mechanisms[0].nodal_planes.nodal_plane_1
-        return catalog,plane_a
+        #plane_a = catalog[0].focal_mechanisms[0].nodal_planes.nodal_plane_1
+        focal_mechanism = self.__get_minimum_misfit(catalog[0].focal_mechanisms)
+        return catalog, focal_mechanism
+
+    def __get_minimum_misfit(self, focal_mechanism):
+        mismifits = []
+        for i, focal in enumerate(focal_mechanism):
+            mismifits.append(focal.misfit)
+
+        index = mismifits.index(min(mismifits))
+        return focal_mechanism[index]
+
+    def edit_focmec_run(self, new_float_value):
+        """
+        Edits a specific line in the text file to update the float value and writes it to a new location.
+
+        Parameters:
+            input_path (str): The path to the input template file.
+            output_path (str): The path to save the modified file.
+            new_float_value (float): The new float value to replace in the specific line.
+        """
+
+        #output_path = os.path.join(os.path.dirname(FOC_MEC_BASH_PATH), "focmec_run")
+        # Read the file and store its content
+        with open(FOC_MEC_BASH_PATH, 'r') as file:
+            lines = file.readlines()
+
+        # Edit the specific line containing "allowed P polarity erors..[0]"
+        for i, line in enumerate(lines):
+            if "allowed P polarity erors" in line:
+                # Split the line and replace the float value at the beginning
+                parts = line.split()
+                parts[0] = f"{new_float_value:.1f}"  # Format the float with one decimal place
+                lines[i] = " ".join(parts) + '\n'  # Reconstruct the line
+                break
+
+        # Write the modified content to the new file
+        with open(FOC_MEC_BASH_PATH, 'w') as file:
+            file.writelines(lines)
+
 
 

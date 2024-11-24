@@ -12,12 +12,11 @@ FOCMEC file format support for ObsPy
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 from future.builtins import *  # NOQA @UnusedWildImport
-
-import re
 import warnings
-
 import numpy as np
-
+import re
+from dataclasses import dataclass, field
+from typing import List, Optional
 from obspy import UTCDateTime, Catalog, __version__
 from obspy.core.event import (
     Event, FocalMechanism, NodalPlanes, NodalPlane, Comment, CreationInfo)
@@ -377,6 +376,108 @@ def _read_common_header(lines):
     # get rid of those common lines already parsed
     lines = lines[4:]
     return event, lines
+
+
+@dataclass
+class Solution:
+
+    dip_strike_rake: List[tuple] = field(default_factory=list)
+    polarity_weights: List[float] = field(default_factory=list)
+    total_weight: float = 0.0
+    auxiliary_plane: Optional[List[tuple]] = None
+    lower_hemisphere: dict = field(default_factory=dict)  # A/N and P/T trends and plunges
+    b_axis: Optional[tuple] = None  # B trend, B plunge, Angle
+
+
+@dataclass
+class FocmecData:
+    header: str = ""
+    solutions: List[Solution] = field(default_factory=list)
+    best_solution: Optional[Solution] = None
+
+
+def parse_focmec_file(file_path: str) -> FocmecData:
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    data = FocmecData()
+    current_solution = None
+    is_parsing_solution = False
+
+    for line in lines:
+        line = line.strip()
+
+        # Detect start of solutions
+        # Flexible detection of lines with multiple '+' symbols
+        if re.fullmatch(r"\+{10,}", line):  # Matches lines with 10 or more '+' symbols
+            if current_solution:
+                data.solutions.append(current_solution)
+            current_solution = Solution()
+            is_parsing_solution = True
+            continue
+
+        # Parse Dip, Strike, Rake
+        if is_parsing_solution and line.startswith("Dip,Strike,Rake"):
+            match = re.findall(r"(\d+\.\d+)", line)
+            if match:
+                dip, strike, rake = map(float, match[:3])
+                current_solution.dip_strike_rake.append((dip, strike, rake))
+            continue
+
+        # Parse P Polarity weights
+        if is_parsing_solution and line.startswith("P Polarity weights:"):
+            weights = re.findall(r"(\d+\.\d+)", line)
+            current_solution.polarity_weights.extend(map(float, weights))
+            continue
+
+        # Parse Total P polarity weight
+        if is_parsing_solution and line.startswith("Total P polarity weight is"):
+            match = re.search(r"Total P polarity weight is\s+(\d+\.\d+)", line)
+            if match:
+                current_solution.total_weight = float(match.group(1))
+            continue
+
+        # Parse Auxiliary Plane
+        if is_parsing_solution and "Auxiliary Plane" in line:
+            match = re.findall(r"(\d+\.\d+)", line)
+            if match:
+                aux_dip, aux_strike, aux_rake = map(float, match[:3])
+                current_solution.auxiliary_plane = [(aux_dip, aux_strike, aux_rake)]
+            continue
+
+        # Parse Lower Hemisphere A, N and P, T trends and plunges
+        if is_parsing_solution and line.startswith("Lower Hem. Trend, Plunge of A,N"):
+            match = re.findall(r"(\d+\.\d+)", line)
+            if match:
+                a_trend, a_plunge, n_trend, n_plunge = map(float, match)
+                current_solution.lower_hemisphere['A,N'] = [(a_trend, a_plunge), (n_trend, n_plunge)]
+            continue
+
+        if is_parsing_solution and line.startswith("Lower Hem. Trend, Plunge of P,T"):
+            match = re.findall(r"(\d+\.\d+)", line)
+            if match:
+                p_trend, p_plunge, t_trend, t_plunge = map(float, match)
+                current_solution.lower_hemisphere['P,T'] = [(p_trend, p_plunge), (t_trend, t_plunge)]
+            continue
+
+        # Parse B trend, B plunge, Angle
+        if is_parsing_solution and line.startswith("B trend, B plunge, Angle:"):
+            match = re.findall(r"(\d+\.\d+)", line)
+            if match:
+                b_trend, b_plunge, angle = map(float, match)
+                current_solution.b_axis = (b_trend, b_plunge, angle)
+            continue
+
+    # Append the last solution
+    if current_solution:
+        data.solutions.append(current_solution)
+
+    # Determine the best solution
+    if data.solutions:
+        data.best_solution = max(data.solutions, key=lambda sol: sol.total_weight)
+
+    return data
+
 
 
 if __name__ == '__main__':

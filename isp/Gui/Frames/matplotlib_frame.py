@@ -1449,7 +1449,7 @@ class FocCanvas(BasePltPyqtCanvas):
         c_layout = kwargs.pop("constrained_layout", False)
         super().__init__(parent,constrained_layout=c_layout, **kwargs)
 
-    def drawFocMec(self, strike, dip, rake, sta, az, inc, pol, axes_index):
+    def drawFocMec(self, strike, dip, rake, sta, az, inc, pol, all_solutions):
         from obspy.imaging.beachball import beach
         import numpy as np
         azims_pos = []
@@ -1459,11 +1459,12 @@ class FocCanvas(BasePltPyqtCanvas):
         polarities = []
         bbox = dict(boxstyle="round, pad=0.2", fc="w", ec="k", lw=1.5, alpha=0.7)
         self.clear()
-        ax = self.get_axe(axes_index)
+        ax = self.get_axe(0)
         beach2 = beach([strike, dip, rake], facecolor='r', linewidth=1., alpha=0.3, width=2)
         ax.add_collection(beach2)
         ax.set_ylim(-1, 1)
         ax.set_xlim(-1, 1)
+
         N= len(sta)
         for j in range(N):
             station = sta[j]
@@ -1504,8 +1505,32 @@ class FocCanvas(BasePltPyqtCanvas):
         x_neg = incis_neg * np.cos(azims_neg)
         y_neg = incis_neg * np.sin(azims_neg)
         ax.scatter(x_neg, y_neg, marker="o", lw=1, facecolor="w", edgecolor="k", s=50, zorder=3)
+        #lets plot P and T axes
+        PTax = all_solutions.best_solution.lower_hemisphere['P,T']
+        Paz = PTax[0][0]
+        Pinc = PTax[0][1]
+        Taz = PTax[1][0]
+        Tinc = PTax[1][1]
+        if Pinc > 90:
+            Pinc = 180. - Pinc
+            Paz = -180. + Paz
+        Paz = (np.pi / 2.) - ((Paz / 180.) * np.pi)
+        x_pos = (Pinc * np.cos(Paz)) / 90
+        y_pos = (Pinc * np.sin(Paz)) / 90
+        ax.scatter(x_pos, y_pos, marker="P", lw=1, facecolor="green", edgecolor="k", s=50, zorder=4)
+        ax.text(x_pos, y_pos, "P-axis", va="top", bbox=bbox, zorder=4)
+
+        if Tinc > 90:
+            Tinc = 180. - Tinc
+            Taz = -180. + Taz
+        Taz = (np.pi / 2.) - ((Taz / 180.) * np.pi)
+        x_pos = (Tinc * np.cos(Taz)) / 90
+        y_pos = (Tinc * np.sin(Taz)) / 90
+        ax.scatter(x_pos, y_pos, marker="X", lw=1, facecolor="green", edgecolor="k", s=50, zorder=4)
+        ax.text(x_pos, y_pos, "T-axis", va="top", bbox=bbox, zorder=4)
+
         #mask = (polarities == True)
-        ax.set_title("Focal Mechanism")
+        #ax.set_title("Focal Mechanism")
         ax.set_axis_off()
         self.draw()
 
