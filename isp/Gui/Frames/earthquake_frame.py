@@ -1969,9 +1969,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             [identified_chop, id]= self.find_chop_by_ax(self.ax_num)
             data = identified_chop[2]
             delta = 1 / identified_chop[0][6]
-            [spec, freq, jackknife_errors] = spectrumelement(data, delta, id)
+            [spec, freq, _] = spectrumelement(data, delta, id)
             self.spectrum = PlotToolsManager(id)
-            self.spectrum.plot_spectrum(freq, spec, jackknife_errors)
+            self.spectrum.plot_spectrum(freq, spec, _)
 
 
         if event.key == 'm':

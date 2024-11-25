@@ -88,8 +88,8 @@ class PlotToolsManager:
         ax1.loglog(freq, spec, linewidth=1.0, color='steelblue', label=self.__id)
         ax1.frequencies = freq
         ax1.spectrum = spec
-        ax1.fill_between(freq, jackknife_errors[:, 0], jackknife_errors[:, 1], facecolor="0.75",
-                         alpha=0.5, edgecolor="0.5")
+        #ax1.fill_between(freq, jackknife_errors[0][:], jackknife_errors[1][:], facecolor="0.75",
+        #                 alpha=0.5, edgecolor="0.5")
         ax1.set_ylim(spec.min() / 10.0, spec.max() * 100.0)
         plt.ylabel('Amplitude')
         plt.xlabel('Frequency [Hz]')

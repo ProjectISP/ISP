@@ -1,13 +1,11 @@
 from obspy import Stream
 from scipy import ndimage
-
 from isp.Gui import pw
 from isp.Gui.Frames import MatplotlibCanvas
 from isp.Gui.Frames.uis_frames import UiTimeFrequencyWidget
-from isp.seismogramInspector.MTspectrogram import cross_spectrogram
+#from isp.seismogramInspector.MTspectrogram import cross_spectrogram # TODO CHANGE TO NITIME
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, cohe, correlate_template, \
     correlate_maxlag, get_lags
-import matplotlib.pyplot as plt
 import numpy as np
 import math
 from isp.seismogramInspector.ba_fast import ccwt_ba_fast
@@ -53,14 +51,15 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
         self.resSB.setValue(self.horizontalSlider.value())
 
     def plot_spectrum(self):
+        self.specialWidget.setCurrentIndex(0)
         if len(self.tr1) >0:
-            [spec1, freq1, jackknife_errors] = spectrumelement(self.tr1.data, self.tr1.stats.delta, self.tr1.id)
+            [spec1, freq1, _] = spectrumelement(self.tr1.data, self.tr1.stats.delta, self.tr1.id)
             self.spectrum_Widget_Canvas.plot(freq1, spec1, 0)
             ax1 = self.spectrum_Widget_Canvas.get_axe(0)
             ax1.cla()
             ax1.loglog(freq1, spec1, '0.1', linewidth=0.5, color='steelblue', label=self.tr1.id)
-            ax1.fill_between(freq1, jackknife_errors[:, 0], jackknife_errors[:, 1], facecolor="0.75",
-                             alpha=0.5, edgecolor="0.5")
+            #ax1.fill_between(freq1, jackknife_errors[:, 0], jackknife_errors[:, 1], facecolor="0.75",
+            #                 alpha=0.5, edgecolor="0.5")
             ax1.set_ylim(spec1.min() / 10.0, spec1.max() * 100.0)
             ax1.set_xlim(freq1[1], freq1[len(freq1)-1])
             ax1.set_ylabel('Amplitude')
@@ -86,13 +85,13 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
             pass
 
         if len(self.tr2) > 0:
-            [spec2, freq2, jackknife_errors] = spectrumelement(self.tr2.data, self.tr2.stats.delta, self.tr2.id)
+            [spec2, freq2, _] = spectrumelement(self.tr2.data, self.tr2.stats.delta, self.tr2.id)
             self.spectrum_Widget_Canvas.plot(freq2, spec2, 1)
             ax2 = self.spectrum_Widget_Canvas.get_axe(1)
             ax2.cla()
             ax2.loglog(freq2, spec2, '0.1', linewidth=0.5, color='steelblue', label=self.tr2.id)
-            ax2.fill_between(freq2, jackknife_errors[:, 0], jackknife_errors[:, 1], facecolor="0.75",
-                             alpha=0.5, edgecolor="0.5")
+            #ax2.fill_between(freq2, jackknife_errors[:, 0], jackknife_errors[:, 1], facecolor="0.75",
+            #                 alpha=0.5, edgecolor="0.5")
             ax2.set_ylim(spec2.min() / 10.0, spec2.max() * 100.0)
             ax2.set_xlim(freq2[1], freq2[len(freq2) - 1])
             ax2.set_ylabel('Amplitude')
@@ -138,6 +137,7 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
 
 
     def coherence(self):
+        self.specialWidget.setCurrentIndex(1)
         if len(self.tr1) > 0 and len(self.tr2) > 0:
             sampling_rates = []
             fs1=self.tr1.stats.sampling_rate
@@ -181,7 +181,7 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
             ax2.legend()
 
     def plot_correlation(self):
-
+        self.specialWidget.setCurrentIndex(2)
         if len(self.tr1) > 0 and len(self.tr2) > 0:
             sampling_rates = []
             fs1=self.tr1.stats.sampling_rate
@@ -207,21 +207,21 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
             self.cross_correlation_Widget_Canvas.plot(get_lags(cc3)/max_sampling_rates, cc3, 2,
                                                       clear_plot=True, linewidth=0.5, color = 'red')
 
-    def plot_cross_spectrogram(self):
-        if len(self.tr1) > 0 and len(self.tr2) > 0:
-            csp = cross_spectrogram(self.tr1, self.tr2, win=self.time_windowSB.value(),
-                                    tbp=self.time_bandwidthSB.value(), ntapers = self.num_tapersSB.value())
-
-            [coherence_cross, freq, t] = csp.compute_coherence_crosspectrogram()
-            f_min = 0
-            f_max = 0.5*(1/max(freq))
-            f_max=50
-            x, y = np.meshgrid(t, np.linspace(f_min, f_max, coherence_cross.shape[0]))
-
-            self.cross_spectrumWidget_Widget_Canvas.plot_contour(x, y, coherence_cross, axes_index=0,
-                     clabel="Coherence", cmap=plt.get_cmap("jet"), vmin=0,vmax=1)
-            self.cross_spectrumWidget_Widget_Canvas.set_xlabel(0, "Time (s)")
-            self.cross_spectrumWidget_Widget_Canvas.set_ylabel(0, "Frequency (Hz)")
+    # def plot_cross_spectrogram(self):
+    #     if len(self.tr1) > 0 and len(self.tr2) > 0:
+    #         csp = cross_spectrogram(self.tr1, self.tr2, win=self.time_windowSB.value(),
+    #                                 tbp=self.time_bandwidthSB.value(), ntapers = self.num_tapersSB.value())
+    #
+    #         [coherence_cross, freq, t] = csp.compute_coherence_crosspectrogram()
+    #         f_min = 0
+    #         f_max = 0.5*(1/max(freq))
+    #         f_max=50
+    #         x, y = np.meshgrid(t, np.linspace(f_min, f_max, coherence_cross.shape[0]))
+    #
+    #         self.cross_spectrumWidget_Widget_Canvas.plot_contour(x, y, coherence_cross, axes_index=0,
+    #                  clabel="Coherence", cmap=plt.get_cmap("jet"), vmin=0,vmax=1)
+    #         self.cross_spectrumWidget_Widget_Canvas.set_xlabel(0, "Time (s)")
+    #         self.cross_spectrumWidget_Widget_Canvas.set_ylabel(0, "Frequency (Hz)")
 
     def __estimate_res(self, npts):
 
@@ -245,7 +245,7 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
         print("resolution Factor", self.res_factor)
 
     def plot_cross_scalogram(self):
-
+        self.specialWidget.setCurrentIndex(3)
         base_line = self.base_lineDB.value()
         colour = self.colourCB.currentText()
 
