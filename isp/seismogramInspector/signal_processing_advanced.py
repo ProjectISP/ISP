@@ -6,7 +6,8 @@ Created on Tue Jul  9 18:15:16 2019
 @author: robertocabieces
 """
 
-from mtspec import mtspec
+
+import nitime.algorithms as tsa
 import numpy as np
 import math
 import scipy.signal
@@ -51,7 +52,8 @@ def MTspectrum(data,win,dt,tbp,ntapers,linf,lsup):
         data1=data[n:win+n]
         data1=data1-np.mean(data1)
         data2[0:win]=data1
-        spec,freq = mtspec(data2,delta=dt ,time_bandwidth=tbp,number_of_tapers=ntapers)
+        #spec,freq = mtspec(data2,delta=dt ,time_bandwidth=tbp,number_of_tapers=ntapers)
+        freq, spec, _ = tsa.multi_taper_psd(data2, 1 / dt, adaptive=True, jackknife=False, low_bias=True)
         spec=spec[0:int(nfft)]
         S[:,n]=spec
 
@@ -295,8 +297,14 @@ def cohe(tr1, tr2, fs, nfft, overlap):
     A=(np.abs(np.array(cohe[:])))
     return A, f, phase
 
+def dB(x, out=None):
+    if out is None:
+        return 10 * np.log10(x)
+    else:
+        np.log10(x, out)
+        np.multiply(out, 10, out)
 ###
-def spectrumelement(data,delta,sta):
+def spectrumelement(data,delta, sta):
     """
 
     Return the amplitude spectrum using multitaper aproach
@@ -307,10 +315,11 @@ def spectrumelement(data,delta,sta):
     z = np.zeros(D - N)
     data = np.concatenate((data, z), axis=0)
 
-    spec, freq, jackknife_errors, _, _ = mtspec(data, delta=delta , time_bandwidth=3.5, statistics=True)
+    freq, spec, _ = tsa.multi_taper_psd(data, 1/delta, adaptive=True, jackknife=False, low_bias=True)
+
     spec = np.sqrt(spec) #mtspec Amplitude spectrum
-    jackknife_errors = np.sqrt(jackknife_errors)
-    return spec, freq, jackknife_errors
+
+    return spec, freq, _
 
 
 def sta_lta(data, sampling_rate, STA = 1, LTA = 40):

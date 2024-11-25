@@ -175,82 +175,82 @@ class  WignerVille:
         x, y, log_spectrogram = self.__compute_spectrogram(tr)
         return x, y, log_spectrogram
 
-class cross_spectrogram:
-
-    def __init__(self, tr1, tr2, win, tbp, ntapers):
-        self.tr1 = tr1
-        self.tr2 = tr2
-        self.win = win
-        self.tbp = tbp
-        self.ntapers = ntapers
-
-    def resampling_trace(self):
-        fs1 = self.tr1.stats.sampling_rate
-        fs2 = self.tr2.stats.sampling_rate
-        self.fs = max(fs1, fs2)
-        if fs1 < self.fs:
-            self.tr1.resample(self.fs)
-        elif fs2 < self.fs:
-            self.tr2.resample(self.fs)
-
-    def __compute_coherence_cross(self):
-        """
-        :param tr1:
-        :param tr2:
-        :param sampling_rate:
-        :param tbp:
-        :param kspec:
-        :param nf:
-        :param p:
-        :return: Dictionary
-
-        Parameters:
-        freq – the frequency bins
-        cohe – coherence of the two series (0 - 1)
-        phase – the phase at each frequency
-        speci – spectrum of first series
-        specj – spectrum of second series
-        conf – p confidence value for each freq.
-        cohe_ci – 95% bounds on coherence (not larger than 1)
-        phase_ci – 95% bounds on phase estimates
-        """
-        self.resampling_trace()
-        win = int(self.win*self.fs)
-        if (win % 2) == 0:
-            nfft = win / 2 + 1
-        else:
-            nfft = (win + 1) / 2
-
-        data_tr1 = self.tr1.data
-        data_tr2 = self.tr2.data
-        npts = len(data_tr1)
-        data_tr2=data_tr2[0:npts]
-        lim = len(data_tr1) - win
-        S = np.zeros([int(nfft), int(lim)])
-        t = np.linspace(0, (npts/self.fs), npts - win)
-
-        for n in range(lim):
-            data1 = data_tr1[n:win + n]
-            data1 = data1 - np.mean(data1)
-            data1[0:win] = data1
-            data2 = data_tr2[n:win + n]
-            data2 = data2 - np.mean(data2)
-            data2[0:win] = data2
-            coherence=mt_coherence(1/self.fs, data1, data2, int(self.tbp), int(self.ntapers), int(nfft), p =.9,
-                                       freq=True, cohe=True, iadapt=1 )
-            spec= coherence['cohe']
-
-            S[:, n] = spec
-
-        freq = coherence['freq']
-        #print("Dimensions", S.shape[1],len(t),n,lim)
-        return S, freq, t
-
-    def compute_coherence_crosspectrogram(self):
-
-         [coherence_cross, freq, t] = self.__compute_coherence_cross()
-
-         return coherence_cross, freq, t
+# class cross_spectrogram:
+#
+#     def __init__(self, tr1, tr2, win, tbp, ntapers):
+#         self.tr1 = tr1
+#         self.tr2 = tr2
+#         self.win = win
+#         self.tbp = tbp
+#         self.ntapers = ntapers
+#
+#     def resampling_trace(self):
+#         fs1 = self.tr1.stats.sampling_rate
+#         fs2 = self.tr2.stats.sampling_rate
+#         self.fs = max(fs1, fs2)
+#         if fs1 < self.fs:
+#             self.tr1.resample(self.fs)
+#         elif fs2 < self.fs:
+#             self.tr2.resample(self.fs)
+#
+#     def __compute_coherence_cross(self):
+#         """
+#         :param tr1:
+#         :param tr2:
+#         :param sampling_rate:
+#         :param tbp:
+#         :param kspec:
+#         :param nf:
+#         :param p:
+#         :return: Dictionary
+#
+#         Parameters:
+#         freq – the frequency bins
+#         cohe – coherence of the two series (0 - 1)
+#         phase – the phase at each frequency
+#         speci – spectrum of first series
+#         specj – spectrum of second series
+#         conf – p confidence value for each freq.
+#         cohe_ci – 95% bounds on coherence (not larger than 1)
+#         phase_ci – 95% bounds on phase estimates
+#         """
+#         self.resampling_trace()
+#         win = int(self.win*self.fs)
+#         if (win % 2) == 0:
+#             nfft = win / 2 + 1
+#         else:
+#             nfft = (win + 1) / 2
+#
+#         data_tr1 = self.tr1.data
+#         data_tr2 = self.tr2.data
+#         npts = len(data_tr1)
+#         data_tr2=data_tr2[0:npts]
+#         lim = len(data_tr1) - win
+#         S = np.zeros([int(nfft), int(lim)])
+#         t = np.linspace(0, (npts/self.fs), npts - win)
+#
+#         for n in range(lim):
+#             data1 = data_tr1[n:win + n]
+#             data1 = data1 - np.mean(data1)
+#             data1[0:win] = data1
+#             data2 = data_tr2[n:win + n]
+#             data2 = data2 - np.mean(data2)
+#             data2[0:win] = data2
+#             coherence=mt_coherence(1/self.fs, data1, data2, int(self.tbp), int(self.ntapers), int(nfft), p =.9,
+#                                        freq=True, cohe=True, iadapt=1 )
+#             spec= coherence['cohe']
+#
+#             S[:, n] = spec
+#
+#         freq = coherence['freq']
+#         #print("Dimensions", S.shape[1],len(t),n,lim)
+#         return S, freq, t
+#
+#     def compute_coherence_crosspectrogram(self):
+#
+#          [coherence_cross, freq, t] = self.__compute_coherence_cross()
+#
+#          return coherence_cross, freq, t
 
 
 
