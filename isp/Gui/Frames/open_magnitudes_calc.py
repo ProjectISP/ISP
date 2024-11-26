@@ -4,7 +4,7 @@ from obspy import UTCDateTime
 from isp.Gui import pw
 from isp.Gui.Frames import MatplotlibCanvas, SettingsLoader, MessageDialog
 from isp.Gui.Frames.uis_frames import UiMagnitudeFrame
-from mtspec import mtspec
+import nitime.algorithms as tsa
 import numpy as np
 import scipy
 import scipy.optimize
@@ -163,7 +163,7 @@ class MagnitudeCalc(pw.QFrame, UiMagnitudeFrame, metaclass=SettingsLoader):
 
             # Calculate the spectrum.
 
-            spec, freq, jackknife_errors, _, _ = mtspec(data, delta=delta, time_bandwidth=3.5, statistics=True)
+            freq, spec, _ = tsa.multi_taper_psd(data, magnitude_dict[0][6], adaptive=True, jackknife=False, low_bias=True)
             spec = spec[1:]
             freq = freq[1:]
             # go to amplitude and displacement

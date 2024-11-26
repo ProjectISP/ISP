@@ -12,7 +12,7 @@ from isp.Gui.Frames.time_frequency_advance_frame import TimeFrequencyAdvance
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime, set_qdatetime
 from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.Utils.subprocess_utils import open_url
-from isp.seismogramInspector.MTspectrogram import MTspectrogram, WignerVille
+from isp.seismogramInspector.MTspectrogram import MTspectrogram
 import numpy as np
 import os
 from sys import platform
@@ -54,7 +54,6 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.selectDirBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         self.datalessBtn.clicked.connect(lambda: self.on_click_select_file(self.dataless_path_bind))
         # Action Buttons
-        self.actionSettings.triggered.connect(lambda: self.open_parameters_settings())
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.macroBtn.clicked.connect(lambda: self.open_parameters_settings())
         self.actionOpen_Spectral_Analysis.triggered.connect(self.time_frequency_advance)
@@ -307,11 +306,10 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         if selection == "Multitaper Spectrogram":
 
             win = int(self.mt_window_lengthDB.value() * tr.stats.sampling_rate)
-            tbp = self.time_bandwidth_DB.value()
-            ntapers = self.number_tapers_mtSB.value()
+            overlap= 1-(self.overlapSB.value())/100
             f_min = self.freq_min_mtDB.value()
             f_max = self.freq_max_mtDB.value()
-            mtspectrogram = MTspectrogram(self.file_selector.file_path, win, tbp, ntapers, f_min, f_max)
+            mtspectrogram = MTspectrogram(self.file_selector.file_path, win, f_min, f_max, overlap)
 
             if self.trimCB.isChecked() and diff >= 0:
                 x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr, start_time=ts, end_time=te, res = self.res_factor)
@@ -365,54 +363,54 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             del y
             del log_spectrogram
 
-        elif selection == "Wigner Spectrogram":
-
-            win = int(self.mt_window_lengthDB.value() * tr.stats.sampling_rate)
-            tbp = self.time_bandwidth_DB.value()
-            ntapers = self.number_tapers_mtSB.value()
-            f_min = self.freq_min_mtDB.value()
-            f_max = self.freq_max_mtDB.value()
-            wignerspec = WignerVille(self.file_selector.file_path, win, tbp, ntapers, f_min, f_max)
-
-            if self.trimCB.isChecked() and diff >= 0:
-                x, y, log_spectrogram = wignerspec.compute_wigner_spectrogram(tr, start_time=ts, end_time=te, res = self.res_factor)
-            else:
-                x, y, log_spectrogram = wignerspec.compute_wigner_spectrogram(tr, res = self.res_factor)
-
-            if order == "Seismogram 1":
-
-                if self.res_factor <= 1:
-                    self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clear_plot=True,
-                                                   clabel="Rel Power ",cmap=self.colourCB.currentText())
-                elif self.res_factor > 1:
-                    self.canvas_plot1.pcolormesh(x, y, log_spectrogram, axes_index=1, clear_plot=True,
-                                                 clabel="Rel Power ", cmap=self.colourCB.currentText())
-                # elif self.typeCB.currentText() == 'imshow':
-                #     self.canvas_plot1.image(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                #                          cmap=self.colourCB.currentText())
-                self.canvas_plot1.set_xlabel(1, "Time (s)")
-                self.canvas_plot1.set_ylabel(0, "Amplitude ")
-                self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
-
-            elif order == "Seismogram 2":
-                if self.res_factor <= 1:
-                    self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                     cmap=self.colourCB.currentText())
-                elif self.res_factor > 1:
-                    self.canvas_plot2.pcolormesh(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                                                   cmap=self.colourCB.currentText())
-                # elif self.typeCB.currentText() == 'imshow':
-                #     self.canvas_plot2.image(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                #                              cmap=self.colourCB.currentText())
-                self.canvas_plot2.set_xlabel(1, "Time (s)")
-                self.canvas_plot2.set_ylabel(0, "Amplitude ")
-                self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
-
-            # clean objects
-            del wignerspec
-            del x
-            del y
-            del log_spectrogram
+        # elif selection == "Wigner Spectrogram":
+        #
+        #     win = int(self.mt_window_lengthDB.value() * tr.stats.sampling_rate)
+        #     tbp = self.time_bandwidth_DB.value()
+        #     ntapers = self.number_tapers_mtSB.value()
+        #     f_min = self.freq_min_mtDB.value()
+        #     f_max = self.freq_max_mtDB.value()
+        #     wignerspec = WignerVille(self.file_selector.file_path, win, tbp, ntapers, f_min, f_max)
+        #
+        #     if self.trimCB.isChecked() and diff >= 0:
+        #         x, y, log_spectrogram = wignerspec.compute_wigner_spectrogram(tr, start_time=ts, end_time=te, res = self.res_factor)
+        #     else:
+        #         x, y, log_spectrogram = wignerspec.compute_wigner_spectrogram(tr, res = self.res_factor)
+        #
+        #     if order == "Seismogram 1":
+        #
+        #         if self.res_factor <= 1:
+        #             self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clear_plot=True,
+        #                                            clabel="Rel Power ",cmap=self.colourCB.currentText())
+        #         elif self.res_factor > 1:
+        #             self.canvas_plot1.pcolormesh(x, y, log_spectrogram, axes_index=1, clear_plot=True,
+        #                                          clabel="Rel Power ", cmap=self.colourCB.currentText())
+        #         # elif self.typeCB.currentText() == 'imshow':
+        #         #     self.canvas_plot1.image(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
+        #         #                          cmap=self.colourCB.currentText())
+        #         self.canvas_plot1.set_xlabel(1, "Time (s)")
+        #         self.canvas_plot1.set_ylabel(0, "Amplitude ")
+        #         self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
+        #
+        #     elif order == "Seismogram 2":
+        #         if self.res_factor <= 1:
+        #             self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
+        #              cmap=self.colourCB.currentText())
+        #         elif self.res_factor > 1:
+        #             self.canvas_plot2.pcolormesh(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
+        #                                            cmap=self.colourCB.currentText())
+        #         # elif self.typeCB.currentText() == 'imshow':
+        #         #     self.canvas_plot2.image(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
+        #         #                              cmap=self.colourCB.currentText())
+        #         self.canvas_plot2.set_xlabel(1, "Time (s)")
+        #         self.canvas_plot2.set_ylabel(0, "Amplitude ")
+        #         self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
+        #
+        #     # clean objects
+        #     del wignerspec
+        #     del x
+        #     del y
+        #     del log_spectrogram
 
         elif selection == "Continuous Wavelet Transform":
 

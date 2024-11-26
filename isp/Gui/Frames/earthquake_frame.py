@@ -2022,36 +2022,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ntapers = int(params["N Tapers"])
             f_min = 0
             f_max = fn
-            print(win,tbp,ntapers)
+
             self.spectrogram = PlotToolsManager(id)
-            if win > 0.5*fs and ntapers > 2 and tbp > 2:
-                [x,y,z] = self.spectrogram.compute_spectrogram_plot(data, win, delta, tbp, ntapers, f_min, f_max, t)
-            else:
-                [x, y, z] = self.spectrogram.compute_spectrogram_plot(data, int(3*fs), delta, 3.5, 3, f_min, f_max, t)
+
+            [x,y,z] = self.spectrogram.compute_spectrogram_plot(data, win, delta, f_min, f_max, t)
+
             ax = self.canvas.get_axe(self.ax_num)
 
             ax2 = ax.twinx()
             z= np.clip(z, a_min=-120, a_max=0)
-            cs = ax2.contourf(x, y, z, levels=50, cmap=plt.get_cmap("jet"), alpha = 0.2)
-            fig = ax2.get_figure()
+            #cs = ax2.contourf(x, y, z, levels=50, cmap=plt.get_cmap("jet"), alpha=0.2)
             ax2.set_ylim(0, fn)
             t = t[0:len(x)]
-            ax2.set_xlim(t[0],t[-1])
+            ax2.set_xlim(t[0], t[-1])
             ax2.set_ylabel('Frequency [ Hz]')
             vmin = -120
             vmax = 0
-            cs.set_clim(vmin, vmax)
-            # TODO COLORBAR STABLE
-            #axs = []
-            #for j in range(self.items_per_page):
-            #    axs.append(self.canvas.get_axe(j))
-
-            #if self.nums_clicks > 0:
-            #    pass
-            #else:
-
-            #    self.cbar = fig.colorbar(cs, ax=axs[j], extend='both', orientation='horizontal', pad=0.2)
-            #    self.cbar.ax.set_ylabel("Power [dB]")
+            #cs.set_clim(vmin, vmax)
 
             tr = self.st[self.ax_num]
             tt = tr.times("matplotlib")
@@ -2068,7 +2055,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax.set_ylim(min(data),max(data))
             formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
-            #self.nums_clicks = self.nums_clicks+1
 
     def availability(self):
 

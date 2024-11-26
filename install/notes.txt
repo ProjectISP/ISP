@@ -1,0 +1,2 @@
+conda env export > mac_environment_new.ym
+conda list -e > requirements.txt
