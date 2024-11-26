@@ -314,12 +314,24 @@ class Locate(BaseFrame, UiLocFlow):
         Station, Az, Dip, Motion = firstpolarity_manager.get_dataframe(location_file)
         cat, focal_mechanism = firstpolarity_manager.extract_focmec_info(focmec_file)
         focmec_full_Data = parse_focmec_file(focmec_file)
-        PTax = focmec_full_Data.best_solution.lower_hemisphere['P,T']
+
+
         # #print(cat[0].focal_mechanisms[0])
         Plane_A = focal_mechanism.nodal_planes.nodal_plane_1
         strike_A = Plane_A.strike
         dip_A = Plane_A.dip
         rake_A = Plane_A.rake
+
+        extra_info = firstpolarity_manager.parse_solution_block(focal_mechanism.comments[0]["text"])
+
+
+        P_Trend = extra_info['P,T']['Trend']
+        P_Plunge = extra_info['P,T']['Plunge']
+
+        T_Trend = extra_info['P,N']['Trend']
+        T_Plunge = extra_info['P,N']['Plunge']
+
+
         misfit_first_polarity = focal_mechanism.misfit
         azimuthal_gap = focal_mechanism.azimuthal_gap
         number_of_polarities = focal_mechanism.station_polarity_count
@@ -328,11 +340,12 @@ class Locate(BaseFrame, UiLocFlow):
                                                      "number_of_polarities", "P_axis_Trend", "P_axis_Plunge",
                                                      "T_axis_Trend", "T_axis_Plunge"],
                                   "results": [strike_A, dip_A, rake_A, misfit_first_polarity, azimuthal_gap,
-                                              number_of_polarities, PTax[0][0], PTax[0][1], PTax[1][0], PTax[1][1]]}
+                                              number_of_polarities, P_Trend, P_Plunge, T_Trend, T_Plunge]}
 
         self.add_first_polarity_info(first_polarity_results)
         self.focmec_canvas.clear()
-        self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, focmec_full_Data)
+        self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, P_Trend, P_Plunge,
+                                      T_Trend, T_Plunge)
         self.focmec_canvas.figure.subplots_adjust(left=0.240, bottom=0.105, right=0.785, top=0.937, wspace=0.0,
                                                   hspace=0.0)
 

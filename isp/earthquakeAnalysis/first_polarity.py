@@ -13,7 +13,7 @@ from obspy import read_events, Catalog
 from isp import FOC_MEC_PATH, FOC_MEC_BASH_PATH
 from isp.earthquakeAnalysis import focmecobspy
 from isp.Utils.subprocess_utils import exc_cmd
-
+import re
 
 class FirstPolarity:
 
@@ -195,5 +195,86 @@ class FirstPolarity:
         with open(FOC_MEC_BASH_PATH, 'w') as file:
             file.writelines(lines)
 
+    def parse_solution_block(self, solution_text):
+        """
+        Parses a block of text containing Dip, Strike, Rake and other information
+        and returns a dictionary with structured data.
 
+        Parameters:
+            solution_text (str): Text block containing solution information.
+
+        Returns:
+            dict: Parsed solution data.
+        """
+        parsed_data = {}
+
+        import re
+
+        # Patterns for parsing
+        dip_strike_rake_pattern = r"Dip,Strike,Rake\s+([\d\.\-]+)\s+([\d\.\-]+)\s+([\d\.\-]+)"
+        auxiliary_pattern = r"Dip,Strike,Rake\s+([\d\.\-]+)\s+([\d\.\-]+)\s+([\d\.\-]+)\s+Auxiliary Plane"
+        lower_hem_pattern = r"Lower Hem\. Trend, Plunge of ([A-Z]),[N|T]\s+([\d\.\-]+)\s+([\d\.\-]+)\s+([\d\.\-]+)\s+([\d\.\-]+)"
+        b_axis_pattern = r"B trend, B plunge, Angle:\s+([\d\.\-]+)\s+([\d\.\-]+)\s+([\d\.\-]+)"
+        polarity_pattern = r"P Polarity error at\s+([A-Z]+)"
+        weight_pattern = r"P Polarity weights:\s+([\d\.\-]+)"
+        total_weight_pattern = r"Total P polarity weight is\s+([\d\.\-]+)"
+        total_number_pattern = r"Total number:\s+(\d+)"
+
+        # Main Plane
+        main_match = re.search(dip_strike_rake_pattern, solution_text)
+        if main_match:
+            parsed_data['Main Plane'] = {
+                'Dip': float(main_match.group(1)),
+                'Strike': float(main_match.group(2)),
+                'Rake': float(main_match.group(3)),
+            }
+
+        # Auxiliary Plane
+        aux_match = re.search(auxiliary_pattern, solution_text)
+        if aux_match:
+            parsed_data['Auxiliary Plane'] = {
+                'Dip': float(aux_match.group(1)),
+                'Strike': float(aux_match.group(2)),
+                'Rake': float(aux_match.group(3)),
+            }
+
+        # Lower Hemisphere Trends and Plunges
+        for match in re.finditer(lower_hem_pattern, solution_text):
+            plane_key = match.group(1)  # 'A' or 'P'
+            parsed_data[f'{plane_key},T'] = {
+                'Trend': float(match.group(2)),
+                'Plunge': float(match.group(3)),
+            }
+            parsed_data[f'{plane_key},N'] = {
+                'Trend': float(match.group(4)),
+                'Plunge': float(match.group(5)),
+            }
+
+        # B Axis
+        b_match = re.search(b_axis_pattern, solution_text)
+        if b_match:
+            parsed_data['B Axis'] = {
+                'Trend': float(b_match.group(1)),
+                'Plunge': float(b_match.group(2)),
+                'Angle': float(b_match.group(3)),
+            }
+
+        # Polarity Error and Weights
+        polarity_match = re.search(polarity_pattern, solution_text)
+        if polarity_match:
+            parsed_data['P Polarity Error'] = polarity_match.group(1)
+
+        weight_match = re.search(weight_pattern, solution_text)
+        if weight_match:
+            parsed_data['P Polarity Weights'] = float(weight_match.group(1))
+
+        total_weight_match = re.search(total_weight_pattern, solution_text)
+        if total_weight_match:
+            parsed_data['Total P Polarity Weight'] = float(total_weight_match.group(1))
+
+        total_number_match = re.search(total_number_pattern, solution_text)
+        if total_number_match:
+            parsed_data['Total Number'] = int(total_number_match.group(1))
+
+        return parsed_data
 

@@ -1449,7 +1449,8 @@ class FocCanvas(BasePltPyqtCanvas):
         c_layout = kwargs.pop("constrained_layout", False)
         super().__init__(parent,constrained_layout=c_layout, **kwargs)
 
-    def drawFocMec(self, strike, dip, rake, sta, az, inc, pol, all_solutions):
+    def drawFocMec(self, strike, dip, rake, sta, az, inc, pol, P_Trend, P_Plunge,
+                                      T_Trend, T_Plunge):
         from obspy.imaging.beachball import beach
         import numpy as np
         azims_pos = []
@@ -1506,11 +1507,11 @@ class FocCanvas(BasePltPyqtCanvas):
         y_neg = incis_neg * np.sin(azims_neg)
         ax.scatter(x_neg, y_neg, marker="o", lw=1, facecolor="w", edgecolor="k", s=50, zorder=3)
         #lets plot P and T axes
-        PTax = all_solutions.best_solution.lower_hemisphere['P,T']
-        Paz = PTax[0][0]
-        Pinc = PTax[0][1]
-        Taz = PTax[1][0]
-        Tinc = PTax[1][1]
+
+        Paz = P_Trend
+        Pinc = 90 - P_Plunge
+        Taz = T_Trend
+        Tinc = 90 - T_Plunge
         if Pinc > 90:
             Pinc = 180. - Pinc
             Paz = -180. + Paz

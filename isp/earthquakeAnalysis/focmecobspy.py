@@ -378,6 +378,8 @@ def _read_common_header(lines):
     return event, lines
 
 
+
+
 @dataclass
 class Solution:
 
@@ -472,11 +474,14 @@ def parse_focmec_file(file_path: str) -> FocmecData:
     if current_solution:
         data.solutions.append(current_solution)
 
-    # Determine the best solution
+    # Determine the best solutions (all with the maximum weight)
     if data.solutions:
-        data.best_solution = max(data.solutions, key=lambda sol: sol.total_weight)
+        max_weight = max(sol.total_weight for sol in data.solutions)
+        data.best_solutions = [sol for sol in data.solutions if sol.total_weight == max_weight]
 
     return data
+
+
 
 
 
