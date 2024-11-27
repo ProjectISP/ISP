@@ -784,7 +784,14 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
 
     def clear_color_bar(self):
         if self.__cbar:
-            self.__cbar.remove()
+            try:
+                self.__cbar.remove()
+            except Exception as e:
+                if self.__cbar is None:
+                    pass
+                else:
+                    print(f"An error occurred: {e}")
+
 
     def draw_selection(self, axe_index, check = True):
         from PIL import Image

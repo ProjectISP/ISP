@@ -425,7 +425,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             t = np.linspace(0, tr.stats.delta * npts, npts)
             #cw = ConvolveWaveletScipy(self.file_selector.file_path)
             cw = ConvolveWaveletScipy(tr)
-            wavelet=self.wavelet_typeCB.currentText()
+            wavelet = self.wavelet_typeCB.currentText()
 
             m = self.wavelets_param.value()
             if self.trimCB.isChecked() and diff >= 0:
@@ -455,13 +455,13 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 x, y = np.meshgrid(t, np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0]))
 
             k = wmin / (2 * np.pi * freq)
-            delay = int(fs*np.mean(k))
+            # delay = int(fs*np.mean(k))
             c_f = wmin / 2 * math.pi
-            f = np.linspace((f_min), (f_max), scalogram2.shape[0])
-            pred = (math.sqrt(2) * c_f / f)  - (math.sqrt(2) * c_f / f_max)
+            f = np.linspace(f_min, f_max, scalogram2.shape[0])
+            pred = (math.sqrt(2) * c_f / f) - (math.sqrt(2) * c_f / f_max)
 
             pred_comp = t[len(t)-1]-pred
-            min_cwt= self.minlevelCB.value()
+            min_cwt=self.minlevelCB.value()
             max_cwt = 0
 
             #norm = Normalize(vmin=min_cwt, vmax=max_cwt)
