@@ -1,4 +1,4 @@
-name: isp_surfq
+name: isp
 channels:
   - conda-forge
   - anaconda
@@ -161,4 +161,4 @@ dependencies:
     - werkzeug==3.0.1
     - wrapt==1.14.1
     - zipp==3.17.0
-prefix: /Users/admin/opt/anaconda3/envs/isp_surfq
+
