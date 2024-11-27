@@ -2002,13 +2002,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if event.key == 'z':
             # Compute Multitaper Spectrogram
             params = self.settings_dialog.getParameters()
-
+            tr = self.st[self.ax_num]
+            ax = self.canvas.get_axe(self.ax_num)
+            ax2 = ax.twinx()
 
             start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
             end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             [identified_chop, id] = self.find_chop_by_ax(self.ax_num)
             tini = identified_chop[3]
             tend = identified_chop[4]
+
+
             data = identified_chop[2]
             t = identified_chop[1]
             npts = len(data)
@@ -2017,30 +2021,33 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             fn = fs/2
 
 
-            win = int(params["Win"]*fs)
-            tbp = params["TW"]
-            ntapers = int(params["N Tapers"])
-            f_min = 0
+            #win = int(params["Win"]*delta)
+
+            f_min = 1/(npts*delta)
+            f_min = 0.1 # just for now
             f_max = fn
 
-            self.spectrogram = PlotToolsManager(id)
 
-            [x,y,z] = self.spectrogram.compute_spectrogram_plot(data, win, delta, f_min, f_max, t)
+            ## using wavelet transform
+            cw = ConvolveWaveletScipy(tr)
+            cw.setup_wavelet(start_time, end_time, wmin=6, wmax=6, tt=int(fs / f_min), fmin=f_min, fmax=f_max, nf=80,
+                              use_wavelet="Complex Morlet", m=30, decimate=False)
+            z = cw.scalogram_in_dbs()
+            z = np.clip(z, a_min=-80, a_max=0)
+            x, y = np.meshgrid(t, np.linspace(f_min, f_max, z.shape[0]))
+            z = z[:, tini:tend]
 
-            ax = self.canvas.get_axe(self.ax_num)
+            ## Using MTspectrogram still under check -->need to adapt the z to the chop
+            #self.spectrogram = PlotToolsManager(id)
+            #[x,y,z] = self.spectrogram.compute_spectrogram_plot(data, win, delta, f_min, f_max, t)
+            ##
 
-            ax2 = ax.twinx()
-            z= np.clip(z, a_min=-120, a_max=0)
-            #cs = ax2.contourf(x, y, z, levels=50, cmap=plt.get_cmap("jet"), alpha=0.2)
-            ax2.set_ylim(0, fn)
+            ax2.contourf(x, y, z, levels=50, cmap=plt.get_cmap("jet"), alpha=0.2)
+            ax2.set_ylim(f_min, fn)
             t = t[0:len(x)]
             ax2.set_xlim(t[0], t[-1])
             ax2.set_ylabel('Frequency [ Hz]')
-            vmin = -120
-            vmax = 0
-            #cs.set_clim(vmin, vmax)
 
-            tr = self.st[self.ax_num]
             tt = tr.times("matplotlib")
             data = tr.data
             self.canvas.plot_date(tt, data, self.ax_num, clear_plot=False, color='black', fmt='-', linewidth=0.5)
@@ -2052,7 +2059,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             else:
                 ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
 
-            ax.set_ylim(min(data),max(data))
+            ax.set_ylim(min(data), max(data))
             formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
 

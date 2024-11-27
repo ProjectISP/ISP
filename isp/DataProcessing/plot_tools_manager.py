@@ -4,7 +4,6 @@ import pickle
 import numpy as np
 import nitime.algorithms as tsa
 from scipy import ndimage
-
 from isp import CLOCK_PATH
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement
 from matplotlib.path import Path
@@ -169,7 +168,7 @@ class PlotToolsManager:
 
 
     def compute_spectrogram_plot(self, data, win, dt, f_min, f_max, step_percentage=0.25):
-
+        # Using NITIME
         # win -- samples
         # Ensure nfft is a power of 2
         nfft = 2 ** math.ceil(math.log2(win))  # Next power to 2
