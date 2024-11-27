@@ -2103,7 +2103,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def open_solutions(self):
 
-        output_path = os.path.join(ROOT_DIR,'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
+        output_path = os.path.join(ROOT_DIR,'earthquakeAnalysis', 'location_output', 'obs', 'output.txt')
 
         try:
             # Determine the appropriate command based on the OS

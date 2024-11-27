@@ -181,8 +181,10 @@ class PickerManager:
                 data[self.FirstMotion] = "l"
 
         df = pd.DataFrame(data, columns=self.columns, index=[0])
-        self.df: pd.DataFrame = self.df.append(df, ignore_index=True)
-
+        try:
+            self.df: pd.DataFrame = pd.concat([self.df, df], ignore_index=True)
+        except Exception as e:
+            print(f"An error occurred: {e}")
     def read(self):
         return pd.read_csv(self.output_path, sep=self.file_separator, index_col=None, nrows=None)
 

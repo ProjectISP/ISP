@@ -13,35 +13,48 @@ from isp.Structures import BaseDataClass
 
 def validate_dictionary(cls: NamedTuple, dic: dict):
     """
-     Force the dictionary to have the same type of the parameter's declaration.
+    Force the dictionary to have the same type of the parameter's declaration.
 
     :param cls: Expect a NamedTuple child class.
-    :param dic: The dictionary to be validate.
-    :return: A new dictionary that try to keeps the same data type from this class parameters.
+    :param dic: The dictionary to be validated.
+    :return: A new dictionary that tries to keep the same data type from this class parameters.
     """
     valid_dic = {}
     fields_list_lower = [k.lower() for k in cls._fields]
+
     for k in dic.keys():
         if k.lower() in fields_list_lower:
-            index = fields_list_lower.index(k.lower())  # Compare all in lower case. Avoid Caps sensitive.
-            safe_key = cls._fields[index]
+            try:
+                # Find the correct field name in the NamedTuple (case insensitive)
+                index = fields_list_lower.index(k.lower())
+                safe_key = cls._fields[index]
 
-            if cls._field_types.get(safe_key) == int:
-                valid_dic[safe_key] = int(dic.get(k))
-            elif cls._field_types.get(safe_key) == float:
-                valid_dic[safe_key] = float(dic.get(k))
-            elif cls._field_types.get(safe_key) == bool:
-                if hasattr(dic.get(k), "capitalize"):
-                    valid_dic[safe_key] = True if dic.get(k).capitalize() == "True" else False
+                # Access the type annotation for the field
+                field_type = cls.__annotations__.get(safe_key)
+
+                # Cast the dictionary value to the correct type based on the field type
+                if field_type == int:
+                    valid_dic[safe_key] = int(dic.get(k))
+                elif field_type == float:
+                    valid_dic[safe_key] = float(dic.get(k))
+                elif field_type == bool:
+                    value = dic.get(k)
+                    if isinstance(value, str):
+                        valid_dic[safe_key] = value.strip().lower() == "true"
+                    else:
+                        valid_dic[safe_key] = bool(value)
+                elif field_type == str:
+                    # Handle 'null' as None
+                    value = dic.get(k)
+                    valid_dic[safe_key] = None if value == "null" else str(value)
                 else:
                     valid_dic[safe_key] = dic.get(k)
-            elif cls._field_types.get(safe_key) == str:
-                if dic.get(k) == "null":
-                    valid_dic[safe_key] = None
-                else:
-                    valid_dic[safe_key] = str(dic.get(k))
-            else:
-                valid_dic[safe_key] = dic.get(k)
+
+            except (KeyError, ValueError, TypeError) as e:
+                # Log or handle the error here
+                print(f"Error processing key '{k}': {e}")
+                pass
+
     return valid_dic
 
 
