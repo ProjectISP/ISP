@@ -62,7 +62,7 @@ def load_preferences(pyqt_object, ui_name=None):
                 with suppress(TypeError):
                     str(value, "utf-8")
                 value = value.strip() if type(value) == str else value
-                if value is not "" or type(value) is not str:
+                if value != "" or type(value) is not str:
                     if isinstance(item, pw.QDoubleSpinBox):
                         item.setValue(float(value))
                     elif isinstance(item, pw.QSpinBox):

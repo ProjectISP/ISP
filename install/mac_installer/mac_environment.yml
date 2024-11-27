@@ -1,6 +1,5 @@
 name: isp
 channels:
-  - conda-forge
   - anaconda
   - defaults
 dependencies:
@@ -56,7 +55,6 @@ dependencies:
     - markupsafe==2.1.5
     - matplotlib==3.8.3
     - ml-dtypes==0.2.0
-    - mysql-connector-python==8.0.31
     - nitime==0.11
     - numba==0.60.0
     - numpy==1.26.4
@@ -69,10 +67,11 @@ dependencies:
     - pandas==2.1.4
     - paramiko==3.5.0
     - pillow==10.1.0
-    - protobuf==3.20.1
+    - protobuf==4.25.5
     - pyasn1==0.5.1
     - pyasn1-modules==0.3.0
     - pycparser==2.22
+    - pymysql==1.1.1
     - pynacl==1.5.0
     - pyparsing==3.1.1
     - pyproj==3.6.1
@@ -108,4 +107,4 @@ dependencies:
     - werkzeug==3.0.1
     - wrapt==1.14.1
     - zipp==3.17.0
-
+prefix: /opt/anaconda3/envs/isp_new

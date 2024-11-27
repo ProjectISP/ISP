@@ -538,7 +538,7 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
         if current_row == ValueError :
             return
     
-        if (current_row is 0 and up is True) :
+        if (current_row == 0 and up is True) :
             return
     
         if current_row is (self.tableWidget.rowCount() - 1) and up is False:
