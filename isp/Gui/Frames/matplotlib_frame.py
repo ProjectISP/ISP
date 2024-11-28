@@ -1057,7 +1057,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         from isp import ROOT_DIR
         import os
-
+        epi_color = 'white'
+        epi_edgecolor = 'black'
         resolution = kwargs.pop('resolution')
         stations = kwargs.pop('stations')
         os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
@@ -1110,6 +1111,15 @@ class CartopyCanvas(BasePltPyqtCanvas):
                 ax.background_img(name='ne_shaded', resolution=resolution)
                 ax.add_feature(coastline_10m)
 
+        elif resolution == "simple":
+            coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
+                                                                edgecolor='k', alpha=0.6, linewidth=0.5,
+                                                                facecolor=cartopy.feature.COLORS['land'])
+            ax.add_feature(coastline_10m)
+            epi_color = 'black'
+            epi_edgecolor = 'red'
+
+
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
 
@@ -1136,7 +1146,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
                     bbox=dict(facecolor='sandybrown', alpha=0.5, boxstyle='round'))
 
 
-        ax.scatter(x, y, color='white', marker='*', s=60, edgecolor='black')
+        ax.scatter(x, y, color=epi_color, marker='*', s=60, edgecolor=epi_edgecolor)
 
         # Create an inset GeoAxes showing the Global location
         sub_ax = ax.figure.add_axes([0.80, 0.80, 0.20, 0.20], projection=ccrs.PlateCarree())

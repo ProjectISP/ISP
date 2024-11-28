@@ -6,6 +6,8 @@ locate_frame
 """
 
 import os
+import shutil
+
 from obspy import Inventory
 from obspy.core.event import Origin
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -19,6 +21,7 @@ from isp.LocCore.plot_tool_loc import StationUtils
 from isp.Utils import ObspyUtil
 from isp.earthquakeAnalysis import NllManager, FirstPolarity
 from isp.earthquakeAnalysis.focmecobspy import parse_focmec_file
+from isp.earthquakeAnalysis.run_nll import Nllcatalog
 from isp.earthquakeAnalysis.structures import TravelTimesConfiguration, LocationParameters, NLLConfig, \
     GridConfiguration
 from sys import platform
@@ -67,6 +70,7 @@ class Locate(BaseFrame, UiLocFlow):
         self.pltMap.clicked.connect(lambda: self.on_click_plot_map())
         self.runFocMecBtn.clicked.connect(lambda: self.first_polarity())
         self.pltFocMecBtn.clicked.connect(lambda: self.pltFocMec())
+        self.saveLocBtn.clicked.connect(lambda: self.saveLoc())
 
         # Map
         self.cartopy_canvas = CartopyCanvas(self.widget_map)
@@ -202,11 +206,12 @@ class Locate(BaseFrame, UiLocFlow):
         nllconfig = self.get_nll_config()
         if isinstance(nllconfig, NLLConfig):
             nll_manager = NllManager(nllconfig, self.metadata_path_bind.value, self.loc_work_bind.value)
+            nll_manager.clean_output_folder()
             for i in range(self.iterationsSB.value()):
                 print("Running Location iteration", i)
                 nll_manager.run_nlloc()
-            #nll_catalog = Nllcatalog(self.loc_work_bind.value)
-            #nll_catalog.run_catalog(self.loc_work_bind.value)
+            nll_catalog = Nllcatalog(self.loc_work_bind.value)
+            nll_catalog.run_catalog(self.loc_work_bind.value)
 
     def plot_pdf(self):
 
@@ -261,6 +266,7 @@ class Locate(BaseFrame, UiLocFlow):
     def __get_last_hyp(self):
 
         file_last = os.path.join(self.loc_work_bind.value, "loc", "last.hyp")
+
         # check
         if os.path.isfile(file_last):
 
@@ -285,8 +291,37 @@ class Locate(BaseFrame, UiLocFlow):
             stations = StationUtils.get_station_location_dict(event, inventory)
             self.add_earthquake_info(origin)
             self.cartopy_canvas.clear()
+            if self.topoCB.isChecked():
+                resolution = 'high'
+            else:
+                resolution = 'simple'
             self.cartopy_canvas.plot_map(origin.longitude, origin.latitude,0,
-                                         resolution='high', stations=stations)
+                                         resolution=resolution, stations=stations)
+
+
+    def saveLoc(self):
+
+        md = MessageDialog(self)
+        dir_output_path = os.path.join(self.loc_work_bind.value, "savedLocs")
+
+        nllcatalog = Nllcatalog(self.loc_work_bind.value)
+        nllcatalog.find_files()
+        files_list = nllcatalog.obsfiles
+        if files_list is not None:
+            if os.path.isdir(dir_output_path):
+                pass
+            else:
+                os.makedirs(dir_output_path)
+
+            for file in files_list:
+                shutil.move(file, dir_output_path)
+
+            md.set_info_message("Saved Location files", dir_output_path)
+        else:
+            md.set_info_message("No files to save", "No *.hyp files inside " + self.loc_work_bind.value)
+
+
+
 
     def first_polarity(self):
 

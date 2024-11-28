@@ -783,7 +783,7 @@
              <layout class="QVBoxLayout" name="verticalLayout_7">
               <item>
                <layout class="QGridLayout" name="gridLayout">
-                <item row="1" column="1">
+                <item row="1" column="2">
                  <widget class="QPushButton" name="pltPDF">
                   <property name="minimumSize">
                    <size>
@@ -796,28 +796,21 @@
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="1">
+                <item row="0" column="2">
                  <widget class="QPushButton" name="pltMap">
                   <property name="text">
                    <string>Plot Map</string>
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="0" rowspan="2">
-                 <widget class="QPushButton" name="runlocBtn">
-                  <property name="text">
-                   <string>Run Location</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0" colspan="4">
+                <item row="3" column="0" colspan="5">
                  <widget class="QWidget" name="widget_map" native="true">
                   <property name="styleSheet">
                    <string notr="true">background-color: rgb(255, 255, 255);</string>
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="2" rowspan="2" colspan="2">
+                <item row="0" column="3" rowspan="2" colspan="2">
                  <widget class="QPlainTextEdit" name="EarthquakeInfoText">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -830,6 +823,27 @@
                     <width>720</width>
                     <height>150</height>
                    </size>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1" alignment="Qt::AlignHCenter">
+                 <widget class="QCheckBox" name="topoCB">
+                  <property name="text">
+                   <string>Topo</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QPushButton" name="runlocBtn">
+                  <property name="text">
+                   <string>Run Location</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QPushButton" name="saveLocBtn">
+                  <property name="text">
+                   <string>Save Locations</string>
                   </property>
                  </widget>
                 </item>

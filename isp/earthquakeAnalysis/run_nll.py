@@ -64,6 +64,26 @@ class NllManager:
         return [n for n in fnmatch.filter(os.listdir(base), pattern) if os.path.isfile(os.path.join(base, n))]
 
 
+    def clean_output_folder(self):
+
+        """
+        Cleans the destination folder and creates symbolic links for all files in the source folder.
+
+        Args:
+        destination_folder (str): Path to the destination folder.
+        source_folder (str): Path to the source folder.
+
+        """
+        dir_path = os.path.join(self.__location_output, "loc")
+
+        # Clean the destination folder
+        for item in os.listdir(dir_path):
+            item_path = os.path.join(dir_path, item)
+            if os.path.isfile(item_path) or os.path.islink(item_path):
+                os.unlink(item_path)  # Remove files or symbolic links
+            elif os.path.isdir(item_path):
+                shutil.rmtree(item_path)  # Remove
+
     @property
     def root_path(self):
         root_path = self.__location_output
@@ -710,7 +730,7 @@ class Nllcatalog:
         self.obsfiles = []
     def find_files(self):
         pattern = re.compile(r'.*\.grid0\.loc\.hyp$')
-        for top_dir, _ , files in os.walk(self.working_directory):
+        for top_dir, _, files in os.walk(self.working_directory):
             for file in files:
                     self.obsfiles.append(os.path.join(top_dir, file))
 
