@@ -739,13 +739,21 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         :return:
         """
 
+        # Ensure self.figure is a valid Matplotlib Figure
         if self.axes is not None:
+            # Attempt to get the axis
             ax = self.get_axe(axes_index)
+
+            # Check if it's not a 3D axis and recreate it
+            if not hasattr(ax, 'plot') or not isinstance(ax, Axes3D):
+                ax = self.figure.add_subplot(111, projection='3d')
+                self.axes[axes_index] = ax  # Update the axes reference if stored
+
+            # Clear plot if specified
             if clear_plot:
                 ax.cla()
 
-            #ax = self.figure.gca(projection='3d')
-            ax = Axes3D(self.figure)
+            # Plot the data
             ax.plot(x, y, z, linewidth=0.75, **kwargs)
 
     def scatter3d(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
