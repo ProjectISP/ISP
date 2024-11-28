@@ -346,7 +346,7 @@ class Locate(BaseFrame, UiLocFlow):
         self.focmec_canvas.clear()
         self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, P_Trend, P_Plunge,
                                       T_Trend, T_Plunge)
-        self.focmec_canvas.figure.subplots_adjust(left=0.240, bottom=0.105, right=0.785, top=0.937, wspace=0.0,
+        self.focmec_canvas.figure.subplots_adjust(left=0.250, bottom=0.105, right=0.725, top=0.937, wspace=0.0,
                                                   hspace=0.0)
 
     def add_first_polarity_info(self, first_polarity_results):

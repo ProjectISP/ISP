@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1661</width>
-    <height>916</height>
+    <width>1574</width>
+    <height>944</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -583,8 +583,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>1090</width>
-                  <height>674</height>
+                  <width>1003</width>
+                  <height>702</height>
                  </rect>
                 </property>
                </widget>
@@ -758,16 +758,6 @@
                </property>
                <item>
                 <property name="text">
-                 <string>Phase</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Uncertainity</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
                  <string>P</string>
                 </property>
                </item>
@@ -884,7 +874,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1661</width>
+     <width>1574</width>
      <height>24</height>
     </rect>
    </property>

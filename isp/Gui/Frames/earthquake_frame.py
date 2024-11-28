@@ -1572,9 +1572,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
        for key, value in self.chop.items():
            if tr.id in self.chop[key]:
                 t = self.chop[key][tr.id][1]
+                data = self.chop[key][tr.id][2]
                 xmin_index = self.chop[key][tr.id][3]
                 xmax_index = self.chop[key][tr.id][4]
-                data = s[xmin_index:xmax_index]
+                #data = s[xmin_index:xmax_index]
                 self.chop[key][tr.id][2] = data
                 self.canvas.plot_date(t, data, ax_index, clear_plot=False, color=self.color[key],
                                  fmt='-', linewidth=0.5)
@@ -1852,9 +1853,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     #     pass
 
     def on_select(self, ax_index, xmin, xmax):
+        # xmin xmax matplotlib_date
         self.kind_wave = self.ChopCB.currentText()
         tr = self.st[ax_index]
         t = self.st[ax_index].times("matplotlib")
+
         y = self.st[ax_index].data
         dic_metadata = ObspyUtil.get_stats_from_trace(tr)
         metadata = [dic_metadata['net'], dic_metadata['station'], dic_metadata['location'], dic_metadata['channel'],
@@ -1866,8 +1869,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         xmax_index = np.min(np.where(t >= xmax))
         t = t[xmin_index:xmax_index]
         s = y[xmin_index:xmax_index]
-        self.canvas.plot_date(t, s, ax_index, clear_plot=False, color = self.color[self.kind_wave], fmt='-', linewidth=0.5)
-        id = {id: [metadata, t, s, xmin_index, xmax_index]}
+        t_start_utc =UTCDateTime(mdt.num2date(t[0]))
+        t_end_utc = UTCDateTime(mdt.num2date(t[-1]))
+        self.canvas.plot_date(t, s, ax_index, clear_plot=False, color=self.color[self.kind_wave],
+                              fmt='-', linewidth=0.5)
+        id = {id: [metadata, t, s, xmin_index, xmax_index, t_start_utc, t_end_utc]}
         self.chop[self.kind_wave].update(id)
 
     def on_multiple_select(self, ax_index, xmin, xmax):
@@ -1890,9 +1896,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             xmax_index = np.min(np.where(t >= xmax))
             t = t[xmin_index:xmax_index]
             s = y[xmin_index:xmax_index]
+            t_start_utc = UTCDateTime(mdt.num2date(t[0]))
+            t_end_utc = UTCDateTime(mdt.num2date(t[-1]))
             self.canvas.plot_date(t, s, ax_index, clear_plot=False, color=self.color[self.kind_wave], fmt='-',
                                   linewidth=0.5)
-            id = {id: [metadata, t, s, xmin_index, xmax_index]}
+            id = {id: [metadata, t, s, xmin_index, xmax_index, t_start_utc, t_end_utc]}
             self.chop[self.kind_wave].update(id)
 
 
@@ -1901,12 +1909,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
     def find_chop_by_ax(self, ax):
+        identified_chop = None
         id = self.st[ax].id
-        for key, value in self.chop[self.kind_wave].items():
-            if id in self.chop[self.kind_wave]:
-                identified_chop = self.chop[self.kind_wave][id]
-            else:
-                pass
+        #for key, value in self.chop[self.kind_wave].items():
+        if id in self.chop[self.kind_wave]:
+            identified_chop = self.chop[self.kind_wave][id]
+        else:
+            pass
         return identified_chop, id
 
     def clean_events_detected(self):
@@ -1966,7 +1975,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         if event.key == 'a':
             self.kind_wave = self.ChopCB.currentText()
-            [identified_chop, id]= self.find_chop_by_ax(self.ax_num)
+            [identified_chop, id] = self.find_chop_by_ax(self.ax_num)
             data = identified_chop[2]
             delta = 1 / identified_chop[0][6]
             [spec, freq, _] = spectrumelement(data, delta, id)
@@ -2001,7 +2010,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         if event.key == 'z':
             # Compute Multitaper Spectrogram
-            params = self.settings_dialog.getParameters()
             tr = self.st[self.ax_num]
             ax = self.canvas.get_axe(self.ax_num)
             ax2 = ax.twinx()
@@ -2009,17 +2017,21 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
             end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
             [identified_chop, id] = self.find_chop_by_ax(self.ax_num)
-            tini = identified_chop[3]
-            tend = identified_chop[4]
+            starttime = identified_chop[5]
+            endtime = identified_chop[6]
+            # if we want plot full trace#
 
+            tr.trim(starttime=starttime, endtime=endtime)
 
-            data = identified_chop[2]
-            t = identified_chop[1]
+            # tini = tr.times("matplotlib")[0]
+            # tend = tr.times("matplotlib")[1]
+
+            data = tr.data
+            t = tr.times("matplotlib")
             npts = len(data)
-            fs = identified_chop[0][6]
-            delta = 1 /fs
+            fs = tr.stats.sampling_rate
+            delta = tr.stats.delta
             fn = fs/2
-
 
             #win = int(params["Win"]*delta)
 
@@ -2030,12 +2042,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             ## using wavelet transform
             cw = ConvolveWaveletScipy(tr)
-            cw.setup_wavelet(start_time, end_time, wmin=6, wmax=6, tt=int(fs / f_min), fmin=f_min, fmax=f_max, nf=80,
+            cw.setup_wavelet(wmin=6, wmax=6, tt=int(fs / f_min), fmin=f_min, fmax=f_max, nf=80,
                               use_wavelet="Complex Morlet", m=30, decimate=False)
             z = cw.scalogram_in_dbs()
             z = np.clip(z, a_min=-80, a_max=0)
             x, y = np.meshgrid(t, np.linspace(f_min, f_max, z.shape[0]))
-            z = z[:, tini:tend]
+            #z = z[:, tini:tend]
 
             ## Using MTspectrogram still under check -->need to adapt the z to the chop
             #self.spectrogram = PlotToolsManager(id)

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1250</width>
-    <height>1039</height>
+    <height>986</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,7 @@
     <item>
      <widget class="QTabWidget" name="SurfQuakeWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="Location">
        <attribute name="title">
@@ -777,7 +777,7 @@
                <x>0</x>
                <y>0</y>
                <width>1176</width>
-               <height>911</height>
+               <height>858</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -803,13 +803,10 @@
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="2" rowspan="2" colspan="2">
-                 <widget class="QPlainTextEdit" name="EarthquakeInfoText">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
+                <item row="0" column="0" rowspan="2">
+                 <widget class="QPushButton" name="runlocBtn">
+                  <property name="text">
+                   <string>Run Location</string>
                   </property>
                  </widget>
                 </item>
@@ -820,10 +817,19 @@
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="0" rowspan="2">
-                 <widget class="QPushButton" name="runlocBtn">
-                  <property name="text">
-                   <string>Run Location</string>
+                <item row="0" column="2" rowspan="2" colspan="2">
+                 <widget class="QPlainTextEdit" name="EarthquakeInfoText">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>720</width>
+                    <height>150</height>
+                   </size>
                   </property>
                  </widget>
                 </item>
@@ -865,6 +871,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>200</width>
+              <height>150</height>
+             </size>
             </property>
            </widget>
           </item>
