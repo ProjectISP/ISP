@@ -357,11 +357,6 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 self.canvas_plot2.set_ylabel(0, "Amplitude ")
                 self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
 
-            # clean objects
-            del mtspectrogram
-            del x
-            del y
-            del log_spectrogram
 
         # elif selection == "Wigner Spectrogram":
         #
@@ -406,11 +401,6 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         #         self.canvas_plot2.set_ylabel(0, "Amplitude ")
         #         self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
         #
-        #     # clean objects
-        #     del wignerspec
-        #     del x
-        #     del y
-        #     del log_spectrogram
 
         elif selection == "Continuous Wavelet Transform":
 
@@ -508,11 +498,6 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 self.canvas_plot2.set_ylabel(0, "Amplitude ")
                 self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
 
-            # clean objects
-            del cw
-            del x
-            del y
-            del scalogram2
         else:
             pass
 
@@ -575,18 +560,18 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
 
             if self.res_factor <= 1:
-                self.canvas_plot3.plot_contour(x_freq, y_freq, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
+                self.canvas_plot3.plot_contour(x_freq, y_freq, scalogram2, axes_index=1, levels=20, clear_plot=True, clabel="Power [dB]",
                                                cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
-                self.canvas_plot3.plot_contour(x_period, 10*np.log(y_period), scalogram_period, axes_index=2,
+                self.canvas_plot3.plot_contour(x_period, 10*np.log(y_period), scalogram_period, axes_index=2, levels=20,
                                                clear_plot=True, clabel="Power [dB]",
                                                cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
             elif self.res_factor > 1:
-                self.canvas_plot3.pcolormesh(x_freq, y_freq, scalogram2, axes_index=1, clear_plot = True, clabel="Power [dB]",
+                self.canvas_plot3.pcolormesh(x_freq, y_freq, scalogram2, axes_index=1, levels=20, clear_plot=True, clabel="Power [dB]",
                                              cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
-                self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, clear_plot=True,
+                self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, levels=20, clear_plot=True,
                                              clabel ="Power [dB]", cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
             ax_period = self.canvas_plot3.get_axe(1)
@@ -600,17 +585,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             self.canvas_plot3.set_ylabel(0, "Amplitude ")
             self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")
             self.canvas_plot3.set_ylabel(2, "Period (s)")
-            # clean objects
-            del cw
-            del x
-            del y
-            del x_period
-            del y_period
-            del x_freq
-            del y_freq
-            del scalogram2
-            del scalogram_period
-            del ax_period
+
         else:
             pass
 
