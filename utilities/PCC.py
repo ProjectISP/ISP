@@ -62,8 +62,8 @@ def pcc2(x1, x2, dt, lag0, lagu):
 
     # Padding zeros
 
-    xa1 = np.append(xa1, np.zeros((Nz-N), dtype=np.complex_))
-    xa2 = np.append(xa2, np.zeros((Nz-N), dtype=np.complex_))
+    xa1 = np.append(xa1, np.zeros((Nz-N), dtype=np.complex64))
+    xa2 = np.append(xa2, np.zeros((Nz-N), dtype=np.complex64))
 
     # FFT, correlation and IFFT
 

@@ -58,7 +58,7 @@ def ccwt_ba_fast(npts, srate,fmin, fmax, wmin, wmax,tt, nf):
     else:
        nConv2 = (nConv+1)/2
 
-    tf = np.zeros((len(frex), nConv), dtype=np.complex)
+    tf = np.zeros((len(frex), nConv), dtype=np.complex64)
     tf = np.transpose(tf)
     
     ##loop over frequencies
