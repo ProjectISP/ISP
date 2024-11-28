@@ -20,7 +20,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from obspy import Stream
 from owslib.wms import WebMapService
 import numpy as np
-from isp import RESOURCE_PATH
+from isp import RESOURCE_PATH, MAP_SERVICE_URL, MAP_LAYER
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Utils import ExtendSpanSelector
 from isp.Utils import ObspyUtil, AsycTime
@@ -1015,7 +1015,6 @@ class Multiprocess_plot(BasePltPyqtCanvas):
 class CartopyCanvas(BasePltPyqtCanvas):
 
     #MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
-    MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2020/mapserv?'
     #MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/etopo1/MapServer/WMSServer'
     def __init__(self, parent, **kwargs):
         """
@@ -1080,7 +1079,6 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
         #layer = 'GEBCO_08 Hillshade'
-        layer ='GEBCO_2020_Grid'
         #layer = 'shaded_relief'
         # xmin = int(x-6)
         # xmax = int(x+6)
@@ -1098,8 +1096,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         if resolution == "high":
             try:
 
-                wms = WebMapService(self.MAP_SERVICE_URL)
-                ax.add_wms(wms, layer)
+                wms = WebMapService(MAP_SERVICE_URL)
+                ax.add_wms(wms, MAP_LAYER)
 
             except:
 
@@ -1145,8 +1143,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         sub_ax.set_extent([-179.99, 180, -89.99, 90], geodetic)
 
         # Make a nice border around the inset axes.
-        effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
-        sub_ax.outline_patch.set_path_effects([effect])
+        #effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
+        #sub_ax.outline_patch.set_path_effects([effect])
 
         # Add the land, coastlines and the extent .
         sub_ax.add_feature(cfeature.LAND)
@@ -1161,8 +1159,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
         self.clear()
         ax = self.get_axe(axes_index)
         # print(self.MAP_SERVICE_URL)
-        wms = WebMapService(self.MAP_SERVICE_URL)
-        layer = 'GEBCO_08 Hillshade'
+        wms = WebMapService(MAP_SERVICE_URL)
 
         xmin = -150
         xmax = -140
@@ -1175,7 +1172,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
                                                             edgecolor='k', alpha=0.6, linewidth=0.5,
                                                             facecolor=cartopy.feature.COLORS['land'])
         ax.add_feature(coastline_10m)
-        ax.add_wms(wms, layer)
+        ax.add_wms(wms, MAP_LAYER)
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
         gl.xlabels_top = False
@@ -1417,8 +1414,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
             sub_ax.set_extent([-179.9, 180, -89.9, 90], geodetic)
 
             # Make a nice border around the inset axes.
-            effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
-            sub_ax.outline_patch.set_path_effects([effect])
+            #effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
+            #sub_ax.outline_patch.set_path_effects([effect])
 
             # Add the land, coastlines and the extent .
             sub_ax.add_feature(cfeature.LAND)

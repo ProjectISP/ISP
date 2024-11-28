@@ -25,6 +25,8 @@ LOGMTI = os.path.join(ROOT_DIR, 'mti/output/log.txt')
 nll_templates = os.path.join(ROOT_DIR, "earthquakeAnalysis", "loc_structure/run")
 nll_ak135 = os.path.join(ROOT_DIR, "earthquakeAnalysis", "loc_structure/ak135")
 BINARY_NLL_DIR = os.path.join(ROOT_DIR, 'NLL7/src/bin')
+MAP_SERVICE_URL = "https://wms.gebco.net/mapserv?"
+MAP_LAYER = "GEBCO_LATEST"
 def create_logger():
 
     # create logger.

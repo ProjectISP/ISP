@@ -1,4 +1,6 @@
 import cartopy
+
+from isp import MAP_SERVICE_URL, MAP_LAYER
 from isp.Gui.Frames import MatplotlibFrame
 
 
@@ -12,6 +14,9 @@ class StationsMap:
         """
         self.__stations_dict = stations_dict
 
+    def _extrac_layers(self, wms):
+        for layer in wms.contents:
+            print(f" - {layer}: {wms[layer].title}")
 
 
     def plot_stations_map(self, **kwargs):
@@ -27,12 +32,11 @@ class StationsMap:
         import os
         os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
         # MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
-        MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2020/mapserv?'
+        # MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2020/mapserv?'
         # MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/etopo1/MapServer/WMSServer'
-
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
         #layer = 'GEBCO_08 Hillshade'
-        layer ='GEBCO_2020_Grid'
+        # layer ='GEBCO_2020_Grid'
         #layer = 'shaded_relief'
 
         epi_lat = kwargs.pop('latitude')
@@ -61,11 +65,13 @@ class StationsMap:
         try:
 
             wms = WebMapService(MAP_SERVICE_URL)
-            ax.add_wms(wms, layer)
+            ax.add_wms(wms, MAP_LAYER)
 
-        except:
+
+        except Exception as e:
             print("Coudnt load web service")
-
+            # Capture and print the exception
+            print(f"An error occurred: {e}")
             ax.background_img(name='ne_shaded', resolution="high")
 
 
@@ -88,8 +94,8 @@ class StationsMap:
         sub_ax.set_extent([-179.9, 180, -89.9, 90], geodetic)
 
         # Make a nice border around the inset axes.
-        effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
-        sub_ax.outline_patch.set_path_effects([effect])
+        #effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
+        #sub_ax.outline_patch.set_path_effects([effect])
 
         # Add the land, coastlines and the extent .
         sub_ax.add_feature(cfeature.LAND)

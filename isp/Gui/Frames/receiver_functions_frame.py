@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 For questions, bug reports, or to suggest new features, please contact me at
 olivar.ac@gmail.com.
 """
-
+from isp import MAP_SERVICE_URL, MAP_LAYER
 # isp imports
 from isp.Gui.Frames import BaseFrame
 import isp.receiverfunctions.rf_dialogs as dialogs
@@ -750,10 +750,8 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             self.mplwidget_5_basemap.set_extent(self.mplwidget_5.figure.axes[0].get_extent())
         
         if self.comboBox_6.currentText() == "GEBCO":
-            MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2019/mapserv?'
             wms = WebMapService(MAP_SERVICE_URL)
-            layer = 'GEBCO_2019_Grid'
-            self.mplwidget_5_basemap.add_wms(wms, layer)
+            self.mplwidget_5_basemap.add_wms(wms, MAP_LAYER)
         elif self.comboBox_6.currentText() == "Stamen":
             self.mplwidget_5_basemap.add_image(Stamen('terrain-background'), self.spinBox_6.value())
         
