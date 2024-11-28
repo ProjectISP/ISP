@@ -1124,7 +1124,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
 
         gl.top_labels = False
-        gl.left_labels = False
+        gl.left_labels = True
+        gl.right_labels = False
         gl.xlines = False
         gl.ylines = False
 

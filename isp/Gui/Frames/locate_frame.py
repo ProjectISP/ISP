@@ -73,7 +73,7 @@ class Locate(BaseFrame, UiLocFlow):
         self.saveLocBtn.clicked.connect(lambda: self.saveLoc())
 
         # Map
-        self.cartopy_canvas = CartopyCanvas(self.widget_map)
+        self.cartopy_canvas = CartopyCanvas(self.widget_map, constrained_layout=True)
 
         # FocMec
         self.focmec_canvas = FocCanvas(self.widget_focmec)
