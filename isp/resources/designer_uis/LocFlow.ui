@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1250</width>
-    <height>986</height>
+    <height>902</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -777,59 +777,22 @@
                <x>0</x>
                <y>0</y>
                <width>1176</width>
-               <height>858</height>
+               <height>774</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
               <item>
                <layout class="QGridLayout" name="gridLayout">
-                <item row="1" column="2">
-                 <widget class="QPushButton" name="pltPDF">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>Plot PDF</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="2">
-                 <widget class="QPushButton" name="pltMap">
-                  <property name="text">
-                   <string>Plot Map</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0" colspan="5">
+                <item row="5" column="0" colspan="6">
                  <widget class="QWidget" name="widget_map" native="true">
-                  <property name="styleSheet">
-                   <string notr="true">background-color: rgb(255, 255, 255);</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="3" rowspan="2" colspan="2">
-                 <widget class="QPlainTextEdit" name="EarthquakeInfoText">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>720</width>
-                    <height>150</height>
-                   </size>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1" alignment="Qt::AlignHCenter">
-                 <widget class="QCheckBox" name="topoCB">
-                  <property name="text">
-                   <string>Topo</string>
+                  <property name="styleSheet">
+                   <string notr="true">background-color: rgb(255, 255, 255);</string>
                   </property>
                  </widget>
                 </item>
@@ -840,11 +803,114 @@
                   </property>
                  </widget>
                 </item>
+                <item row="4" column="0" colspan="6">
+                 <widget class="QGroupBox" name="resultsGB">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="title">
+                   <string>Location Info</string>
+                  </property>
+                  <layout class="QVBoxLayout" name="verticalLayout_5">
+                   <property name="spacing">
+                    <number>0</number>
+                   </property>
+                   <property name="leftMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QPlainTextEdit" name="EarthquakeInfoText">
+                     <property name="enabled">
+                      <bool>true</bool>
+                     </property>
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QCheckBox" name="resultsShow">
+                  <property name="text">
+                   <string>Location Info</string>
+                  </property>
+                 </widget>
+                </item>
                 <item row="1" column="0">
                  <widget class="QPushButton" name="saveLocBtn">
                   <property name="text">
                    <string>Save Locations</string>
                   </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QPushButton" name="pltMap">
+                  <property name="text">
+                   <string>Plot Location</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QCheckBox" name="topoCB">
+                  <property name="text">
+                   <string>Topo</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="4" rowspan="2" colspan="2">
+                 <widget class="QTableWidget" name="locFilesQTW">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>150</width>
+                    <height>100</height>
+                   </size>
+                  </property>
+                  <property name="sortingEnabled">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="horizontalHeaderDefaultSectionSize">
+                   <number>370</number>
+                  </attribute>
+                  <column>
+                   <property name="text">
+                    <string>Loc File</string>
+                   </property>
+                  </column>
                  </widget>
                 </item>
                </layout>

@@ -728,13 +728,23 @@ class Nllcatalog:
     def __init__(self, working_directory):
         self.working_directory = os.path.join(working_directory, "loc")
         self.obsfiles = []
+
     def find_files(self):
-        pattern = re.compile(r'.*\.grid0\.loc\.hyp$')
+        pattern = re.compile(r'.*\.grid0\.loc\.hyp$')  # Match files ending with ".grid0.loc.hyp"
+        self.obsfiles = []  # Initialize the list
+
         for top_dir, _, files in os.walk(self.working_directory):
             for file in files:
+                # Exclude files starting with "._" or containing "sum"
+                if file.startswith("._") or "sum" in file:
+                    continue
+
+                # If the file matches the desired pattern, add it to the list
+                if pattern.match(file):
                     self.obsfiles.append(os.path.join(top_dir, file))
 
-        self.obsfiles = [file for file in self.obsfiles if pattern.match(file) and file != "location.sum.grid0.loc.hyp"]
+        # Remove specific file "location.sum.grid0.loc.hyp" from the results, if it exists
+        self.obsfiles = [file for file in self.obsfiles if not file.endswith("location.sum.grid0.loc.hyp")]
 
     def generate_id(self, length: int) -> str:
         """

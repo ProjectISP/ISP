@@ -41,12 +41,15 @@ class Locate(BaseFrame, UiLocFlow):
         """
 
         self.datalessPathForm.setText(inv_path)
-
+        self.inventory = None
         ####### Metadata ##########
+        # TODO ON SELECT METADATA CREATES SELF.INVENTORY
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm)
-        self.setMetaBtn.clicked.connect(lambda: self.on_click_select_file(self.metadata_path_bind))
-        #self.loadMetaBtn.clicked.connect(lambda: self.onChange_metadata_path(self.metadata_path_bind.value))
 
+        self.setMetaBtn.clicked.connect(lambda: self.on_click_select_file(self.metadata_path_bind))
+
+        # Binds
+        self.loc_work_bind = BindPyqtObject(self.loc_workLE, self.onChange_root_pathLoc)
 
         # NonLinLoc
         self.grid_latitude_bind = BindPyqtObject(self.gridlatSB)
@@ -58,8 +61,9 @@ class Locate(BaseFrame, UiLocFlow):
         self.grid_dxsize_bind = BindPyqtObject(self.dxsizeSB)
         self.grid_dysize_bind = BindPyqtObject(self.dysizeSB)
         self.grid_dzsize_bind = BindPyqtObject(self.dzsizeSB)
-        self.loc_work_bind = BindPyqtObject(self.loc_workLE)
+
         self.loc_work_dirBtn.clicked.connect(lambda: self.on_click_select_directory(self.loc_work_bind))
+
         self.model_path_bind = BindPyqtObject(self.modelLE, self.onChange_root_path)
         self.modelPathBtn.clicked.connect(lambda: self.on_click_select_directory(self.model_path_bind))
         self.picks_path_bind = BindPyqtObject(self.picksLE, self.onChange_root_path)
@@ -71,6 +75,7 @@ class Locate(BaseFrame, UiLocFlow):
         self.runFocMecBtn.clicked.connect(lambda: self.first_polarity())
         self.pltFocMecBtn.clicked.connect(lambda: self.pltFocMec())
         self.saveLocBtn.clicked.connect(lambda: self.saveLoc())
+
 
         # Map
         self.cartopy_canvas = CartopyCanvas(self.widget_map, constrained_layout=True)
@@ -95,11 +100,19 @@ class Locate(BaseFrame, UiLocFlow):
         """
         pass
 
+    # def on_click_select_directory(self, bind: BindPyqtObject):
+    #     dir_path = self._select_directory(bind)
+    #     if dir_path:
+    #         bind.value = dir_path
+
     def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = self._select_directory(bind)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if dir_path:
             bind.value = dir_path
-
     def _select_directory(self, bind: BindPyqtObject):
 
         if "darwin" == platform:
@@ -218,13 +231,13 @@ class Locate(BaseFrame, UiLocFlow):
             nll_catalog = Nllcatalog(self.loc_work_bind.value)
             nll_catalog.run_catalog(self.loc_work_bind.value)
 
-    def plot_pdf(self):
+    def plot_pdf(self, file_hyp):
 
-        selected = pw.QFileDialog.getOpenFileName(self, "Select *hyp file")
-        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+        #selected = pw.QFileDialog.getOpenFileName(self, "Select *hyp file")
+        if isinstance(file_hyp, str) and os.path.isfile(file_hyp):
             ellipse = {}
-            file_Selected = selected[0]
-            origin: Origin = ObspyUtil.reads_hyp_to_origin(file_Selected)
+
+            origin: Origin = ObspyUtil.reads_hyp_to_origin(file_hyp)
             latitude = origin.latitude
             longitude = origin.longitude
             smin = origin.origin_uncertainty.min_horizontal_uncertainty
@@ -235,9 +248,9 @@ class Locate(BaseFrame, UiLocFlow):
             ellipse['smin'] = smin
             ellipse['smax'] = smax
             ellipse['azimuth'] = azimuth
-            if os.path.isfile(file_Selected):
-                print(file_Selected)
-                scatter_x, scatter_y, scatter_z, pdf = NllManager.get_NLL_scatter(file_Selected)
+            if os.path.isfile(file_hyp):
+                print(file_hyp)
+                scatter_x, scatter_y, scatter_z, pdf = NllManager.get_NLL_scatter(file_hyp)
                 plot_scatter(scatter_x, scatter_y, scatter_z, pdf, ellipse)
 
     def add_earthquake_info(self, origin: Origin):
@@ -286,14 +299,16 @@ class Locate(BaseFrame, UiLocFlow):
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def on_click_plot_map(self):
 
-        file_last = self.__get_last_hyp()
-        if file_last is not None:
-            print("Plotting Map")
+        file_hyp = self.__selected_file()
+        print("Plotting ", file_hyp)
+        if file_hyp is not None:
 
-            metadata_manager = MetadataManager(self.metadata_path_bind.value)
-            inventory: Inventory = metadata_manager.get_inventory()
-            origin, event = ObspyUtil.reads_hyp_to_origin(file_last, modified=True)
-            stations = StationUtils.get_station_location_dict(event, inventory)
+            if self.inventory is None:
+                metadata_manager = MetadataManager(self.metadata_path_bind.value)
+                self.inventory: Inventory = metadata_manager.get_inventory()
+
+            origin, event = ObspyUtil.reads_hyp_to_origin(file_hyp, modified=True)
+            stations = StationUtils.get_station_location_dict(event, self.inventory)
             self.add_earthquake_info(origin)
             self.cartopy_canvas.clear()
             if self.topoCB.isChecked():
@@ -302,6 +317,7 @@ class Locate(BaseFrame, UiLocFlow):
                 resolution = 'simple'
             self.cartopy_canvas.plot_map(origin.longitude, origin.latitude,0,
                                          resolution=resolution, stations=stations)
+            self.plot_pdf(file_hyp)
 
 
     def saveLoc(self):
@@ -404,3 +420,39 @@ class Locate(BaseFrame, UiLocFlow):
         self.FirstPolarityInfoText.appendPlainText("Misfit: {Misfit:.3f}".format(Misfit=first_polarity_results["results"][3]))
         self.FirstPolarityInfoText.appendPlainText("GAP: {GAP:.3f}".format(GAP=first_polarity_results["results"][4]))
         self.FirstPolarityInfoText.appendPlainText("Number of polarities: {NP:.3f}".format(NP=first_polarity_results["results"][5]))
+
+
+    def onChange_root_pathLoc(self, value):
+
+        """
+        Fired every time the root_path is changed
+
+        :param value: The path of the new directory.
+
+        :return:
+        """
+
+        self.locFilesQTW.clearContents()
+        if os.path.isdir(self.loc_work_bind.value):
+            nllcatalog = Nllcatalog(self.loc_work_bind.value)
+            nllcatalog.find_files()
+            files_list = nllcatalog.obsfiles
+            for file in files_list:
+                try:
+                    root_file = os.path.basename(file)
+                    self.locFilesQTW.setRowCount(self.locFilesQTW.rowCount() + 1)
+
+
+                    item = pw.QTableWidgetItem()
+                    item.setData(0, root_file)
+                    self.locFilesQTW.setItem(self.locFilesQTW.rowCount() - 1, 0, pw.QTableWidgetItem(root_file))
+                    #check = pw.QCheckBox()
+                    #self.tw_files.setCellWidget(self.locFilesQTW.rowCount() - 1, 3, check)
+
+                except Exception:
+                    pass
+
+    def __selected_file(self):
+        row = self.locFilesQTW.currentRow()
+        file = os.path.join(self.loc_work_bind.value, "loc", self.locFilesQTW.item(row, 0).data(0))
+        return file
