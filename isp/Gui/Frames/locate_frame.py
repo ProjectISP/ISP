@@ -8,6 +8,7 @@ locate_frame
 import os
 import shutil
 
+from PyQt5.QtWidgets import QPushButton, QVBoxLayout
 from obspy import Inventory
 from obspy.core.event import Origin
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -66,7 +67,6 @@ class Locate(BaseFrame, UiLocFlow):
         self.genvelBtn.clicked.connect(lambda: self.on_click_run_vel_to_grid())
         self.grdtimeBtn.clicked.connect(lambda: self.on_click_run_grid_to_time())
         self.runlocBtn.clicked.connect(lambda: self.on_click_run_loc())
-        self.pltPDF.clicked.connect(lambda: self.plot_pdf())
         self.pltMap.clicked.connect(lambda: self.on_click_plot_map())
         self.runFocMecBtn.clicked.connect(lambda: self.first_polarity())
         self.pltFocMecBtn.clicked.connect(lambda: self.pltFocMec())
@@ -74,11 +74,16 @@ class Locate(BaseFrame, UiLocFlow):
 
         # Map
         self.cartopy_canvas = CartopyCanvas(self.widget_map, constrained_layout=True)
-
         # FocMec
         self.focmec_canvas = FocCanvas(self.widget_focmec)
 
+        self.resultsShow.stateChanged.connect(lambda: self.show_results())
 
+    def show_results(self):
+        if not self.resultsShow.checkState():
+            self.EarthquakeInfoText.setMaximumHeight(0)
+        else:
+            self.EarthquakeInfoText.setMaximumHeight(150)
 
     def onChange_root_path(self, value):
         """

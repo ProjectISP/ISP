@@ -7,10 +7,12 @@ Created on Tue Dec 17 20:26:28 2019
 """
 import shutil
 import subprocess
+import time
+
 import pandas as pd
 import os
 from obspy import read_events, Catalog
-from isp import FOC_MEC_PATH, FOC_MEC_BASH_PATH
+from isp import FOC_MEC_PATH, FOC_MEC_BASH_PATH, ROOT_DIR
 from isp.earthquakeAnalysis import focmecobspy
 from isp.Utils.subprocess_utils import exc_cmd
 import re
@@ -117,6 +119,9 @@ class FirstPolarity:
             for j in range(N):
                 f.write("{:4s}  {:6.2f}  {:6.2f}{:1s}\n".format(Station[j], Az[j], Dip[j], Motion[j]))
 
+        # Now move the template running to the first_polarity folder
+        shutil.copy(FOC_MEC_BASH_PATH, dir_path)
+
         return temp_file
 
     def run_focmec_csh(self):
@@ -126,9 +131,15 @@ class FirstPolarity:
 
     def run_focmec(self, input_focmec_path, num_wrong_polatities):
 
+        # binary file
         command = os.path.join(FOC_MEC_PATH, 'focmec')
         dir_name = os.path.dirname(input_focmec_path)
+
+        # first_polarity/output
         output_path = os.path.join(dir_name, "output")
+
+        # first_polarity path
+        focmec_bash_path = os.path.join(os.path.dirname(input_focmec_path), "focmec_run")
 
         if os.path.isdir(output_path):
             pass
@@ -136,20 +147,26 @@ class FirstPolarity:
             os.makedirs(output_path)
 
         # edit number of accepted wrong polarities
-        self.edit_focmec_run(num_wrong_polatities)
+        self.edit_focmec_run(num_wrong_polatities, focmec_bash_path)
 
-        shutil.copy(input_focmec_path,'.')
-        with open(FOC_MEC_BASH_PATH, 'r') as f, open('./log.txt', 'w') as log:
+        shutil.copy(input_focmec_path, '.')
+        with open(focmec_bash_path, 'r') as f, open('./log.txt', 'w') as log:
             p = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=log)
-            f = open(FOC_MEC_BASH_PATH, 'r')
+            f = open(focmec_bash_path, 'r')
             string = f.read()
             # This action has created focmec.lst at ./isp
             out, errs = p.communicate(input=string.encode(), timeout=2.0)
             # This action has created mechanism.out at ./isp
-        shutil.move('mechanism.out', os.path.join(output_path, 'mechanism.out'))
-        shutil.move('focmec.lst', os.path.join(output_path, 'focmec.lst'))
-        shutil.move('./log.txt', os.path.join(output_path, 'log.txt'))
-        shutil.move('./test.inp', os.path.join(output_path, 'test.inp'))
+        #time.sleep(5)
+        exec_path = os.path.dirname(ROOT_DIR)
+        mechanism_out = os.path.join(exec_path, "mechanism.out")
+        focmec_lst = os.path.join(exec_path, "focmec.lst")
+        log_file = os.path.join(exec_path, "log.txt")
+        test_inp = os.path.join(exec_path, "test.inp")
+        shutil.move(mechanism_out, os.path.join(output_path, 'mechanism.out'))
+        shutil.move(focmec_lst, os.path.join(output_path, 'focmec.lst'))
+        shutil.move(log_file, os.path.join(output_path, 'log.txt'))
+        shutil.move(test_inp, os.path.join(output_path, 'test.inp'))
 
     def extract_focmec_info(self, focmec_path):
         catalog: Catalog = focmecobspy._read_focmec(focmec_path)
@@ -167,7 +184,7 @@ class FirstPolarity:
         index = mismifits.index(min(mismifits))
         return focal_mechanism[index]
 
-    def edit_focmec_run(self, new_float_value):
+    def edit_focmec_run(self, new_float_value, focmec_bash_path):
         """
         Edits a specific line in the text file to update the float value and writes it to a new location.
 
@@ -179,7 +196,7 @@ class FirstPolarity:
 
         #output_path = os.path.join(os.path.dirname(FOC_MEC_BASH_PATH), "focmec_run")
         # Read the file and store its content
-        with open(FOC_MEC_BASH_PATH, 'r') as file:
+        with open(focmec_bash_path, 'r') as file:
             lines = file.readlines()
 
         # Edit the specific line containing "allowed P polarity erors..[0]"
@@ -192,7 +209,7 @@ class FirstPolarity:
                 break
 
         # Write the modified content to the new file
-        with open(FOC_MEC_BASH_PATH, 'w') as file:
+        with open(focmec_bash_path, 'w') as file:
             file.writelines(lines)
 
     def parse_solution_block(self, solution_text):
