@@ -341,24 +341,21 @@ class Locate(BaseFrame, UiLocFlow):
         else:
             md.set_info_message("No files to save", "No *.hyp files inside " + self.loc_work_bind.value)
 
-
-
-
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def first_polarity(self):
 
         file_last = self.__get_last_hyp()
-
+        #comment for input
+        header = FirstPolarity.set_head(file_last)
         if file_last is not None:
             print("Plotting Map")
             firstpolarity_manager = FirstPolarity()
-            file_input = firstpolarity_manager.create_input(file_last)
+            file_input = firstpolarity_manager.create_input(file_last, header)
             #if file_input is not None:
             firstpolarity_manager.run_focmec(file_input, self.accepted_polarities.value())
 
-
             #df = pd.DataFrame(first_polarity_results, columns=["First_Polarity", "results"])
             #df.to_csv(path_output, sep=' ', index=False)
-
 
 
     def pltFocMec(self):
@@ -369,8 +366,9 @@ class Locate(BaseFrame, UiLocFlow):
         firstpolarity_manager = FirstPolarity()
         Station, Az, Dip, Motion = firstpolarity_manager.get_dataframe(location_file)
         cat, focal_mechanism = firstpolarity_manager.extract_focmec_info(focmec_file)
-        focmec_full_Data = parse_focmec_file(focmec_file)
-
+        # TODO MIGHT BE FOR PLOTTING ALL POSSIBLE FAUL PLANES
+        # focmec_full_Data = parse_focmec_file(focmec_file)
+        file_output_name = FirstPolarity.extract_name(focmec_file)
 
         # #print(cat[0].focal_mechanisms[0])
         Plane_A = focal_mechanism.nodal_planes.nodal_plane_1

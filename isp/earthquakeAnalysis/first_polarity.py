@@ -12,7 +12,10 @@ import time
 import pandas as pd
 import os
 from obspy import read_events, Catalog
+from obspy.core.event import Origin
+
 from isp import FOC_MEC_PATH, FOC_MEC_BASH_PATH, ROOT_DIR
+from isp.Utils import ObspyUtil
 from isp.earthquakeAnalysis import focmecobspy
 from isp.Utils.subprocess_utils import exc_cmd
 import re
@@ -97,7 +100,7 @@ class FirstPolarity:
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
 
-    def create_input(self, file_last_hyp):
+    def create_input(self, file_last_hyp, header):
 
         Station, Az, Dip, Motion = self.get_dataframe(file_last_hyp)
 
@@ -115,7 +118,9 @@ class FirstPolarity:
         N = len(Station)
 
         with open(temp_file, 'wt') as f:
-            f.write("\n")  # first line should be skipped!
+            #f.write("\n")  # first line should be skipped!
+            f.write(header)
+            f.write("\n")
             for j in range(N):
                 f.write("{:4s}  {:6.2f}  {:6.2f}{:1s}\n".format(Station[j], Az[j], Dip[j], Motion[j]))
 
@@ -163,10 +168,25 @@ class FirstPolarity:
         focmec_lst = os.path.join(exec_path, "focmec.lst")
         log_file = os.path.join(exec_path, "log.txt")
         test_inp = os.path.join(exec_path, "test.inp")
-        shutil.move(mechanism_out, os.path.join(output_path, 'mechanism.out'))
-        shutil.move(focmec_lst, os.path.join(output_path, 'focmec.lst'))
-        shutil.move(log_file, os.path.join(output_path, 'log.txt'))
-        shutil.move(test_inp, os.path.join(output_path, 'test.inp'))
+        output_ref = FirstPolarity.extract_name(focmec_lst)
+        # Sanitize file name
+        file_output_name = (f"{output_ref['date'].replace('/', '-')}_"
+                            f"{output_ref['time'].replace(':', '-')}")
+
+        # Ensure output directory exists
+        os.makedirs(output_path, exist_ok=True)
+
+        # Move and rename files
+        if os.path.exists(mechanism_out):
+            shutil.move(mechanism_out, os.path.join(output_path, file_output_name + '.out'))
+        if os.path.exists(focmec_lst):
+            shutil.copy(focmec_lst, os.path.join(output_path, 'focmec.lst'))
+        if os.path.exists(focmec_lst):
+            shutil.move(focmec_lst, os.path.join(output_path, file_output_name + '.lst'))
+        if os.path.exists(log_file):
+            shutil.move(log_file, os.path.join(output_path, file_output_name + '.txt'))
+        if os.path.exists(test_inp):
+            shutil.move(test_inp, os.path.join(output_path, file_output_name + '.inp'))
 
     def extract_focmec_info(self, focmec_path):
         catalog: Catalog = focmecobspy._read_focmec(focmec_path)
@@ -295,3 +315,47 @@ class FirstPolarity:
 
         return parsed_data
 
+    @staticmethod
+    def set_head(event_file):
+        header = "\n"
+        # helps to set a string in comments of focmec input
+        try:
+            origin: Origin = ObspyUtil.reads_hyp_to_origin(event_file)
+            origin_time_formatted_string = origin.time.datetime.strftime("%m/%d/%Y, %H:%M:%S.%f")
+
+            lat = str(origin.longitude)
+            lon = str(origin.latitude)
+            depth = str(origin.depth / 1000)
+            header = origin_time_formatted_string + " " + lat + " " + lon + " " + depth
+        except:
+            pass
+        return header
+
+    @staticmethod
+    def extract_name(file_path):
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+        for i, line in enumerate(lines):
+            if "Input" in line:
+                # Extract the line after "Input"
+                epicenter_line = lines[i + 1].strip()
+                # Split the line into date, time, and coordinates
+                parts = epicenter_line.split(',')
+                if len(parts) < 2:
+                    continue  # Skip if line format is unexpected
+                date = parts[0].strip()
+                time_and_coordinates = parts[1].strip().split()
+                time = time_and_coordinates[0]
+                longitude = float(time_and_coordinates[1])
+                latitude = float(time_and_coordinates[2])
+                depth_km = float(time_and_coordinates[3])
+                # Store data in a dictionary
+                return {
+                    "date": date,
+                    "time": time,
+                    "longitude": longitude,
+                    "latitude": latitude,
+                    "depth_km": depth_km}
+
+        return None  # Return None if "Input" is not found
