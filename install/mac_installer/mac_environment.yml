@@ -21,7 +21,7 @@ dependencies:
     - astunparse==1.6.3
     - bcrypt==4.2.1
     - cachetools==5.3.3
-    - cartopy==0.22.0
+    - cartopy==0.23.0
     - certifi==2024.2.2
     - cffi==1.17.1
     - charset-normalizer==3.3.2
@@ -53,7 +53,7 @@ dependencies:
     - lxml==5.1.0
     - markdown==3.5.2
     - markupsafe==2.1.5
-    - matplotlib==3.8.3
+    - matplotlib==3.9.0
     - ml-dtypes==0.2.0
     - nitime==0.11
     - numba==0.60.0
@@ -108,4 +108,3 @@ dependencies:
     - werkzeug==3.0.1
     - wrapt==1.14.1
     - zipp==3.17.0
-prefix: /opt/anaconda3/envs/isp_new

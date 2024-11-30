@@ -6,7 +6,7 @@ astunparse=1.6.3=pypi_0
 bcrypt=4.2.1=pypi_0
 ca-certificates=2023.12.12=hecd8cb5_0
 cachetools=5.3.3=pypi_0
-cartopy=0.22.0=pypi_0
+cartopy=0.23.0=pypi_0
 certifi=2024.2.2=pypi_0
 cffi=1.17.1=pypi_0
 charset-normalizer=3.3.2=pypi_0
@@ -40,9 +40,8 @@ llvmlite=0.43.0=pypi_0
 lxml=5.1.0=pypi_0
 markdown=3.5.2=pypi_0
 markupsafe=2.1.5=pypi_0
-matplotlib=3.8.3=pypi_0
+matplotlib=3.9.0=pypi_0
 ml-dtypes=0.2.0=pypi_0
-mysql-connector-python=8.0.31=pypi_0
 ncurses=6.4=hcec6c5f_0
 nitime=0.11=pypi_0
 numba=0.60.0=pypi_0
@@ -50,6 +49,7 @@ numpy=1.26.4=pypi_0
 nvector=1.0.1=pypi_0
 oauthlib=3.2.2=pypi_0
 obspy=1.4.0=pypi_0
+obspyh5=0.5.0=pypi_0
 openssl=3.0.13=hca72f7f_0
 opt-einsum=3.3.0=pypi_0
 owslib=0.29.3=pypi_0
@@ -58,10 +58,11 @@ pandas=2.1.4=pypi_0
 paramiko=3.5.0=pypi_0
 pillow=10.1.0=pypi_0
 pip=23.3.1=py39hecd8cb5_0
-protobuf=3.20.1=pypi_0
+protobuf=4.25.5=pypi_0
 pyasn1=0.5.1=pypi_0
 pyasn1-modules=0.3.0=pypi_0
 pycparser=2.22=pypi_0
+pymysql=1.1.1=pypi_0
 pynacl=1.5.0=pypi_0
 pyparsing=3.1.1=pypi_0
 pyproj=3.6.1=pypi_0
