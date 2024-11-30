@@ -114,76 +114,76 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         mindepth = self.depth_minCB.value()
         maxdepth = self.depth_maxCB.value()
 
-        try:
-            md = MessageDialog(self)
-            md.hide()
+        #try:
+        md = MessageDialog(self)
+        md.hide()
 
-            if self.FDSN_CB.isChecked():
-                catalog = self.client.get_events(starttime=starttime, endtime=endtime, mindepth = mindepth,
-                                             maxdepth = maxdepth, minmagnitude=minmagnitude, maxmagnitude = maxmagnitude)
+        if self.FDSN_CB.isChecked():
+            catalog = self.client.get_events(starttime=starttime, endtime=endtime, mindepth = mindepth,
+                                         maxdepth = maxdepth, minmagnitude=minmagnitude, maxmagnitude = maxmagnitude)
 
-                for event in catalog:
-                    otime = event.origins[0].time
-                    lat = event.origins[0].latitude
-                    lon = event.origins[0].longitude
-                    depth = event.origins[0].depth
-                    magnitude = event.magnitudes[0].mag
-                    magnitude_type = event.magnitudes[0].magnitude_type
-                    # append results
-                    latitudes.append(lat)
-                    longitudes.append(lon)
-                    depths.append(depth)
-                    magnitudes.append(magnitude)
-                    self.set_table(otime, lat, lon, depth, magnitude, magnitude_type)
-            else:
-                self.sc = self.seiscomp3connection.getSeisComPdatabase()
-                self.inventory = self.seiscomp3connection.getMetadata()
-                self.plotstationsBtn.setEnabled(True)
-                self.catalogBtn.setEnabled(True)
-                #if not sc.checkfile():
-                sc3_filter = {'depth': [mindepth, maxdepth], 'magnitude': [minmagnitude, maxmagnitude]}
-                catalog = self.sc.find(starttime_datetime, endtime_datetime, **sc3_filter)
-                self.sc3_catalog_search = catalog
+            for event in catalog:
+                otime = event.origins[0].time
+                lat = event.origins[0].latitude
+                lon = event.origins[0].longitude
+                depth = event.origins[0].depth
+                magnitude = event.magnitudes[0].mag
+                magnitude_type = event.magnitudes[0].magnitude_type
+                # append results
+                latitudes.append(lat)
+                longitudes.append(lon)
+                depths.append(depth)
+                magnitudes.append(magnitude)
+                self.set_table(otime, lat, lon, depth, magnitude, magnitude_type)
+        else:
+            self.sc = self.seiscomp3connection.getSeisComPdatabase()
+            self.inventory = self.seiscomp3connection.getMetadata()
+            self.plotstationsBtn.setEnabled(True)
+            self.catalogBtn.setEnabled(True)
+            #if not sc.checkfile():
+            sc3_filter = {'depth': [mindepth, maxdepth], 'magnitude': [minmagnitude, maxmagnitude]}
+            catalog = self.sc.find(starttime_datetime, endtime_datetime, **sc3_filter)
+            self.sc3_catalog_search = catalog
 
-                for event in catalog:
-                    otime = UTCDateTime(event['time'])
-                    lat = event['latitude']
-                    lon = event['longitude']
-                    depth = event['depth']*1000
-                    magnitude = event['magnitude']
-                    magnitude_type = "Mw"
-                    # append results
-                    latitudes.append(lat)
-                    longitudes.append(lon)
-                    depths.append(depth)
-                    magnitudes.append(magnitude)
-                    self.set_table(otime, lat, lon, depth, magnitude, magnitude_type)
+            for event in catalog:
+                otime = UTCDateTime(event['time'])
+                lat = event['latitude']
+                lon = event['longitude']
+                depth = event['depth']*1000
+                magnitude = event['magnitude']
+                magnitude_type = "Mw"
+                # append results
+                latitudes.append(lat)
+                longitudes.append(lon)
+                depths.append(depth)
+                magnitudes.append(magnitude)
+                self.set_table(otime, lat, lon, depth, magnitude, magnitude_type)
 
-            selection_range = QtWidgets.QTableWidgetSelectionRange(0, 0, self.tableWidget.rowCount() - 1, self.tableWidget.columnCount() - 1)
-            #print(selection_range.bottomRow())
+        selection_range = QtWidgets.QTableWidgetSelectionRange(0, 0, self.tableWidget.rowCount() - 1, self.tableWidget.columnCount() - 1)
+        #print(selection_range.bottomRow())
 
-            self.longitudes = longitudes
-            self.latitudes = latitudes
-            self.depths = depths
-            self.magnitudes = magnitudes
-            self.tableWidget.setRangeSelected(selection_range, True)
-            #print(selection_range)
-            self.catalog_out=[latitudes, longitudes, depths, magnitudes]
-            # plot earthquakes
-            self.cartopy_canvas.global_map(0, plot_earthquakes= True, show_colorbar = self.activated_colorbar,
-                                           lat=latitudes, lon=longitudes, depth=depths, magnitude = magnitudes,
-                                           resolution = self.typeCB.currentText())
+        self.longitudes = longitudes
+        self.latitudes = latitudes
+        self.depths = depths
+        self.magnitudes = magnitudes
+        self.tableWidget.setRangeSelected(selection_range, True)
+        #print(selection_range)
+        self.catalog_out=[latitudes, longitudes, depths, magnitudes]
+        # plot earthquakes
+        self.cartopy_canvas.global_map(0, plot_earthquakes= True, show_colorbar = self.activated_colorbar,
+                                       lat=latitudes, lon=longitudes, depth=depths, magnitude = magnitudes,
+                                       resolution = self.typeCB.currentText())
 
-            self.activated_colorbar = False
-            self.event_dataBtn.setEnabled(True)
-            md.set_info_message("Catalog generated succesfully!!!")
-            md.show()
+        self.activated_colorbar = False
+        self.event_dataBtn.setEnabled(True)
+        md.set_info_message("Catalog generated succesfully!!!")
+        md.show()
 
-        except:
-
-                md.set_error_message("Something wet wrong, Please check that you have: 1- Loaded Inventory, " 
-                                     "2- Search Parameters have sense")
-                md.show()
+        # except:
+        #
+        #         md.set_error_message("Something wet wrong, Please check that you have: 1- Loaded Inventory, "
+        #                              "2- Search Parameters have sense")
+        #         md.show()
 #
         #obspy.clients.fdsn.client.Client
 

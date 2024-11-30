@@ -1283,7 +1283,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
 
         if plot_earthquakes:
-            color_map = plt.cm.get_cmap('rainbow')
+            color_map = plt.get_cmap('rainbow')
             reversed_color_map = color_map.reversed()
             cs = ax.scatter(lon, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map, vmin = 0,
                             vmax = 600)
