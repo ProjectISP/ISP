@@ -180,8 +180,6 @@ class FirstPolarity:
         if os.path.exists(mechanism_out):
             shutil.move(mechanism_out, os.path.join(output_path, file_output_name + '.out'))
         if os.path.exists(focmec_lst):
-            shutil.copy(focmec_lst, os.path.join(output_path, 'focmec.lst'))
-        if os.path.exists(focmec_lst):
             shutil.move(focmec_lst, os.path.join(output_path, file_output_name + '.lst'))
         if os.path.exists(log_file):
             shutil.move(log_file, os.path.join(output_path, file_output_name + '.txt'))
@@ -359,3 +357,70 @@ class FirstPolarity:
                     "depth_km": depth_km}
 
         return None  # Return None if "Input" is not found
+
+    @staticmethod
+    def find_files(base_path):
+        pattern = re.compile(r'.*lst$')  # Match files ending with ".grid0.loc.hyp"
+        obsfiles = []  # Initialize the list
+        path_to_find = os.path.join(base_path, 'first_polarity')
+
+        for top_dir, _, files in os.walk(path_to_find):
+            for file in files:
+                # If the file matches the desired pattern, add it to the list
+                if pattern.match(file):
+                    obsfiles.append(os.path.join(top_dir, file))
+
+        return obsfiles
+    @staticmethod
+    def extract_station_data(file_path):
+        stations = []
+        azimuths = []
+        dips = []
+        motions = []
+
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+        # Find the start of the station data
+        station_data_started = False
+        for line in lines:
+            # Skip lines until the header is detected
+            if line.strip().startswith("Statn"):
+                station_data_started = True
+                continue
+
+            # Skip processing lines until after header
+            if not station_data_started:
+                continue
+
+            # Stop parsing if the data block ends
+            if line.strip().startswith("Polarities/Errors:"):
+                break
+
+            # Process station data lines
+            parts = line.split()
+            if len(parts) < 4:
+                continue  # Skip malformed lines
+
+            try:
+                # Extract fields
+                station = parts[0]
+                azimuth = float(parts[1])
+                dip = float(parts[2])
+                motion = parts[3]
+
+                # Skip rows with '?' in motion
+                if '?' in motion:
+                    continue
+
+                # Append to respective lists
+                stations.append(station)
+                azimuths.append(azimuth)
+                dips.append(dip)
+                motions.append(motion)
+
+            except ValueError:
+                # Ignore lines with invalid numeric values
+                continue
+
+        return stations, azimuths, dips, motions

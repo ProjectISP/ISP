@@ -7,8 +7,6 @@ locate_frame
 
 import os
 import shutil
-
-from PyQt5.QtWidgets import QPushButton, QVBoxLayout
 from obspy import Inventory
 from obspy.core.event import Origin
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -21,7 +19,6 @@ from isp.LocCore.pdf_plot import plot_scatter
 from isp.LocCore.plot_tool_loc import StationUtils
 from isp.Utils import ObspyUtil
 from isp.earthquakeAnalysis import NllManager, FirstPolarity
-from isp.earthquakeAnalysis.focmecobspy import parse_focmec_file
 from isp.earthquakeAnalysis.run_nll import Nllcatalog
 from isp.earthquakeAnalysis.structures import TravelTimesConfiguration, LocationParameters, NLLConfig, \
     GridConfiguration
@@ -230,6 +227,7 @@ class Locate(BaseFrame, UiLocFlow):
                 nll_manager.run_nlloc()
             nll_catalog = Nllcatalog(self.loc_work_bind.value)
             nll_catalog.run_catalog(self.loc_work_bind.value)
+            self.onChange_root_pathLoc("refress")
 
     def plot_pdf(self, file_hyp):
 
@@ -259,22 +257,22 @@ class Locate(BaseFrame, UiLocFlow):
                                              format(origin_time=origin.time,
                                                     standard_error=origin.quality.standard_error))
         self.EarthquakeInfoText.appendPlainText("  Hypocenter Geographic Coordinates:     "
-                                                "Latitude {lat:.3f} "
-                                                "Longitude {long:.3f}     Depth {depth:.3f}     "
-                                                "Uncertainty {unc:.3f}".
+                                                "Latitude {lat:.3f}º"
+                                                "Longitude {long:.3f}º     Depth {depth:.3f} km    "
+                                                "Uncertainty {unc:.3f} km".
                                                 format(lat=origin.latitude, long=origin.longitude,
                                                        depth=origin.depth / 1000,
                                                        unc=origin.depth_errors['uncertainty']))
-        self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err {:.3f}     "
-                                                "Min Horizontal Err {:.3f}     "
-                                                "Azimuth {:.3f}"
+        self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err {:.3f} km     "
+                                                "Min Horizontal Err {:.3f} km    "
+                                                "Azimuth {:.3f} º"
                                                 .format(origin.origin_uncertainty.max_horizontal_uncertainty,
                                                         origin.origin_uncertainty.min_horizontal_uncertainty,
                                                         origin.origin_uncertainty.azimuth_max_horizontal_uncertainty))
 
         self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases {:.3f}     "
-                                                "Azimuthal GAP {:.3f}     Minimum Distance {:.3f}     "
-                                                "Maximum Distance {:.3f}"
+                                                "Azimuthal GAP {:.3f} º     Minimum Distance {:.3f} km     "
+                                                "Maximum Distance {:.3f} km"
                                                 .format(origin.quality.used_phase_count,
                                                         origin.quality.azimuthal_gap,
                                                         origin.quality.minimum_distance,
@@ -296,7 +294,6 @@ class Locate(BaseFrame, UiLocFlow):
         file_last = os.path.join(self.loc_work_bind.value, "first_polarity/output", "focmec.lst")
         return file_last
 
-    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def on_click_plot_map(self):
 
         file_hyp = self.__selected_file()
@@ -309,6 +306,7 @@ class Locate(BaseFrame, UiLocFlow):
 
             origin, event = ObspyUtil.reads_hyp_to_origin(file_hyp, modified=True)
             stations = StationUtils.get_station_location_dict(event, self.inventory)
+            N = len(stations)
             self.add_earthquake_info(origin)
             self.cartopy_canvas.clear()
             if self.topoCB.isChecked():
@@ -318,6 +316,10 @@ class Locate(BaseFrame, UiLocFlow):
             self.cartopy_canvas.plot_map(origin.longitude, origin.latitude,0,
                                          resolution=resolution, stations=stations)
             self.plot_pdf(file_hyp)
+
+            if N==0:
+                md = MessageDialog(self)
+                md.set_info_message("Warning, refresh your metadata, no stations matching the *.hyp file")
 
 
     def saveLoc(self):
@@ -344,47 +346,42 @@ class Locate(BaseFrame, UiLocFlow):
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def first_polarity(self):
 
-        file_last = self.__get_last_hyp()
-        #comment for input
-        header = FirstPolarity.set_head(file_last)
-        if file_last is not None:
-            print("Plotting Map")
-            firstpolarity_manager = FirstPolarity()
-            file_input = firstpolarity_manager.create_input(file_last, header)
-            #if file_input is not None:
-            firstpolarity_manager.run_focmec(file_input, self.accepted_polarities.value())
-
-            #df = pd.DataFrame(first_polarity_results, columns=["First_Polarity", "results"])
-            #df.to_csv(path_output, sep=' ', index=False)
+        nllcatalog = Nllcatalog(self.loc_work_bind.value)
+        nllcatalog.find_files()
+        files_list = nllcatalog.obsfiles
+        for file in files_list:
+            try:
+                header = FirstPolarity.set_head(file)
+                if file is not None:
+                    firstpolarity_manager = FirstPolarity()
+                    file_input = firstpolarity_manager.create_input(file, header)
+                    firstpolarity_manager.run_focmec(file_input, self.accepted_polarities.value())
+            except:
+                pass
+        self.onChange_root_pathLoc("refress")
 
 
     def pltFocMec(self):
-        location_file = self.__get_last_hyp()
-        focmec_file = self.__get_last_focmec()
-        if location_file is not None:
-            print("Plotting Map")
+
+        focmec_file = self.__focmec_file()
+
         firstpolarity_manager = FirstPolarity()
-        Station, Az, Dip, Motion = firstpolarity_manager.get_dataframe(location_file)
+        #Station, Az, Dip, Motion = firstpolarity_manager.get_dataframe(location_file)
+        Station, Az, Dip, Motion = FirstPolarity.extract_station_data(focmec_file)
         cat, focal_mechanism = firstpolarity_manager.extract_focmec_info(focmec_file)
         # TODO MIGHT BE FOR PLOTTING ALL POSSIBLE FAUL PLANES
         # focmec_full_Data = parse_focmec_file(focmec_file)
-        file_output_name = FirstPolarity.extract_name(focmec_file)
+        # file_output_name = FirstPolarity.extract_name(focmec_file)
 
-        # #print(cat[0].focal_mechanisms[0])
         Plane_A = focal_mechanism.nodal_planes.nodal_plane_1
         strike_A = Plane_A.strike
         dip_A = Plane_A.dip
         rake_A = Plane_A.rake
-
         extra_info = firstpolarity_manager.parse_solution_block(focal_mechanism.comments[0]["text"])
-
-
         P_Trend = extra_info['P,T']['Trend']
         P_Plunge = extra_info['P,T']['Plunge']
-
         T_Trend = extra_info['P,N']['Trend']
         T_Plunge = extra_info['P,N']['Plunge']
-
 
         misfit_first_polarity = focal_mechanism.misfit
         azimuthal_gap = focal_mechanism.azimuthal_gap
@@ -435,6 +432,7 @@ class Locate(BaseFrame, UiLocFlow):
             nllcatalog = Nllcatalog(self.loc_work_bind.value)
             nllcatalog.find_files()
             files_list = nllcatalog.obsfiles
+            files_focmec = FirstPolarity.find_files(self.loc_work_bind.value)
             for file in files_list:
                 try:
                     root_file = os.path.basename(file)
@@ -450,7 +448,28 @@ class Locate(BaseFrame, UiLocFlow):
                 except Exception:
                     pass
 
+            for file in files_focmec:
+                try:
+                    root_file = os.path.basename(file)
+                    self.focmecTW.setRowCount(self.focmecTW.rowCount() + 1)
+
+
+                    item = pw.QTableWidgetItem()
+                    item.setData(0, root_file)
+                    self.focmecTW.setItem(self.focmecTW.rowCount() - 1, 0, pw.QTableWidgetItem(root_file))
+                    #check = pw.QCheckBox()
+                    #self.tw_files.setCellWidget(self.locFilesQTW.rowCount() - 1, 3, check)
+
+                except Exception:
+                    pass
+
+
     def __selected_file(self):
         row = self.locFilesQTW.currentRow()
         file = os.path.join(self.loc_work_bind.value, "loc", self.locFilesQTW.item(row, 0).data(0))
+        return file
+
+    def __focmec_file(self):
+        row = self.focmecTW.currentRow()
+        file = os.path.join(self.loc_work_bind.value, "first_polarity/output", self.focmecTW.item(row, 0).data(0))
         return file
