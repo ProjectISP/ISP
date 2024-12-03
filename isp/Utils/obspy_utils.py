@@ -1,5 +1,6 @@
 import math
 import pickle
+from datetime import datetime
 from enum import unique, Enum
 from multiprocessing import Pool
 from os import listdir
@@ -368,17 +369,68 @@ class MseedUtil:
 
         return r
 
+    # @staticmethod
+    # def get_project_basic_info(project):
+    #
+    #     try:
+    #         total_components = sum(len(value_list) for value_list in project.values())
+    #         stations_channel = len(project)
+    #     except:
+    #         total_components = None
+    #         stations_channel = None
+    #
+    #     return stations_channel, total_components
     @staticmethod
     def get_project_basic_info(project):
+        """
+            Counts the number of unique stations in a dictionary where keys are in the format 'NET.STATION.CHANNEL'.
 
-        try:
+            Args:
+                data_dict (dict): The input dictionary with keys in the format 'NET.STATION.CHANNEL'.
+
+            Returns:
+                int: The number of unique stations and channels
+        """
+
+        ## Take the stations names and its number
+
+        info = {}
+
+        networks = set()
+        stations = set()  # Use a set to store unique stations
+        channels = set()
+        num_stations = 0
+        num_channels = 0
+        num_networks = 0
+        total_components = 0
+
+        for key in project.keys():
+            parts = key.split('.')  # Split the key by '.'
+            network = f"{parts[0]}"
+            networks.add(network)  # Add to the set
+            station = f"{parts[1]}"
+            stations.add(station)
+            channel = f"{parts[2]}"
+            channels.add(channel)
+
+        if len(stations) > 0:
+            num_stations = len(stations)
+            num_channels = len(channels)
+            num_networks = len(networks)
+
+
+        ## Take the number of files
+
+        if len(stations) > 0:
             total_components = sum(len(value_list) for value_list in project.values())
-            stations_channel = len(project)
-        except:
-            total_components = None
-            stations_channel = None
 
-        return stations_channel, total_components
+        if len(stations) > 0:
+            info["Networks"] = [networks, num_networks]
+            info["Stations"] = [stations, num_stations]
+            info["Channels"] = [channels, num_channels]
+            info["num_files"] = total_components
+
+        return info
 
     def loop_tree(self, i):
         result = None
@@ -531,54 +583,125 @@ class MseedUtil:
         if channel == '':
             channel = '.+'
 
-
-        data = []
-
         # filter for regular expresions
         event = [net, station, channel]
         project = cls.search(project, event)
 
-        for key, value in project.items():
-            for j in value:
-                data.append([j[0], j[1]['starttime'], j[1]['endtime']])
+        data_files = []
+        project = {key: value for key, value in project.items() if value}
+        for item in project.items():
+            list_channel = item[1]
+            for file_path in list_channel:
+                data_files.append(file_path[0])
 
-        return project, data
+
+        return project, data_files
 
     @classmethod
-    def filter_time(cls, list_files, **kwargs):
+    def filter_time(cls, project, starttime, endtime, tol = 86400):
 
-        #filter the list output of filter_project_keys by trimed times
+        """
+        Filters project data based on time range.
 
-        result = []
-        st1 = kwargs.pop('starttime', None)
-        et1 = kwargs.pop('endtime', None)
+        - starttime (str or UTCDateTime): Start time of the range.
+          If str, it should follow the format "%Y-%m-%d %H:%M:%S".
+          Example: "2023-12-10 00:00:00"
+        - endtime (str or UTCDateTime): End time of the range.
+          If str, it should follow the format "%Y-%m-%d %H:%M:%S".
+          Example: "2023-12-23 00:00:00"
+        """
 
-        if st1 is None and et1 is None:
-            for file in list_files:
-                result.append(file[0])
-
+        # Convert starttime and endtime to datetime objects if they are strings
+        date_format = "%Y-%m-%d %H:%M:%S"
+        if isinstance(starttime, str):
+            start = datetime.strptime(starttime, date_format)
+            start = UTCDateTime(start)
+        elif isinstance(starttime, UTCDateTime):
+            start = starttime.datetime  # Convert to Python datetime
         else:
+            raise TypeError("starttime must be a string or UTCDateTime object.")
 
-            for file in list_files:
-                pos_file = file[0]
-                st0 = file[1]
-                et0 = file[2]
-                # check times as a filter
+        if isinstance(endtime, str):
+            end = datetime.strptime(endtime, date_format)
+            end = UTCDateTime(end)
+        elif isinstance(endtime, UTCDateTime):
+            end = endtime.datetime  # Convert to Python datetime
+        else:
+            raise TypeError("endtime must be a string or UTCDateTime object.")
 
-                if st1 >= st0 and et1 > et0 and (st1 - st0) <= 86400:
-                    result.append(pos_file)
-                elif st1 <= st0 and et1 >= et0:
-                    result.append(pos_file)
-                elif st1 <= st0 and et1 <= et0 and (et0 - et1) <= 86400:
-                    result.append(pos_file)
-                elif st1 >= st0 and et1 <= et0:
-                    result.append(pos_file)
-                else:
-                    pass
+        # Process project data
+        if len(project) > 0:
+            for key in project:
+                item = project[key]
+                indices_to_remove = []
+                for index, value in enumerate(item):
+                    start_data = value[1].starttime
+                    end_data = value[1].endtime
+                    if start_data >= start and end_data > end and (start_data - start) <= tol:
+                        pass
 
-        result.sort()
+                    elif start_data <= start and end_data >= end:
+                        pass
 
-        return result
+                    elif start_data <= start and end_data <= end and (end - end_data) <= tol:
+                        pass
+
+                    elif start_data >= start and end_data <= end:
+                        pass
+
+                    else:
+                        indices_to_remove.append(index)
+
+                for index in reversed(indices_to_remove):
+                    item.pop(index)
+                    project[key] = item
+
+        # Fill the data_files list
+        data_files = []
+        project = {key: value for key, value in project.items() if value}
+        for item in project.items():
+            list_channel = item[1]
+            for file_path in list_channel:
+                data_files.append(file_path[0])
+
+        return project, data_files
+
+    # old style filter time
+    # @classmethod
+    # def filter_time(cls, list_files, **kwargs):
+    #
+    #     #filter the list output of filter_project_keys by trimed times
+    #
+    #     result = []
+    #     st1 = kwargs.pop('starttime', None)
+    #     et1 = kwargs.pop('endtime', None)
+    #
+    #     if st1 is None and et1 is None:
+    #         for file in list_files:
+    #             result.append(file[0])
+    #
+    #     else:
+    #
+    #         for file in list_files:
+    #             pos_file = file[0]
+    #             st0 = file[1]
+    #             et0 = file[2]
+    #             # check times as a filter
+    #
+    #             if st1 >= st0 and et1 > et0 and (st1 - st0) <= 86400:
+    #                 result.append(pos_file)
+    #             elif st1 <= st0 and et1 >= et0:
+    #                 result.append(pos_file)
+    #             elif st1 <= st0 and et1 <= et0 and (et0 - et1) <= 86400:
+    #                 result.append(pos_file)
+    #             elif st1 >= st0 and et1 <= et0:
+    #                 result.append(pos_file)
+    #             else:
+    #                 pass
+    #
+    #     result.sort()
+    #
+    #     return result
 
 
     ###### New Project ###########
