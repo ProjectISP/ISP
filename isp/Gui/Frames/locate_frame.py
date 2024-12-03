@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# ------------------------------------------------------------------
+# Filename: run_nll.py
+# Program: surfQuake & ISP
+# Date: December 2024
+# Purpose: Manage Event Locator
+# Author: Roberto Cabieces & Thiago C. Junqueira
+# Email: rcabdia@roa.es
+# --------------------------------------------------------------------
 
 """
 locate_frame
@@ -7,8 +15,10 @@ locate_frame
 
 import os
 import shutil
+from PyQt5.QtWidgets import  QCheckBox
 from obspy import Inventory
 from obspy.core.event import Origin
+from isp import PICKING_DIR, LOCATION_OUTPUT_PATH, LOC_STRUCTURE
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
 from isp.Gui import pw
@@ -39,10 +49,7 @@ class Locate(BaseFrame, UiLocFlow):
 
         self.datalessPathForm.setText(inv_path)
         self.inventory = None
-        ####### Metadata ##########
-        # TODO ON SELECT METADATA CREATES SELF.INVENTORY
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm)
-
         self.setMetaBtn.clicked.connect(lambda: self.on_click_select_file(self.metadata_path_bind))
 
         # Binds
@@ -72,14 +79,43 @@ class Locate(BaseFrame, UiLocFlow):
         self.runFocMecBtn.clicked.connect(lambda: self.first_polarity())
         self.pltFocMecBtn.clicked.connect(lambda: self.pltFocMec())
         self.saveLocBtn.clicked.connect(lambda: self.saveLoc())
-
-
+        self.saveMecBtn.clicked.connect(lambda: self.saveMec())
+        self.setDefaultPathBtn.clicked.connect(lambda: self.setDefault())
+        self.loadMetaBtn.clicked.connect(lambda: self.reloadMetadata())
         # Map
         self.cartopy_canvas = CartopyCanvas(self.widget_map, constrained_layout=True)
         # FocMec
         self.focmec_canvas = FocCanvas(self.widget_focmec)
 
         self.resultsShow.stateChanged.connect(lambda: self.show_results())
+        self.selectAllLocCB.stateChanged.connect(lambda: self.check_all_checkboxes_Loc())
+        self.selectAllFocCB.stateChanged.connect(lambda: self.check_all_checkboxes_Mec())
+
+    def check_all_checkboxes_Loc(self):
+        # Iterate through the rows and check all checkboxes
+        if not self.selectAllLocCB.checkState():
+            for row in range(self.locFilesQTW.rowCount()):
+                cell_widget = self.locFilesQTW.cellWidget(row, 1)
+                if isinstance(cell_widget, QCheckBox):
+                    cell_widget.setChecked(False)
+        else:
+            for row in range(self.locFilesQTW.rowCount()):
+                cell_widget = self.locFilesQTW.cellWidget(row, 1)
+                if isinstance(cell_widget, QCheckBox):
+                    cell_widget.setChecked(True)
+
+    def check_all_checkboxes_Mec(self):
+        # Iterate through the rows and check all checkboxes
+        if not self.selectAllFocCB.checkState():
+            for row in range(self.focmecTW.rowCount()):
+                cell_widget = self.focmecTW.cellWidget(row, 1)
+                if isinstance(cell_widget, QCheckBox):
+                    cell_widget.setChecked(False)
+        else:
+            for row in range(self.focmecTW.rowCount()):
+                cell_widget = self.focmecTW.cellWidget(row, 1)
+                if isinstance(cell_widget, QCheckBox):
+                    cell_widget.setChecked(True)
 
     def show_results(self):
         if not self.resultsShow.checkState():
@@ -97,10 +133,6 @@ class Locate(BaseFrame, UiLocFlow):
         """
         pass
 
-    # def on_click_select_directory(self, bind: BindPyqtObject):
-    #     dir_path = self._select_directory(bind)
-    #     if dir_path:
-    #         bind.value = dir_path
 
     def on_click_select_directory(self, bind: BindPyqtObject):
         if "darwin" == platform:
@@ -124,8 +156,7 @@ class Locate(BaseFrame, UiLocFlow):
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
             bind.value = selected[0]
 
-    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg,
-                                                              False))  # When launch, metadata path need show messsage to False.
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg, False))  # When launch, metadata path need show messsage to False.
     def onChange_metadata_path(self, value):
 
         try:
@@ -135,6 +166,13 @@ class Locate(BaseFrame, UiLocFlow):
         except:
             raise FileNotFoundError("The metadata is not valid")
 
+    def reloadMetadata(self):
+        try:
+            self.__metadata_manager = MetadataManager(self.datalessPathForm.text())
+            self.inventory: Inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
+        except:
+            raise FileNotFoundError("The metadata is not valid")
 
     def subprocess_feedback(self, err_msg: str, set_default_complete=True):
 
@@ -278,7 +316,6 @@ class Locate(BaseFrame, UiLocFlow):
                                                         origin.quality.minimum_distance,
                                                         origin.quality.maximum_distance))
 
-
     def __get_last_hyp(self):
 
         file_last = os.path.join(self.loc_work_bind.value, "loc", "last.hyp")
@@ -323,25 +360,60 @@ class Locate(BaseFrame, UiLocFlow):
 
 
     def saveLoc(self):
-
         md = MessageDialog(self)
         dir_output_path = os.path.join(self.loc_work_bind.value, "savedLocs")
 
-        nllcatalog = Nllcatalog(self.loc_work_bind.value)
-        nllcatalog.find_files()
-        files_list = nllcatalog.obsfiles
-        if files_list is not None:
-            if os.path.isdir(dir_output_path):
-                pass
-            else:
-                os.makedirs(dir_output_path)
+        row_count = self.locFilesQTW.rowCount()
+        column_count = self.locFilesQTW.columnCount()
+        moved_files = []
+        for row in range(row_count):
+            file = None
+            for column in range(column_count):
+                # If the column contains a QTableWidgetItem
+                item = self.locFilesQTW.item(row, column)
+                if column == 0:
+                    file = os.path.join(self.loc_work_bind.value, "loc", item.text())
+                # If the column contains a widget (e.g., QCheckBox)
 
-            for file in files_list:
-                shutil.move(file, dir_output_path)
+                if column == 1:
+                    cell_widget = self.locFilesQTW.cellWidget(row, column)
+                    #if isinstance(cell_widget, pw.QCheckBox):
+                    if cell_widget.isChecked() and os.path.isfile(file):
+                        shutil.copy(file, dir_output_path)
+                        moved_files.append(file)
 
-            md.set_info_message("Saved Location files", dir_output_path)
+        if len(moved_files) > 0:
+            md.set_info_message("Saved Loc files", dir_output_path)
         else:
-            md.set_info_message("No files to save", "No *.hyp files inside " + self.loc_work_bind.value)
+            md.set_info_message("No files to save")
+
+    def saveMec(self):
+        md = MessageDialog(self)
+        dir_output_path = os.path.join(self.loc_work_bind.value, "savedMecs")
+
+        row_count = self.focmecTW.rowCount()
+        column_count = self.focmecTW.columnCount()
+        moved_files = []
+        for row in range(row_count):
+            file = None
+            for column in range(column_count):
+                # If the column contains a QTableWidgetItem
+                item = self.focmecTW.item(row, column)
+                if column == 0:
+                    file = os.path.join(self.loc_work_bind.value, "first_polarity", item.text())
+                # If the column contains a widget (e.g., QCheckBox)
+
+                if column == 1:
+                    cell_widget = self.focmecTW.cellWidget(row, column)
+                    # if isinstance(cell_widget, pw.QCheckBox):
+                    if cell_widget.isChecked() and os.path.isfile(file):
+                        shutil.copy(file, dir_output_path)
+                        moved_files.append(file)
+
+        if len(moved_files) > 0:
+            md.set_info_message("Saved Loc files", dir_output_path)
+        else:
+            md.set_info_message("No files to save")
 
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def first_polarity(self):
@@ -433,17 +505,17 @@ class Locate(BaseFrame, UiLocFlow):
             nllcatalog.find_files()
             files_list = nllcatalog.obsfiles
             files_focmec = FirstPolarity.find_files(self.loc_work_bind.value)
+
             for file in files_list:
                 try:
                     root_file = os.path.basename(file)
                     self.locFilesQTW.setRowCount(self.locFilesQTW.rowCount() + 1)
 
-
                     item = pw.QTableWidgetItem()
                     item.setData(0, root_file)
+                    check = pw.QCheckBox()
                     self.locFilesQTW.setItem(self.locFilesQTW.rowCount() - 1, 0, pw.QTableWidgetItem(root_file))
-                    #check = pw.QCheckBox()
-                    #self.tw_files.setCellWidget(self.locFilesQTW.rowCount() - 1, 3, check)
+                    self.locFilesQTW.setCellWidget(self.locFilesQTW.rowCount() - 1, 1, check)
 
                 except Exception:
                     pass
@@ -453,16 +525,19 @@ class Locate(BaseFrame, UiLocFlow):
                     root_file = os.path.basename(file)
                     self.focmecTW.setRowCount(self.focmecTW.rowCount() + 1)
 
-
                     item = pw.QTableWidgetItem()
                     item.setData(0, root_file)
+                    check = pw.QCheckBox()
                     self.focmecTW.setItem(self.focmecTW.rowCount() - 1, 0, pw.QTableWidgetItem(root_file))
-                    #check = pw.QCheckBox()
-                    #self.tw_files.setCellWidget(self.locFilesQTW.rowCount() - 1, 3, check)
-
+                    self.focmecTW.setCellWidget(self.focmecTW.rowCount() - 1, 1, check)
                 except Exception:
                     pass
 
+
+    def setDefault(self):
+        self.picksLE.setText(os.path.join(PICKING_DIR, "out.txt"))
+        self.loc_workLE.setText(LOCATION_OUTPUT_PATH)
+        self.modelLE.setText(os.path.join(LOC_STRUCTURE, "local_models"))
 
     def __selected_file(self):
         row = self.locFilesQTW.currentRow()

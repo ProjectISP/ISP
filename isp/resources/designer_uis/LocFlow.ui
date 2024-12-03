@@ -32,7 +32,7 @@
       </property>
       <widget class="QWidget" name="Location">
        <attribute name="title">
-        <string>Event Location</string>
+        <string>Configuration</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
@@ -64,14 +64,10 @@
                 <property name="verticalSpacing">
                  <number>12</number>
                 </property>
-                <item row="0" column="0">
-                 <widget class="QPushButton" name="setMetaBtn">
-                  <property name="text">
-                   <string>Set Metadata</string>
-                  </property>
-                 </widget>
+                <item row="1" column="2">
+                 <widget class="QLineEdit" name="datalessPathForm"/>
                 </item>
-                <item row="1" column="0">
+                <item row="2" column="0">
                  <widget class="QPushButton" name="loc_work_dirBtn">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -84,38 +80,24 @@
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="0">
+                <item row="4" column="0">
                  <widget class="QPushButton" name="picksBtn">
                   <property name="text">
                    <string>Pick File</string>
                   </property>
                  </widget>
                 </item>
-                <item row="2" column="0">
-                 <widget class="QPushButton" name="modelPathBtn">
+                <item row="1" column="0">
+                 <widget class="QPushButton" name="setMetaBtn">
                   <property name="text">
-                   <string>Model Folder Path</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QPushButton" name="loadMetaBtn">
-                  <property name="text">
-                   <string>Reload Metadata</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1" colspan="2">
-                 <widget class="QLineEdit" name="loc_workLE">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
+                   <string>Set Metadata</string>
                   </property>
                  </widget>
                 </item>
                 <item row="3" column="1" colspan="2">
+                 <widget class="QLineEdit" name="modelLE"/>
+                </item>
+                <item row="4" column="1" colspan="2">
                  <widget class="QLineEdit" name="picksLE">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -126,10 +108,35 @@
                  </widget>
                 </item>
                 <item row="2" column="1" colspan="2">
-                 <widget class="QLineEdit" name="modelLE"/>
+                 <widget class="QLineEdit" name="loc_workLE">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                 </widget>
                 </item>
-                <item row="0" column="2">
-                 <widget class="QLineEdit" name="datalessPathForm"/>
+                <item row="3" column="0">
+                 <widget class="QPushButton" name="modelPathBtn">
+                  <property name="text">
+                   <string>Model Folder Path</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QPushButton" name="loadMetaBtn">
+                  <property name="text">
+                   <string>Reload Metadata</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0" colspan="2">
+                 <widget class="QPushButton" name="setDefaultPathBtn">
+                  <property name="text">
+                   <string>Set Default Paths</string>
+                  </property>
+                 </widget>
                 </item>
                </layout>
               </item>
@@ -761,7 +768,7 @@
       </widget>
       <widget class="QWidget" name="tab">
        <attribute name="title">
-        <string>Event Location Map</string>
+        <string>Event Location</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
@@ -783,27 +790,7 @@
              <layout class="QVBoxLayout" name="verticalLayout_7">
               <item>
                <layout class="QGridLayout" name="gridLayout">
-                <item row="5" column="0" colspan="6">
-                 <widget class="QWidget" name="widget_map" native="true">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">background-color: rgb(255, 255, 255);</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QPushButton" name="runlocBtn">
-                  <property name="text">
-                   <string>Run Location</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="0" colspan="6">
+                <item row="4" column="0" colspan="7">
                  <widget class="QGroupBox" name="resultsGB">
                   <property name="minimumSize">
                    <size>
@@ -858,13 +845,6 @@
                   </layout>
                  </widget>
                 </item>
-                <item row="0" column="1">
-                 <widget class="QCheckBox" name="resultsShow">
-                  <property name="text">
-                   <string>Location Info</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="1" column="0">
                  <widget class="QPushButton" name="saveLocBtn">
                   <property name="text">
@@ -872,21 +852,55 @@
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="2">
+                <item row="0" column="0">
+                 <widget class="QPushButton" name="runlocBtn">
+                  <property name="text">
+                   <string>Run Location</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="0" colspan="7">
+                 <widget class="QWidget" name="widget_map" native="true">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">background-color: rgb(255, 255, 255);</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
                  <widget class="QPushButton" name="pltMap">
                   <property name="text">
                    <string>Plot Location</string>
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="3">
+                <item row="0" column="1">
+                 <widget class="QCheckBox" name="resultsShow">
+                  <property name="text">
+                   <string>Location Info</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
                  <widget class="QCheckBox" name="topoCB">
                   <property name="text">
                    <string>Topo</string>
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="4" rowspan="2" colspan="2">
+                <item row="0" column="2">
+                 <widget class="QCheckBox" name="selectAllLocCB">
+                  <property name="text">
+                   <string>Select All</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3" rowspan="2" colspan="4">
                  <widget class="QTableWidget" name="locFilesQTW">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -900,15 +914,41 @@
                     <height>100</height>
                    </size>
                   </property>
+                  <property name="mouseTracking">
+                   <bool>true</bool>
+                  </property>
+                  <property name="tabletTracking">
+                   <bool>true</bool>
+                  </property>
+                  <property name="acceptDrops">
+                   <bool>true</bool>
+                  </property>
+                  <property name="autoFillBackground">
+                   <bool>true</bool>
+                  </property>
+                  <property name="dragEnabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="alternatingRowColors">
+                   <bool>true</bool>
+                  </property>
                   <property name="sortingEnabled">
                    <bool>true</bool>
                   </property>
                   <attribute name="horizontalHeaderDefaultSectionSize">
-                   <number>370</number>
+                   <number>330</number>
+                  </attribute>
+                  <attribute name="horizontalHeaderMinimumSectionSize">
+                   <number>20</number>
                   </attribute>
                   <column>
                    <property name="text">
                     <string>Loc File</string>
+                   </property>
+                  </column>
+                  <column>
+                   <property name="text">
+                    <string>Check</string>
                    </property>
                   </column>
                  </widget>
@@ -930,46 +970,80 @@
        <layout class="QVBoxLayout" name="verticalLayout_11">
         <item>
          <layout class="QGridLayout" name="gridLayout_3">
-          <item row="2" column="0" colspan="4">
+          <item row="5" column="0" colspan="6">
            <widget class="QWidget" name="widget_focmec" native="true">
             <property name="styleSheet">
              <string notr="true">background-color: rgb(255, 255, 255);</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QSpinBox" name="accepted_polarities">
-            <property name="prefix">
-             <string>Number of accepted wrong polarities </string>
-            </property>
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <number>10</number>
+          <item row="0" column="0">
+           <widget class="QPushButton" name="runFocMecBtn">
+            <property name="text">
+             <string>Run Foc Mec</string>
             </property>
            </widget>
           </item>
           <item row="0" column="3" rowspan="2">
+           <widget class="QTableWidget" name="focmecTW">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <attribute name="horizontalHeaderDefaultSectionSize">
+             <number>285</number>
+            </attribute>
+            <attribute name="horizontalHeaderMinimumSectionSize">
+             <number>20</number>
+            </attribute>
+            <column>
+             <property name="text">
+              <string>Focal Mechanism</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Check</string>
+             </property>
+            </column>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QDoubleSpinBox" name="accepted_polarities">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QPushButton" name="saveMecBtn">
+            <property name="text">
+             <string>Save Foc Mech</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4" rowspan="2" colspan="2">
            <widget class="QPlainTextEdit" name="FirstPolarityInfoText">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="minimumSize">
              <size>
-              <width>200</width>
+              <width>220</width>
               <height>150</height>
              </size>
             </property>
            </widget>
           </item>
-          <item row="0" column="0" rowspan="2">
-           <widget class="QPushButton" name="runFocMecBtn">
+          <item row="0" column="2">
+           <widget class="QCheckBox" name="selectAllFocCB">
             <property name="text">
-             <string>Run Foc Mec</string>
+             <string>Select All</string>
             </property>
            </widget>
           </item>
@@ -978,24 +1052,6 @@
             <property name="text">
              <string>Plot Foc Mec</string>
             </property>
-           </widget>
-          </item>
-          <item row="0" column="2" rowspan="2">
-           <widget class="QTableWidget" name="focmecTW">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <attribute name="horizontalHeaderDefaultSectionSize">
-             <number>255</number>
-            </attribute>
-            <column>
-             <property name="text">
-              <string>Focal Mechanism</string>
-             </property>
-            </column>
            </widget>
           </item>
          </layout>
