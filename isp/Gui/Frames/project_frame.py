@@ -48,6 +48,7 @@ class Project(pw.QDialog, UiProject):
 
     def load_files_done(self):
 
+        info = {}
         if self.rootPathForm_inv.text() == "":
             filter = "All files (*.*)"
         else:
@@ -77,11 +78,19 @@ class Project(pw.QDialog, UiProject):
                 self.project = f.result()
                 f.cancel()
 
-            stations_channel, seismograms = ms.get_project_basic_info(self.project)
+            info = ms.get_project_basic_info(self.project)
 
-            if stations_channel is not None and seismograms is not None:
-                md.set_info_message("Created Project ", "number of stations/channels included " +
-                                    str(stations_channel) +"\n"+ "Total number of seismograms " + str(seismograms))
+            if len(info)>0:
+                md.set_info_message("Loaded Project ",
+                                    "Networks: " + ','.join(info["Networks"][0]) + "\n" +
+                                    "Stations: " + ','.join(info["Stations"][0]) + "\n" +
+                                    "Channels: " + ','.join(info["Channels"][0]) + "\n" + "\n" +
+
+                                    "Networks Number: " + str(info["Networks"][1]) + "\n" +
+                                    "Stations Number: " + str(info["Stations"][1]) + "\n" +
+                                    "Channels Number: " + str(info["Channels"][1]) + "\n" +
+                                    "Num Files: " + str(info["num_files"]) + "\n")
+
             else:
                 md.set_warning_message("Empty Project ", "Please provide a root path "
                                                          "with mseed files inside and check the wuery filters applied")
@@ -107,7 +116,7 @@ class Project(pw.QDialog, UiProject):
 
 
     def openProject(self):
-
+        info = {}
         md = MessageDialog(self)
         md.hide()
         try:
@@ -125,13 +134,24 @@ class Project(pw.QDialog, UiProject):
                 self.project = f.result()
                 f.cancel()
 
-            stations_channel, seismograms = ms.get_project_basic_info(self.project)
-            if stations_channel is not None and seismograms is not None:
-                md.set_info_message("Created Project ", "number of stations/channels included " +
-                                    str(stations_channel) + "\n" + "Total number of seismograms " + str(seismograms))
+
+            info = ms.get_project_basic_info(self.project)
+
+            if len(info) > 0:
+
+                md.set_info_message("Opened Project ",
+                                    "Networks: " + ','.join(info["Networks"][0]) + "\n" +
+                                    "Stations: " + ','.join(info["Stations"][0]) + "\n" +
+                                    "Channels: " + ','.join(info["Channels"][0]) + "\n" + "\n" +
+
+                                    "Networks Number: " + str(info["Networks"][1]) + "\n" +
+                                    "Stations Number: " + str(info["Stations"][1]) + "\n" +
+                                    "Channels Number: " + str(info["Channels"][1]) + "\n" +
+                                    "Num Files: " + str(info["num_files"]) + "\n")
+
             else:
                 md.set_warning_message("Empty Project ", "Please provide a root path "
-                                                         "with mseed files inside and check the query filters applied")
+                                                         "with mseed files inside and check the wuery filters applied")
 
         except:
 

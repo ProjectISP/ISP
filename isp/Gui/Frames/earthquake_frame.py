@@ -1,3 +1,4 @@
+import copy
 import shutil
 from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
@@ -70,7 +71,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.aligned_picks = False
         self.aligned_fixed = False
         self.shift_times = None
+        self.info_proj_reloaded = {}
         self.project = {}
+        self.project_filtered = {}
         self.dist_all = []
         self.baz_all = []
         self.special_selection = []
@@ -344,7 +347,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.current_project_file = selected[0]
                 self.project = MseedUtil.load_project(file=selected[0])
                 project_name = os.path.basename(selected[0])
+                info = MseedUtil.get_project_basic_info(self.project)
                 md.set_info_message("Project {} loaded  ".format(project_name))
+                if len(info) > 0:
+                    md.set_info_message("Project {} loaded  ".format(project_name),
+                                        "Networks: " + ','.join(info["Networks"][0]) + "\n" +
+                                        "Stations: " + ','.join(info["Stations"][0]) + "\n" +
+                                        "Channels: " + ','.join(info["Channels"][0]) + "\n" + "\n"+
+
+                                        "Networks Number: " + str(info["Networks"][1]) + "\n" +
+                                        "Stations Number: " + str(info["Stations"][1]) + "\n" +
+                                        "Channels Number: " + str(info["Channels"][1]) + "\n" +
+                                        "Num Files: " + str(info["num_files"]) + "\n")
+
+                else:
+                    md.set_warning_message("Empty Project ", "Please provide a root path "
+                                                             "with mseed files inside and check the wuery filters applied")
+
             except:
                 md.set_error_message("Project couldn't be loaded ")
         else:
@@ -352,46 +371,33 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.get_now_files()
         # now we can access to #self.project_dialog.project
 
+    # "Stations Number: " + info["Stations"][1]) + "\n" +
+    #                                            "Channels Number: " + info["Channels"][1] + "\n" +
+    #                                            "Num Files: " + str(info["num_files"]) + "\n")
     def reload_current_project(self):
 
         md = MessageDialog(self)
-        if self.loaded_project:
-            if isinstance(self.current_project_file, str) and os.path.isfile(self.current_project_file):
-                try:
-                    self.project = MseedUtil.load_project(file=self.current_project_file)
-                    stations_channel, seismograms = MseedUtil.get_project_basic_info(self.project)
-                    project_name = os.path.basename(self.current_project_file)
 
-                    if stations_channel is not None and seismograms is not None:
-                        md.set_info_message("Project {} reloaded  ".format(project_name), "number of stations/channels included " +
-                                        str(stations_channel) +"\n"+ "Total number of seismograms " + str(seismograms))
-                    else:
-                        md.set_warning_message("Empty Project ", "Please provide a root path "
-                                                                 "with mseed files inside and check the query filters applied")
-                except:
-                    md.set_error_message("Project couldn't be reloaded ", "Please provide a root path "
-                                                                 "with mseed files inside and check the wuery filters applied")
-            else:
-                md.set_error_message("Project couldn't be reloaded ", "Please provide a root path "
-                                                                 "with mseed files inside and check the query filters applied")
-            self.get_now_files()
+        self.get_now_files()
+
+        info = MseedUtil.get_project_basic_info(self.project_filtered)
+
+        if len(info) > 0:
+
+            md.set_info_message("New Project reloaded",
+                                "Networks: " + ','.join(info["Networks"][0]) + "\n" +
+                                "Stations: " + ','.join(info["Stations"][0]) + "\n" +
+                                "Channels: " + ','.join(info["Channels"][0]) + "\n" + "\n" +
+
+                                "Networks Number: " + str(info["Networks"][1]) + "\n" +
+                                "Stations Number: " + str(info["Stations"][1]) + "\n" +
+                                "Channels Number: " + str(info["Channels"][1]) + "\n" +
+                                "Num Files: " + str(info["num_files"]) + "\n")
 
         else:
-            try:
-                if isinstance(self.project, dict):
-                    self.get_now_files()
-                    stations_channel, seismograms = MseedUtil.get_project_basic_info(self.project)
-                    num_current_seismograms = len(self.files_path)
-                    if stations_channel is not None and seismograms is not None and num_current_seismograms > 0:
-                        md.set_info_message("New Project reloaded", "number of stations/channels included " +
-                                        str(stations_channel) +"\n"+ "Total number of seismograms " + str(seismograms)+"\n"+
-                                            "Number Seismograms to be process and plot " + str(num_current_seismograms))
-                    else:
-                        md.set_warning_message("Empty Filtered Project ", "Please provide a root path "
-                                                                 "with mseed files inside and check the query filters applied")
-            except:
-                md.set_error_message("Project couldn't be reloaded ", "Please provide a root path "
-                                                                 "with mseed files inside and check the query filters applied")
+            md.set_warning_message("Empty Filtered Project ", "Please provide a root path "
+                                                     "with mseed files inside and check the query filters applied")
+
 
     def plot_particle_motion(self):
 
@@ -660,22 +666,28 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def get_now_files(self):
 
+        self.project_filtered = copy.deepcopy(self.project)
+        start = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        diff = end - start
         selection = [self.netForm.text(), self.stationForm.text(), self.channelForm.text()]
-        _, self.files_path = MseedUtil.filter_project_keys(self.project, net=selection[0], station=selection[1], channel=selection[2])
 
-        if len(self.files_path)>0 and self.trimCB.isChecked():
-            start = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
-            end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-            diff = end-start
-            if diff > 0:
-                self.files_path = MseedUtil.filter_time(list_files=self.files_path, starttime=start, endtime=end)
-        else:
-            self.files_path = MseedUtil.filter_time(list_files=self.files_path)
+        try:
+            self.project_filtered, self.files_path = MseedUtil.filter_project_keys(self.project, net=selection[0],
+                                                                        station=selection[1], channel=selection[2])
+        except:
+            self.files_path = []
+
+
+        if len(self.files_path)>0 and self.trimCB.isChecked() and diff >0:
+            try:
+                self.project_filtered, self.files_path = MseedUtil.filter_time(self.project_filtered, starttime=start,
+                                                                               endtime=end)
+            except:
+                self.files_path = []
 
         if len(self.files_path) > 0:
             self.set_pagination_files(self.files_path)
-
-
 
 
     @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
@@ -803,10 +815,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def plot_seismogram(self):
 
-        stations_channel, seismograms = MseedUtil.get_project_basic_info(self.project)
+        info = MseedUtil.get_project_basic_info(self.project)
         num_current_seismograms = len(self.files_path)
 
-        if stations_channel > 0 and seismograms > 0 and num_current_seismograms > 0:
+        if len(info) > 0 and num_current_seismograms > 0:
             self.workers = ParallelWorkers(os.cpu_count())
 
             # Here we can disabled thing or make additional staff
