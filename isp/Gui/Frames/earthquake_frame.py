@@ -565,7 +565,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         selected = pw.QFileDialog.getOpenFileName(self, "Select picking file")
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
-            self.pick_times_imported = MseedUtil.get_NLL_phase_picks2(input_file = selected[0])
+            self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file = selected[0])
             stations_info = self.__stations_info_list()
             for count, station in enumerate(stations_info):
                 id = station[1] + "." + station[3]
