@@ -291,11 +291,11 @@ class Locate(BaseFrame, UiLocFlow):
 
     def add_earthquake_info(self, origin: Origin):
         self.EarthquakeInfoText.clear()
-        self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     {origin_time}     {standard_error:.3f}".
+        self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     {origin_time}     {standard_error:.3f} s".
                                              format(origin_time=origin.time,
                                                     standard_error=origin.quality.standard_error))
         self.EarthquakeInfoText.appendPlainText("  Hypocenter Geographic Coordinates:     "
-                                                "Latitude {lat:.3f}º"
+                                                "Latitude {lat:.3f}º "
                                                 "Longitude {long:.3f}º     Depth {depth:.3f} km    "
                                                 "Uncertainty {unc:.3f} km".
                                                 format(lat=origin.latitude, long=origin.longitude,

@@ -1,6 +1,9 @@
 import os
 import pickle
 from concurrent.futures.thread import ThreadPoolExecutor
+
+from surfquakecore.project.surf_project import SurfProject
+
 from isp import ROOT_DIR
 from isp.Gui import pw, pqg, pyc
 from isp.Gui.Frames import MessageDialog
@@ -163,22 +166,31 @@ class Project(pw.QDialog, UiProject):
 
     def saveProject(self):
 
-        try:
-            if "darwin" == platform:
-                path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value)
-            else:
-                path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value,
-                                                           pw.QFileDialog.DontUseNativeDialog)
-            if not path:
-                return
+        if len(self.project) >0:
+            try:
+                if "darwin" == platform:
+                    path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value)
+                else:
+                    path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', self.root_path_bind.value,
+                                                               pw.QFileDialog.DontUseNativeDialog)
+                if not path:
+                    return
 
-            file_to_store = open(os.path.join(path,self.nameForm.text()), "wb")
-            pickle.dump(self.project, file_to_store)
+                file_to_store = open(os.path.join(path,self.nameForm.text()), "wb")
 
-            md = MessageDialog(self)
-            md.set_info_message("Project saved successfully")
+                # Now writes surfQuake Project
+                sp = SurfProject("")
+                sp.project = self.project
+                sp.data_files = MseedUtil.generate_data_files(self.project)
+                pickle.dump(sp, file_to_store)
+    
+                md = MessageDialog(self)
+                md.set_info_message("Project saved successfully")
 
-        except:
+            except:
 
+                md = MessageDialog(self)
+                md.set_info_message("No data to save in Project")
+        else:
             md = MessageDialog(self)
             md.set_info_message("No data to save in Project")

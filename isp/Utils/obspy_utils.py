@@ -669,6 +669,17 @@ class MseedUtil:
 
         return project, data_files
 
+    @staticmethod
+    def generate_data_files(project):
+        data_files = []
+        project = {key: value for key, value in project.items() if value}
+        for item in project.items():
+            list_channel = item[1]
+            for file_path in list_channel:
+                data_files.append(file_path[0])
+
+        return data_files
+
     # old style filter time
     # @classmethod
     # def filter_time(cls, list_files, **kwargs):
