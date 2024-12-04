@@ -974,7 +974,7 @@ class MseedUtil:
         return new_times,string_times
 
     @classmethod
-    def get_NLL_phase_picks2(cls, **kwargs):
+    def get_NLL_phase_picks(cls, phase = None, **kwargs ):
 
         pick_times = {}
         pick_file = os.path.join(PICKING_DIR, "output.txt")
@@ -984,93 +984,86 @@ class MseedUtil:
             df = pd.read_csv(pick_file, delimiter=" ")
             for index, row in df.iterrows():
                 tt = str(row['Date']) + "TT" + str(row['Hour_min']) + '{:0>2}'.format(row['Seconds'])
-                id = row['Station_name'] + "." + row["Component"]
-                if id not in pick_times:
-                    items = []
-                    # items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
-                    items.append([row["P_phase_descriptor"], UTCDateTime(tt), row["Component"], row["First_Motion"],
-                                  row["Err"], row["ErrMag"], row["Coda_duration"], row["Amplitude"], row["Period"]])
-                    pick_times[id] = items
-                else:
-                    # items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
-                    items.append([row["P_phase_descriptor"], UTCDateTime(tt), row["Component"], row["First_Motion"],
-                                  row["Err"], row["ErrMag"], row["Coda_duration"], row["Amplitude"], row["Period"]])
-                    pick_times[id] = items
+                if phase == row["P_phase_descriptor"]:
+                    pick_times[row['Station_name'] + "." + row["Component"]] = [row["P_phase_descriptor"], UTCDateTime(tt)]
+                elif phase is None:
+                    pick_times[row['Station_name'] + "." + row["Component"]] = [row["P_phase_descriptor"],
+                                                                                UTCDateTime(tt)]
             return pick_times
 
-    # @classmethod
-    # def get_NLL_phase_picks(cls, input_file=None, delimiter='\s+', **kwargs):
-    #     """
-    #     Reads a NonLinLoc output file and returns a dictionary of phase picks.
-    #
-    #     Parameters:
-    #         input_file (str, optional): Path to the NonLinLoc output file.
-    #                                     If not provided, raises an error.
-    #         delimiter (str, optional): Delimiter used in the file (default is a space).
-    #         **kwargs: Additional arguments for customization.
-    #
-    #     Returns:
-    #         dict: Dictionary of picks with the structure:
-    #               {
-    #                   "Station.Component": [
-    #                       [P_phase_descriptor, UTCDateTime, Component, First_Motion, Err, ErrMag, Coda_duration, Amplitude, Period],
-    #                       ...
-    #                   ],
-    #                   ...
-    #               }
-    #     """
-    #     if input_file is None:
-    #         raise ValueError("An input file must be provided.")
-    #
-    #     if not os.path.isfile(input_file):
-    #         raise FileNotFoundError(f"The file {input_file} does not exist.")
-    #
-    #     pick_times = {}
-    #
-    #     try:
-    #         # Load the file into a DataFrame
-    #         df = pd.read_csv(input_file, delimiter=delimiter)
-    #
-    #         # Validate necessary columns
-    #
-    #         required_columns = ["Station_name", "Instrument", "Component", "P_phase_onset", "P_phase_descriptor",
-    #                             "First_Motion", "Date", "Hourmin", "Seconds", "GAU", "Err","Coda_duration",	"Amplitude"
-    #                             , "Period"]
-    #
-    #
-    #         missing_columns = [col for col in required_columns if col not in df.columns]
-    #         if missing_columns:
-    #             raise ValueError(f"The input file is missing required columns: {missing_columns}")
-    #
-    #         # Process each row
-    #         for _, row in df.iterrows():
-    #             try:
-    #                 # Construct timestamp
-    #                 tt = f"{row['Date']}T{str(row['Hourmin']).zfill(4)}:{float(row['Seconds']):06.3f}"
-    #                 timestamp = UTCDateTime(tt)
-    #
-    #                 # Construct ID
-    #                 id = f"{row['Station_name']}.{row['Component']}"
-    #
-    #                 # Collect pick details
-    #                 pick_details = [
-    #                     row["P_phase_descriptor"], timestamp, row["Component"],
-    #                     row["First_Motion"], row["Err"], 0,
-    #                     row["Coda_duration"], row["Amplitude"], row["Period"]
-    #                 ]
-    #
-    #                 # Add to dictionary
-    #                 if id not in pick_times:
-    #                     pick_times[id] = []
-    #                 pick_times[id].append(pick_details)
-    #
-    #             except Exception as e:
-    #                 print(f"Error processing row {row.to_dict()}: {e}")
-    #
-    #     except Exception as e:
-    #         raise RuntimeError(f"Error reading or processing the file {input_file}: {e}")
-    #
-    #     return pick_times
+    @classmethod
+    def get_NLL_phase_picks(cls, input_file=None, delimiter='\s+'):
+        """
+        Reads a NonLinLoc output file and returns a dictionary of phase picks.
+
+        Parameters:
+            input_file (str, optional): Path to the NonLinLoc output file.
+                                        If not provided, raises an error.
+            delimiter (str, optional): Delimiter used in the file (default is a space).
+            **kwargs: Additional arguments for customization.
+
+        Returns:
+            dict: Dictionary of picks with the structure:
+              {
+                  "Station.Component": [
+                      ["Station_name", "Instrument", "Component", "P_phase_onset", "P_phase_descriptor",
+                            "First_Motion", "Date", "Hour_min", "Seconds", "Err", "ErrMag", "Coda_duration",
+                            "Amplitude", "Period"
+                  ],
+                  ...
+              }
+        """
+        if input_file is None:
+            raise ValueError("An input file must be provided.")
+
+        if not os.path.isfile(input_file):
+            raise FileNotFoundError(f"The file {input_file} does not exist.")
+
+        pick_times = {}
+
+        try:
+            # Load the file into a DataFrame
+            df = pd.read_csv(input_file, delimiter=delimiter)
+
+            # Validate necessary columns
+
+            required_columns = ["Station_name", "Instrument", "Component", "P_phase_onset", "P_phase_descriptor",
+                                "First_Motion", "Date", "Hour_min", "Seconds", "Err", "ErrMag", "Coda_duration",
+                                "Amplitude", "Period"]
+
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                raise ValueError(f"The input file is missing required columns: {missing_columns}")
+
+            # Process each row
+            for _, row in df.iterrows():
+                try:
+                    # Construct timestamp
+                    tt = f"{row['Date']}T{str(row['Hour_min']).zfill(4)}:{float(row['Seconds']):06.3f}"
+                    timestamp = UTCDateTime(tt)
+
+                    # Construct ID
+                    id = f"{row['Station_name']}.{row['Component']}"
+
+                    # Collect pick details
+                    pick_details = [
+                        row["P_phase_descriptor"], timestamp, row["Component"],
+                        row["First_Motion"], row["Err"], 0,
+                        row["Coda_duration"], row["Amplitude"], row["Period"]
+                    ]
+
+                    # Add to dictionary
+                    if id not in pick_times:
+                        pick_times[id] = []
+                    pick_times[id].append(pick_details)
+
+                except Exception as e:
+                    print(f"Error processing row {row.to_dict()}: {e}")
+
+        except Exception as e:
+            raise RuntimeError(f"Error reading or processing the file {input_file}: {e}")
+
+        return pick_times
 
     @staticmethod
     def get_stream(files_path: str, selection: dict):

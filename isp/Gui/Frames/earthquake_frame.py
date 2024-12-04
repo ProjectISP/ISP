@@ -162,10 +162,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionStack.triggered.connect(lambda: self.stack_all_seismograms())
         #self.actionSpectral_Entropy.triggered.connect(lambda : self.spectral_entropy())
         self.actionSpectral_Entropy.triggered.connect(lambda: self.spectral_entropy_progress())
-        self.actionRemove_all_selections.triggered.connect(lambda : self.clean_all_chop())
-        self.actionClean_selection.triggered.connect(lambda : self.clean_chop_at_page())
-        self.actionClean_Events_Detected.triggered.connect(lambda : self.clean_events_detected())
-        self.actionPlot_All_Seismograms.triggered.connect(lambda : self.plot_all_seismograms())
+        self.actionRemove_all_selections.triggered.connect(lambda: self.clean_all_chop())
+        self.actionClean_selection.triggered.connect(lambda: self.clean_chop_at_page())
+        self.actionClean_Events_Detected.triggered.connect(lambda: self.clean_events_detected())
+        self.actionPlot_All_Seismograms.triggered.connect(lambda: self.plot_all_seismograms())
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
         self.actionOnly_a_folder.triggered.connect(lambda: self.availability())
         self.actionAll_tree.triggered.connect(lambda: self.availability_all_tree())
@@ -565,7 +565,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         selected = pw.QFileDialog.getOpenFileName(self, "Select picking file")
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
-            self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file = selected[0])
+            self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=selected[0])
             stations_info = self.__stations_info_list()
             for count, station in enumerate(stations_info):
                 id = station[1] + "." + station[3]
@@ -588,8 +588,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                         self.picked_at[str(line)] = PickerStructure(pick[j][1], id.split(".")[0], pick_value, pick[j][4],
                              pick[j][7], "green", label, self.get_file_at_index(count))
 
-                        self.pm.add_data(pick_value, pick[j][4], pick[j][7], id.split(".")[0], pick[j][0],
-                                         First_Motion = pick[j][3], Component = pick[j][2])
+                        self.pm.add_data(pick_value, pick[j][5], pick[j][7], id.split(".")[0], pick[j][0],
+                                         First_Motion=pick[j][3], Component=pick[j][2])
                         self.pm.save()
 
     def __stations_info_list(self):
