@@ -727,11 +727,12 @@ class Nllcatalog:
 
     def __init__(self, working_directory):
         self.working_directory = os.path.join(working_directory, "loc")
-        self.obsfiles = []
+
 
     def find_files(self):
+
+        self.obsfiles = []
         pattern = re.compile(r'.*\.grid0\.loc\.hyp$')  # Match files ending with ".grid0.loc.hyp"
-        self.obsfiles = []  # Initialize the list
 
         for top_dir, _, files in os.walk(self.working_directory):
             for file in files:
