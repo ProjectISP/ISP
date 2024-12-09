@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1514</width>
-    <height>944</height>
+    <height>962</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -584,7 +584,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>943</width>
-                  <height>702</height>
+                  <height>712</height>
                  </rect>
                 </property>
                </widget>
@@ -950,7 +950,14 @@
     <property name="title">
      <string>Import</string>
     </property>
-    <addaction name="actionPicks_from_file"/>
+    <widget class="QMenu" name="menuPicks_from_file">
+     <property name="title">
+      <string>Picks from file</string>
+     </property>
+     <addaction name="actionDefaultPicks"/>
+     <addaction name="actionPicksOther_file"/>
+    </widget>
+    <addaction name="menuPicks_from_file"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
@@ -1241,11 +1248,6 @@
     <string>Using MCCC</string>
    </property>
   </action>
-  <action name="actionPicks_from_file">
-   <property name="text">
-    <string>Picks from file</string>
-   </property>
-  </action>
   <action name="actionNew_Project">
    <property name="icon">
     <iconset>
@@ -1314,6 +1316,16 @@
   <action name="actionStack_Seismogram">
    <property name="text">
     <string>Stack Seismogram</string>
+   </property>
+  </action>
+  <action name="actionDefaultPicks">
+   <property name="text">
+    <string>Default</string>
+   </property>
+  </action>
+  <action name="actionPicksOther_file">
+   <property name="text">
+    <string>Other file</string>
    </property>
   </action>
  </widget>

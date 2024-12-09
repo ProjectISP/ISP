@@ -2,6 +2,7 @@ import copy
 import shutil
 from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
+from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QMessageBox
 from matplotlib.backend_bases import MouseButton
 from obspy import UTCDateTime, Stream, Trace, Inventory
@@ -40,7 +41,7 @@ import numpy as np
 import os
 import json
 from isp.Utils.subprocess_utils import exc_cmd, open_url
-from isp import ROOT_DIR, EVENTS_DETECTED, AUTOMATIC_PHASES
+from isp import ROOT_DIR, EVENTS_DETECTED, AUTOMATIC_PHASES, PICKING_DIR
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
@@ -176,7 +177,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRun_autoloc.triggered.connect(lambda: self.picker_all())
         self.actionFrom_Phase_Pick.triggered.connect(lambda: self.alaign_picks())
         self.actionUsing_MCCC.triggered.connect(lambda: self.alaign_mccc())
-        self.actionPicks_from_file.triggered.connect(lambda: self.import_pick_from_file())
+        self.actionDefaultPicks.triggered.connect(lambda: self.import_pick_from_file(default = True))
+        self.actionPicksOther_file.triggered.connect(lambda: self.import_pick_from_file(default = False))
         self.actionNew_Project.triggered.connect(lambda: self.new_project())
         self.newProjectBtn.clicked.connect(lambda: self.new_project())
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
@@ -563,11 +565,22 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.pick_times = MseedUtil.get_NLL_phase_picks(phase)
             self.plot_seismogram()
 
-    def import_pick_from_file(self):
 
-        selected = pw.QFileDialog.getOpenFileName(self, "Select picking file")
+    def import_pick_from_file(self, default=True):
+
+        if default:
+            selected = [os.path.join(PICKING_DIR, "output.txt")]
+        else:
+            selected = pw.QFileDialog.getOpenFileName(self, "Select picking file")
+
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
             self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=selected[0])
+
+        self.plot_seismogram()
+
+
+    def __incorporate_picks(self):
+        if len(self.pick_times_imported) > 0:
             stations_info = self.__stations_info_list()
             for count, station in enumerate(stations_info):
                 id = station[1] + "." + station[3]
@@ -593,6 +606,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                         self.pm.add_data(pick_value, pick[j][5], pick[j][7], id.split(".")[0], pick[j][0],
                                          First_Motion=pick[j][3], Component=pick[j][2])
                         self.pm.save()
+
+
 
     def __stations_info_list(self):
         files_at_page = self.get_files_at_page()
@@ -915,6 +930,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
 
                 self.canvas.set_xlabel(len(self.files_at_page)-1, "Date")
+
+                # include picked
+                self.__incorporate_picks()
 
             except:
                 pass
@@ -2170,7 +2188,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def remove_picks(self):
         md = MessageDialog(self)
-        output_path = os.path.join(ROOT_DIR, 'earthquakeAnalisysis', 'location_output', 'obs', 'output.txt')
+        output_path = os.path.join(PICKING_DIR, 'output.txt')
 
         try:
             self.pm.clear()
@@ -2367,8 +2385,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def open_auto_pick(self):
         self.__autopick = Autopick(self.project_filtered)
+        self.__autopick.signal.connect(self.slot)
         self.__autopick.show()
 
+    @pyqtSlot()
+    def slot(self):
+        self.import_pick_from_file(default = True)
     def open_locate(self):
         # Add buttons
         msg_box = QMessageBox()

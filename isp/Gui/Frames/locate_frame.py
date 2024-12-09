@@ -501,7 +501,8 @@ class Locate(BaseFrame, UiLocFlow):
 
         self.locFilesQTW.clearContents()
         self.focmecTW.clearContents()
-
+        self.locFilesQTW.setRowCount(0)
+        self.focmecTW.setRowCount(0)
         if os.path.isdir(self.loc_work_bind.value):
             nllcatalog = Nllcatalog(self.loc_work_bind.value)
             nllcatalog.find_files()
