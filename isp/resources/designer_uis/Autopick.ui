@@ -1,0 +1,633 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1250</width>
+    <height>925</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SurfQuake</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>:/logo/logo/surfQuake.png</normaloff>:/logo/logo/surfQuake.png</iconset>
+  </property>
+  <property name="iconSize">
+   <size>
+    <width>100</width>
+    <height>100</height>
+   </size>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <widget class="QTabWidget" name="SurfQuakeWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="PhasePicking">
+       <attribute name="title">
+        <string>Phase Picking and Event Associator</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QGroupBox" name="groupBox_19">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="title">
+           <string>Phase Picking Box</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_27">
+           <item row="0" column="0">
+            <layout class="QGridLayout" name="gridLayout_24">
+             <item row="1" column="2" alignment="Qt::AlignHCenter">
+              <widget class="QLabel" name="label_55">
+               <property name="text">
+                <string>S wave Threshold</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0" alignment="Qt::AlignHCenter">
+              <widget class="QLabel" name="label_54">
+               <property name="text">
+                <string>P-wave Threshold</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0" colspan="5">
+              <widget class="QPushButton" name="phasenetBtn">
+               <property name="text">
+                <string>Run Phase Picking</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QDoubleSpinBox" name="p_wave_picking_thresholdDB">
+               <property name="decimals">
+                <number>2</number>
+               </property>
+               <property name="maximum">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.300000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QDoubleSpinBox" name="s_wave_picking_thresholdDB">
+               <property name="decimals">
+                <number>2</number>
+               </property>
+               <property name="maximum">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.300000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QPushButton" name="setDefaultPickPath">
+               <property name="text">
+                <string>Set Default</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QPushButton" name="output_path_pickBtn">
+               <property name="text">
+                <string>Output Directory</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2" colspan="3">
+              <widget class="QLineEdit" name="picking_LE"/>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_23">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="title">
+           <string>Associator Box</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_11">
+           <property name="spacing">
+            <number>25</number>
+           </property>
+           <property name="topMargin">
+            <number>20</number>
+           </property>
+           <item>
+            <widget class="QGroupBox" name="groupBox_24">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Working Framework</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_22">
+              <item row="0" column="0">
+               <widget class="QPushButton" name="real_picking_inputBtn">
+                <property name="text">
+                 <string>Picking Directory</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="real_inputLE"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="output_realBtn">
+                <property name="text">
+                 <string>Output Directory</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="output_realLE"/>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_10">
+             <property name="toolTip">
+              <string>Search range in depth (km)</string>
+             </property>
+             <property name="title">
+              <string>Geographic Framework</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_9">
+              <item row="3" column="3">
+               <widget class="QPushButton" name="plot_grid_stationsBtn">
+                <property name="toolTip">
+                 <string>Plot Grid Stations</string>
+                </property>
+                <property name="text">
+                 <string>Plot Grid Stations</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QDoubleSpinBox" name="depthSB">
+                <property name="toolTip">
+                 <string>Depth max</string>
+                </property>
+                <property name="prefix">
+                 <string>Depth (km) </string>
+                </property>
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <double>750.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QDoubleSpinBox" name="lon_refMaxSB">
+                <property name="toolTip">
+                 <string>Longitude max.</string>
+                </property>
+                <property name="prefix">
+                 <string>Ref Longitude Max </string>
+                </property>
+                <property name="decimals">
+                 <number>5</number>
+                </property>
+                <property name="minimum">
+                 <double>-180.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>180.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.050000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QDoubleSpinBox" name="lat_refMaxSB">
+                <property name="toolTip">
+                 <string>Latitude max</string>
+                </property>
+                <property name="prefix">
+                 <string>Ref Latitude Max </string>
+                </property>
+                <property name="decimals">
+                 <number>5</number>
+                </property>
+                <property name="maximum">
+                 <double>90.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.050000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QDoubleSpinBox" name="lat_refMinSB">
+                <property name="toolTip">
+                 <string>Latitude min</string>
+                </property>
+                <property name="prefix">
+                 <string>Ref Latitude Min </string>
+                </property>
+                <property name="decimals">
+                 <number>5</number>
+                </property>
+                <property name="maximum">
+                 <double>90.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.050000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QDoubleSpinBox" name="lon_refMin">
+                <property name="toolTip">
+                 <string>Longitude min</string>
+                </property>
+                <property name="prefix">
+                 <string>Ref Longitude Min  </string>
+                </property>
+                <property name="decimals">
+                 <number>5</number>
+                </property>
+                <property name="minimum">
+                 <double>-180.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>180.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.050000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="title">
+              <string>Associator Parameters</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_10">
+              <item row="0" column="4">
+               <widget class="QLabel" name="label_22">
+                <property name="text">
+                 <string>Threshold Picks</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="2" colspan="3">
+               <widget class="QDoubleSpinBox" name="TTHorizontalGridSizeBtn">
+                <property name="toolTip">
+                 <string>Grid size of the travel times table (degree)</string>
+                </property>
+                <property name="statusTip">
+                 <string>Travel times table grid size (degree)</string>
+                </property>
+                <property name="prefix">
+                 <string>Horizontal Grid Resolution Size (º) </string>
+                </property>
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="maximum">
+                 <double>10.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.250000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.010000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3" rowspan="4">
+               <widget class="Line" name="line_7">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="2" colspan="3">
+               <widget class="QDoubleSpinBox" name="TTDepthGridSizeBtn">
+                <property name="toolTip">
+                 <string>Vertical grid size of travel times table (km)</string>
+                </property>
+                <property name="statusTip">
+                 <string>Grid size of travel times table (km)</string>
+                </property>
+                <property name="prefix">
+                 <string>Depth Grid Resolution Size (km) </string>
+                </property>
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="maximum">
+                 <double>50.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>2.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QDoubleSpinBox" name="HorizontalGridSizeBtn">
+                <property name="toolTip">
+                 <string>Search grid size for epicenter (degree)</string>
+                </property>
+                <property name="prefix">
+                 <string>Horizontal Search Grid Size (º) </string>
+                </property>
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.600000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0" colspan="2">
+               <widget class="QDoubleSpinBox" name="gridSearchParamHorizontalRangeBtn">
+                <property name="toolTip">
+                 <string>Horizontal search range centered on the station where the first phase is recorded (degrees).</string>
+                </property>
+                <property name="prefix">
+                 <string>Horizontal Search Range (º) </string>
+                </property>
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+                <property name="value">
+                 <double>4.800000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0" colspan="2">
+               <widget class="QDoubleSpinBox" name="TTHorizontalRangeBtn">
+                <property name="toolTip">
+                 <string>Horizontal range in the travel times table (degree)</string>
+                </property>
+                <property name="statusTip">
+                 <string>Horizontal range in the travel times table (degree)</string>
+                </property>
+                <property name="prefix">
+                 <string>Horizontal Range (º) </string>
+                </property>
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="maximum">
+                 <double>50.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.200000000000000</double>
+                </property>
+                <property name="value">
+                 <double>5.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0" colspan="2">
+               <widget class="QDoubleSpinBox" name="DepthSearchParamHorizontalRangeBtn">
+                <property name="toolTip">
+                 <string>Depth search range (km)</string>
+                </property>
+                <property name="statusTip">
+                 <string>Vertical range in the travel times table (km)</string>
+                </property>
+                <property name="prefix">
+                 <string>Depth Search Range (km) </string>
+                </property>
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="value">
+                 <double>50.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0" colspan="3">
+               <widget class="QLabel" name="label_20">
+                <property name="text">
+                 <string>Grid Search Parameters</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="4">
+               <widget class="QSpinBox" name="number_stations_picksSB">
+                <property name="toolTip">
+                 <string>Minimum number of stations where there must be P and S picks</string>
+                </property>
+                <property name="suffix">
+                 <string/>
+                </property>
+                <property name="prefix">
+                 <string>Number of Stations Recorded (P &amp; S) </string>
+                </property>
+                <property name="value">
+                 <number>1</number>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0" colspan="3">
+               <widget class="QLabel" name="label_21">
+                <property name="text">
+                 <string>Travel Time Grid Search</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0" colspan="2">
+               <widget class="QDoubleSpinBox" name="TTDepthRangeBtn">
+                <property name="toolTip">
+                 <string>Vertical range in the travel times table (km)</string>
+                </property>
+                <property name="prefix">
+                 <string>Depth Range (km) </string>
+                </property>
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="maximum">
+                 <double>700.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>50.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0" colspan="3">
+               <widget class="QDoubleSpinBox" name="EventTimeWindow">
+                <property name="toolTip">
+                 <string>Time between two events (seconds)</string>
+                </property>
+                <property name="prefix">
+                 <string>Event Time Window (s) </string>
+                </property>
+                <property name="decimals">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <double>3600.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>120.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QDoubleSpinBox" name="DepthGridSizeBtn">
+                <property name="toolTip">
+                 <string>Search grid size for depth (km)</string>
+                </property>
+                <property name="prefix">
+                 <string>Depth Search Grid Size (km) </string>
+                </property>
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="value">
+                 <double>10.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="4">
+               <widget class="QSpinBox" name="ThresholdPwaveSB">
+                <property name="toolTip">
+                 <string>Minimum number of P-phase selections required in an event</string>
+                </property>
+                <property name="statusTip">
+                 <string>Minimum number of P-phase selections required in an event</string>
+                </property>
+                <property name="suffix">
+                 <string/>
+                </property>
+                <property name="prefix">
+                 <string>Minimum Number P-wave Picks </string>
+                </property>
+                <property name="value">
+                 <number>3</number>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0" colspan="5">
+               <widget class="Line" name="line">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="4">
+               <widget class="QSpinBox" name="ThresholdSwaveSB">
+                <property name="toolTip">
+                 <string>Minimum number of S-phase selections required in an event</string>
+                </property>
+                <property name="suffix">
+                 <string/>
+                </property>
+                <property name="prefix">
+                 <string>Minimum Number S-wave Picks </string>
+                </property>
+                <property name="value">
+                 <number>1</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="realBtn">
+             <property name="toolTip">
+              <string>Associator</string>
+             </property>
+             <property name="text">
+              <string>Run Associator</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1250</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuOpen">
+    <property name="title">
+     <string>Open</string>
+    </property>
+   </widget>
+   <addaction name="menuOpen"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionData_Base">
+   <property name="text">
+    <string>Data Base</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
