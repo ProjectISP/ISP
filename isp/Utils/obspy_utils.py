@@ -350,6 +350,26 @@ class MseedUtil:
 
          return []
 
+    @staticmethod
+    def stationsCoodsFromMeta(dataXml):
+
+        sta_names = []
+        latitudes = []
+        longitudes = []
+        networks = {}
+
+        for network in dataXml:
+            for station in network.stations:
+                if station.code not in sta_names:
+                    sta_names.append(network.code + "." + station.code)
+                    latitudes.append(station.latitude)
+                    longitudes.append(station.longitude)
+                else:
+                    pass
+            networks[network.code] = [sta_names, longitudes, latitudes]
+        print(networks)
+        return networks
+
     def get_tree_mseed_files(self, root_dir: str):
 
         """
@@ -679,6 +699,8 @@ class MseedUtil:
                 data_files.append(file_path[0])
 
         return data_files
+
+
 
     # old style filter time
     # @classmethod
