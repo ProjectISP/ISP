@@ -15,7 +15,8 @@ from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Exceptions import parse_excepts
 from isp.Gui import pw, pqg, pyc, qt
 from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, MessageDialog, EventInfoBox, \
-    MatplotlibCanvas 
+    MatplotlibCanvas
+from isp.Gui.Frames.autopick_frame import Autopick
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame
 from isp.Gui.Frames.locate_frame import Locate
 from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
@@ -183,6 +184,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionCFs.triggered.connect(lambda: self.save_cf())
         self.runScriptBtn.clicked.connect(self.run_process)
         self.locateBtn.clicked.connect(self.open_locate)
+        self.autoPickBtn.clicked.connect(self.open_auto_pick)
 
 
 
@@ -2362,6 +2364,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         set_qdatetime(otime+900, self.dateTimeEdit_2)
         self.event_info.set_time(otime)
         self.event_info.set_coordinates([lat,lon,depth])
+
+    def open_auto_pick(self):
+        self.__autopick = Autopick(self.project_filtered)
+        self.__autopick.show()
 
     def open_locate(self):
         # Add buttons

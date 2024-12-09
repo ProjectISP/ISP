@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1574</width>
+    <width>1514</width>
     <height>944</height>
    </rect>
   </property>
@@ -583,7 +583,7 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>1003</width>
+                  <width>943</width>
                   <height>702</height>
                  </rect>
                 </property>
@@ -662,22 +662,6 @@
               </widget>
              </item>
              <item>
-              <spacer name="horizontalSpacer_3">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Maximum</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>150</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
               <widget class="QPushButton" name="stations_infoBtn">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -710,27 +694,18 @@
               </widget>
              </item>
              <item>
+              <widget class="QPushButton" name="autoPickBtn">
+               <property name="text">
+                <string>Auto pick</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QPushButton" name="locateBtn">
                <property name="text">
                 <string>Locate</string>
                </property>
               </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Preferred</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>150</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
              </item>
              <item>
               <widget class="QPushButton" name="phaseUncertaintyBtn">
@@ -874,7 +849,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1574</width>
+     <width>1514</width>
      <height>24</height>
     </rect>
    </property>
