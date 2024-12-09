@@ -57,6 +57,26 @@ class ObspyUtil:
 
 
     @staticmethod
+    def stationsCoodsFromMeta(dataXml):
+
+        sta_names = []
+        latitudes = []
+        longitudes = []
+        networks = {}
+
+        for network in dataXml:
+            for station in network.stations:
+                if station.code not in sta_names:
+                    sta_names.append(network.code + "." + station.code)
+                    latitudes.append(station.latitude)
+                    longitudes.append(station.longitude)
+                else:
+                    pass
+            networks[network.code] = [sta_names, longitudes, latitudes]
+
+        return networks
+
+    @staticmethod
     def get_figure_from_stream(st: Stream, **kwargs):
         if st:
             return st.plot(show=False, **kwargs)
@@ -350,25 +370,6 @@ class MseedUtil:
 
          return []
 
-    @staticmethod
-    def stationsCoodsFromMeta(dataXml):
-
-        sta_names = []
-        latitudes = []
-        longitudes = []
-        networks = {}
-
-        for network in dataXml:
-            for station in network.stations:
-                if station.code not in sta_names:
-                    sta_names.append(network.code + "." + station.code)
-                    latitudes.append(station.latitude)
-                    longitudes.append(station.longitude)
-                else:
-                    pass
-            networks[network.code] = [sta_names, longitudes, latitudes]
-        print(networks)
-        return networks
 
     def get_tree_mseed_files(self, root_dir: str):
 

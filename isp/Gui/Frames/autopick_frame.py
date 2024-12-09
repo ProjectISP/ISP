@@ -1,8 +1,9 @@
 import os.path
 from PyQt5.QtCore import Qt
+from obspy import Inventory
 from surfquakecore.real.structures import RealConfig, GeographicFrame, GridSearch, TravelTimeGridSearch, ThresholdPicks
-
 from isp import PICKING_DIR
+from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Gui import pyc, pw
 from isp.Gui.Frames import BaseFrame, MessageDialog
 from isp.Gui.Frames.uis_frames import UiAutopick
@@ -12,12 +13,15 @@ from isp.Utils import AsycTime, obspy_utils
 from isp.Utils.os_utils import OSutils
 from surfquakecore.phasenet.phasenet_handler import PhasenetISP, PhasenetUtils
 from surfquakecore.real.real_core import RealCore
+from sys import platform
 
 @add_save_load()
 class Autopick(BaseFrame, UiAutopick):
 
     signal = pyc.pyqtSignal()
-    def __init__(self, project):
+
+    def __init__(self, project, metadata_path):
+
         super(Autopick, self).__init__()
         self.setupUi(self)
 
@@ -25,16 +29,26 @@ class Autopick(BaseFrame, UiAutopick):
         Picking & Associate Event Frame
 
         :param params required to initialize the class:
-        project
+        project: surfquake_project
+        metadata_path: str
         """
 
-
         self.sp = project
-
+        self.metadata_path = metadata_path
+        self.inventory = None
+        ############# Phasent -Picking ##############
         self.picking_bind = BindPyqtObject(self.picking_LE, self.onChange_root_path)
         self.output_path_pickBtn.clicked.connect(lambda: self.on_click_select_directory(self.picking_bind))
-
         self.phasenetBtn.clicked.connect(self.run_phasenet)
+
+        ############ REAL ###########################
+        self.real_bind = BindPyqtObject(self.real_inputLE, self.onChange_root_path)
+        self.real_picking_inputBtn.clicked.connect(lambda: self.on_click_select_directory(self.real_bind))
+        self.real_output_bind = BindPyqtObject(self.output_realLE, self.onChange_root_path)
+        self.output_realBtn.clicked.connect(lambda: self.on_click_select_directory(self.real_output_bind))
+        self.realBtn.clicked.connect(self.run_real)
+        self.plot_grid_stationsBtn.clicked.connect(self.plot_real_grid)
+
         self.setDefaultPickPath.clicked.connect(self.setDefaultPick)
 
         # Dialog
@@ -47,6 +61,16 @@ class Autopick(BaseFrame, UiAutopick):
         self.progress_dialog.close()
 
 
+
+    def get_metadata(self):
+
+        try:
+            self.__metadata_manager = MetadataManager(self.metadata_path)
+            self.inventory: Inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
+        except:
+            raise FileNotFoundError("The metadata is not valid")
+
     def onChange_root_path(self, value):
         """
         Fired every time the root_path is changed
@@ -58,14 +82,40 @@ class Autopick(BaseFrame, UiAutopick):
         pass
 
     def on_click_select_directory(self, bind: BindPyqtObject):
-        dir_path = self._select_directory(bind)
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
         if dir_path:
             bind.value = dir_path
+
+    def _select_directory(self, bind: BindPyqtObject):
+
+        if "darwin" == platform:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value)
+        else:
+            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', bind.value,
+                                                           pw.QFileDialog.DontUseNativeDialog)
+        return dir_path
 
     ## Picking ##
 
     def setDefaultPick(self):
+
+        output_real = os.path.join(PICKING_DIR, "associated_picks")
+
         self.picking_LE.setText(PICKING_DIR)
+
+        self.real_inputLE.setText(PICKING_DIR)
+        if os.path.isdir(output_real):
+            self.output_realLE.setText(output_real)
+        else:
+            try:
+                os.makedirs(output_real)
+                self.output_realLE.setText(output_real)
+            except Exception as error:
+                print("An exception occurred:", error)
 
 
     def run_phasenet(self):
@@ -94,15 +144,15 @@ class Autopick(BaseFrame, UiAutopick):
         PhasenetUtils.convert2real(picks_, self.picking_bind.value)
         PhasenetUtils.save_original_picks(picks_, self.picking_bind.value)
 
-
         file_picks = os.path.join(self.picking_bind.value, "nll_picks.txt")
         OSutils.copy_and_rename_file(file_picks, PICKING_DIR, "output.txt")
-        """ PHASENET OUTPUT TO REAL INPUT"""
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def send_signal(self):
-        self.signal.emit()
 
+        # Conect end of picking with Earthquake Analysis
+
+        self.signal.emit()
 
     ## End Picking ##
 
@@ -110,13 +160,13 @@ class Autopick(BaseFrame, UiAutopick):
 
         """ REAL """
         if self.inventory is None:
-            md = MessageDialog(self)
-            md.set_error_message("Metadata couldn't be loaded")
-        else:
-            self.send_real()
-            self.progress_dialog.exec()
-            md = MessageDialog(self)
-            md.set_info_message("Association Done")
+            self.get_metadata()
+
+        self.send_real()
+        self.progress_dialog.exec()
+        md = MessageDialog(self)
+        md.set_info_message("Association Done")
+
 
     @AsycTime.run_async()
     def send_real(self):
@@ -146,14 +196,24 @@ class Autopick(BaseFrame, UiAutopick):
                 num_stations_recorded=self.number_stations_picksSB.value())
         )
         real_path_work = os.path.join(self.real_output_bind.value, "work_dir")
-        os.mkdir(real_path_work)
-        rc = RealCore(self.metadata_path_bind.value, real_config, self.real_bind.value, real_path_work,
+
+        if os.path.isdir(real_path_work):
+            pass
+        else:
+            try:
+                os.mkdir(real_path_work)
+            except Exception as error:
+                print("An exception occurred:", error)
+
+        rc = RealCore(self.metadata_path, real_config, self.real_bind.value, real_path_work,
                       self.real_output_bind.value)
         rc.run_real()
         print("End of Events AssociationProcess, please see for results: ", self.real_output_bind.value)
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def plot_real_grid(self):
+        if self.inventory is None:
+            self.get_metadata()
         print("Work in progress")
         lon_min = self.lon_refMin.value()
         lon_max = self.lon_refMaxSB.value()
@@ -162,5 +222,7 @@ class Autopick(BaseFrame, UiAutopick):
         x = [lon_min, lon_max, lon_max, lon_min, lon_min]
         y = [lat_max, lat_max, lat_min, lat_min, lat_max]
         area = x + y
-        network = obspy_utils.stationsCoodsFromMeta(self.inventory)
+        network = obspy_utils.ObspyUtil.stationsCoodsFromMeta(self.inventory)
+        #network = obspy_utils.ObspyUtil.stationsCoodsFromMeta(self.inventory)
         plot_real_map(network, area=area)
+

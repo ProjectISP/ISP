@@ -2384,7 +2384,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.event_info.set_coordinates([lat,lon,depth])
 
     def open_auto_pick(self):
-        self.__autopick = Autopick(self.project_filtered)
+        self.__autopick = Autopick(self.project_filtered, self.metadata_path_bind.value)
         self.__autopick.signal.connect(self.slot)
         self.__autopick.show()
 
