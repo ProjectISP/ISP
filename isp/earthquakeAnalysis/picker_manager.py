@@ -221,8 +221,16 @@ class PickerManager:
         :param save: True if you want to save in file, false otherwise.
         :return:
         """
-        selected = self.select_data(pick_time, station)
-        self.df = self.df.drop(selected.index).reset_index(drop=True)
+
+        #selected = self.select_data(pick_time, station)
+        #self.df = self.df.drop(selected.index).reset_index(drop=True)
+
+        # TODO: More accurate include channel self.df['Component']
+        date, h_m, s = self.__from_utctime_to_datetime(pick_time)
+        self.df = self.df[
+            ~((self.df['Date'] == date) & (self.df['Hour_min'] == h_m) & (self.df['Seconds'] == s) &
+              (self.df['Station_name'] == station))
+        ].reset_index(drop=True)
         if save:
             self.save()
 

@@ -9,6 +9,8 @@ from obspy import UTCDateTime, Stream, Trace, Inventory
 from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth, kilometers2degrees
 from obspy.signal.trigger import coincidence_trigger
+from surfquakecore.project.surf_project import SurfProject
+
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.NeuralNetwork import CNNPicker
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -92,6 +94,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.files = []
         self.files_path = []
         self.events_times = []
+        self.removed_picks = []
         self.check_start_time = None
         self.check_end_time = None
         self.total_items = 0
@@ -568,6 +571,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def import_pick_from_file(self, default=True):
 
+
         if default:
             selected = [os.path.join(PICKING_DIR, "output.txt")]
         else:
@@ -575,6 +579,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
             self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=selected[0])
+
+        # save data
+        if len(self.pick_times_imported) > 0:
+            for key in self.pick_times_imported:
+                pick = self.pick_times_imported[key]
+                for j in range(len(pick)):
+                    pick_value = pick[j][1]
+
+                    self.pm.add_data(pick_value, pick[j][5], pick[j][7], key.split(".")[0], pick[j][0],
+                                     First_Motion=pick[j][3], Component=pick[j][2])
+                    self.pm.save()
 
         self.plot_seismogram()
 
@@ -597,15 +612,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                         else:
                             label = pick[j][0] + " ?"
 
-                        line = self.canvas.draw_arrow(pick_value, count, arrow_label=label, amplitude=pick[j][7],
-                                                      color="green", picker=True)
-                        self.lines.append(line)
-                        self.picked_at[str(line)] = PickerStructure(pick[j][1], id.split(".")[0], pick_value, pick[j][4],
-                             pick[j][7], "green", label, self.get_file_at_index(count))
 
-                        self.pm.add_data(pick_value, pick[j][5], pick[j][7], id.split(".")[0], pick[j][0],
-                                         First_Motion=pick[j][3], Component=pick[j][2])
-                        self.pm.save()
+                        if [station[1], pick[j][1]] not in self.removed_picks:
+
+                            line = self.canvas.draw_arrow(pick_value, count, arrow_label=label, amplitude=pick[j][7],
+                                                          color="green", picker=True)
+                            self.lines.append(line)
+                            self.picked_at[str(line)] = PickerStructure(pick[j][1], id.split(".")[0], pick_value, pick[j][4],
+                                 pick[j][7], "green", label, self.get_file_at_index(count))
+
 
 
 
@@ -932,6 +947,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.canvas.set_xlabel(len(self.files_at_page)-1, "Date")
 
                 # include picked
+
                 self.__incorporate_picks()
 
             except:
@@ -1652,8 +1668,33 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         line = event.artist
         self.canvas.remove_arrow(line)
         picker_structure: PickerStructure = self.picked_at.pop(str(line), None)
+
         if picker_structure:
             self.pm.remove_data(picker_structure.Time, picker_structure.Station)
+            self.remove_picker_structure(picker_structure.Time, picker_structure.Station)
+
+
+    def remove_picker_structure(self, time: UTCDateTime, station: str):
+        """
+        Remove a PickerStructure from a dictionary based on the specified time and station.
+
+        :param pickers: Dictionary containing PickerStructure objects as values.
+        :param time: The UTCDateTime of the picker to be removed.
+        :param station: The station name of the picker to be removed.
+        :return: None
+        """
+        keys_to_remove = [
+            key for key, picker in self.picked_at.items()
+            if picker.Time == time and picker.Station == station
+        ]
+
+        if not keys_to_remove:
+            raise ValueError(f"No PickerStructure found for time: {time} and station: {station}")
+
+        for key in keys_to_remove:
+            self.picked_at.pop(key)
+            self.removed_picks.append([station, time])
+
 
     def on_click_plot_record_section(self, event_time: UTCDateTime, lat: float, long: float, depth: float):
 
@@ -2412,7 +2453,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
 
             if isinstance(self.metadata_path_bind.value, str) and os.path.exists(self.metadata_path_bind.value):
-                self.__locate = Locate(self.metadata_path_bind.value)
+
+                # create surf project
+                sp = SurfProject()
+                sp.project = self.project_filtered
+                sp.data_files = self.files_path
+
+                self.__locate = Locate(self.metadata_path_bind.value, sp)
 
             else:
                 self.__locate=Locate("")

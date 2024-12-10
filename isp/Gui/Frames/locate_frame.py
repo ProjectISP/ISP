@@ -15,19 +15,25 @@ locate_frame
 
 import os
 import shutil
+
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import  QCheckBox
 from obspy import Inventory
 from obspy.core.event import Origin
-from isp import PICKING_DIR, LOCATION_OUTPUT_PATH, LOC_STRUCTURE
+from surfquakecore.magnitudes.source_tools import ReadSource
+from surfquakecore.project.surf_project import SurfProject
+
+from isp import PICKING_DIR, LOCATION_OUTPUT_PATH, LOC_STRUCTURE, source_config
+from surfquakecore.magnitudes.run_magnitudes import Automag
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
-from isp.Gui import pw
+from isp.Gui import pw, pyc
 from isp.Gui.Frames import BaseFrame, MessageDialog, CartopyCanvas, FocCanvas
 from isp.Gui.Frames.uis_frames import UiLocFlow
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
 from isp.LocCore.pdf_plot import plot_scatter
 from isp.LocCore.plot_tool_loc import StationUtils
-from isp.Utils import ObspyUtil
+from isp.Utils import ObspyUtil, AsycTime
 from isp.earthquakeAnalysis import NllManager, FirstPolarity
 from isp.earthquakeAnalysis.run_nll import Nllcatalog
 from isp.earthquakeAnalysis.structures import TravelTimesConfiguration, LocationParameters, NLLConfig, \
@@ -36,7 +42,7 @@ from sys import platform
 
 @add_save_load()
 class Locate(BaseFrame, UiLocFlow):
-    def __init__(self, inv_path: str):
+    def __init__(self, inv_path: str, project: SurfProject):
         super(Locate, self).__init__()
         self.setupUi(self)
 
@@ -46,7 +52,8 @@ class Locate(BaseFrame, UiLocFlow):
         :param params required to initialize the class:
 
         """
-
+        self.config_automag = {}
+        self.sp = project
         self.datalessPathForm.setText(inv_path)
         self.inventory = None
         self.metadata_path_bind = BindPyqtObject(self.datalessPathForm)
@@ -82,6 +89,17 @@ class Locate(BaseFrame, UiLocFlow):
         self.saveMecBtn.clicked.connect(lambda: self.saveMec())
         self.setDefaultPathBtn.clicked.connect(lambda: self.setDefault())
         self.loadMetaBtn.clicked.connect(lambda: self.reloadMetadata())
+
+        # Magnitude
+        self.source_locs_bind = BindPyqtObject(self.source_locsLE)
+        self.setLocFolderBtn.clicked.connect(lambda: self.on_click_select_directory(self.source_locs_bind))
+
+        self.source_out_bind = BindPyqtObject(self.source_outLE)
+        self.setSourceOutBtn.clicked.connect(lambda: self.on_click_select_directory(self.source_out_bind))
+        self.mag_runBtn.clicked.connect(lambda: self.run_automag())
+        self.printSourceResultsBtn.clicked.connect(lambda: self.print_source_results())
+
+
         # Map
         self.cartopy_canvas = CartopyCanvas(self.widget_map, constrained_layout=True)
         # FocMec
@@ -90,6 +108,15 @@ class Locate(BaseFrame, UiLocFlow):
         self.resultsShow.stateChanged.connect(lambda: self.show_results())
         self.selectAllLocCB.stateChanged.connect(lambda: self.check_all_checkboxes_Loc())
         self.selectAllFocCB.stateChanged.connect(lambda: self.check_all_checkboxes_Mec())
+
+        # Dialog
+        self.progress_dialog = pw.QProgressDialog(self)
+        self.progress_dialog.setRange(0, 0)
+        self.progress_dialog.setWindowTitle('Processing.....')
+        self.progress_dialog.setLabelText('Please Wait')
+        self.progress_dialog.setWindowIcon(self.windowIcon())
+        self.progress_dialog.setWindowTitle(self.windowTitle())
+        self.progress_dialog.close()
 
     def check_all_checkboxes_Loc(self):
         # Iterate through the rows and check all checkboxes
@@ -551,3 +578,168 @@ class Locate(BaseFrame, UiLocFlow):
         row = self.focmecTW.currentRow()
         file = os.path.join(self.loc_work_bind.value, "first_polarity/output", self.focmecTW.item(row, 0).data(0))
         return file
+
+
+    ####### Source Parameters ########
+    def run_automag(self):
+        self.__send_run_automag()
+        self.progress_dialog.exec()
+        md = MessageDialog(self)
+        md.set_info_message("Source Parameters estimation finished, Please see output directory and press "
+                            "print results")
+
+    @AsycTime.run_async()
+    def __send_run_automag(self):
+
+        self.__load_config_automag()
+        # Running stage
+        mg = Automag(self.sp, self.source_locs_bind.value, self.metadata_path_bind.value, source_config,
+                     self.source_out_bind.value, scale="regional", gui_mod=self.config_automag)
+        print("Estimating Source Parameters")
+        mg.estimate_source_parameters()
+
+        # write a txt summarizing the results
+        rs = ReadSource(self.source_out_bind.value)
+        summary = rs.generate_source_summary()
+        summary_path = os.path.join(self.source_out_bind.value, "source_summary.txt")
+        rs.write_summary(summary, summary_path)
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
+
+    def __load_config_automag(self):
+        self.config_automag['epi_dist_ranges'] = [0, self.mag_max_distDB.value()]
+        self.config_automag['p_arrival_tolerance'] = self.p_tolDB.value()
+        self.config_automag['s_arrival_tolerance'] = self.s_tolDB.value()
+        self.config_automag['noise_pre_time'] = self.noise_windowDB.value()
+        self.config_automag['win_length'] = self.signal_windowDB.value()
+        self.config_automag['spectral_win_length'] = self.spec_windowSB.value()
+        self.config_automag['rho_source'] = self.automag_density_DB.value()
+        self.config_automag['rpp'] = self.automag_rppDB.value()
+        self.config_automag['rps'] = self.automag_rpsDB.value()
+
+        if self.r_power_nRB.isChecked():
+            self.config_automag['geom_spread_model'] = "r_power_n"
+        else:
+            self.config_automag['geom_spread_model'] = "boatwright"
+
+        self.config_automag['geom_spread_n_exponent'] = self.geom_spread_n_exponentDB.value()
+        self.config_automag['geom_spread_cutoff_distance'] = self.geom_spread_cutoff_distanceDB.value()
+
+        self.config_automag['a'] = self.mag_aDB.value()
+        self.config_automag['b'] = self.mag_bDB.value()
+        self.config_automag['c'] = self.mag_cDB.value()
+        print("Loaded Source Config from GUI")
+
+    def print_source_results(self):
+        import pandas as pd
+        import math
+        self.automagnitudesText.clear()
+        summary_path = os.path.join(self.source_out_bind.value, "source_summary.txt")
+        df = pd.read_csv(summary_path, sep=";", na_values='missing')
+
+        for index, row in df.iterrows():
+            self.automagnitudesText.appendPlainText("#####################################################")
+            date = row['date_id']
+            lat = str(row['lats'])
+            lon = str(row['longs'])
+            depth = str(row['depths'])
+            if not math.isnan(row['Mw']):
+                Mw = str("{: .2f}".format(row['Mw']))
+            else:
+                Mw = row['Mw']
+
+            if not math.isnan(row['Mw_error']):
+                Mw_std = str("{: .2f}".format(row['Mw_error']))
+            else:
+                Mw_std = row['Mw_error']
+
+            if not math.isnan(row['Mo']):
+                Mo = str("{: .2e}".format(row['Mo']))
+            else:
+                Mo = row['Mo']
+
+            if not math.isnan(row['radius']):
+                source_radius = str("{: .2f}".format(row['radius']))
+            else:
+                source_radius = row['radius']
+
+            if not math.isnan(row['ML']):
+                ML = str("{: .2f}".format(row['ML']))
+            else:
+                ML = row['ML']
+
+            if not math.isnan(row['ML_error']):
+                ML_std = str("{: .2f}".format(row['ML_error']))
+            else:
+                ML_std = row['ML_error']
+
+            if not math.isnan(row['bsd']):
+                bsd = str("{: .2f}".format(row['bsd']))
+            else:
+                bsd = row['bsd']
+
+            if not math.isnan(row['Er']):
+                Er = str("{: .2e}".format(row['Er']))
+            else:
+                Er = row['Er']
+
+            if not math.isnan(row['Er_std']):
+                Er_std = str("{: .2e}".format(row['Er_std']))
+            else:
+                Er_std = row['Er']
+
+            if not math.isnan(row['fc']):
+                fc = str("{: .2f}".format(row['fc']))
+            else:
+                fc = row['fc']
+
+            if not math.isnan(row['fc_std']):
+                fc_std = str("{: .2f}".format(row['fc_std']))
+            else:
+                fc_std = row['fc']
+
+            if not math.isnan(row['Qo']):
+                Qo = str("{: .2f}".format(row['Qo']))
+            else:
+                Qo = row['Qo']
+
+            if not math.isnan(row['Qo_std']):
+                Qo_std = str("{: .2f}".format(row['Qo_std']))
+            else:
+                Qo_std = row['Qo_std']
+
+            if not math.isnan(row['t_star']):
+                t_star = str("{: .2f}".format(row['t_star']))
+            else:
+                t_star = row['t_star']
+
+            if not math.isnan(row['t_star_std']):
+                t_star_std = str("{: .2f}".format(row['t_star_std']))
+            else:
+                t_star_std = row['t_star_std']
+
+
+            self.automagnitudesText.appendPlainText(date + "    " + lat +"º    "+ lon+"º    "+ depth+" km")
+            self.automagnitudesText.appendPlainText("Moment Magnitude: " " Mw {Mw} "
+                                                             " std {std} ".format(Mw=Mw, std=Mw_std))
+
+            self.automagnitudesText.appendPlainText("Seismic Moment and Source radius: " " Mo {Mo:} Nm"
+                                                              ", R {std} km".format(Mo=Mo, std=source_radius))
+
+            self.automagnitudesText.appendPlainText("Local Magnitude: " " ML {ML} "
+                                                    " std {std} ".format(ML=ML, std=ML_std))
+
+            self.automagnitudesText.appendPlainText("Brune stress Drop: " "{bsd} MPa".format(bsd=bsd))
+
+            self.automagnitudesText.appendPlainText(
+                 "Seismic Energy: " " Er {Er} juls" " Er_std {Er_std} ".format(Er=Er, Er_std=Er_std))
+
+            self.automagnitudesText.appendPlainText(
+                 "Corner Frequency: " " fc {fc} Hz" " fc_std {fc_std} ".format(fc=fc, fc_std=fc_std))
+
+            self.automagnitudesText.appendPlainText(
+                          "Quality factor: " " Qo {Qo} " " Q_std {Qo_std} ".format(Qo=Qo, Qo_std=Qo_std))
+
+            self.automagnitudesText.appendPlainText(
+                          "t_star: " "{t_star} s" " t_star_std {t_star_std} ".format(t_star=t_star,
+                                                                                             t_star_std=t_star_std))
+

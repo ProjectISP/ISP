@@ -3,6 +3,7 @@ from contextlib import suppress
 from datetime import datetime
 from concurrent.futures.thread import ThreadPoolExecutor
 from PyQt5 import uic
+from PyQt5.QtCore import QFileSystemWatcher
 from obspy import UTCDateTime
 from isp import UIS_PATH
 from isp.Gui import pyc, pw, user_preferences, pqg
@@ -281,4 +282,32 @@ class BindPyqtObject(pyc.QObject):
         :return:
         """
         self.pyqt_obj.setVisible(is_visible)
+
+
+class FolderWatcher:
+    def __init__(self, path):
+        self.path = path
+        self.watcher = QFileSystemWatcher()
+        self.watcher.addPath(path)
+        self.watcher.directoryChanged.connect(self.on_directory_changed)
+
+        # Initial snapshot of the folder's contents
+        self.current_files = set(os.listdir(path))
+
+    def on_directory_changed(self, path):
+        # Get the new snapshot of the folder's contents
+        updated_files = set(os.listdir(path))
+
+        # Determine added and removed files
+        added_files = updated_files - self.current_files
+        removed_files = self.current_files - updated_files
+
+        # Update the current snapshot
+        self.current_files = updated_files
+
+        # Print added and removed files
+        for added in added_files:
+            print(f"New file added: {added}")
+        for removed in removed_files:
+            print(f"File removed: {removed}")
 
