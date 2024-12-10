@@ -28,6 +28,7 @@ nll_ak135 = os.path.join(ROOT_DIR, "earthquakeAnalysis", "loc_structure/ak135")
 BINARY_NLL_DIR = os.path.join(ROOT_DIR, 'NLL7/src/bin')
 MAP_SERVICE_URL = "https://wms.gebco.net/mapserv?"
 MAP_LAYER = "GEBCO_LATEST"
+source_config = os.path.join(ROOT_DIR, "source_spec_parse/config/source_spec.conf")
 def create_logger():
 
     # create logger.
