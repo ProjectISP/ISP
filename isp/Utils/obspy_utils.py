@@ -326,8 +326,8 @@ class ObspyUtil:
         :return: list Pick info
         """
         if os.path.isfile(hyp_file_path):
-            Origin = read_nlloc_hyp(hyp_file_path)
-            return Origin.events[0].picks
+            cat = read_nll_performance.read_nlloc_hyp_ISP(hyp_file_path)
+            return cat[0]["origins"][0]["arrivals"]
 
 
     @staticmethod
@@ -1071,7 +1071,7 @@ class MseedUtil:
                     # Collect pick details
                     pick_details = [
                         row["P_phase_descriptor"], timestamp, row["Component"],
-                        row["First_Motion"], row["Err"], 0,
+                        row["First_Motion"], row["Err"], row["ErrMag"],
                         row["Coda_duration"], row["Amplitude"], row["Period"]
                     ]
 

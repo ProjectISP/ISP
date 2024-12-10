@@ -1,10 +1,12 @@
 import os
 from dataclasses import dataclass, field
 from typing import List
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.orm.query import Query
+
 from isp.Utils import Singleton
 
 
