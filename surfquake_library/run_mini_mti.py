@@ -29,7 +29,7 @@ if __name__ == "__main__":
                              save_plots=True)
     #
     # Run Inversion
-    bic.run_inversion(mti_config=path_to_configfiles)
+    bic.run_inversion(mti_config=path_to_configfiles, map_stations=None)
     print("Finished Inversion")
     iversion_json_files = list_files_with_iversion_json(output_directory)
 
