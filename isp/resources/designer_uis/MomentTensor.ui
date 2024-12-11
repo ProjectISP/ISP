@@ -6,464 +6,921 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1436</width>
-    <height>732</height>
+    <width>1465</width>
+    <height>869</height>
    </rect>
   </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
+  <property name="windowTitle">
+   <string>SurfQuake</string>
   </property>
-  <property name="maximumSize">
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>:/logo/logo/surfQuake.png</normaloff>:/logo/logo/surfQuake.png</iconset>
+  </property>
+  <property name="iconSize">
    <size>
-    <width>16777215</width>
-    <height>16777200</height>
+    <width>100</width>
+    <height>100</height>
    </size>
   </property>
-  <property name="windowTitle">
-   <string>MainWindow</string>
-  </property>
   <widget class="QWidget" name="centralwidget">
-   <property name="autoFillBackground">
-    <bool>true</bool>
-   </property>
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="0">
-     <widget class="QSplitter" name="splitter_3">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <widget class="QWidget" name="layoutWidget">
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
-         <layout class="QGridLayout" name="gridLayout_4">
-          <item row="0" column="0">
-           <widget class="QPushButton" name="earthmodelBtn">
-            <property name="toolTip">
-             <string>Select the folder where you have the 1D earth model. You can create one in Build --&gt;  Earth Model</string>
-            </property>
-            <property name="text">
-             <string>Earth Model File</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QLineEdit" name="earth_modelPathForm"/>
-          </item>
-          <item row="1" column="0">
-           <widget class="QPushButton" name="setOutputBtn">
-            <property name="text">
-             <string>Output Folder</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QLineEdit" name="outputLE"/>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QGridLayout" name="gridLayout_5">
-          <item row="0" column="1">
-           <widget class="QPushButton" name="run_inversionBtn">
-            <property name="toolTip">
-             <string>Click to run the MTI over the &quot;Process and Plot&quot; Seismograms. Please fill carefully the Parameters section</string>
-            </property>
-            <property name="text">
-             <string>Run Inversion</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QPushButton" name="plot_solutionBtn">
-            <property name="text">
-             <string>Plot Last solution</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QPushButton" name="stationSelectBtn">
-            <property name="text">
-             <string>Station / Channel select</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QPushButton" name="openHTML">
-            <property name="text">
-             <string>Open full report</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QTabWidget" name="tabWidget">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>640</width>
-        <height>572</height>
-       </size>
-      </property>
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <widget class="QTabWidget" name="SurfQuakeWidget">
       <property name="currentIndex">
        <number>0</number>
       </property>
+      <widget class="QWidget" name="MTI">
+       <attribute name="title">
+        <string>MTI Configuration and Running</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <widget class="QGroupBox" name="groupBox_11">
+          <property name="title">
+           <string>Settings</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <property name="spacing">
+            <number>20</number>
+           </property>
+           <item>
+            <layout class="QGridLayout" name="gridLayout_19">
+             <item row="0" column="0">
+              <widget class="QGroupBox" name="groupBox_17">
+               <property name="title">
+                <string>Working Framework</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_20">
+                <item row="1" column="2">
+                 <widget class="QLineEdit" name="MTI_output_path">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLineEdit" name="earth_model_path">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QPushButton" name="earthModelMTIBtn">
+                  <property name="text">
+                   <string>Earth Model File</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QPushButton" name="outputDirectoryMTIBtn">
+                  <property name="text">
+                   <string>Output Directory</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_25">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>100</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Grid Search</string>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <property name="spacing">
+               <number>15</number>
+              </property>
+              <item>
+               <layout class="QGridLayout" name="gridLayout_30">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <item row="3" column="1">
+                 <widget class="QDoubleSpinBox" name="magnitudeDB"/>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QDoubleSpinBox" name="HorizontalLocUncertainityMTIDB">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="suffix">
+                   <string> m</string>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <double>15000.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>3000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="1">
+                 <widget class="QDoubleSpinBox" name="HorizontalSeachStepMTIDB">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="suffix">
+                   <string> m</string>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>200.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QLabel" name="label_47">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Horizontal Location Uncertainity</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="0">
+                 <widget class="QLabel" name="label_44">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Horizontal search step</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="latDB">
+                  <property name="decimals">
+                   <number>5</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-90.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>90.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label">
+                  <property name="text">
+                   <string>Latitude</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="label_9">
+                  <property name="text">
+                   <string>Magnitude (Mw)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_7">
+                  <property name="text">
+                   <string>Origin Time</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QDateTimeEdit" name="origin_time">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="displayFormat">
+                   <string>yyyy/MM/dd hh:mm:ss.ssssss UTC</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="Line" name="line_2">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QGridLayout" name="gridLayout_29">
+                <item row="0" column="1">
+                 <widget class="QDoubleSpinBox" name="lonDB">
+                  <property name="decimals">
+                   <number>5</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-180.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>180.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="label_40">
+                  <property name="text">
+                   <string>Depth Search step</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label_39">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Depth Uncertainity</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QDoubleSpinBox" name="depthSearchStepMTIDB">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="suffix">
+                   <string> m</string>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <double>1000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>1.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>200.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QDoubleSpinBox" name="timeUncertainityMTIDB">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="suffix">
+                   <string> s</string>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <double>11.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>1.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QLabel" name="label_31">
+                  <property name="text">
+                   <string>Time Uncertainity</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="depthUncertainityMTIDB">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="suffix">
+                   <string> m</string>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <double>15000.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>3000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_2">
+                  <property name="text">
+                   <string>Longitude</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>Depth (km)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QDoubleSpinBox" name="depthDB"/>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_26">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>100</height>
+              </size>
+             </property>
+             <property name="title">
+              <string/>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_7">
+              <item>
+               <widget class="QGroupBox" name="groupBox_27">
+                <property name="title">
+                 <string>Inversion Parameters</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_9">
+                 <item>
+                  <layout class="QGridLayout" name="gridLayout_2">
+                   <item row="2" column="6">
+                    <widget class="QDoubleSpinBox" name="freq_maxMTI">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="prefix">
+                      <string>freq max </string>
+                     </property>
+                     <property name="suffix">
+                      <string> Hz</string>
+                     </property>
+                     <property name="decimals">
+                      <number>3</number>
+                     </property>
+                     <property name="value">
+                      <double>0.600000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="4">
+                    <widget class="QLabel" name="label_43">
+                     <property name="toolTip">
+                      <string>S-wave average radiation pattern coefficient</string>
+                     </property>
+                     <property name="text">
+                      <string>Rupture Velocity</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="4">
+                    <widget class="QLabel" name="label_32">
+                     <property name="text">
+                      <string>Inversion Freqs</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="5">
+                    <widget class="QDoubleSpinBox" name="freq_minMTI">
+                     <property name="prefix">
+                      <string>freq min </string>
+                     </property>
+                     <property name="suffix">
+                      <string> Hz</string>
+                     </property>
+                     <property name="decimals">
+                      <number>3</number>
+                     </property>
+                     <property name="value">
+                      <double>0.040000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="5" colspan="2">
+                    <widget class="QDoubleSpinBox" name="ruptureVelMTIDB">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="suffix">
+                      <string> (m/s)</string>
+                     </property>
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <double>5000.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>2500.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_41">
+                     <property name="text">
+                      <string>Source type</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="2">
+                    <widget class="QDoubleSpinBox" name="sourceTypeLenthgMTIDB">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="prefix">
+                      <string>legth </string>
+                     </property>
+                     <property name="suffix">
+                      <string> (s)</string>
+                     </property>
+                     <property name="value">
+                      <double>2.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QComboBox" name="sourceTypeCB">
+                     <item>
+                      <property name="text">
+                       <string>Triangle</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QCheckBox" name="deviatoricCB">
+                     <property name="text">
+                      <string>Deviatoric</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QCheckBox" name="covarianceCB">
+                     <property name="text">
+                      <string>Cross Covariance</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="3" rowspan="2">
+                    <widget class="Line" name="line">
+                     <property name="orientation">
+                      <enum>Qt::Vertical</enum>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_28">
+                <property name="title">
+                 <string>Traces Selection Criteria</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_7">
+                 <item>
+                  <layout class="QGridLayout" name="gridLayout">
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_57">
+                     <property name="toolTip">
+                      <string>S-wave average radiation pattern coefficient</string>
+                     </property>
+                     <property name="text">
+                      <string>RMS Threshold</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="label_58">
+                     <property name="toolTip">
+                      <string>S-wave average radiation pattern coefficient</string>
+                     </property>
+                     <property name="text">
+                      <string>Minimum Epicenter Distance</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QDoubleSpinBox" name="rms_threshMTI">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="prefix">
+                      <string/>
+                     </property>
+                     <property name="suffix">
+                      <string> (s)</string>
+                     </property>
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="value">
+                      <double>5.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QSpinBox" name="max_num_stationsMTI">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="suffix">
+                      <string/>
+                     </property>
+                     <property name="prefix">
+                      <string/>
+                     </property>
+                     <property name="value">
+                      <number>10</number>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_56">
+                     <property name="toolTip">
+                      <string>S-wave average radiation pattern coefficient</string>
+                     </property>
+                     <property name="text">
+                      <string>Max numer of stations</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="3">
+                    <widget class="QDoubleSpinBox" name="minDistMTIDB">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="prefix">
+                      <string/>
+                     </property>
+                     <property name="suffix">
+                      <string> km</string>
+                     </property>
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <double>1000.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="3">
+                    <widget class="QDoubleSpinBox" name="maxDistMTIDB">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="prefix">
+                      <string/>
+                     </property>
+                     <property name="suffix">
+                      <string> (km)</string>
+                     </property>
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="maximum">
+                      <double>100000.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>450.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="2">
+                    <widget class="QLabel" name="label_59">
+                     <property name="toolTip">
+                      <string>S-wave average radiation pattern coefficient</string>
+                     </property>
+                     <property name="text">
+                      <string>Maximum Epicenter Distance</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="0" colspan="2">
+                    <widget class="QPushButton" name="stationSelectBtn">
+                     <property name="text">
+                      <string>Station / Channel select</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <layout class="QGridLayout" name="gridLayout_25">
+             <item row="0" column="0">
+              <widget class="QGroupBox" name="groupBox_21">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="title">
+                <string>Results</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_12">
+                <property name="spacing">
+                 <number>12</number>
+                </property>
+                <item>
+                 <widget class="QPlainTextEdit" name="mti_text">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_9">
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QPushButton" name="runInversionMTIBtn">
+                    <property name="text">
+                     <string>Run Inversion</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="savePlotsCB">
+                    <property name="text">
+                     <string>Save Plots</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="printMTIresultsBtn">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Print Results</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="tab">
        <attribute name="title">
-        <string>Moment Tensor Parameters</string>
+        <string>Plotting</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <property name="leftMargin">
-         <number>1</number>
+       <widget class="QTabWidget" name="plotTG">
+        <property name="geometry">
+         <rect>
+          <x>340</x>
+          <y>0</y>
+          <width>1101</width>
+          <height>811</height>
+         </rect>
         </property>
-        <property name="topMargin">
-         <number>1</number>
+        <property name="currentIndex">
+         <number>0</number>
         </property>
-        <property name="rightMargin">
-         <number>1</number>
-        </property>
-        <property name="bottomMargin">
-         <number>1</number>
-        </property>
-        <item>
-         <layout class="QGridLayout" name="gridLayout_3">
-          <property name="sizeConstraint">
-           <enum>QLayout::SetFixedSize</enum>
-          </property>
-          <item row="3" column="1">
-           <widget class="QDoubleSpinBox" name="timeDB"/>
-          </item>
-          <item row="2" column="1">
-           <widget class="QDoubleSpinBox" name="magnitudeDB"/>
-          </item>
-          <item row="6" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_4">
-            <property name="toolTip">
-             <string>Minimum frequency to be consider in the inversions</string>
+        <widget class="QWidget" name="tab_BB">
+         <attribute name="title">
+          <string>Beach Ball</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QScrollArea" name="scroll_area_widget">
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(255, 255, 255);</string>
             </property>
-            <property name="text">
-             <string>Freq Min</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QDateTimeEdit" name="origin_time">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="displayFormat">
-             <string>yyyy/MM/dd hh:mm:ss UTC</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0">
-           <widget class="QCheckBox" name="deviatoricCB">
-            <property name="text">
-             <string>Deviatoric</string>
-            </property>
-            <property name="checked">
+            <property name="widgetResizable">
              <bool>true</bool>
             </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <widget class="QDoubleSpinBox" name="lonDB">
-            <property name="decimals">
-             <number>5</number>
-            </property>
-            <property name="minimum">
-             <double>-180.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>180.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="3">
-           <widget class="QDoubleSpinBox" name="freq_max_DB">
-            <property name="decimals">
-             <number>3</number>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="3">
-           <widget class="QDoubleSpinBox" name="location_uncDB">
-            <property name="maximum">
-             <double>90000.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="1">
-           <widget class="QCheckBox" name="circle_shapeCB">
-            <property name="text">
-             <string>Circle Shape</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="2" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_5">
-            <property name="toolTip">
-             <string>Minimum frequency to be consider in the inversions</string>
-            </property>
-            <property name="text">
-             <string>Freq Max</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QDoubleSpinBox" name="latDB">
-            <property name="decimals">
-             <number>5</number>
-            </property>
-            <property name="minimum">
-             <double>-90.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>90.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="2">
-           <widget class="QLabel" name="label_14">
-            <property name="text">
-             <string>Depth Uncertainity (m)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="0" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_10">
-            <property name="toolTip">
-             <string>Minimum epicentral distance to be consider in the inversions</string>
-            </property>
-            <property name="text">
-             <string>Dist Min (km)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1">
-           <widget class="QDoubleSpinBox" name="freq_min_DB">
-            <property name="decimals">
-             <number>3</number>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="3">
-           <widget class="QDoubleSpinBox" name="depth_uncDB">
-            <property name="maximum">
-             <double>90000.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="1">
-           <widget class="QDoubleSpinBox" name="min_distCB">
-            <property name="maximum">
-             <double>9000.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_8">
-            <property name="text">
-             <string>Time Uncertainity (s)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>Longitude</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="3">
-           <widget class="QCheckBox" name="covarianceCB">
-            <property name="text">
-             <string>Covariance</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>Origin Time</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_6">
-            <property name="text">
-             <string>Depth (km)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Latitude</string>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="2" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_11">
-            <property name="toolTip">
-             <string>Maximum epicentral distance to be consider in the inversions</string>
-            </property>
-            <property name="text">
-             <string>Dist Max (km)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="3">
-           <widget class="QDoubleSpinBox" name="max_distCB">
-            <property name="maximum">
-             <double>10000.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="depthDB"/>
-          </item>
-          <item row="5" column="2">
-           <widget class="QCheckBox" name="gfCB">
-            <property name="text">
-             <string>Use Precalculated GFs</string>
-            </property>
-            <property name="checked">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>Location Uncertainity (m)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_9">
-            <property name="text">
-             <string>Magnitude (Mw)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="0" colspan="4">
-           <widget class="QPlainTextEdit" name="infoTx">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777214</height>
-             </size>
-            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>1053</width>
+               <height>748</height>
+              </rect>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_4">
+              <item>
+               <layout class="QGridLayout" name="pltGrid"/>
+              </item>
+             </layout>
+            </widget>
            </widget>
           </item>
          </layout>
-        </item>
-       </layout>
-      </widget>
-     </widget>
-    </item>
-    <item row="1" column="1" rowspan="2">
-     <widget class="QTabWidget" name="plotTG">
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <widget class="QWidget" name="tab_BB">
-       <attribute name="title">
-        <string>Beach Ball</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <widget class="QScrollArea" name="scroll_area_widget">
-          <property name="styleSheet">
-           <string notr="true">background-color: rgb(255, 255, 255);</string>
-          </property>
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>708</width>
-             <height>606</height>
-            </rect>
+        </widget>
+        <widget class="QWidget" name="tab_SF">
+         <attribute name="title">
+          <string>Synthetic Fit</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="QScrollArea" name="scrollArea">
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(255, 255, 255);</string>
+            </property>
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents_2">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>98</width>
+               <height>28</height>
+              </rect>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <item>
+               <layout class="QGridLayout" name="pltSynthetics"/>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>10</y>
+          <width>333</width>
+          <height>781</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QWidget" name="fileSelectorWidget" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_4">
-            <item>
-             <layout class="QGridLayout" name="pltGrid"/>
-            </item>
-           </layout>
-          </widget>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_SF">
-       <attribute name="title">
-        <string>Synthetic Fit</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_5">
-        <item>
-         <widget class="QScrollArea" name="scrollArea">
-          <property name="styleSheet">
-           <string notr="true">background-color: rgb(255, 255, 255);</string>
-          </property>
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_2">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>708</width>
-             <height>606</height>
-            </rect>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16700</height>
+            </size>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
-            <item>
-             <layout class="QGridLayout" name="pltSynthetics"/>
-            </item>
-           </layout>
+           <property name="toolTip">
+            <string>Files Selector. Please select the file you want to Process adn plot</string>
+           </property>
           </widget>
-         </widget>
-        </item>
-       </layout>
+         </item>
+         <item>
+          <layout class="QGridLayout" name="gridLayout_4">
+           <item row="1" column="0">
+            <widget class="QPushButton" name="pushButton">
+             <property name="text">
+              <string>Plot</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QPushButton" name="pushButton_2">
+             <property name="text">
+              <string>Print Sol</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QPushButton" name="selectDirBtn">
+             <property name="toolTip">
+              <string>Select the folder where you have the seismogram files</string>
+             </property>
+             <property name="text">
+              <string>File Directory</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QPushButton" name="pushButton_3">
+             <property name="text">
+              <string>Open html</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1" colspan="2">
+            <widget class="QLineEdit" name="rootPathForm"/>
+           </item>
+           <item row="2" column="0" colspan="3">
+            <widget class="QPlainTextEdit" name="plainTextEdit"/>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </widget>
     </item>
@@ -474,112 +931,27 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1436</width>
+     <width>1465</width>
      <height>24</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFile">
+   <widget class="QMenu" name="menuOpen">
     <property name="title">
-     <string>File</string>
+     <string>Open</string>
     </property>
+    <addaction name="actionData_Base"/>
    </widget>
-   <widget class="QMenu" name="menuParameters">
-    <property name="title">
-     <string>Parameters</string>
-    </property>
-    <addaction name="actionSettings"/>
-   </widget>
-   <widget class="QMenu" name="menuBuild">
-    <property name="title">
-     <string>Build</string>
-    </property>
-    <addaction name="actionEarth_Model"/>
-   </widget>
-   <widget class="QMenu" name="menuRead_Event">
-    <property name="title">
-     <string>Read Event</string>
-    </property>
-    <addaction name="actionFrom_File"/>
-   </widget>
-   <widget class="QMenu" name="menuHelp">
-    <property name="title">
-     <string>Help</string>
-    </property>
-    <addaction name="actionOpen_Help"/>
-   </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuParameters"/>
-   <addaction name="menuBuild"/>
-   <addaction name="menuRead_Event"/>
-   <addaction name="menuHelp"/>
+   <addaction name="menuOpen"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionWrite">
-   <property name="icon">
-    <iconset>
-     <normalon>:/Iconos/Imagenes/Compas.png</normalon>
-    </iconset>
-   </property>
+  <action name="actionData_Base">
    <property name="text">
-    <string>Write Seismogram</string>
-   </property>
-  </action>
-  <action name="actionCreatenewProject">
-   <property name="icon">
-    <iconset>
-     <normalon>:/Iconos/Imagenes/Lapiz.png</normalon>
-    </iconset>
-   </property>
-   <property name="text">
-    <string>Create a new Project</string>
-   </property>
-  </action>
-  <action name="actionStationsInfo">
-   <property name="icon">
-    <iconset>
-     <normalon>:/Iconos/Imagenes/Balc¢n.png</normalon>
-    </iconset>
-   </property>
-   <property name="text">
-    <string>Stations Info</string>
-   </property>
-  </action>
-  <action name="actionSettings">
-   <property name="text">
-    <string>Macro</string>
-   </property>
-  </action>
-  <action name="actionImport_from_EA">
-   <property name="text">
-    <string>Import from EA</string>
-   </property>
-  </action>
-  <action name="actionWrite_Time_Frequency">
-   <property name="text">
-    <string>Write Time-Frequency</string>
-   </property>
-  </action>
-  <action name="actionEarth_Model">
-   <property name="text">
-    <string>Earth Model</string>
-   </property>
-  </action>
-  <action name="actionFrom_Database">
-   <property name="text">
-    <string>From Database</string>
-   </property>
-  </action>
-  <action name="actionFrom_File">
-   <property name="text">
-    <string>From File</string>
-   </property>
-  </action>
-  <action name="actionOpen_Help">
-   <property name="text">
-    <string>Open Help</string>
+    <string>Data Base</string>
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
