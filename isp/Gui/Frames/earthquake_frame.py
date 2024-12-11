@@ -2456,8 +2456,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                 # create surf project
                 sp = SurfProject()
-                sp.project = self.project_filtered
-                sp.data_files = self.files_path
+                if len(self.project_filtered)==0:
+                    sp.project = self.project
+                    sp.data_files = self.files_path
+                else:
+                    sp.project = self.project_filtered
+                    sp.data_files = self.files_path
 
                 self.__locate = Locate(self.metadata_path_bind.value, sp)
 
