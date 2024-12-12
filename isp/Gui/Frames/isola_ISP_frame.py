@@ -3,12 +3,6 @@
 """
 isola_ISP_frame
 
-
-
-:param : 
-:type : 
-:return: 
-:rtype: 
 """
 
 from PyQt5.QtGui import QPixmap
@@ -17,7 +11,7 @@ from obspy.core.event import Origin
 from isp import ROOT_DIR, ALL_LOCATIONS
 from isp.Exceptions import InvalidFile
 from isp.Gui import pw, qt
-from isp.Gui.Frames import BaseFrame, MessageDialog, UiMomentTensor, MatplotlibFrame
+from isp.Gui.Frames import BaseFrame, MessageDialog, UiMomentTensor, MatplotlibFrame, FilesView
 from isp.Gui.Frames.crustal_model_parameters_frame import CrustalModelParametersFrame
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime, set_qdatetime, \
@@ -32,7 +26,9 @@ import platform
 from surfquakecore.moment_tensor.mti_parse import read_isola_result, WriteMTI
 from surfquakecore.moment_tensor.sq_isola_tools.sq_bayesian_isola import BayesianIsolaCore
 from surfquakecore.project.surf_project import SurfProject
-from surfquakecore.moment_tensor.structures import MomentTensorInversionConfig, StationConfig, InversionParameters
+from surfquakecore.moment_tensor.structures import MomentTensorInversionConfig, StationConfig, \
+    InversionParameters, SignalProcessingParameters
+
 
 @add_save_load()
 class MTIFrame(BaseFrame, UiMomentTensor):
@@ -50,19 +46,113 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         # Binding
         self.earth_path_bind = BindPyqtObject(self.earth_model_path)
         self.output_path_bind = BindPyqtObject(self.MTI_output_path)
+        #self.rootPathFormView_bind = BindPyqtObject(self.rootPathFormView)
 
         self.earthModelMTIBtn.clicked.connect(lambda: self.on_click_select_file(self.earth_path_bind))
         self.outputDirectoryMTIBtn.clicked.connect(lambda: self.on_click_select_directory(self.output_path_bind))
-
+        #self.selectDirViewBtn.clicked.connect(lambda: self.on_click_select_directory(self.rootPathFormView_bind))
+        self.selectDirViewBtn.clicked.connect(lambda: self.on_click_select_directory(self.root_path_bind))
         # actions
         self.stationSelectBtn.clicked.connect(lambda: self.stationsInfo())
         self.runInversionMTIBtn.clicked.connect(lambda: self.run_inversion())
+        self.printMTIresultsBtn.clicked.connect(lambda: self.print_mti())
+
+        # self.file_selector = FilesView(self.rootPathFormView_bind.value, parent=self.fileSelectorWidget,
+        #                                on_change_file_callback=lambda file_path: self.onChange_file(file_path))
+        self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
+        self.file_selector = FilesView(self.root_path_bind.value, parent=self.fileSelectorWidget,
+                                       on_change_file_callback=lambda file_path: self.onChange_file(file_path))
+
+        self.plot_solutionBtn.clicked.connect(lambda: self.plot_solution())
+        self.openHTML.clicked.connect(lambda: self.load_HTML_file())
+    def plot_solution(self):
+
+        self._load_log_file()
+        beach_ball_list = ['centroid.png', 'uncertainty_MT_DC.png', 'uncertainty_MT.png']
+        synthetic_list = ['seismo_sharey.png', 'spectra.png']
+        self.__plot_grid(beach_ball_list, self.pltGrid, max_cols=1, size=250)
+        self.__plot_grid(synthetic_list, self.pltSynthetics, max_cols=0, size=550)
+    def __plot_grid(self, good_list, grid, max_cols, size):
+
+        # Clear the grid layout
+        for i in reversed(range(grid.count())):
+            widget = grid.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+        # Load and display images with titles
+        row, col = 0, 0
+        for filename in os.listdir(self.root_path_bind.value):
+            if filename.lower().endswith('.png') and filename in good_list:  # Only load PNG images
+                image_path = os.path.join(self.root_path_bind.value, filename)
+                pixmap = QPixmap(image_path)
+
+                # Resize the image for thumbnails
+                pixmap = pixmap.scaled(size, size, qt.KeepAspectRatio, qt.SmoothTransformation)
+
+                # Create a vertical layout for the image and title
+                vbox = QVBoxLayout()
+
+                # Add a title (filename without extension)
+                title = QLabel(self)
+                title.setText(os.path.splitext(filename)[0])  # Remove .png from the filename
+                title.setAlignment(qt.AlignCenter)  # Center-align the title
+                title.setStyleSheet("font-size: 14px; font-weight: bold; margin-bottom: 2px;")  # Optional styling
+                vbox.addWidget(title)
+
+                # Add the image
+                image_label = ImageLabel(image_path, self)  # Use custom QLabel
+                image_label.setPixmap(pixmap)
+                image_label.setAlignment(qt.AlignCenter)
+                vbox.addWidget(image_label)
+
+                # Add the vertical layout to the grid
+                container_widget = QWidget()
+                container_widget.setLayout(vbox)
+                grid.addWidget(container_widget, row, col)
+
+                col += 1
+                if col > max_cols:  # Adjust column count for grid
+                    col = 0
+                    row += 1
+    def load_HTML_file(self):
+        html_path = os.path.join(self.root_path_bind.value, 'index.html')
+        open_html_file(html_path)
+
+    def _load_log_file(self):
+        logfile = os.path.join(self.root_path_bind.value, "log.txt")
+        if logfile:
+            try:
+                # Read the content of the file
+                with open(logfile, 'r') as file:
+                    log_content = file.read()
+                    self.infoTx.setPlainText(log_content)  # Display the content in QPlainTextEdit
+            except Exception as e:
+                self.infoTx.setPlainText(f"Failed to load file: {e}")
+
+
+    def onChange_root_path(self, value):
+        """
+        Fired every time the root_path is changed
+
+        :param value: The path of the new directory.
+
+        :return:
+        """
+        self.file_selector.set_new_rootPath(value)
+
+    def onChange_file(self, file_path):
+        # Called every time user select a different file
+        pass
 
     def get_inversion_parameters(self):
 
-        parameters = {'output_directory': self.MTI_output_path.text(),
+        parameters = {'origin_time': convert_qdatetime_datetime(self.origin_time),
+                      'latitude': self.latDB.value(), 'longitude': self.lonDB.value(), 'depth': self.depthDB.value(),
+                      'output_directory': self.MTI_output_path.text(),
                       'earth_model': self.earth_model_path.text(),
                       'location_unc': self.HorizontalLocUncertainityMTIDB.value(),
+                      'magnitude': self.magnitudeDB.value(),
                       'time_unc': self.timeUncertainityMTIDB.value(), 'depth_unc': self.depthUncertainityMTIDB.value(),
                       'deviatoric': self.deviatoricCB.isChecked(), 'covariance': self.covarianceCB.isChecked(),
                       'plot_save': self.savePlotsCB.isChecked(), 'rupture_velocity': self.ruptureVelMTIDB.value(),
@@ -77,16 +167,16 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
     def run_inversion(self):
 
-
         parameters = self.get_inversion_parameters()
 
         mti_config = MomentTensorInversionConfig(
-            origin_date=convert_qdatetime_datetime(self.origin_time),
-            latitude=self.latDB.value(),
-            longitude=self.lonDB.value(),
-            depth_km=self.depthDB.value(),
-            magnitude=self.magnitudeDB.value(),
+            origin_date=parameters['origin_time'],
+            latitude=parameters['latitude'],
+            longitude=parameters['longitude'],
+            depth_km=parameters['depth'],
+            magnitude=parameters['magnitude'],
             stations=[StationConfig(name=".", channels=["."])],
+
             inversion_parameters=InversionParameters(
                 earth_model_file=parameters['earth_model'],
                 location_unc=parameters['location_unc'],
@@ -99,16 +189,19 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                 source_type=parameters['source_type'],
                 deviatoric=parameters['deviatoric'],
                 covariance=parameters['covariance'],
-                max_number_stations=parameters['max_number_stations']
+                max_number_stations=parameters['max_number_stations']),
 
-            ),
-        )
+            signal_processing_parameters=SignalProcessingParameters(remove_response=False,
+                                                                    max_freq=parameters['fmax'],
+                                                                    min_freq=parameters['fmin'],
+                                                                    rms_thresh=parameters['rms_thresh']))
 
-
-        bic = BayesianIsolaCore(project=self.stream, inventory_file="", output_directory=self.output_path_bind.value)
+        bic = BayesianIsolaCore(project=self.st, inventory_file=self.inventory,
+                                output_directory=self.output_path_bind.value,
+                                save_plots=self.savePlotsCB.isChecked())
 
         # # Run Inversion
-        bic.run_inversion(mti_config=path_to_configfiles, map_stations=None)
+        bic.run_inversion(mti_config=mti_config, map_stations=None)
 
     def on_click_select_file(self, bind: BindPyqtObject):
         file_path = pw.QFileDialog.getOpenFileName(self, 'Select Directory', bind.value)
@@ -136,7 +229,6 @@ class MTIFrame(BaseFrame, UiMomentTensor):
             md.set_info_message("No selected any file, please set hypocenter parameters manually")
             return None
 
-
     def load_event(self):
         hyp_file = self.on_click_select_hyp_file()
         if isinstance(hyp_file, str):
@@ -151,24 +243,14 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.stations_check = True
         md = MessageDialog(self)
         md.set_info_message("Select your Station/Channel", "Sorted by distance to the epicenter")
-        parameters = self.get_inversion_parameters()
-        lat = float(parameters['latitude'])
-        lon = float(parameters['longitude'])
-
-        if self.st:
-            min_dist = self.min_distCB.value()
-            max_dist = self.max_distCB.value()
-            mt = MTIManager(self.st, self.inventory, lat, lon, min_dist, max_dist)
-            [self.stream, self.deltas, self.stations_isola_path] = mt.get_stations_index()
 
         all_stations = []
 
-        for stream in self.stream:
-            for tr in stream:
-                station = [tr.stats.network, tr.stats.station, tr.stats.location, tr.stats.channel, tr.stats.starttime,
-                           tr.stats.endtime, tr.stats.sampling_rate, tr.stats.npts]
-
-                all_stations.append(station)
+        # for stream in self.stream:
+        for tr in self.st:
+            station = [tr.stats.network, tr.stats.station, tr.stats.location, tr.stats.channel, tr.stats.starttime,
+                       tr.stats.endtime, tr.stats.sampling_rate, tr.stats.npts]
+            all_stations.append(station)
 
         self._stations_info = StationsInfo(all_stations, check=True)
         self._stations_info.show()
@@ -208,6 +290,54 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                 md = MessageDialog(self)
                 md.set_info_message("Loaded information and set hypocenter parameters, please click stations info")
 
+    def print_mti(self):
+        self.mti_text.clear()
+        iversion_json_files = []
+
+        for foldername, subfolders, filenames in os.walk(self.MTI_output_path.text()):
+            for filename in filenames:
+                if filename == "inversion.json":
+                    iversion_json_files.append(os.path.join(foldername, filename))
+
+        for result_file in iversion_json_files:
+            result = read_isola_result(result_file)
+            self.mti_text.appendPlainText("#####################################################")
+            formatted_date = result["centroid"]["time"]
+            lat = str("{: .2f}".format(result["centroid"]["latitude"]))
+            lon = str("{: .2f}".format(result["centroid"]["longitude"]))
+            depth = str("{: .2f}".format(result["centroid"]["depth"]))
+            self.mti_text.appendPlainText(formatted_date + "    " + lat +"º    "+ lon+"º    "+ depth+" km")
+            mrr = str("{: .2e}".format(result["centroid"]["mrr"]))
+            mtt = str("{: .2e}".format(result["centroid"]["mtt"]))
+            mpp = str("{: .2e}".format(result["centroid"]["mpp"]))
+            mrt = str("{: .2e}".format(result["centroid"]["mrt"]))
+            mrp = str("{: .2e}".format(result["centroid"]["mtt"]))
+            mtp = str("{: .2e}".format(result["centroid"]["mpp"]))
+            self.mti_text.appendPlainText("mrr    " + mrr + "    mtt    " + mtt + "    mpp    " + mpp)
+            self.mti_text.appendPlainText("mrt    " + mrt + "    mrp    " + mrp + "    mtp    " + mtp)
+            cn = str("{: .2f}".format(result["centroid"]["cn"]))
+            vr = str("{: .2f}".format(result["centroid"]["vr"]))
+            self.mti_text.appendPlainText("CN    " + cn + "    VR    "+vr+" "+ "%")
+            cvld = str("{: .2f}".format(result["scalar"]["clvd"]))
+            dc = str("{: .2f}".format(result["scalar"]["dc"]))
+            iso = str("{: .2f}".format(result["scalar"]["isotropic_component"]))
+            mo = str("{: .2e}".format(result["scalar"]["mo"]))
+            mw = str("{: .2f}".format(result["scalar"]["mw"]))
+            rupture_length = str("{: .2f}".format(result["centroid"]["rupture_length"]))
+            plane_1_dip = str("{: .1f}".format(result["scalar"]["plane_1_dip"]))
+            plane_1_slip_strike = str("{: .1f}".format(result["scalar"]["plane_1_slip_rake"]))
+            plane_1_strike = str("{: .1f}".format(result["scalar"]["plane_1_strike"]))
+            plane_2_dip = str("{: .1f}".format(result["scalar"]["plane_2_dip"]))
+            plane_2_slip_strike = str("{: .1f}".format(result["scalar"]["plane_2_slip_rake"]))
+            plane_2_strike = str("{: .1f}".format(result["scalar"]["plane_2_strike"]))
+            self.mti_text.appendPlainText("CVLD    " + cvld + " %" + "    DC    "+dc + " %"+"    ISO    "+iso + " %")
+            self.mti_text.appendPlainText("Mo    " + mo + " Nm"+"    Mw    " + mw+"    Rupture Length    " +
+                                          rupture_length + " km")
+            self.mti_text.appendPlainText("strike A    " + plane_1_strike + "    slip A    " + plane_1_slip_strike +
+                                          "    dip A    " + plane_1_dip)
+            self.mti_text.appendPlainText("strike B    " + plane_2_strike + "    slip B    " + plane_2_slip_strike +
+                                          "    dip B    " + plane_2_dip)
+            self.mti_text.appendPlainText("#####################################################")
 
 
 class ImageLabel(QLabel):

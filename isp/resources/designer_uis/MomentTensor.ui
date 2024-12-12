@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1465</width>
-    <height>869</height>
+    <height>901</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -775,9 +775,9 @@
        <widget class="QTabWidget" name="plotTG">
         <property name="geometry">
          <rect>
-          <x>340</x>
+          <x>530</x>
           <y>0</y>
-          <width>1101</width>
+          <width>911</width>
           <height>811</height>
          </rect>
         </property>
@@ -802,7 +802,7 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>1053</width>
+               <width>863</width>
                <height>748</height>
               </rect>
              </property>
@@ -834,8 +834,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>98</width>
-               <height>28</height>
+               <width>863</width>
+               <height>748</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -854,7 +854,7 @@
          <rect>
           <x>0</x>
           <y>10</y>
-          <width>333</width>
+          <width>531</width>
           <height>781</height>
          </rect>
         </property>
@@ -880,22 +880,8 @@
          </item>
          <item>
           <layout class="QGridLayout" name="gridLayout_4">
-           <item row="1" column="0">
-            <widget class="QPushButton" name="pushButton">
-             <property name="text">
-              <string>Plot</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QPushButton" name="pushButton_2">
-             <property name="text">
-              <string>Print Sol</string>
-             </property>
-            </widget>
-           </item>
            <item row="0" column="0">
-            <widget class="QPushButton" name="selectDirBtn">
+            <widget class="QPushButton" name="selectDirViewBtn">
              <property name="toolTip">
               <string>Select the folder where you have the seismogram files</string>
              </property>
@@ -905,7 +891,7 @@
             </widget>
            </item>
            <item row="1" column="2">
-            <widget class="QPushButton" name="pushButton_3">
+            <widget class="QPushButton" name="openHTML">
              <property name="text">
               <string>Open html</string>
              </property>
@@ -915,7 +901,14 @@
             <widget class="QLineEdit" name="rootPathForm"/>
            </item>
            <item row="2" column="0" colspan="3">
-            <widget class="QPlainTextEdit" name="plainTextEdit"/>
+            <widget class="QPlainTextEdit" name="infoTx"/>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QPushButton" name="plot_solutionBtn">
+             <property name="text">
+              <string>Plot</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </item>
