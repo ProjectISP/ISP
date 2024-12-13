@@ -15,14 +15,12 @@ locate_frame
 
 import os
 import shutil
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import  QCheckBox
 from obspy import Inventory
 from obspy.core.event import Origin
 from surfquakecore.magnitudes.source_tools import ReadSource
 from surfquakecore.project.surf_project import SurfProject
-
 from isp import PICKING_DIR, LOCATION_OUTPUT_PATH, LOC_STRUCTURE, source_config
 from surfquakecore.magnitudes.run_magnitudes import Automag
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -389,6 +387,13 @@ class Locate(BaseFrame, UiLocFlow):
     def saveLoc(self):
         md = MessageDialog(self)
         dir_output_path = os.path.join(self.loc_work_bind.value, "savedLocs")
+        if os.path.isdir(dir_output_path):
+            pass
+        else:
+            try:
+                os.makedirs(dir_output_path)
+            except Exception as error:
+                print("An exception occurred:", error)
 
         row_count = self.locFilesQTW.rowCount()
         column_count = self.locFilesQTW.columnCount()
@@ -418,6 +423,14 @@ class Locate(BaseFrame, UiLocFlow):
         md = MessageDialog(self)
         dir_output_path = os.path.join(self.loc_work_bind.value, "savedMecs")
 
+        if os.path.isdir(dir_output_path):
+            pass
+        else:
+            try:
+                os.makedirs(dir_output_path)
+            except Exception as error:
+                print("An exception occurred:", error)
+
         row_count = self.focmecTW.rowCount()
         column_count = self.focmecTW.columnCount()
         moved_files = []
@@ -427,7 +440,7 @@ class Locate(BaseFrame, UiLocFlow):
                 # If the column contains a QTableWidgetItem
                 item = self.focmecTW.item(row, column)
                 if column == 0:
-                    file = os.path.join(self.loc_work_bind.value, "first_polarity", item.text())
+                    file = os.path.join(self.loc_work_bind.value, "first_polarity/output", item.text())
                 # If the column contains a widget (e.g., QCheckBox)
 
                 if column == 1:
@@ -528,13 +541,20 @@ class Locate(BaseFrame, UiLocFlow):
 
         self.locFilesQTW.clearContents()
         self.focmecTW.clearContents()
-        self.locFilesQTW.setRowCount(0)
-        self.focmecTW.setRowCount(0)
+
+
         if os.path.isdir(self.loc_work_bind.value):
             nllcatalog = Nllcatalog(self.loc_work_bind.value)
             nllcatalog.find_files()
             files_list = nllcatalog.obsfiles
+
+            if len(files_list) >0:
+                self.locFilesQTW.setRowCount(0)
+
             files_focmec = FirstPolarity.find_files(self.loc_work_bind.value)
+
+            if len(files_focmec) >0:
+                self.focmecTW.setRowCount(0)
 
             for file in files_list:
                 try:
@@ -565,7 +585,7 @@ class Locate(BaseFrame, UiLocFlow):
 
 
     def setDefault(self):
-        self.picksLE.setText(os.path.join(PICKING_DIR, "out.txt"))
+        self.picksLE.setText(os.path.join(PICKING_DIR, "output.txt"))
         self.loc_workLE.setText(LOCATION_OUTPUT_PATH)
         self.modelLE.setText(os.path.join(LOC_STRUCTURE, "local_models"))
 

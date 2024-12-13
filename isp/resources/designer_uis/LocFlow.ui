@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1250</width>
-    <height>874</height>
+    <height>846</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,7 @@
     <item>
      <widget class="QTabWidget" name="SurfQuakeWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="Location">
        <attribute name="title">
@@ -783,8 +783,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>1176</width>
-               <height>746</height>
+               <width>522</width>
+               <height>170</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
