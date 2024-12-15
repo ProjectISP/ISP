@@ -5,15 +5,13 @@ Created on Tue Dec 17 20:26:28 2019
 
 @author: robertocabieces
 """
+
 import shutil
 import subprocess
-import time
-
 import pandas as pd
 import os
 from obspy import read_events, Catalog
 from obspy.core.event import Origin
-
 from isp import FOC_MEC_PATH, FOC_MEC_BASH_PATH, ROOT_DIR
 from isp.Utils import ObspyUtil
 from isp.earthquakeAnalysis import focmecobspy
@@ -30,9 +28,6 @@ class FirstPolarity:
 
         :param obs_file_path: The file path of pick observations.
         """
-        #self.__dataless_dir = dataless_path
-        #self.__obs_file_path = obs_file_path
-        #self.__create_dirs()
 
     @staticmethod
     def __validate_dir(dir_path):
@@ -171,7 +166,7 @@ class FirstPolarity:
         output_ref = FirstPolarity.extract_name(focmec_lst)
         # Sanitize file name
         file_output_name = (f"{output_ref['date'].replace('/', '-')}_"
-                            f"{output_ref['time'].replace(':', '-')}")
+                            f"{output_ref['time'].replace(':', '_')}")
 
         # Ensure output directory exists
         os.makedirs(output_path, exist_ok=True)
@@ -242,8 +237,6 @@ class FirstPolarity:
             dict: Parsed solution data.
         """
         parsed_data = {}
-
-        import re
 
         # Patterns for parsing
         dip_strike_rake_pattern = r"Dip,Strike,Rake\s+([\d\.\-]+)\s+([\d\.\-]+)\s+([\d\.\-]+)"
@@ -319,7 +312,7 @@ class FirstPolarity:
         # helps to set a string in comments of focmec input
         try:
             origin: Origin = ObspyUtil.reads_hyp_to_origin(event_file)
-            origin_time_formatted_string = origin.time.datetime.strftime("%m/%d/%Y, %H:%M:%S.%f")
+            origin_time_formatted_string = origin.time.datetime.strftime("%d/%m/%Y, %H:%M:%S.%f")
 
             lat = str(origin.longitude)
             lon = str(origin.latitude)
@@ -424,3 +417,46 @@ class FirstPolarity:
                 continue
 
         return stations, azimuths, dips, motions
+
+    @staticmethod
+    def find_loc_mec_file(loc_file):
+
+        """
+        Parameters
+        ----------
+        loc_file: Full path hyp file
+        foc_mec_basedir: Full path focmec_output
+        Returns
+        -------
+
+        """
+        file_found = None
+        origin: Origin = ObspyUtil.reads_hyp_to_origin(loc_file)
+        time = origin.time.datetime.strftime("%d-%m-%Y_%H_%M_%S.%f")
+        expected_foc_mec = time + ".lst"
+
+        pattern = re.compile(r'.*lst$')  # Match files ending with ".grid0.loc.hyp"
+        obsfiles = []  # Initialize the list
+
+        foc_mec_basedir = os.path.dirname(loc_file)
+        foc_mec_basedir = os.path.dirname(foc_mec_basedir)
+        path_to_find = os.path.join(foc_mec_basedir, 'first_polarity/output')
+
+        for top_dir, _, files in os.walk(path_to_find):
+            for file in files:
+                # If the file matches the desired pattern, add it to the list
+                if pattern.match(file):
+                    obsfiles.append(file)
+
+        # obsfiles -->  list of lst files
+        # expected_foc_mec --> expected file extracted from hyp file
+
+        for file in obsfiles:
+            if file == expected_foc_mec:
+                file_found = file
+
+        return file_found
+
+
+
+

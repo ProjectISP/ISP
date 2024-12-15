@@ -87,6 +87,7 @@ class Locate(BaseFrame, UiLocFlow):
         self.saveMecBtn.clicked.connect(lambda: self.saveMec())
         self.setDefaultPathBtn.clicked.connect(lambda: self.setDefault())
         self.loadMetaBtn.clicked.connect(lambda: self.reloadMetadata())
+        self.pltFocMecLocBtn.clicked.connect(lambda: self.pltFocMec(set_page=1))
 
         # Magnitude
         self.source_locs_bind = BindPyqtObject(self.source_locsLE)
@@ -310,7 +311,6 @@ class Locate(BaseFrame, UiLocFlow):
             ellipse['smax'] = smax
             ellipse['azimuth'] = azimuth
             if os.path.isfile(file_hyp):
-                print(file_hyp)
                 scatter_x, scatter_y, scatter_z, pdf = NllManager.get_NLL_scatter(file_hyp)
                 plot_scatter(scatter_x, scatter_y, scatter_z, pdf, ellipse)
 
@@ -371,13 +371,24 @@ class Locate(BaseFrame, UiLocFlow):
             N = len(stations)
             self.add_earthquake_info(origin)
             self.cartopy_canvas.clear()
+
+            # get ellipse points
+            x_ellipse, y_ellipse = ObspyUtil.get_ellipse(file_hyp)
+
+
             if self.topoCB.isChecked():
                 resolution = 'high'
             else:
                 resolution = 'simple'
+
+
             self.cartopy_canvas.plot_map(origin.longitude, origin.latitude,0,
                                          resolution=resolution, stations=stations)
-            self.plot_pdf(file_hyp)
+            self.cartopy_canvas.plot_ellipse(x_ellipse, y_ellipse, axes_index=0)
+
+
+            if self.pdfCB.isChecked():
+                self.plot_pdf(file_hyp)
 
             if N==0:
                 md = MessageDialog(self)
@@ -473,9 +484,13 @@ class Locate(BaseFrame, UiLocFlow):
         self.onChange_root_pathLoc("refress")
 
 
-    def pltFocMec(self):
+    def pltFocMec(self, set_page=None):
 
-        focmec_file = self.__focmec_file()
+        if set_page is None:
+            focmec_file = self.__focmec_file()
+        else:
+            self.SurfQuakeWidget.setCurrentIndex(2)
+            focmec_file = self.__focmec_file(from_focmec=False)
 
         firstpolarity_manager = FirstPolarity()
         #Station, Az, Dip, Motion = firstpolarity_manager.get_dataframe(location_file)
@@ -548,12 +563,12 @@ class Locate(BaseFrame, UiLocFlow):
             nllcatalog.find_files()
             files_list = nllcatalog.obsfiles
 
-            if len(files_list) >0:
+            if len(files_list) > 0:
                 self.locFilesQTW.setRowCount(0)
 
             files_focmec = FirstPolarity.find_files(self.loc_work_bind.value)
 
-            if len(files_focmec) >0:
+            if len(files_focmec) > 0:
                 self.focmecTW.setRowCount(0)
 
             for file in files_list:
@@ -563,9 +578,14 @@ class Locate(BaseFrame, UiLocFlow):
 
                     item = pw.QTableWidgetItem()
                     item.setData(0, root_file)
+
+                    foc_mec_match = FirstPolarity.find_loc_mec_file(file)
+
+                    if foc_mec_match is not None:
+                        self.locFilesQTW.setItem(self.locFilesQTW.rowCount() - 1, 1, pw.QTableWidgetItem(foc_mec_match))
                     check = pw.QCheckBox()
                     self.locFilesQTW.setItem(self.locFilesQTW.rowCount() - 1, 0, pw.QTableWidgetItem(root_file))
-                    self.locFilesQTW.setCellWidget(self.locFilesQTW.rowCount() - 1, 1, check)
+                    self.locFilesQTW.setCellWidget(self.locFilesQTW.rowCount() - 1, 2, check)
 
                 except Exception:
                     pass
@@ -594,10 +614,15 @@ class Locate(BaseFrame, UiLocFlow):
         file = os.path.join(self.loc_work_bind.value, "loc", self.locFilesQTW.item(row, 0).data(0))
         return file
 
-    def __focmec_file(self):
-        row = self.focmecTW.currentRow()
-        file = os.path.join(self.loc_work_bind.value, "first_polarity/output", self.focmecTW.item(row, 0).data(0))
+    def __focmec_file(self, from_focmec=True):
+        if from_focmec:
+            row = self.focmecTW.currentRow()
+            file = os.path.join(self.loc_work_bind.value, "first_polarity/output", self.focmecTW.item(row, 0).data(0))
+        else:
+            row = self.locFilesQTW.currentRow()
+            file = os.path.join(self.loc_work_bind.value, "first_polarity/output", self.locFilesQTW.item(row, 1).data(0))
         return file
+
 
 
     ####### Source Parameters ########
@@ -762,4 +787,3 @@ class Locate(BaseFrame, UiLocFlow):
             self.automagnitudesText.appendPlainText(
                           "t_star: " "{t_star} s" " t_star_std {t_star_std} ".format(t_star=t_star,
                                                                                              t_star_std=t_star_std))
-

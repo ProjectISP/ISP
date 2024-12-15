@@ -1166,6 +1166,11 @@ class CartopyCanvas(BasePltPyqtCanvas):
         plt.tight_layout()
         self.draw()
 
+    def plot_ellipse(self, x, y, axes_index=0):
+        ax = self.get_axe(axes_index)
+        ax.plot(x, y, color="red", alpha=0.75, transform=ccrs.PlateCarree())
+        self.draw()
+
     def plot_stations(self, x, y, depth, axes_index, show_colorbar=True, clear_plot=True, **kwargs):
         self.clear()
         ax = self.get_axe(axes_index)

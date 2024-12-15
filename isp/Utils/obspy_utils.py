@@ -318,6 +318,43 @@ class ObspyUtil:
         else:
             return origin
 
+
+    @staticmethod
+    def get_ellipse(hyp_file_path: str):
+
+        ellipse = {}
+        if isinstance(hyp_file_path, str) and os.path.isfile(hyp_file_path):
+
+            origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file_path)
+            latitude = origin.latitude
+            longitude = origin.longitude
+            smin = origin.origin_uncertainty.min_horizontal_uncertainty
+            smax = origin.origin_uncertainty.max_horizontal_uncertainty
+            azimuth = origin.origin_uncertainty.azimuth_max_horizontal_uncertainty
+            ellipse['latitude'] = latitude
+            ellipse['longitude'] = longitude
+            ellipse['smin'] = smin
+            ellipse['smax'] = smax
+            ellipse['azimuth'] = azimuth
+
+        azimuth = (90 - ellipse['azimuth']) % 360
+
+        azimuth_minor = azimuth + 90
+
+        # Generate angles from 0 to 2*pi
+        angles = np.linspace(0, 2 * np.pi, 100)
+
+        # Calculate the major and minor axes vectors
+        major_axis = np.array([np.cos(np.radians(azimuth)), np.sin(np.radians(azimuth))]) * ellipse['smax']
+        minor_axis = np.array([np.cos(np.radians(azimuth_minor)), np.sin(np.radians(azimuth_minor))]) * ellipse['smin']
+
+        # Calculate ellipse points
+        den = 111.2 * np.cos(np.radians(ellipse['latitude']))
+        x_points = ellipse['longitude'] + (major_axis[0] * np.cos(angles) + minor_axis[0] * np.sin(angles)) / den
+        y_points = ellipse['latitude'] + (major_axis[1] * np.cos(angles) + minor_axis[1] * np.sin(angles)) / 111.2
+
+        return x_points, y_points
+
     @staticmethod
     def reads_pick_info(hyp_file_path: str):
         """
