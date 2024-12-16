@@ -97,7 +97,7 @@ class Locate(BaseFrame, UiLocFlow):
         self.setSourceOutBtn.clicked.connect(lambda: self.on_click_select_directory(self.source_out_bind))
         self.mag_runBtn.clicked.connect(lambda: self.run_automag())
         self.printSourceResultsBtn.clicked.connect(lambda: self.print_source_results())
-
+        self.setDefaultSourceBtn.clicked.connect(lambda: self.setSourcePath())
 
         # Map
         self.cartopy_canvas = CartopyCanvas(self.widget_map, constrained_layout=True)
@@ -116,6 +116,30 @@ class Locate(BaseFrame, UiLocFlow):
         self.progress_dialog.setWindowIcon(self.windowIcon())
         self.progress_dialog.setWindowTitle(self.windowTitle())
         self.progress_dialog.close()
+
+
+    def setSourcePath(self):
+        save__source_path = os.path.join(self.loc_work_bind.value, "savedLocs")
+        save__source_output_path = os.path.join(self.loc_work_bind.value, "source_parameters")
+
+        if os.path.isdir(save__source_path):
+            pass
+        else:
+            try:
+                os.makedirs(save__source_path)
+            except Exception as error:
+                print("An exception occurred:", error)
+
+        if os.path.isdir(save__source_output_path):
+            pass
+        else:
+            try:
+                os.makedirs(save__source_output_path)
+            except Exception as error:
+                print("An exception occurred:", error)
+
+        self.source_locsLE.setText(save__source_path)
+        self.source_outLE.setText(save__source_output_path)
 
     def check_all_checkboxes_Loc(self):
         # Iterate through the rows and check all checkboxes
