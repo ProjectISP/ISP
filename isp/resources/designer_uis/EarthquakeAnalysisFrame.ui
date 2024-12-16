@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1514</width>
-    <height>962</height>
+    <height>934</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -584,7 +584,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>943</width>
-                  <height>712</height>
+                  <height>692</height>
                  </rect>
                 </property>
                </widget>
@@ -884,13 +884,6 @@
     <property name="title">
      <string>Actions</string>
     </property>
-    <widget class="QMenu" name="menuData_Availability">
-     <property name="title">
-      <string>Data Availability</string>
-     </property>
-     <addaction name="actionOnly_a_folder"/>
-     <addaction name="actionAll_tree"/>
-    </widget>
     <widget class="QMenu" name="menuPicks">
      <property name="title">
       <string>Picks</string>
@@ -908,8 +901,8 @@
     <addaction name="actionClean_Events_Detected"/>
     <addaction name="actionOpen_Magnitudes_Calculator"/>
     <addaction name="actionOpen_Earth_Model_Viewer"/>
-    <addaction name="menuData_Availability"/>
     <addaction name="actionSearch_in_Catalog"/>
+    <addaction name="actionData_Availability"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -1326,6 +1319,11 @@
   <action name="actionPicksOther_file">
    <property name="text">
     <string>Other file</string>
+   </property>
+  </action>
+  <action name="actionData_Availability">
+   <property name="text">
+    <string>Data Availability</string>
    </property>
   </action>
  </widget>

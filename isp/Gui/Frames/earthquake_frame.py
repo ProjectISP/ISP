@@ -10,7 +10,6 @@ from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth, kilometers2degrees
 from obspy.signal.trigger import coincidence_trigger
 from surfquakecore.project.surf_project import SurfProject
-
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.NeuralNetwork import CNNPicker
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -172,8 +171,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionClean_Events_Detected.triggered.connect(lambda: self.clean_events_detected())
         self.actionPlot_All_Seismograms.triggered.connect(lambda: self.plot_all_seismograms())
         self.actionOpen_Help.triggered.connect(lambda: self.open_help())
-        self.actionOnly_a_folder.triggered.connect(lambda: self.availability())
-        self.actionAll_tree.triggered.connect(lambda: self.availability_all_tree())
+        self.actionData_Availability.triggered.connect(lambda: self.availability())
         self.actionOpen_picksnew.triggered.connect(lambda: self.open_solutions())
         self.actionRemove_picks.triggered.connect(lambda: self.remove_picks())
         self.actionNew_location.triggered.connect(lambda: self.start_location())
@@ -365,7 +363,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                         "Networks Number: " + str(info["Networks"][1]) + "\n" +
                                         "Stations Number: " + str(info["Stations"][1]) + "\n" +
                                         "Channels Number: " + str(info["Channels"][1]) + "\n" +
-                                        "Num Files: " + str(info["num_files"]) + "\n")
+                                        "Num Files: " + str(info["num_files"]) + "\n" +
+                                        "Start Project: " + info["Start"] + "\n"+ "End Project: "+ info["End"])
 
                 else:
                     md.set_warning_message("Empty Project ", "Please provide a root path "
@@ -376,11 +375,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         else:
             md.set_error_message("Project couldn't be loaded ")
         self.get_now_files()
-        # now we can access to #self.project_dialog.project
 
-    # "Stations Number: " + info["Stations"][1]) + "\n" +
-    #                                            "Channels Number: " + info["Channels"][1] + "\n" +
-    #                                            "Num Files: " + str(info["num_files"]) + "\n")
+
     def reload_current_project(self):
 
         md = MessageDialog(self)
@@ -399,7 +395,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                 "Networks Number: " + str(info["Networks"][1]) + "\n" +
                                 "Stations Number: " + str(info["Stations"][1]) + "\n" +
                                 "Channels Number: " + str(info["Channels"][1]) + "\n" +
-                                "Num Files: " + str(info["num_files"]) + "\n")
+                                "Num Files: " + str(info["num_files"]) + "\n" +
+                                "Start Project: " + info["Start"] + "\n" + "End Project: "+ info["End"])
 
         else:
             md.set_warning_message("Empty Filtered Project ", "Please provide a root path "
@@ -2149,34 +2146,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax.xaxis.set_major_formatter(formatter)
 
     def availability(self):
+        MseedUtil.data_availability_new(self.files_path)
 
-        if "darwin" == platform:
-            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
-        else:
-            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', "",
-                                                           pw.QFileDialog.DontUseNativeDialog)
-        if os.path.isdir(dir_path):
-            try:
-
-                MseedUtil.data_availability(dir_path)
-
-            except:
-                md = MessageDialog(self)
-                md.set_warning_message("No data available")
-
-    def availability_all_tree(self):
-
-        if "darwin" == platform:
-            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory')
-        else:
-            dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', "",
-                                                           pw.QFileDialog.DontUseNativeDialog)
-        if os.path.isdir(dir_path):
-            try:
-                MseedUtil.data_availability(dir_path, only_this = False)
-            except:
-                md = MessageDialog(self)
-                md.set_warning_message("No data available")
 
     def open_magnitudes_calculator(self):
         hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")

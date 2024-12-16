@@ -4,20 +4,20 @@
 isola_ISP_frame
 
 """
-
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QFileDialog, QLabel, QWidget, QVBoxLayout
 from obspy.core.event import Origin
 from isp import ROOT_DIR, ALL_LOCATIONS
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
-from isp.Gui import pw, qt
+from isp.Gui import pw, qt, pyc
 from isp.Gui.Frames import BaseFrame, MessageDialog, UiMomentTensor, MatplotlibFrame, FilesView
 from isp.Gui.Frames.crustal_model_parameters_frame import CrustalModelParametersFrame
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime, set_qdatetime, \
     convert_qdatetime_datetime
-from isp.Utils import MseedUtil, ObspyUtil
+from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.Utils.subprocess_utils import open_html_file, open_url
 from isp.mti.mti_utilities import MTIManager
 from isp.mti.class_isola_new import *
@@ -242,7 +242,17 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
         return parameters
 
+
     def run_inversionDB(self):
+        self.__send_run_mti_db()
+        self.progress_dialog.exec()
+        md = MessageDialog(self)
+        md.set_info_message("Moment Tensor Inversion finished, Please see output directory and press "
+                            "print results")
+
+    @AsycTime.run_async()
+    def __send_run_mti_db(self):
+
         parameters = self.get_inversion_parameters()
         bic = BayesianIsolaCore(project=self.sp, inventory_file=self.inventory,
                                 output_directory=self.MTI_output_path.text(),
@@ -251,10 +261,19 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         bi = BayesianIsolaGUICore(bic, model=self.get_model(), entities=self.get_db(),
                                   parameters=parameters)
         bi.run_inversion()
-        #wm = WriteMTI(self.MTI_output_path.text())
-        #wm.mti_summary()
+        wm = WriteMTI(self.MTI_output_path.text())
+        wm.mti_summary()
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def run_inversion(self):
+        self.__send_run_mti()
+        self.progress_dialog.exec()
+        md = MessageDialog(self)
+        md.set_info_message("Moment Tensor Inversion finished, Please see output directory and press "
+                            "print results")
+
+    @AsycTime.run_async()
+    def __send_run_mti(self):
 
         parameters = self.get_inversion_parameters()
 
@@ -291,6 +310,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
         # # Run Inversion
         bic.run_inversion(mti_config=mti_config, map_stations=None)
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def on_click_select_file(self, bind: BindPyqtObject):
         file_path = pw.QFileDialog.getOpenFileName(self, 'Select Directory', bind.value)
