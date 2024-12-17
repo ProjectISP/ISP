@@ -310,9 +310,9 @@ class Locate(BaseFrame, UiLocFlow):
         if isinstance(nllconfig, NLLConfig):
             nll_manager = NllManager(nllconfig, self.metadata_path_bind.value, self.loc_work_bind.value)
             nll_manager.clean_output_folder()
-            for i in range(self.iterationsSB.value()):
+            for i in range(1, self.iterationsSB.value()):
                 print("Running Location iteration", i)
-                nll_manager.run_nlloc()
+                nll_manager.run_nlloc(num_iter=i)
             nll_catalog = Nllcatalog(self.loc_work_bind.value)
             nll_catalog.run_catalog(self.loc_work_bind.value)
             self.onChange_root_pathLoc("refress")

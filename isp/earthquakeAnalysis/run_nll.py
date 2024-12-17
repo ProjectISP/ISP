@@ -455,7 +455,7 @@ class NllManager:
             exc_nll(command, cwd=output_path.parent)
 
 
-    def run_nlloc(self):
+    def run_nlloc(self, num_iter=1):
         """
         # Method to run the event locations from the picking file and config_file.ini #
         :return: locations files *hyp inside ./working_dir/loc
@@ -472,7 +472,9 @@ class NllManager:
 
 
         elif transform == "GLOBAL":
-            self.stations_to_nll_v2(latitude, longitude, limit=20000, transform="GLOBAL")
+            if num_iter == 1:
+                self.stations_to_nll_v2(latitude, longitude, limit=20000, transform="GLOBAL")
+
             stations_path = os.path.join(self.get_stations_template_file_path)
             temp_path = self.get_temp_dir
             shutil.copy(stations_path, temp_path)

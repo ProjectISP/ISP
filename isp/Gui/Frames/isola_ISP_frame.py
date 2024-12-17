@@ -4,19 +4,20 @@
 isola_ISP_frame
 
 """
-
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QFileDialog, QLabel, QWidget, QVBoxLayout
 from obspy.core.event import Origin
 from isp import ROOT_DIR, ALL_LOCATIONS
+from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
-from isp.Gui import pw, qt
+from isp.Gui import pw, qt, pyc
 from isp.Gui.Frames import BaseFrame, MessageDialog, UiMomentTensor, MatplotlibFrame, FilesView
 from isp.Gui.Frames.crustal_model_parameters_frame import CrustalModelParametersFrame
 from isp.Gui.Frames.stations_info import StationsInfo
 from isp.Gui.Utils.pyqt_utils import BindPyqtObject, add_save_load, convert_qdatetime_utcdatetime, set_qdatetime, \
     convert_qdatetime_datetime
-from isp.Utils import MseedUtil, ObspyUtil
+from isp.Utils import MseedUtil, ObspyUtil, AsycTime
 from isp.Utils.subprocess_utils import open_html_file, open_url
 from isp.mti.mti_utilities import MTIManager
 from isp.mti.class_isola_new import *
@@ -28,6 +29,8 @@ from surfquakecore.moment_tensor.sq_isola_tools.sq_bayesian_isola import Bayesia
 from surfquakecore.project.surf_project import SurfProject
 from surfquakecore.moment_tensor.structures import MomentTensorInversionConfig, StationConfig, \
     InversionParameters, SignalProcessingParameters
+
+from isp.mti.sq_bayesian_isola_core import BayesianIsolaGUICore
 
 
 @add_save_load()
@@ -65,6 +68,79 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
         self.plot_solutionBtn.clicked.connect(lambda: self.plot_solution())
         self.openHTML.clicked.connect(lambda: self.load_HTML_file())
+        self.readDBBtn.clicked.connect(lambda: self.read_database())
+        self.runInversionMTIDBBtn.clicked.connect(lambda: self.run_inversionDB())
+        self.loadProjectBtn.clicked.connect(lambda: self.load_project())
+        self.loadMetadataBtn.clicked.connect(lambda: self.load_metadata())
+
+    def load_project(self):
+
+
+        selected = pw.QFileDialog.getOpenFileName(self, "Select Project", ROOT_DIR)
+
+        md = MessageDialog(self)
+
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            try:
+
+                self.current_project_file = selected[0]
+                self.sp = SurfProject.load_project(self.current_project_file)
+                project_name = os.path.basename(selected[0])
+                info = MseedUtil.get_project_basic_info(self.sp.project)
+                md.set_info_message("Project {} loaded  ".format(project_name))
+                if len(info) > 0:
+                    md.set_info_message("Project {} loaded  ".format(project_name),
+                                        "Networks: " + ','.join(info["Networks"][0]) + "\n" +
+                                        "Stations: " + ','.join(info["Stations"][0]) + "\n" +
+                                        "Channels: " + ','.join(info["Channels"][0]) + "\n" + "\n"+
+
+                                        "Networks Number: " + str(info["Networks"][1]) + "\n" +
+                                        "Stations Number: " + str(info["Stations"][1]) + "\n" +
+                                        "Channels Number: " + str(info["Channels"][1]) + "\n" +
+                                        "Num Files: " + str(info["num_files"]) + "\n")
+
+                else:
+                    md.set_warning_message("Empty Project ", "Please provide a root path "
+                                                             "with mseed files inside and check the wuery filters applied")
+
+            except:
+                md.set_error_message("Project couldn't be loaded ")
+        else:
+            md.set_error_message("Project couldn't be loaded ")
+
+    def load_metadata(self):
+
+        selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
+
+        if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+            metadata_file = selected[0]
+        try:
+            self.__metadata_manager = MetadataManager(metadata_file)
+            self.inventory = self.__metadata_manager.get_inventory()
+            print(self.inventory)
+        except:
+            raise FileNotFoundError("The metadata is not valid")
+
+
+    def controller(self):
+        from isp.Gui.controllers import Controller
+        return Controller()
+
+    def read_database(self):
+        Controller = self.controller()
+        Controller.open_project()
+        self.db_frame = Controller.project_frame
+
+    def get_db(self):
+        db = self.db_frame.get_entities()
+        return db
+
+    def get_model(self):
+        # returns the database
+        model = self.db_frame.get_model()
+        return model
+
+
     def plot_solution(self):
 
         self._load_log_file()
@@ -72,6 +148,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         synthetic_list = ['seismo_sharey.png', 'spectra.png']
         self.__plot_grid(beach_ball_list, self.pltGrid, max_cols=1, size=250)
         self.__plot_grid(synthetic_list, self.pltSynthetics, max_cols=0, size=550)
+
     def __plot_grid(self, good_list, grid, max_cols, size):
 
         # Clear the grid layout
@@ -165,7 +242,38 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
         return parameters
 
+
+    def run_inversionDB(self):
+        self.__send_run_mti_db()
+        self.progress_dialog.exec()
+        md = MessageDialog(self)
+        md.set_info_message("Moment Tensor Inversion finished, Please see output directory and press "
+                            "print results")
+
+    @AsycTime.run_async()
+    def __send_run_mti_db(self):
+
+        parameters = self.get_inversion_parameters()
+        bic = BayesianIsolaCore(project=self.sp, inventory_file=self.inventory,
+                                output_directory=self.MTI_output_path.text(),
+                                save_plots=parameters['plot_save'])
+
+        bi = BayesianIsolaGUICore(bic, model=self.get_model(), entities=self.get_db(),
+                                  parameters=parameters)
+        bi.run_inversion()
+        wm = WriteMTI(self.MTI_output_path.text())
+        wm.mti_summary()
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
+
     def run_inversion(self):
+        self.__send_run_mti()
+        self.progress_dialog.exec()
+        md = MessageDialog(self)
+        md.set_info_message("Moment Tensor Inversion finished, Please see output directory and press "
+                            "print results")
+
+    @AsycTime.run_async()
+    def __send_run_mti(self):
 
         parameters = self.get_inversion_parameters()
 
@@ -202,6 +310,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
         # # Run Inversion
         bic.run_inversion(mti_config=mti_config, map_stations=None)
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def on_click_select_file(self, bind: BindPyqtObject):
         file_path = pw.QFileDialog.getOpenFileName(self, 'Select Directory', bind.value)
