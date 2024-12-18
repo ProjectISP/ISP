@@ -14,12 +14,41 @@ class CoincidenceTrigger:
             self.project = project
 
         self.method: str = kwargs.pop('input_file', 'classicstalta')
-        self.the_on = kwargs.pop('the_on', 5)
-        self.the_off = kwargs.pop('the_on', 5)
+        self.the_on = kwargs.pop('the_on', 3)
+        self.the_off = kwargs.pop('the_on', 3)
 
-        self.param1 = kwargs.pop('param1', 5) # sta in seconds
-        self.param2 = kwargs.pop('param2', 30) # lta in seconds
-        self.param3 = kwargs.pop('param2', 60)  # centroid radious
+        self.param1 = kwargs.pop('param1', 1) # sta in seconds
+        self.param2 = kwargs.pop('param2', 40) # lta in seconds
+        self.param3 = kwargs.pop('param3', 60)  # centroid radious
+        self.param4 = kwargs.pop('param4', 3) # coincidence
+
+    def fill_gaps(self, tr, tol=5):
+
+        tol_seconds_percentage = int((tol / 100) * len(tr.data)) * tr.stats.delta
+        st = Stream(traces=tr)
+        gaps = st.get_gaps()
+
+        if len(gaps) > 0 and self._check_gaps(gaps, tol_seconds_percentage):
+            st.print_gaps()
+            st.merge(fill_value="interpolate", interpolation_samples=-1)
+            return st[0]
+
+        elif len(gaps) > 0 and not self._check_gaps(gaps, tol_seconds_percentage):
+            st.print_gaps()
+            return None
+        elif len(gaps) == 0 and self._check_gaps(gaps, tol_seconds_percentage):
+            return tr
+        else:
+            return tr
+
+    def _check_gaps(self, gaps, tol):
+        time_gaps = []
+        for i in gaps:
+            time_gaps.append(i[6])
+
+        sum_total = sum(time_gaps)
+
+        return sum_total <= tol
 
     def thresholding_sta_lta(self, files_list, start, end):
 
@@ -27,7 +56,9 @@ class CoincidenceTrigger:
         for file in files_list:
             try:
                 tr = read(file)[0]
-                traces.append(tr)
+                tr = self.fill_gaps(tr)
+                if tr is not None:
+                    traces.append(tr)
             except:
                 pass
         st = Stream(traces)
@@ -41,7 +72,8 @@ class CoincidenceTrigger:
         st.taper(max_percentage=0.05)
         fs = 20
         st.resample(20)
-        events = coincidence_trigger('classicstalta', 5,5, st, thr_coincidence_sum=3,
+        events = coincidence_trigger('classicstalta', self.the_on, self.the_off, st,
+                                     thr_coincidence_sum=self.param4,
                                      max_trigger_length=self.param3, sta=self.param1*fs, lta=self.param2*fs)
         print(events)
         return events
@@ -110,6 +142,8 @@ class CoincidenceTrigger:
         daily_ranges = [(start_time + i * 86400, start_time + (i + 1) * 86400)
                         for i in range(int((end_time - start_time) // 86400))]
 
+        if len(daily_ranges) == 0 and (end_time-start_time) < 86400:
+            daily_ranges = [(start_time, end_time)]
         # Prepare arguments for multiprocessing
         tasks = [(self.project, start, end) for start, end in daily_ranges]
 
@@ -118,4 +152,13 @@ class CoincidenceTrigger:
             results = pool.map(self.process_day, tasks)
 
         if len(results) > 0 and input_file is not None and output_file is not None:
+            events = []
+            for event in results:
+                events.append(event("time"))
             self.separate_picks_by_events(input_file, output_file, centroids=results)
+
+
+if __name__ == '__main__':
+    path_to_project = "/Users/robertocabiecesdiaz/Documents/test_surfquake/project/project.pkl"
+    ct = CoincidenceTrigger(project=path_to_project)
+    ct.optimized_project_processing()

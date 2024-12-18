@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1514</width>
-    <height>934</height>
+    <height>944</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -584,7 +584,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>943</width>
-                  <height>692</height>
+                  <height>702</height>
                  </rect>
                 </property>
                </widget>
@@ -917,8 +917,15 @@
     <property name="title">
      <string>Compute</string>
     </property>
+    <widget class="QMenu" name="menuCWT_CFs">
+     <property name="title">
+      <string>CWT (CFs)</string>
+     </property>
+     <addaction name="actionlogarythmic_dff"/>
+     <addaction name="actionkurtosis"/>
+    </widget>
     <addaction name="actionSTA_LTA"/>
-    <addaction name="actionCWT_CF"/>
+    <addaction name="menuCWT_CFs"/>
     <addaction name="actionEnvelope"/>
     <addaction name="actionSpectral_Entropy"/>
     <addaction name="actionStack"/>
@@ -1068,11 +1075,6 @@
   <action name="actionSTA_LTA">
    <property name="text">
     <string>STA/LTA</string>
-   </property>
-  </action>
-  <action name="actionCWT_CF">
-   <property name="text">
-    <string>CWT (CFs)</string>
    </property>
   </action>
   <action name="actionWrite_Current_Page">
@@ -1324,6 +1326,16 @@
   <action name="actionData_Availability">
    <property name="text">
     <string>Data Availability</string>
+   </property>
+  </action>
+  <action name="actionlogarythmic_dff">
+   <property name="text">
+    <string>logarythmic dff</string>
+   </property>
+  </action>
+  <action name="actionkurtosis">
+   <property name="text">
+    <string>kurtosis</string>
    </property>
   </action>
  </widget>

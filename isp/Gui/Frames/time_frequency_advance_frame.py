@@ -247,7 +247,6 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
     def plot_cross_scalogram(self):
         self.specialWidget.setCurrentIndex(3)
         base_line = self.base_lineDB.value()
-        colour = self.colourCB.currentText()
 
         if len(self.tr1) > 0 and len(self.tr2) > 0:
             #

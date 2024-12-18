@@ -568,10 +568,10 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                                                cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
             elif self.res_factor > 1:
-                self.canvas_plot3.pcolormesh(x_freq, y_freq, scalogram2, axes_index=1, levels=20, clear_plot=True, clabel="Power [dB]",
+                self.canvas_plot3.pcolormesh(x_freq, y_freq, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
                                              cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
-                self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, levels=20, clear_plot=True,
+                self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, clear_plot=True,
                                              clabel ="Power [dB]", cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
             ax_period = self.canvas_plot3.get_axe(1)
@@ -579,8 +579,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             ax_period=self.canvas_plot3.get_axe(2)
             ax_period.invert_yaxis()
             ax_period.set_yscale('log')
-            #self.canvas_plot3.figure.subplots_adjust(left=0.046, bottom=0.070, right=0.976, top=0.975, wspace=0.2,
-            #                                         hspace=0.0)
+
             self.canvas_plot3.set_xlabel(2, "Time (s)")
             self.canvas_plot3.set_ylabel(0, "Amplitude ")
             self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")

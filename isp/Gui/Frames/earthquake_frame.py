@@ -156,7 +156,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionTime_Frequency_Analysis.triggered.connect(self.time_frequency_analysis)
         self.actionOpen_Magnitudes_Calculator.triggered.connect(self.open_magnitudes_calculator)
         self.actionSTA_LTA.triggered.connect(self.run_STA_LTA)
-        self.actionCWT_CF.triggered.connect(self.cwt_cf)
+        self.actionlogarythmic_dff.triggered.connect(self.cwt_cf)
+        self.actionkurtosis.triggered.connect(self.cwt_kurt)
         self.actionEnvelope.triggered.connect(self.envelope)
         self.actionReceiver_Functions.triggered.connect(self.open_receiver_functions)
         self.actionRun_picker.triggered.connect(self._picker_thread)
@@ -1271,6 +1272,88 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.redraw_pickers(file_path, index)
             self.redraw_chop(tr, tr.data, index)
             cf = cw.cf_lowpass()
+            # Normalize
+            #cf = cf / max(cf)
+            t=t[0:len(cf)]
+            #self.canvas.plot(t, cf, index, is_twinx=True, color="red",linewidth=0.5)
+            #self.canvas.set_ylabel_twinx(index, "CWT (CF)")
+            ax = self.canvas.get_axe(index)
+            ax2 = ax.twinx()
+            ax2.plot(t, cf, color="red", linewidth=0.5, alpha = 0.5)
+            #ax2.set_ylim(-1.05, 1.05)
+            last_index = index
+            tr_cf = tr.copy()
+            tr_cf.data = cf
+            tr_cf.times = t
+            cfs.append(tr_cf)
+        ax = self.canvas.get_axe(last_index)
+        try:
+            if self.trimCB.isChecked():
+                ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
+            else:
+                ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
+            formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
+            ax.xaxis.set_major_formatter(formatter)
+            self.canvas.set_xlabel(last_index, "Date")
+        except:
+            pass
+        self.cf = Stream(traces=cfs)
+
+
+    def cwt_kurt(self):
+        self.cf = []
+        cfs = []
+        files_at_page = self.get_files_at_page()
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
+        params = self.settings_dialog.getParameters()
+        start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        diff = end_time - start_time
+        cycles = params["Num Cycles"]
+        fmin = params["Fmin"]
+        fmax = params["Fmax"]
+
+        for index, file_path in enumerate(files_at_page):
+            tr = self.st[index]
+            st_stats = ObspyUtil.get_stats_from_trace(tr)
+            cw = ConvolveWaveletScipy(tr)
+            if self.trimCB.isChecked() and diff >= 0:
+
+                if fmin < fmax and cycles > 5:
+                    tt = int(tr.stats.sampling_rate / fmin)
+                    cw.setup_wavelet(start_time, end_time, wmin=cycles, wmax=cycles, tt=tt, fmin=fmin, fmax=fmax, nf=40,
+                                 use_rfft=False, decimate=False)
+
+                else:
+                    cw.setup_wavelet(start_time, end_time, wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False,
+                                     decimate=False)
+
+            else:
+                if fmin < fmax and cycles > 5:
+                   tt = int(tr.stats.sampling_rate / fmin)
+                   cw.setup_wavelet(wmin=cycles, wmax=cycles, tt=tt, fmin=fmin, fmax=fmax, nf=40,
+                                     use_rfft=False, decimate=False)
+                else:
+                   cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False, decimate=False)
+
+
+            delay = cw.get_time_delay()
+            start = tr.stats.starttime + delay
+            #f = np.logspace(np.log10(fmin), np.log10(fmax))
+            #k = cycles / (2 * np.pi * f) #one standar deviation
+            #delay = np.mean(k)
+
+            tr.stats.starttime=start
+            t = tr.times("matplotlib")
+
+            self.canvas.plot_date(t, tr.data, index, color="black", fmt='-', linewidth=0.5)
+            info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
+            self.canvas.set_plot_label(index, info)
+            self.redraw_pickers(file_path, index)
+            self.redraw_chop(tr, tr.data, index)
+            tr_kurt = cw.charachteristic_function_kurt()
+            cf = tr_kurt.data
             # Normalize
             #cf = cf / max(cf)
             t=t[0:len(cf)]
