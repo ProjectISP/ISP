@@ -5,25 +5,35 @@ from obspy.signal.trigger import coincidence_trigger
 from multiprocessing import Pool
 import pandas as pd
 from surfquakecore.project.surf_project import SurfProject
-
 from isp.DataProcessing import ConvolveWaveletScipy
+from isp.Utils import MseedUtil
 
 
 class CoincidenceTrigger:
-    def __init__(self, project: Union[SurfProject, str], **kwargs):
+    def __init__(self, project: Union[SurfProject, str], parameters: dict):
+
         if isinstance(project, str):
             self.project = SurfProject.load_project(project)
         else:
             self.project = project
 
-        self.method: str = kwargs.pop('input_file', 'classicstalta')
-        self.the_on = kwargs.pop('the_on', 5)
-        self.the_off = kwargs.pop('the_off', 2)
+        self.method: str = parameters.pop('method', 'classicstalta')
+        self.the_on = parameters.pop('the_on', 20)
+        self.the_off = parameters.pop('the_off', 10)
+        self.fmin = parameters.pop('fmin', 1)  # freq_min
+        self.fmax = parameters.pop('fmax', 40)  # freq_max
+        self.centroid_radio = parameters.pop('centroid_radio', 60)  # centroid radious
+        self.coincidence = parameters.pop("coincidence", 3)  # coincidence
 
-        self.param1 = kwargs.pop('param1', 1) # sta in seconds
-        self.param2 = kwargs.pop('param2', 40) # lta in seconds
-        self.param3 = kwargs.pop('param3', 60)  # centroid radious
-        self.param4 = kwargs.pop('param4', 3) # coincidence
+        if self.method == "classicstalta":
+
+            self.sta = parameters.pop("time_window", 1)  # time_window_kurtosis
+            self.lta = parameters.pop("time_window", 40)
+
+        elif self.method == "kurtosis":
+
+            self.time_window = parameters.pop("time_window", 5)  # time_window_kurtosis
+            self.decimate_sampling_rate: Union[bool, int] = parameters.pop("decimate_sampling_rate", False)
 
     def fill_gaps(self, tr, tol=5):
 
@@ -53,6 +63,17 @@ class CoincidenceTrigger:
 
         return sum_total <= tol
 
+    def _extract_event_info(self, trigger):
+        events_times = []
+        for k in range(len(trigger)):
+            detection = trigger[k]
+            for key in detection:
+
+                if key == 'time':
+                    time = detection[key]
+                    events_times.append(time)
+        return events_times
+
     def thresholding_sta_lta(self, files_list, start, end):
 
         traces = []
@@ -65,50 +86,63 @@ class CoincidenceTrigger:
             except:
                 pass
         st = Stream(traces)
-        #st.select(channel="*Z") # no necessary, better filter project before
+        #st.select(station="CARF", channel="*Z") # no necessary, better filter project before
         st.trim(starttime=start, endtime=end)
         st.merge()
         st.detrend(type='simple')
         st.taper(max_percentage=0.05)
-        st.filter(type="bandpass", freqmin=0.5, freqmax=8)
+        st.filter(type="bandpass", freqmin=self.fmin, freqmax=self.fmax)
         st.detrend(type='simple')
         st.taper(max_percentage=0.05)
-        fs = 20
-        st.resample(20)
         events = coincidence_trigger('classicstalta', self.the_on, self.the_off, st,
-                                     thr_coincidence_sum=self.param4,
-                                     max_trigger_length=self.param3, sta=self.param1*fs, lta=self.param2*fs)
-        print(events)
-        return events
+                                     thr_coincidence_sum=self.coincidence,
+                                     max_trigger_length=self.centroid_radio, sta=self.sta, lta=self.lta)
+        triggers = self._extract_event_info(events)
+        events_times_cluster, _ = MseedUtil.cluster_events(triggers, eps=self.centroid_radio)
+        print("Number of events detected", len(events_times_cluster))
+        return events, events_times_cluster
 
     def thresholding_cwt_kurt(self, files_list, start, end):
-        fs = 10
-        traces = []
-        for file in files_list:
-            try:
-                tr = read(file)[0]
-                tr = self.fill_gaps(tr)
-                if tr is not None:
 
-                    tr.resample(fs)
-                    cw = ConvolveWaveletScipy(tr)
-                    tt = int(tr.stats.sampling_rate / 2)
-                    cw.setup_wavelet(wmin=6, wmax=6, tt=tt, fmin=2, fmax=8, nf=40,
-                                     use_rfft=False, decimate=False)
-                    tr_kurt = cw.charachteristic_function_kurt()
-                    traces.append(tr_kurt)
-                    print(tr_kurt)
-            except:
-                pass
+            traces = []
 
-        st = Stream(traces)
-        st.trim(starttime=start, endtime=end)
-        st.merge()
-        events = coincidence_trigger(trigger_type=None, thr_on=self.the_on, thr_off=self.the_off,
-                                     trigger_off_extension=self.param3, thr_coincidence_sum=self.param4, stream=st,
-                                     similarity_threshold=0.8, details=True)
+            for file in files_list:
+                try:
+                    tr = read(file)[0]
 
-        return events
+                    tr = self.fill_gaps(tr)
+                    if tr is not None:
+
+                       traces.append(tr)
+                       print(tr)
+                except:
+                    print("File not included: ", file)
+
+            st = Stream(traces)
+            st.merge()
+
+            if self.decimate_sampling_rate:
+                st.resample(self.decimate_sampling_rate)
+                cw = ConvolveWaveletScipy(st, decimate_stream=True)
+                tt = int(self.decimate_sampling_rate / 2)
+            else:
+                cw = ConvolveWaveletScipy(st, decimate_stream=True)
+                tt = int(st[0].stats.sampling_rate / 2)
+
+            cw.setup_wavelet(start_time=start, end_time=end, wmin=6, wmax=6, tt=tt, fmin=self.fmin, fmax=self.fmax,
+                             nf=60, use_rfft=False, decimate=False, setup_wavelets_stream=True)
+
+            st_kurt = cw.charachteristic_function_kurt_stream(window_size_seconds=self.time_window)
+
+            events = coincidence_trigger(trigger_type=None, thr_on=self.the_on, thr_off=self.the_off,
+                      trigger_off_extension=self.centroid_radio, thr_coincidence_sum=self.coincidence, stream=st_kurt,
+                                          similarity_threshold=0.8, details=True)
+
+            triggers = self._extract_event_info(events)
+            events_times_cluster, _ = MseedUtil.cluster_events(triggers, eps=self.centroid_radio)
+            print("Number of events detected", len(events_times_cluster))
+
+            return events, events_times_cluster
 
     def separate_picks_by_events(self, input_file, output_file, centroids):
         """
@@ -122,12 +156,12 @@ class CoincidenceTrigger:
         # Load the input data
         df = pd.read_csv(input_file, delimiter='\s+')
         # Ensure columns are properly typed
-        df['Date'] = df['Date'].astype(str)  # Date as string for slicing
-        df['Hourmin'] = df['Hourmin'].astype(int)  # Hourmin as integer
-        df['Seconds'] = df['Seconds'].astype(float)  # Seconds as float for fractional handling
+        # df['Date'] = df['Date'].astype(str)  # Date as string for slicing
+        # df['Hourmin'] = df['Hourmin'].astype(int)  # Hourmin as integer
+        # df['Seconds'] = df['Seconds'].astype(float)  # Seconds as float for fractional handling
         # Parse date and time columns into a single datetime object
         df['FullTime'] = df.apply(lambda row: UTCDateTime(
-            f"{row['Date']}T{str(row['Hourmin']).zfill(4)}:{row['Seconds']}"
+            f"{row['Date']}T{str(row['Hour_min']).zfill(4)}:{row['Seconds']}"
         ), axis=1)
 
         # Create a new column for event assignment
@@ -135,7 +169,7 @@ class CoincidenceTrigger:
 
         # Assign picks to the closest centroid within the radius
         for i, centroid in enumerate(centroids):
-            within_radius = df['FullTime'].apply(lambda t: abs((t - centroid)) <= (self.param3)/2)
+            within_radius = df['FullTime'].apply(lambda t: abs((t - centroid)) <= self.centroid_radio / 2)
             df.loc[within_radius, 'Event'] = f"Event_{i + 1}"
 
         # Write grouped picks into the output file
@@ -153,8 +187,10 @@ class CoincidenceTrigger:
         # Filter files for the given time range
         filtered_files = sp.filter_time(starttime=start, endtime=end, tol=3600, use_full=True)
         if filtered_files:
-            #return self.thresholding_sta_lta(filtered_files, start, end)
-            return self.thresholding_cwt_kurt(filtered_files, start, end)
+            if self.method == 'classicstalta':
+                return self.thresholding_sta_lta(filtered_files, start, end)
+            else:
+                return self.thresholding_cwt_kurt(filtered_files, start, end)
         else:
             return "empty"
 
@@ -184,14 +220,22 @@ class CoincidenceTrigger:
         with Pool() as pool:
             results = pool.map(self.process_day, tasks)
 
-        if len(results) > 0 and input_file is not None and output_file is not None:
-            events = []
-            for event in results:
-                events.append(event("time"))
-            self.separate_picks_by_events(input_file, output_file, centroids=results)
+        if len(results[0][1]) > 0 and input_file is not None and output_file is not None:
+            self.separate_picks_by_events(input_file, output_file, centroids=results[0][1])
 
 
 if __name__ == '__main__':
-    path_to_project = "/Users/robertocabiecesdiaz/Documents/test_surfquake/project/project.pkl"
-    ct = CoincidenceTrigger(project=path_to_project, the_on=10, the_off=0, param3=60, param4=6)
-    ct.optimized_project_processing()
+
+    # Example of parametrization and association pf event picks
+    path_to_project = "/Users/robertocabiecesdiaz/Documents/ISP/Andorra_test"
+    input_file = '/Users/robertocabiecesdiaz/Documents/test_surfquake/my_test/picks/nll_picks.txt'
+    output_file = '/Users/robertocabiecesdiaz/Documents/test_surfquake/my_test/picks/nll_picks_associated.txt'
+
+    kurtosis = {"method": "kurtosis", "fmin": 0.5, "fmax": 12.0, "the_on": 20, "the_off": 5, "time_window": 15,
+                "coincidence": 4, "centroid_radio": 60, "decimate_sampling_rate": 40}
+
+    classic_sta_lta = {"method": "classicstalta", "fmin": 2.0, "fmax": 8.0, "the_on": 15, "the_off": 10,
+                       "sta": 1, "lta": 40, "coincidence": 4, "centroid_radio": 60}
+
+    ct = CoincidenceTrigger(project=path_to_project, parameters=classic_sta_lta)
+    ct.optimized_project_processing(input_file = input_file, output_file=output_file)
