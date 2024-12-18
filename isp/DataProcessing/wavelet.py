@@ -1,13 +1,11 @@
 import multiprocessing
 from multiprocessing.dummy import Pool as ThreadPool
-
 import numpy as np
 import scipy
 from deprecated import deprecated
 from obspy import read, Trace, UTCDateTime
 from obspy.signal.filter import lowpass
 from scipy.signal import argrelextrema
-
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, MseedUtil
@@ -247,22 +245,6 @@ class ConvolveWaveletBase:
         tr = Trace(data)
         tr.taper(max_percentage=max_percentage, type='blackman')
         return tr.data
-
-    # def __chop_data(self, delta_time, start_time: UTCDateTime, end_time: UTCDateTime):
-    #     total_time = (end_time - start_time) / 3600.
-    #     n = np.math.ceil(total_time / delta_time)
-    #
-    #     data_set = []
-    #     for h in range(n):
-    #         dt = h * 3600 * delta_time
-    #         dt2 = (h + 1) * 3600 * delta_time
-    #         data = self.__get_data_in_time(start_time + dt, start_time + dt2)
-    #         if data is not None:
-    #             self._npts = int(self.stats.Sampling_rate * delta_time * 3600) + 1
-    #             data = self.__pad_data(data, self._npts)
-    #             data_set.append(data)
-    #
-    #     return data_set
 
     def __setup_wavelet(self, start_time: UTCDateTime, end_time: UTCDateTime, **kwargs):
         self._data = self.__get_data_in_time(start_time, end_time)

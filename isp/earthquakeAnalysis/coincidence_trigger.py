@@ -6,6 +6,9 @@ from multiprocessing import Pool
 import pandas as pd
 from surfquakecore.project.surf_project import SurfProject
 
+from isp.DataProcessing import ConvolveWaveletScipy
+
+
 class CoincidenceTrigger:
     def __init__(self, project: Union[SurfProject, str], **kwargs):
         if isinstance(project, str):
@@ -14,8 +17,8 @@ class CoincidenceTrigger:
             self.project = project
 
         self.method: str = kwargs.pop('input_file', 'classicstalta')
-        self.the_on = kwargs.pop('the_on', 3)
-        self.the_off = kwargs.pop('the_on', 3)
+        self.the_on = kwargs.pop('the_on', 5)
+        self.the_off = kwargs.pop('the_off', 2)
 
         self.param1 = kwargs.pop('param1', 1) # sta in seconds
         self.param2 = kwargs.pop('param2', 40) # lta in seconds
@@ -78,6 +81,35 @@ class CoincidenceTrigger:
         print(events)
         return events
 
+    def thresholding_cwt_kurt(self, files_list, start, end):
+        fs = 10
+        traces = []
+        for file in files_list:
+            try:
+                tr = read(file)[0]
+                tr = self.fill_gaps(tr)
+                if tr is not None:
+
+                    tr.resample(fs)
+                    cw = ConvolveWaveletScipy(tr)
+                    tt = int(tr.stats.sampling_rate / 2)
+                    cw.setup_wavelet(wmin=6, wmax=6, tt=tt, fmin=2, fmax=8, nf=40,
+                                     use_rfft=False, decimate=False)
+                    tr_kurt = cw.charachteristic_function_kurt()
+                    traces.append(tr_kurt)
+                    print(tr_kurt)
+            except:
+                pass
+
+        st = Stream(traces)
+        st.trim(starttime=start, endtime=end)
+        st.merge()
+        events = coincidence_trigger(trigger_type=None, thr_on=self.the_on, thr_off=self.the_off,
+                                     trigger_off_extension=self.param3, thr_coincidence_sum=self.param4, stream=st,
+                                     similarity_threshold=0.8, details=True)
+
+        return events
+
     def separate_picks_by_events(self, input_file, output_file, centroids):
         """
         Separates picks by events based on centroids and their radius.
@@ -121,7 +153,8 @@ class CoincidenceTrigger:
         # Filter files for the given time range
         filtered_files = sp.filter_time(starttime=start, endtime=end, tol=3600, use_full=True)
         if filtered_files:
-            return self.thresholding_sta_lta(filtered_files, start, end)
+            #return self.thresholding_sta_lta(filtered_files, start, end)
+            return self.thresholding_cwt_kurt(filtered_files, start, end)
         else:
             return "empty"
 
@@ -160,5 +193,5 @@ class CoincidenceTrigger:
 
 if __name__ == '__main__':
     path_to_project = "/Users/robertocabiecesdiaz/Documents/test_surfquake/project/project.pkl"
-    ct = CoincidenceTrigger(project=path_to_project)
+    ct = CoincidenceTrigger(project=path_to_project, the_on=10, the_off=0, param3=60, param4=6)
     ct.optimized_project_processing()
