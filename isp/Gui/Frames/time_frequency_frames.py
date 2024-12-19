@@ -1,9 +1,10 @@
 import math
+from PyQt5.QtCore import Qt
 from scipy import ndimage
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
-from isp.Gui import pw
+from isp.Gui import pw, pyc
 from isp.Gui.Frames import BaseFrame, UiTimeFrequencyFrame, FilesView, \
     MatplotlibCanvas, MessageDialog
 from isp.Gui.Frames.parameters import ParametersSettings
@@ -76,6 +77,15 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.low_res = 100*3600 * 1
         self.high_res = 100 * 3600 * 3
         self.very_high_res = 100 * 3600 * 6
+
+        # Dialog
+        self.progress_dialog = pw.QProgressDialog(self)
+        self.progress_dialog.setRange(0, 0)
+        self.progress_dialog.setWindowTitle('Processing.....')
+        self.progress_dialog.setLabelText('Please Wait')
+        self.progress_dialog.setWindowIcon(self.windowIcon())
+        self.progress_dialog.setWindowTitle(self.windowTitle())
+        self.progress_dialog.close()
 
     def valueChanged(self):
         self.resSB.setValue(self.horizontalSlider.value())
@@ -275,6 +285,9 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.canvas_plot3.clear()
         self.tr3 = tr
         t = self.tr3.times()
+        fn = int(tr.stats.sampling_rate/2)
+        duration = (len(tr.data)*tr.stats.delta)
+        minf_freq = np.min([0.01, 4/duration])
         print("trace imported")
         print(self.tr3)
         set_qdatetime(tr.stats.starttime, self.starttime_date)
@@ -282,11 +295,16 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.trimCB.setChecked(True)
         self.time_frequencyCB.setCurrentIndex(1)
         self.time_frequencyChB.setChecked(True)
+        self.freq_max_cwtDB.setValue(fn)
+        self.freq_min_cwtDB.setValue(minf_freq)
+        self.atomsSB.setValue(40)
+        self.wminSB.setValue(6)
+        self.wmaxSB.setValue(6)
         self.canvas_plot3.plot(t, self.tr3.data, 0, clear_plot=True, color="black", linewidth=0.5)
         # plot arrivals
         if phases!=None and travel_times!=None:
             for phase, time in zip(phases, travel_times):
-                self.canvas_plot3.draw_arrow(time, axe_index=0, arrow_label=phase, draw_arrow=False, color = "green")
+                self.canvas_plot3.draw_arrow(time, axe_index=0, arrow_label=phase, draw_arrow=False, color="green")
         self.canvas_plot3.set_xlabel(2, "Time (s)")
         self.canvas_plot3.set_ylabel(0, "Amplitude ")
         self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")
@@ -298,8 +316,13 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
              selection = self.selectCB.currentText()
              self.time_frequency_full(self.tr3, selection)
 
-    @AsycTime.run_async()
     def time_frequency(self, tr, order):
+        self._time_frequency(tr, order)
+        self.progress_dialog.exec()
+
+
+    @AsycTime.run_async()
+    def _time_frequency(self, tr, order):
         selection = self.time_frequencyCB.currentText()
         ts, te = self.get_time_window()
         diff = te-ts
@@ -324,11 +347,13 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
                 if self.res_factor <= 1:
                     self.canvas_plot1.plot_contour(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
-                                         cmap=self.colourCB.currentText(), vmin= min_log_spectrogram, vmax=max_log_spectrogram)
+                                         cmap=self.colourCB.currentText(), vmin= min_log_spectrogram,
+                                                   vmax=max_log_spectrogram)
 
                 elif self.res_factor > 1:
                     self.canvas_plot1.pcolormesh(x, y, log_spectrogram, axes_index=1, clabel="Power [dB]",
-                            cmap=self.colourCB.currentText(),vmin= min_log_spectrogram, vmax=max_log_spectrogram)
+                            cmap=self.colourCB.currentText(), vmin=min_log_spectrogram, vmax=max_log_spectrogram,
+                                                 shading='nearest')
 
                 #elif self.typeCB.currentText() == 'imshow':
                 #    self.canvas_plot1.image(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
@@ -343,11 +368,12 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 if self.res_factor <= 1:
 
                     self.canvas_plot2.plot_contour(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                                               cmap=self.colourCB.currentText(), vmin= min_log_spectrogram, vmax=max_log_spectrogram)
+                                               cmap=self.colourCB.currentText(), vmin=min_log_spectrogram, vmax=max_log_spectrogram)
                 elif self.res_factor > 1:
 
                     self.canvas_plot2.pcolormesh(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                            cmap=self.colourCB.currentText(), vmin=min_log_spectrogram, vmax=max_log_spectrogram)
+                            cmap=self.colourCB.currentText(), vmin=min_log_spectrogram, vmax=max_log_spectrogram,
+                                                 shading='nearest')
 
                 # elif self.typeCB.currentText() == 'imshow':
                 #     self.canvas_plot2.image(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
@@ -465,7 +491,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                                                     cmap=self.colourCB.currentText(), vmin= min_cwt, vmax=max_cwt)
                 elif self.res_factor > 1:
                      self.canvas_plot1.pcolormesh(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                                                  cmap=self.colourCB.currentText(), vmin= min_cwt, vmax=max_cwt)
+                                                  cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt,
+                                                  shading='nearest')
 
                 # elif self.typeCB.currentText() == 'imshow':
                 #
@@ -487,7 +514,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                                                     cmap=self.colourCB.currentText(), vmin= min_cwt, vmax=max_cwt)
                 elif self.res_factor > 1:
                      self.canvas_plot2.pcolormesh(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                                                  cmap=self.colourCB.currentText(), vmin= min_cwt, vmax=max_cwt)
+                                                  cmap=self.colourCB.currentText(), vmin= min_cwt, vmax=max_cwt,
+                                                  shading='nearest')
                 # elif self.typeCB.currentText() == 'imshow':
                 #     self.canvas_plot2.image(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
                 #                              cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt, yscale = 'log')
@@ -501,8 +529,15 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         else:
             pass
 
-    #@AsycTime.run_async()
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
+
+
     def time_frequency_full(self, tr, order):
+        self._time_frequency_full(tr, order)
+        self.progress_dialog.exec()
+
+    @AsycTime.run_async()
+    def _time_frequency_full(self, tr, order):
         selection = self.time_frequencyCB.currentText()
         ts, te = self.get_time_window()
         diff = te - ts
@@ -513,7 +548,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             nf = self.atomsSB.value()
             f_min = self.freq_min_cwtDB.value()
             f_max = self.freq_max_cwtDB.value()
-            if f_max < 1 :
+            if f_max < 1:
                 f_max = 1
             wmin = self.wminSB.value()
             wmax = self.wminSB.value()
@@ -548,19 +583,20 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             max_cwt = 0
 
             value, idx = self.find_nearest(y[:,1], 1.0)
-            scalogram_period = scalogram2[0:idx,:]
+            scalogram_period = scalogram2[0:idx, :]
 
-            scalogram2 = scalogram2[(idx):,:]
+            scalogram2 = scalogram2[idx:, :]
 
             x_period = x[0:idx,:]
-            y_period = 1/(y[0:idx,:])
-            #y_period = np.flipud(y_period)
-            x_freq = x[(idx):,:]
-            y_freq = y[(idx):,:]
+            y_period = 1/(y[0:idx, :])
+
+            x_freq = x[idx:, :]
+            y_freq = y[idx:, :]
 
 
             if self.res_factor <= 1:
-                self.canvas_plot3.plot_contour(x_freq, y_freq, scalogram2, axes_index=1, levels=20, clear_plot=True, clabel="Power [dB]",
+                self.canvas_plot3.plot_contour(x_freq, y_freq, scalogram2, axes_index=1, levels=20, clear_plot=True,
+                                               clabel="Power [dB]",
                                                cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
 
                 self.canvas_plot3.plot_contour(x_period, 10*np.log(y_period), scalogram_period, axes_index=2, levels=20,
@@ -569,14 +605,16 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
 
             elif self.res_factor > 1:
                 self.canvas_plot3.pcolormesh(x_freq, y_freq, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                                             cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
+                                             cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt,
+                                             shading='nearest')
 
                 self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, clear_plot=True,
-                                             clabel ="Power [dB]", cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
+                                             clabel ="Power [dB]", cmap=self.colourCB.currentText(), vmin=min_cwt,
+                                             vmax=max_cwt, shading='nearest')
 
             ax_period = self.canvas_plot3.get_axe(1)
             ax_period.set_yscale('log')
-            ax_period=self.canvas_plot3.get_axe(2)
+            ax_period = self.canvas_plot3.get_axe(2)
             ax_period.invert_yaxis()
             ax_period.set_yscale('log')
 
@@ -588,6 +626,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         else:
             pass
 
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def key_pressed(self, event):
         selection = self.selectCB.currentText()
