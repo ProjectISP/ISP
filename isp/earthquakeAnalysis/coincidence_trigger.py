@@ -220,10 +220,20 @@ class CoincidenceTrigger:
         with Pool() as pool:
             results = pool.map(self.process_day, tasks)
 
+        # Join the output of all days
+
+        final__filtered_results = []
+        details = []
+        for item in results:
+            times = item[1]
+            details.extend(item[0])
+            final__filtered_results.extend(times)
+
         if len(results[0][1]) > 0 and input_file is not None and output_file is not None:
-            self.separate_picks_by_events(input_file, output_file, centroids=results[0][1])
+            self.separate_picks_by_events(input_file, output_file, centroids=final__filtered_results)
 
-
+        return final__filtered_results, details
+    
 if __name__ == '__main__':
 
     # Example of parametrization and association pf event picks
