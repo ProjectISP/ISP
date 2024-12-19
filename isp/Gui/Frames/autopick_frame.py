@@ -14,6 +14,9 @@ from isp.Utils.os_utils import OSutils
 from surfquakecore.phasenet.phasenet_handler import PhasenetISP, PhasenetUtils
 from surfquakecore.real.real_core import RealCore
 from sys import platform
+from surfquakecore.project.surf_project import SurfProject
+from isp.associate_events.coincidence_trigger import CoincidenceTrigger
+
 
 @add_save_load()
 class Autopick(BaseFrame, UiAutopick):
@@ -49,6 +52,15 @@ class Autopick(BaseFrame, UiAutopick):
         self.realBtn.clicked.connect(self.run_real)
         self.plot_grid_stationsBtn.clicked.connect(self.plot_real_grid)
 
+        #### Coincidence Trigger ####
+        self.pick_file_bind = BindPyqtObject(self.trigger_inputLE)
+        self.trigger_outpath_bind = BindPyqtObject(self.output_triggerLE)
+
+        self.picking_triggerFileBtn.clicked.connect(lambda: self.on_click_select_file(self.pick_file_bind))
+        self.output_triggerBtn.clicked.connect(lambda: self.on_click_select_directory(self.trigger_outpath_bind))
+        self.realCoincidenceTrigger.clicked.connect(lambda: self.run_trigger())
+
+
         self.setDefaultPickPath.clicked.connect(self.setDefaultPick)
 
         # Dialog
@@ -61,6 +73,66 @@ class Autopick(BaseFrame, UiAutopick):
         self.progress_dialog.close()
 
 
+
+    def _get_trigger_parameters(self):
+        self.trigger_parameters = {}
+
+        if self.decimateCB.isChecked():
+            decimate_sampling_rate = self.new_sampling_rateSB.value()
+        else:
+            decimate_sampling_rate = False
+
+        if self.methodTrigger.currentText() == "Classic STA/LTA":
+            method = "classicstalta"
+            self.trigger_parameters["sta"] = self.staWinDB.value()
+            self.trigger_parameters["lta"] = self.ltaWinDB.value()
+
+        else:
+            method = "kurtosis"
+
+        self.trigger_parameters = {"method": method, "fmin": self.fminDB.value(), "fmax": self.fmaxDB.value(),
+                                   "the_on": self.threshold_onDB.value(), "the_off": self.threshold_offDB.value(),
+                                   "time_window": self.kurtosisTimeWindowDB.value(),
+                                   "coincidence": self.NumCoincidenceSB.value(),
+                                   "centroid_radio": self.clusterSizeDB.value(),
+                                   "decimate_sampling_rate": decimate_sampling_rate}
+
+
+    def run_trigger(self):
+
+        if self.sp is None:
+            md = MessageDialog(self)
+            md.set_error_message("Metadata run Picking, Please load a project first")
+        else:
+            self.send_trigger()
+            self.progress_dialog.exec()
+            md = MessageDialog(self)
+            md.set_info_message("Coincidence Trigger Done")
+
+
+    @AsycTime.run_async()
+    def run_trigger(self):
+
+        sp = SurfProject()
+        sp.project = self.sp
+
+        self._get_trigger_parameters()
+        if self.pick_file_bind.value == "":
+            pick_file = None
+        if self.trigger_outpath_bind.value == "":
+            out_path = None
+
+        if len(self.trigger_parameters)>0:
+            ct = CoincidenceTrigger(project=sp, parameters=self.trigger_parameters)
+            ct.optimized_project_processing(input_file=pick_file,
+                                            output_file=out_path)
+
+    def on_click_select_file(self, bind: BindPyqtObject):
+        file_path = pw.QFileDialog.getOpenFileName(self, 'Select File', bind.value)
+        file_path = file_path[0]
+
+        if file_path:
+            bind.value = file_path
 
     def get_metadata(self):
 
@@ -150,7 +222,7 @@ class Autopick(BaseFrame, UiAutopick):
 
     def send_signal(self):
 
-        # Conect end of picking with Earthquake Analysis
+        # Connect end of picking with Earthquake Analysis
 
         self.signal.emit()
 
