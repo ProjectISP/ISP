@@ -111,7 +111,7 @@ class Autopick(BaseFrame, UiAutopick):
 
 
     @AsycTime.run_async()
-    def run_trigger(self):
+    def send_trigger(self):
 
         sp = SurfProject()
         sp.project = self.sp
@@ -126,6 +126,8 @@ class Autopick(BaseFrame, UiAutopick):
             ct = CoincidenceTrigger(project=sp, parameters=self.trigger_parameters)
             ct.optimized_project_processing(input_file=pick_file,
                                             output_file=out_path)
+            
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def on_click_select_file(self, bind: BindPyqtObject):
         file_path = pw.QFileDialog.getOpenFileName(self, 'Select File', bind.value)
