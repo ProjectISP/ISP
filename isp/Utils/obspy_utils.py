@@ -1031,7 +1031,7 @@ class MseedUtil:
         return new_times,string_times
 
     @classmethod
-    def get_NLL_phase_picks(cls, phase = None, **kwargs ):
+    def get_NLL_phase_picks_phase(cls, phase=None, **kwargs ):
 
         pick_times = {}
         pick_file = os.path.join(PICKING_DIR, "output.txt")

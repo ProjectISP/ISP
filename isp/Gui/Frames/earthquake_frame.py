@@ -563,7 +563,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.aligned_picks = True
             phase = self.comboBox_phases.currentText()
             self.aligned_checked = True
-            self.pick_times = MseedUtil.get_NLL_phase_picks(phase)
+            self.pick_times = MseedUtil.get_NLL_phase_picks_phase(phase)
             self.plot_seismogram()
 
 
