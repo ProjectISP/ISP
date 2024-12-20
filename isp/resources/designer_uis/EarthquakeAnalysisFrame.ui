@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1514</width>
-    <height>944</height>
+    <width>1659</width>
+    <height>1008</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -62,92 +62,23 @@
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout">
-                  <item row="7" column="3" alignment="Qt::AlignLeft">
-                   <widget class="QLabel" name="label">
-                    <property name="text">
-                     <string>Start</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="8" column="3" alignment="Qt::AlignLeft">
-                   <widget class="QLabel" name="label_2">
-                    <property name="text">
-                     <string>End</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="6" column="1" colspan="4">
-                   <widget class="QLineEdit" name="datalessPathForm">
+                  <item row="1" column="0" colspan="2">
+                   <widget class="QPushButton" name="stations_infoBtn">
                     <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>16777202</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="readOnly">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="3" column="0">
-                   <widget class="QLineEdit" name="netForm">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="0" alignment="Qt::AlignHCenter">
-                   <widget class="QLabel" name="label_4">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="text">
-                     <string>Nets</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="6" column="0">
-                   <widget class="QPushButton" name="selectDatalessDirBtn">
-                    <property name="toolTip">
-                     <string>Set the Metadata File (*.dlsv or *.xml)</string>
-                    </property>
-                    <property name="text">
-                     <string>Metadata File</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="7" column="4" rowspan="3">
-                   <widget class="QCheckBox" name="trimCB">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
                     <property name="toolTip">
-                     <string>Checkd if you want trim the seismograms according to StartTime [kw &quot;Q&quot;] &amp; EndTime  [kw &quot;E&quot;] </string>
+                     <string>Click to view header information of the loaded seismogram files</string>
                     </property>
                     <property name="text">
-                     <string>Trim Time</string>
+                     <string>Stations Info</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="3" colspan="2">
-                   <widget class="QLineEdit" name="channelForm"/>
-                  </item>
-                  <item row="2" column="3" colspan="2" alignment="Qt::AlignHCenter">
+                  <item row="5" column="4" colspan="2" alignment="Qt::AlignHCenter">
                    <widget class="QLabel" name="label_6">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -160,7 +91,7 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="7" column="0" colspan="3">
+                  <item row="10" column="0" colspan="4">
                    <widget class="QDateTimeEdit" name="dateTimeEdit_1">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -197,7 +128,105 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="8" column="0" colspan="3">
+                  <item row="9" column="0">
+                   <widget class="QPushButton" name="selectDatalessDirBtn">
+                    <property name="toolTip">
+                     <string>Set the Metadata File (*.dlsv or *.xml)</string>
+                    </property>
+                    <property name="text">
+                     <string>Metadata File</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="0" alignment="Qt::AlignHCenter">
+                   <widget class="QLabel" name="label_4">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Nets</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="4" alignment="Qt::AlignLeft">
+                   <widget class="QLabel" name="label">
+                    <property name="text">
+                     <string>Start</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="1" colspan="5">
+                   <widget class="QLineEdit" name="datalessPathForm">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777202</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="readOnly">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="5" rowspan="3">
+                   <widget class="QCheckBox" name="trimCB">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>Checkd if you want trim the seismograms according to StartTime [kw &quot;Q&quot;] &amp; EndTime  [kw &quot;E&quot;] </string>
+                    </property>
+                    <property name="text">
+                     <string>Trim Time</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="4" colspan="2">
+                   <widget class="QLineEdit" name="channelForm"/>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLineEdit" name="netForm">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="11" column="4" alignment="Qt::AlignLeft">
+                   <widget class="QLabel" name="label_2">
+                    <property name="text">
+                     <string>End</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="3" colspan="3">
+                   <widget class="QPushButton" name="selectDirBtn">
+                    <property name="toolTip">
+                     <string extracomment="Select the folder where you have the seismogram files">Select the folder where you have the Project file / Press &quot;R&quot; to reload last Project with your selected filters.</string>
+                    </property>
+                    <property name="toolTipDuration">
+                     <number>-1</number>
+                    </property>
+                    <property name="text">
+                     <string>Load Project</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="11" column="0" colspan="4">
                    <widget class="QDateTimeEdit" name="dateTimeEdit_2">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -234,47 +263,17 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="0" column="1" colspan="4">
-                   <widget class="QPushButton" name="selectDirBtn">
-                    <property name="toolTip">
-                     <string extracomment="Select the folder where you have the seismogram files">Select the folder where you have the Project file / Press &quot;R&quot; to reload last Project with your selected filters.</string>
-                    </property>
-                    <property name="toolTipDuration">
-                     <number>-1</number>
-                    </property>
-                    <property name="text">
-                     <string>Load Project</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="1" colspan="4">
-                   <widget class="QPushButton" name="filterProjectBtn">
-                    <property name="toolTip">
-                     <string>Filter the Project based on Nets, Stations and Channels. (Use valid wildcards)</string>
-                    </property>
-                    <property name="text">
-                     <string>Apply Search Filters</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="0" column="0" rowspan="2">
-                   <widget class="QPushButton" name="newProjectBtn">
-                    <property name="text">
-                     <string>New Project</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="3" column="1" colspan="2">
+                  <item row="6" column="1" colspan="3">
                    <widget class="QLineEdit" name="stationForm">
                     <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
                    </widget>
                   </item>
-                  <item row="2" column="1" colspan="2" alignment="Qt::AlignHCenter">
+                  <item row="5" column="1" colspan="3" alignment="Qt::AlignHCenter">
                    <widget class="QLabel" name="label_5">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -284,6 +283,39 @@
                     </property>
                     <property name="text">
                      <string>Stations</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2">
+                   <widget class="QPushButton" name="filterProjectBtn">
+                    <property name="toolTip">
+                     <string>Filter the Project based on Nets, Stations and Channels. (Use valid wildcards)</string>
+                    </property>
+                    <property name="text">
+                     <string>Apply Search Filters</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="2">
+                   <widget class="QPushButton" name="mapBtn">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>Click to plot the stations map from the ploted seismograms. Warning, needs the correct metadata alreadt loaded</string>
+                    </property>
+                    <property name="text">
+                     <string>Stations Map</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0" colspan="2">
+                   <widget class="QPushButton" name="newProjectBtn">
+                    <property name="text">
+                     <string>New Project</string>
                     </property>
                    </widget>
                   </item>
@@ -583,8 +615,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>943</width>
-                  <height>702</height>
+                  <width>1072</width>
+                  <height>766</height>
                  </rect>
                 </property>
                </widget>
@@ -662,41 +694,9 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="stations_infoBtn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Click to view header information of the loaded seismogram files</string>
-               </property>
-               <property name="text">
-                <string>Stations Info</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="mapBtn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Click to plot the stations map from the ploted seismograms. Warning, needs the correct metadata alreadt loaded</string>
-               </property>
-               <property name="text">
-                <string>Stations Map</string>
-               </property>
-              </widget>
-             </item>
-             <item>
               <widget class="QPushButton" name="autoPickBtn">
                <property name="text">
-                <string>Auto pick</string>
+                <string>Auto pick / associate</string>
                </property>
               </widget>
              </item>
@@ -849,7 +849,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1514</width>
+     <width>1659</width>
      <height>24</height>
     </rect>
    </property>
@@ -893,9 +893,6 @@
     </widget>
     <addaction name="menuPicks"/>
     <addaction name="actionSet_Parameters"/>
-    <addaction name="actionRun_Event_Detector"/>
-    <addaction name="actionRun_picker"/>
-    <addaction name="actionRun_autoloc"/>
     <addaction name="actionClean_selection"/>
     <addaction name="actionRemove_all_selections"/>
     <addaction name="actionClean_Events_Detected"/>
