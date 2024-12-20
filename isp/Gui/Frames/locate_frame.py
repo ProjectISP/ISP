@@ -16,7 +16,7 @@ locate_frame
 import os
 import shutil
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import  QCheckBox
+from PyQt5.QtWidgets import QCheckBox, QMessageBox
 from obspy import Inventory
 from obspy.core.event import Origin
 from surfquakecore.magnitudes.source_tools import ReadSource
@@ -145,12 +145,12 @@ class Locate(BaseFrame, UiLocFlow):
         # Iterate through the rows and check all checkboxes
         if not self.selectAllLocCB.checkState():
             for row in range(self.locFilesQTW.rowCount()):
-                cell_widget = self.locFilesQTW.cellWidget(row, 1)
+                cell_widget = self.locFilesQTW.cellWidget(row, 2)
                 if isinstance(cell_widget, QCheckBox):
                     cell_widget.setChecked(False)
         else:
             for row in range(self.locFilesQTW.rowCount()):
-                cell_widget = self.locFilesQTW.cellWidget(row, 1)
+                cell_widget = self.locFilesQTW.cellWidget(row, 2)
                 if isinstance(cell_widget, QCheckBox):
                     cell_widget.setChecked(True)
 
@@ -290,22 +290,34 @@ class Locate(BaseFrame, UiLocFlow):
 
         return nllconfig
 
-    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def on_click_run_vel_to_grid(self):
+        self._on_click_run_vel_to_grid()
+        self.progress_dialog.exec()
+
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
+    def _on_click_run_vel_to_grid(self):
         nllconfig = self.get_nll_config()
         if isinstance(nllconfig, NLLConfig):
             nll_manager = NllManager(nllconfig, self.metadata_path_bind.value, self.loc_work_bind.value)
             nll_manager.vel_to_grid()
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
-    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def on_click_run_grid_to_time(self):
+        self._on_click_run_grid_to_time()
+        self.progress_dialog.exec()
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
+    def _on_click_run_grid_to_time(self):
         nllconfig = self.get_nll_config()
         if isinstance(nllconfig, NLLConfig):
             nll_manager = NllManager(nllconfig, self.metadata_path_bind.value, self.loc_work_bind.value)
             nll_manager.grid_to_time()
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
-    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
     def on_click_run_loc(self):
+        self._on_click_run_loc()
+        self.progress_dialog.exec()
+    @parse_excepts(lambda self, msg: self.subprocess_feedback(msg))
+    def _on_click_run_loc(self):
         nllconfig = self.get_nll_config()
         if isinstance(nllconfig, NLLConfig):
             nll_manager = NllManager(nllconfig, self.metadata_path_bind.value, self.loc_work_bind.value)
@@ -316,6 +328,7 @@ class Locate(BaseFrame, UiLocFlow):
             nll_catalog = Nllcatalog(self.loc_work_bind.value)
             nll_catalog.run_catalog(self.loc_work_bind.value)
             self.onChange_root_pathLoc("refress")
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def plot_pdf(self, file_hyp):
 
@@ -442,7 +455,7 @@ class Locate(BaseFrame, UiLocFlow):
                     file = os.path.join(self.loc_work_bind.value, "loc", item.text())
                 # If the column contains a widget (e.g., QCheckBox)
 
-                if column == 1:
+                if column == 2:
                     cell_widget = self.locFilesQTW.cellWidget(row, column)
                     #if isinstance(cell_widget, pw.QCheckBox):
                     if cell_widget.isChecked() and os.path.isfile(file):
@@ -651,16 +664,46 @@ class Locate(BaseFrame, UiLocFlow):
 
     ####### Source Parameters ########
     def run_automag(self):
-        self.__send_run_automag()
-        self.progress_dialog.exec()
-        md = MessageDialog(self)
-        md.set_info_message("Source Parameters estimation finished, Please see output directory and press "
-                            "print results")
+
+        if isinstance(self.sp, SurfProject) and len(self.sp.project)>0:
+            print(self.sp)
+        else:
+            # Add buttons
+            msg_box = QMessageBox()
+            msg_box.setWindowTitle("You need to load a project before run Source")
+            msg_box.setText("Do you want load now and run Source?")
+
+            yes_button = msg_box.addButton(pw.QMessageBox.Yes)
+            no_button = msg_box.addButton(pw.QMessageBox.No)
+
+            # Set the default button
+            msg_box.setDefaultButton(yes_button)
+
+            # Execute the message box and get the response
+            response = msg_box.exec_()
+
+            if response == QMessageBox.Yes:
+                selected = pw.QFileDialog.getOpenFileName(self, "Select file")
+                if isinstance(selected[0], str) and os.path.isfile(selected[0]):
+                    self.sp = SurfProject.load_project(selected[0])
+
+        if len(self.sp.project) > 0:
+            self.__send_run_automag()
+            self.progress_dialog.exec()
+            md = MessageDialog(self)
+            md.set_info_message("Source Parameters estimation finished, Please see output directory and press "
+                                "print results")
+        else:
+            md = MessageDialog(self)
+            md.set_info_message("No Loaded a valid Project, please back to Earthquake Analysis and load a project \n, "
+                                "or try run source another time and then load a project")
+
 
     @AsycTime.run_async()
     def __send_run_automag(self):
 
         self.__load_config_automag()
+
         # Running stage
         mg = Automag(self.sp, self.source_locs_bind.value, self.metadata_path_bind.value, source_config,
                      self.source_out_bind.value, scale="regional", gui_mod=self.config_automag)
@@ -672,6 +715,7 @@ class Locate(BaseFrame, UiLocFlow):
         summary = rs.generate_source_summary()
         summary_path = os.path.join(self.source_out_bind.value, "source_summary.txt")
         rs.write_summary(summary, summary_path)
+
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def __load_config_automag(self):
