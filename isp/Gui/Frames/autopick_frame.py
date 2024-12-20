@@ -22,7 +22,7 @@ from isp.associate_events.coincidence_trigger import CoincidenceTrigger
 class Autopick(BaseFrame, UiAutopick):
 
     signal = pyc.pyqtSignal()
-
+    signal2 = pyc.pyqtSignal()
     def __init__(self, project, metadata_path):
 
         super(Autopick, self).__init__()
@@ -39,6 +39,7 @@ class Autopick(BaseFrame, UiAutopick):
         self.sp = project
         self.metadata_path = metadata_path
         self.inventory = None
+        self.final_filtered_results = []
         ############# Phasent -Picking ##############
         self.picking_bind = BindPyqtObject(self.picking_LE, self.onChange_root_path)
         self.output_path_pickBtn.clicked.connect(lambda: self.on_click_select_directory(self.picking_bind))
@@ -121,12 +122,16 @@ class Autopick(BaseFrame, UiAutopick):
             pick_file = None
         if self.trigger_outpath_bind.value == "":
             out_path = None
+        else:
+            out_path = os.path.join(self.trigger_outpath_bind.value, "triggered_picks.txt")
 
         if len(self.trigger_parameters)>0:
             ct = CoincidenceTrigger(project=sp, parameters=self.trigger_parameters)
-            ct.optimized_project_processing(input_file=pick_file,
+            final_filtered_results, details = ct.optimized_project_processing(input_file=self.pick_file_bind.value,
                                             output_file=out_path)
-            
+
+            self.final_filtered_results = final_filtered_results
+            self.send_signal2()
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def on_click_select_file(self, bind: BindPyqtObject):
@@ -177,11 +182,16 @@ class Autopick(BaseFrame, UiAutopick):
 
     def setDefaultPick(self):
 
+        default_pick_file = os.path.join(PICKING_DIR, 'output.txt')
+
+        self.pick_file_bind = BindPyqtObject(self.trigger_inputLE)
         output_real = os.path.join(PICKING_DIR, "associated_picks")
 
         self.picking_LE.setText(PICKING_DIR)
-
+        self.trigger_inputLE.setText(default_pick_file)
+        self.output_triggerLE.setText(output_real)
         self.real_inputLE.setText(PICKING_DIR)
+
         if os.path.isdir(output_real):
             self.output_realLE.setText(output_real)
         else:
@@ -227,6 +237,13 @@ class Autopick(BaseFrame, UiAutopick):
         # Connect end of picking with Earthquake Analysis
 
         self.signal.emit()
+
+    def send_signal2(self):
+
+        # Connect end of picking with Earthquake Analysis
+
+        self.signal2.emit()
+
 
     ## End Picking ##
 

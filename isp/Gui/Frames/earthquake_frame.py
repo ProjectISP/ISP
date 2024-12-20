@@ -2211,11 +2211,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def open_auto_pick(self):
         self.__autopick = Autopick(self.project_filtered, self.metadata_path_bind.value)
         self.__autopick.signal.connect(self.slot)
+        self.__autopick.signal2.connect(self.slot2)
         self.__autopick.show()
 
     @pyqtSlot()
     def slot(self):
         self.import_pick_from_file(default=True)
+
+    @pyqtSlot()
+    def slot2(self):
+        self.events_times = self.__autopick.final_filtered_results
+        self.plot_seismogram()
 
     def open_locate(self):
         # Add buttons
