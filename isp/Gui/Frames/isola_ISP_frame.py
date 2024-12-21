@@ -45,7 +45,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.stations_check = False
         self.url = 'https://projectisp.github.io/ISP_tutorial.github.io/mti/'
         self.scroll_area_widget.setWidgetResizable(True)
-
+        self.earth_model = CrustalModelParametersFrame()
         # Binding
         self.earth_path_bind = BindPyqtObject(self.earth_model_path)
         self.output_path_bind = BindPyqtObject(self.MTI_output_path)
@@ -72,7 +72,10 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.runInversionMTIDBBtn.clicked.connect(lambda: self.run_inversionDB())
         self.loadProjectBtn.clicked.connect(lambda: self.load_project())
         self.loadMetadataBtn.clicked.connect(lambda: self.load_metadata())
+        self.earthModelMakerBtn.clicked.connect(lambda: self.open_earth_model())
 
+    def open_earth_model(self):
+        self.earth_model.show()
     def load_project(self):
 
 

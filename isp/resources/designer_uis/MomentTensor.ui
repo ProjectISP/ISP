@@ -52,6 +52,20 @@
                 <string>Working Framework</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_20">
+                <item row="1" column="2" colspan="2">
+                 <widget class="QLineEdit" name="earth_model_path">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QPushButton" name="loadProjectBtn">
+                  <property name="text">
+                   <string>Load Project</string>
+                  </property>
+                 </widget>
+                </item>
                 <item row="2" column="0">
                  <widget class="QPushButton" name="outputDirectoryMTIBtn">
                   <property name="text">
@@ -66,10 +80,10 @@
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="0">
-                 <widget class="QPushButton" name="loadProjectBtn">
+                <item row="1" column="1">
+                 <widget class="QPushButton" name="earthModelMakerBtn">
                   <property name="text">
-                   <string>Load Project</string>
+                   <string>Open Earth Model Maker</string>
                   </property>
                  </widget>
                 </item>
@@ -80,14 +94,7 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="1" colspan="2">
-                 <widget class="QLineEdit" name="earth_model_path">
-                  <property name="text">
-                   <string/>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1" colspan="2">
+                <item row="2" column="1" colspan="3">
                  <widget class="QLineEdit" name="MTI_output_path">
                   <property name="text">
                    <string/>
@@ -837,8 +844,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>863</width>
-               <height>748</height>
+               <width>58</width>
+               <height>26</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -869,8 +876,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>98</width>
-               <height>28</height>
+               <width>58</width>
+               <height>26</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_6">
