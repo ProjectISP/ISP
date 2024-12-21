@@ -23,7 +23,7 @@ class Autopick(BaseFrame, UiAutopick):
 
     signal = pyc.pyqtSignal()
     signal2 = pyc.pyqtSignal()
-    def __init__(self, project, metadata_path):
+    def __init__(self, project, metadata_path, starttime=None, endtime=None):
 
         super(Autopick, self).__init__()
         self.setupUi(self)
@@ -38,6 +38,8 @@ class Autopick(BaseFrame, UiAutopick):
 
         self.sp = project
         self.metadata_path = metadata_path
+        self.starttime = starttime
+        self.endtime = endtime
         self.inventory = None
         self.final_filtered_results = []
         ############# Phasent -Picking ##############
@@ -224,7 +226,8 @@ class Autopick(BaseFrame, UiAutopick):
         picks = phISP.phasenet()
         picks_ = PhasenetUtils.split_picks(picks)
 
-        PhasenetUtils.write_nlloc_format(picks_, self.picking_bind.value)
+        PhasenetUtils.write_nlloc_format(picks_, self.picking_bind.value, starttime=self.starttime,
+                                         endtime=self.endtime)
         PhasenetUtils.convert2real(picks_, self.picking_bind.value)
         PhasenetUtils.save_original_picks(picks_, self.picking_bind.value)
 

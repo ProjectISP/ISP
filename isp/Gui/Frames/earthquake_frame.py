@@ -2209,7 +2209,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.event_info.set_coordinates([lat, lon, depth])
 
     def open_auto_pick(self):
-        self.__autopick = Autopick(self.project_filtered, self.metadata_path_bind.value)
+        if self.trimCB.isChecked():
+            starttime = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+            endtime = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        else:
+            starttime = None
+            endtime = None
+        self.__autopick = Autopick(self.project_filtered, self.metadata_path_bind.value, starttime=starttime,
+                                   endtime=endtime)
         self.__autopick.signal.connect(self.slot)
         self.__autopick.signal2.connect(self.slot2)
         self.__autopick.show()
