@@ -30,6 +30,16 @@ class FirstPolarity:
         """
 
     @staticmethod
+    def check_no_empty(file_path):
+        count = 0
+        with open(file_path, 'r') as file:
+            for line in file:
+                if line.strip():  # Check if the line contains characters (ignoring whitespace)
+                    count += 1
+                if count > 4:
+                    return True
+        return False
+    @staticmethod
     def __validate_dir(dir_path):
         if not os.path.isdir(dir_path):
             raise FileNotFoundError("The dir {} doesn't exist.".format(dir_path))
@@ -192,10 +202,13 @@ class FirstPolarity:
     def __get_minimum_misfit(self, focal_mechanism):
         mismifits = []
         for i, focal in enumerate(focal_mechanism):
-            mismifits.append(focal.misfit)
-
-        index = mismifits.index(min(mismifits))
-        return focal_mechanism[index]
+            if focal.misfit is not None:
+                mismifits.append(focal.misfit)
+        if len(mismifits)>0:
+            index = mismifits.index(min(mismifits))
+            return focal_mechanism[index]
+        else:
+            return None
 
     def edit_focmec_run(self, new_float_value, focmec_bash_path):
         """

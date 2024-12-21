@@ -515,7 +515,9 @@ class Locate(BaseFrame, UiLocFlow):
                 if file is not None:
                     firstpolarity_manager = FirstPolarity()
                     file_input = firstpolarity_manager.create_input(file, header)
-                    firstpolarity_manager.run_focmec(file_input, self.accepted_polarities.value())
+
+                    if FirstPolarity.check_no_empty(file_input):
+                        firstpolarity_manager.run_focmec(file_input, self.accepted_polarities.value())
             except:
                 pass
         self.onChange_root_pathLoc("refress")
@@ -536,33 +538,36 @@ class Locate(BaseFrame, UiLocFlow):
         # TODO MIGHT BE FOR PLOTTING ALL POSSIBLE FAUL PLANES
         # focmec_full_Data = parse_focmec_file(focmec_file)
         # file_output_name = FirstPolarity.extract_name(focmec_file)
+        if focal_mechanism is not None:
+            Plane_A = focal_mechanism.nodal_planes.nodal_plane_1
+            strike_A = Plane_A.strike
+            dip_A = Plane_A.dip
+            rake_A = Plane_A.rake
+            extra_info = firstpolarity_manager.parse_solution_block(focal_mechanism.comments[0]["text"])
+            P_Trend = extra_info['P,T']['Trend']
+            P_Plunge = extra_info['P,T']['Plunge']
+            T_Trend = extra_info['P,N']['Trend']
+            T_Plunge = extra_info['P,N']['Plunge']
 
-        Plane_A = focal_mechanism.nodal_planes.nodal_plane_1
-        strike_A = Plane_A.strike
-        dip_A = Plane_A.dip
-        rake_A = Plane_A.rake
-        extra_info = firstpolarity_manager.parse_solution_block(focal_mechanism.comments[0]["text"])
-        P_Trend = extra_info['P,T']['Trend']
-        P_Plunge = extra_info['P,T']['Plunge']
-        T_Trend = extra_info['P,N']['Trend']
-        T_Plunge = extra_info['P,N']['Plunge']
+            misfit_first_polarity = focal_mechanism.misfit
+            azimuthal_gap = focal_mechanism.azimuthal_gap
+            number_of_polarities = focal_mechanism.station_polarity_count
+            #
+            first_polarity_results = {"First_Polarity": ["Strike", "Dip", "Rake", "misfit_first_polarity", "azimuthal_gap",
+                                                         "number_of_polarities", "P_axis_Trend", "P_axis_Plunge",
+                                                         "T_axis_Trend", "T_axis_Plunge"],
+                                      "results": [strike_A, dip_A, rake_A, misfit_first_polarity, azimuthal_gap,
+                                                  number_of_polarities, P_Trend, P_Plunge, T_Trend, T_Plunge]}
 
-        misfit_first_polarity = focal_mechanism.misfit
-        azimuthal_gap = focal_mechanism.azimuthal_gap
-        number_of_polarities = focal_mechanism.station_polarity_count
-        #
-        first_polarity_results = {"First_Polarity": ["Strike", "Dip", "Rake", "misfit_first_polarity", "azimuthal_gap",
-                                                     "number_of_polarities", "P_axis_Trend", "P_axis_Plunge",
-                                                     "T_axis_Trend", "T_axis_Plunge"],
-                                  "results": [strike_A, dip_A, rake_A, misfit_first_polarity, azimuthal_gap,
-                                              number_of_polarities, P_Trend, P_Plunge, T_Trend, T_Plunge]}
-
-        self.add_first_polarity_info(first_polarity_results)
-        self.focmec_canvas.clear()
-        self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, P_Trend, P_Plunge,
-                                      T_Trend, T_Plunge)
-        self.focmec_canvas.figure.subplots_adjust(left=0.250, bottom=0.105, right=0.725, top=0.937, wspace=0.0,
-                                                  hspace=0.0)
+            self.add_first_polarity_info(first_polarity_results)
+            self.focmec_canvas.clear()
+            self.focmec_canvas.drawFocMec(strike_A, dip_A, rake_A, Station, Az, Dip, Motion, P_Trend, P_Plunge,
+                                          T_Trend, T_Plunge)
+            self.focmec_canvas.figure.subplots_adjust(left=0.250, bottom=0.105, right=0.725, top=0.937, wspace=0.0,
+                                                      hspace=0.0)
+        else:
+            md = MessageDialog(self)
+            md.set_info_message("No valid solutions for this mechanism")
 
     def add_first_polarity_info(self, first_polarity_results):
         self.FirstPolarityInfoText.clear()
