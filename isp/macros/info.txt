@@ -1,0 +1,1 @@
+In this folder macros will be saved with extension pal (pickle file)

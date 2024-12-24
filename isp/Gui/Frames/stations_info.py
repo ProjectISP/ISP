@@ -32,4 +32,7 @@ class StationsInfo(pw.QFrame, UiStationInfo):
             channel = self.stations_table.item(i, 3).text()
             checked = self.stations_table.cellWidget(i, 8).isChecked()
             stations_map.append([station_name, channel, checked])
-        return stations_map
+        if len(stations_map) > 0:
+            return stations_map
+        else:
+            return None

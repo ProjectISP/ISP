@@ -1,12 +1,13 @@
-from isp.Gui import pw
-from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QDialogButtonBox
 
+from isp.Gui import pw
 from isp.Gui.Frames import MessageDialog
 from isp.Gui.Frames.add_parameters import AdditionalParameters
 from isp.Gui.Frames.uis_frames import UiParametersFrame
 from isp import MACROS_PATH
 import enum
 import pickle
+import os
 
 class ActionEnum (enum.Enum):
 
@@ -50,6 +51,24 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
         self.saveBtn.clicked.connect(self.on_save_action_pushed)
         self.loadBtn.clicked.connect(self.on_load_action_pushed)
         self.accept_Btn.clicked.connect(self.accept)
+        self.populate_combo_box()
+
+
+    def populate_combo_box(self):
+        # Get the current items in the combo box
+        current_items = set(self.macrosselectCB.itemText(i) for i in range(self.macrosselectCB.count()))
+
+        # Get the list of files in the directory
+        if os.path.exists(MACROS_PATH) and os.path.isdir(MACROS_PATH):
+            files = [f for f in os.listdir(MACROS_PATH) if f.endswith(".pkl")]
+
+            # Add only new files to the combo box
+            for file in files:
+                if file not in current_items:
+                    self.macrosselectCB.addItem(file)
+        else:
+            print(f"The folder path {MACROS_PATH} is invalid.")
+
     def execAdditionalParameters(self):
         if self.additionalParams is None:
             self.additionalParams = AdditionalParameters()
@@ -61,37 +80,67 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
         print(self.getParameters())
         #QCoreApplication.instance().quit
 
-    def on_save_action_pushed(self):
-        path = self.currentFilename
-        if not path:
-            path = MACROS_PATH
+    # def on_save_action_pushed(self):
+    #     path = self.currentFilename
+    #     if not path:
+    #         path = MACROS_PATH
+    #
+    #     selected = pw.QFileDialog.getSaveFileName(
+    #         self, "Select target macros file", path)
+    #     if selected:
+    #         s = selected[0]
+    #         if '.pkl' not in s:
+    #             s = selected[0] + '.pkl'
+    #         with open(s, 'wb') as f:
+    #             pickle.dump(self.getParameters(), f)
+    #             self.currentFilename = s
 
-        selected = pw.QFileDialog.getSaveFileName( 
-            self, "Select target macros file", path)
-        if selected:
-            s = selected[0]
-            if '.pkl' not in s:
-                s = selected[0] + '.pkl'
-            with open(s, 'wb') as f:
-                pickle.dump(self.getParameters(), f)
-                self.currentFilename = s
+
+    # def on_load_action_pushed(self):
+    #     path = self.currentFilename
+    #     if not path:
+    #         path = MACROS_PATH
+    #
+    #     selected = pw.QFileDialog.getOpenFileName(
+    #         self, "Select macros file", path)
+    #
+    #     if selected:
+    #         with open(selected[0], 'rb') as f:
+    #             parameters = pickle.load(f)
+    #             self.tableWidget.setRowCount(0)
+    #             self.orderWidgetsList.clear()
+    #             for p in parameters:
+    #                 self._add_row(ActionEnum(p[0]), *p[1:])
+    #             self.currentFilename = selected[0]
+
+    def on_save_action_pushed(self):
+        # Open the dialog and capture the result
+        dialog = FileNameDialog(self)
+        if dialog.exec() == QDialog.Accepted:
+            file_name = dialog.get_file_name()
+            file_name = os.path.join(MACROS_PATH, file_name)
+            print(f"File name to save: {file_name}")
+            if file_name:
+                if '.pkl' not in file_name:
+                    file_name = file_name + '.pkl'
+                with open(file_name, 'wb') as f:
+                    pickle.dump(self.getParameters(), f)
+                    self.currentFilename = file_name
+
+                self.populate_combo_box()
 
     def on_load_action_pushed(self):
-        path = self.currentFilename
-        if not path:
-            path = MACROS_PATH
 
-        selected = pw.QFileDialog.getOpenFileName(
-            self, "Select macros file", path)
-
-        if selected:
-            with open(selected[0], 'rb') as f:
+            file = os.path.join(MACROS_PATH, self.macrosselectCB.currentText())
+            with open(file, 'rb') as f:
                 parameters = pickle.load(f)
                 self.tableWidget.setRowCount(0)
                 self.orderWidgetsList.clear()
                 for p in parameters:
                     self._add_row(ActionEnum(p[0]), *p[1:])
-                self.currentFilename = selected[0]
+                self.currentFilename = file
+
+
 
     def on_add_action_pushed(self):
         self._add_row(self.addCombo.currentData())
@@ -677,3 +726,33 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
                  parameters.append([action, combo_value1, spin_value1, spin_value2])
 
         return parameters
+
+
+class FileNameDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Save File")
+        self.setGeometry(100, 100, 300, 100)
+
+        # Layout for the dialog
+        layout = QVBoxLayout(self)
+
+        # Label and QLineEdit
+        self.label = QLabel("Enter the file name:")
+        self.line_edit = QLineEdit(self)
+
+        # Buttons
+        self.button_box = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel, self
+        )
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+
+        # Add widgets to the layout
+        layout.addWidget(self.label)
+        layout.addWidget(self.line_edit)
+        layout.addWidget(self.button_box)
+
+    def get_file_name(self):
+        # Return the text entered by the user
+        return self.line_edit.text()

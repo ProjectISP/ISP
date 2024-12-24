@@ -127,6 +127,9 @@
       </widget>
      </item>
      <item>
+      <widget class="QComboBox" name="macrosselectCB"/>
+     </item>
+     <item>
       <widget class="QPushButton" name="accept_Btn">
        <property name="text">
         <string>Accept</string>

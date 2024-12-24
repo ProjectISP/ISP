@@ -279,6 +279,9 @@ class MTIFrame(BaseFrame, UiMomentTensor):
     def __send_run_mti(self):
 
         parameters = self.get_inversion_parameters()
+        stations_map = None
+        if isinstance(self._stations_info, StationsInfo):
+            stations_map = self._stations_info.get_stations_map()
 
         mti_config = MomentTensorInversionConfig(
             origin_date=parameters['origin_time'],
@@ -312,7 +315,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                                 save_plots=self.savePlotsCB.isChecked())
 
         # # Run Inversion
-        bic.run_inversion(mti_config=mti_config, map_stations=None)
+        bic.run_inversion(mti_config=mti_config, map_stations=stations_map)
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def on_click_select_file(self, bind: BindPyqtObject):
