@@ -74,6 +74,16 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         self.loadMetadataBtn.clicked.connect(lambda: self.load_metadata())
         self.earthModelMakerBtn.clicked.connect(lambda: self.open_earth_model())
 
+        # Dialog
+        self.progress_dialog = pw.QProgressDialog(self)
+        self.progress_dialog.setRange(0, 0)
+        self.progress_dialog.setWindowTitle('Processing.....')
+        self.progress_dialog.setLabelText('Please Wait')
+        self.progress_dialog.setWindowIcon(self.windowIcon())
+        self.progress_dialog.setWindowTitle(self.windowTitle())
+        self.progress_dialog.close()
+
+
     def open_earth_model(self):
         self.earth_model.show()
     def load_project(self):
