@@ -248,7 +248,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         # endtime = convert_qdatetime_utcdatetime(self.endtime_date)
         self.phaseLE.clear()
         self.trace_stack = None
-        self.phaseLE.appendPlainText("Ready to save your picks, at isp/arrayanalysis/array_picks.txt")
+        self.phaseLE.setPlainText("Ready to save your picks, at isp/arrayanalysis/array_picks.txt")
         selection = MseedUtil.filter_inventory_by_stream(self.st, self.inventory)
 
         wavenumber = array_analysis.array()
@@ -286,8 +286,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             # selection = self.inventory.select(station=self.stationLE.text(), channel=self.channelLE.text())
             selection = MseedUtil.filter_inventory_by_stream(self.st, self.inventory)
             x1, y1 = event.xdata, event.ydata
-            DT = x1
-            Z, Sxpow, Sypow, coord = wavenumber.FKCoherence(st, selection, DT,
+            Z, Sxpow, Sypow, coord = wavenumber.FKCoherence(st, selection, x1,
                                                             self.fminFK_bind.value, self.fmaxFK_bind.value,
                                                             self.smaxFK_bind.value, self.timewindow_bind.value,
                                                             self.slow_grid_bind.value, self.methodSB.currentText())
@@ -308,7 +307,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             self.canvas_slow_map.set_ylabel(0, "Sy [s/km]")
 
             # Save in a dataframe the pick value
-            x1 = wavenumber.gregorian2date(x1)
+            x1 = UTCDateTime(mdt.num2date(x1))
 
             self.picks['Time'].append(x1.isoformat())
             self.picks['Phase'].append(self.phaseCB.currentText())
@@ -370,26 +369,9 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             md = MessageDialog(self)
             md.set_info_message("Nothing to write")
 
-    def __to_UTC(self, DT):
+    def __to_UTC(self, t1):
 
-        # Convert start from Greogorian to actual date
-        Time = DT
-        Time = Time - int(Time)
-        d = date.fromordinal(int(DT))
-        date1 = d.isoformat()
-        H = (Time * 24)
-        H1 = int(H)  # Horas
-        minutes = (H - int(H)) * 60
-        minutes1 = int(minutes)
-        seconds = (minutes - int(minutes)) * 60
-        H1 = str(H1).zfill(2)
-        minutes1 = str(minutes1).zfill(2)
-        seconds = "%.2f" % seconds
-        seconds = str(seconds).zfill(2)
-        DATE = date1 + "T" + str(H1) + minutes1 + seconds
-
-        t1 = UTCDateTime(DATE)
-        return t1
+        return UTCDateTime(mdt.num2date(t1))
 
     def on_multiple_select(self, ax_index, xmin, xmax):
 

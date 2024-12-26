@@ -1,13 +1,11 @@
 import multiprocessing
 from multiprocessing.dummy import Pool as ThreadPool
-
 import numpy as np
 import scipy
 from deprecated import deprecated
-from obspy import read, Trace, UTCDateTime
+from obspy import read, Stream, Trace, UTCDateTime
 from obspy.signal.filter import lowpass
 from scipy.signal import argrelextrema
-
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, MseedUtil
@@ -51,6 +49,11 @@ class ConvolveWaveletBase:
         if isinstance(data, Trace):
             self.stats = TracerStats.from_dict(data.stats)
             self.trace: Trace = data
+
+        elif isinstance(data, Stream):
+            self.st: Stream = data
+            self.stats = TracerStats.from_dict(self.st[0].stats)
+            self._decimate_stream = kwargs.get("decimate_stream", False)
         else:
             if not MseedUtil.is_valid_mseed(data):
                 raise InvalidFile("The file: {} is not a valid mseed.".format(data))
@@ -67,21 +70,21 @@ class ConvolveWaveletBase:
         self._m = int(kwargs.get("m", 30))
         self._use_rfft = kwargs.get("use_rfft", False)
         self._decimate = kwargs.get("decimate", False)
+        if self.stats:
+            self._validate_kwargs()
+            # print(self.stats)
 
-        self._validate_kwargs()
-        # print(self.stats)
+            self._data = None
+            self._npts = 0
+            self._tf = None
+            self._start_time = self.stats.StartTime
+            self._end_time = self.stats.EndTime
+            self._sample_rate = self.stats.Sampling_rate
 
-        self._data = None
-        self._npts = 0
-        self._tf = None
-        self._start_time = self.stats.StartTime
-        self._end_time = self.stats.EndTime
-        self._sample_rate = self.stats.Sampling_rate
-
-        self._frex = None
-        self._n_cycles = None
-        self._wtime = None
-        self._half_wave = None
+            self._frex = None
+            self._n_cycles = None
+            self._wtime = None
+            self._half_wave = None
 
     def __repr__(self):
         return "ConvolveWavelet(data={}, wmin={}, wmax={}, tt={}, fmin={}, fmax={}, nf={})".format(
@@ -219,9 +222,29 @@ class ConvolveWaveletBase:
         self._sample_rate = tr.stats.sampling_rate
         return tr.data
 
+    def __get_data_in_time_stream(self, start_time, end_time):
+
+        self.st.trim(starttime=start_time, endtime=end_time)
+        # if self._decimate_stream:
+        #     self.st = self.decimate_data_stream(self.st)
+
+        self.st.detrend(type='demean')
+        self.st.taper(max_percentage=0.025)
+
+        self._sample_rate = self.st[0].stats.sampling_rate
+
+        return self.st
+
     def __get_resample_factor(self):
         rf = int(0.4 * self._sample_rate / self._fmax)
         return rf
+
+    def decimate_data_stream(self, st: Stream, fs_new=10):
+
+
+        st.resample(fs_new)
+
+        return st
 
     def decimate_data(self, tr: Trace):
         rf = self.__get_resample_factor()
@@ -248,24 +271,15 @@ class ConvolveWaveletBase:
         tr.taper(max_percentage=max_percentage, type='blackman')
         return tr.data
 
-    # def __chop_data(self, delta_time, start_time: UTCDateTime, end_time: UTCDateTime):
-    #     total_time = (end_time - start_time) / 3600.
-    #     n = np.math.ceil(total_time / delta_time)
-    #
-    #     data_set = []
-    #     for h in range(n):
-    #         dt = h * 3600 * delta_time
-    #         dt2 = (h + 1) * 3600 * delta_time
-    #         data = self.__get_data_in_time(start_time + dt, start_time + dt2)
-    #         if data is not None:
-    #             self._npts = int(self.stats.Sampling_rate * delta_time * 3600) + 1
-    #             data = self.__pad_data(data, self._npts)
-    #             data_set.append(data)
-    #
-    #     return data_set
-
     def __setup_wavelet(self, start_time: UTCDateTime, end_time: UTCDateTime, **kwargs):
-        self._data = self.__get_data_in_time(start_time, end_time)
+        setup_wavelets_stream = kwargs.get("setup_wavelets_stream", False)
+        if setup_wavelets_stream:
+            self._data = self.__get_data_in_time_stream(start_time, end_time)
+
+        else:
+
+            self._data = self.__get_data_in_time(start_time, end_time)
+
         self.setup_atoms(**kwargs)
 
     def _convolve_atoms(self, parallel: bool):
@@ -361,6 +375,130 @@ class ConvolveWaveletBase:
         cf = lowpass(self.cf(tapper, parallel=parallel), freq, df=self._sample_rate, corners=3, zerophase=True)
 
         return cf
+
+    def charachteristic_function_kurt_stream(self, window_size_seconds=5, parallel=False, stream=True):
+
+        kurt_st = []
+        if self._tf is None:
+            self.st.normalize()
+            self.compute_tf(parallel=parallel, stream=stream)
+
+        for item in self._tf:
+            stats = item[1]
+            print("Processing Kurtosis", stats.station, stats.channel)
+            pow_scalogram = np.abs(item[0])**2
+            kurtosis_values, time_vector = self.conventional_kurtosis(pow_scalogram, window_size_seconds=window_size_seconds,
+                                                                      sampling_rate=self._sample_rate)
+
+            time_vector_resample = np.linspace(time_vector[0], time_vector[-1], int(time_vector[-1]*self._sample_rate))
+
+            kurtosis_values_resample = np.interp(time_vector_resample, time_vector, kurtosis_values)
+
+            # Create Trace object with the synthetic data
+            tr_kurt = Trace(data=kurtosis_values_resample, header=stats)
+            kurt_st.append(tr_kurt)
+
+        kurt_st = Stream(kurt_st)
+
+        kurt_st.detrend(type="simple")
+        kurt_st.detrend(type='constant')
+        # ...and the linear trend...
+        kurt_st.detrend(type='linear')
+        kurt_st.taper(max_percentage=0.05, type="blackman")
+        kurt_st.filter(type='lowpass', freq=0.15, zerophase=True, corners=4)
+
+        kurt_st.detrend(type="simple")
+        kurt_st.detrend(type='constant')
+        # ...and the linear trend...
+        kurt_st.detrend(type='linear')
+        kurt_st.taper(max_percentage=0.05,  type="blackman")
+
+        return kurt_st
+
+    def charachteristic_function_kurt(self, window_size_seconds=5, parallel=True):
+
+        if self._tf is None:
+            self._data = self._data/np.max(self._data)
+            self.compute_tf(parallel=parallel)
+
+        pow_scalogram = np.abs(self._tf)**2
+        kurtosis_values, time_vector = self.conventional_kurtosis(pow_scalogram, window_size_seconds=window_size_seconds,
+                                                                  sampling_rate=self._sample_rate)
+
+        time_vector_resample = np.linspace(time_vector[0], time_vector[-1], int(time_vector[-1]*self._sample_rate))
+
+        kurtosis_values_resample = np.interp(time_vector_resample, time_vector, kurtosis_values)
+
+        # Create Trace object with the synthetic data
+        tr_kurt = Trace(data=kurtosis_values_resample)
+
+        # Set trace metadata
+        tr_kurt.stats.station = self.trace.stats.station  # Station name
+        tr_kurt.stats.network = self.trace.stats.network # Network code
+        tr_kurt.stats.channel = self.trace.stats.channel  # Channel code
+        tr_kurt.stats.starttime = self.trace.stats.starttime + time_vector_resample[0] # Set to current time as start time
+        tr_kurt.stats.sampling_rate = self.trace.stats.sampling_rate
+        tr_kurt.detrend(type="simple")
+        tr_kurt.detrend(type='constant')
+        # ...and the linear trend...
+        tr_kurt.detrend(type='linear')
+        tr_kurt.taper(max_percentage=0.05, type="blackman")
+        # tr_kurt.filter(type='lowpass', freq=0.15, zerophase=True, corners=4)
+        #
+        # tr_kurt.detrend(type="simple")
+        # tr_kurt.detrend(type='constant')
+        # # ...and the linear trend...
+        # tr_kurt.detrend(type='linear')
+        # tr_kurt.taper(max_percentage=0.05, type="blackman")
+
+        return tr_kurt
+    def conventional_kurtosis(self, data, window_size_seconds, sampling_rate):
+
+        n = data.shape[1]
+        window_size_samples = int(window_size_seconds * sampling_rate)
+        slide = int(sampling_rate/2)
+
+        # Call the Numba-accelerated helper function
+        kurtosis_values = self._conventional_kurtosis_helper(data, window_size_samples, slide, n)
+
+        # Create time vector
+        time_vector = np.linspace(0, int((n - window_size_samples) / sampling_rate), len(kurtosis_values)) + int(window_size_seconds)
+        time_vector = time_vector[0:-1]
+        kurtosis_values = np.abs(np.diff(kurtosis_values))
+        return kurtosis_values, time_vector
+
+    def _conventional_kurtosis_helper(self, data, window_size_samples, slide, n):
+        kurtosis_values = []
+
+        # Loop through the data with the sliding window
+        for i in range(0, n - window_size_samples + 1, slide):
+            window_data = data[:, i:i + window_size_samples]  # Extract data in window
+
+            # Compute mean for the window
+            mean = np.mean(window_data)
+
+            # Compute variance (second central moment)
+            variance = np.mean((window_data - mean) ** 2)
+
+            # Compute fourth central moment
+            fourth_moment = np.mean((window_data - mean) ** 4)
+
+            # Compute kurtosis (excess kurtosis)
+            if variance > 1e-10:  # Ensure variance is not effectively zero
+                kurtosis = (fourth_moment / (variance ** 2)) - 3  # Subtract 3 for excess kurtosis
+
+                # Check for extremely large kurtosis and cap it
+                if not np.isfinite(kurtosis):  # Handles inf and NaN cases
+                    kurtosis = 0.0
+                elif abs(kurtosis) > 1e6:  # Prevent unreasonably large values
+                    kurtosis = np.sign(kurtosis) * 1e6
+            else:
+                kurtosis = 1e-2  # Set kurtosis to 0 if variance is effectively zero
+
+            # Append result to list
+            kurtosis_values.append(kurtosis)
+
+        return np.array(kurtosis_values)
 
     def get_time_delay(self):
         """
@@ -620,11 +758,31 @@ class ConvolveWaveletScipy(ConvolveWaveletBase):
 
         return tf
 
-    def compute_tf(self, parallel=True):
+    def _convolve_atoms_stream(self):
+        d_type = np.float32 if self._use_rfft else np.complex64
+        tfs = []
+        for trace_index in self.st:
+            tf = []
+            for i, fi in enumerate(self._frex):
+                tf.append(self.__convolve_stream((fi, i), trace_index))
+            tf = np.array(tf, copy=False, dtype=d_type)
+            tfs.append([tf, trace_index.stats])
+        return tfs
+
+    def __convolve_stream(self, freq: tuple, trace_index):
+
+        freq, index = freq
+        cmw = self.filter_win(freq, index)
+        return scipy.signal.oaconvolve(trace_index, cmw, mode='same')
+
+    def compute_tf(self, parallel=True, stream=False):
         """
         Compute the convolved waveform with the wavelet from fmin to fmax.
         :param parallel: Either or not it should run cwt in parallel. Default=True.
         :return:
         """
         self._validate_data()
-        self._tf = self._convolve_atoms(parallel)
+        if stream:
+            self._tf = self._convolve_atoms_stream()
+        else:
+            self._tf = self._convolve_atoms(parallel)

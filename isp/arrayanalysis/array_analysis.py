@@ -6,7 +6,7 @@
 """
 
 import numpy as np
-from obspy.core import UTCDateTime
+import matplotlib.dates as mdt
 from obspy.core.util import AttribDict
 from obspy.signal.array_analysis import array_processing
 from obspy.signal.array_analysis import array_transff_freqslowness
@@ -15,7 +15,6 @@ from obspy.signal.array_analysis import get_geometry
 import math
 from scipy import fftpack
 from nitime import utils
-from datetime import date
 from scipy.signal import hilbert
 from scipy.fftpack import next_fast_len
 from obspy import Trace, Stream, UTCDateTime
@@ -24,11 +23,9 @@ class array:
 
     def __init__(self):
         """
-                ARF, (FK and Multitaper) Coherence program and Vespagram.
+        ARF, (FK and Multitaper) Coherence program and Vespagram.
 
-
-
-                :param No params required to initialize the class
+        :param No params required to initialize the class
         """
 
 
@@ -76,24 +73,24 @@ class array:
         return azimuth
 
 
-    def gregorian2date(self, DT):
-        #####Convert start from Greogorian to actual date###############
-        Time = DT
-        Time = Time - int(Time)
-        d = date.fromordinal(int(DT))
-        date1 = d.isoformat()
-        H = (Time * 24)
-        H1 = int(H)  # Horas
-        minutes = (H - int(H)) * 60
-        minutes1 = int(minutes)
-        seconds = (minutes - int(minutes)) * 60
-        H1 = str(H1).zfill(2)
-        minutes1 = str(minutes1).zfill(2)
-        seconds = "%.2f" % seconds
-        seconds = str(seconds).zfill(2)
-        DATE = date1 + "T" + str(H1) + minutes1 + seconds
-        t1 = UTCDateTime(DATE)
-        return t1
+    # def gregorian2date(self, DT):
+    #     #####Convert start from Greogorian to actual date###############
+    #     Time = DT
+    #     Time = Time - int(Time)
+    #     d = date.fromordinal(int(DT))
+    #     date1 = d.isoformat()
+    #     H = (Time * 24)
+    #     H1 = int(H)  # Horas
+    #     minutes = (H - int(H)) * 60
+    #     minutes1 = int(minutes)
+    #     seconds = (minutes - int(minutes)) * 60
+    #     H1 = str(H1).zfill(2)
+    #     minutes1 = str(minutes1).zfill(2)
+    #     seconds = "%.2f" % seconds
+    #     seconds = str(seconds).zfill(2)
+    #     DATE = date1 + "T" + str(H1) + minutes1 + seconds
+    #     t1 = UTCDateTime(DATE)
+    #     return t1
 
     def FK(self, st, inv, stime, etime, fmin, fmax, slim, sres, win_len, win_frac):
 
@@ -136,7 +133,10 @@ class array:
 
         return relpower, abspower, AZ, Slowness, T
 
-    def FKCoherence(self, st, inv,  DT, linf, lsup, slim, win_len, sinc, method):
+    def FKCoherence(self, st, inv,  t1, linf, lsup, slim, win_len, sinc, method):
+
+        t_start_utc = UTCDateTime(mdt.num2date(t1))
+        t_end_utc = t_start_utc+win_len
 
         def find_nearest(array, value):
 
@@ -153,25 +153,7 @@ class array:
         nx = ny = len(Sx[0])
         Sy = np.fliplr(Sy)
 
-        #####Convert start from Greogorian to actual date###############
-        Time = DT
-        Time = Time - int(Time)
-        d = date.fromordinal(int(DT))
-        date1 = d.isoformat()
-        H = (Time * 24)
-        H1 = int(H)  # Horas
-        minutes = (H - int(H)) * 60
-        minutes1 = int(minutes)
-        seconds = (minutes - int(minutes)) * 60
-        H1 = str(H1).zfill(2)
-        minutes1 = str(minutes1).zfill(2)
-        seconds = "%.2f" % seconds
-        seconds = str(seconds).zfill(2)
-        DATE = date1 + "T" + str(H1) + minutes1 + seconds
-        t1 = UTCDateTime(DATE)
-        ########End conversion###############################
-
-        st.trim(starttime=t1, endtime=t1 + win_len)
+        st.trim(starttime=t_start_utc, endtime=t_end_utc + win_len)
         st.sort()
         n = len(st)
         for i in range(n):
@@ -289,7 +271,7 @@ class array:
 
         sx = -1*sx
         sy = -1*sy
-        s = np.array([sx, sy, 0])
+        s = np.array([sx[0], sy[0], 0])
         r = []
 
         for i in range(len(coord) - 1):
@@ -297,9 +279,7 @@ class array:
 
         for j in range(len(st_shift)):
             TAU = np.dot(r[j], s)
-            TAU= TAU[0]
             st_shift[j].stats.starttime = st_shift[j].stats.starttime + TAU
-
 
         maxstart = np.max([tr.stats.starttime for tr in st_shift])
         minend = np.min([tr.stats.endtime for tr in st_shift])
@@ -390,7 +370,7 @@ class array:
 
 class vespagram_util:
     
-    def __init__(self, st, linf, lsup, win_len, slow, baz, inv, t1, t2, res, selection = "Slowness", method = "FK"):
+    def __init__(self, st, linf, lsup, win_len, slow, baz, inv, t1, t2, res, selection="Slowness", method="FK"):
 
         """
         Vespagram, computed a fixed slowness or backazimuth

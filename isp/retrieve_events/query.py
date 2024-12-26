@@ -1,5 +1,5 @@
 from isp.retrieve_events.database import sds_database
-from mysql.connector import Error
+
 
 class dbquery:
     def __init__(self, **kwargs):

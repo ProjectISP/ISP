@@ -115,8 +115,6 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
         maxdepth = self.depth_maxCB.value()
 
         try:
-            md = MessageDialog(self)
-            md.hide()
 
             if self.FDSN_CB.isChecked():
                 catalog = self.client.get_events(starttime=starttime, endtime=endtime, mindepth = mindepth,
@@ -176,16 +174,15 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
             self.activated_colorbar = False
             self.event_dataBtn.setEnabled(True)
+            md = MessageDialog(self)
             md.set_info_message("Catalog generated succesfully!!!")
             md.show()
 
         except:
-
-                md.set_error_message("Something wet wrong, Please check that you have: 1- Loaded Inventory, " 
-                                     "2- Search Parameters have sense")
-                md.show()
-#
-        #obspy.clients.fdsn.client.Client
+             md = MessageDialog(self)
+             md.set_error_message("Something wet wrong, Please check that you have: 1- Loaded Inventory, "
+                                  "2- Search Parameters have sense")
+             md.show()
 
     def dowload_events(self):
 

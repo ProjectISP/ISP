@@ -1,10 +1,9 @@
 import math
 import os
 import pickle
-
 import numpy as np
-from mtspec import mtspec
-
+import nitime.algorithms as tsa
+from scipy import ndimage
 from isp import CLOCK_PATH
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement
 from matplotlib.path import Path
@@ -88,8 +87,8 @@ class PlotToolsManager:
         ax1.loglog(freq, spec, linewidth=1.0, color='steelblue', label=self.__id)
         ax1.frequencies = freq
         ax1.spectrum = spec
-        ax1.fill_between(freq, jackknife_errors[:, 0], jackknife_errors[:, 1], facecolor="0.75",
-                         alpha=0.5, edgecolor="0.5")
+        #ax1.fill_between(freq, jackknife_errors[0][:], jackknife_errors[1][:], facecolor="0.75",
+        #                 alpha=0.5, edgecolor="0.5")
         ax1.set_ylim(spec.min() / 10.0, spec.max() * 100.0)
         plt.ylabel('Amplitude')
         plt.xlabel('Frequency [Hz]')
@@ -167,48 +166,50 @@ class PlotToolsManager:
         idx, val = min(enumerate(array), key=lambda x: abs(x[1] - value))
         return idx, val
 
-    # def __compute_spectrogram(self, tr):
-    #      npts = len(tr)
-    #      t = np.linspace(0, (tr.stats.delta * npts), npts - self.win)
-    #      mt_spectrum = self.MTspectrum(tr.data, self.win, tr.stats.delta, self.tbp, self.ntapers, self.f_min, self.f_max)
-    #      log_spectrogram = 10. * np.log(mt_spectrum / np.max(mt_spectrum))
-    #      x, y = np.meshgrid(t, np.linspace(self.f_min, self.f_max, log_spectrogram.shape[0]))
-    #      return x, y, log_spectrogram
 
-    def MTspectrum_plot(self, data, win, dt, tbp, ntapers, linf, lsup):
+    def compute_spectrogram_plot(self, data, win, dt, f_min, f_max, step_percentage=0.25):
+        # Using NITIME
+        # win -- samples
+        # Ensure nfft is a power of 2
+        nfft = 2 ** math.ceil(math.log2(win))  # Next power to 2
 
-        if (win % 2) == 0:
-            nfft = win / 2 + 1
-        else:
-            nfft = (win + 1) / 2
+        # Step size as a percentage of window size
+        try:
+            step_size = max(1, int(nfft * step_percentage))  # Ensure step size is at least 1
+        except:
+            step_size=1
+        lim = len(data) - nfft  # Define sliding window limit
+        num_steps = (lim // step_size) + 1  # Total number of steps
+        S = np.zeros([nfft // 2 + 1, num_steps])  # Adjust output size for reduced steps
 
-        lim = len(data) - win
-        S = np.zeros([int(nfft), int(lim)])
-        data2 = np.zeros(2 ** math.ceil(math.log2(win)))
+        # Precompute frequency indices for slicing spectrum
+        fs = 1 / dt  # Sampling frequency
 
-        for n in range(lim):
-            data1 = data[n:win + n]
+
+        for idx, n in enumerate(range(0, lim, step_size)):
+            print(f"{(n + 1) * 100 / lim:.2f}% done")
+            data1 = data[n:nfft + n]
             data1 = data1 - np.mean(data1)
-            data2[0:win] = data1
-            spec, freq = mtspec(data2, delta=dt, time_bandwidth=tbp, number_of_tapers=ntapers)
-            spec = spec[0:int(nfft)]
-            S[:, n] = spec
+            freq, spec, _ = tsa.multi_taper_psd(data1, fs, adaptive=True, jackknife=False, low_bias=False)
 
-        value1, freq1 = self.find_nearest(freq, linf)
-        value2, freq2 = self.find_nearest(freq, lsup)
-        S = S[value1:value2]
+            S[:, idx] = spec
 
-        return S
+        value1, freq1 = self.find_nearest(freq, f_min)
+        value2, freq2 = self.find_nearest(freq, f_max)
 
-    def compute_spectrogram_plot(self, data, win, delta, tbp, ntapers, f_min, f_max, t):
+        spectrum = S[value1:value2, :]
 
-      npts = len(data)
-      x = np.linspace(0, (delta * npts), npts - win)
-      t = t[0:len(x)]
-      mt_spectrum = self.MTspectrum_plot(data, win, delta, tbp, ntapers, f_min, f_max)
-      log_spectrogram = 10. * np.log(mt_spectrum / np.max(mt_spectrum))
-      x, y = np.meshgrid(t, np.linspace(f_min, f_max, log_spectrogram.shape[0]))
-      return x, y, log_spectrogram
+        # if res > 1:
+        #     spectrum = ndimage.zoom(spectrum, (1.0, 1 / spectrum))
+        #     t = np.linspace(0, res * dt * spectrum.shape[1], spectrum.shape[1])
+        #     f = np.linspace(linf, lsup, spectrum.shape[0])
+        #else:
+
+        t = np.linspace(0, len(data) * dt, spectrum.shape[1])
+        f = np.linspace(f_min, f_max, spectrum.shape[0])
+        x, y = np.meshgrid(t, f)
+        log_spectrogram = 10. * np.log(spectrum / np.max(spectrum))
+        return x, y, log_spectrogram
 
     def plot_fit(self, x, y, type, deg, clocks_station_name, ref, dates, crosscorrelate, skew):
 

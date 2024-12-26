@@ -6,11 +6,13 @@ Created on Tue Jul  9 18:15:16 2019
 @author: robertocabieces
 """
 
-from mtspec import mtspec
+
+import nitime.algorithms as tsa
 import numpy as np
 import math
 import scipy.signal
 import pywt  # this should be added on requirements.txt if is a necessary package
+from scipy import ndimage
 from isp.seismogramInspector.entropy import spectral_entropy
 import copy
 from obspy.signal.trigger import classic_sta_lta
@@ -35,31 +37,69 @@ def find_nearest(array, value):
     idx,val = min(enumerate(array), key=lambda x: abs(x[1]-value))
     return idx,val
 
-def MTspectrum(data,win,dt,tbp,ntapers,linf,lsup):
 
-    if (win % 2) == 0:
-       nfft = win/2 + 1
+# def MTspectrum(data, win, dt, tbp, ntapers, linf, lsup):
+#     if (win % 2) == 0:
+#         nfft = win / 2 + 1
+#     else:
+#         nfft = (win + 1) / 2
+#
+#     lim = len(data) - win
+#     S = np.zeros([int(nfft), int(lim)])
+#     data2 = np.zeros(2 ** math.ceil(math.log2(win)))
+#
+#     for n in range(lim):
+#         data1 = data[n:win + n]
+#         data1 = data1 - np.mean(data1)
+#         data2[0:win] = data1
+#         freq, spec, _ = tsa.multi_taper_psd(data2, 1/dt, adaptive=False, jackknife=False, low_bias=False)
+#         spec = spec[0:int(nfft)]
+#         S[:, n] = spec
+#
+#     value1, freq1 = find_nearest(freq, linf)
+#     value2, freq2 = find_nearest(freq, lsup)
+#     S = S[value1:value2]
+#
+#     return S
+
+def MTspectrum(data, win, dt, linf, lsup, step_percentage=0.1, res=1):
+
+    # win -- samples
+    # Ensure nfft is a power of 2
+    nfft = 2 ** math.ceil(math.log2(win)) # Next power to 2
+
+    # Step size as a percentage of window size
+    step_size = max(1, int(nfft * step_percentage))  # Ensure step size is at least 1
+    lim = len(data) - nfft  # Define sliding window limit
+    num_steps = (lim // step_size) + 1  # Total number of steps
+    S = np.zeros([nfft // 2 + 1, num_steps])  # Adjust output size for reduced steps
+
+    # Precompute frequency indices for slicing spectrum
+    fs = 1 / dt  # Sampling frequency
+    #freq, _, _ = tsa.multi_taper_psd(np.zeros(nfft), fs, adaptive=True, jackknife=False, low_bias=False)
+
+    for idx, n in enumerate(range(0, lim, step_size)):
+        #print(f"{(n + 1) * 100 / lim:.2f}% done")
+        data1 = data[n:nfft + n]
+        data1 = data1 - np.mean(data1)
+        freq, spec, _ = tsa.multi_taper_psd(data1, fs, adaptive=True, jackknife=False, low_bias=True)
+
+        S[:,idx] = spec
+
+    value1, freq1 = find_nearest(freq, linf)
+    value2, freq2 = find_nearest(freq, lsup)
+
+    spectrum = S[value1:value2,:]
+
+    if res > 1:
+          spectrum = ndimage.zoom(spectrum, (1.0, 1 / spectrum))
+          t = np.linspace(0, res * dt * spectrum.shape[1], spectrum.shape[1])
+          f = np.linspace(linf, lsup, spectrum.shape[0])
     else:
-       nfft = (win+1)/2
-    
-    
-    lim=len(data)-win
-    S=np.zeros([int(nfft),int(lim)])
-    data2 = np.zeros(2 ** math.ceil(math.log2(win)))
+        t = np.linspace(0, len(data)*dt, spectrum.shape[1])
+        f = np.linspace(linf, lsup, spectrum.shape[0])
 
-    for n in range(lim):
-        data1=data[n:win+n]
-        data1=data1-np.mean(data1)
-        data2[0:win]=data1
-        spec,freq = mtspec(data2,delta=dt ,time_bandwidth=tbp,number_of_tapers=ntapers)
-        spec=spec[0:int(nfft)]
-        S[:,n]=spec
-
-    value1,freq1=find_nearest(freq,linf)
-    value2,freq2=find_nearest(freq,lsup)
-    S=S[value1:value2]
-    
-    return S
+    return spectrum, num_steps, t, f
 
 
 
@@ -295,8 +335,14 @@ def cohe(tr1, tr2, fs, nfft, overlap):
     A=(np.abs(np.array(cohe[:])))
     return A, f, phase
 
+def dB(x, out=None):
+    if out is None:
+        return 10 * np.log10(x)
+    else:
+        np.log10(x, out)
+        np.multiply(out, 10, out)
 ###
-def spectrumelement(data,delta,sta):
+def spectrumelement(data,delta, sta):
     """
 
     Return the amplitude spectrum using multitaper aproach
@@ -307,10 +353,11 @@ def spectrumelement(data,delta,sta):
     z = np.zeros(D - N)
     data = np.concatenate((data, z), axis=0)
 
-    spec, freq, jackknife_errors, _, _ = mtspec(data, delta=delta , time_bandwidth=3.5, statistics=True)
+    freq, spec, _ = tsa.multi_taper_psd(data, 1/delta, adaptive=True, jackknife=False, low_bias=True)
+
     spec = np.sqrt(spec) #mtspec Amplitude spectrum
-    jackknife_errors = np.sqrt(jackknife_errors)
-    return spec, freq, jackknife_errors
+
+    return spec, freq, _
 
 
 def sta_lta(data, sampling_rate, STA = 1, LTA = 40):

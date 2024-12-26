@@ -2,7 +2,7 @@
 from obspy.core.event import Origin
 from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey
 from sqlalchemy.orm import relationship
-from isp.db import db, generate_id
+from isp.db import db, generate_id, generate_id_from_origin
 from isp.db.models import RelationShip
 from isp.db.models.base_model import BaseModel
 
@@ -54,34 +54,25 @@ class MomentTensorModel(db.Model, BaseModel):
         return "MomentTensorModel({})".format(self.to_dict())
 
 
-# class PhaseInfoModel(db.Model, BaseModel):
-#     __tablename__ = 'phase_info'
-#
-#     id = Column(String(16), primary_key=True)
-#     event_info_id = Column(String(16), ForeignKey("event_locations.id"), nullable=False, primary_key=True)
-#     station_code = Column(String(5), nullable=False)
-#     channel = Column(String(5), nullable=False)
-#     phase = Column(String(1), nullable=False)
-#     polarity = Column(String(1), nullable=False)
-#     time = Column(DateTime, nullable=False)
-#     amplitude = Column(Float, nullable=False)
-#     travel_time = Column(Float, nullable=False)
-#     rms = Column(Float, nullable=False)
-#     residual = Column(Float, nullable=False)
-#     weight = Column(Float, nullable=False)
-#     s_dist = Column(Float, nullable=False)
-#     s_az = Column(Float, nullable=False)
-#     r_az = Column(Float, nullable=False)
-#     r_dip = Column(Float, nullable=False)
-
 class PhaseInfoModel(db.Model, BaseModel):
     __tablename__ = 'phase_info'
 
     id = Column(String(16), primary_key=True)
     event_info_id = Column(String(16), ForeignKey("event_locations.id"), nullable=False, primary_key=True)
     station_code = Column(String(5), nullable=False)
-    phase = Column(String(1), nullable=False)
+    instrument = Column(String(5), nullable=True)
+    component = Column(String(5), nullable=True)
+    phase = Column(String(5), nullable=False)
+    polarity = Column(String(1), nullable=True)
     time = Column(DateTime, nullable=False)
+    amplitude = Column(Float, nullable=True)
+    travel_time = Column(Float, nullable=False)
+    time_residual = Column(Float, nullable=False)
+    time_weight = Column(Float, nullable=False)
+    distance_km = Column(Float, nullable=False)
+    distance_degrees = Column(Float, nullable=False)
+    azimuth = Column(Float, nullable=False)
+    take_off_angle = Column(Float, nullable=False)
 
 
     def __repr__(self):
@@ -96,8 +87,14 @@ class PhaseInfoModel(db.Model, BaseModel):
          #   raise AttributeError("Object already exist in the database.")
 
         for pick in picks:
-            event_dict = {"id": generate_id(16), "event_info_id": event_info_id, "station_code":pick.waveform_id.station_code,
-                          "phase" : pick.phase_hint, "time" : pick.time.datetime}
+            event_dict = {"id": generate_id(16), "event_info_id": event_info_id, "station_code": pick.station,
+                          "instrument": pick.instrument,
+                          "component": pick.component, "phase": pick.phase,
+                          "polarity": pick.polarity, "time": pick.date.datetime, "time_residual": pick.time_residual,
+                          "time_weight": pick.time_weight, "travel_time": pick.travel_time,
+                          "distance_degrees": pick.distance_degrees,
+                          "distance_km": pick.distance_km, "azimuth": pick.azimuth, "take_off_angle": pick.takeoff_angle}
+
             phases.append(cls(**event_dict))
 
         return phases
@@ -106,7 +103,7 @@ class PhaseInfoModel(db.Model, BaseModel):
 
 class EventArrayModel(db.Model, BaseModel):
 
-    # The name of the table at the data base.
+    # The name of the table at the database.
     __tablename__ = "event_array"
 
     # The table columns.
@@ -121,7 +118,7 @@ class EventArrayModel(db.Model, BaseModel):
 class EventLocationModel(db.Model, BaseModel):
     __tablename__ = 'event_locations'
 
-    id = Column(String(16), primary_key=True)
+    id = Column(String(14), primary_key=True)
     origin_time = Column(DateTime, nullable=False)
     transformation = Column(String(10),  nullable=False)
     rms = Column(Float, nullable=False)
@@ -160,6 +157,9 @@ class EventLocationModel(db.Model, BaseModel):
 
     @classmethod
     def create_from_origin(cls, origin: Origin):
+
+        #origin_id = generate_id_from_origin(origin)
+
         if cls.find_by(latitude=origin.latitude, longitude=origin.longitude, depth=origin.depth,
                        origin_time=origin.time.datetime):
             raise AttributeError("Object already exist in the database.")
@@ -204,6 +204,7 @@ class EventLocationModel(db.Model, BaseModel):
         :param array_analysis_id: The current id of the array_analysis.
         """
 
+
         event_arrays = EventArrayModel(event_info_id=self.id, array_analysis_id=array_analysis_id)
         self.event_arrays.append(event_arrays)
 
@@ -217,9 +218,13 @@ class EventLocationModel(db.Model, BaseModel):
         :param array_analysis_id: The current id of the array_analysis.
         """
 
-        #phase = PhaseInfoModel(id = phase_id, event_info_id=self.id)
-        self.phase_info.append(phase)
+        phase_add = PhaseInfoModel(id=phase.id, event_info_id=self.id, station_code=phase.station_code,
+        instrument=phase.instrument, component=phase.component, phase=phase.phase, polarity=phase.polarity,
+        time=phase.time, time_residual=phase.time_residual, time_weight=phase.time_weight, travel_time=phase.time_weight,
+        distance_degrees=phase.distance_degrees, distance_km=phase.distance_km, azimuth=phase.azimuth,
+        take_off_angle=phase.take_off_angle)
 
+        self.phase_info.append(phase_add)
 
 class ArrayAnalysisModel(db.Model, BaseModel):
     __tablename__ = 'array_analysis'

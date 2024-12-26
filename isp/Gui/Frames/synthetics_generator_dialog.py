@@ -11,7 +11,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 import os
 from sys import platform
 from datetime import datetime
-from isp.earthquakeAnalisysis.stations_map import StationsMap
+from isp.earthquakeAnalysis.stations_map import StationsMap
 
 
 @add_save_load()

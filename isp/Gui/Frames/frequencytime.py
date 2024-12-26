@@ -34,7 +34,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
         # Binds
         self.root_path_bind = BindPyqtObject(self.rootPathForm_2, self.onChange_root_path)
-        self.canvas_plot1 = MatplotlibCanvas(self.widget_plot_up, ncols=1)
+        self.canvas_plot1 = MatplotlibCanvas(self.widget_plot_up, ncols=1, constrained_layout=False)
         top = 0.900
         bottom = 0.180
         left = 0.045

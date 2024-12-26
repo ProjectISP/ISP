@@ -194,10 +194,18 @@ class CustomBuildExtCommand(build_ext):
 
 
 setup(
-    cmdclass={
-        'build_ext': CustomBuildExtCommand,
-    },
-    ext_modules=cythonize(os.path.join(cy_path, 'ccwt_cy.pyx')),
-    include_dirs=[numpy.get_include()],
-    ext_package='isp.c_lib'
-)
+    cmdclass={'build_ext': CustomBuildExtCommand,},
+    name='isp_package',
+    version='2.0',
+    description='ISP setup script',
+    packages=find_packages(include=['isp', 'isp.*']),
+    include_dirs=[numpy.get_include()])
+
+#setup(
+#    cmdclass={
+#        'build_ext': CustomBuildExtCommand,
+#    },
+#    ext_modules=cythonize(os.path.join(cy_path, 'ccwt_cy.pyx')),
+#    include_dirs=[numpy.get_include()],
+#    ext_package='isp.c_lib'
+#)

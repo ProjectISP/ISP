@@ -1,6 +1,8 @@
 import random
 import string
 
+from obspy.core.event import Origin
+
 from isp.db.data_base import DataBase
 
 db: DataBase = DataBase()
@@ -13,7 +15,7 @@ db: DataBase = DataBase()
 ">>> db.create_all()"
 
 
-def generate_id(length):
+def generate_id(length: int) -> str:
     """
     Generate a random string with the combination of lowercase and uppercase letters.
 
@@ -24,3 +26,14 @@ def generate_id(length):
     letters = string.ascii_letters
     return "".join(random.choice(letters) for _ in range(length))
 
+
+def generate_id_from_origin(origin: Origin):
+
+    """
+    Generate an ID from Origin object
+
+    :param origin: obspy object for origin time of earthquake
+
+    :return: id based on origin time
+    """
+    return origin.time.strftime("%Y%m%d%H%M%S")

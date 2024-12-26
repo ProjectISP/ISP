@@ -6,8 +6,7 @@
 """
 import obspy
 import nvector as nv
-from isp.Gui.Frames import MessageDialog
-
+from obspy.clients.fdsn.client import Client
 
 class retrieve:
 
@@ -28,7 +27,7 @@ class retrieve:
 
             if FDSN:
 
-                client = obspy.clients.fdsn.Client(url)
+                client = Client(base_url=url)
 
                 if len(networks) == 0:
 

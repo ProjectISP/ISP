@@ -1,6 +1,5 @@
 from itertools import product
 from typing import List, Union
-
 from sqlalchemy import Column, or_, and_, text, func, distinct
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import InstrumentedAttribute
@@ -8,7 +7,6 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from isp.Exceptions import EntityNotFound, QueryException
 from isp.Structures.structures import Search, SearchResult, QueryOperators, ColumnOperator, SearchDefault
 from isp.db import db
-
 
 class BaseModel:
 

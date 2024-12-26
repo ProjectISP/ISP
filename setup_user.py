@@ -7,9 +7,10 @@ from os import listdir
 import numpy
 from Cython.Build import cythonize
 import subprocess as sb
-
+from setuptools import setup, find_packages
 from isp import ROOT_DIR
 from sys import platform
+
 if platform == "linux" or platform == "linux2":
     system_path = os.path.join(ROOT_DIR,"linux_bin")
     print(system_path)
@@ -178,11 +179,9 @@ class CustomBuildExtCommand(build_ext):
 
     
 setup(
-    cmdclass={
-        'build_ext': CustomBuildExtCommand,
-    },
-    ext_modules=cythonize(os.path.join(cy_path, 'ccwt_cy.pyx')),
-    include_dirs=[numpy.get_include()],
-    ext_package='isp.c_lib'
-)
-
+    cmdclass={'build_ext': CustomBuildExtCommand,},
+    name='isp_package',
+    version='2.0',
+    description='ISP setup script',
+    packages=find_packages(include=['isp', 'isp.*']),
+    include_dirs=[numpy.get_include()])

@@ -1,5 +1,5 @@
-import mysql.connector
-from mysql.connector import Error
+import pymysql
+from pymysql import MySQLError
 
 class sds_database:
 
@@ -30,32 +30,34 @@ class sds_database:
             self._password = kwargs['password']
 
     def connect(self):
-        connection = mysql.connector.connect()
+        connection = None
 
+        # Connection without user credentials
         if self._user is None:
             try:
-                connection = mysql.connector.connect(
+                connection = pymysql.connect(
                     host=self._hostname,
                     database=self._dbname
                 )
 
-                #print("MySQL Database connection successful")
+                # print("MySQL Database connection successful")
 
-            except Error as err:
+            except MySQLError as err:
                 print(f"Error: '{err}'")
 
+        # Connection with user credentials
         elif self._user is not None:
             try:
-                connection = mysql.connector.connect(
+                connection = pymysql.connect(
                     host=self._hostname,
                     user=self._user,
-                    passwd=self._password,
+                    password=self._password,
                     database=self._dbname
                 )
 
-                #print("MySQL Database connection successful")
+                # print("MySQL Database connection successful")
 
-            except Error as err:
+            except MySQLError as err:
                 print(f"Error: '{err}'")
 
         return connection

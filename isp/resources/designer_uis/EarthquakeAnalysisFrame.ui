@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1542</width>
-    <height>916</height>
+    <width>1659</width>
+    <height>1008</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,7 +22,7 @@
       </property>
       <widget class="QWidget" name="tab_pick">
        <attribute name="title">
-        <string>Pick event</string>
+        <string>Event Analysis</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
@@ -62,92 +62,23 @@
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout">
-                  <item row="7" column="3" alignment="Qt::AlignLeft">
-                   <widget class="QLabel" name="label">
-                    <property name="text">
-                     <string>Start</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="8" column="3" alignment="Qt::AlignLeft">
-                   <widget class="QLabel" name="label_2">
-                    <property name="text">
-                     <string>End</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="6" column="1" colspan="4">
-                   <widget class="QLineEdit" name="datalessPathForm">
+                  <item row="1" column="0" colspan="2">
+                   <widget class="QPushButton" name="stations_infoBtn">
                     <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>16777202</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="readOnly">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="3" column="0">
-                   <widget class="QLineEdit" name="netForm">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="0" alignment="Qt::AlignHCenter">
-                   <widget class="QLabel" name="label_4">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="text">
-                     <string>Nets</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="6" column="0">
-                   <widget class="QPushButton" name="selectDatalessDirBtn">
-                    <property name="toolTip">
-                     <string>Set the Metadata File (*.dlsv or *.xml)</string>
-                    </property>
-                    <property name="text">
-                     <string>Metadata File</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="7" column="4" rowspan="3">
-                   <widget class="QCheckBox" name="trimCB">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
                     <property name="toolTip">
-                     <string>Checkd if you want trim the seismograms according to StartTime [kw &quot;Q&quot;] &amp; EndTime  [kw &quot;E&quot;] </string>
+                     <string>Click to view header information of the loaded seismogram files</string>
                     </property>
                     <property name="text">
-                     <string>Trim Time</string>
+                     <string>Stations Info</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="3" colspan="2">
-                   <widget class="QLineEdit" name="channelForm"/>
-                  </item>
-                  <item row="2" column="3" colspan="2" alignment="Qt::AlignHCenter">
+                  <item row="5" column="4" colspan="2" alignment="Qt::AlignHCenter">
                    <widget class="QLabel" name="label_6">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -160,7 +91,7 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="7" column="0" colspan="3">
+                  <item row="10" column="0" colspan="4">
                    <widget class="QDateTimeEdit" name="dateTimeEdit_1">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -197,7 +128,105 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="8" column="0" colspan="3">
+                  <item row="9" column="0">
+                   <widget class="QPushButton" name="selectDatalessDirBtn">
+                    <property name="toolTip">
+                     <string>Set the Metadata File (*.dlsv or *.xml)</string>
+                    </property>
+                    <property name="text">
+                     <string>Metadata File</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="0" alignment="Qt::AlignHCenter">
+                   <widget class="QLabel" name="label_4">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Nets</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="4" alignment="Qt::AlignLeft">
+                   <widget class="QLabel" name="label">
+                    <property name="text">
+                     <string>Start</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="1" colspan="5">
+                   <widget class="QLineEdit" name="datalessPathForm">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777202</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="readOnly">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="5" rowspan="3">
+                   <widget class="QCheckBox" name="trimCB">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>Checkd if you want trim the seismograms according to StartTime [kw &quot;Q&quot;] &amp; EndTime  [kw &quot;E&quot;] </string>
+                    </property>
+                    <property name="text">
+                     <string>Trim Time</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="4" colspan="2">
+                   <widget class="QLineEdit" name="channelForm"/>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLineEdit" name="netForm">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="11" column="4" alignment="Qt::AlignLeft">
+                   <widget class="QLabel" name="label_2">
+                    <property name="text">
+                     <string>End</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="3" colspan="3">
+                   <widget class="QPushButton" name="selectDirBtn">
+                    <property name="toolTip">
+                     <string extracomment="Select the folder where you have the seismogram files">Select the folder where you have the Project file / Press &quot;R&quot; to reload last Project with your selected filters.</string>
+                    </property>
+                    <property name="toolTipDuration">
+                     <number>-1</number>
+                    </property>
+                    <property name="text">
+                     <string>Load Project</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="11" column="0" colspan="4">
                    <widget class="QDateTimeEdit" name="dateTimeEdit_2">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -234,47 +263,17 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="0" column="1" colspan="4">
-                   <widget class="QPushButton" name="selectDirBtn">
-                    <property name="toolTip">
-                     <string extracomment="Select the folder where you have the seismogram files">Select the folder where you have the Project file / Press &quot;R&quot; to reload last Project with your selected filters.</string>
-                    </property>
-                    <property name="toolTipDuration">
-                     <number>-1</number>
-                    </property>
-                    <property name="text">
-                     <string>Load Project</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="1" colspan="4">
-                   <widget class="QPushButton" name="filterProjectBtn">
-                    <property name="toolTip">
-                     <string>Filter the Project based on Nets, Stations and Channels. (Use valid wildcards)</string>
-                    </property>
-                    <property name="text">
-                     <string>Apply Search Filters</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="0" column="0" rowspan="2">
-                   <widget class="QPushButton" name="newProjectBtn">
-                    <property name="text">
-                     <string>New Project</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="3" column="1" colspan="2">
+                  <item row="6" column="1" colspan="3">
                    <widget class="QLineEdit" name="stationForm">
                     <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
                    </widget>
                   </item>
-                  <item row="2" column="1" colspan="2" alignment="Qt::AlignHCenter">
+                  <item row="5" column="1" colspan="3" alignment="Qt::AlignHCenter">
                    <widget class="QLabel" name="label_5">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -284,6 +283,39 @@
                     </property>
                     <property name="text">
                      <string>Stations</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2">
+                   <widget class="QPushButton" name="filterProjectBtn">
+                    <property name="toolTip">
+                     <string>Filter the Project based on Nets, Stations and Channels. (Use valid wildcards)</string>
+                    </property>
+                    <property name="text">
+                     <string>Apply Search Filters</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="2">
+                   <widget class="QPushButton" name="mapBtn">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>Click to plot the stations map from the ploted seismograms. Warning, needs the correct metadata alreadt loaded</string>
+                    </property>
+                    <property name="text">
+                     <string>Stations Map</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0" colspan="2">
+                   <widget class="QPushButton" name="newProjectBtn">
+                    <property name="text">
+                     <string>New Project</string>
                     </property>
                    </widget>
                   </item>
@@ -583,8 +615,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>971</width>
-                  <height>674</height>
+                  <width>1072</width>
+                  <height>766</height>
                  </rect>
                 </property>
                </widget>
@@ -662,68 +694,18 @@
               </widget>
              </item>
              <item>
-              <spacer name="horizontalSpacer_3">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Maximum</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>150</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="stations_infoBtn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Click to view header information of the loaded seismogram files</string>
-               </property>
+              <widget class="QPushButton" name="autoPickBtn">
                <property name="text">
-                <string>Stations Info</string>
+                <string>Auto pick / associate</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="mapBtn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Click to plot the stations map from the ploted seismograms. Warning, needs the correct metadata alreadt loaded</string>
-               </property>
+              <widget class="QPushButton" name="locateBtn">
                <property name="text">
-                <string>Stations Map</string>
+                <string>Locate</string>
                </property>
               </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Preferred</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>150</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
              </item>
              <item>
               <widget class="QPushButton" name="phaseUncertaintyBtn">
@@ -749,16 +731,6 @@
                  <height>30</height>
                 </size>
                </property>
-               <item>
-                <property name="text">
-                 <string>Phase</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Uncertainity</string>
-                </property>
-               </item>
                <item>
                 <property name="text">
                  <string>P</string>
@@ -868,18 +840,6 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="Event">
-       <attribute name="title">
-        <string>Event Location</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
-         <widget class="QWidget" name="parentWidgetLocation" native="true">
-          <layout class="QVBoxLayout" name="verticalLayout_9"/>
-         </widget>
-        </item>
-       </layout>
-      </widget>
      </widget>
     </item>
    </layout>
@@ -889,7 +849,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1542</width>
+     <width>1659</width>
      <height>24</height>
     </rect>
    </property>
@@ -924,13 +884,6 @@
     <property name="title">
      <string>Actions</string>
     </property>
-    <widget class="QMenu" name="menuData_Availability">
-     <property name="title">
-      <string>Data Availability</string>
-     </property>
-     <addaction name="actionOnly_a_folder"/>
-     <addaction name="actionAll_tree"/>
-    </widget>
     <widget class="QMenu" name="menuPicks">
      <property name="title">
       <string>Picks</string>
@@ -940,16 +893,13 @@
     </widget>
     <addaction name="menuPicks"/>
     <addaction name="actionSet_Parameters"/>
-    <addaction name="actionRun_Event_Detector"/>
-    <addaction name="actionRun_picker"/>
-    <addaction name="actionRun_autoloc"/>
     <addaction name="actionClean_selection"/>
     <addaction name="actionRemove_all_selections"/>
     <addaction name="actionClean_Events_Detected"/>
     <addaction name="actionOpen_Magnitudes_Calculator"/>
     <addaction name="actionOpen_Earth_Model_Viewer"/>
-    <addaction name="menuData_Availability"/>
     <addaction name="actionSearch_in_Catalog"/>
+    <addaction name="actionData_Availability"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -964,8 +914,15 @@
     <property name="title">
      <string>Compute</string>
     </property>
+    <widget class="QMenu" name="menuCWT_CFs">
+     <property name="title">
+      <string>CWT (CFs)</string>
+     </property>
+     <addaction name="actionlogarythmic_dff"/>
+     <addaction name="actionkurtosis"/>
+    </widget>
     <addaction name="actionSTA_LTA"/>
-    <addaction name="actionCWT_CF"/>
+    <addaction name="menuCWT_CFs"/>
     <addaction name="actionEnvelope"/>
     <addaction name="actionSpectral_Entropy"/>
     <addaction name="actionStack"/>
@@ -990,7 +947,14 @@
     <property name="title">
      <string>Import</string>
     </property>
-    <addaction name="actionPicks_from_file"/>
+    <widget class="QMenu" name="menuPicks_from_file">
+     <property name="title">
+      <string>Picks from file</string>
+     </property>
+     <addaction name="actionDefaultPicks"/>
+     <addaction name="actionPicksOther_file"/>
+    </widget>
+    <addaction name="menuPicks_from_file"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
@@ -1108,11 +1072,6 @@
   <action name="actionSTA_LTA">
    <property name="text">
     <string>STA/LTA</string>
-   </property>
-  </action>
-  <action name="actionCWT_CF">
-   <property name="text">
-    <string>CWT (CFs)</string>
    </property>
   </action>
   <action name="actionWrite_Current_Page">
@@ -1281,11 +1240,6 @@
     <string>Using MCCC</string>
    </property>
   </action>
-  <action name="actionPicks_from_file">
-   <property name="text">
-    <string>Picks from file</string>
-   </property>
-  </action>
   <action name="actionNew_Project">
    <property name="icon">
     <iconset>
@@ -1354,6 +1308,31 @@
   <action name="actionStack_Seismogram">
    <property name="text">
     <string>Stack Seismogram</string>
+   </property>
+  </action>
+  <action name="actionDefaultPicks">
+   <property name="text">
+    <string>Default</string>
+   </property>
+  </action>
+  <action name="actionPicksOther_file">
+   <property name="text">
+    <string>Other file</string>
+   </property>
+  </action>
+  <action name="actionData_Availability">
+   <property name="text">
+    <string>Data Availability</string>
+   </property>
+  </action>
+  <action name="actionlogarythmic_dff">
+   <property name="text">
+    <string>logarythmic dff</string>
+   </property>
+  </action>
+  <action name="actionkurtosis">
+   <property name="text">
+    <string>kurtosis</string>
    </property>
   </action>
  </widget>

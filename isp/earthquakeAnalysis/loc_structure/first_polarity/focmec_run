@@ -1,0 +1,19 @@
+mechanism.out
+No comments
+\* Comment is previous line: Input file for focmec is next
+test.inp
+y     Use emergent arrivals?  [y]
+	correct file  [y]
+y	relative weighting..[y]
+1.0 allowed P polarity erors..[0]
+500	exit after this many acceptable solutions...[100]
+	minimum B trend  [0]
+	B increment  [5]
+	maximum B trend  [355]
+	min B plunge..[0]
+	increment  [5]
+	maximum..[90]
+	minimum Angle..[0]
+	increment  [5]
+	maximum  [175]
+

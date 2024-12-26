@@ -20,7 +20,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from obspy import Stream
 from owslib.wms import WebMapService
 import numpy as np
-from isp import RESOURCE_PATH
+from isp import RESOURCE_PATH, MAP_SERVICE_URL, MAP_LAYER
 from isp.Gui import pw, pyc, qt
 from isp.Gui.Utils import ExtendSpanSelector
 from isp.Utils import ObspyUtil, AsycTime
@@ -739,13 +739,21 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
         :return:
         """
 
+        # Ensure self.figure is a valid Matplotlib Figure
         if self.axes is not None:
+            # Attempt to get the axis
             ax = self.get_axe(axes_index)
+
+            # Check if it's not a 3D axis and recreate it
+            if not hasattr(ax, 'plot') or not isinstance(ax, Axes3D):
+                ax = self.figure.add_subplot(111, projection='3d')
+                self.axes[axes_index] = ax  # Update the axes reference if stored
+
+            # Clear plot if specified
             if clear_plot:
                 ax.cla()
 
-            #ax = self.figure.gca(projection='3d')
-            ax = Axes3D(self.figure)
+            # Plot the data
             ax.plot(x, y, z, linewidth=0.75, **kwargs)
 
     def scatter3d(self, x, y, z, axes_index, clear_plot=True, show_colorbar=True, **kwargs):
@@ -784,7 +792,14 @@ class MatplotlibCanvas(BasePltPyqtCanvas):
 
     def clear_color_bar(self):
         if self.__cbar:
-            self.__cbar.remove()
+            try:
+                self.__cbar.remove()
+            except Exception as e:
+                if self.__cbar is None:
+                    pass
+                else:
+                    print(f"An error occurred: {e}")
+
 
     def draw_selection(self, axe_index, check = True):
         from PIL import Image
@@ -1000,7 +1015,6 @@ class Multiprocess_plot(BasePltPyqtCanvas):
 class CartopyCanvas(BasePltPyqtCanvas):
 
     #MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/gebco08_hillshade/MapServer/WMSServer'
-    MAP_SERVICE_URL = 'https://www.gebco.net/data_and_products/gebco_web_services/2020/mapserv?'
     #MAP_SERVICE_URL = 'https://gis.ngdc.noaa.gov/arcgis/services/etopo1/MapServer/WMSServer'
     def __init__(self, parent, **kwargs):
         """
@@ -1025,7 +1039,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         c_layout = kwargs.pop("constrained_layout", False)
         super().__init__(parent, subplot_kw=dict(projection=proj), constrained_layout=c_layout, **kwargs)
 
-    def plot_map(self, x, y, scatter_x, scatter_y, scatter_z, axes_index, clear_plot=True, **kwargs):
+    def plot_map(self, x, y, axes_index, clear_plot=True, **kwargs):
+
         """
         Cartopy plot.
 
@@ -1039,9 +1054,11 @@ class CartopyCanvas(BasePltPyqtCanvas):
         :param kwargs:
         :return:
         """
+
         from isp import ROOT_DIR
         import os
-
+        epi_color = 'white'
+        epi_edgecolor = 'black'
         resolution = kwargs.pop('resolution')
         stations = kwargs.pop('stations')
         os.environ["CARTOPY_USER_BACKGROUNDS"] = os.path.join(ROOT_DIR, "maps")
@@ -1063,14 +1080,13 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
         geodetic = ccrs.Geodetic(globe=ccrs.Globe(datum='WGS84'))
         #layer = 'GEBCO_08 Hillshade'
-        layer ='GEBCO_2020_Grid'
         #layer = 'shaded_relief'
         # xmin = int(x-6)
         # xmax = int(x+6)
         # ymin = int(y-4)
         # ymax = int(y+4)
-        xmin = min([x, min_lon])-1
-        xmax = max([x, max_lon]) + 1
+        xmin = min([x, min_lon])-2
+        xmax = max([x, max_lon]) + 2
         ymin = min([y, min_lat]) - 1
         ymax = max([y, max_lat]) + 1
         extent = [xmin, xmax, ymin, ymax]
@@ -1081,8 +1097,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         if resolution == "high":
             try:
 
-                wms = WebMapService(self.MAP_SERVICE_URL)
-                ax.add_wms(wms, layer)
+                wms = WebMapService(MAP_SERVICE_URL)
+                ax.add_wms(wms, MAP_LAYER)
 
             except:
 
@@ -1095,11 +1111,21 @@ class CartopyCanvas(BasePltPyqtCanvas):
                 ax.background_img(name='ne_shaded', resolution=resolution)
                 ax.add_feature(coastline_10m)
 
+        elif resolution == "simple":
+            coastline_10m = cartopy.feature.NaturalEarthFeature('physical', 'coastline', '10m',
+                                                                edgecolor='k', alpha=0.6, linewidth=0.5,
+                                                                facecolor=cartopy.feature.COLORS['land'])
+            ax.add_feature(coastline_10m)
+            epi_color = 'black'
+            epi_edgecolor = 'red'
+
+
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
 
         gl.top_labels = False
-        gl.left_labels = False
+        gl.left_labels = True
+        gl.right_labels = False
         gl.xlines = False
         gl.ylines = False
 
@@ -1109,7 +1135,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
         # Plot stations
         geodetic_transform = ccrs.PlateCarree()._as_mpl_transform(ax)
         text_transform = offset_copy(geodetic_transform, units='dots', x=-25)
-        ax.scatter(lon, lat, s=12, marker="^", color='red', alpha=0.7, transform=ccrs.PlateCarree())
+        ax.scatter(lon, lat, s=12, marker="^", color='red', alpha=0.7, edgecolor='black',
+                   transform=ccrs.PlateCarree())
         N = len(name_stations)
         for n in range(N):
             lon1 = lon[n]
@@ -1120,16 +1147,15 @@ class CartopyCanvas(BasePltPyqtCanvas):
                     bbox=dict(facecolor='sandybrown', alpha=0.5, boxstyle='round'))
 
 
-        ax.plot(x, y, color='red', marker='*',markersize=3)
-        ax.scatter(scatter_x, scatter_y, s=10, c=scatter_z/10, marker=".", alpha=0.3, cmap=plt.get_cmap('YlOrBr'))
+        ax.scatter(x, y, color=epi_color, marker='*', s=60, edgecolor=epi_edgecolor)
 
         # Create an inset GeoAxes showing the Global location
-        sub_ax = ax.figure.add_axes([0.70, 0.73, 0.28, 0.28], projection=ccrs.PlateCarree())
-        sub_ax.set_extent([-179.9, 180, -89.9, 90], geodetic)
+        sub_ax = ax.figure.add_axes([0.80, 0.80, 0.20, 0.20], projection=ccrs.PlateCarree())
+        sub_ax.set_extent([-179.99, 180, -89.99, 90], geodetic)
 
         # Make a nice border around the inset axes.
-        effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
-        sub_ax.outline_patch.set_path_effects([effect])
+        #effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
+        #sub_ax.outline_patch.set_path_effects([effect])
 
         # Add the land, coastlines and the extent .
         sub_ax.add_feature(cfeature.LAND)
@@ -1137,15 +1163,19 @@ class CartopyCanvas(BasePltPyqtCanvas):
         extent_box = sgeom.box(extent[0], extent[2], extent[1], extent[3])
         sub_ax.add_geometries([extent_box], ccrs.PlateCarree(), facecolor='none',
                               edgecolor='blue', linewidth=1.0)
+        plt.tight_layout()
+        self.draw()
 
+    def plot_ellipse(self, x, y, axes_index=0):
+        ax = self.get_axe(axes_index)
+        ax.plot(x, y, color="red", alpha=0.75, transform=ccrs.PlateCarree())
         self.draw()
 
     def plot_stations(self, x, y, depth, axes_index, show_colorbar=True, clear_plot=True, **kwargs):
         self.clear()
         ax = self.get_axe(axes_index)
         # print(self.MAP_SERVICE_URL)
-        wms = WebMapService(self.MAP_SERVICE_URL)
-        layer = 'GEBCO_08 Hillshade'
+        wms = WebMapService(MAP_SERVICE_URL)
 
         xmin = -150
         xmax = -140
@@ -1158,7 +1188,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
                                                             edgecolor='k', alpha=0.6, linewidth=0.5,
                                                             facecolor=cartopy.feature.COLORS['land'])
         ax.add_feature(coastline_10m)
-        ax.add_wms(wms, layer)
+        ax.add_wms(wms, MAP_LAYER)
         gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                           linewidth=0.2, color='gray', alpha=0.2, linestyle='-')
         gl.xlabels_top = False
@@ -1258,7 +1288,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
 
         if plot_earthquakes:
-            color_map = plt.cm.get_cmap('rainbow')
+            color_map = plt.get_cmap('rainbow')
             reversed_color_map = color_map.reversed()
             cs = ax.scatter(lon, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map, vmin = 0,
                             vmax = 600)
@@ -1400,8 +1430,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
             sub_ax.set_extent([-179.9, 180, -89.9, 90], geodetic)
 
             # Make a nice border around the inset axes.
-            effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
-            sub_ax.outline_patch.set_path_effects([effect])
+            #effect = Stroke(linewidth=4, foreground='wheat', alpha=0.5)
+            #sub_ax.outline_patch.set_path_effects([effect])
 
             # Add the land, coastlines and the extent .
             sub_ax.add_feature(cfeature.LAND)
@@ -1447,7 +1477,8 @@ class FocCanvas(BasePltPyqtCanvas):
         c_layout = kwargs.pop("constrained_layout", False)
         super().__init__(parent,constrained_layout=c_layout, **kwargs)
 
-    def drawFocMec(self, strike, dip, rake, sta, az, inc, pol, axes_index):
+    def drawFocMec(self, strike, dip, rake, sta, az, inc, pol, P_Trend, P_Plunge,
+                                      T_Trend, T_Plunge):
         from obspy.imaging.beachball import beach
         import numpy as np
         azims_pos = []
@@ -1457,11 +1488,12 @@ class FocCanvas(BasePltPyqtCanvas):
         polarities = []
         bbox = dict(boxstyle="round, pad=0.2", fc="w", ec="k", lw=1.5, alpha=0.7)
         self.clear()
-        ax = self.get_axe(axes_index)
+        ax = self.get_axe(0)
         beach2 = beach([strike, dip, rake], facecolor='r', linewidth=1., alpha=0.3, width=2)
         ax.add_collection(beach2)
         ax.set_ylim(-1, 1)
         ax.set_xlim(-1, 1)
+
         N= len(sta)
         for j in range(N):
             station = sta[j]
@@ -1502,8 +1534,32 @@ class FocCanvas(BasePltPyqtCanvas):
         x_neg = incis_neg * np.cos(azims_neg)
         y_neg = incis_neg * np.sin(azims_neg)
         ax.scatter(x_neg, y_neg, marker="o", lw=1, facecolor="w", edgecolor="k", s=50, zorder=3)
+        #lets plot P and T axes
+
+        Paz = P_Trend
+        Pinc = 90 - P_Plunge
+        Taz = T_Trend
+        Tinc = 90 - T_Plunge
+        if Pinc > 90:
+            Pinc = 180. - Pinc
+            Paz = -180. + Paz
+        Paz = (np.pi / 2.) - ((Paz / 180.) * np.pi)
+        x_pos = (Pinc * np.cos(Paz)) / 90
+        y_pos = (Pinc * np.sin(Paz)) / 90
+        ax.scatter(x_pos, y_pos, marker="P", lw=1, facecolor="green", edgecolor="k", s=50, zorder=4)
+        ax.text(x_pos, y_pos, "P-axis", va="top", bbox=bbox, zorder=4)
+
+        if Tinc > 90:
+            Tinc = 180. - Tinc
+            Taz = -180. + Taz
+        Taz = (np.pi / 2.) - ((Taz / 180.) * np.pi)
+        x_pos = (Tinc * np.cos(Taz)) / 90
+        y_pos = (Tinc * np.sin(Taz)) / 90
+        ax.scatter(x_pos, y_pos, marker="X", lw=1, facecolor="green", edgecolor="k", s=50, zorder=4)
+        ax.text(x_pos, y_pos, "T-axis", va="top", bbox=bbox, zorder=4)
+
         #mask = (polarities == True)
-        ax.set_title("Focal Mechanism")
+        #ax.set_title("Focal Mechanism")
         ax.set_axis_off()
         self.draw()
 

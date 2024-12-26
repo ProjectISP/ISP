@@ -1,3 +1,0 @@
-# 3D model for P and S wave from 
-
-Grandin, R., Borges, J.F., Bezzeghoud,M., Caldeira, B.&Carrilho, F., 2007.Simulations of strong ground motion in SW Iberia for the 1969 February28 (M s = 8.0) and the 1755 November 1 (M∼ 8.5) earthquakes–I.Velocity model, Geophys. J. Int., 171, 1144–1161.

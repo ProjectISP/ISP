@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1501</width>
-    <height>859</height>
+    <height>811</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -131,6 +131,67 @@
         </item>
         <item>
          <layout class="QGridLayout" name="gridLayout_5">
+          <item row="4" column="2">
+           <widget class="QComboBox" name="time_frequencyCB">
+            <property name="toolTip">
+             <string>Select which signal processing method you want to apply</string>
+            </property>
+            <item>
+             <property name="text">
+              <string>No Time-Frequency Process Selected</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Continuous Wavelet Transform</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Multitaper Spectrogram</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QComboBox" name="selectCB">
+            <property name="toolTip">
+             <string>Select Semogram 1 to Process and Plot (Upper Panel), Seismogram 2 (Lower Panel)</string>
+            </property>
+            <item>
+             <property name="text">
+              <string>Seismogram 1</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Seismogram 2</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Seismogram 3</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="7" column="0" colspan="2" alignment="Qt::AlignRight">
+           <widget class="QLabel" name="label_15">
+            <property name="text">
+             <string>Min level</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0" colspan="2" alignment="Qt::AlignHCenter">
+           <widget class="QCheckBox" name="time_frequencyChB">
+            <property name="toolTip">
+             <string>Check is you want to apply a signal processing method</string>
+            </property>
+            <property name="text">
+             <string>Time-Frequency Analysis</string>
+            </property>
+           </widget>
+          </item>
           <item row="1" column="1">
            <widget class="QDateTimeEdit" name="starttime_date">
             <property name="sizePolicy">
@@ -256,69 +317,16 @@
             </item>
            </widget>
           </item>
-          <item row="7" column="0" colspan="2" alignment="Qt::AlignRight">
-           <widget class="QLabel" name="label_15">
-            <property name="text">
-             <string>Min level</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="2">
-           <widget class="QComboBox" name="time_frequencyCB">
+          <item row="3" column="0" colspan="2">
+           <widget class="QPushButton" name="plotBtn">
             <property name="toolTip">
-             <string>Select which signal processing method you want to apply</string>
-            </property>
-            <item>
-             <property name="text">
-              <string>No Time-Frequency Process Selected</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Continuous Wavelet Transform</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Multitaper Spectrogram</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Wigner Spectrogram</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="3" column="2">
-           <widget class="QComboBox" name="selectCB">
-            <property name="toolTip">
-             <string>Select Semogram 1 to Process and Plot (Upper Panel), Seismogram 2 (Lower Panel)</string>
-            </property>
-            <item>
-             <property name="text">
-              <string>Seismogram 1</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Seismogram 2</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Seismogram 3</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="4" column="0" colspan="2" alignment="Qt::AlignHCenter">
-           <widget class="QCheckBox" name="time_frequencyChB">
-            <property name="toolTip">
-             <string>Check is you want to apply a signal processing method</string>
+             <string>Process the methods set in the Macro and Plot. Warning: Be careful, Computationally very demanding (use fow relative small time windows i.e window &lt; 30 min)</string>
             </property>
             <property name="text">
-             <string>Time-Frequency Analysis</string>
+             <string>Process and Plot</string>
+            </property>
+            <property name="shortcut">
+             <string>W</string>
             </property>
            </widget>
           </item>
@@ -341,19 +349,6 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="0" colspan="2">
-           <widget class="QPushButton" name="plotBtn">
-            <property name="toolTip">
-             <string>Process the methods set in the Macro and Plot. Warning: Be careful, Computationally very demanding (use fow relative small time windows i.e window &lt; 30 min)</string>
-            </property>
-            <property name="text">
-             <string>Process and Plot</string>
-            </property>
-            <property name="shortcut">
-             <string>W</string>
-            </property>
-           </widget>
-          </item>
          </layout>
         </item>
        </layout>
@@ -368,7 +363,7 @@
       <item row="0" column="1">
        <widget class="QTabWidget" name="tabWidget">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -396,21 +391,7 @@
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_2">
-             <property name="text">
-              <string>Time Bandwidth</string>
-             </property>
-            </widget>
-           </item>
            <item row="2" column="1">
-            <widget class="QDoubleSpinBox" name="time_bandwidth_DB">
-             <property name="value">
-              <double>4.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
             <widget class="QDoubleSpinBox" name="freq_min_mtDB">
              <property name="decimals">
               <number>3</number>
@@ -426,21 +407,14 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="0" alignment="Qt::AlignHCenter">
-            <widget class="QLabel" name="label_4">
-             <property name="text">
-              <string>Freq Min</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="2" alignment="Qt::AlignHCenter">
+           <item row="2" column="2" alignment="Qt::AlignHCenter">
             <widget class="QLabel" name="label_5">
              <property name="text">
               <string>Freq Max</string>
              </property>
             </widget>
            </item>
-           <item row="3" column="3">
+           <item row="2" column="3">
             <widget class="QDoubleSpinBox" name="freq_max_mtDB">
              <property name="decimals">
               <number>3</number>
@@ -456,31 +430,44 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="2">
-            <widget class="QLabel" name="label">
+           <item row="2" column="0" alignment="Qt::AlignHCenter">
+            <widget class="QLabel" name="label_4">
              <property name="text">
-              <string>Number of Tapers</string>
+              <string>Freq Min</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="3">
-            <widget class="QSpinBox" name="number_tapers_mtSB">
-             <property name="value">
-              <number>4</number>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Window Length</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="2">
+           <item row="0" column="1">
             <widget class="QDoubleSpinBox" name="mt_window_lengthDB">
              <property name="value">
               <double>3.000000000000000</double>
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QLabel" name="label_3">
+           <item row="0" column="2" alignment="Qt::AlignHCenter">
+            <widget class="QLabel" name="label">
              <property name="text">
-              <string>Window Length</string>
+              <string>Overlap</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <widget class="QSpinBox" name="overlapSB">
+             <property name="suffix">
+              <string> %</string>
+             </property>
+             <property name="singleStep">
+              <number>1</number>
+             </property>
+             <property name="value">
+              <number>90</number>
              </property>
             </widget>
            </item>
@@ -713,13 +700,6 @@
      <string>File</string>
     </property>
     <addaction name="actionWrite"/>
-    <addaction name="actionWrite_Time_Frequency"/>
-   </widget>
-   <widget class="QMenu" name="menuParameters">
-    <property name="title">
-     <string>Parameters</string>
-    </property>
-    <addaction name="actionSettings"/>
    </widget>
    <widget class="QMenu" name="menuActions">
     <property name="title">
@@ -734,7 +714,6 @@
     <addaction name="actionOpen_Help"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuParameters"/>
    <addaction name="menuActions"/>
    <addaction name="menuHelp"/>
   </widget>

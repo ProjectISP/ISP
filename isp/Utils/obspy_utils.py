@@ -1,5 +1,6 @@
 import math
 import pickle
+from datetime import datetime
 from enum import unique, Enum
 from multiprocessing import Pool
 from os import listdir
@@ -15,6 +16,8 @@ from obspy.io.mseed.core import _is_mseed
 from obspy.io.stationxml.core import _is_stationxml
 from obspy.io.xseed.parser import Parser
 from obspy.taup import TauPyModel
+from surfquakecore.project.surf_project import SurfProject
+
 from isp import PICKING_DIR
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
@@ -52,6 +55,26 @@ class Filters(Enum):
 
 class ObspyUtil:
 
+
+    @staticmethod
+    def stationsCoodsFromMeta(dataXml):
+
+        sta_names = []
+        latitudes = []
+        longitudes = []
+        networks = {}
+
+        for network in dataXml:
+            for station in network.stations:
+                if station.code not in sta_names:
+                    sta_names.append(network.code + "." + station.code)
+                    latitudes.append(station.latitude)
+                    longitudes.append(station.longitude)
+                else:
+                    pass
+            networks[network.code] = [sta_names, longitudes, latitudes]
+
+        return networks
 
     @staticmethod
     def get_figure_from_stream(st: Stream, **kwargs):
@@ -265,6 +288,10 @@ class ObspyUtil:
 
     @staticmethod
     def reads_hyp_to_origin(hyp_file_path: str, modified=False) -> Origin:
+
+        import warnings
+        warnings.filterwarnings("ignore")
+
         """
         Reads an hyp file and returns the Obspy Origin.
         :param hyp_file_path: The file path to the .hyp file
@@ -291,6 +318,43 @@ class ObspyUtil:
         else:
             return origin
 
+
+    @staticmethod
+    def get_ellipse(hyp_file_path: str):
+
+        ellipse = {}
+        if isinstance(hyp_file_path, str) and os.path.isfile(hyp_file_path):
+
+            origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file_path)
+            latitude = origin.latitude
+            longitude = origin.longitude
+            smin = origin.origin_uncertainty.min_horizontal_uncertainty
+            smax = origin.origin_uncertainty.max_horizontal_uncertainty
+            azimuth = origin.origin_uncertainty.azimuth_max_horizontal_uncertainty
+            ellipse['latitude'] = latitude
+            ellipse['longitude'] = longitude
+            ellipse['smin'] = smin
+            ellipse['smax'] = smax
+            ellipse['azimuth'] = azimuth
+
+        azimuth = (90 - ellipse['azimuth']) % 360
+
+        azimuth_minor = azimuth + 90
+
+        # Generate angles from 0 to 2*pi
+        angles = np.linspace(0, 2 * np.pi, 100)
+
+        # Calculate the major and minor axes vectors
+        major_axis = np.array([np.cos(np.radians(azimuth)), np.sin(np.radians(azimuth))]) * ellipse['smax']
+        minor_axis = np.array([np.cos(np.radians(azimuth_minor)), np.sin(np.radians(azimuth_minor))]) * ellipse['smin']
+
+        # Calculate ellipse points
+        den = 111.2 * np.cos(np.radians(ellipse['latitude']))
+        x_points = ellipse['longitude'] + (major_axis[0] * np.cos(angles) + minor_axis[0] * np.sin(angles)) / den
+        y_points = ellipse['latitude'] + (major_axis[1] * np.cos(angles) + minor_axis[1] * np.sin(angles)) / 111.2
+
+        return x_points, y_points
+
     @staticmethod
     def reads_pick_info(hyp_file_path: str):
         """
@@ -299,8 +363,8 @@ class ObspyUtil:
         :return: list Pick info
         """
         if os.path.isfile(hyp_file_path):
-            Origin = read_nlloc_hyp(hyp_file_path)
-            return Origin.events[0].picks
+            cat = read_nll_performance.read_nlloc_hyp_ISP(hyp_file_path)
+            return cat[0]["origins"][0]["arrivals"]
 
 
     @staticmethod
@@ -343,6 +407,7 @@ class MseedUtil:
 
          return []
 
+
     def get_tree_mseed_files(self, root_dir: str):
 
         """
@@ -364,17 +429,75 @@ class MseedUtil:
 
         return r
 
+    # @staticmethod
+    # def get_project_basic_info(project):
+    #
+    #     try:
+    #         total_components = sum(len(value_list) for value_list in project.values())
+    #         stations_channel = len(project)
+    #     except:
+    #         total_components = None
+    #         stations_channel = None
+    #
+    #     return stations_channel, total_components
     @staticmethod
     def get_project_basic_info(project):
+        """
+            Counts the number of unique stations in a dictionary where keys are in the format 'NET.STATION.CHANNEL'.
 
-        try:
+            Args:
+                data_dict (dict): The input dictionary with keys in the format 'NET.STATION.CHANNEL'.
+
+            Returns:
+                int: The number of unique stations and channels
+        """
+
+        ## Take the stations names and its number
+
+        info = {}
+
+        networks = set()
+        stations = set()  # Use a set to store unique stations
+        channels = set()
+        num_stations = 0
+        num_channels = 0
+        num_networks = 0
+        start_time = []
+        end_time = []
+        total_components = 0
+
+        for key in project.keys():
+            parts = key.split('.')  # Split the key by '.'
+            network = f"{parts[0]}"
+            networks.add(network)  # Add to the set
+            station = f"{parts[1]}"
+            stations.add(station)
+            channel = f"{parts[2]}"
+            channels.add(channel)
+            for item in project[key]:
+                start_time.append(item[1].starttime)
+                end_time.append(item[1].endtime)
+
+        if len(stations) > 0:
+            num_stations = len(stations)
+            num_channels = len(channels)
+            num_networks = len(networks)
+
+
+        ## Take the number of files
+
+        if len(stations) > 0:
             total_components = sum(len(value_list) for value_list in project.values())
-            stations_channel = len(project)
-        except:
-            total_components = None
-            stations_channel = None
 
-        return stations_channel, total_components
+        if len(stations) > 0:
+            info["Networks"] = [networks, num_networks]
+            info["Stations"] = [stations, num_stations]
+            info["Channels"] = [channels, num_channels]
+            info["num_files"] = total_components
+            info["Start"] = min(start_time).strftime(format="%Y-%m-%d %H:%M:%S")
+            info["End"] = max(end_time).strftime(format="%Y-%m-%d %H:%M:%S")
+
+        return info
 
     def loop_tree(self, i):
         result = None
@@ -419,7 +542,8 @@ class MseedUtil:
         project = {}
         try:
             project = pickle.load(open(file, "rb"))
-
+            if isinstance(project, SurfProject):
+                project = project.project
         except:
             pass
         return project
@@ -527,54 +651,138 @@ class MseedUtil:
         if channel == '':
             channel = '.+'
 
-
-        data = []
-
         # filter for regular expresions
         event = [net, station, channel]
         project = cls.search(project, event)
 
-        for key, value in project.items():
-            for j in value:
-                data.append([j[0], j[1]['starttime'], j[1]['endtime']])
+        data_files = []
+        project = {key: value for key, value in project.items() if value}
+        for item in project.items():
+            list_channel = item[1]
+            for file_path in list_channel:
+                data_files.append(file_path[0])
 
-        return project, data
+
+        return project, data_files
 
     @classmethod
-    def filter_time(cls, list_files, **kwargs):
+    def filter_time(cls, project, starttime, endtime, tol = 86400):
 
-        #filter the list output of filter_project_keys by trimed times
+        """
+        Filters project data based on time range.
 
-        result = []
-        st1 = kwargs.pop('starttime', None)
-        et1 = kwargs.pop('endtime', None)
+        - starttime (str or UTCDateTime): Start time of the range.
+          If str, it should follow the format "%Y-%m-%d %H:%M:%S".
+          Example: "2023-12-10 00:00:00"
+        - endtime (str or UTCDateTime): End time of the range.
+          If str, it should follow the format "%Y-%m-%d %H:%M:%S".
+          Example: "2023-12-23 00:00:00"
+        """
 
-        if st1 is None and et1 is None:
-            for file in list_files:
-                result.append(file[0])
-
+        # Convert starttime and endtime to datetime objects if they are strings
+        date_format = "%Y-%m-%d %H:%M:%S"
+        if isinstance(starttime, str):
+            start = datetime.strptime(starttime, date_format)
+            start = UTCDateTime(start)
+        elif isinstance(starttime, UTCDateTime):
+            start = starttime.datetime  # Convert to Python datetime
         else:
+            raise TypeError("starttime must be a string or UTCDateTime object.")
 
-            for file in list_files:
-                pos_file = file[0]
-                st0 = file[1]
-                et0 = file[2]
-                # check times as a filter
+        if isinstance(endtime, str):
+            end = datetime.strptime(endtime, date_format)
+            end = UTCDateTime(end)
+        elif isinstance(endtime, UTCDateTime):
+            end = endtime.datetime  # Convert to Python datetime
+        else:
+            raise TypeError("endtime must be a string or UTCDateTime object.")
 
-                if st1 >= st0 and et1 > et0 and (st1 - st0) <= 86400:
-                    result.append(pos_file)
-                elif st1 <= st0 and et1 >= et0:
-                    result.append(pos_file)
-                elif st1 <= st0 and et1 <= et0 and (et0 - et1) <= 86400:
-                    result.append(pos_file)
-                elif st1 >= st0 and et1 <= et0:
-                    result.append(pos_file)
-                else:
-                    pass
+        # Process project data
+        if len(project) > 0:
+            for key in project:
+                item = project[key]
+                indices_to_remove = []
+                for index, value in enumerate(item):
+                    start_data = value[1].starttime
+                    end_data = value[1].endtime
+                    if start_data >= start and end_data > end and (start_data - start) <= tol:
+                        pass
 
-        result.sort()
+                    elif start_data <= start and end_data >= end:
+                        pass
 
-        return result
+                    elif start_data <= start and end_data <= end and (end - end_data) <= tol:
+                        pass
+
+                    elif start_data >= start and end_data <= end:
+                        pass
+
+                    else:
+                        indices_to_remove.append(index)
+
+                for index in reversed(indices_to_remove):
+                    item.pop(index)
+                    project[key] = item
+
+        # Fill the data_files list
+        data_files = []
+        project = {key: value for key, value in project.items() if value}
+        for item in project.items():
+            list_channel = item[1]
+            for file_path in list_channel:
+                data_files.append(file_path[0])
+
+        return project, data_files
+
+    @staticmethod
+    def generate_data_files(project):
+        data_files = []
+        project = {key: value for key, value in project.items() if value}
+        for item in project.items():
+            list_channel = item[1]
+            for file_path in list_channel:
+                data_files.append(file_path[0])
+
+        return data_files
+
+
+
+    # old style filter time
+    # @classmethod
+    # def filter_time(cls, list_files, **kwargs):
+    #
+    #     #filter the list output of filter_project_keys by trimed times
+    #
+    #     result = []
+    #     st1 = kwargs.pop('starttime', None)
+    #     et1 = kwargs.pop('endtime', None)
+    #
+    #     if st1 is None and et1 is None:
+    #         for file in list_files:
+    #             result.append(file[0])
+    #
+    #     else:
+    #
+    #         for file in list_files:
+    #             pos_file = file[0]
+    #             st0 = file[1]
+    #             et0 = file[2]
+    #             # check times as a filter
+    #
+    #             if st1 >= st0 and et1 > et0 and (st1 - st0) <= 86400:
+    #                 result.append(pos_file)
+    #             elif st1 <= st0 and et1 >= et0:
+    #                 result.append(pos_file)
+    #             elif st1 <= st0 and et1 <= et0 and (et0 - et1) <= 86400:
+    #                 result.append(pos_file)
+    #             elif st1 >= st0 and et1 <= et0:
+    #                 result.append(pos_file)
+    #             else:
+    #                 pass
+    #
+    #     result.sort()
+    #
+    #     return result
 
 
     ###### New Project ###########
@@ -752,7 +960,7 @@ class MseedUtil:
         return []
 
     @classmethod
-    def data_availability(cls, files_path: str, only_this = True):
+    def data_availability_new(cls, list_files: list):
         import matplotlib.pyplot as plt
         import matplotlib.dates as mdt
         from isp.Gui.Frames import MatplotlibFrame
@@ -761,42 +969,31 @@ class MseedUtil:
         cls.mpf = MatplotlibFrame(fig)
         starttimes = []
         endtimes = []
-        if only_this:
 
-            obsfiles = [f for f in listdir(files_path) if isfile(join(files_path, f))]
-            obsfiles.sort()
-        else:
-            obsfiles = []
-            for top_dir, sub_dir, files in os.walk(files_path):
-                for file in files:
-                    obsfiles.append(os.path.join(top_dir, file))
-            obsfiles.sort()
 
         data_map = {}
         data_map['nets'] = {}
 
-        for i in obsfiles:
-            paths = os.path.join(files_path, i)
-            if _is_mseed(paths):
+        for i in list_files:
 
-                print("Processing Waveform at", os.path.basename(paths))
-                header = read(paths, headlonly=True)
-                gap = header.get_gaps()
-                net = header[0].stats.network
-                sta = header[0].stats.station
-                chn = header[0].stats.channel
-                # times
-                starttimes.append(header[0].stats.starttime)
-                start = header[0].stats.starttime.matplotlib_date
-                endtimes.append(header[0].stats.endtime)
-                end = header[0].stats.endtime.matplotlib_date
-                name = net + "." + sta + "." + chn
-                hax.hlines(name, start, end, colors='k', linestyles='solid', label=name, lw=2)
-                if len(gap) > 0:
-                    for i in range(len(gap)):
-                        starttime_gap = gap[i][4].matplotlib_date
-                        endtime_gap = gap[i][5].matplotlib_date
-                        hax.hlines(name, starttime_gap, endtime_gap, colors='r', linestyles='solid', label=name, lw=2)
+            print("Processing Waveform at ", i)
+            header = read(i, headlonly=True)
+            gap = header.get_gaps()
+            net = header[0].stats.network
+            sta = header[0].stats.station
+            chn = header[0].stats.channel
+            # times
+            starttimes.append(header[0].stats.starttime)
+            start = header[0].stats.starttime.matplotlib_date
+            endtimes.append(header[0].stats.endtime)
+            end = header[0].stats.endtime.matplotlib_date
+            name = net + "." + sta + "." + chn
+            hax.hlines(name, start, end, colors='k', linestyles='solid', label=name, lw=2)
+            if len(gap) > 0:
+                for i in range(len(gap)):
+                    starttime_gap = gap[i][4].matplotlib_date
+                    endtime_gap = gap[i][5].matplotlib_date
+                    hax.hlines(name, starttime_gap, endtime_gap, colors='r', linestyles='solid', label=name, lw=2)
 
         start_time = min(starttimes)
         end_time = max(endtimes)
@@ -805,6 +1002,7 @@ class MseedUtil:
         hax.set_xlabel("Date")
         hax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
         cls.mpf.show()
+
 
     @classmethod
     def cluster_events(cls, times, eps=20.0):
@@ -833,7 +1031,7 @@ class MseedUtil:
         return new_times,string_times
 
     @classmethod
-    def get_NLL_phase_picks(cls, phase = None, **kwargs ):
+    def get_NLL_phase_picks_phase(cls, phase=None, **kwargs ):
 
         pick_times = {}
         pick_file = os.path.join(PICKING_DIR, "output.txt")
@@ -850,31 +1048,79 @@ class MseedUtil:
                                                                                 UTCDateTime(tt)]
             return pick_times
 
-
     @classmethod
-    def get_NLL_phase_picks2(cls, **kwargs ):
+    def get_NLL_phase_picks(cls, input_file=None, delimiter='\s+'):
+        """
+        Reads a NonLinLoc output file and returns a dictionary of phase picks.
+
+        Parameters:
+            input_file (str, optional): Path to the NonLinLoc output file.
+                                        If not provided, raises an error.
+            delimiter (str, optional): Delimiter used in the file (default is a space).
+            **kwargs: Additional arguments for customization.
+
+        Returns:
+            dict: Dictionary of picks with the structure:
+              {
+                  "Station.Component": [
+                      ["Station_name", "Instrument", "Component", "P_phase_onset", "P_phase_descriptor",
+                            "First_Motion", "Date", "Hour_min", "Seconds", "Err", "ErrMag", "Coda_duration",
+                            "Amplitude", "Period"
+                  ],
+                  ...
+              }
+        """
+        if input_file is None:
+            raise ValueError("An input file must be provided.")
+
+        if not os.path.isfile(input_file):
+            raise FileNotFoundError(f"The file {input_file} does not exist.")
 
         pick_times = {}
-        pick_file = os.path.join(PICKING_DIR, "output.txt")
-        pick_file = kwargs.pop("input_file", pick_file)
 
-        if os.path.isfile(pick_file):
-            df = pd.read_csv(pick_file, delimiter=" ")
-            for index, row in df.iterrows():
-                tt = str(row['Date']) + "TT" + str(row['Hour_min']) + '{:0>2}'.format(row['Seconds'])
-                id = row['Station_name'] + "." + row["Component"]
-                if id not in pick_times:
-                    items = []
-                    #items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
-                    items.append([row["P_phase_descriptor"], UTCDateTime(tt), row["Component"], row["First_Motion"],
-                                  row["Err"], row["ErrMag"], row["Coda_duration"], row["Amplitude"], row["Period"]])
-                    pick_times[id] = items
-                else:
-                    #items.append([row["P_phase_descriptor"], UTCDateTime(tt)])
-                    items.append([row["P_phase_descriptor"], UTCDateTime(tt), row["Component"], row["First_Motion"],
-                                  row["Err"], row["ErrMag"], row["Coda_duration"], row["Amplitude"], row["Period"]])
-                    pick_times[id] = items
-            return pick_times
+        try:
+            # Load the file into a DataFrame
+            df = pd.read_csv(input_file, delimiter=delimiter)
+
+            # Validate necessary columns
+
+            required_columns = ["Station_name", "Instrument", "Component", "P_phase_onset", "P_phase_descriptor",
+                                "First_Motion", "Date", "Hour_min", "Seconds", "Err", "ErrMag", "Coda_duration",
+                                "Amplitude", "Period"]
+
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                raise ValueError(f"The input file is missing required columns: {missing_columns}")
+
+            # Process each row
+            for _, row in df.iterrows():
+                try:
+                    # Construct timestamp
+                    tt = f"{row['Date']}T{str(row['Hour_min']).zfill(4)}:{float(row['Seconds']):06.3f}"
+                    timestamp = UTCDateTime(tt)
+
+                    # Construct ID
+                    id = f"{row['Station_name']}.{row['Component']}"
+
+                    # Collect pick details
+                    pick_details = [
+                        row["P_phase_descriptor"], timestamp, row["Component"],
+                        row["First_Motion"], row["Err"], row["ErrMag"],
+                        row["Coda_duration"], row["Amplitude"], row["Period"]
+                    ]
+
+                    # Add to dictionary
+                    if id not in pick_times:
+                        pick_times[id] = []
+                    pick_times[id].append(pick_details)
+
+                except Exception as e:
+                    print(f"Error processing row {row.to_dict()}: {e}")
+
+        except Exception as e:
+            raise RuntimeError(f"Error reading or processing the file {input_file}: {e}")
+
+        return pick_times
 
     @staticmethod
     def get_stream(files_path: str, selection: dict):
