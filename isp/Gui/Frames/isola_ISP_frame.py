@@ -274,8 +274,10 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         bi = BayesianIsolaGUICore(bic, model=self.get_model(), entities=self.get_db(),
                                   parameters=parameters)
         bi.run_inversion()
+        print("Writing Summary")
         wm = WriteMTI(self.MTI_output_path.text())
         wm.mti_summary()
+        
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def run_inversion(self):
@@ -326,6 +328,9 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
         # # Run Inversion
         bic.run_inversion(mti_config=mti_config, map_stations=stations_map)
+        print("Writing Summary")
+        wm = WriteMTI(self.output_path_bind.value)
+        wm.mti_summary()
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def on_click_select_file(self, bind: BindPyqtObject):
