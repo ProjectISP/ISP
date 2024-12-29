@@ -21,7 +21,7 @@ from obspy import Inventory
 from obspy.core.event import Origin
 from surfquakecore.magnitudes.source_tools import ReadSource
 from surfquakecore.project.surf_project import SurfProject
-from isp import PICKING_DIR, LOCATION_OUTPUT_PATH, LOC_STRUCTURE, source_config
+from isp import PICKING_DIR, LOC_STRUCTURE, source_config, LOCATION_OUTPUT_STRUCTURE
 from surfquakecore.magnitudes.run_magnitudes import Automag
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import parse_excepts
@@ -648,7 +648,7 @@ class Locate(BaseFrame, UiLocFlow):
 
     def setDefault(self):
         self.picksLE.setText(os.path.join(PICKING_DIR, "output.txt"))
-        self.loc_workLE.setText(LOCATION_OUTPUT_PATH)
+        self.loc_workLE.setText(LOCATION_OUTPUT_STRUCTURE)
         self.modelLE.setText(os.path.join(LOC_STRUCTURE, "local_models"))
 
     def __selected_file(self):

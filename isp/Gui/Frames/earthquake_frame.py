@@ -5,7 +5,6 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QMessageBox
 from matplotlib.backend_bases import MouseButton
 from obspy import UTCDateTime, Stream, Trace, Inventory
-from obspy.core.event import Origin
 from obspy.geodetics import gps2dist_azimuth, kilometers2degrees
 from surfquakecore.project.surf_project import SurfProject
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
@@ -18,7 +17,7 @@ from isp.Gui.Frames import BaseFrame, UiEarthquakeAnalysisFrame, Pagination, Mes
 from isp.Gui.Frames.autopick_frame import Autopick
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame
 from isp.Gui.Frames.locate_frame import Locate
-from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
+#from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
 from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.plot_polarization import PlotPolarization
@@ -145,7 +144,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionArray_Anlysis.triggered.connect(self.open_array_analysis)
         self.actionMoment_Tensor_Inversion.triggered.connect(self.open_moment_tensor)
         self.actionTime_Frequency_Analysis.triggered.connect(self.time_frequency_analysis)
-        self.actionOpen_Magnitudes_Calculator.triggered.connect(self.open_magnitudes_calculator)
+        #self.actionOpen_Magnitudes_Calculator.triggered.connect(self.open_magnitudes_calculator)
         self.actionSTA_LTA.triggered.connect(self.run_STA_LTA)
         self.actionlogarythmic_dff.triggered.connect(self.cwt_cf)
         self.actionkurtosis.triggered.connect(self.cwt_kurt)
@@ -222,8 +221,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+C'), self)
         self.shortcut_open.activated.connect(self.clean_events_detected)
 
-        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+M'), self)
-        self.shortcut_open.activated.connect(self.open_magnitudes_calculator)
+        # self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+M'), self)
+        # self.shortcut_open.activated.connect(self.open_magnitudes_calculator)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+P'), self)
         self.shortcut_open.activated.connect(self.comboBox_phases.showPopup)
@@ -1966,13 +1965,41 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def availability(self):
         MseedUtil.data_availability_new(self.files_path)
 
-    def open_magnitudes_calculator(self):
-        hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")
-        origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file, modified=True)
-        # origin: Origin = read_nll_performance.read_nlloc_hyp_ISP(hyp_file)
-        if isinstance(origin[0], Origin):
-            self._magnitude_calc = MagnitudeCalc(origin[0], origin[1], self.inventory, self.project, self.chop)
-            self._magnitude_calc.show()
+    # def open_magnitudes_calculator(self):
+    #
+    #
+    #     if isinstance(self.inventory, Inventory):
+    #         choice, ok = pw.QInputDialog.getItem(
+    #             self, "Open Magnitude Estimator ",
+    #             "Please How to set Hypocenter parameters:",
+    #             ["Load last location", "Load other location"], 0, False
+    #         )
+    #
+    #         if ok:
+    #
+    #             # if choice == "Manually after open Magnitude module":
+    #             #     option = "manually"
+    #             if choice == "Load last location":
+    #                 option = "last"
+    #             elif choice == "Load other location":
+    #                 option = "other"
+    #
+    #             self._magnitude_calc = MagnitudeCalc(option, self.inventory, self.project, self.chop)
+    #             self._magnitude_calc.show()
+    #
+    #         else:
+    #             # If the user cancels the choice dialog, do nothing
+    #             return
+    #     else:
+    #         # Show an error message if required conditions are not met
+    #         md = MessageDialog(self)
+    #         md.set_error_message(
+    #             "Please review the following requirements before proceeding:",
+    #             "1. Ensure you have choped the waveforms. \n"
+    #             "2. Ensure selected the correct hypocenter option\n"
+    #             "3. Load a valid inventory metadata."
+    #         )
+
 
     def open_solutions(self):
 

@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QFileDialog, QLabel, QWidget, QVBoxLayout
 from obspy.core.event import Origin
-from isp import ROOT_DIR, ALL_LOCATIONS
+from isp import ROOT_DIR, ALL_LOCATIONS, LOCATION_OUTPUT_PATH
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
 from isp.Gui import pw, qt, pyc
@@ -274,8 +274,10 @@ class MTIFrame(BaseFrame, UiMomentTensor):
         bi = BayesianIsolaGUICore(bic, model=self.get_model(), entities=self.get_db(),
                                   parameters=parameters)
         bi.run_inversion()
+        print("Writing Summary")
         wm = WriteMTI(self.MTI_output_path.text())
         wm.mti_summary()
+        
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def run_inversion(self):
@@ -326,10 +328,13 @@ class MTIFrame(BaseFrame, UiMomentTensor):
 
         # # Run Inversion
         bic.run_inversion(mti_config=mti_config, map_stations=stations_map)
+        print("Writing Summary")
+        wm = WriteMTI(self.output_path_bind.value)
+        wm.mti_summary()
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def on_click_select_file(self, bind: BindPyqtObject):
-        file_path = pw.QFileDialog.getOpenFileName(self, 'Select Directory', bind.value)
+        file_path = pw.QFileDialog.getOpenFileName(self, 'Select  File', bind.value)
         file_path = file_path[0]
 
         if file_path:
@@ -345,7 +350,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
             bind.value = dir_path
 
     def on_click_select_hyp_file(self):
-        file_path = pw.QFileDialog.getOpenFileName(self, 'Select Directory', ALL_LOCATIONS)
+        file_path = pw.QFileDialog.getOpenFileName(self, 'Select Directory', ROOT_DIR)
         file_path = file_path[0]
         if isinstance(file_path, str):
             return file_path
@@ -362,6 +367,13 @@ class MTIFrame(BaseFrame, UiMomentTensor):
             self.__set_hyp(hyp_values)
             md = MessageDialog(self)
             md.set_info_message("Loaded information and set hypocenter parameters, please click stations info")
+
+    def __set_hyp(self, hyp_values):
+        self.latDB.setValue(float(hyp_values["latitude"]))
+        self.lonDB.setValue(float(hyp_values["longitude"]))
+        self.depthDB.setValue(float(hyp_values["depth"]))
+        self.magnitudeDB.setValue(float(3.5))
+        set_qdatetime(hyp_values['origin_time'], self.origin_time)
 
     def stationsInfo(self):
 
@@ -399,7 +411,7 @@ class MTIFrame(BaseFrame, UiMomentTensor):
                                 "then click stations info")
 
         elif option == "last":
-            hyp_file = os.path.join(ROOT_DIR, "earthquakeAnalisysis", "location_output", "loc", "last.hyp")
+            hyp_file = os.path.join(LOCATION_OUTPUT_PATH, "last.hyp")
             origin: Origin = ObspyUtil.reads_hyp_to_origin(hyp_file, modified=True)
             hyp_values = MTIManager.get_hyp_values(origin[0])
             self.__set_hyp(hyp_values)
