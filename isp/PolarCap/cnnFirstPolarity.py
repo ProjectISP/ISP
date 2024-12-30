@@ -1,3 +1,4 @@
+from copy import deepcopy
 from obspy import UTCDateTime, read, Trace
 import numpy as np
 import tensorflow as tf
@@ -5,14 +6,16 @@ from datetime import datetime
 from isp.Utils import MseedUtil
 from multiprocessing import Pool
 from surfquakecore.project.surf_project import SurfProject
-
+import pandas as pd
 class Polarity:
-    def __init__(self, project_file,  model_path, arrivals_path):
+    def __init__(self, project_file,  model_path, arrivals_path, threshold, output_path):
 
         self.model = tf.keras.models.load_model(model_path)
         self.project = self._read_project(project_file)
         self.model_path = model_path
         self.arrivals_path = arrivals_path
+        self.threshold = threshold
+        self.output_path = output_path
         self.import_picks()
 
     def __str__(self):
@@ -27,7 +30,7 @@ class Polarity:
 
     def import_picks(self):
         self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=self.arrivals_path)
-
+        self.pick_times_imported_modify = deepcopy(self.pick_times_imported)
 
     def run_predict_polarity_day(self, filtered_files):
         tr = None
@@ -64,17 +67,18 @@ class Polarity:
 
         # List to store matching picks
         filtered_picks = []
-
+        items = []
         # Check if the trace ID exists in the pick dictionary
         if trace_id in self.pick_times_imported:
-            for pick in self.pick_times_imported[trace_id]:
+            for item, pick in enumerate(self.pick_times_imported[trace_id]):
                 phase_name, pick_time, channel = pick[0], pick[1], pick[2]
 
                 # Ensure channel contains "Z" and pick time falls within the trace's time window
-                if "Z" in channel and trace_start <= pick_time <= trace_end and phase_name == "P":
+                if trace_start <= pick_time <= trace_end and phase_name == "P":
                     filtered_picks.append(pick)
+                    items.append(item)
 
-        return filtered_picks
+        return filtered_picks, items
 
 
     def optimized_project_processing_pol(self):
@@ -102,7 +106,7 @@ class Polarity:
         # Use multiprocessing to parallelize
         with Pool() as pool:
             results = pool.map(self.process_coincidence_pol, tasks)
-
+        self.write_output()
         # Join the output of all days
         # for item in results:
         #     if item[0] is not None and item[1] is not None:
@@ -123,7 +127,7 @@ class Polarity:
             return "empty"
 
 
-    def run_predict_polarity_day(self, filtered_files, model="PolarCap"):
+    def run_predict_polarity_day(self, filtered_files, threshold=0.9):
         tr = None
         for file in filtered_files:
             try:
@@ -133,11 +137,13 @@ class Polarity:
                 print("Cannot process day ", file)
 
             if isinstance(tr, Trace):
-                filtered_picks = self._filter_trace_by_picks(tr)
+                filtered_picks, items = self._filter_trace_by_picks(tr)
+                trace_id = f"{tr.stats.station}.{tr.stats.channel}"
                 print(filtered_picks)
                 data = tr.data
 
-                for pick in filtered_picks:
+                for pick, item in zip(filtered_picks, items):
+
                     pick_time = pick[1]
                     time_samples = int((pick_time - tr.stats.starttime) * tr.stats.sampling_rate)
                     start_sample = time_samples - 32
@@ -151,11 +157,10 @@ class Polarity:
                         data_chop = data_chop[0:64]
 
                     data_full = data_full - np.mean(data_full)
-                    data_full = data_full / np.max(data_full)
 
                     data_chop = data_chop - np.mean(data_chop)
                     #data_chop = data_chop / np.max(data_chop)
-                    data_plot = data_chop
+                    # data_plot = data_chop
                     data_chop = data_chop.reshape(1, -1, 1)
                     data_chop = self.norm(data_chop)
                     y_pred = self.model.predict(data_chop)
@@ -168,9 +173,18 @@ class Polarity:
                         predictions.append((polarity[pol], prob))
 
                     print(pol_pred, pred_prob, predictions)
+                    self._edit_pick_input(trace_id, item, predictions)
                     #self._plot(data_plot, data_full, label=predictions[0])
 
 
+    def _edit_pick_input(self, trace_id, item, predictions):
+
+        if predictions[0][0] == "Positive" and predictions[0][1] >= self.threshold:
+            self.pick_times_imported_modify[trace_id][item][3] = "U"
+        elif predictions[0][0] == "Negative" and predictions[0][1] >= self.threshold:
+            self.pick_times_imported_modify[trace_id][item][3] = "D"
+
+        print(self.pick_times_imported_modify[trace_id][item])
 
     def _plot(self, data, data_full, label):
         import matplotlib.pyplot as plt
@@ -189,16 +203,59 @@ class Polarity:
             X_ret[i] = X_ret[i] / maxi[i]
         return X_ret
 
+    def write_output(self):
+        with open(self.output_path, 'w') as file:
+
+            # Write the header line
+            header = ("Station_name\tInstrument\tComponent\tP_phase_onset\tP_phase_descriptor\t"
+                       "First_Motion\tDate\tHour_min\tSeconds\tErr\tErrMag\tCoda_duration\tAmplitude\tPeriod\n")
+            file.write(header)
+
+            for key in self.pick_times_imported.keys():
+                id = key.split(".")
+                contents = self.pick_times_imported[key]
+                station = id[0].ljust(6)  # Station name, left-justified, 6 chars
+                instrument = "?".ljust(4)  # Placeholder for Instrument
+                component = id[1].ljust(4)  # Placeholder for Component
+
+                for content in contents:
+                    time = UTCDateTime(content[1]) # Convert starttime and endtime to pandas-compatible datetime objects
+                    #time = pd.Timestamp(str(time)) if isinstance(time, UTCDateTime) else pd.Timestamp(time)
+                    #time = pd.to_datetime(time)
+                    date_concatanate = str(time.year)+str(time.month)+str(time.day)
+                    p_phase_onset = "?"  # Placeholder for P phase onset
+                    phase_descriptor = content[0].ljust(6)  # Phase descriptor (e.g., P, S)
+                    first_motion = content[3]  # Placeholder for First Motion
+                    date = f"{ date_concatanate}"  # Date in yyyymmdd format
+                    hour_min = f"{time.hour:02}{time.minute:02}"  # hhmm
+                    seconds = str(time.second) + "." + str(time.microsecond)[0:3] # ss.ssss
+                    err = "GAU"  # Error type (GAU)
+
+                    err_mag = f"{content[5]:.2e}"  # Error magnitude in seconds
+                    coda_duration = content[6]  # Placeholder for Coda duration
+                    amplitude = f"{content[7]:.2e}"  # Amplitude
+                    period = content[8]  # Placeholder for Period
+                    # Construct the line
+                    line = (
+                        f"{station} {instrument} {component} {p_phase_onset} {phase_descriptor} {first_motion} "
+                        f"{date} {hour_min} {seconds} {err} {err_mag} {coda_duration} {amplitude} {period}\n"
+                    )
+                    file.write(line)
+
+                    # Add a blank line at the end for NLLoc format compliance
+            file.write("\n")
+
 
 if __name__ == "__main__":
 
-    project_path = "/Users/robertocabiecesdiaz/Documents/ISP/earthquake_test"
+    project_path = "/Users/roberto/Documents/ISP/earthquake_test"
 
-    arrivals_path = ("/Users/robertocabiecesdiaz/Documents/ISP/isp/earthquakeAnalysis/loc_structure/"
+    arrivals_path = ("/Users/roberto/Documents/ISP/isp/earthquakeAnalysis/loc_structure/"
                      "output_original_example.txt")
-    model_path = '/Users/robertocabiecesdiaz/Documents/ISP/isp/PolarCap/PolarCAP.h5'
+    model_path = '/Users/roberto/Documents/ISP/isp/PolarCap/PolarCAP.h5'
     output = "./"
-    pol = Polarity(project_file=project_path, model_path=model_path, arrivals_path=arrivals_path)
+    pol = Polarity(project_file=project_path, model_path=model_path, arrivals_path=arrivals_path, threshold=0.9,
+                   output_path="/Users/roberto/Documents/ISP/isp/earthquakeAnalysis/loc_structure/test_focmec.txt")
     print(pol)
     pol.optimized_project_processing_pol()
 
