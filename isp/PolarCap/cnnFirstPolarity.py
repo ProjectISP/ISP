@@ -1,3 +1,4 @@
+from typing import Union
 from copy import deepcopy
 from obspy import UTCDateTime, read, Trace
 import numpy as np
@@ -6,12 +7,17 @@ from datetime import datetime
 from isp.Utils import MseedUtil
 from multiprocessing import Pool
 from surfquakecore.project.surf_project import SurfProject
-import pandas as pd
+
 class Polarity:
-    def __init__(self, project_file,  model_path, arrivals_path, threshold, output_path):
+    def __init__(self, project: Union[SurfProject, str],  model_path, arrivals_path, threshold, output_path):
 
         self.model = tf.keras.models.load_model(model_path)
-        self.project = self._read_project(project_file)
+
+        if isinstance(project, str):
+            self.project = SurfProject.load_project(project)
+        else:
+            self.project = project
+
         self.model_path = model_path
         self.arrivals_path = arrivals_path
         self.threshold = threshold
@@ -23,10 +29,6 @@ class Polarity:
         self.model.summary(print_fn=lambda x: stringlist.append(x))
         model_summary = "\n".join(stringlist)
         return model_summary
-
-    def _read_project(self, project_path):
-        return SurfProject.load_project(project_path)
-
 
     def import_picks(self):
         self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=self.arrivals_path)
@@ -127,12 +129,14 @@ class Polarity:
             return "empty"
 
 
-    def run_predict_polarity_day(self, filtered_files, threshold=0.9):
+    def run_predict_polarity_day(self, filtered_files):
         tr = None
         for file in filtered_files:
             try:
                 tr = read(file)[0]
                 print(tr)
+                if tr.stats.sampling_rate != 100:
+                    tr.resample(100)
             except:
                 print("Cannot process day ", file)
 
@@ -209,6 +213,7 @@ class Polarity:
             # Write the header line
             header = ("Station_name\tInstrument\tComponent\tP_phase_onset\tP_phase_descriptor\t"
                        "First_Motion\tDate\tHour_min\tSeconds\tErr\tErrMag\tCoda_duration\tAmplitude\tPeriod\n")
+
             file.write(header)
 
             for key in self.pick_times_imported.keys():
@@ -220,8 +225,6 @@ class Polarity:
 
                 for content in contents:
                     time = UTCDateTime(content[1]) # Convert starttime and endtime to pandas-compatible datetime objects
-                    #time = pd.Timestamp(str(time)) if isinstance(time, UTCDateTime) else pd.Timestamp(time)
-                    #time = pd.to_datetime(time)
                     date_concatanate = str(time.year)+str(time.month)+str(time.day)
                     p_phase_onset = "?"  # Placeholder for P phase onset
                     phase_descriptor = content[0].ljust(6)  # Phase descriptor (e.g., P, S)
@@ -254,7 +257,7 @@ if __name__ == "__main__":
                      "output_original_example.txt")
     model_path = '/Users/roberto/Documents/ISP/isp/PolarCap/PolarCAP.h5'
     output = "./"
-    pol = Polarity(project_file=project_path, model_path=model_path, arrivals_path=arrivals_path, threshold=0.9,
+    pol = Polarity(project=project_path, model_path=model_path, arrivals_path=arrivals_path, threshold=0.9,
                    output_path="/Users/roberto/Documents/ISP/isp/earthquakeAnalysis/loc_structure/test_focmec.txt")
     print(pol)
     pol.optimized_project_processing_pol()

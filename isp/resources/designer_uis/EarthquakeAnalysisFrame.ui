@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1659</width>
-    <height>1008</height>
+    <height>958</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -616,7 +616,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>1072</width>
-                  <height>766</height>
+                  <height>708</height>
                  </rect>
                 </property>
                </widget>
@@ -893,8 +893,6 @@
     </widget>
     <addaction name="menuPicks"/>
     <addaction name="actionSet_Parameters"/>
-    <addaction name="actionClean_selection"/>
-    <addaction name="actionRemove_all_selections"/>
     <addaction name="actionClean_Events_Detected"/>
     <addaction name="actionOpen_Earth_Model_Viewer"/>
     <addaction name="actionSearch_in_Catalog"/>
@@ -955,11 +953,19 @@
     </widget>
     <addaction name="menuPicks_from_file"/>
    </widget>
+   <widget class="QMenu" name="menuSelections">
+    <property name="title">
+     <string>Selections</string>
+    </property>
+    <addaction name="actionClean_selection"/>
+    <addaction name="actionRemove_all_selections"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuActions"/>
    <addaction name="menuGo"/>
    <addaction name="menuCompute"/>
    <addaction name="menuAlign_Traces"/>
+   <addaction name="menuSelections"/>
    <addaction name="menuImport"/>
    <addaction name="menuHelp"/>
   </widget>
