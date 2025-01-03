@@ -15,8 +15,8 @@ class PickerManager:
     Date = "Date"
     HourMin = "Hour_min"
     Seconds = "Seconds"
-    GAU = "GAU"
     Err = "Err"
+    ErrMag = "ErrMag"
     CodaDuration = "Coda_duration"
     Amplitude = "Amplitude"
     Period = "Period"
@@ -46,7 +46,7 @@ class PickerManager:
             self.__output_path = self.get_default_output_path()
 
         self.columns = [self.StationName, self.Instrument, self.Component, self.PPhaseOnset, self.PPhaseDescriptor,
-                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, "GAU", self.Err, self.CodaDuration,
+                        self.FirstMotion, self.Date, self.HourMin, self.Seconds, self.Err, self.ErrMag, self.CodaDuration,
                         self.Amplitude, self.Period]
 
         if overwrite:
@@ -109,7 +109,9 @@ class PickerManager:
         :keyword Instrument: The instrument.
         :keyword Component:
         :keyword First_Motion: The polarization, either "U" or "D"
-        :keyword Err: uncertainty
+
+        :keyword Err: uncertainty type --> GAU (gaussian type)
+        :keyword ErrMag: uncertainty magnitude in secconds
         :keyword Coda_duration:
         :keyword Period:
         :return:
@@ -122,7 +124,7 @@ class PickerManager:
         amplitude = "{0:.2f}".format(amplitude)
         #err = "{0:.2f}".format(err)
         err = format(err, ".2E")
-        self.__add_data(Date=date, Hour_min=hour_min, Seconds=seconds, Err=err, Station_name=station, Amplitude=amplitude,
+        self.__add_data(Date=date, Hour_min=hour_min, Seconds=seconds, ErrMag=err, Station_name=station, Amplitude=amplitude,
                         P_phase_descriptor=p_phase, **kwargs)
 
     def __add_data(self, **kwargs):
@@ -141,8 +143,8 @@ class PickerManager:
         :keyword Date:
         :keyword Hour_min:
         :keyword Seconds:
-        :keyword GAU:
         :keyword Err:
+        :keyword ErrMag:
         :keyword Coda_duration:
         :keyword Amplitude:
         :keyword Period:
@@ -153,8 +155,8 @@ class PickerManager:
         data = {key: kwargs.get(key, "?") for key in self.columns}  # start a dict with default values equal "?"
 
         # Override defaults values for some keys
-        data["GAU"] = "GAU"
-        data[self.Err] = "{:.1f}".format(0) if data[self.Err] == "?" else data[self.Err]
+        data["Err"] = "GAU"
+        # data[self.Err] = "{:.1f}".format(0) if data[self.Err] == "?" else data[self.Err]
         #data[self.Err] = "GAU" if data[self.Err] == "?" else data[self.Err]
         data[self.CodaDuration] = "{:.1f}".format(0) if data[self.CodaDuration] == "?" else data[self.CodaDuration]
         data[self.Period] = "{:.1f}".format(0) if data[self.Period] == "?" else data[self.Period]
@@ -165,19 +167,19 @@ class PickerManager:
             data[self.FirstMotion] = "D"
 
         if data[self.FirstMotion] == "+" and kwargs.get("P_phase_descriptor")[0] == "S":
-            if kwargs.get("Component")[2]=="N" or kwargs.get("Component")[2]=="R":
+            if kwargs.get("Component")[2] == "N" or kwargs.get("Component")[2] == "R":
                 data[self.FirstMotion] = "f"
 
         elif data[self.FirstMotion] == "-" and kwargs.get("P_phase_descriptor")[0] == "S":
-            if kwargs.get("Component")[2]=="N" or kwargs.get("Component")[2]=="R":
+            if kwargs.get("Component")[2] == "N" or kwargs.get("Component")[2] == "R":
                 data[self.FirstMotion] = "b"
 
         if data[self.FirstMotion] == "+" and kwargs.get("P_phase_descriptor")[0] == "S":
-            if kwargs.get("Component")[2]=="E" or kwargs.get("Component")[2]=="T":
+            if kwargs.get("Component")[2] == "E" or kwargs.get("Component")[2] == "T":
                 data[self.FirstMotion] = "r"
 
         elif data[self.FirstMotion] == "-" and kwargs.get("P_phase_descriptor")[0] == "S":
-            if kwargs.get("Component")[2]=="E" or kwargs.get("Component")[2]=="T":
+            if kwargs.get("Component")[2] == "E" or kwargs.get("Component")[2] == "T":
                 data[self.FirstMotion] = "l"
 
         df = pd.DataFrame(data, columns=self.columns, index=[0])

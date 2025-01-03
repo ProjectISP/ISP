@@ -776,7 +776,7 @@ class Nllcatalog:
                       "min_distance": origin.quality.minimum_distance}
 
         return event_dict
-    def run_catalog(self, summary_path):
+    def run_catalog(self):
         # TODO INCLUDE TRANSFORMATION
         dates = []
         transformations = []
@@ -816,10 +816,10 @@ class Nllcatalog:
         'depths': depths, 'Uncertainty':uncertainties, 'Max_Hor_Error': max_hor_errors, 'Min_Hor_Error': min_hor_errors,
         'Ellipse_Az': ellipses_azs, 'No_phases': no_phases, 'Az_gap': azs_gap, 'Max_Dist': max_dists, 'Min Dist': min_dists}
 
-        self.__write_dict(events_dict, summary_path)
+        self.__write_dict(events_dict)
 
-    def __write_dict(self, events_dict, output):
-        output = os.path.join(output, "catalog.txt")
+    def __write_dict(self, events_dict):
+        output = os.path.join(self.working_directory, "catalog.txt")
         df_magnitudes = pd.DataFrame.from_dict(events_dict)
         df_magnitudes.to_csv(output, sep=";", index=False)
 

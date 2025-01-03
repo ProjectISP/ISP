@@ -325,8 +325,9 @@ class Locate(BaseFrame, UiLocFlow):
             for i in range(self.iterationsSB.value()):
                 print("Running Location iteration", i)
                 nll_manager.run_nlloc(num_iter=i+1)
+
             nll_catalog = Nllcatalog(self.loc_work_bind.value)
-            nll_catalog.run_catalog(self.loc_work_bind.value)
+            nll_catalog.run_catalog()
             self.onChange_root_pathLoc("refress")
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 

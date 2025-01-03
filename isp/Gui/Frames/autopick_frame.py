@@ -2,13 +2,14 @@ import os.path
 from PyQt5.QtCore import Qt
 from obspy import Inventory
 from surfquakecore.real.structures import RealConfig, GeographicFrame, GridSearch, TravelTimeGridSearch, ThresholdPicks
-from isp import PICKING_DIR
+from isp import PICKING_DIR, POLARITY_NETWORK
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Gui import pyc, pw
 from isp.Gui.Frames import BaseFrame, MessageDialog
 from isp.Gui.Frames.uis_frames import UiAutopick
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
 from isp.LocCore.plot_tool_loc import plot_real_map
+from isp.PolarCap.cnnFirstPolarity import Polarity
 from isp.Utils import AsycTime, obspy_utils
 from isp.Utils.os_utils import OSutils
 from surfquakecore.phasenet.phasenet_handler import PhasenetISP, PhasenetUtils
@@ -42,7 +43,7 @@ class Autopick(BaseFrame, UiAutopick):
         self.endtime = endtime
         self.inventory = None
         self.final_filtered_results = []
-        ############# Phasent -Picking ##############
+        ############# Phasent - Picking ##############
         self.picking_bind = BindPyqtObject(self.picking_LE, self.onChange_root_path)
         self.output_path_pickBtn.clicked.connect(lambda: self.on_click_select_directory(self.picking_bind))
         self.phasenetBtn.clicked.connect(self.run_phasenet)
@@ -63,8 +64,10 @@ class Autopick(BaseFrame, UiAutopick):
         self.output_triggerBtn.clicked.connect(lambda: self.on_click_select_directory(self.trigger_outpath_bind))
         self.realCoincidenceTrigger.clicked.connect(lambda: self.run_trigger())
 
-
         self.setDefaultPickPath.clicked.connect(self.setDefaultPick)
+
+        ### Polarities Determination ####
+        self.runPolaritiesBtn.clicked.connect(lambda: self.run_polarities())
 
         # Dialog
         self.progress_dialog = pw.QProgressDialog(self)
@@ -74,7 +77,6 @@ class Autopick(BaseFrame, UiAutopick):
         self.progress_dialog.setWindowIcon(self.windowIcon())
         self.progress_dialog.setWindowTitle(self.windowTitle())
         self.progress_dialog.close()
-
 
 
     def _get_trigger_parameters(self):
@@ -320,3 +322,29 @@ class Autopick(BaseFrame, UiAutopick):
         #network = obspy_utils.ObspyUtil.stationsCoodsFromMeta(self.inventory)
         plot_real_map(network, area=area)
 
+    def run_polarities(self):
+
+        """ Polarities """
+
+        self.send_polarities()
+        self.progress_dialog.exec()
+        md = MessageDialog(self)
+        md.set_info_message("Polarities determination Done")
+        self.send_signal()
+
+
+    @AsycTime.run_async()
+    def send_polarities(self):
+
+        arrivals_path = os.path.join(PICKING_DIR, "output.txt")
+        output_path = os.path.join(PICKING_DIR, "nll_picks_polarities.txt")
+        sp = SurfProject()
+        sp.project = self.sp
+        pol = Polarity(project=sp, model_path=POLARITY_NETWORK, arrivals_path=arrivals_path,
+                       threshold=self.polaritiesProbDB.value(),
+                       output_path=output_path)
+
+        pol.optimized_project_processing_pol()
+
+        OSutils.copy_and_rename_file(output_path, PICKING_DIR, "output.txt")
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)

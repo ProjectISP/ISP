@@ -7,6 +7,7 @@ LOCATION_OUTPUT_STRUCTURE = os.path.join(ROOT_DIR, 'earthquakeAnalysis/location_
 ALL_LOCATIONS = os.path.join(ROOT_DIR, 'earthquakeAnalysis/location_output/all_locations')
 LOC_STRUCTURE = os.path.join(ROOT_DIR, "earthquakeAnalysis", "loc_structure")
 PICKING_DIR = os.path.join(ROOT_DIR, 'earthquakeAnalysis/location_output/obs')
+POLARITY_NETWORK = os.path.join(ROOT_DIR, 'PolarCap/PolarCAP.h5')
 MOMENT_TENSOR_OUTPUT = os.path.join(ROOT_DIR, 'mti/output')
 RESOURCE_PATH = os.path.join(ROOT_DIR, 'resources')
 IMAGES_PATH = os.path.join(RESOURCE_PATH, 'images')

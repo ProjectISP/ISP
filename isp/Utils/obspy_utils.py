@@ -1028,7 +1028,7 @@ class MseedUtil:
         for k  in  range(len(clusters)):
             new_times.append(UTCDateTime(clusters[k][0]))
             string_times.append(UTCDateTime(clusters[k][0]).strftime(format="%Y-%m-%dT%H:%M:%S.%f"))
-        return new_times,string_times
+        return new_times, string_times
 
     @classmethod
     def get_NLL_phase_picks_phase(cls, phase=None, **kwargs ):
@@ -1038,7 +1038,7 @@ class MseedUtil:
         pick_file = kwargs.pop("input_file", pick_file)
 
         if os.path.isfile(pick_file):
-            df = pd.read_csv(pick_file, delimiter=" ")
+            df = pd.read_csv(pick_file, delimiter='\s+')
             for index, row in df.iterrows():
                 tt = str(row['Date']) + "TT" + str(row['Hour_min']) + '{:0>2}'.format(row['Seconds'])
                 if phase == row["P_phase_descriptor"]:
