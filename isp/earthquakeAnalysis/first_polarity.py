@@ -368,7 +368,7 @@ class FirstPolarity:
     def find_files(base_path):
         pattern = re.compile(r'.*lst$')  # Match files ending with ".grid0.loc.hyp"
         obsfiles = []  # Initialize the list
-        path_to_find = os.path.join(base_path, 'first_polarity')
+        path_to_find = os.path.join(base_path, 'first_polarity/output')
 
         for top_dir, _, files in os.walk(path_to_find):
             for file in files:

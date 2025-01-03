@@ -2,7 +2,7 @@ import os.path
 from PyQt5.QtCore import Qt
 from obspy import Inventory
 from surfquakecore.real.structures import RealConfig, GeographicFrame, GridSearch, TravelTimeGridSearch, ThresholdPicks
-from isp import PICKING_DIR
+from isp import PICKING_DIR, POLARITY_NETWORK
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Gui import pyc, pw
 from isp.Gui.Frames import BaseFrame, MessageDialog
@@ -330,15 +330,17 @@ class Autopick(BaseFrame, UiAutopick):
         self.progress_dialog.exec()
         md = MessageDialog(self)
         md.set_info_message("Polarities determination Done")
+        self.send_signal()
 
 
     @AsycTime.run_async()
     def send_polarities(self):
-        model_path = '/Users/roberto/Documents/ISP/isp/PolarCap/PolarCAP.h5'
+
         arrivals_path = os.path.join(PICKING_DIR, "output.txt")
         output_path = os.path.join(PICKING_DIR, "nll_picks_polarities.txt")
-
-        pol = Polarity(project=self.sp, model_path=model_path, arrivals_path=arrivals_path,
+        sp = SurfProject()
+        sp.project = self.sp
+        pol = Polarity(project=sp, model_path=POLARITY_NETWORK, arrivals_path=arrivals_path,
                        threshold=self.polaritiesProbDB.value(),
                        output_path=output_path)
 

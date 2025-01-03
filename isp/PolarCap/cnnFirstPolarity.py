@@ -1,12 +1,15 @@
 from typing import Union
 from copy import deepcopy
-from obspy import UTCDateTime, read, Trace
+from obspy import UTCDateTime, read, Trace, Stream
 import numpy as np
 import tensorflow as tf
 from datetime import datetime
 from isp.Utils import MseedUtil
-from multiprocessing import Pool
 from surfquakecore.project.surf_project import SurfProject
+
+# def init_worker():
+#     """Initialize TensorFlow settings for each worker process."""
+#     tf.compat.v1.enable_eager_execution()
 
 class Polarity:
     def __init__(self, project: Union[SurfProject, str],  model_path, arrivals_path, threshold, output_path):
@@ -33,18 +36,6 @@ class Polarity:
     def import_picks(self):
         self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=self.arrivals_path)
         self.pick_times_imported_modify = deepcopy(self.pick_times_imported)
-
-    def run_predict_polarity_day(self, filtered_files):
-        tr = None
-        for file in filtered_files:
-            try:
-                tr = read(file)[0]
-            except:
-                print("Cannot process day ", file)
-
-            if isinstance(tr, Trace):
-                filtered_picks = self._filter_trace_by_picks(tr)
-                print(filtered_picks)
 
 
     def _filter_trace_by_picks(self, tr: Trace):
@@ -105,18 +96,14 @@ class Polarity:
         # Prepare arguments for multiprocessing
         tasks = [(self.project, start, end) for start, end in daily_ranges]
 
+        for task in tasks:
+            self.process_coincidence_pol(task)
+
+        # no using multiprocess
         # Use multiprocessing to parallelize
-        with Pool() as pool:
-            results = pool.map(self.process_coincidence_pol, tasks)
+        # with Pool(initializer=init_worker) as pool:
+        #     results = pool.map(self.process_coincidence_pol, tasks)
         self.write_output()
-        # Join the output of all days
-        # for item in results:
-        #     if item[0] is not None and item[1] is not None:
-        #         details.extend(item[0])
-        #         final_filtered_results.extend(item[1])
-
-
-        return final_filtered_results, details
 
     def process_coincidence_pol(self, args):
         """Process a single day's data and return events or 'empty'."""
@@ -135,6 +122,7 @@ class Polarity:
             try:
                 tr = read(file)[0]
                 print(tr)
+                tr = self.fill_gaps(tr)
                 if tr.stats.sampling_rate != 100:
                     tr.resample(100)
             except:
@@ -147,37 +135,39 @@ class Polarity:
                 data = tr.data
 
                 for pick, item in zip(filtered_picks, items):
+                    try:
+                        pick_time = pick[1]
+                        time_samples = int((pick_time - tr.stats.starttime) * tr.stats.sampling_rate)
+                        start_sample = time_samples - 32
+                        end_sample = time_samples + 32
+                        data_chop = data[start_sample:end_sample]
 
-                    pick_time = pick[1]
-                    time_samples = int((pick_time - tr.stats.starttime) * tr.stats.sampling_rate)
-                    start_sample = time_samples - 32
-                    end_sample = time_samples + 32
-                    data_chop = data[start_sample:end_sample]
+                        start_sample = time_samples - 200
+                        end_sample = time_samples + 200
+                        data_full = data[start_sample:end_sample]
+                        if len(data_chop) < 64:
+                            data_chop = data_chop[0:64]
 
-                    start_sample = time_samples - 200
-                    end_sample = time_samples + 200
-                    data_full = data[start_sample:end_sample]
-                    if len(data_chop) < 64:
-                        data_chop = data_chop[0:64]
+                        data_full = data_full - np.mean(data_full)
 
-                    data_full = data_full - np.mean(data_full)
+                        data_chop = data_chop - np.mean(data_chop)
+                        #data_chop = data_chop / np.max(data_chop)
+                        # data_plot = data_chop
+                        data_chop = data_chop.reshape(1, -1, 1)
+                        data_chop = self.norm(data_chop)
+                        y_pred = self.model.predict(data_chop)
 
-                    data_chop = data_chop - np.mean(data_chop)
-                    #data_chop = data_chop / np.max(data_chop)
-                    # data_plot = data_chop
-                    data_chop = data_chop.reshape(1, -1, 1)
-                    data_chop = self.norm(data_chop)
-                    y_pred = self.model.predict(data_chop)
+                        pol_pred = np.argmax(y_pred[1], axis=1)
+                        pred_prob = np.max(y_pred[1], axis=1)
+                        predictions = []
+                        polarity = ['Negative', 'Positive']
+                        for pol, prob in zip(pol_pred, pred_prob):
+                            predictions.append((polarity[pol], prob))
 
-                    pol_pred = np.argmax(y_pred[1], axis=1)
-                    pred_prob = np.max(y_pred[1], axis=1)
-                    predictions = []
-                    polarity = ['Negative', 'Positive']
-                    for pol, prob in zip(pol_pred, pred_prob):
-                        predictions.append((polarity[pol], prob))
-
-                    print(pol_pred, pred_prob, predictions)
-                    self._edit_pick_input(trace_id, item, predictions)
+                        print(pol_pred, pred_prob, predictions)
+                        self._edit_pick_input(trace_id, item, predictions)
+                    except:
+                        print("Error estimating prediction polarity at :", pick)
                     #self._plot(data_plot, data_full, label=predictions[0])
 
 
@@ -207,6 +197,34 @@ class Polarity:
             X_ret[i] = X_ret[i] / maxi[i]
         return X_ret
 
+    def fill_gaps(self, tr, tol=5):
+
+        tol_seconds_percentage = int((tol / 100) * len(tr.data)) * tr.stats.delta
+        st = Stream(traces=tr)
+        gaps = st.get_gaps()
+
+        if len(gaps) > 0 and self._check_gaps(gaps, tol_seconds_percentage):
+            st.print_gaps()
+            st.merge(fill_value="interpolate", interpolation_samples=-1)
+            return st[0]
+
+        elif len(gaps) > 0 and not self._check_gaps(gaps, tol_seconds_percentage):
+            st.print_gaps()
+            return None
+        elif len(gaps) == 0 and self._check_gaps(gaps, tol_seconds_percentage):
+            return tr
+        else:
+            return tr
+
+    def _check_gaps(self, gaps, tol):
+        time_gaps = []
+        for i in gaps:
+            time_gaps.append(i[6])
+
+        sum_total = sum(time_gaps)
+
+        return sum_total <= tol
+
     def write_output(self):
         with open(self.output_path, 'w') as file:
 
@@ -216,22 +234,22 @@ class Polarity:
 
             file.write(header)
 
-            for key in self.pick_times_imported.keys():
+            for key in self.pick_times_imported_modify.keys():
                 id = key.split(".")
-                contents = self.pick_times_imported[key]
+                contents = self.pick_times_imported_modify[key]
                 station = id[0].ljust(6)  # Station name, left-justified, 6 chars
                 instrument = "?".ljust(4)  # Placeholder for Instrument
                 component = id[1].ljust(4)  # Placeholder for Component
 
                 for content in contents:
                     time = UTCDateTime(content[1]) # Convert starttime and endtime to pandas-compatible datetime objects
-                    date_concatanate = str(time.year)+str(time.month)+str(time.day)
+                    date_concatanate = time.strftime("%Y%m%d")
                     p_phase_onset = "?"  # Placeholder for P phase onset
                     phase_descriptor = content[0].ljust(6)  # Phase descriptor (e.g., P, S)
                     first_motion = content[3]  # Placeholder for First Motion
                     date = f"{ date_concatanate}"  # Date in yyyymmdd format
                     hour_min = f"{time.hour:02}{time.minute:02}"  # hhmm
-                    seconds = str(time.second) + "." + str(time.microsecond)[0:3] # ss.ssss
+                    seconds = f"{time.second + time.microsecond / 1e6:07.4f}"
                     err = "GAU"  # Error type (GAU)
 
                     err_mag = f"{content[5]:.2e}"  # Error magnitude in seconds
