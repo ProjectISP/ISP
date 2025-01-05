@@ -375,18 +375,39 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def plot_particle_motion(self):
 
         if isinstance(self.st, Stream) and self.trimCB.isChecked():
-            for tr in self.st:
-                if tr.stats.channel[-1] == "Z":
-                    z = tr
-                elif (tr.stats.channel[-1] == "1" or tr.stats.channel[-1] == "N" or tr.stats.channel[-1] == "Y"
-                      or tr.stats.channel[-1] == "R"):
-                    r = tr
-                elif (tr.stats.channel[-1] == "2" or tr.stats.channel[-1] == "E" or tr.stats.channel[-1] == "X"
-                      or tr.stats.channel[-1] == "T"):
-                    t = tr
-
-            self._plot_polarization = PlotPolarization(z.data, r.data, t.data)
-            self._plot_polarization.show()
+            try:
+                channels_fullfill = []
+                for tr in self.st:
+                    if tr.stats.channel[-1] == "Z":
+                        z = tr
+                        channels_fullfill.append("Z")
+                    elif (tr.stats.channel[-1] == "1" or tr.stats.channel[-1] == "N" or tr.stats.channel[-1] == "Y"
+                          or tr.stats.channel[-1] == "R"):
+                        r = tr
+                        channels_fullfill.append("1")
+                    elif (tr.stats.channel[-1] == "2" or tr.stats.channel[-1] == "E" or tr.stats.channel[-1] == "X"
+                          or tr.stats.channel[-1] == "T"):
+                        t = tr
+                        channels_fullfill.append("2")
+                if len(channels_fullfill) ==3:
+                    self._plot_polarization = PlotPolarization(z.data, r.data, t.data)
+                    self._plot_polarization.show()
+                else:
+                    md = MessageDialog(self)
+                    md.set_warning_message(
+                        "You Need to select three components and trim it",
+                        "Be sure you have process and plot Z, N, E or Z, 1 ,2 or Z, Y, X\n")
+            except:
+                md = MessageDialog(self)
+                md.set_error_message(
+                    "The action is nor allowed",
+                    "Be sure you have process and plot all 3-components Z, N, E or Z, 1 ,2 "
+                    "or Z, Y, X or Z, R, T\n")
+        else:
+            md = MessageDialog(self)
+            md.set_warning_message(
+                "You Need to select three components and trim it",
+                "Be sure you have process and plot Z, N, E or Z, 1 ,2 or Z, Y, X\n")
 
     def open_earth_model_viewer(self):
         self.earthmodel.show()
@@ -671,6 +692,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         info = MseedUtil.get_project_basic_info(self.project)
         num_current_seismograms = len(self.files_path)
+        params = self.settings_dialog.getParameters()
+        sharey = params["amplitudeaxis"]
 
         if len(info) > 0 and num_current_seismograms > 0:
             self.workers = ParallelWorkers(os.cpu_count())
@@ -716,7 +739,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ##
             self.diff = self.end_time - self.start_time
             if len(self.canvas.axes) != len(self.files_at_page) or self.autorefreshCB.isChecked():
-                self.canvas.set_new_subplot(nrows=len(self.files_at_page), ncols=1)
+                self.canvas.set_new_subplot(nrows=len(self.files_at_page), ncols=1, sharey=sharey)
             self.last_index = 0
             self.min_starttime = []
             self.max_endtime = []
@@ -992,11 +1015,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         files_at_page = self.get_files_at_page()
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-        self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
         params = self.settings_dialog.getParameters()
         STA = params["STA"]
         LTA = params["LTA"]
+        sharey = params["amplitudeaxis"]
+        global_cf_min = float('inf')
+        global_cf_max = float('-inf')
+        self.canvas.clear()
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
+
         for index, file_path in enumerate(files_at_page):
             tr = self.st[index]
 
@@ -1021,6 +1048,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
             ax2.plot(t, cf, color="grey", linewidth=0.5)
+            # Update global y-limits for ax2
+            cf_min, cf_max = min(cf), max(cf)
+            global_cf_min = min(global_cf_min, cf_min)
+            global_cf_max = max(global_cf_max, cf_max)
+            ax2.set_ylim(global_cf_min, global_cf_max)
+
             last_index = index
             tr_cf = tr.copy()
             tr_cf.data = cf
@@ -1041,18 +1074,24 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cf = Stream(traces=cfs)
 
     def cwt_cf(self):
+        params = self.settings_dialog.getParameters()
+        cycles = params["Num Cycles"]
+        fmin = params["Fmin"]
+        fmax = params["Fmax"]
+        sharey = params["amplitudeaxis"]
+        global_cf_min = float('inf')
+        global_cf_max = float('-inf')
+
         self.cf = []
         cfs = []
         files_at_page = self.get_files_at_page()
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
-        params = self.settings_dialog.getParameters()
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
+
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         diff = end_time - start_time
-        cycles = params["Num Cycles"]
-        fmin = params["Fmin"]
-        fmax = params["Fmax"]
+
 
         for index, file_path in enumerate(files_at_page):
             tr = self.st[index]
@@ -1101,12 +1140,19 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
             ax2.plot(t, cf, color="red", linewidth=0.5, alpha=0.5)
-            # ax2.set_ylim(-1.05, 1.05)
+
+            # Update global y-limits for ax2
+            cf_min, cf_max = min(cf), max(cf)
+            global_cf_min = min(global_cf_min, cf_min)
+            global_cf_max = max(global_cf_max, cf_max)
+            ax2.set_ylim(global_cf_min, global_cf_max)
+
             last_index = index
             tr_cf = tr.copy()
             tr_cf.data = cf
             tr_cf.times = t
             cfs.append(tr_cf)
+
         ax = self.canvas.get_axe(last_index)
         try:
             if self.trimCB.isChecked():
@@ -1121,18 +1167,23 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cf = Stream(traces=cfs)
 
     def cwt_kurt(self):
+        params = self.settings_dialog.getParameters()
+        cycles = params["Num Cycles"]
+        fmin = params["Fmin"]
+        fmax = params["Fmax"]
+        kurt_win = params["kurt_win"]
+        sharey = params["amplitudeaxis"]
+        global_cf_min = float('inf')
+        global_cf_max = float('-inf')
         self.cf = []
         cfs = []
         files_at_page = self.get_files_at_page()
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
-        params = self.settings_dialog.getParameters()
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
+
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         diff = end_time - start_time
-        cycles = params["Num Cycles"]
-        fmin = params["Fmin"]
-        fmax = params["Fmax"]
 
         for index, file_path in enumerate(files_at_page):
             tr = self.st[index]
@@ -1172,7 +1223,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.canvas.set_plot_label(index, info)
             self.redraw_pickers(file_path, index)
             self.redraw_chop(tr, tr.data, index)
-            tr_kurt = cw.charachteristic_function_kurt()
+            tr_kurt = cw.charachteristic_function_kurt(window_size_seconds=kurt_win)
             cf = tr_kurt.data
             # Normalize
             # cf = cf / max(cf)
@@ -1182,7 +1233,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
             ax2.plot(t, cf, color="red", linewidth=0.5, alpha=0.5)
-            # ax2.set_ylim(-1.05, 1.05)
+
+            # Update global y-limits for ax2
+            cf_min, cf_max = min(cf), max(cf)
+            global_cf_min = min(global_cf_min, cf_min)
+            global_cf_max = max(global_cf_max, cf_max)
+            ax2.set_ylim(global_cf_min, global_cf_max)
+
             last_index = index
             tr_cf = tr.copy()
             tr_cf.data = cf
@@ -1202,11 +1259,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cf = Stream(traces=cfs)
 
     def envelope(self):
+
+        params = self.settings_dialog.getParameters()
+        sharey = params["amplitudeaxis"]
         self.cf = []
         cfs = []
         files_at_page = self.get_files_at_page()
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         for index, file_path in enumerate(files_at_page):
@@ -1243,13 +1303,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         params = self.settings_dialog.getParameters()
         win = params["win_entropy"]
+        sharey = params["amplitudeaxis"]
+        global_cf_min = float('inf')
+        global_cf_max = float('-inf')
 
         self.cf = []
         cfs = []
         files_at_page = self.get_files_at_page()
 
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         for index, file_path in enumerate(files_at_page):
@@ -1272,7 +1335,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
             ax2.plot(t_entropy, cf, color="green", linewidth=0.5, alpha=0.5)
-            ax2.set_ylim(-1.05, 1.05)
+
+            # Update global y-limits for ax2
+            cf_min, cf_max = min(cf), max(cf)
+            global_cf_min = min(global_cf_min, cf_min)
+            global_cf_max = max(global_cf_max, cf_max)
+            ax2.set_ylim(global_cf_min, global_cf_max)
+
             last_index = index
             tr_cf = tr.copy()
             tr_cf.data = cf
@@ -1672,7 +1741,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         max_values = []
         files_at_page = self.get_files_at_page()
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
+        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
 
         try:
             if len(self.st) > 0 and self.trimCB.isChecked():
