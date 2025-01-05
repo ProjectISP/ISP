@@ -288,7 +288,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         hypo_lon = self.event_info.longitude
         hypo_depth = self.event_info.depth
         hypo_origin_time = self.event_info.event_time
-        rp(self.st, starttime=start_time, endtime=end_time, hypo_lat=hypo_lat, hypo_lon=hypo_lon,
+        rp(self.st, chop=self.chop, starttime=start_time, endtime=end_time, hypo_lat=hypo_lat, hypo_lon=hypo_lon,
            hypo_depth_km=hypo_depth, hypo_origin_time=hypo_origin_time)
 
     def new_project(self):
