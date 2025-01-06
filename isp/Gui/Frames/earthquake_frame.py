@@ -1048,17 +1048,30 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
             ax2.plot(t, cf, color="grey", linewidth=0.5)
+            if sharey:
+                # Clean ticks on ax2
+                ax2.tick_params(axis='y', which='both', left=False, right=False, labelleft=False, labelright=False)
+
             # Update global y-limits for ax2
             cf_min, cf_max = min(cf), max(cf)
             global_cf_min = min(global_cf_min, cf_min)
             global_cf_max = max(global_cf_max, cf_max)
-            ax2.set_ylim(global_cf_min, global_cf_max)
 
             last_index = index
             tr_cf = tr.copy()
             tr_cf.data = cf
             tr_cf.times = t
             cfs.append(tr_cf)
+
+        # After the loop, synchronize all ax2 y-limits
+        if sharey:
+            for index in range(len(files_at_page)):
+                ax2 = self.canvas.get_axe(index).twinx()  # Get the corresponding ax2
+                ax2.set_ylim(global_cf_min, global_cf_max)
+
+                # Re-enable right-side ticks (if needed)
+                ax2.tick_params(axis='y', which='both', left=False, right=True, labelleft=False, labelright=True)
+
         ax = self.canvas.get_axe(last_index)
         try:
             if self.trimCB.isChecked():
@@ -1140,18 +1153,29 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
             ax2.plot(t, cf, color="red", linewidth=0.5, alpha=0.5)
-
+            if sharey:
+                # Clean ticks on ax2
+                ax2.tick_params(axis='y', which='both', left=False, right=False, labelleft=False, labelright=False)
             # Update global y-limits for ax2
             cf_min, cf_max = min(cf), max(cf)
             global_cf_min = min(global_cf_min, cf_min)
             global_cf_max = max(global_cf_max, cf_max)
-            ax2.set_ylim(global_cf_min, global_cf_max)
+            #ax2.set_ylim(global_cf_min, global_cf_max)
 
             last_index = index
             tr_cf = tr.copy()
             tr_cf.data = cf
             tr_cf.times = t
             cfs.append(tr_cf)
+
+        # After the loop, synchronize all ax2 y-limits
+        if sharey:
+            for index in range(len(files_at_page)):
+                ax2 = self.canvas.get_axe(index).twinx()  # Get the corresponding ax2
+                ax2.set_ylim(global_cf_min, global_cf_max)
+
+                # Re-enable right-side ticks (if needed)
+                ax2.tick_params(axis='y', which='both', left=False, right=True, labelleft=False, labelright=True)
 
         ax = self.canvas.get_axe(last_index)
         try:
@@ -1233,18 +1257,30 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
             ax2.plot(t, cf, color="red", linewidth=0.5, alpha=0.5)
-
+            if sharey:
+                # Clean ticks on ax2
+                ax2.tick_params(axis='y', which='both', left=False, right=False, labelleft=False, labelright=False)
             # Update global y-limits for ax2
             cf_min, cf_max = min(cf), max(cf)
             global_cf_min = min(global_cf_min, cf_min)
             global_cf_max = max(global_cf_max, cf_max)
-            ax2.set_ylim(global_cf_min, global_cf_max)
+            #ax2.set_ylim(global_cf_min, global_cf_max)
 
             last_index = index
             tr_cf = tr.copy()
             tr_cf.data = cf
             tr_cf.times = t
             cfs.append(tr_cf)
+
+        # After the loop, synchronize all ax2 y-limits
+        if sharey:
+            for index in range(len(files_at_page)):
+                ax2 = self.canvas.get_axe(index).twinx()  # Get the corresponding ax2
+                ax2.set_ylim(global_cf_min, global_cf_max)
+
+                # Re-enable right-side ticks (if needed)
+                ax2.tick_params(axis='y', which='both', left=False, right=True, labelleft=False, labelright=True)
+
         ax = self.canvas.get_axe(last_index)
         try:
             if self.trimCB.isChecked():
@@ -1335,12 +1371,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
             ax2.plot(t_entropy, cf, color="green", linewidth=0.5, alpha=0.5)
-
+            if sharey:
+                # Clean ticks on ax2
+                ax2.tick_params(axis='y', which='both', left=False, right=False, labelleft=False, labelright=False)
             # Update global y-limits for ax2
             cf_min, cf_max = min(cf), max(cf)
             global_cf_min = min(global_cf_min, cf_min)
             global_cf_max = max(global_cf_max, cf_max)
-            ax2.set_ylim(global_cf_min, global_cf_max)
+            #ax2.set_ylim(global_cf_min, global_cf_max)
 
             last_index = index
             tr_cf = tr.copy()
@@ -1348,6 +1386,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             tr_cf.times = t_entropy
             cfs.append(tr_cf)
             self.value_entropy_init.emit(index + 1)
+
+        # After the loop, synchronize all ax2 y-limits
+        if sharey:
+            for index in range(len(files_at_page)):
+                ax2 = self.canvas.get_axe(index).twinx()  # Get the corresponding ax2
+                ax2.set_ylim(global_cf_min, global_cf_max)
+
+                # Re-enable right-side ticks (if needed)
+                ax2.tick_params(axis='y', which='both', left=False, right=True, labelleft=False, labelright=True)
 
         ax = self.canvas.get_axe(last_index)
         try:
