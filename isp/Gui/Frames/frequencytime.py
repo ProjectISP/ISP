@@ -286,8 +286,11 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.group_vel_def = []
         self._clean_lasso()
 
+        row = self.tw_files.currentRow()
+        file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
+
         modes = ["fundamental", "first", "second"]
-        feature = ["-.","-",  "--"]
+        feature = ["-.", "-", "--"]
         [tr1, t] = self.get_data()
         tr = tr1.copy()
         fs = tr1.stats.sampling_rate
@@ -451,8 +454,10 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             self.ax_seism1.set_xlabel("Amplitude")
             self.ax_seism1.set_ylabel("Time (s)")
             self.canvas_plot1.clear()
+
             self.canvas_plot1.plot_contour(period, vel, scalogram2, axes_index=0, levels=100, clabel="Power [dB]",
-                        cmap=plt.get_cmap("jet"), vmin=min_cwt, vmax=max_cwt, antialiased=True, xscale="log")
+                        cmap=plt.get_cmap("jet"), vmin=min_cwt, vmax=max_cwt, antialiased=True, xscale="log",
+                                           show_colorbar=False)
 
 
             for i, mode in enumerate(modes):
@@ -579,6 +584,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
                 pts = ax.scatter(self.periods, self.group_vel[k], c=self.colors[k], marker=".", s=60)
                 self.selectors_group_vel.append(CollectionLassoSelector(ax, pts, [0.5, 0., 0.5, 1.]))
+
 
     def run_phase_vel(self):
 
