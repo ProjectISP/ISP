@@ -18,7 +18,6 @@ from isp.Gui.Frames.autopick_frame import Autopick
 from isp.Gui.Frames.earthquake_frame_tabs import Earthquake3CFrame
 from isp.Gui.Frames.locate_frame import Locate
 #from isp.Gui.Frames.open_magnitudes_calc import MagnitudeCalc
-from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 from isp.Gui.Frames.parameters import ParametersSettings
 from isp.Gui.Frames.plot_polarization import PlotPolarization
 from isp.Gui.Frames.uncertainity import UncertainityInfo
@@ -139,7 +138,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.macroBtn.clicked.connect(self.open_parameters_settings)
         self.__metadata_manager = MetadataManager(self.metadata_path_bind.value)
         self.actionSet_Parameters.triggered.connect(lambda: self.open_parameters_settings())
-        self.actionOpen_Earth_Model_Viewer.triggered.connect(lambda: self.open_earth_model_viewer())
         self.actionSeismograms.triggered.connect(self.write_files_page)
         self.actionArray_Anlysis.triggered.connect(self.open_array_analysis)
         self.actionMoment_Tensor_Inversion.triggered.connect(self.open_moment_tensor)
@@ -191,9 +189,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.project_dialog = Project()
 
-        # Earth Model Viewer
-
-        self.earthmodel = EarthModelViewer()
 
         # catalog viewer
 
@@ -408,9 +403,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             md.set_warning_message(
                 "You Need to select three components and trim it",
                 "Be sure you have process and plot Z, N, E or Z, 1 ,2 or Z, Y, X\n")
-
-    def open_earth_model_viewer(self):
-        self.earthmodel.show()
 
     def open_catalog_viewer(self):
         self.catalog.show()

@@ -3,7 +3,7 @@ from isp.Gui.Frames.uis_frames import UiEarth_model_viewer
 import numpy as np
 import matplotlib.pyplot as plt
 from isp.Gui.Utils.pyqt_utils import add_save_load
-from isp.earthquakeAnalysis import NLLGrid
+from isp.earthquakeAnalysis.NLLGrid import NLLGrid
 import os
 import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
@@ -11,11 +11,12 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
 @add_save_load()
 class EarthModelViewer(pw.QFrame,UiEarth_model_viewer):
+
         """
+
         EarthModelViewr contains the functionability to plot *buf from NonLinLoc
 
-                :param params required to initialize the class:
-
+        :param params required to initialize the class:
 
         """
         def __init__(self):
@@ -37,15 +38,17 @@ class EarthModelViewer(pw.QFrame,UiEarth_model_viewer):
 
         def info_grid(self):
 
-            grd = NLLGrid(self.path_file)
+            grd = NLLGrid(basename=self.path_file)
+            self.InfoTX.clear()
             self.InfoTX.setPlainText("Model Primary Information")
             self.InfoTX.appendPlainText("Basename: {name} ".format(name=os.path.basename(grd.basename)))
-            self.InfoTX.appendPlainText("nx: {nx} ny: {ny} nz: {nz}".format(nx=grd.nx, ny=grd.ny, nz=grd.nz))
+            self.InfoTX.appendPlainText("Projection: {proj} ".format(proj=grd.proj_name))
+            self.InfoTX.appendPlainText("nx: {nx} km ny: {ny} km nz: {nz} km".format(nx=grd.nx, ny=grd.ny, nz=grd.nz))
             self.InfoTX.appendPlainText("x.orig: {x_orig} y.orig: {y_orig} z.orig: {y_orig}".format(x_orig=grd.x_orig,
                                       y_orig=grd.y_orig,z=grd.z_orig))
-            self.InfoTX.appendPlainText("nx: {dx} ny: {dy} nz: {dz}".format(dx=grd.dx, dy=grd.dy, dz=grd.dz))
+            self.InfoTX.appendPlainText("dx: {dx} dy: {dy} dz: {dz}".format(dx=grd.dx, dy=grd.dy, dz=grd.dz))
             self.InfoTX.appendPlainText("{transform} LatOrig {LatOrig:.2f} LonOrig {LonOrig:.2f}".format(
-                transform = grd.proj_name, LatOrig=grd.orig_lat, LonOrig=grd.orig_lon))
+                transform=grd.proj_name, LatOrig=grd.orig_lat, LonOrig=grd.orig_lon))
 
 
         def plot(self):
@@ -79,13 +82,13 @@ class EarthModelViewer(pw.QFrame,UiEarth_model_viewer):
 
             grid = grd.array
 
-            if grd.z_orig * dz < zz <  grid.shape[2]* dz:
+            if grd.z_orig * dz < zz < grid.shape[2]* dz:
 
                 self.map_widget.ax.clear()
                 z = grid[:, :, zz].transpose()
                 if self.earth_modelCB.isChecked():
                     z = 1 / z
-                    print(np.min(z),np.max(z))
+
                 z = np.clip(z, a_min=np.min(z), a_max=np.max(z))
                 y = np.linspace(y0, y1, grid.shape[1])
                 x = np.linspace(x0, x1, grid.shape[0])
@@ -98,8 +101,10 @@ class EarthModelViewer(pw.QFrame,UiEarth_model_viewer):
                                                  vmin =np.min(z), vmax = np.max(z))
                 if self.plt_cbar:
                     #self.cb = self.map_widget.fig.colorbar(cs)
-                    self.cb = self.map_widget.fig.colorbar(cs, orientation='horizontal', fraction=0.05, extend='both',
-                                                           pad=0.3)
+                    cax = self.map_widget.fig.add_axes([0.83, 0.1, 0.02, 0.8])  # Adjust these values as needed
+
+                    self.cb = self.map_widget.fig.colorbar(cs, cax=cax, orientation='vertical', extend='both',
+                                                           label='Depth (km)')
                     self.cb.ax.xaxis.tick_top()
 
                 self.plt_cbar = False
@@ -148,6 +153,7 @@ class EarthModelViewer(pw.QFrame,UiEarth_model_viewer):
                 gl.ylines = False
                 gl.xformatter = LONGITUDE_FORMATTER
                 gl.yformatter = LATITUDE_FORMATTER
+                self.map_widget.fig.subplots_adjust(right=0.870, bottom=0.062, top=0.828, left=0.014)
                 self.map_widget.fig.canvas.draw()
 
 

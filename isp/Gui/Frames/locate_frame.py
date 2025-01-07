@@ -37,6 +37,7 @@ from isp.earthquakeAnalysis.run_nll import Nllcatalog
 from isp.earthquakeAnalysis.structures import TravelTimesConfiguration, LocationParameters, NLLConfig, \
     GridConfiguration
 from sys import platform
+from isp.Gui.Frames.earth_model_viewer import EarthModelViewer
 
 @add_save_load()
 class Locate(BaseFrame, UiLocFlow):
@@ -101,12 +102,18 @@ class Locate(BaseFrame, UiLocFlow):
 
         # Map
         self.cartopy_canvas = CartopyCanvas(self.widget_map, constrained_layout=True)
+
         # FocMec
         self.focmec_canvas = FocCanvas(self.widget_focmec)
 
         self.resultsShow.stateChanged.connect(lambda: self.show_results())
         self.selectAllLocCB.stateChanged.connect(lambda: self.check_all_checkboxes_Loc())
         self.selectAllFocCB.stateChanged.connect(lambda: self.check_all_checkboxes_Mec())
+
+        # Earth Model Viewer
+        self.Open_Earth_Model_Viewer.clicked.connect(lambda: self.open_earth_model_viewer())
+
+        self.earthmodel = EarthModelViewer()
 
         # Dialog
         self.progress_dialog = pw.QProgressDialog(self)
@@ -117,6 +124,8 @@ class Locate(BaseFrame, UiLocFlow):
         self.progress_dialog.setWindowTitle(self.windowTitle())
         self.progress_dialog.close()
 
+    def open_earth_model_viewer(self):
+        self.earthmodel.show()
 
     def setSourcePath(self):
         save__source_path = os.path.join(self.loc_work_bind.value, "savedLocs")
@@ -260,7 +269,7 @@ class Locate(BaseFrame, UiLocFlow):
             path_model3D = "NONE"
         else:
             path_model1D = "NONE"
-            path_model3D = self.picks_path_bind.value
+            path_model3D = self.model_path_bind.value
 
         nllconfig = NLLConfig(
             grid_configuration=GridConfiguration(

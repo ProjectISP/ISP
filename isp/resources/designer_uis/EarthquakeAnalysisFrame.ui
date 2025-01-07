@@ -894,7 +894,6 @@
     <addaction name="menuPicks"/>
     <addaction name="actionSet_Parameters"/>
     <addaction name="actionClean_Events_Detected"/>
-    <addaction name="actionOpen_Earth_Model_Viewer"/>
     <addaction name="actionSearch_in_Catalog"/>
     <addaction name="actionData_Availability"/>
    </widget>

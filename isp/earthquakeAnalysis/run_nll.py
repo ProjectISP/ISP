@@ -234,10 +234,11 @@ class NllManager:
         self.__create_dir("stations")
 
         # model dir.
+        # This folder will storage the output of eiather 3D grids or 1D grids
         self.__create_dir("model")
 
         # model dir.
-        self.__create_dir("model3D")
+        # self.__create_dir("model3D")
 
         # time dir.
         self.__create_dir("time")
@@ -656,31 +657,63 @@ class NllManager:
         path = os.path.join(self.get_local_models_dir3D, file_name)
         aslow, xNum, yNum, zNum = self.read_modfiles(path)
         output_name = file_name+".buf"
-        output= os.path.join(self.get_model_dir, output_name)
+        output = os.path.join(self.get_model_dir, output_name)
         with open(file_name, 'wb'):
             aslow.astype('float32').tofile(output)
 
 
-    def read_modfiles(self, file_name):
+    # def read_modfiles(self, file_name):
+    #
+    #     xNum, yNum, zNum, xOrig, yOrig, zOrig, dx, dy, dz = self.__read_header(file_name)
+    #     aslow = np.empty([xNum, yNum, zNum])
+    #     fm = None
+    #     for k in range(zNum):
+    #         new_k = k * int(dz)
+    #         depth = int(zOrig) + new_k
+    #         strdepth = str(depth)
+    #         fm_name = file_name + strdepth + '.mod'
+    #         fm = open(fm_name)
+    #         for j in range(yNum):
+    #             line = fm.readline().split()
+    #             for i in range(xNum):
+    #                 print("Processing depth ", k, "y ", j, "x ", i)
+    #                 vel = float(line[i])
+    #                 if vel <= 1E-2:
+    #                     vel = 1E-2
+    #                 slow = dx * 1. / vel
+    #                 aslow[i, j, k] = slow
+    #     fm.close()
+    #     return aslow, xNum, yNum, zNum
 
+    def read_modfiles(self, file_name):
         xNum, yNum, zNum, xOrig, yOrig, zOrig, dx, dy, dz = self.__read_header(file_name)
-        aslow = np.empty([xNum, yNum, zNum])
+        aslow = np.empty((xNum, yNum, zNum), dtype=np.float32)
+
+        # Precompute constants
+        min_vel = 1E-2
+        dx_inv = 1.0 / dx
 
         for k in range(zNum):
-            new_k = k * int(dz)
-            depth = int(zOrig) + new_k
-            strdepth = str(depth)
-            fm_name = file_name + strdepth + '.mod'
-            fm = open(fm_name)
-            for j in range(yNum):
-                line = fm.readline().split()
-                for i in range(xNum):
-                    vel = float(line[i])
-                    slow = dx * 1. / vel
-                    aslow[i, j, k] = slow
-        fm.close()
-        return aslow, xNum, yNum, zNum
 
+            depth = zOrig + k * dz
+            # Dynamically format depth based on whether dz is integer-like or float
+            if depth.is_integer():  # Check if depth is equivalent to an integer
+                depth_str = f"{int(depth)}"  # Format as an integer
+            else:
+                depth_str = f"{depth:.1f}"  # Format as a float with 2 decimal places
+            print("processing layer", depth_str, " km")
+            fm_name = f"{file_name}{depth_str}.mod"  # Construct the filename
+
+            # Read the file and process data
+            with open(fm_name, 'r') as fm:
+                file_data = [line.split() for line in fm.readlines()]
+
+            # Convert to NumPy array for faster processing
+            file_array = np.array(file_data, dtype=np.float64)
+            file_array[file_array <= min_vel] = min_vel  # Replace velocities ≤ min_vel
+
+            aslow[:, :, k] = dx_inv / file_array.T
+        return aslow, xNum, yNum, zNum
     def __read_header(self, file_name):
 
         fa = open(file_name + '.hdr')
@@ -706,7 +739,7 @@ class NllManager:
             file_name = os.path.join(self.get_local_models_dir3D, "layer.S.mod.hdr")
 
         x_width = float((x_node - 1) * dx)
-        y_width = float((x_node - 1) * dx)
+        y_width = float((y_node - 1) * dy)
         shift_x = -0.5 * x_width
         shift_y = -0.5 * y_width
         lat_geo, lon_geo = calculate_destination_coordinates(latitude, longitude, abs(shift_x), abs(shift_y))

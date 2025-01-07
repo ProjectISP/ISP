@@ -154,30 +154,71 @@
              <property name="title">
               <string>Grid Configuration</string>
              </property>
-             <layout class="QGridLayout" name="gridLayout_12" rowstretch="0,0,0,0,0,0,0,0">
-              <item row="7" column="7">
-               <widget class="QPushButton" name="genvelBtn">
+             <layout class="QGridLayout" name="gridLayout_12" rowstretch="0,0,0,0,0,0,0,0,0">
+              <item row="4" column="7">
+               <widget class="QLabel" name="label_14">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="toolTip">
-                 <string>Click to Generate the velocity grid</string>
-                </property>
                 <property name="text">
-                 <string>Generate Velocity Grid</string>
+                 <string>dz</string>
                 </property>
                </widget>
               </item>
-              <item row="2" column="0">
-               <widget class="QDoubleSpinBox" name="gridlatSB">
+              <item row="4" column="0">
+               <widget class="QDoubleSpinBox" name="griddepthSB">
                 <property name="minimum">
-                 <double>-90.000000000000000</double>
+                 <double>-10.000000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>90.000000000000000</double>
+                 <double>1000.990000000000009</double>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0" colspan="3">
+               <widget class="QComboBox" name="transCB">
+                <item>
+                 <property name="text">
+                  <string>GLOBAL</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>SIMPLE</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="4" column="4">
+               <widget class="QSpinBox" name="znodeSB">
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QDoubleSpinBox" name="gridlonSB">
+                <property name="minimum">
+                 <double>-180.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>180.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="5">
+               <widget class="QLabel" name="label_7">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>z</string>
                 </property>
                </widget>
               </item>
@@ -194,74 +235,24 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="7">
-               <widget class="QLabel" name="label_14">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
+              <item row="3" column="2">
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
                 </property>
-                <property name="text">
-                 <string>dz</string>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
                 </property>
-               </widget>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>320</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
-              <item row="6" column="4" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_18">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Grid Type</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="6">
-               <widget class="QSpinBox" name="dxsizeSB">
-                <property name="maximum">
-                 <number>10000</number>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="4">
-               <widget class="QSpinBox" name="znodeSB">
-                <property name="maximum">
-                 <number>10000</number>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="7">
-               <widget class="QLabel" name="label_10">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>dx</string>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="1">
-               <widget class="QLabel" name="label_4">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Depth (km)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="6" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_11">
+              <item row="6" column="5" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_19">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                   <horstretch>0</horstretch>
@@ -269,34 +260,7 @@
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>Model</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="4">
-               <widget class="QSpinBox" name="xnodeSB">
-                <property name="maximum">
-                 <number>10000</number>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="4">
-               <widget class="QSpinBox" name="ynodeSB">
-                <property name="maximum">
-                 <number>10000</number>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="1">
-               <widget class="QLabel" name="label_3">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Longitude</string>
+                 <string>Wave</string>
                 </property>
                </widget>
               </item>
@@ -320,32 +284,6 @@
                 </item>
                </widget>
               </item>
-              <item row="6" column="5" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_19">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Wave</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QLabel" name="label_9">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Latitude</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="0" alignment="Qt::AlignHCenter">
                <widget class="QLabel" name="label_8">
                 <property name="sizePolicy">
@@ -359,18 +297,77 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="0">
-               <widget class="QDoubleSpinBox" name="griddepthSB">
-                <property name="minimum">
-                 <double>-10.000000000000000</double>
+              <item row="6" column="4" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_18">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
-                <property name="maximum">
-                 <double>1000.990000000000009</double>
+                <property name="text">
+                 <string>Grid Type</string>
                 </property>
                </widget>
               </item>
-              <item row="3" column="5">
-               <widget class="QLabel" name="label_6">
+              <item row="0" column="3" colspan="4" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_5">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Grid Size (km)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Geographic Transformation</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="6">
+               <widget class="QSpinBox" name="dysizeSB">
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="7">
+               <widget class="QPushButton" name="genvelBtn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Click to Generate the velocity grid</string>
+                </property>
+                <property name="text">
+                 <string>Generate Velocity Grid</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="4">
+               <widget class="QSpinBox" name="xnodeSB">
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QLabel" name="label_4">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -378,14 +375,43 @@
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>y</string>
+                 <string>Depth (km)</string>
                 </property>
                </widget>
               </item>
-              <item row="4" column="6">
-               <widget class="QSpinBox" name="dzsizeSB">
+              <item row="3" column="1">
+               <widget class="QLabel" name="label_3">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Longitude</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QDoubleSpinBox" name="gridlatSB">
+                <property name="minimum">
+                 <double>-90.000000000000000</double>
+                </property>
                 <property name="maximum">
-                 <number>10000</number>
+                 <double>90.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="7">
+               <widget class="QLabel" name="label_10">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>dx</string>
                 </property>
                </widget>
               </item>
@@ -429,18 +455,29 @@
                 </item>
                </widget>
               </item>
-              <item row="3" column="0">
-               <widget class="QDoubleSpinBox" name="gridlonSB">
-                <property name="minimum">
-                 <double>-180.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>180.000000000000000</double>
+              <item row="1" column="3" rowspan="4">
+               <widget class="Line" name="line_4">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
                 </property>
                </widget>
               </item>
-              <item row="3" column="7">
-               <widget class="QLabel" name="label_13">
+              <item row="2" column="6">
+               <widget class="QSpinBox" name="dxsizeSB">
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0" colspan="8">
+               <widget class="Line" name="line_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLabel" name="label_9">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -448,12 +485,12 @@
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>dy</string>
+                 <string>Latitude</string>
                 </property>
                </widget>
               </item>
-              <item row="3" column="6">
-               <widget class="QSpinBox" name="dysizeSB">
+              <item row="4" column="6">
+               <widget class="QSpinBox" name="dzsizeSB">
                 <property name="maximum">
                  <number>10000</number>
                 </property>
@@ -473,8 +510,8 @@
                 </item>
                </widget>
               </item>
-              <item row="4" column="5">
-               <widget class="QLabel" name="label_7">
+              <item row="3" column="5">
+               <widget class="QLabel" name="label_6">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -482,12 +519,19 @@
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>z</string>
+                 <string>y</string>
                 </property>
                </widget>
               </item>
-              <item row="6" column="0" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_2">
+              <item row="3" column="4">
+               <widget class="QSpinBox" name="ynodeSB">
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="6" alignment="Qt::AlignHCenter">
+               <widget class="QLabel" name="label_11">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                   <horstretch>0</horstretch>
@@ -495,64 +539,27 @@
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>Geographic Transformation</string>
+                 <string>Model</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="3" colspan="4" alignment="Qt::AlignHCenter">
-               <widget class="QLabel" name="label_5">
+              <item row="3" column="7">
+               <widget class="QLabel" name="label_13">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>Grid Size (km)</string>
+                 <string>dy</string>
                 </property>
                </widget>
               </item>
-              <item row="3" column="2">
-               <spacer name="horizontalSpacer_2">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeType">
-                 <enum>QSizePolicy::Fixed</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>320</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="1" column="3" rowspan="4">
-               <widget class="Line" name="line_4">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="7" column="0" colspan="3">
-               <widget class="QComboBox" name="transCB">
-                <item>
-                 <property name="text">
-                  <string>GLOBAL</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>SIMPLE</string>
-                 </property>
-                </item>
-               </widget>
-              </item>
-              <item row="5" column="0" colspan="8">
-               <widget class="Line" name="line_5">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+              <item row="8" column="7">
+               <widget class="QPushButton" name="Open_Earth_Model_Viewer">
+                <property name="text">
+                 <string>3D Earth Model Viewer</string>
                 </property>
                </widget>
               </item>
@@ -784,7 +791,7 @@
                <x>0</x>
                <y>0</y>
                <width>1330</width>
-               <height>782</height>
+               <height>776</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -839,11 +846,11 @@
                   <property name="sortingEnabled">
                    <bool>true</bool>
                   </property>
-                  <attribute name="horizontalHeaderDefaultSectionSize">
-                   <number>220</number>
-                  </attribute>
                   <attribute name="horizontalHeaderMinimumSectionSize">
                    <number>20</number>
+                  </attribute>
+                  <attribute name="horizontalHeaderDefaultSectionSize">
+                   <number>220</number>
                   </attribute>
                   <column>
                    <property name="text">
@@ -1014,11 +1021,11 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <attribute name="horizontalHeaderDefaultSectionSize">
-             <number>285</number>
-            </attribute>
             <attribute name="horizontalHeaderMinimumSectionSize">
              <number>20</number>
+            </attribute>
+            <attribute name="horizontalHeaderDefaultSectionSize">
+             <number>285</number>
             </attribute>
             <column>
              <property name="text">
