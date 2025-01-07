@@ -260,8 +260,11 @@ class Locate(BaseFrame, UiLocFlow):
         if self.loc_wavetypeCB.currentText() == "P & S":
             p_wave_type = True
             s_wave_type = True
-        else:
+        elif self.loc_wavetypeCB.currentText() == "P":
             p_wave_type = True
+            s_wave_type = False
+        elif self.loc_wavetypeCB.currentText() == "S":
+            p_wave_type = False
             s_wave_type = True
 
         if self.loc_modelCB.currentText() == "1D":

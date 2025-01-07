@@ -32,6 +32,7 @@ from isp.DataProcessing.metadata_manager import MetadataManager
 
 _os = platform.system()
 
+
 class NllManager:
 
     def __init__(self, nll_config: Union[str, NLLConfig], metadata_path, working_directory):
@@ -56,13 +57,11 @@ class NllManager:
             raise ValueError(f"mti_config {nll_config} is not valid. It must be either a "
                              f" valid real_config.ini file or a NLLConfig instance.")
 
-
-    def find_files(self,base, pattern):
+    def find_files(self, base, pattern):
         """
         Return list of files matching pattern in base folder
         """
         return [n for n in fnmatch.filter(os.listdir(base), pattern) if os.path.isfile(os.path.join(base, n))]
-
 
     def clean_output_folder(self):
 
@@ -143,7 +142,6 @@ class NllManager:
         else:
             raise AttributeError("Wrong wave type. The wave type {} is not valid".format(wave_type))
 
-
     @property
     def get_run_dir(self):
         run_dir = os.path.join(self.root_path, "run")
@@ -191,7 +189,6 @@ class NllManager:
         time_dir = os.path.join(self.root_path, "ak135")
         self.__validate_dir(time_dir)
         return time_dir
-
 
     @property
     def get_stations_dir(self):
@@ -250,7 +247,7 @@ class NllManager:
 
         self.__obs_file_path = self.nll_config.grid_configuration.path_to_picks
 
-    def set_run_template(self, latitude, longitude):
+    def set_run_template(self, latitude, longitude, depth):
         files = self.find_files(self.get_time_dir, 'layer.P.mod.hdr')
         file_name = os.path.join(self.get_time_dir, files[0])
         fa = open(file_name)
@@ -261,51 +258,74 @@ class NllManager:
         fa.close()
 
         run_path = self.get_run_template_file_path
-        data = pd.read_csv(run_path, header = None)
+        data = pd.read_csv(run_path, header=None)
         travetimepath = os.path.join(self.get_time_dir, "layer")
         locationpath = os.path.join(self.get_loc_dir, "location")
 
         # Grid search inside for location robustness 1% inside the grid
-        yNum = yNum*dy - round(0.02 * (yNum*dy) + 1)
-        xNum = yNum*dy
-        zNum = zNum*dz - round(0.02 * (zNum*dz) + 1)
+        yNum_delta = yNum * dy - round(0.02 * (yNum * dy) + 1)
+        xNum_delta = xNum * dx - round(0.02 * (xNum * dx) + 1)
+        # xNum = yNum*dy
+        zNum_delta = zNum * dz - round(0.02 * (zNum * dz) + 1)
+
+        if (self.nll_config.grid_configuration.p_wave_type == True and
+                self.nll_config.grid_configuration.s_wave_type == True):
+            vp_vs = -1 * 1.73
+        else:
+            vp_vs = 1.73
 
         if self.nll_config.grid_configuration.model == "1D":
-            xOrig = round(0.01*(xNum*dx) + 1)
-            yOrig = round(0.01*(yNum*dy) + 1)
-            zOrig = zOrig + round(0.01*zNum + 1)
+            # the shift is zero because is centered in the left-down corner
+            xOrig = round(0.01 * (xNum * dx) + 1)
+            yOrig = round(0.01 * (yNum * dy) + 1)
+            zOrig = zOrig + 1 * round(0.01 * zOrig + 1)
+            xNum_delta = yNum_delta
         else:
-            xOrig = round(0.01 * xOrig + 1)
-            yOrig = round(0.01 * yOrig + 1)
-            zOrig = zOrig + round(0.01 * zOrig + 1)
+            # the shift is centered in the center of the grid
+            x_node = int(self.nll_config.grid_configuration.x)
+            y_node = int(self.nll_config.grid_configuration.y)
 
+            dx = self.nll_config.grid_configuration.dx
+            dy = self.nll_config.grid_configuration.dy
+            dz = self.nll_config.grid_configuration.dz
+
+            x_width = float((x_node - 1) * dx)
+            y_width = float((y_node - 1) * dy)
+            shift_x = -0.5 * x_width
+            shift_y = -0.5 * y_width
+            latitude, longitude = calculate_destination_coordinates(latitude, longitude, abs(shift_x), abs(shift_y))
+
+            xOrig = xOrig + -1 * round(0.01 * xOrig + 1)
+            yOrig = yOrig + -1 * round(0.01 * yOrig + 1)
+            zOrig = zOrig + 1 * round(0.01 * zOrig + 1)
 
         df = pd.DataFrame(data)
-        df.iloc[1, 0] = 'TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}'.format(lat=latitude, lon=longitude, depth=0.0)
+
+        df.iloc[1, 0] = 'TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}'.format(lat=latitude, lon=longitude, depth=depth)
         df.iloc[3, 0] = 'LOCFILES {obspath} NLLOC_OBS {timepath} {locpath}'.format(
             obspath=self.nll_config.grid_configuration.path_to_picks, timepath=travetimepath, locpath=locationpath)
 
-        xNum = int(yNum)
-        yNum = int(yNum)
-        df.iloc[6, 0] = 'LOCGRID  {x} {y} {z} {xo} {yo} {zo} {dx} {dy} {dz} PROB_DENSITY  SAVE'.format(x=int(xNum),
-                        y=int(yNum), z=int(zNum), xo=xOrig, yo=yOrig, zo=zOrig, dx=dx, dy=dy, dz=dz)
+        df.iloc[6, 0] = 'LOCGRID  {x} {y} {z} {xo} {yo} {zo} {dx} {dy} {dz} PROB_DENSITY  SAVE'.format(
+            x=int(xNum_delta),
+            y=int(yNum_delta), z=int(zNum_delta), xo=xOrig, yo=yOrig, zo=zOrig, dx=dx, dy=dy, dz=dz)
 
         if self.nll_config.location_parameters.method == 'GAU_ANALYTIC':
             df.iloc[8, 0] = ('LOCMETH GAU_ANALYTIC {maxDistStaGrid} {minNumberPhases} {maxNumberPhases} '
                              '{minNumberSphases} {VpVsRatio} {maxNum3DGridMemory} {minDistStaGrid} '
                              '{iRejectDuplicateArrivals}'.format(maxDistStaGrid=9999.0, minNumberPhases=4,
                                                                  maxNumberPhases=-1, minNumberSphases=-1,
-                                                                 VpVsRatio=1.68, maxNum3DGridMemory=6, minDistStaGrid=5,
+                                                                 VpVsRatio=vp_vs, maxNum3DGridMemory=6,
+                                                                 minDistStaGrid=5,
                                                                  iRejectDuplicateArrivals=0))
 
-        #GAU_ANALYTIC 9999.0 4 - 1 - 1 1.68 6
-        #LOCMETH EDT_OT_WT 9999.0 4 -1 -1 1.68 6 -1.0 1
+        # GAU_ANALYTIC 9999.0 4 - 1 - 1 1.68 6
+        # LOCMETH EDT_OT_WT 9999.0 4 -1 -1 1.68 6 -1.0 1
         output = os.path.join(self.get_temp_dir, "run_temp.txt")
         df.to_csv(output, index=False, header=False, encoding='utf-8')
         return output
 
     @staticmethod
-    def __secure_exec(bin_file:str):
+    def __secure_exec(bin_file: str):
         st = os.stat(bin_file)
         os.chmod(bin_file, st.st_mode | stat.S_IEXEC)
 
@@ -345,8 +365,25 @@ class NllManager:
         data = pd.read_csv(file_path)
         df = pd.DataFrame(data)
 
-        df.iloc[1, 0] = "TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}".format(lat=latitude, lon=longitude, depth=0.0)
-        df.iloc[2, 0] = "GTFILES {modelpath} {timepath} {wavetype}".\
+        if dimension == "GRID3D":
+            x_node = int(self.nll_config.grid_configuration.x)
+            y_node = int(self.nll_config.grid_configuration.y)
+            z_node = int(self.nll_config.grid_configuration.z)
+            dx = self.nll_config.grid_configuration.dx
+            dy = self.nll_config.grid_configuration.dy
+            dz = self.nll_config.grid_configuration.dz
+            x_width = float((x_node - 1) * dx)
+            y_width = float((y_node - 1) * dy)
+            shift_x = -0.5 * x_width
+            shift_y = -0.5 * y_width
+            lat_geo, lon_geo = calculate_destination_coordinates(latitude, longitude, abs(shift_x), abs(shift_y))
+            df.iloc[1, 0] = "TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}".format(lat=lat_geo, lon=lon_geo,
+                                                                                  depth=depth)
+        else:
+            df.iloc[1, 0] = "TRANS SIMPLE {lat:.2f} {lon:.2f} {depth:.2f}".format(lat=latitude, lon=longitude,
+                                                                                  depth=0.0)
+
+        df.iloc[2, 0] = "GTFILES {modelpath} {timepath} {wavetype}". \
             format(modelpath=os.path.join(self.get_model_dir, "layer"),
                    timepath=os.path.join(self.get_time_dir, "layer"), wavetype=wave_type)
         df.iloc[3, 0] = "GTMODE {grid} {angles}".format(grid=dimension, angles=option)
@@ -367,9 +404,9 @@ class NllManager:
 
     @staticmethod
     def __append_files(file_path_to_cat: str, file_path_to_append: str):
-        #command = "cat {}".format(file_path_to_cat)
+        # command = "cat {}".format(file_path_to_cat)
         command = ["cat", file_path_to_cat]
-        #command = "cat /Users/admin/Documents/iMacROA/SurfQuakeCore/examples/earthquake_locate/model1D/modelP"
+        # command = "cat /Users/admin/Documents/iMacROA/SurfQuakeCore/examples/earthquake_locate/model1D/modelP"
         exc_nll(command, stdout=open(file_path_to_append, 'a'), close_fds=True)
 
     def vel_to_grid(self):
@@ -394,19 +431,19 @@ class NllManager:
         model = self.nll_config.grid_configuration.model
 
         if model == "1D":
-            x_node = 2 # mandatory for 1D models
+            x_node = 2  # mandatory for 1D models
             if p_wave_type:
                 waves.append("P")
             if s_wave_type:
                 waves.append("S")
             for wave in waves:
-                    output = self.set_vel2grid_template(latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz,
-                                                        grid_type, wave)
-                    model_path = self.get_model_file_path(wave)
-                    self.__append_files(model_path, output)
-                    output_path = Path(output)
-                    command = [self.get_bin_file("Vel2Grid"), output_path]
-                    exc_nll(command, cwd=output_path.parent)
+                output = self.set_vel2grid_template(latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz,
+                                                    grid_type, wave)
+                model_path = self.get_model_file_path(wave)
+                self.__append_files(model_path, output)
+                output_path = Path(output)
+                command = [self.get_bin_file("Vel2Grid"), output_path]
+                exc_nll(command, cwd=output_path.parent)
 
         elif model == "3D":
             if p_wave_type:
@@ -414,9 +451,8 @@ class NllManager:
             if s_wave_type:
                 waves.append("S")
             for wave in waves:
-             self.__write_header(latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz, wave)
-             self.grid3d(wave)
-
+                self.__write_header(latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz, wave)
+                self.grid3d(wave)
 
     def grid_to_time(self):
         """
@@ -448,13 +484,11 @@ class NllManager:
         self.stations_to_nll_v2(latitude, longitude, depth, limit)
 
         for wave in waves:
-
             output = self.set_grid2time_template(latitude, longitude, depth, dimension, option, wave)
             self.__append_files(self.get_stations_template_file_path, output)
             output_path = Path(output)
             command = [self.get_bin_file("Grid2Time"), output_path]
             exc_nll(command, cwd=output_path.parent)
-
 
     def run_nlloc(self, num_iter=1):
         """
@@ -464,10 +498,11 @@ class NllManager:
         """
         latitude = self.nll_config.grid_configuration.latitude
         longitude = self.nll_config.grid_configuration.longitude
+        depth = self.nll_config.grid_configuration.depth
         transform = self.nll_config.grid_configuration.geo_transformation
 
         if transform == "SIMPLE":
-            output = self.set_run_template(latitude, longitude)
+            output = self.set_run_template(latitude, longitude, depth)
             output_path = Path(output)
             command = [self.get_bin_file("NLLoc"), output_path]
 
@@ -490,7 +525,6 @@ class NllManager:
             self.__append_files(stats_file, temp_run_file)
 
         return exc_nll(command, cwd=output_path.parent)
-
 
     def stations_to_nll_v2(self, latitude_f, longitude_f, depth=0, limit=20000, transform="SIMPLE"):
 
@@ -515,26 +549,24 @@ class NllManager:
                     code = sta.code
                     latitude = sta.latitude
                     longitude = sta.longitude
-                    elevation = sta.elevation/1000
+                    elevation = sta.elevation / 1000
 
                     # filter minimum distance
                     dist, _, _ = gps2dist_azimuth(latitude, longitude, latitude_f, longitude_f)
-                    dist = dist/1000
-                    if dist<limit:
+                    dist = dist / 1000
+                    if dist < limit:
                         station_names.append(code)
                         station_latitudes.append(latitude)
                         station_longitudes.append(longitude)
                         station_depths.append(elevation)
 
             if transform == "SIMPLE":
-
                 data = {'Code': 'GTSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lat': station_latitudes,
-                    'Lon': station_longitudes, 'Z': '0.000', 'Depth': station_depths}
+                        'Lon': station_longitudes, 'Z': '0.000', 'Depth': station_depths}
 
             if transform == "GLOBAL":
                 data = {'Code': 'LOCSRCE', 'Name': station_names, 'Type': 'LATLON', 'Lat': station_latitudes,
                         'Lon': station_longitudes, 'Z': '0.000', 'Depth': station_depths}
-
 
             df = pd.DataFrame(data, columns=['Code', 'Name', 'Type', 'Lat', 'Lon', 'Z', 'Depth'])
 
@@ -567,13 +599,13 @@ class NllManager:
 
         command = [bin_file, "1", output_folder, location_file_cut]
         exc_nll(command)
-        #name = "location.20211001.021028.grid0.loc.hdr"
+        # name = "location.20211001.021028.grid0.loc.hdr"
         location_file_name = os.path.basename(location_file)
         location_file_name_list = location_file_name.split(".")
-        scat_file_name = (location_file_name_list[0]+"."+location_file_name_list[1] + "." +
-                          location_file_name_list[2]+"."+location_file_name_list[3] + "." +
-                          location_file_name_list[4]+"."+location_file_name_list[5]+"." +
-                          "scat"+"."+"xyz")
+        scat_file_name = (location_file_name_list[0] + "." + location_file_name_list[1] + "." +
+                          location_file_name_list[2] + "." + location_file_name_list[3] + "." +
+                          location_file_name_list[4] + "." + location_file_name_list[5] + "." +
+                          "scat" + "." + "xyz")
 
         location_file_check = os.path.join(output_folder, scat_file_name)
         if os.path.isfile(location_file_check):
@@ -629,9 +661,9 @@ class NllManager:
 
     def load_stations_file(self):
         stations_path = os.path.join(self.get_stations_dir, "stations.txt")
-        stations = np.loadtxt(stations_path, dtype = str)
-        name = stations[:,1]
-        lon = stations[:,4]
+        stations = np.loadtxt(stations_path, dtype=str)
+        name = stations[:, 1]
+        lon = stations[:, 4]
         lat = stations[:, 3]
         all = [name, lon, lat]
         return all
@@ -641,7 +673,7 @@ class NllManager:
         all_stations_names = self.load_stations_file()
 
         stations = {}
-        for name, lon, lat in zip(all_stations_names[0],all_stations_names[1],all_stations_names[2]):
+        for name, lon, lat in zip(all_stations_names[0], all_stations_names[1], all_stations_names[2]):
             if name in stations_located:
                 stations[name] = [lon, lat]
 
@@ -656,11 +688,10 @@ class NllManager:
             file_name = "layer.S.mod"
         path = os.path.join(self.get_local_models_dir3D, file_name)
         aslow, xNum, yNum, zNum = self.read_modfiles(path)
-        output_name = file_name+".buf"
+        output_name = file_name + ".buf"
         output = os.path.join(self.get_model_dir, output_name)
         with open(file_name, 'wb'):
             aslow.astype('float32').tofile(output)
-
 
     # def read_modfiles(self, file_name):
     #
@@ -714,6 +745,7 @@ class NllManager:
 
             aslow[:, :, k] = dx_inv / file_array.T
         return aslow, xNum, yNum, zNum
+
     def __read_header(self, file_name):
 
         fa = open(file_name + '.hdr')
@@ -726,8 +758,6 @@ class NllManager:
         Transf, lat0, lon0, Rot0 = hline[1], hline[3], hline[5], hline[7]
         fa.close()
         return xNum, yNum, zNum, xOrig, yOrig, zOrig, dx, dy, dz
-
-
 
     def __write_header(self, latitude, longitude, depth, x_node, y_node, z_node, dx, dy, dz, wave_type):
         """
@@ -747,9 +777,11 @@ class NllManager:
         # shift_x = -0.5*float((x_node-1)*dx)
         # shift_y = -0.5*float((y_node-1)*dy)
 
-        coords = '{xnd} {ynd} {znd} {shift_x} {shift_y}  {depth} {dx:.2f} {dy:.2f} {dz:.2f} SLOW_LEN FLOAT\n'.format(xnd=x_node,
-                    ynd=y_node, znd=z_node, shift_x=shift_x, shift_y=shift_y, depth=depth, dx=dx, dy=dy, dz=dz)
-        transf = 'TRANSFORM SIMPLE LatOrig {xorig:.2f} LongOrig {yorig:.2f} RotCW 0.000000'.format(xorig=lat_geo, yorig=lon_geo)
+        coords = '{xnd} {ynd} {znd} {shift_x} {shift_y}  {depth} {dx:.2f} {dy:.2f} {dz:.2f} SLOW_LEN FLOAT\n'.format(
+            xnd=x_node,
+            ynd=y_node, znd=z_node, shift_x=shift_x, shift_y=shift_y, depth=depth, dx=dx, dy=dy, dz=dz)
+        transf = 'TRANSFORM SIMPLE LatOrig {xorig:.2f} LongOrig {yorig:.2f} RotCW 0.000000'.format(xorig=lat_geo,
+                                                                                                   yorig=lon_geo)
         new_file = open(file_name, mode="w+", encoding="utf-8")
         new_file.write(coords)
         new_file.close()
@@ -758,11 +790,11 @@ class NllManager:
         new_file.close()
         shutil.copy(file_name, self.get_model_dir)
 
+
 class Nllcatalog:
 
     def __init__(self, working_directory):
         self.working_directory = os.path.join(working_directory, "loc")
-
 
     def find_files(self):
 
@@ -809,6 +841,7 @@ class Nllcatalog:
                       "min_distance": origin.quality.minimum_distance}
 
         return event_dict
+
     def run_catalog(self):
         # TODO INCLUDE TRANSFORMATION
         dates = []
@@ -835,7 +868,7 @@ class Nllcatalog:
             rmss.append(origin.quality.standard_error)
             longs.append(origin.longitude)
             lats.append(origin.latitude)
-            depths.append(origin.depth/1000)
+            depths.append(origin.depth / 1000)
             uncertainties.append(origin.depth_errors["uncertainty"])
             max_hor_errors.append(origin.origin_uncertainty.max_horizontal_uncertainty)
             min_hor_errors.append(origin.origin_uncertainty.min_horizontal_uncertainty)
@@ -846,8 +879,10 @@ class Nllcatalog:
             min_dists.append(origin.quality.minimum_distance)
 
         events_dict = {'Origin Time': dates, 'RMS': rmss, 'lats': lats, 'longs': longs,
-        'depths': depths, 'Uncertainty':uncertainties, 'Max_Hor_Error': max_hor_errors, 'Min_Hor_Error': min_hor_errors,
-        'Ellipse_Az': ellipses_azs, 'No_phases': no_phases, 'Az_gap': azs_gap, 'Max_Dist': max_dists, 'Min Dist': min_dists}
+                       'depths': depths, 'Uncertainty': uncertainties, 'Max_Hor_Error': max_hor_errors,
+                       'Min_Hor_Error': min_hor_errors,
+                       'Ellipse_Az': ellipses_azs, 'No_phases': no_phases, 'Az_gap': azs_gap, 'Max_Dist': max_dists,
+                       'Min Dist': min_dists}
 
         self.__write_dict(events_dict)
 
@@ -855,4 +890,3 @@ class Nllcatalog:
         output = os.path.join(self.working_directory, "catalog.txt")
         df_magnitudes = pd.DataFrame.from_dict(events_dict)
         df_magnitudes.to_csv(output, sep=";", index=False)
-
