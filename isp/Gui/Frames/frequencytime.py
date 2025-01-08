@@ -80,6 +80,8 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         md = MessageDialog(self)
         if isinstance(self.project.project_dispersion, dict):
             # get info
+            # for key in self.project.project_dispersion.keys():
+            #     print(key)
             row = self.tw_files.currentRow()
             file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
             st = read(file)
@@ -99,12 +101,11 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             if len(self.period_grp) > 0 and len(self.group_vel_def) > 0:
                 self.project.project_dispersion[id_group] = {'period': self.period_grp, 'velocity': self.group_vel_def}
-
+                print("Saved Group Velocity: ", id_group)
 
             if len(self.period_phv) and len(self.phase_vel_def):
                 self.project.project_dispersion[id_phase] = {'period': self.period_phv, 'velocity': self.phase_vel_def}
-
-            print(self.project.project_dispersion)
+                print("Saved Phase Velocity: ", id_phase)
 
             # saving stage
 

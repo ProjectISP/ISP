@@ -113,6 +113,9 @@
             <property name="text">
              <string>Save to Project</string>
             </property>
+            <property name="shortcut">
+             <string>S</string>
+            </property>
            </widget>
           </item>
           <item row="3" column="0">
@@ -172,6 +175,9 @@
               <height>25</height>
              </size>
             </property>
+            <property name="value">
+             <double>4.500000000000000</double>
+            </property>
            </widget>
           </item>
           <item row="1" column="1">
@@ -181,6 +187,9 @@
               <width>0</width>
               <height>25</height>
              </size>
+            </property>
+            <property name="value">
+             <double>1.500000000000000</double>
             </property>
            </widget>
           </item>
@@ -247,6 +256,9 @@
             <property name="text">
              <string>Process Phase Vel</string>
             </property>
+            <property name="shortcut">
+             <string>E</string>
+            </property>
            </widget>
           </item>
           <item row="0" column="0">
@@ -293,6 +305,9 @@
             <property name="singleStep">
              <double>1.000000000000000</double>
             </property>
+            <property name="value">
+             <double>-25.000000000000000</double>
+            </property>
            </widget>
           </item>
           <item row="3" column="0">
@@ -301,7 +316,7 @@
              <string>Phase Match Filter</string>
             </property>
             <property name="checked">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -358,6 +373,9 @@
             </property>
             <property name="suffix">
              <string> s</string>
+            </property>
+            <property name="value">
+             <double>20.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -525,14 +543,17 @@
               <number>3</number>
              </property>
              <property name="minimum">
-              <double>0.500000000000000</double>
+              <double>0.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>6.000000000000000</double>
              </property>
             </widget>
            </item>
            <item row="0" column="1">
             <widget class="QSpinBox" name="atomsSB">
              <property name="value">
-              <number>40</number>
+              <number>80</number>
              </property>
             </widget>
            </item>
@@ -601,7 +622,7 @@
               <number>3</number>
              </property>
              <property name="value">
-              <double>10.000000000000000</double>
+              <double>70.000000000000000</double>
              </property>
             </widget>
            </item>
