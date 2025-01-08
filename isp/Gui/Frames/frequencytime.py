@@ -17,6 +17,8 @@ import numpy as np
 from obspy import read
 import os
 from isp.Gui.Utils import CollectionLassoSelector
+from isp.Gui.Frames.project_frame_dispersion import Project
+
 
 @add_save_load()
 class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
@@ -67,14 +69,16 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.macroBtn.clicked.connect(lambda: self.open_parameters_settings())
         self.saveBtn.clicked.connect(self.save_to_project)
         self.removeBtn.clicked.connect(self.remove_from_project)
-        # clicks #now is not compatible with collectors
-        #self.canvas_plot1.on_double_click(self.on_click_matplotlib)
-        #self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
+        self.refreshTableBtn.clicked.connect(self.refresh_table)
+        self.dispersionProjectBtn.clicked.connect(self.open_disp_proj)
 
         # shortcuts
         self.selectors_phase_vel = []
         self.selectors_group_vel = []
 
+
+    def open_disp_proj(self):
+        self.project.show()
 
     def save_to_project(self):
         md = MessageDialog(self)
@@ -177,7 +181,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         :return:
         """
         self.tw_files.clearContents()
-
+        self.tw_files.setRowCount(0)
         for file in os.listdir(value):
             try:
                 trace = read(value + '/' + file, format='H5')
@@ -198,6 +202,37 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             except Exception:
                 pass
 
+    def refresh_table(self):
+
+        """
+        Refresh the table, this is util when ou copy and paste new files. It is still not programmed a watcher
+
+        :param value: The path of the new directory.
+
+        :return:
+        """
+
+        self.tw_files.clearContents()
+        self.tw_files.setRowCount(0)
+        for file in os.listdir(self.rootPathForm_2.text()):
+            try:
+                trace = read(self.rootPathForm_2.text() + '/' + file, format='H5')
+                self.tw_files.setRowCount(self.tw_files.rowCount() + 1)
+
+                dist = '{dist:.2f}'.format(dist=trace[0].stats.mseed['geodetic'][0] / 1000)
+                azim = '{azim:.2f}'.format(azim=trace[0].stats.mseed['geodetic'][1])
+                dist_item = pw.QTableWidgetItem()
+                dist_item.setData(0, float(dist))
+                azim_item = pw.QTableWidgetItem()
+                azim_item.setData(0, float(azim))
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 0, pw.QTableWidgetItem(file))
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 1, dist_item)
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 2, azim_item)
+                check = pw.QCheckBox()
+                self.tw_files.setCellWidget(self.tw_files.rowCount() - 1, 3, check)
+
+            except Exception:
+                pass
 
     def onChange_file(self, file_path):
         # Called every time user select a different file
