@@ -36,20 +36,45 @@ ISP_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/.."
 
 conda env list | grep '^isp\s' > /dev/null
 if (( $? )); then
-  echo "No isp environment found. Creating one"
+  echo "No 'isp' environment found. Proceeding to create one."
 
-if [[ `uname -s` == "Darwin" ]]; then
+  # Check operating system
+  OS_TYPE=`uname -s`
+  echo "Operating System detected: $OS_TYPE"
 
-export OS="MacOSX"  
-conda env create -f ./mac_installer/mac_environment.yml
+  if [[ $OS_TYPE == "Darwin" ]]; then
+    echo "MacOS detected. Checking processor type..."
+    
+    # Determine processor type
+    CPU_INFO=$(sysctl -n machdep.cpu.brand_string)
+    echo "Processor Info: $CPU_INFO"
 
+    if [[ $CPU_INFO == *"Apple"* ]]; then
+      echo "Apple Silicon (M1/M2) detected."
+      export OS="MacOSX-ARM"
+      echo "Using Conda environment file: mac_installer/mac_environment_arm.yml"
+      conda env create -f ./mac_installer/mac_environment_arm.yml
+    else
+      echo "Intel processor detected."
+      export OS="MacOSX-Intel"
+      echo "Using Conda environment file: mac_installer/mac_environment.yml"
+      conda env create -f ./mac_installer/mac_environment.yml
+    fi
+
+  elif [[ $OS_TYPE == "Linux" ]]; then
+    echo "Linux detected."
+    export OS="Linux"
+    echo "Using Conda environment file: linux_installer/linux_environment.yml"
+    conda env create -f ./linux_installer/linux_environment.yml
+  else
+    echo "Unsupported operating system: $OS_TYPE"
+    exit 1
+  fi
 else
-export OS="Linux"
-conda env create -f ./linux_installer/linux_environment.yml
+  echo "'isp' environment already exists. No action taken."
 fi
-else
-echo "isp environment found"
-fi
+
+echo "ISP environment created"
 
 # Compile packages
 pushd ${ISP_DIR} > /dev/null
