@@ -83,11 +83,20 @@ class Project(pw.QDialog, UiProject_Dispersion):
     @staticmethod
     def load_project(file: str):
         project = {}
+
         try:
             project = pickle.load(open(file, "rb"))
-            print(project)
-        except:
-            pass
+            # get info
+            if len(project)>0:
+                for key in project.keys():
+                     print(key)
+
+        except Exception as e:
+             # Print the exception details
+             print(f"An error occurred: {e}")
+             # Optionally, log the exception or perform additional handling
+             # Re-raise the exception
+             return project
         return project
 
 
