@@ -2,11 +2,13 @@ import os.path
 import re
 import numpy as np
 import math
-#from numba import jit
 from scipy import stats
 # Cython code
 #from isp.cython_code.whiten import whiten_aux, whiten_aux_horizontals
-from numba import jit
+import pandas as pd
+import os
+from isp import DISP_REF_CURVES
+from scipy import interpolate
 class noise_processing:
 
     def __init__(self, tr):
@@ -133,58 +135,49 @@ class noise_processing:
 
 
     def get_disp(self, type, phaseMacthmodel):
-        import pandas as pd
-        import os
-        from isp import DISP_REF_CURVES
 
-        modes = ["fundamental", "first", "second"]
+        curves = []
+        modes = ["fundamental", "first"]
         if phaseMacthmodel == "ak-135f":
-            curves = ["ak135_earth_velocity.txt", "ak135_earth_velocity_first_mode.txt",
-                      "ak135_earth_velocity_second_mode.txt"]
+            curves = ["ak135_earth_velocity_fundamental_mode.txt", "ak135_earth_velocity_first_mode.txt"]
 
         elif phaseMacthmodel == "ak-135f (Ocean-shallow waters)":
-            curves = ["ak135_earth_ocean_shallow_velocity.txt",
-                      "ak135_earth_ocean_shallow_velocity_first_mode.txt",
-                      "ak135_earth_ocean_shallow_velocity_second_mode.txt"]
+            curves = ["ak135_earth_ocean_shallow_velocity_fundamental_mode.txt",
+                      "ak135_earth_ocean_shallow_velocity_first_mode.txt"]
 
         elif phaseMacthmodel == "ak-135f (Ocean-intermediate waters)":
 
-            curves = ["ak135_earth_ocean_intermediate_velocity.txt",
-                      "ak135_earth_ocean_intermediate_velocity_first_mode.txt",
-                      "ak135_earth_ocean_intermediate_velocity_second_mode.txt"]
+            curves = ["ak135_earth_ocean_intermediate_velocity_fundamental_mode.txt",
+                      "ak135_earth_ocean_intermediate_velocity_first_mode.txt"]
 
         elif phaseMacthmodel == "ak-135f (Ocean-deep waters)":
-            curves = ["ak135_earth_ocean_deep_velocity.txt",
-                      "ak135_earth_ocean_deep_velocity_first_mode.txt",
-                      "ak135_earth_ocean_deep_velocity_second_mode.txt"]
+            curves = ["ak135_earth_ocean_deep_velocity_fundamental_mode.txt",
+                      "ak135_earth_ocean_deep_velocity_first_mode.txt"]
 
         all_curves = {}
-        for i, curve in enumerate(curves):
-            path = os.path.join(DISP_REF_CURVES, curve)
-            df = pd.read_csv(path)
-            all_curves[modes[i]] = {}
+        if len(curves) > 0:
+            for i, curve in enumerate(curves):
+                path = os.path.join(DISP_REF_CURVES, curve)
+                df = pd.read_csv(path)
+                all_curves[modes[i]] = {}
 
-            if type == "Rayleigh":
-                all_curves[modes[i]]["U"] = df['group_velocity_rayleigh'].to_numpy()
-                all_curves[modes[i]]["PHV"] = df['phase_velocity_rayleigh'].to_numpy()
+                if type == "Rayleigh":
+                    all_curves[modes[i]]["U"] = df['group_velocity_rayleigh'].to_numpy()
+                    all_curves[modes[i]]["PHV"] = df['phase_velocity_rayleigh'].to_numpy()
+                    all_curves[modes[i]]["period"] = df['period'].to_numpy()
+                if type == "Love":
+                    all_curves[modes[i]]["U"] = df['group_velocity_love'].to_numpy()
+                    all_curves[modes[i]]["PHV"] = df['phase_velocity_love'].to_numpy()
+                    all_curves[modes[i]]["period"] = df['period'].to_numpy()
 
-            if type == "Love":
-                all_curves[modes[i]]["U"] = df['group_velocity_love'].to_numpy()
-                all_curves[modes[i]]["PHV"] = df['phase_velocity_love'].to_numpy()
-
-            all_curves["period"] = df['period'].to_numpy()
 
         return all_curves
 
     def __get_reference_disp(self, type, phaseMacthmodel, fft_bins):
-        import pandas as pd
-        import os
-        from isp import DISP_REF_CURVES
-        from scipy import interpolate
 
         if phaseMacthmodel == "ak-135f":
 
-            path = os.path.join(DISP_REF_CURVES, "ak135_earth_velocity.txt")
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_velocity_first_mode.txt")
             df = pd.read_csv(path)
             freq_ref = 1/(df['period'].to_numpy())
             if type == "Rayleigh":
@@ -194,7 +187,7 @@ class noise_processing:
 
         elif phaseMacthmodel == "ak-135f (Ocean-shallow waters)":
 
-            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_shallow_velocity.txt")
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_shallow_velocity_first_mode.txt")
             df = pd.read_csv(path)
             freq_ref = 1/(df['period'].to_numpy())
             if type == "Rayleigh":
@@ -204,7 +197,7 @@ class noise_processing:
 
         elif phaseMacthmodel == "ak-135f (Ocean-intermediate waters)":
 
-            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_intermediate_velocity.txt")
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_intermediate_velocity_first_mode.txt")
             df = pd.read_csv(path)
             freq_ref = 1/(df['period'].to_numpy())
             if type == "Rayleigh":
@@ -214,7 +207,7 @@ class noise_processing:
 
         elif phaseMacthmodel == "ak-135f (Ocean-deep waters)":
 
-            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_deep_velocity.txt")
+            path = os.path.join(DISP_REF_CURVES, "ak135_earth_ocean_deep_velocity_first_mode.txt")
             df = pd.read_csv(path)
             freq_ref = 1/(df['period'].to_numpy())
             if type == "Rayleigh":

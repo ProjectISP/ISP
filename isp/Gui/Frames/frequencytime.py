@@ -325,8 +325,8 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         row = self.tw_files.currentRow()
         file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
 
-        modes = ["fundamental", "first", "second"]
-        feature = ["-.", "-", "--"]
+        modes = ["fundamental", "first"]
+        feature = ["-.", "-"]
         [tr1, t] = self.get_data()
         tr = tr1.copy()
         fs = tr1.stats.sampling_rate
@@ -377,7 +377,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             "Both"
             tr.data = (tr_causal.data[0:N_cut] + tr_acausal.data[0:N_cut]) / 2
 
-        # 4-06-2024
+        # 15-01-2025
         # get dispersion curve
         ns = noise_processing(tr)
         all_curves = ns.get_disp(self.typeCB.currentText(), self.phaseMacthmodelCB.currentText())
@@ -497,7 +497,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
 
             for i, mode in enumerate(modes):
-                T = all_curves["period"]
+                T = all_curves[mode]["period"]
                 vel = all_curves[mode]["U"]
                 self.canvas_plot1.plot(T, vel, axes_index=0, clear_plot=False,
                                        color="gray", linewidth=1.0, linestyle=feature[i], label=mode)
