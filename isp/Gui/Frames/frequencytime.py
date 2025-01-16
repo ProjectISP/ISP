@@ -182,25 +182,26 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         """
         self.tw_files.clearContents()
         self.tw_files.setRowCount(0)
-        for file in os.listdir(value):
-            try:
-                trace = read(value + '/' + file, format='H5')
-                self.tw_files.setRowCount(self.tw_files.rowCount() + 1)
+        if os.path.isdir(value):
+            for file in os.listdir(value):
+                try:
+                    trace = read(value + '/' + file, format='H5')
+                    self.tw_files.setRowCount(self.tw_files.rowCount() + 1)
 
-                dist = '{dist:.2f}'.format(dist =trace[0].stats.mseed['geodetic'][0]/1000)
-                azim = '{azim:.2f}'.format(azim =trace[0].stats.mseed['geodetic'][1])
-                dist_item = pw.QTableWidgetItem()
-                dist_item.setData(0, float(dist))
-                azim_item = pw.QTableWidgetItem()
-                azim_item.setData(0, float(azim))
-                self.tw_files.setItem(self.tw_files.rowCount() - 1, 0, pw.QTableWidgetItem(file))
-                self.tw_files.setItem(self.tw_files.rowCount() - 1, 1, dist_item)
-                self.tw_files.setItem(self.tw_files.rowCount() - 1, 2, azim_item)
-                check = pw.QCheckBox()
-                self.tw_files.setCellWidget(self.tw_files.rowCount() - 1, 3, check)
+                    dist = '{dist:.2f}'.format(dist =trace[0].stats.mseed['geodetic'][0]/1000)
+                    azim = '{azim:.2f}'.format(azim =trace[0].stats.mseed['geodetic'][1])
+                    dist_item = pw.QTableWidgetItem()
+                    dist_item.setData(0, float(dist))
+                    azim_item = pw.QTableWidgetItem()
+                    azim_item.setData(0, float(azim))
+                    self.tw_files.setItem(self.tw_files.rowCount() - 1, 0, pw.QTableWidgetItem(file))
+                    self.tw_files.setItem(self.tw_files.rowCount() - 1, 1, dist_item)
+                    self.tw_files.setItem(self.tw_files.rowCount() - 1, 2, azim_item)
+                    check = pw.QCheckBox()
+                    self.tw_files.setCellWidget(self.tw_files.rowCount() - 1, 3, check)
 
-            except Exception:
-                pass
+                except Exception:
+                    pass
 
     def refresh_table(self):
 

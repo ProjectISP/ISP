@@ -153,7 +153,9 @@ class process_ant:
         num_columns = len(list_item) - 1
         N = num_minutes * 60 * self.sampling_rate_new  # seconds*fs
         self.dict_matrix['data_length'] = N
-        DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
+        # correction 16/01/2025
+        # DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
+        DD = self.next_power_of_2(2 * N)
         self.list_item = list_item
         # ······
         # f = [0, 1, ..., n / 2 - 1, n / 2] / (d * n) if n is even
@@ -263,7 +265,9 @@ class process_ant:
         N = num_minutes * 60 * self.sampling_rate_new  # segundos*fs
         self.dict_matrix_N['data_length'] = N
         self.dict_matrix_E['data_length'] = N
-        DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
+        # correction 16/01/2025
+        #DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
+        DD = self.next_power_of_2(2 * N)
         self.list_item_N = list_item_horizonrals["North"]
         self.list_item_E = list_item_horizonrals["East"]
         """
@@ -425,7 +429,10 @@ class process_ant:
                 if (self.data_domain == "frequency") and len(tr[:]) > 0:
                     n = tr_test.count()
                     if n > 0:
-                        D = 2 ** math.ceil(math.log2(n))
+
+                        # Corrrection 16/01/2025 --> preparing data por later crop in time domain
+                        # D = 2 ** math.ceil(math.log2(n))
+                        D = self.next_power_of_2(2*n)
 
                         # Automatic Pre-filt
                         # filter the signal between 150 seconds and 1/4 the sampling rate
@@ -593,7 +600,9 @@ class process_ant:
                             len(tr_N[:]) == len(tr_E[:]):
                         n = tr_test_N.count()
                         if n > 0:
-                            D = 2 ** math.ceil(math.log2(n))
+                            # Corrrection 16/01/2025 --> preparing data por later crop in time domain
+                            # D = 2 ** math.ceil(math.log2(n))
+                            D = self.next_power_of_2(2 * n)
 
                             #TODO Autorotate to azimuth in metadata
 
@@ -735,6 +744,12 @@ class process_ant:
             pass
 
         return st
+
+    def next_power_of_2(self, n):
+        """
+        Return next power of 2 greater than or equal to n
+        """
+        return 2 ** (n - 1).bit_length()
 
 
     def temporal_window(self, channel_list):

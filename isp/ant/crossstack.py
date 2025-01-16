@@ -227,12 +227,22 @@ class noisestack:
                                 count_zero_vectors = np.sum(zero_vectors)
                                 size_2d_all = size_2d_all - count_zero_vectors
 
+                                # Crop in time domain 16/01/2025
+
                                 if normalization == "PCC":
-                                    corr_ij_time = np.real(np.fft.ifft(corr_ij_freq, cross_length, axis=2))
+                                    corr_ij_time = np.real(np.fft.ifft(corr_ij_freq, axis=2))
                                     corr_ij_time = np.fft.ifftshift(corr_ij_time)
                                 else:
-                                    corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, cross_length, axis=2))
+
+                                    corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, axis=2))
                                     corr_ij_time = np.fft.ifftshift(corr_ij_time)
+
+                                # Crop in time domain 16/01/2025
+                                pad_length = corr_ij_time.shape[2]
+
+                                start_idx = (pad_length - cross_length) // 2
+                                end_idx = start_idx + cross_length
+                                corr_ij_time = corr_ij_time[:, :, start_idx:end_idx]
 
                                 # save memory
                                 if self.stack != "PWS":
@@ -256,7 +266,6 @@ class noisestack:
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
 
                                 elif self.stack == "Linear":
-                                    # Stack: Linear stack
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
 
 
@@ -276,7 +285,7 @@ class noisestack:
                                     signal_rfft_mod[1:non_real_dim // 2] = 2 * signal_rfft_mod[1:non_real_dim // 2]
 
                                     # Generate the analytic function matrix
-                                    analytic_signal = np.fft.ifft(signal_rfft_mod, cross_length, axis=2)
+                                    analytic_signal = np.fft.ifft(signal_rfft_mod, axis=2)
                                     analytic_signal = np.fft.ifftshift(analytic_signal)
 
                                     # elif normalization != "CC":
@@ -286,6 +295,10 @@ class noisestack:
                                     #     analytic_signal = np.fft.ifftshift(analytic_signal)
 
                                     # Compute linear stack
+
+                                    # Crop the analytic signal 16/01/2025
+                                    analytic_signal = analytic_signal[:, :, start_idx:end_idx]
+
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
                                     c_stack_max = np.max(c_stack)
 
@@ -307,6 +320,8 @@ class noisestack:
                                 #     c = int(np.ceil((num + 1)/2))
                                 #
                                 # c_stack = np.roll(c_stack, c)
+
+
                                 print("stack[" + str(i) + "," + str(j) + "]:")
                                 # print(c_stack)
 
@@ -503,11 +518,18 @@ class noisestack:
                             size_2d_all = size_2d_all - count_zero_vectors
 
                             if normalization == "PCC":
-                                corr_ij_time = np.real(np.fft.ifft(corr_ij_freq, cross_length, axis=2))
+                                corr_ij_time = np.real(np.fft.ifft(corr_ij_freq, axis=2))
                                 corr_ij_time = np.fft.ifftshift(corr_ij_time)
                             else:
-                                corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, cross_length, axis=2))
+                                corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, axis=2))
                                 corr_ij_time = np.fft.ifftshift(corr_ij_time)
+
+                            # Crop in time domain 16/01/2025
+                            pad_length = corr_ij_time.shape[2]
+
+                            start_idx = (pad_length - cross_length) // 2
+                            end_idx = start_idx + cross_length
+                            corr_ij_time = corr_ij_time[:, :, start_idx:end_idx]
 
                             # save memory
                             if self.stack != "PWS":
@@ -549,14 +571,17 @@ class noisestack:
                                     signal_rfft_mod[1:non_real_dim // 2] = 2 * signal_rfft_mod[1:non_real_dim // 2]
 
                                     # Generate the analytic function matrix
-                                    analytic_signal = np.fft.ifft(signal_rfft_mod, cross_length, axis=2)
+                                    analytic_signal = np.fft.ifft(signal_rfft_mod, axis=2)
                                     analytic_signal = np.fft.ifftshift(analytic_signal)
 
-                                elif normalization != "CC":
+                                # elif normalization != "CC":
+                                #
+                                #     # Generate the analytic function matrix
+                                #     analytic_signal = np.fft.ifft(corr_ij_freq,  axis=2)
+                                #     analytic_signal = np.fft.ifftshift(analytic_signal)
 
-                                    # Generate the analytic function matrix
-                                    analytic_signal = np.fft.ifft(corr_ij_freq, cross_length, axis=2)
-                                    analytic_signal = np.fft.ifftshift(analytic_signal)
+                                # Crop the analytic signal 16/01/2025
+                                analytic_signal = analytic_signal[:, :, start_idx:end_idx]
 
                                 # Compute linear stack
                                 c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
