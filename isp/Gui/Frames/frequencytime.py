@@ -1,5 +1,6 @@
 import gc
 import pickle
+from PyQt5.QtCore import pyqtSlot
 from scipy.signal import find_peaks
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.Gui import pw
@@ -17,7 +18,7 @@ import numpy as np
 from obspy import read
 import os
 from isp.Gui.Utils import CollectionLassoSelector
-from isp.Gui.Frames.project_frame_dispersion import Project
+# from isp.Gui.Frames.project_frame_dispersion import Project
 
 
 @add_save_load()
@@ -79,17 +80,24 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
     def open_disp_proj(self):
         self.project.show()
+        self.project.signal_proj.connect(self.slot)
+
+    @pyqtSlot()
+    def slot(self):
+        # now fill check boxes according to the keys
+        self.refresh_checks()
+
 
     def save_to_project(self):
         md = MessageDialog(self)
         if isinstance(self.project.project_dispersion, dict):
-            # get info
-            # for key in self.project.project_dispersion.keys():
-            #     print(key)
+
             row = self.tw_files.currentRow()
             file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
             st = read(file)
             tr = st[0]
+            dist = '{dist:.2f}'.format(dist=tr.stats.mseed['geodetic'][0] / 1000)
+            azim = '{azim:.2f}'.format(azim=tr.stats.mseed['geodetic'][1])
             wave_type = tr.stats.channel
 
             id_phase = tr.stats.station+"_"+wave_type+"_"+"phv"
@@ -97,18 +105,24 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             # save info to the project
             # important modification 07/06/2024 loop over the data collections
-            if len(self.period_grp) == 0 and len(self.group_vel_def) == 0:
-                self.period_phv, self.phase_vel_def = self.get_def_velocities(selector="phase")
+            if len(self.period_grp) == 0 and len(self.group_vel_def) == 0 and self.run_group_vel_done:
+                # This case is when just group velocity has been picked
+                self.period_grp, self.group_vel_def, self.power = self.get_def_velocities(selector="group")
+
             else:
-                self.period_phv, self.phase_vel_def = self.get_def_velocities(selector="phase")
 
+                # This case is when it has been picked group velocity and phase velocity
+                # (previously was computed the group vel)
+                self.period_phv, self.phase_vel_def, _ = self.get_def_velocities(selector="phase")
 
-            if len(self.period_grp) > 0 and len(self.group_vel_def) > 0:
-                self.project.project_dispersion[id_group] = {'period': self.period_grp, 'velocity': self.group_vel_def}
+            if len(self.period_grp) and len(self.group_vel_def):
+                self.project.project_dispersion[id_group] = {'period': self.period_grp, 'velocity': self.group_vel_def,
+                                                             'geodetic': [dist, azim], 'power': self.power}
                 print("Saved Group Velocity: ", id_group)
 
             if len(self.period_phv) and len(self.phase_vel_def):
-                self.project.project_dispersion[id_phase] = {'period': self.period_phv, 'velocity': self.phase_vel_def}
+                self.project.project_dispersion[id_phase] = {'period': self.period_phv, 'velocity': self.phase_vel_def,
+                                                             'geodetic': [dist, azim]}
                 print("Saved Phase Velocity: ", id_phase)
 
             # saving stage
@@ -124,8 +138,9 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             md.set_info_message("Saved Dispersion data Succesfully")
         else:
-            md.set_error_message("Something went wrong, ", "Please check you have creeated a project "
+            md.set_error_message("Something went wrong, ", "Please check you have created a project "
                                                            "and it is loaded in memory")
+
 
 
     def remove_from_project(self):
@@ -235,6 +250,43 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             except Exception:
                 pass
 
+    def refresh_checks(self):
+
+        self.tw_files.clearContents()
+        self.tw_files.setRowCount(0)
+        for file in os.listdir(self.rootPathForm_2.text()):
+            try:
+                trace = read(self.rootPathForm_2.text() + '/' + file, format='H5')
+                self.tw_files.setRowCount(self.tw_files.rowCount() + 1)
+
+                dist = '{dist:.2f}'.format(dist=trace[0].stats.mseed['geodetic'][0] / 1000)
+                azim = '{azim:.2f}'.format(azim=trace[0].stats.mseed['geodetic'][1])
+                dist_item = pw.QTableWidgetItem()
+                dist_item.setData(0, float(dist))
+                azim_item = pw.QTableWidgetItem()
+                azim_item.setData(0, float(azim))
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 0, pw.QTableWidgetItem(file))
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 1, dist_item)
+                self.tw_files.setItem(self.tw_files.rowCount() - 1, 2, azim_item)
+                check = pw.QCheckBox()
+                self.tw_files.setCellWidget(self.tw_files.rowCount() - 1, 3, check)
+
+                sta1 = file.split("_")[0]
+                sta1 = sta1.split(".")[1]
+                sta2 = file.split("_")[1]
+                sta22 = sta2.split(".")[0]
+                chn = sta2.split(".")[1]
+                # name = sta1+"_"+sta22+"_"+chn
+                for key in self.project.project_dispersion.keys():
+                    #if re.search(rf"\b{re.escape(key)}\b", name, re.IGNORECASE):
+                    sta1_check = key.split("_")[0]
+                    sta2_check = key.split("_")[1]
+                    chn_check = key.split("_")[2]
+                    if sta1 == sta1_check and sta22 == sta2_check and chn == chn_check:
+                        check.setChecked(True)
+            except Exception:
+                pass
+
     def onChange_file(self, file_path):
         # Called every time user select a different file
         pass
@@ -321,10 +373,15 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
     def plot_seismogram(self):
         self.period_grp = []
         self.group_vel_def = []
+        self.period_phv = []
+        self.phase_vel_def = []
+
+
+        self.run_group_vel_done = True
         self._clean_lasso()
 
-        row = self.tw_files.currentRow()
-        file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
+        # row = self.tw_files.currentRow()
+        # file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
 
         modes = ["fundamental", "first"]
         feature = ["-.", "-"]
@@ -340,11 +397,11 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             #print(“Thenumber is even”)
             c = int(np.ceil(num / 2.) + 1)
-            even = True
+
         else:
             #print(“The providednumber is odd”)
             c = int(np.ceil((num + 1)/2))
-            even = False
+
 
         if self.causalCB.currentText() == "Causal":
             starttime = tr.stats.starttime
@@ -428,8 +485,8 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
             if self.ftCB.isChecked():
 
-                min_period, idx_min_period = self.find_nearest(period[:, 0], self.period_min_cwtDB.value())
-                max_period, idx_max_period = self.find_nearest(period[:, 0], self.period_max_cwtDB.value())
+                # min_period, idx_min_period = self.find_nearest(period[:, 0], self.period_min_cwtDB.value())
+                # max_period, idx_max_period = self.find_nearest(period[:, 0], self.period_max_cwtDB.value())
                 min_vel, idx_min_vel = self.find_nearest(vel[0, :], self.min_velDB.value())
                 max_vel, idx_max_vel = self.find_nearest(vel[0, :], self.max_velDB.value())
                 self.min_vel = min_vel
@@ -468,10 +525,12 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             vel = vel.T
             vel = np.flipud(vel)
             self.vel = vel
+            self.vel_single = vel[:,0]
+
 
             period = period.T
             period = np.fliplr(period)
-
+            self.period_single = period[0,:]
             # extract ridge
 
             distance = self.dist_ridgDB.value()*vel.shape[0]/(max_vel-min_vel)
@@ -503,7 +562,8 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                 self.canvas_plot1.plot(T, vel, axes_index=0, clear_plot=False,
                                        color="gray", linewidth=1.0, linestyle=feature[i], label=mode)
 
-            info = "Disp. Fundamental mode " + "-.-"
+            info = (self.typeCB.currentText() + " Fundamental mode " + "-.-" + "\n" + self.typeCB.currentText()
+                    + " First mode " + "-")
             self.canvas_plot1.set_plot_label(0, info)
             self.canvas_plot1.set_xlabel(0, "Period (s)")
             self.canvas_plot1.set_ylabel(0, "Group Velocity (km/s)")
@@ -624,12 +684,12 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
 
     def run_phase_vel(self):
-
+        self.run_group_vel_done = False
         self.period_phv = []
         self.phase_vel_def = []
 
         # save info from collection
-        self.period_grp, self.group_vel_def = self.get_def_velocities(selector="group")
+        self.period_grp, self.group_vel_def, self.power = self.get_def_velocities(selector="group")
 
         phase_vel_array = self.phase_velocity()
         test = np.arange(-5, 5, 1) # natural ambiguity
@@ -653,6 +713,25 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
         self.canvas_plot1.set_plot_label(0, "Ref. Group Velocity -.-")
 
+        modes = ["fundamental", "first"]
+        feature = ["-.", "-"]
+
+        ns = noise_processing(None)
+        all_curves = ns.get_disp(self.typeCB.currentText(), self.phaseMacthmodelCB.currentText())
+        for i, mode in enumerate(modes):
+            T = all_curves[mode]["period"]
+            vel = all_curves[mode]["PHV"]
+            self.canvas_plot1.plot(T, vel, axes_index=0, clear_plot=False,
+                                   color="gray", linewidth=1.0, linestyle=feature[i], label=mode)
+
+        info = (self.typeCB.currentText() + " Fundamental mode " + "-.-" + "\n" + self.typeCB.currentText()
+                + " First mode " + "-")
+
+        self.canvas_plot1.set_plot_label(0, info)
+        self.canvas_plot1.set_xlabel(0, "Period (s)")
+        self.canvas_plot1.set_ylabel(0, "Phase Velocity (km/s)")
+
+
         if self.ftCB.isChecked():
           ax2.set_xlim(self.period_min_cwtDB.value(), self.period_max_cwtDB.value())
           ax2.set_ylim(self.min_vel, self.max_vel)
@@ -674,7 +753,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             for j in range(len(self.group_vel_def)):
                 value_period, idx_period = self.find_nearest(self.periods, self.period_grp[j])
                 value_group_vel, idx_group_vel = self.find_nearest(self.vel[:, 0], self.group_vel_def[j])
-                to = self.t[idx_group_vel , 0]
+                to = self.t[idx_group_vel, 0]
                 phase_test = self.phase[idx_group_vel, idx_period]
                 inst_freq_test = self.inst_freq[idx_group_vel, idx_period]
                 phase_vel_num = self.dist * inst_freq_test
@@ -793,9 +872,12 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         period.sort()
         vel.sort()
 
-        return period, vel
+        power = []
 
+        for period_test, vel_test in zip(period, vel):
+            value, idx_period = self.find_nearest(self.period_single, period_test)
+            value, idx_vel = self.find_nearest(self.vel_single, vel_test)
+            power.append(self.scalogram2[idx_vel, idx_period])
 
-
-
+        return period, vel, power
 

@@ -11,6 +11,7 @@ import pandas as pd
 
 class Project(pw.QDialog, UiProject_Dispersion):
 
+    signal_proj = pyc.pyqtSignal()
     def __init__(self, parent=None):
         super(Project, self).__init__(parent)
         self.setupUi(self)
@@ -72,6 +73,7 @@ class Project(pw.QDialog, UiProject_Dispersion):
             try:
                 self.current_project_file = selected[0]
                 self.project_dispersion = self.load_project(file=selected[0])
+                self.send_signal()
                 project_name = os.path.basename(selected[0])
                 md.set_info_message("Project {} loaded  ".format(project_name))
             except:
@@ -80,14 +82,14 @@ class Project(pw.QDialog, UiProject_Dispersion):
             md.set_error_message("Project couldn't be loaded ")
 
 
-    @staticmethod
-    def load_project(file: str):
+
+    def load_project(self, file: str):
         project = {}
 
         try:
             project = pickle.load(open(file, "rb"))
             # get info
-            if len(project)>0:
+            if len(project) > 0:
                 for key in project.keys():
                      print(key)
 
@@ -99,6 +101,12 @@ class Project(pw.QDialog, UiProject_Dispersion):
              return project
         return project
 
+
+    def send_signal(self):
+
+        # Connect end of picking with Earthquake Analysis
+
+        self.signal_proj.emit()
 
     def saveProject(self):
 
