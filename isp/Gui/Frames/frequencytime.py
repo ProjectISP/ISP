@@ -567,6 +567,10 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             self.canvas_plot1.set_plot_label(0, info)
             self.canvas_plot1.set_xlabel(0, "Period (s)")
             self.canvas_plot1.set_ylabel(0, "Group Velocity (km/s)")
+            dist = '{dist:.1f}'.format(dist=tr.stats.mseed['geodetic'][0] / 1000)
+            azim = '{azim:.1f}'.format(azim=tr.stats.mseed['geodetic'][1])
+            self.label_stats = tr.stats.station + "_" + tr.stats.channel +" Dist "+ str(dist) + " Azim "+str(azim)
+            self.canvas_plot1.set_disp_label(0, self.label_stats)
 
             # Plot ridges and create lasso selectors
 
@@ -738,7 +742,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
     #
         self.canvas_plot1.set_xlabel(0, "Period (s)")
         self.canvas_plot1.set_ylabel(0, "Phase Velocity (km/s)")
-
+        self.canvas_plot1.set_disp_label(0, self.label_stats)
 
 
     def phase_velocity(self):

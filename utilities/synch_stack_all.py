@@ -203,7 +203,7 @@ class SynchEnergy():
         if save:
             tr1 = st["stream"][0]
             tr1.data = matrix_stack
-            self.mapping(tr1, output_path=self.output_path, format="H5")
+            #self.mapping(tr1, output_path=self.output_path, format="H5")
             self.mapping(tr1, output_path=self.output_path, format="sac")
 
 
@@ -328,10 +328,10 @@ class SynchEnergy():
 if __name__ == "__main__":
     # best test using robust
     #root_path = "/Volumes/LaCie/UPFLOW_5HZ/matrix_z_upflow/stack_daily"
-    root_path = "/Volumes/LaCie/UPFLOW_5HZ/synch_EGFs/test"
+    root_path = "/Volumes/LaCie/UPFLOW_NEW_MATRIX/morocco_new/stack_daily"
     path_to_polynom = "/Volumes/LaCie/UPFLOW_5HZ/poly/"
-    plots = "/Volumes/LaCie/UPFLOW_5HZ/synch_EGFs/plots/morocco"
-    outputs = "/Volumes/LaCie/UPFLOW_5HZ/synch_EGFs/synch/morocco"
+    plots = "/Volumes/LaCie/UPFLOW_NEW_MATRIX/plots"
+    outputs = "/Volumes/LaCie/UPFLOW_NEW_MATRIX/synch/morocco"
     skew_path = "/Volumes/LaCie/UPFLOW_5HZ/poly/skews.txt"
 
     stack_type = "robust"
@@ -340,4 +340,4 @@ if __name__ == "__main__":
     #"cluster", "tfpws","tfpws-dost"
     #pe.create_matrix(filter=False, correct=True, plot=True, save=True,
     #                 trim=False, stack_type="robust", f1=0.033, f2=0.333, format="H5")
-    pe.run_all_synch(stack_type=stack_type, filter=False, plot=True, save=True)
+    pe.run_all_synch(stack_type=stack_type, filter=False, plot=False, save=True)
