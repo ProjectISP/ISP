@@ -860,21 +860,25 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
         period = []
         vel = []
+        all_data = []  # List to store (period, velocity) tuples
 
         if selector == "phase":
             for phase_collection in self.selectors_phase_vel:
                 for idx_selected_phase in phase_collection.ind:
-                    vel.append(phase_collection.xys[idx_selected_phase, 1])
-                    period.append(phase_collection.xys[idx_selected_phase, 0])
+                    vel = phase_collection.xys[idx_selected_phase, 1]
+                    period = phase_collection.xys[idx_selected_phase, 0]
+                    all_data.append((period, vel))
 
         elif selector == "group":
             for group_collection in self.selectors_group_vel:
                 for idx_selected_group in group_collection.ind:
-                    vel.append(group_collection.xys[idx_selected_group, 1])
-                    period.append(group_collection.xys[idx_selected_group, 0])
+                    period = group_collection.xys[idx_selected_group][0]
+                    vel = group_collection.xys[idx_selected_group][1]
+                    all_data.append((period, vel))
 
-        period.sort()
-        vel.sort()
+        # Sort the data based on the period
+        sorted_data = sorted(all_data, key=lambda x: x[0])
+        period, vel = map(list, zip(*sorted_data))
 
         power = []
 
