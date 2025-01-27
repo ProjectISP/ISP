@@ -596,7 +596,7 @@ class Locate(BaseFrame, UiLocFlow):
                                                           Pplunge=first_polarity_results["results"][9]))
         self.FirstPolarityInfoText.appendPlainText("Misfit: {Misfit:.3f}".format(Misfit=first_polarity_results["results"][3]))
         self.FirstPolarityInfoText.appendPlainText("GAP: {GAP:.3f}".format(GAP=first_polarity_results["results"][4]))
-        self.FirstPolarityInfoText.appendPlainText("Number of polarities: {NP:.3f}".format(NP=first_polarity_results["results"][5]))
+        self.FirstPolarityInfoText.appendPlainText("Number of polarities: {NP:.0f}".format(NP=first_polarity_results["results"][5]))
 
 
     def onChange_root_pathLoc(self, value):
@@ -854,7 +854,7 @@ class Locate(BaseFrame, UiLocFlow):
                                                              " std {std} ".format(Mw=Mw, std=Mw_std))
 
             self.automagnitudesText.appendPlainText("Seismic Moment and Source radius: " " Mo {Mo:} Nm"
-                                                              ", R {std} km".format(Mo=Mo, std=source_radius))
+                                                              ", R {std} m".format(Mo=Mo, std=source_radius))
 
             self.automagnitudesText.appendPlainText("Local Magnitude: " " ML {ML} "
                                                     " std {std} ".format(ML=ML, std=ML_std))
