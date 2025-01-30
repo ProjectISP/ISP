@@ -5,8 +5,7 @@ Created on Tue Jul  9 18:15:16 2019
 
 @author: robertocabieces
 """
-
-
+from obspy import Trace
 import nitime.algorithms as tsa
 import numpy as np
 import math
@@ -398,6 +397,36 @@ def add_white_noise(tr, SNR_dB):
     n = noiseSigma * np.random.normal(size=L)
     tr.data = tr.data+ n
     return tr
+
+
+def downsample_trace(trace, factor=10):
+    """
+    Downsamples an ObsPy Trace by selecting every `factor`-th sample,
+    adjusting the metadata to maintain the correct time length.
+
+    Parameters:
+        trace (obspy.Trace): Input trace to downsample.
+        factor (int): Downsampling factor.
+
+    Returns:
+        obspy.Trace: Downsampled trace with corrected metadata.
+    """
+    original_npts = trace.stats.npts
+    downsampled_data = trace.data[::factor]
+
+    # Compute new stats
+    new_sampling_rate = trace.stats.sampling_rate / factor
+    new_npts = len(downsampled_data)
+
+    # Create new Trace with updated metadata
+    new_trace = Trace(data=downsampled_data, header=trace.stats)
+    new_trace.stats.sampling_rate = new_sampling_rate
+    new_trace.stats.npts = new_npts
+    len_time = len(new_trace.times())
+    Trace.data = trace.data[0:len_time]
+
+    return new_trace
+
 
 
 def __whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos):

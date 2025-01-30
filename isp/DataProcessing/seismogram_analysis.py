@@ -7,7 +7,7 @@ from isp.Utils import ObspyUtil, Filters
 import numpy as np
 
 from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise, \
-    smoothing, wiener_filter, hampel
+    smoothing, wiener_filter, hampel, downsample_trace
 
 
 @unique
@@ -154,7 +154,7 @@ class SeismogramDataAdvanced:
 
         if diff >= lim1:
             check = True
-            decimator_factor = 1
+            decimator_factor = 10
             return [decimator_factor, check]
 
         if diff >= lim2 and diff < lim1:
@@ -281,6 +281,9 @@ class SeismogramDataAdvanced:
 
             if parameters[j][0] == 'resample':
                 tr.resample(sampling_rate=parameters[j][1],window='hanning',no_filter=parameters[j][2])
+
+            if parameters[j][0] == 'resample_simple':
+                tr = downsample_trace(tr, factor=parameters[j][1])
 
             if parameters[j][0] == 'fill gaps':
                 st = Stream(tr)

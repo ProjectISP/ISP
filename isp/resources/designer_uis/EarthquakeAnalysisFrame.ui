@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1659</width>
-    <height>958</height>
+    <height>940</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -616,7 +616,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>1072</width>
-                  <height>708</height>
+                  <height>698</height>
                  </rect>
                 </property>
                </widget>
@@ -686,10 +686,10 @@
                 <string>Include autodecimation to 1 Hz and 5 Hz fro long span seismograms</string>
                </property>
                <property name="text">
-                <string>Fast View</string>
+                <string>Auto-Resample</string>
                </property>
                <property name="checked">
-                <bool>true</bool>
+                <bool>false</bool>
                </property>
               </widget>
              </item>

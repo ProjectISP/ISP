@@ -810,7 +810,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.decimator = sd.resample_check()
 
         if self.decimator[1]:
-            self.parameters_list.insert(0, ['resample', self.decimator[0], True])
+            self.parameters_list.insert(0, ['resample_simple', self.decimator[0], True])
 
         if self.trimCB.isChecked() and self.diff >= 0:
 
