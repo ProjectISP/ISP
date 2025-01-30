@@ -18,7 +18,6 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import QStyle
 import os
 import matplotlib.dates as mdt
-from datetime import date
 import pandas as pd
 from isp.Utils import MseedUtil, AsycTime
 from isp.Utils.subprocess_utils import open_url
@@ -27,7 +26,7 @@ from isp import ROOT_DIR
 from isp.arrayanalysis.backprojection_tools import back_proj_organize, backproj
 from isp.arrayanalysis.plot_bp import plot_bp
 from isp.seismogramInspector.signal_processing_advanced import find_nearest
-
+from PyQt5.QtCore import Qt
 
 class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
@@ -112,6 +111,15 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
         self.playButton.clicked.connect(self.play_bp)
         self.positionSlider.sliderMoved.connect(self.setPosition)
+
+        # Dialog
+        self.progress_dialog = pw.QProgressDialog(self)
+        self.progress_dialog.setRange(0, 0)
+        self.progress_dialog.setWindowTitle('Processing.....')
+        self.progress_dialog.setLabelText('Please Wait')
+        self.progress_dialog.setWindowIcon(self.windowIcon())
+        self.progress_dialog.setWindowTitle(self.windowTitle())
+        self.progress_dialog.close()
 
     def mediaStateChanged(self):
         if self.player.state() == QMediaPlayer.PlayingState:
@@ -241,8 +249,19 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             md = MessageDialog(self)
             md.set_info_message("Please load a stations file with array coordinates")
 
-    @AsycTime.run_async()
+
+
+
     def FK_plot(self):
+        self.__FK_plot()
+        self.progress_dialog.exec()
+        md = MessageDialog(self)
+        md.set_info_message("FK analysis finished", "Double click to see the slowness map / "
+                                                    "Drag holding right button to select time spam to analyze in "
+                                                    "Vespagram module")
+
+    @AsycTime.run_async()
+    def __FK_plot(self):
         print("Starting FK analysis")
         # starttime = convert_qdatetime_utcdatetime(self.starttime_date)
         # endtime = convert_qdatetime_utcdatetime(self.endtime_date)
@@ -276,6 +295,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
         ax.xaxis.set_major_formatter(formatter)
         ax.xaxis.set_tick_params(rotation=30)
         print("Finished FK analysis")
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def on_click_matplotlib(self, event, canvas):
         output_path = os.path.join(ROOT_DIR, 'arrayanalysis', 'array_picks.txt"')
