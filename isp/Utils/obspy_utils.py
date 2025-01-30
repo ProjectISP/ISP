@@ -666,7 +666,7 @@ class MseedUtil:
         return project, data_files
 
     @classmethod
-    def filter_time(cls, project, starttime, endtime, tol = 86400):
+    def filter_time(cls, project, starttime, endtime, tol=86400):
 
         """
         Filters project data based on time range.
@@ -681,11 +681,13 @@ class MseedUtil:
 
         # Convert starttime and endtime to datetime objects if they are strings
         date_format = "%Y-%m-%d %H:%M:%S"
+        exact = False
+
         if isinstance(starttime, str):
             start = datetime.strptime(starttime, date_format)
             start = UTCDateTime(start)
         elif isinstance(starttime, UTCDateTime):
-            start = starttime.datetime  # Convert to Python datetime
+            start = starttime
         else:
             raise TypeError("starttime must be a string or UTCDateTime object.")
 
@@ -693,32 +695,50 @@ class MseedUtil:
             end = datetime.strptime(endtime, date_format)
             end = UTCDateTime(end)
         elif isinstance(endtime, UTCDateTime):
-            end = endtime.datetime  # Convert to Python datetime
+            end = endtime
         else:
             raise TypeError("endtime must be a string or UTCDateTime object.")
+
+        if (end-start) <= 86400:
+            exact = True
 
         # Process project data
         if len(project) > 0:
             for key in project:
                 item = project[key]
                 indices_to_remove = []
-                for index, value in enumerate(item):
-                    start_data = value[1].starttime
-                    end_data = value[1].endtime
-                    if start_data >= start and end_data > end and (start_data - start) <= tol:
-                        pass
 
-                    elif start_data <= start and end_data >= end:
-                        pass
+                if exact:
+                    for index, value in enumerate(item):
+                        start_data = value[1].starttime
+                        end_data = value[1].endtime
 
-                    elif start_data <= start and end_data <= end and (end - end_data) <= tol:
-                        pass
+                        if start_data <= start and end <= end_data:
+                            pass
+                        elif start_data >= start and end_data <= end:
+                            pass
 
-                    elif start_data >= start and end_data <= end:
-                        pass
+                        else:
+                            indices_to_remove.append(index)
 
-                    else:
-                        indices_to_remove.append(index)
+                else:
+                    for index, value in enumerate(item):
+                        start_data = value[1].starttime
+                        end_data = value[1].endtime
+                        if start_data >= start and end_data > end and (start_data - start) <= tol:
+                            pass
+
+                        elif start_data <= start and end_data >= end:
+                            pass
+
+                        elif start_data <= start and end_data <= end and (end - end_data) <= tol:
+                            pass
+
+                        elif start_data >= start and end_data <= end:
+                            pass
+
+                        else:
+                            indices_to_remove.append(index)
 
                 for index in reversed(indices_to_remove):
                     item.pop(index)

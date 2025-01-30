@@ -547,7 +547,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         selection = [self.netForm.text(), self.stationForm.text(), self.channelForm.text()]
 
         try:
-            self.project_filtered, self.files_path = MseedUtil.filter_project_keys(self.project, net=selection[0],
+            self.project_filtered, self.files_path = MseedUtil.filter_project_keys(self.project_filtered, net=selection[0],
                                                                                    station=selection[1],
                                                                                    channel=selection[2])
         except:
@@ -699,12 +699,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             self.canvas.clear()
 
-            # self.nums_clicks = 0
-
-            if self.trimCB.isChecked() and self.check_start_time != None and self.check_end_time != None:
-                if self.check_start_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_1) and \
-                        self.check_end_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_2):
-                    self.get_now_files()
+            # if self.trimCB.isChecked() and self.check_start_time != None and self.check_end_time != None:
+            #     if self.check_start_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_1) and \
+            #             self.check_end_time != convert_qdatetime_utcdatetime(self.dateTimeEdit_2):
+            #         self.get_now_files()
 
             if self.sortCB.isChecked():
                 if self.comboBox_sort.currentText() == "Distance":
