@@ -189,11 +189,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.project_dialog = Project()
 
-
-        # catalog viewer
-
-        self.catalog = SearchCatalogViewer()
-
         # shortcuts test
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+D'), self)
@@ -405,6 +400,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 "Be sure you have process and plot Z, N, E or Z, 1 ,2 or Z, Y, X\n")
 
     def open_catalog_viewer(self):
+
+        # catalog viewer
+        if isinstance(self.inventory, Inventory):
+
+            self.catalog = SearchCatalogViewer(metadata=self.inventory)
+        else:
+            self.catalog = SearchCatalogViewer(metadata=None)
         self.catalog.show()
 
     @pyc.Slot()
@@ -1776,6 +1778,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cf = []
         cfs = []
         max_values = []
+        params = self.settings_dialog.getParameters()
+        sharey = params["amplitudeaxis"]
         files_at_page = self.get_files_at_page()
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)

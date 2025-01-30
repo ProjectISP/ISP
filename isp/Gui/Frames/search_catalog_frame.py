@@ -1,3 +1,4 @@
+from typing import Union
 from obspy.geodetics import gps2dist_azimuth
 from isp.Gui import pw
 from isp.Gui.Frames.uis_frames import UiSearch_Catalog
@@ -6,7 +7,9 @@ from isp.Gui.Frames import BaseFrame, MessageDialog, CartopyCanvas
 import pandas as pd
 import os
 from PyQt5 import QtWidgets
-from obspy import UTCDateTime, read_events, Catalog
+from obspy import UTCDateTime, read_events, Catalog, Inventory
+import numpy as np
+from isp.retrieve_events import retrieve
 from isp.seismogramInspector.signal_processing_advanced import find_nearest
 
 
@@ -21,10 +24,14 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
 
 
         """
-        def __init__(self):
+        def __init__(self, metadata: Union[Inventory, None]):
             super(SearchCatalogViewer, self).__init__()
             self.setupUi(self)
 
+            if isinstance(metadata, Inventory):
+                self.metadata = metadata
+            else:
+                self.metadata = None
             # Binding
             self.root_path_bind = BindPyqtObject(self.rootPathForm)
 
@@ -169,11 +176,22 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
 
                     self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QtWidgets.QTableWidgetItem("N/A"))
 
-                self.tableWidget.setItem(self.tableWidget.rowCount() - 1,4,QtWidgets.QTableWidgetItem(str(magnitude)))
-                self.tableWidget.setItem(self.tableWidget.rowCount() - 1,5,QtWidgets.QTableWidgetItem(str(magnitude_type)))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 4, QtWidgets.QTableWidgetItem(str(magnitude)))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 5, QtWidgets.QTableWidgetItem(str(magnitude_type)))
 
-            self.cartopy_canvas.global_map(0, plot_earthquakes=True, show_colorbar=self.activated_colorbar,
-                                           lat=latitudes, lon=longitudes, depth=depths, magnitude=magnitudes)
+            extent = [np.min(longitudes)-0.25, np.max(longitudes)+0.25, np.min(latitudes)+0.25, np.max(latitudes)+0.25]
+            if isinstance(self.metadata, Inventory):
+                self.retrivetool = retrieve()
+                coordinates = self.retrivetool.get_inventory_coordinates(self.metadata)
+                self.cartopy_canvas.global_map(0, plot_earthquakes=True, show_stations=True,
+                                               show_station_names=False, clear_plot=False, update=True,
+                                               coordinates=coordinates, lat=latitudes,
+                                               lon=longitudes, depth=depths, magnitude=magnitudes,
+                                               show_colorbar=self.activated_colorbar, extent=extent)
+            else:
+
+                self.cartopy_canvas.global_map(0, plot_earthquakes=True, show_colorbar=self.activated_colorbar,
+                                               lat=latitudes, lon=longitudes, depth=depths, magnitude=magnitudes, extent=extent)
 
             self.activated_colorbar = False
 

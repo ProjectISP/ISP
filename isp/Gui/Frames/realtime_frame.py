@@ -226,7 +226,8 @@ class RealTimeFrame(BaseFrame, UiRealTimeFrame):
 
     @AsycTime.run_async()
     def retrieve_data(self, e):
-
+        # server address example: geofon.gfz-potsdam.de
+        # DATA = NET 'WM', STATION 'SFS', CHANNEL 'BHZ'
         self.client = create_client(self.serverAddressForm.text(), on_data=self.handle_data,
                                     on_seedlink_error=self.seedlink_error, on_terminate=self.terminate_data)
 

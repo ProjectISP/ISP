@@ -1221,8 +1221,8 @@ class CartopyCanvas(BasePltPyqtCanvas):
             self.__cbar.ax.set_ylabel("Depth [m]")
         self.draw()
 
-    def global_map(self, axes_index, plot_earthquakes = False, update = True,  show_colorbar = False, clear_plot = True,
-                   show_stations = False, show_station_names = False, show_distance_circles = False,  **kwargs):
+    def global_map(self, axes_index, plot_earthquakes=False, update=True,  show_colorbar=False, clear_plot=True,
+                   show_stations=False, show_station_names=False, show_distance_circles=False,  **kwargs):
         import numpy as np
         from isp import ROOT_DIR
         import os
@@ -1265,28 +1265,30 @@ class CartopyCanvas(BasePltPyqtCanvas):
         if clear_plot:
             ax.clear()
 
-        #if len(extent)>=0:
-        #    try:
-        #        ax.set_extent(extent)
-        #    except:
-        #        pass
+
+
         if update:
             ax.background_img(name='ne_shaded', resolution=resolution)
         else:
             pass
 
+        if len(extent)>=0:
+           try:
+               ax.set_extent(extent)
+           except:
+               pass
 
         if show_stations:
-            lat = []
-            lon = []
+            lat_stations = []
+            lon_stations = []
             sta_ids = []
             for key in coordinates.keys():
 
                 for j in range(len(coordinates[key][0][:])):
 
                     sta_ids.append(coordinates[key][1][j])
-                    lat.append(coordinates[key][2][j])
-                    lon.append(coordinates[key][3][j])
+                    lat_stations.append(coordinates[key][2][j])
+                    lon_stations.append(coordinates[key][3][j])
                     if show_station_names:
                         ax.text(coordinates[key][3][j], coordinates[key][2][j], key + "." + coordinates[key][1][j], verticalalignment='center',
                                 horizontalalignment='right', transform=text_transform,
@@ -1296,7 +1298,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
 
             #ax.scatter(lon, lat, s=size, marker="^", edgecolors="white", color="black", alpha=0.7,
             #           transform=ccrs.PlateCarree())
-            ax.scatter(lon, lat, s=size, marker="^", edgecolors="white", color="black", alpha=0.7,
+            ax.scatter(lon_stations, lat_stations, s=size, marker="^", edgecolors="white", color="black", alpha=0.7,
                        transform=ccrs.PlateCarree())
 
 
@@ -1304,7 +1306,7 @@ class CartopyCanvas(BasePltPyqtCanvas):
             color_map = plt.get_cmap('rainbow')
             reversed_color_map = color_map.reversed()
             cs = ax.scatter(lon, lat, s=mag, c=depth, edgecolors="black", cmap=reversed_color_map, vmin = 0,
-                            vmax = 600)
+                            vmax=600)
 
             kw = dict(prop="sizes", num=5, fmt="{x:.0f}", color="red", alpha=0.5, func=lambda s: np.log(s / 0.25))
             ax.legend(*cs.legend_elements(**kw), loc="lower right", title="Magnitudes")
