@@ -699,7 +699,12 @@ class MseedUtil:
         else:
             raise TypeError("endtime must be a string or UTCDateTime object.")
 
-        if (end-start) <= 86400:
+
+        # to check we are chopping the same day
+        start_date_exact = str(starttime.year) + str(starttime.julday)
+        end_date_exact = str(endtime.year) + str(endtime.julday)
+
+        if (end-start) <= 86400 and start_date_exact == end_date_exact:
             exact = True
 
         # Process project data
