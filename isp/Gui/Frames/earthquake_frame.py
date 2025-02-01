@@ -211,8 +211,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+C'), self)
         self.shortcut_open.activated.connect(self.clean_events_detected)
 
-        # self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+M'), self)
-        # self.shortcut_open.activated.connect(self.open_magnitudes_calculator)
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+M'), self)
+        self.shortcut_open.activated.connect(self.plot_stream_concat)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+P'), self)
         self.shortcut_open.activated.connect(self.comboBox_phases.showPopup)
@@ -681,6 +681,93 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             print("No Metadata found for {} file.".format(file))
             self.baz_all.append(0)
             return 0.
+
+    def set_pagination_stream_concat(self, st):
+
+        self.total_items = len(st)
+        self.pagination.set_total_items(self.total_items)
+
+    def plot_stream_concat(self):
+
+        # info = MseedUtil.get_project_basic_info(self.project)
+        params = self.settings_dialog.getParameters()
+        sharey = params["amplitudeaxis"]
+
+        ## Merge traces from files ##
+        all_traces = []
+        for index, file_path in enumerate(self.files_path):
+            sd = SeismogramDataAdvanced(file_path)
+            tr = sd.get_waveform_advanced([], self.inventory,
+                                          filter_error_callback=self.filter_error_message,
+                                          start_time=self.start_time, end_time=self.end_time, trace_number=index)
+            all_traces.append(tr)
+
+        st = Stream(all_traces)
+        st.merge()
+
+        if isinstance(st, Stream):
+
+            self.canvas.clear()
+            self.set_pagination_stream_concat(st)
+            self.canvas.set_new_subplot(nrows=len(st), ncols=1, sharey=sharey)
+
+            for index, tr in enumerate(st):
+
+
+                sd = SeismogramDataAdvanced(file_path=None, stream=tr, realtime=True)
+                tr = sd.get_waveform_advanced(self.parameters_list, self.inventory,
+                                              filter_error_callback=self.filter_error_message,
+                                              start_time=self.start_time, end_time=self.end_time, trace_number=index)
+                if len(tr) > 0:
+
+                    if self.aligned_checked:
+                        try:
+                            pick_reference = self.pick_times[tr.stats.station + "." + tr.stats.channel]
+                            shift_time = pick_reference[1] - tr.stats.starttime
+                            tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00") - shift_time
+                        except:
+                            tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+
+                    if self.actionFrom_StartT.isChecked():
+                        tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+
+                    if self.shift_times is not None:
+                        tr.stats.starttime = tr.stats.starttime + self.shift_times[index][0]
+
+                    t = tr.times("matplotlib")
+                    s = tr.data
+
+                    self.canvas.plot_date(t, s, index, color="black", fmt='-', linewidth=0.5)
+
+                    ax = self.canvas.get_axe(index)
+                    try:
+                        ax.spines["top"].set_visible(False)
+                        ax.spines["bottom"].set_visible(False)
+                        ax.tick_params(top=False)
+                        ax.tick_params(labeltop=False)
+                    except:
+                        pass
+                    ax.set_ylim(np.min(s), np.max(s))
+                    #
+                    if index != (self.pagination.items_per_page - 1):
+                        try:
+                            ax.tick_params(bottom=False)
+                        except:
+                            pass
+
+                    try:
+                        self.min_starttime[index] = min(t)
+                        self.max_endtime[index] = max(t)
+                    except:
+                        print("Empty traces")
+
+                    formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
+                    ax.xaxis.set_major_formatter(formatter)
+
+                    self.all_traces[index] = tr
+
+
+
 
     def plot_seismogram(self):
 
