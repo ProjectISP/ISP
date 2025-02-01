@@ -710,7 +710,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.canvas.clear()
             self.set_pagination_stream_concat(st)
             self.canvas.set_new_subplot(nrows=len(st), ncols=1, sharey=sharey)
-
+            self.st = []
             for index, tr in enumerate(st):
 
 
@@ -766,6 +766,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                     self.all_traces[index] = tr
 
+                self.st = Stream(self.all_traces)
 
 
 
