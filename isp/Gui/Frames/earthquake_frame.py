@@ -35,7 +35,7 @@ from isp.earthquakeAnalysis import PickerManager
 import numpy as np
 import os
 from isp.Utils.subprocess_utils import exc_cmd, open_url
-from isp import ROOT_DIR, EVENTS_DETECTED, AUTOMATIC_PHASES, PICKING_DIR
+from isp import ROOT_DIR, AUTOMATIC_PHASES, PICKING_DIR
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
@@ -75,7 +75,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.progressbar.setLabelText(" Computing Auto-Picking ")
         self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
         self.path_phases = os.path.join(AUTOMATIC_PHASES, "phases_autodetected.txt")
-        self.path_detection = os.path.join(EVENTS_DETECTED, "event_autodetects.txt")
         self.progressbar.close()
         self.settings_dialog = SettingsDialog(self)
         self.inventory = {}
@@ -189,18 +188,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.project_dialog = Project()
 
-        # shortcuts test
-
+        # shortcuts
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+D'), self)
         self.shortcut_open.activated.connect(self.run_process)
 
-        # shortcuts
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+U'), self)
         self.shortcut_open.activated.connect(self.open_solutions)
-
-        # shortcuts
-        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+Y'), self)
-        self.shortcut_open.activated.connect(self.open_events)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+L'), self)
         self.shortcut_open.activated.connect(self.open_parameters_settings)
@@ -1490,43 +1483,112 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.cf = Stream(traces=cfs)
 
+    # def write_files_page(self):
+    #
+    #     root_path = os.path.dirname(os.path.abspath(__file__))
+    #     if "darwin" == platform:
+    #         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+    #     else:
+    #         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+    #                                                        pw.QFileDialog.DontUseNativeDialog)
+    #     if self.st:
+    #         n = len(self.st)
+    #         for j in range(n):
+    #             try:
+    #                 tr = self.st[j]
+    #                 t1 = tr.stats.starttime
+    #                 id = tr.id + "." + "D" + "." + str(t1.year) + "." + str(t1.julday)
+    #                 print(tr.id, "Writing data processed")
+    #                 path_output = os.path.join(dir_path, id)
+    #                 tr.write(path_output, format="MSEED")
+    #             except:
+    #                 print("File cannot be written:", self.files_at_page[j])
+
     def write_files_page(self):
 
+        errors = False
         root_path = os.path.dirname(os.path.abspath(__file__))
-        if "darwin" == platform:
+
+        # Get output directory from user
+        if platform.system() == "Darwin":
             dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         else:
             dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
                                                            pw.QFileDialog.DontUseNativeDialog)
+
+        # Check if user canceled directory selection
+        if not dir_path:
+            print("No directory selected, operation cancelled.")
+            return
+
         if self.st:
-            n = len(self.st)
-            for j in range(n):
+            md = MessageDialog(self)
+            for j, tr in enumerate(self.st):
                 try:
-                    tr = self.st[j]
                     t1 = tr.stats.starttime
-                    id = tr.id + "." + "D" + "." + str(t1.year) + "." + str(t1.julday)
-                    print(tr.id, "Writing data processed")
-                    path_output = os.path.join(dir_path, id)
+                    base_name = f"{tr.id}.D.{t1.year}.{t1.julday}"
+                    path_output = os.path.join(dir_path, base_name)
+
+                    # Check if file exists and append a number if necessary
+                    counter = 1
+                    while os.path.exists(path_output):
+                        path_output = os.path.join(dir_path, f"{base_name}_{counter}")
+                        counter += 1
+
+                    print(f"{tr.id} - Writing processed data to {path_output}")
                     tr.write(path_output, format="MSEED")
-                except:
-                    print("File cannot be written:", self.files_at_page[j])
+
+                except Exception as e:
+                    errors = True
+                    print(f"File cannot be written: {self.files_at_page[j]}, Error: {e}")
+
+            if errors:
+                md.set_info_message("Writting Complete with Errors, check output", dir_path)
+            else:
+                md.set_info_message("Writting Complete, check output", dir_path)
 
     def save_cf(self):
+
+        errors = False
         root_path = os.path.dirname(os.path.abspath(__file__))
-        if "darwin" == platform:
+
+        # Get output directory from user
+        if platform.system() == "Darwin":
             dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         else:
             dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
                                                            pw.QFileDialog.DontUseNativeDialog)
-        if self.cf:
-            n = len(self.cf)
-            for j in range(n):
-                tr = self.cf[j]
-                t1 = tr.stats.starttime
-                id = tr.id + "." + "M" + "." + str(t1.year) + "." + str(t1.julday)
-                print(tr.id, "Writing data processed")
-                path_output = os.path.join(dir_path, id)
-                tr.write(path_output, format="MSEED")
+
+        # Check if user canceled directory selection
+        if not dir_path:
+            print("No directory selected, operation cancelled.")
+            return
+
+        if self.st:
+            md = MessageDialog(self)
+            for j, tr in enumerate(self.cf):
+                try:
+                    t1 = tr.stats.starttime
+                    base_name = f"{tr.id}.M.{t1.year}.{t1.julday}"
+                    path_output = os.path.join(dir_path, base_name)
+
+                    # Check if file exists and append a number if necessary
+                    counter = 1
+                    while os.path.exists(path_output):
+                        path_output = os.path.join(dir_path, f"{base_name}_{counter}")
+                        counter += 1
+
+                    print(f"{tr.id} - Writing processed data to {path_output}")
+                    tr.write(path_output, format="MSEED")
+
+                except Exception as e:
+                    errors = True
+                    print(f"File cannot be written: {self.files_at_page[j]}, Error: {e}")
+
+            if errors:
+                md.set_info_message("Writting Complete with Errors, check output", dir_path)
+            else:
+                md.set_info_message("Writting Complete, check output", dir_path)
 
     def stack_all_seismograms(self):
         params = self.settings_dialog.getParameters()
@@ -2219,25 +2281,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             md = MessageDialog(self)
             md.set_error_message(f"Couldn't open pick file: {str(e)}")
 
-    def open_events(self):
-
-        output_path = os.path.join(EVENTS_DETECTED, 'event_autodetects.txt')
-
-        try:
-
-            if platform == "darwin":
-
-                command = "{} {}".format('open', output_path)
-            else:
-
-                command = "{} {}".format('xdg - open', output_path)
-
-            exc_cmd(command, cwd=ROOT_DIR)
-
-        except:
-
-            md = MessageDialog(self)
-            md.set_error_message("Coundn't open pick file")
 
     def remove_picks(self):
         md = MessageDialog(self)
