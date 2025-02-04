@@ -1016,6 +1016,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                                                     self.event_info.longitude,
                                                                     self.event_info.event_depth)
                     print(bazim)
+
+                # rename channels to ensure rotation
+                st2 = ObspyUtil.rename_traces(st2)
                 st2.rotate(method='NE->RT', back_azimuth=bazim)
 
                 print("The GAC Rotation is not posible for", stations[k])

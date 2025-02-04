@@ -212,6 +212,18 @@ class ObspyUtil:
         return azim, bazim, inci
 
     @staticmethod
+    def rename_traces(st: Stream):
+        for tr in st:
+            old_channel = tr.stats.channel
+            if old_channel.endswith('1') or old_channel.endswith('Y'):
+                tr.stats.channel = old_channel[:-1] + "N"
+            elif old_channel.endswith('2') or old_channel.endswith('X'):
+                tr.stats.channel = old_channel[:-1] + "E"
+        return st
+
+
+
+    @staticmethod
     def filter_trace(trace, trace_filter, f_min, f_max, **kwargs):
         """
         Filter a obspy Trace or Stream.
