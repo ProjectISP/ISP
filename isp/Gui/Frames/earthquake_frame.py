@@ -171,6 +171,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
         self.actionPlot_Record_Section.triggered.connect(lambda: self.on_click_plot_record_section())
         self.actionCFs.triggered.connect(lambda: self.save_cf())
+        self.actionConcatanate_Waveforms.triggered.connect(self.plot_stream_concat)
         self.runScriptBtn.clicked.connect(self.run_process)
         self.locateBtn.clicked.connect(self.open_locate)
         self.autoPickBtn.clicked.connect(self.open_auto_pick)
@@ -704,6 +705,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.set_pagination_stream_concat(st)
             self.canvas.set_new_subplot(nrows=len(st), ncols=1, sharey=sharey)
             self.st = []
+            self.all_traces = []
             for index, tr in enumerate(st):
 
 
@@ -757,7 +759,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
                     ax.xaxis.set_major_formatter(formatter)
 
-                    self.all_traces[index] = tr
+                    self.all_traces.append(tr)
 
                 self.st = Stream(self.all_traces)
 
@@ -1088,7 +1090,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def run_STA_LTA(self):
         self.cf = []
         cfs = []
-        files_at_page = self.get_files_at_page()
+        #files_at_page = self.get_files_at_page()
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         params = self.settings_dialog.getParameters()
@@ -1098,9 +1100,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         global_cf_min = float('inf')
         global_cf_max = float('-inf')
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
+        self.canvas.set_new_subplot(nrows=len(self.st), ncols=1, sharey=sharey)
 
-        for index, file_path in enumerate(files_at_page):
+        for index, file_path in enumerate(self.st):
             tr = self.st[index]
 
             if STA < LTA:
@@ -1141,7 +1143,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         # After the loop, synchronize all ax2 y-limits
         if sharey:
-            for index in range(len(files_at_page)):
+            for index in range(len(self.st)):
                 ax2 = self.canvas.get_axe(index).twinx()  # Get the corresponding ax2
                 ax2.set_ylim(global_cf_min, global_cf_max)
 
@@ -1173,16 +1175,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.cf = []
         cfs = []
-        files_at_page = self.get_files_at_page()
+        # files_at_page = self.get_files_at_page()
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
+        self.canvas.set_new_subplot(nrows=len(self.st), ncols=1, sharey=sharey)
 
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         diff = end_time - start_time
 
 
-        for index, file_path in enumerate(files_at_page):
+        for index, file_path in enumerate(self.st):
             tr = self.st[index]
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             cw = ConvolveWaveletScipy(tr)
@@ -1246,7 +1248,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         # After the loop, synchronize all ax2 y-limits
         if sharey:
-            for index in range(len(files_at_page)):
+            for index in range(len(self.st)):
                 ax2 = self.canvas.get_axe(index).twinx()  # Get the corresponding ax2
                 ax2.set_ylim(global_cf_min, global_cf_max)
 
@@ -1277,15 +1279,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         global_cf_max = float('-inf')
         self.cf = []
         cfs = []
-        files_at_page = self.get_files_at_page()
+        #files_at_page = self.get_files_at_page()
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
+        self.canvas.set_new_subplot(nrows=len(self.st), ncols=1, sharey=sharey)
 
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         diff = end_time - start_time
 
-        for index, file_path in enumerate(files_at_page):
+        for index, file_path in enumerate(self.st):
             tr = self.st[index]
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             cw = ConvolveWaveletScipy(tr)
@@ -1350,7 +1352,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         # After the loop, synchronize all ax2 y-limits
         if sharey:
-            for index in range(len(files_at_page)):
+            for index in range(len(self.st)):
                 ax2 = self.canvas.get_axe(index).twinx()  # Get the corresponding ax2
                 ax2.set_ylim(global_cf_min, global_cf_max)
 
@@ -1376,12 +1378,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         sharey = params["amplitudeaxis"]
         self.cf = []
         cfs = []
-        files_at_page = self.get_files_at_page()
+        #files_at_page = self.get_files_at_page()
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
+        self.canvas.set_new_subplot(nrows=len(self.st), ncols=1, sharey=sharey)
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-        for index, file_path in enumerate(files_at_page):
+        for index, file_path in enumerate(self.st):
             tr = self.st[index]
             t = tr.times("matplotlib")
             st_stats = ObspyUtil.get_stats_from_trace(tr)
