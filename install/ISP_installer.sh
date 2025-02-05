@@ -117,6 +117,10 @@ if [[ $ALIAS_CHOICE =~ ^[Yy]$ ]]; then
 
     for PROFILE in "${CONFIG_FILES[@]}"; do
         if [[ -f "$PROFILE" ]]; then
+            # Remove existing alias if present
+            sed -i '/# ISP Installation/,/# ISP Installation end/d' "$PROFILE"
+
+            # Add new alias
             echo "# ISP Installation" >> "$PROFILE"
             if [[ "$PROFILE" == *fish* ]]; then
                 echo "alias isp '${ISP_DIR}/isp.sh'" >> "$PROFILE"
@@ -126,16 +130,16 @@ if [[ $ALIAS_CHOICE =~ ^[Yy]$ ]]; then
                 echo "alias isp=${ISP_DIR}/isp.sh" >> "$PROFILE"
             fi
             echo "# ISP Installation end" >> "$PROFILE"
+
+            echo "Updated alias in $PROFILE"
         fi
     done
 
-    echo "Aliases have been added to your shell configuration files."
+    echo "Aliases have been updated in your shell configuration files."
     echo "Run ISP by typing 'isp' in the terminal."
 else
     echo "To run ISP, execute isp.sh at ${ISP_DIR}"
 fi
-
-#!/bin/bash
 
 # ================================
 # ADDING DESKTOP SHORTCUT OPTION
