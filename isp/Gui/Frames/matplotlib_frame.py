@@ -211,6 +211,9 @@ class BasePltPyqtCanvas(FigureCanvas):
             # new way to get axes index from event.
             # event.inaxes.get_subplotspec().rowspan.start
             self.__selected_axe_index = self.get_axe_index(event.inaxes)
+            selector.set_visible(False)
+            selector.clear()
+            selector.clear_subplot()
             selector.new_axes(event.inaxes)
             selector.update_background(event)
             # set all axes to selector. Only has effect if sharex=True
