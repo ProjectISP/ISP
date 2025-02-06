@@ -106,11 +106,10 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
             # save info to the project
             # important modification 07/06/2024 loop over the data collections
             if len(self.period_grp) == 0 and len(self.group_vel_def) == 0 and self.run_group_vel_done:
-                # This case is when just group velocity has been picked
+                # This case is when just group velocity has been picked, becausue this action still was not done
                 self.period_grp, self.group_vel_def, self.power = self.get_def_velocities(selector="group")
 
             else:
-
                 # This case is when it has been picked group velocity and phase velocity
                 # (previously was computed the group vel)
                 self.period_phv, self.phase_vel_def, _ = self.get_def_velocities(selector="phase")
@@ -371,17 +370,15 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
     #@AsycTime.run_async()
     def plot_seismogram(self):
+
         self.period_grp = []
         self.group_vel_def = []
         self.period_phv = []
         self.phase_vel_def = []
 
-
         self.run_group_vel_done = True
+        self.run_phase_vel_done = False
         self._clean_lasso()
-
-        # row = self.tw_files.currentRow()
-        # file = os.path.join(self.rootPathForm_2.text(), self.tw_files.item(row, 0).data(0))
 
         modes = ["fundamental", "first"]
         feature = ["-.", "-"]
@@ -689,6 +686,7 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
     def run_phase_vel(self):
         self.run_group_vel_done = False
+        self.run_phase_vel_done = True
         self.period_phv = []
         self.phase_vel_def = []
 
@@ -749,7 +747,6 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
         self.periods_now = []
         self.solutions = []
 
-        self.period_grp, self.group_vel_def
         # TODO WHAT IS THE OPTIMUM LAMBDA
         landa = -1*np.pi/4
         phase_vel_array = np.zeros([len(np.arange(-5, 5, 1)), len(self.group_vel_def)])
@@ -858,9 +855,10 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
 
     def get_def_velocities(self, selector):
 
+        all_data = []  # List to store (period, velocity) tuples
+        power = []
         period = []
         vel = []
-        all_data = []  # List to store (period, velocity) tuples
 
         if selector == "phase":
             for phase_collection in self.selectors_phase_vel:
@@ -877,15 +875,14 @@ class FrequencyTimeFrame(pw.QWidget, UiFrequencyTime):
                     all_data.append((period, vel))
 
         # Sort the data based on the period
-        sorted_data = sorted(all_data, key=lambda x: x[0])
-        period, vel = map(list, zip(*sorted_data))
+        if len(all_data) > 0:
+            sorted_data = sorted(all_data, key=lambda x: x[0])
+            period, vel = map(list, zip(*sorted_data))
 
-        power = []
-
-        for period_test, vel_test in zip(period, vel):
-            value, idx_period = self.find_nearest(self.period_single, period_test)
-            value, idx_vel = self.find_nearest(self.vel_single, vel_test)
-            power.append(self.scalogram2[idx_vel, idx_period])
+            for period_test, vel_test in zip(period, vel):
+                value, idx_period = self.find_nearest(self.period_single, period_test)
+                value, idx_vel = self.find_nearest(self.vel_single, vel_test)
+                power.append(self.scalogram2[idx_vel, idx_period])
 
         return period, vel, power
 
