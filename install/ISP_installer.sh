@@ -190,36 +190,7 @@ EOF
             echo "Automator application shortcut created at $AUTOMATOR_SCRIPT_PATH!"
         fi
     fi
-
-# Linux shortcut creation
-elif [[ $OS_TYPE == "Linux" ]]; then
-    echo "Linux Desktop shortcut creation"
-
-    read -p "Do you want to create a desktop shortcut for ISP? [Y/n] " SHORTCUT
-    if [[ $SHORTCUT =~ ^[Yy]$ ]]; then
-        SHORTCUT_PATH=~/Desktop/ISP_Launcher.desktop
-        
-        # Create the .desktop file
-        echo "Creating desktop shortcut at $SHORTCUT_PATH..."
-        cat <<EOF > "$SHORTCUT_PATH"
-[Desktop Entry]
-Version=2.0
-Name=ISP
-Comment=Launch ISP Application
-Exec=bash -c "source ~/opt/anaconda3/etc/profile.d/conda.sh && conda activate isp && ${ISP_DIR}/isp.sh"
-#Icon=${ISP_DIR}/isp/resources/images/LOGO.png  # Adjust this path to your icon
-Terminal=true
-Type=Application
-Categories=Utility;Application;
-EOF
-
-        # Make it executable
-        chmod +x "$SHORTCUT_PATH"
-        echo "Shortcut created! You can now double-click 'ISP_Launcher.desktop' on your Desktop to launch ISP."
-    fi
-
-else
-    echo "Unsupported operating system: $OS_TYPE"
 fi
 
 echo "Installation complete!"
+
