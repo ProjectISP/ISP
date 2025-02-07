@@ -212,6 +212,18 @@ class ObspyUtil:
         return azim, bazim, inci
 
     @staticmethod
+    def rename_traces(st: Stream):
+        for tr in st:
+            old_channel = tr.stats.channel
+            if old_channel.endswith('1') or old_channel.endswith('Y'):
+                tr.stats.channel = old_channel[:-1] + "N"
+            elif old_channel.endswith('2') or old_channel.endswith('X'):
+                tr.stats.channel = old_channel[:-1] + "E"
+        return st
+
+
+
+    @staticmethod
     def filter_trace(trace, trace_filter, f_min, f_max, **kwargs):
         """
         Filter a obspy Trace or Stream.
@@ -699,7 +711,12 @@ class MseedUtil:
         else:
             raise TypeError("endtime must be a string or UTCDateTime object.")
 
-        if (end-start) <= 86400:
+
+        # to check we are chopping the same day
+        start_date_exact = str(starttime.year) + str(starttime.julday)
+        end_date_exact = str(endtime.year) + str(endtime.julday)
+
+        if (end-start) <= 86400 and start_date_exact == end_date_exact:
             exact = True
 
         # Process project data

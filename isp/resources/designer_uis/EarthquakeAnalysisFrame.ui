@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1659</width>
-    <height>940</height>
+    <height>912</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -616,7 +616,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>1072</width>
-                  <height>698</height>
+                  <height>670</height>
                  </rect>
                 </property>
                </widget>
@@ -896,6 +896,7 @@
     <addaction name="actionClean_Events_Detected"/>
     <addaction name="actionSearch_in_Catalog"/>
     <addaction name="actionData_Availability"/>
+    <addaction name="actionConcatanate_Waveforms"/>
    </widget>
    <widget class="QMenu" name="menuGo">
     <property name="title">
@@ -1337,6 +1338,14 @@
   <action name="actionkurtosis">
    <property name="text">
     <string>kurtosis</string>
+   </property>
+  </action>
+  <action name="actionConcatanate_Waveforms">
+   <property name="text">
+    <string>Concatenate Waveforms</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
    </property>
   </action>
  </widget>

@@ -35,7 +35,7 @@ from isp.earthquakeAnalysis import PickerManager
 import numpy as np
 import os
 from isp.Utils.subprocess_utils import exc_cmd, open_url
-from isp import ROOT_DIR, EVENTS_DETECTED, AUTOMATIC_PHASES, PICKING_DIR
+from isp import ROOT_DIR, AUTOMATIC_PHASES, PICKING_DIR
 import matplotlib.pyplot as plt
 from isp.earthquakeAnalysis.stations_map import StationsMap
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement, sta_lta, envelope, Entropydetect, \
@@ -75,7 +75,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.progressbar.setLabelText(" Computing Auto-Picking ")
         self.progressbar.setWindowIcon(pqg.QIcon(':\icons\map-icon.png'))
         self.path_phases = os.path.join(AUTOMATIC_PHASES, "phases_autodetected.txt")
-        self.path_detection = os.path.join(EVENTS_DETECTED, "event_autodetects.txt")
         self.progressbar.close()
         self.settings_dialog = SettingsDialog(self)
         self.inventory = {}
@@ -172,6 +171,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
         self.actionPlot_Record_Section.triggered.connect(lambda: self.on_click_plot_record_section())
         self.actionCFs.triggered.connect(lambda: self.save_cf())
+        self.actionConcatanate_Waveforms.triggered.connect(self.plot_stream_concat)
         self.runScriptBtn.clicked.connect(self.run_process)
         self.locateBtn.clicked.connect(self.open_locate)
         self.autoPickBtn.clicked.connect(self.open_auto_pick)
@@ -189,18 +189,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.project_dialog = Project()
 
-        # shortcuts test
-
+        # shortcuts
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+D'), self)
         self.shortcut_open.activated.connect(self.run_process)
 
-        # shortcuts
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+U'), self)
         self.shortcut_open.activated.connect(self.open_solutions)
-
-        # shortcuts
-        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+Y'), self)
-        self.shortcut_open.activated.connect(self.open_events)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+L'), self)
         self.shortcut_open.activated.connect(self.open_parameters_settings)
@@ -211,8 +205,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+C'), self)
         self.shortcut_open.activated.connect(self.clean_events_detected)
 
-        # self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+M'), self)
-        # self.shortcut_open.activated.connect(self.open_magnitudes_calculator)
+        self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+M'), self)
+        self.shortcut_open.activated.connect(self.plot_stream_concat)
 
         self.shortcut_open = pw.QShortcut(pqg.QKeySequence('Ctrl+P'), self)
         self.shortcut_open.activated.connect(self.comboBox_phases.showPopup)
@@ -682,6 +676,95 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.baz_all.append(0)
             return 0.
 
+    def set_pagination_stream_concat(self, st):
+
+        self.total_items = len(st)
+        self.pagination.set_total_items(self.total_items)
+
+    def plot_stream_concat(self):
+
+        # info = MseedUtil.get_project_basic_info(self.project)
+        params = self.settings_dialog.getParameters()
+        sharey = params["amplitudeaxis"]
+
+        ## Merge traces from files ##
+        all_traces = []
+        for index, file_path in enumerate(self.files_path):
+            sd = SeismogramDataAdvanced(file_path)
+            tr = sd.get_waveform_advanced([], self.inventory,
+                                          filter_error_callback=self.filter_error_message,
+                                          start_time=self.start_time, end_time=self.end_time, trace_number=index)
+            all_traces.append(tr)
+
+        st = Stream(all_traces)
+        st.merge()
+
+        if isinstance(st, Stream):
+
+            self.canvas.clear()
+            self.set_pagination_stream_concat(st)
+            self.canvas.set_new_subplot(nrows=len(st), ncols=1, sharey=sharey)
+            self.st = []
+            self.all_traces = []
+            for index, tr in enumerate(st):
+
+
+                sd = SeismogramDataAdvanced(file_path=None, stream=tr, realtime=True)
+                tr = sd.get_waveform_advanced(self.parameters_list, self.inventory,
+                                              filter_error_callback=self.filter_error_message,
+                                              start_time=self.start_time, end_time=self.end_time, trace_number=index)
+                if len(tr) > 0:
+
+                    if self.aligned_checked:
+                        try:
+                            pick_reference = self.pick_times[tr.stats.station + "." + tr.stats.channel]
+                            shift_time = pick_reference[1] - tr.stats.starttime
+                            tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00") - shift_time
+                        except:
+                            tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+
+                    if self.actionFrom_StartT.isChecked():
+                        tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+
+                    if self.shift_times is not None:
+                        tr.stats.starttime = tr.stats.starttime + self.shift_times[index][0]
+
+                    t = tr.times("matplotlib")
+                    s = tr.data
+
+                    self.canvas.plot_date(t, s, index, color="black", fmt='-', linewidth=0.5)
+
+                    ax = self.canvas.get_axe(index)
+                    try:
+                        ax.spines["top"].set_visible(False)
+                        ax.spines["bottom"].set_visible(False)
+                        ax.tick_params(top=False)
+                        ax.tick_params(labeltop=False)
+                    except:
+                        pass
+                    ax.set_ylim(np.min(s), np.max(s))
+                    #
+                    if index != (self.pagination.items_per_page - 1):
+                        try:
+                            ax.tick_params(bottom=False)
+                        except:
+                            pass
+
+                    try:
+                        self.min_starttime[index] = min(t)
+                        self.max_endtime[index] = max(t)
+                    except:
+                        print("Empty traces")
+
+                    formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
+                    ax.xaxis.set_major_formatter(formatter)
+
+                    self.all_traces.append(tr)
+
+                self.st = Stream(self.all_traces)
+
+
+
     def plot_seismogram(self):
 
         info = MseedUtil.get_project_basic_info(self.project)
@@ -935,6 +1018,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                                                     self.event_info.longitude,
                                                                     self.event_info.event_depth)
                     print(bazim)
+
+                # rename channels to ensure rotation
+                st2 = ObspyUtil.rename_traces(st2)
                 st2.rotate(method='NE->RT', back_azimuth=bazim)
 
                 print("The GAC Rotation is not posible for", stations[k])
@@ -1004,7 +1090,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def run_STA_LTA(self):
         self.cf = []
         cfs = []
-        files_at_page = self.get_files_at_page()
+        #files_at_page = self.get_files_at_page()
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         params = self.settings_dialog.getParameters()
@@ -1014,9 +1100,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         global_cf_min = float('inf')
         global_cf_max = float('-inf')
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
+        self.canvas.set_new_subplot(nrows=len(self.st), ncols=1, sharey=sharey)
 
-        for index, file_path in enumerate(files_at_page):
+        for index, file_path in enumerate(self.st):
             tr = self.st[index]
 
             if STA < LTA:
@@ -1057,7 +1143,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         # After the loop, synchronize all ax2 y-limits
         if sharey:
-            for index in range(len(files_at_page)):
+            for index in range(len(self.st)):
                 ax2 = self.canvas.get_axe(index).twinx()  # Get the corresponding ax2
                 ax2.set_ylim(global_cf_min, global_cf_max)
 
@@ -1089,16 +1175,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.cf = []
         cfs = []
-        files_at_page = self.get_files_at_page()
+        # files_at_page = self.get_files_at_page()
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
+        self.canvas.set_new_subplot(nrows=len(self.st), ncols=1, sharey=sharey)
 
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         diff = end_time - start_time
 
 
-        for index, file_path in enumerate(files_at_page):
+        for index, file_path in enumerate(self.st):
             tr = self.st[index]
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             cw = ConvolveWaveletScipy(tr)
@@ -1162,7 +1248,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         # After the loop, synchronize all ax2 y-limits
         if sharey:
-            for index in range(len(files_at_page)):
+            for index in range(len(self.st)):
                 ax2 = self.canvas.get_axe(index).twinx()  # Get the corresponding ax2
                 ax2.set_ylim(global_cf_min, global_cf_max)
 
@@ -1193,15 +1279,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         global_cf_max = float('-inf')
         self.cf = []
         cfs = []
-        files_at_page = self.get_files_at_page()
+        #files_at_page = self.get_files_at_page()
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
+        self.canvas.set_new_subplot(nrows=len(self.st), ncols=1, sharey=sharey)
 
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
         diff = end_time - start_time
 
-        for index, file_path in enumerate(files_at_page):
+        for index, file_path in enumerate(self.st):
             tr = self.st[index]
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             cw = ConvolveWaveletScipy(tr)
@@ -1266,7 +1352,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         # After the loop, synchronize all ax2 y-limits
         if sharey:
-            for index in range(len(files_at_page)):
+            for index in range(len(self.st)):
                 ax2 = self.canvas.get_axe(index).twinx()  # Get the corresponding ax2
                 ax2.set_ylim(global_cf_min, global_cf_max)
 
@@ -1292,12 +1378,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         sharey = params["amplitudeaxis"]
         self.cf = []
         cfs = []
-        files_at_page = self.get_files_at_page()
+        #files_at_page = self.get_files_at_page()
         self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
+        self.canvas.set_new_subplot(nrows=len(self.st), ncols=1, sharey=sharey)
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-        for index, file_path in enumerate(files_at_page):
+        for index, file_path in enumerate(self.st):
             tr = self.st[index]
             t = tr.times("matplotlib")
             st_stats = ObspyUtil.get_stats_from_trace(tr)
@@ -1402,43 +1488,112 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.cf = Stream(traces=cfs)
 
+    # def write_files_page(self):
+    #
+    #     root_path = os.path.dirname(os.path.abspath(__file__))
+    #     if "darwin" == platform:
+    #         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
+    #     else:
+    #         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
+    #                                                        pw.QFileDialog.DontUseNativeDialog)
+    #     if self.st:
+    #         n = len(self.st)
+    #         for j in range(n):
+    #             try:
+    #                 tr = self.st[j]
+    #                 t1 = tr.stats.starttime
+    #                 id = tr.id + "." + "D" + "." + str(t1.year) + "." + str(t1.julday)
+    #                 print(tr.id, "Writing data processed")
+    #                 path_output = os.path.join(dir_path, id)
+    #                 tr.write(path_output, format="MSEED")
+    #             except:
+    #                 print("File cannot be written:", self.files_at_page[j])
+
     def write_files_page(self):
 
+        errors = False
         root_path = os.path.dirname(os.path.abspath(__file__))
-        if "darwin" == platform:
+
+        # Get output directory from user
+        if platform.system() == "Darwin":
             dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         else:
             dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
                                                            pw.QFileDialog.DontUseNativeDialog)
+
+        # Check if user canceled directory selection
+        if not dir_path:
+            print("No directory selected, operation cancelled.")
+            return
+
         if self.st:
-            n = len(self.st)
-            for j in range(n):
+            md = MessageDialog(self)
+            for j, tr in enumerate(self.st):
                 try:
-                    tr = self.st[j]
                     t1 = tr.stats.starttime
-                    id = tr.id + "." + "D" + "." + str(t1.year) + "." + str(t1.julday)
-                    print(tr.id, "Writing data processed")
-                    path_output = os.path.join(dir_path, id)
+                    base_name = f"{tr.id}.D.{t1.year}.{t1.julday}"
+                    path_output = os.path.join(dir_path, base_name)
+
+                    # Check if file exists and append a number if necessary
+                    counter = 1
+                    while os.path.exists(path_output):
+                        path_output = os.path.join(dir_path, f"{base_name}_{counter}")
+                        counter += 1
+
+                    print(f"{tr.id} - Writing processed data to {path_output}")
                     tr.write(path_output, format="MSEED")
-                except:
-                    print("File cannot be written:", self.files_at_page[j])
+
+                except Exception as e:
+                    errors = True
+                    print(f"File cannot be written: {self.files_at_page[j]}, Error: {e}")
+
+            if errors:
+                md.set_info_message("Writting Complete with Errors, check output", dir_path)
+            else:
+                md.set_info_message("Writting Complete, check output", dir_path)
 
     def save_cf(self):
+
+        errors = False
         root_path = os.path.dirname(os.path.abspath(__file__))
-        if "darwin" == platform:
+
+        # Get output directory from user
+        if platform.system() == "Darwin":
             dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
         else:
             dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
                                                            pw.QFileDialog.DontUseNativeDialog)
-        if self.cf:
-            n = len(self.cf)
-            for j in range(n):
-                tr = self.cf[j]
-                t1 = tr.stats.starttime
-                id = tr.id + "." + "M" + "." + str(t1.year) + "." + str(t1.julday)
-                print(tr.id, "Writing data processed")
-                path_output = os.path.join(dir_path, id)
-                tr.write(path_output, format="MSEED")
+
+        # Check if user canceled directory selection
+        if not dir_path:
+            print("No directory selected, operation cancelled.")
+            return
+
+        if self.st:
+            md = MessageDialog(self)
+            for j, tr in enumerate(self.cf):
+                try:
+                    t1 = tr.stats.starttime
+                    base_name = f"{tr.id}.M.{t1.year}.{t1.julday}"
+                    path_output = os.path.join(dir_path, base_name)
+
+                    # Check if file exists and append a number if necessary
+                    counter = 1
+                    while os.path.exists(path_output):
+                        path_output = os.path.join(dir_path, f"{base_name}_{counter}")
+                        counter += 1
+
+                    print(f"{tr.id} - Writing processed data to {path_output}")
+                    tr.write(path_output, format="MSEED")
+
+                except Exception as e:
+                    errors = True
+                    print(f"File cannot be written: {self.files_at_page[j]}, Error: {e}")
+
+            if errors:
+                md.set_info_message("Writting Complete with Errors, check output", dir_path)
+            else:
+                md.set_info_message("Writting Complete, check output", dir_path)
 
     def stack_all_seismograms(self):
         params = self.settings_dialog.getParameters()
@@ -2131,25 +2286,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             md = MessageDialog(self)
             md.set_error_message(f"Couldn't open pick file: {str(e)}")
 
-    def open_events(self):
-
-        output_path = os.path.join(EVENTS_DETECTED, 'event_autodetects.txt')
-
-        try:
-
-            if platform == "darwin":
-
-                command = "{} {}".format('open', output_path)
-            else:
-
-                command = "{} {}".format('xdg - open', output_path)
-
-            exc_cmd(command, cwd=ROOT_DIR)
-
-        except:
-
-            md = MessageDialog(self)
-            md.set_error_message("Coundn't open pick file")
 
     def remove_picks(self):
         md = MessageDialog(self)

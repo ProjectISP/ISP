@@ -114,7 +114,7 @@ class FirstPolarity:
         dir_path = os.path.join(two_levels_up, "first_polarity")
 
         if os.path.isdir(dir_path):
-            pass
+            self.clean_output_folder_focmec(dir_path)
         else:
 
             os.makedirs(dir_path)
@@ -133,6 +133,25 @@ class FirstPolarity:
         shutil.copy(FOC_MEC_BASH_PATH, dir_path)
 
         return temp_file
+
+    def clean_output_folder_focmec(self, dir_path):
+
+        """
+        Cleans the destination folder and creates symbolic links for all files in the source folder.
+
+        Args:
+        destination_folder (str): Path to the destination folder.
+        source_folder (str): Path to the source folder.
+
+        """
+
+        # Clean the destination folder
+        for item in os.listdir(dir_path):
+            item_path = os.path.join(dir_path, item)
+            if os.path.isfile(item_path) or os.path.islink(item_path):
+                os.unlink(item_path)  # Remove files or symbolic links
+            elif os.path.isdir(item_path):
+                shutil.rmtree(item_path)  # Remove
 
     def run_focmec_csh(self):
          #old_version, need bash or csh

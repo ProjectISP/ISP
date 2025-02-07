@@ -44,6 +44,7 @@ def save_preferences(pyqt_object, ui_name=None):
         pass
 
 
+
 def load_preferences(pyqt_object, ui_name=None):
     """
     Load data from user_pref to fields QDoubleSpinBox, QSpinBox, QLineEdit
@@ -54,24 +55,27 @@ def load_preferences(pyqt_object, ui_name=None):
     """
     ui_name = type(pyqt_object).__name__ if ui_name is None else ui_name
     user_preferences.beginGroup(ui_name)
-    for key, item in pyqt_object.__dict__.items():
-        if hasattr(item, "load_values"):
-            item.load_values()
-        else:
-            value = user_preferences.value(key)
-            if value is not None:
-                with suppress(TypeError):
-                    str(value, "utf-8")
-                value = value.strip() if type(value) == str else value
-                if value != "" or type(value) is not str:
-                    if isinstance(item, pw.QDoubleSpinBox):
-                        item.setValue(float(value))
-                    elif isinstance(item, pw.QSpinBox):
-                        item.setValue(int(value))
-                    elif isinstance(item, pw.QLineEdit):
-                        item.setText(value)
-                    elif isinstance(item, pw.QDateTimeEdit):
-                        set_qdatetime(value, item)
+    try:
+        for key, item in list(pyqt_object.__dict__.items()):  # Use a copy of items
+            if hasattr(item, "load_values"):
+                item.load_values()
+            else:
+                value = user_preferences.value(key)
+                if value is not None:
+                    with suppress(TypeError):
+                        str(value, "utf-8")
+                    value = value.strip() if isinstance(value, str) else value
+                    if value != "" or not isinstance(value, str):
+                        if isinstance(item, pw.QDoubleSpinBox):
+                            item.setValue(float(value))
+                        elif isinstance(item, pw.QSpinBox):
+                            item.setValue(int(value))
+                        elif isinstance(item, pw.QLineEdit):
+                            item.setText(value)
+                        elif isinstance(item, pw.QDateTimeEdit):
+                            set_qdatetime(value, item)
+    except RuntimeError:
+        print("Dictionary size changed during iteration, skipping the rest.")
 
     user_preferences.endGroup()
 

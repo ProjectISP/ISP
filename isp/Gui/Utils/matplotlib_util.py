@@ -153,8 +153,12 @@ class ExtendSpanSelector(SpanSelector):
             return self.__on_move_callback(vmin, vmax)
 
     def set_sub_axes(self, axes: List[Axes]):
+        # TODO: this is a temporary fix due to a bug (possible in matplotlib) selector is duplicated for current ax
         if self.sharex:
-            self.__sub_axes = [axe for axe in axes if axe != self.ax]
-            self.remove_sub_selectors()
-            self.create_sub_selectors()
-            self.canvas.draw()
+            self.__sub_axes = axes
+        else:
+            self.__sub_axes = [self.ax]
+
+        self.remove_sub_selectors()
+        self.create_sub_selectors()
+        self.canvas.draw()
