@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>783</width>
-    <height>408</height>
+    <width>1146</width>
+    <height>750</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MSEED File Viewer</string>
+   <string>Earthquake Viewer</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -60,7 +60,7 @@
   <customwidget>
    <class>MatplotlibWidget</class>
    <extends>QWidget</extends>
-   <header>isp.receiverfunctions.rf_matplotlibwidget</header>
+   <header>isp/receiverfunctions/rfun_matplotlibwidget</header>
   </customwidget>
  </customwidgets>
  <resources/>

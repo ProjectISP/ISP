@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Apr  3 14:45:54 2020
+This file is part of Rfun, a toolbox for the analysis of teleseismic receiver
+functions.
 
-@author: olivar
-
-Rfun, a toolbox for the analysis of teleseismic receiver functions
 Copyright (C) 2020-2021 Andrés Olivar-Castaño
 
 This program is free software: you can redistribute it and/or modify
@@ -19,15 +17,15 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 For questions, bug reports, or to suggest new features, please contact me at
 olivar.ac@gmail.com.
 """
-# isp imports
-from isp.Gui.Frames import BaseFrame
+
+# standalone imports
 import isp.receiverfunctions.rfun_dialogs as dialogs
 import isp.receiverfunctions.rfun_main_window_utils as mwu
-from isp.Gui.Frames.uis_frames import UiReceiverFunctions
+from PyQt5 import uic, QtWidgets, QtGui
+
 # other imports
 import os
 import math
@@ -43,17 +41,19 @@ import matplotlib.ticker as mticker
 import matplotlib.gridspec as gridspec
 import matplotlib.backend_bases
 import matplotlib.patches as mpatches
-from PyQt5 import QtWidgets
+import scipy.interpolate as scint
 import obspy.signal.filter
 import copy
-import scipy.interpolate as scint
 
-class RecfFrame(BaseFrame, UiReceiverFunctions):
+from rfun.definitions import ROOT_DIR, CONFIG_PATH
+
+class RfunMainWindow(QtWidgets.QMainWindow):
     
     def __init__(self):
-        super(RecfFrame, self).__init__()
-        self.setupUi(self)
-        
+        super(RfunMainWindow, self).__init__()
+        uic.loadUi(os.path.join(ROOT_DIR, "ui/RfunMainWindow.ui"), self)
+        self.show()
+
         self.settings = mwu.read_preferences()
         
         # This should be maybe changed in the UI directly
@@ -68,18 +68,18 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.rfs = []
         self.rf_current_page = 1
         self.rf_pages = 1
-    
+
         self.first_rf_stack_plot = True # To be removed
         self.first_hk_stack_plot = True # To be removed
         self.hk_result = {}
-    
+
         # RF computation progress bar and label
         self.RFs_are_computed = False
         p2 = self.progressBar_2.sizePolicy()
         p2.setRetainSizeWhenHidden(True)
         self.progressBar_2.setSizePolicy(p2)
         self.progressBar_2.setVisible(False)
-    
+ 
         # p3 = self.label_49.sizePolicy()
         # p3.setRetainSizeWhenHidden(True)
         # self.label_49.setSizePolicy(p3)
@@ -219,7 +219,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.pushButton_14.clicked.connect(self.save_ccp_stack)
         self.pushButton_13.clicked.connect(partial(self.save_figure, self.mplwidget_5.figure))
         self.pushButton_26.clicked.connect(self.cross_section_dialog)
-    
+
         self.doubleSpinBox_21.valueChanged.connect(self.update_ccp_map)
         self.doubleSpinBox_22.valueChanged.connect(self.update_ccp_map)
         self.doubleSpinBox_23.valueChanged.connect(self.update_ccp_map)
@@ -230,9 +230,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
         self.comboBox_6.currentTextChanged.connect(self.ccp_basemap)
         self.spinBox_5.valueChanged.connect(self.plot_ccp_stack)
-    
+
         self.spinBox_6.valueChanged.connect(self.ccp_basemap)
-    
+
     def preferences_dialog(self):
         dialog = dialogs.PreferencesDialog()
         dialog.exec_()
@@ -295,7 +295,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             for i, rf in enumerate(sorted(self.rfs, key=lambda x: x[6])):
                 if sorted_rej[i][0] == 0:
                     rf[5] = 0
-    
+
         self.rf_pages = int(math.ceil(len(self.rfs)/self.spinBox_3.value()))
         self.label_14.setText("{}/{}".format(self.rf_current_page, self.rf_pages))
         # Reset filter menu - these kind of things should be turned into functions
@@ -363,7 +363,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.pushButton_22.setEnabled(True)
         
         self.linear_RF_stack = None
-    
+
         self.first_rf_stack_plot = True # To be removed
         self.first_hk_stack_plot = True # To be removed
         self.hk_result = {}
@@ -401,7 +401,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.rf_pages = int(math.ceil(len(self.rfs)/self.spinBox_3.value()))
         self.label_14.setText("{}/{}".format(self.rf_current_page, self.rf_pages))
         self.plot_rfs()   
-    
+
     def plot_rfs(self):
         """ Sort and plot receiver functions according to user selection
         
@@ -428,7 +428,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             t = self.rfs[rf_index+i][1]
             text = np.round(self.rfs[rf_index+i][sort_index], decimals=0)
             evid = self.rfs[rf_index+i][6]
-    
+
             self.mplwidget.figure.axes[i].fill_between(t, rf, color=self.settings['rfs']['appearance']['line_color'],
                                                        linewidth=self.settings['rfs']['appearance']['line_width'])            
             self.mplwidget.figure.axes[i].fill_between(t, np.zeros(len(t)),
@@ -493,13 +493,13 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             eq_id = self.rfs[rf_index][6]
             dialog = dialogs.ShowEarthquakeDialog(self.hdf5_waveforms, self.comboBox.currentText(), eq_id, self.settings, self.comboBox_9.currentText(), self.rf_freq_filter_params)
             dialog.exec_()
-    
+
     def hk_plot_clicked(self, event):
         """Register click events in the hk panel
         
         """
         pass
-    
+
     
     def auto_reject_rfs(self):
         baz_start = self.spinBox_7.value()
@@ -545,7 +545,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         else:
             qm = QtWidgets.QMessageBox
             ret = qm.warning(self,'', "No receiver functions to save! First compute some.")
-    
+
     def setup_rf_stack_axes(self):
         """Prepare receiver function axes for plotting
         
@@ -560,7 +560,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
                 self.mplwidget_2.figure.axes[i].clear()
         
         self.mplwidget_2.figure.axes[1].set_xlabel("Time in seconds")
-    
+
     def plot_rf_stack(self):
         """Plot RF stack according to user preferences
         
@@ -611,7 +611,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
         xmin = min([self.doubleSpinBox_7.value(), self.doubleSpinBox_8.value()])
         xmax = max([self.doubleSpinBox_7.value(), self.doubleSpinBox_8.value()])
-    
+
         self.mplwidget_2.figure.axes[0].set_xlim(xmin, xmax)
         self.mplwidget_2.figure.axes[1].set_xlim(xmin, xmax)
         
@@ -628,8 +628,8 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             self.mplwidget_2.figure.axes[0].text(self.Ps+0.5, 0.9, "Ps", color='gray')
             self.mplwidget_2.figure.axes[0].text(self.PpPs+0.5, 0.9, "PpPs", color='gray')
             self.mplwidget_2.figure.axes[0].text(self.PpSs_PsPs+0.5, 0.9, "PpSs+PsPs", color='gray')
-    
-    
+
+
             self.mplwidget_2.figure.axes[1].axvline(self.Ps, color='gray', linewidth=0.5)
             self.mplwidget_2.figure.axes[1].axvline(self.PpPs, color='gray', linewidth=0.5)
             self.mplwidget_2.figure.axes[1].axvline(self.PpSs_PsPs, color='gray', linewidth=0.5)
@@ -675,10 +675,10 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.Ps, self.PpPs, self.PpSs_PsPs = mwu.compute_theoretical_arrival_times(H, k,
                                                                                    ref_slowness=self.settings['hk']['theoretical_atimes']['ref_slowness'],
                                                                                    avg_vp=self.settings['hk']['theoretical_atimes']['avg_vp'])
-    
+
         N_stacked = len([rf for rf in self.rfs if rf[5]]) # NOT VERY EFFICIENT! JUST TESTING
         a, error_area, k_95, H_95, error_contour_level = mwu.determine_error_region(matrix, H_arr, k_arr, N_stacked)     
-    
+
         self.hk_result = {"H_arr":H_arr,
                           "k_arr":k_arr,
                           "events":events,
@@ -687,7 +687,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
                           "H_95":H_95,
                           "k":k,
                           "k_95":k_95}
-    
+
         self.setup_hk_stack_axes()
         if self.settings['hk']['appearance']['plotting_method'] == 'colored grid':
             self.mplwidget_3.figure.axes[0].pcolormesh(H_arr, k_arr, matrix, cmap=self.settings['hk']['appearance']['colormap'], vmin=0)
@@ -714,7 +714,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         """Saves the H-k stack. Writes the station name, location, and H and
         k values in a chosen txt file (creates one if it doesn't exist). Saves
         the H-k stack as a .pickle in the same location.
-    
+
         """
         stnm = self.comboBox.currentText()
         
@@ -725,7 +725,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         if not os.path.exists(txt_fname):
             with open(txt_fname, "w", newline='\n') as f:
                 f.write("STATION,LONG,LAT,EVENTS,H,MIN_H95,MAX_H95,k,MIN_k95,MAX_k95,METHOD,PARAMETERS" + '\n')
-    
+
         stla = self.hdf5_waveforms[stnm].attrs["stla"]
         stlo = self.hdf5_waveforms[stnm].attrs["stlo"]
         
@@ -747,7 +747,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         pickle_output_path = os.sep.join(txt_fname.split(os.sep)[:-1])
         pickle_fname = stnm + "_Hk" + ".pickle"
         pickle.dump(self.hk_result, open(os.path.join(pickle_output_path, pickle_fname), "wb"))
-    
+
     def setup_map_axes(self):
         """Prepare map axes for plotting
         
@@ -799,7 +799,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             self.pushButton_18.setEnabled(True)
     
     def plot_hk_results(self):
-    
+
         try:
             self.mplwidget_6.figure.clf()
         except IndexError:
@@ -808,7 +808,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
         self.mplwidget_6.figure.subplots(1, subplot_kw=dict(projection=ccrs.PlateCarree()))
         self.mplwidget_6.figure.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.15)
-    
+
         values = []
         points = []
         for stnm in self.hk_results.keys():
@@ -872,10 +872,10 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             doubleSpinBox.valueChanged.connect(self.update_hk_map)
         
         self.mplwidget_6.figure.axes[0].set_zorder(1)
-    
+
         self.hk_basemap()
         self.hk_gridlines()
-    
+
     
     def update_hk_map(self):
         lons = (self.doubleSpinBox_35.value(),self.doubleSpinBox_36.value())
@@ -898,7 +898,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             del self.mplwidget_6_basemap_ax
         except AttributeError:
             pass
-    
+
         try:
             self.mplwidget_6.figure.axes[0].patch.set_facecolor((1, 1, 1, 0))
             self.mplwidget_6_basemap_ax = self.mplwidget_6.figure.subplots(1, subplot_kw=dict(projection=ccrs.PlateCarree()))
@@ -914,13 +914,13 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             return
     
     def hk_gridlines(self):
-    
+
         try:
             self.mplwidget_6_gridlines.remove()
             del self.mplwidget_6_gridlines
         except (AttributeError, KeyError, ValueError) as e:
             pass
-    
+
         self.mplwidget_6_gridlines = self.mplwidget_6.figure.subplots(1, subplot_kw=dict(projection=ccrs.PlateCarree()))
         self.mplwidget_6.figure.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.15)
         self.mplwidget_6_gridlines.set_extent(self.mplwidget_6.figure.axes[0].get_extent())
@@ -967,17 +967,17 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         """Pick event handler for the CCP stack map
         
         """        
-    
+
         if self.pushButton_11.isChecked():
             mode = "grid"
             dict_ = self.ccp_grid
         elif self.pushButton_25.isChecked():
             mode = "cross_section"
             dict_ = self.ccp_cross_section
-    
+
         else:
             return
-    
+
         if event.name == "button_press_event":
             dict_['x0'] = event.xdata
             dict_['y0'] = event.ydata
@@ -1018,7 +1018,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
                     y = [dict_['y0'], dict_['y0'],
                          dict_['y1'], dict_['y1'],
                          dict_['y0']]
-    
+
                     self.ccp_grid_mpl_line.set_xdata(x)
                     self.ccp_grid_mpl_line.set_ydata(y)
                     self.mplwidget_5.figure.canvas.restore_region(self.ccp_events_background)
@@ -1073,7 +1073,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             self.rfs_hdf5 = mwu.read_hdf5(file)
             self.plot_ccp_map()
             self.mplwidget_5.figure.canvas.draw()
-    
+
     def compute_ccp_stack(self):
         """Compute and draw CCP stack
         
@@ -1105,7 +1105,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.doubleSpinBox_25.setSingleStep(dz)
     
     def plot_ccp_map(self):
-    
+
         self.mplwidget_5.figure.clf()
         self.mplwidget_5.figure.subplots(1, subplot_kw=dict(projection=ccrs.PlateCarree()))
         self.mplwidget_5.figure.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.15)
@@ -1117,11 +1117,11 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             # Zstel = self.rfs_hdf5[stnm].attrs["stel"]
             lats.append(stla)
             lons.append(stlo)
-    
+
             if self.settings['ccp']['appearance']['include_stations']:
                 self.mplwidget_5.figure.axes[0].plot(stlo, stla, marker=self.settings['ccp']['appearance']['station_marker'],
                                                      transform=ccrs.Geodetic(), color=self.settings['ccp']['appearance']['station_marker_color'])
-    
+
         if self.settings['ccp']['shapefiles']['include'] and self.settings['ccp']['shapefiles']['path']:
             sfs = mwu.read_shapefiles(self.settings['ccp']['shapefiles']['path'])
             for sf in sfs:
@@ -1132,7 +1132,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
         self.mplwidget_5.figure.axes[0].set_extent([min(lons)-1, max(lons)+1,
                                                     min(lats)-1, max(lats)+1], crs=ccrs.PlateCarree())
-    
+
         # Update GUI elements
         for doubleSpinBox in [self.doubleSpinBox_21, self.doubleSpinBox_22,
                               self.doubleSpinBox_23, self.doubleSpinBox_24]:
@@ -1151,7 +1151,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
         self.mplwidget_5.figure.axes[0].patch.set_alpha(0)
         self.mplwidget_5.figure.axes[0].set_zorder(1)
-    
+
         self.ccp_basemap(draw=False)
         self.ccp_gridlines(draw=False)
         self.set_map_zorder()
@@ -1169,17 +1169,17 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         lats = (self.doubleSpinBox_21.value(),self.doubleSpinBox_22.value())
         for ax in self.mplwidget_5.figure.axes:
             ax.set_extent([min(lons), max(lons), min(lats), max(lats)], crs=ccrs.PlateCarree())
-    
+
         self.mplwidget_5.figure.canvas.draw()
         self.ccp_events_background = self.mplwidget_5.figure.canvas.copy_from_bbox(self.mplwidget_5.figure.bbox)
-    
+
     def ccp_basemap(self, draw=True):
         
         try:
             del self.mplwidget_5_basemap_ax
         except AttributeError:
             pass
-    
+
         self.mplwidget_5_basemap_ax = self.mplwidget_5.figure.subplots(1, subplot_kw=dict(projection=ccrs.PlateCarree()))
         self.mplwidget_5_basemap_ax.set_zorder(0)
         self.mplwidget_5.figure.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.15)
@@ -1194,16 +1194,16 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             self.ccp_events_background = self.mplwidget_5.figure.canvas.copy_from_bbox(self.mplwidget_5.figure.bbox)
     
     def ccp_gridlines(self, draw=True):
-    
+
         try:
             self.mplwidget_5_gridlines.remove()
             del self.mplwidget_5_gridlines
         except (AttributeError, KeyError) as e:
             pass
         
-    
+
         spacing = self.doubleSpinBox_26.value()
-    
+
         self.mplwidget_5_gridlines = self.mplwidget_5.figure.subplots(1, subplot_kw=dict(projection=ccrs.PlateCarree()))
         self.mplwidget_5.figure.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.15)
         self.mplwidget_5_gridlines.set_extent(self.mplwidget_5.figure.axes[0].get_extent())
@@ -1224,14 +1224,14 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             self.mplwidget_5.figure.canvas.draw()
             self.ccp_events_background = self.mplwidget_5.figure.canvas.copy_from_bbox(self.mplwidget_5.figure.bbox)
             
-    
+
     def plot_ccp_stack(self):
         
         try:
             self.mplwidget_5_ccp_pcolormesh.remove()
         except AttributeError:
             pass
-    
+
         alpha = self.spinBox_5.value()/100
         hslice = np.where(np.abs(self.ccp_z - self.doubleSpinBox_25.value()) == np.min(np.abs(self.ccp_z - self.doubleSpinBox_25.value())))[0][0]
         
@@ -1244,9 +1244,9 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         elif self.settings['ccp']['appearance']['plotting_method'] == 'contour map':
             self.mplwidget_5_ccp_pcolormesh = self.mplwidget_5.figure.axes[0].contour(self.ccp_x, self.ccp_y, self.ccp_stack[hslice,:,:].T,
                                                                                       alpha=alpha, transform=ccrs.PlateCarree(), cmap=self.settings['ccp']['appearance']['colormap'])
-    
+
         self.mplwidget_5.figure.canvas.draw()  
-    
+
         self.ccp_events_background = self.mplwidget_5.figure.canvas.copy_from_bbox(self.mplwidget_5.figure.axes[0].bbox)
     
     def save_ccp_stack(self):
@@ -1288,7 +1288,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         print(start)
         print(end)
         newlats, newlons, dist_arr = mwu.compute_intermediate_points(start, end, 100)
-    
+
         matrix = []
         for i, stack in enumerate(self.istack):
             row = []
@@ -1307,7 +1307,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         """
         dialog = dialogs.CutEarthquakesDialog()
         dialog.exec_()
-    
+
     def about_dialog(self):
         dialog = dialogs.AboutDialog()
         dialog.exec_()

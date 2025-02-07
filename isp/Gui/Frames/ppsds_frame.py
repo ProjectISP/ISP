@@ -1,7 +1,7 @@
 from PyQt5.QtCore import pyqtSlot
 from isp.Gui.Frames import BaseFrame, UiPPSDs
 from isp.Gui.Frames.ppsds_db_frame import PPSDsGeneratorDialog
-import isp.receiverfunctions.rf_dialogs as dialogs # using save_figure dialog
+import isp.PPSDS_Utils.ppsds_dialogs as dialogs # using save_figure dialog
 from PyQt5 import QtWidgets
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
