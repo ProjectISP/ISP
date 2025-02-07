@@ -136,7 +136,9 @@ class BasePltPyqtCanvas(FigureCanvas):
         self.axes_updated()
 
     def activate_multi_cursor(self):
-        self.multi = MultiCursor(self, self.axes)
+        self.multi = MultiCursor(None, self.axes, useblit=False, lw=1)
+
+
 
     def deactivate_multi_cursor(self):
         self.multi = None
