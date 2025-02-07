@@ -13,6 +13,7 @@ from obspy import read
 from obspy.io.mseed.core import _is_mseed
 from obspy.signal import PPSD
 import pickle
+from PyQt5 import QtWidgets
 
 class ppsdsISP(pyc.QObject):
     fileProcessed = pyc.pyqtSignal(int)
@@ -246,8 +247,3 @@ class ppsdsISP(pyc.QObject):
                     pass
 
         return data_map, size
-
-
-
-
-

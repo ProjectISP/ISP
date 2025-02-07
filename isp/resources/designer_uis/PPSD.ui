@@ -439,7 +439,7 @@
   <customwidget>
    <class>MatplotlibWidget</class>
    <extends>QWidget</extends>
-   <header>isp.receiverfunctions.rf_matplotlibwidget</header>
+   <header>isp.PPSDS_Utils.ppsds_matplotlibwidget</header>
   </customwidget>
  </customwidgets>
  <resources/>

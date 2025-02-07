@@ -1,7 +1,7 @@
 from isp.Gui.Frames.uis_frames import UiMainFrame, UiTimeFrequencyFrame, UiEarthquakeAnalysisFrame, \
     UiPaginationWidget, UiFilterDockWidget, UiTimeSelectorDockWidget, UiEventInfoDockWidget, UiEarthquake3CFrame, UiSpectrumDockWidget, UiTimeAnalysisWidget, UiStationInfoDockWidget, \
-    UiArrayAnalysisFrame, UiMomentTensor, UiReceiverFunctions, UiReceiverFunctionsCut, UiReceiverFunctionsSaveFigure, \
-    UiReceiverFunctionsCrossSection, UiReceiverFunctionsAbout, UiReceiverFunctionsShowEarthquake, UiTimeFrequencyWidget, \
+    UiArrayAnalysisFrame, UiMomentTensor, UiReceiverFunctions, UiReceiverFunctionsCut, \
+    UiReceiverFunctionsCrossSection, UiReceiverFunctionsAbout, UiReceiverFunctionsShowEarthquake, UiReceiverFunctionsPreferences, UiTimeFrequencyWidget, \
     UiSyntheticsAnalisysFrame, UiSyntheticsGeneratorDialog, UiDataDownloadFrame, UiPPSDs, UiPPSDs_dialog, UiVespagram, \
     UiEarth_model_viewer, UiRealTimeFrame, UiMapRealTime, UiNoise, UiEGFFrame, UiLocFlow
 
