@@ -776,13 +776,28 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def plot_seismogram(self):
 
-        info = MseedUtil.get_project_basic_info(self.project)
+        info = MseedUtil.get_project_basic_info(self.project_filtered)
+        start_project = UTCDateTime(info['Start'])
+        end_project = UTCDateTime(info['End'])
         num_current_seismograms = len(self.files_path)
         params = self.settings_dialog.getParameters()
         sharey = params["amplitudeaxis"]
         self.concatanate = False
+        self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
 
         if len(info) > 0 and num_current_seismograms > 0:
+            if self.trimCB.isChecked() and (self.end_time < start_project or self.start_time > end_project):
+                md = MessageDialog(self)
+                md.set_warning_message("You might want to procees and plot seismograms out of the project scope?,"
+                                       " then click cancel",
+                                       "Please cancel this operation if last too long")
+
+            if self.trimCB.isChecked() and (self.start_time >= self.end_time):
+                md = MessageDialog(self)
+                md.set_warning_message("Your endtime is bigger than your starttime!!",
+                                       "Please cancel this operation ")
+
             self.workers = ParallelWorkers(os.cpu_count())
 
             # Here we can disabled thing or make additional staff
@@ -817,8 +832,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 self.files_at_page = self.get_files_at_page()
 
             ##
-            self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
-            self.end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+
             self.check_start_time = self.start_time
             self.check_end_time = self.end_time
             ##
@@ -1031,7 +1045,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 # I sum 180 degrees to be consistent with definition from station to point
                 if bazim >= 360:
                     bazim = bazim-360
-                
+
 
                 # rename channels to ensure rotation
                 st2 = ObspyUtil.rename_traces(st2)
