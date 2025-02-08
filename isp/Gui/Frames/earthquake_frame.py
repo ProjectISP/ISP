@@ -687,7 +687,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         params = self.settings_dialog.getParameters()
         sharey = params["amplitudeaxis"]
         self.concatanate = True
-        
+
         ## Merge traces from files ##
         all_traces = []
 
@@ -770,7 +770,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                         self.all_traces.append(tr)
 
-                    self.st = Stream(self.all_traces)
+                self.st = Stream(self.all_traces)
 
 
 
@@ -1005,14 +1005,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                 if self.angCB.currentText() == "to this angle":
 
-                    # Process the data
-                    self.plot_seismogram()
                     st1 = self.st.copy()
                     st2 = st1.select(station=stations[k])
                     maxstart = np.max([tr.stats.starttime for tr in st2])
                     minend = np.min([tr.stats.endtime for tr in st2])
                     st2.trim(maxstart, minend)
                     bazim = self.rot_ang.value()
+                    bazim = bazim + 180
 
                 else:
 
@@ -1027,7 +1026,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                                                     coordinates.Elevation, self.event_info.latitude,
                                                                     self.event_info.longitude,
                                                                     self.event_info.event_depth)
-                    print(bazim)
+                    bazim = bazim + 180
+
+                # I sum 180 degrees to be consisten with definition from station to point
 
                 # rename channels to ensure rotation
                 st2 = ObspyUtil.rename_traces(st2)
