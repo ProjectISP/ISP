@@ -686,10 +686,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         # info = MseedUtil.get_project_basic_info(self.project)
         params = self.settings_dialog.getParameters()
         sharey = params["amplitudeaxis"]
-
+        self.concatanate = True
+        
         ## Merge traces from files ##
         all_traces = []
-        for index, file_path in enumerate(self.files_path):
+
+        for index, file_path in enumerate(self.files_at_page):
             sd = SeismogramDataAdvanced(file_path)
             tr = sd.get_waveform_advanced([], self.inventory,
                                           filter_error_callback=self.filter_error_message,
@@ -699,69 +701,76 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         st = Stream(all_traces)
         st.merge()
 
-        if isinstance(st, Stream):
+        if len(st) == 0 and len(self.st) > 0:
+            md = MessageDialog(self)
+            md.set_warning_message("No Concatenate action is required")
 
-            self.canvas.clear()
-            self.set_pagination_stream_concat(st)
-            self.canvas.set_new_subplot(nrows=len(st), ncols=1, sharey=sharey)
-            self.st = []
-            self.all_traces = []
-            for index, tr in enumerate(st):
+        else:
+            if isinstance(st, Stream):
+
+                self.canvas.clear()
+                self.set_pagination_stream_concat(st)
+                self.canvas.set_new_subplot(nrows=len(st), ncols=1, sharey=sharey)
+                self.st = []
+                self.all_traces = []
+                for index, tr in enumerate(st):
 
 
-                sd = SeismogramDataAdvanced(file_path=None, stream=tr, realtime=True)
-                tr = sd.get_waveform_advanced(self.parameters_list, self.inventory,
-                                              filter_error_callback=self.filter_error_message,
-                                              start_time=self.start_time, end_time=self.end_time, trace_number=index)
-                if len(tr) > 0:
+                    sd = SeismogramDataAdvanced(file_path=None, stream=tr, realtime=True)
+                    tr = sd.get_waveform_advanced(self.parameters_list, self.inventory,
+                                                  filter_error_callback=self.filter_error_message,
+                                                  start_time=self.start_time, end_time=self.end_time, trace_number=index)
+                    if len(tr) > 0:
 
-                    if self.aligned_checked:
-                        try:
-                            pick_reference = self.pick_times[tr.stats.station + "." + tr.stats.channel]
-                            shift_time = pick_reference[1] - tr.stats.starttime
-                            tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00") - shift_time
-                        except:
+                        if self.aligned_checked:
+                            try:
+                                pick_reference = self.pick_times[tr.stats.station + "." + tr.stats.channel]
+                                shift_time = pick_reference[1] - tr.stats.starttime
+                                tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00") - shift_time
+                            except:
+                                tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+
+                        if self.actionFrom_StartT.isChecked():
                             tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
 
-                    if self.actionFrom_StartT.isChecked():
-                        tr.stats.starttime = UTCDateTime("2000-01-01T00:00:00")
+                        if self.shift_times is not None:
+                            tr.stats.starttime = tr.stats.starttime + self.shift_times[index][0]
 
-                    if self.shift_times is not None:
-                        tr.stats.starttime = tr.stats.starttime + self.shift_times[index][0]
+                        t = tr.times("matplotlib")
+                        s = tr.data
 
-                    t = tr.times("matplotlib")
-                    s = tr.data
+                        self.canvas.plot_date(t, s, index, color="black", fmt='-', linewidth=0.5)
+                        info = "{}.{}.{}".format(tr.stats.network, tr.stats.station, tr.stats.channel)
+                        self.canvas.set_plot_label(index, info)
 
-                    self.canvas.plot_date(t, s, index, color="black", fmt='-', linewidth=0.5)
-
-                    ax = self.canvas.get_axe(index)
-                    try:
-                        ax.spines["top"].set_visible(False)
-                        ax.spines["bottom"].set_visible(False)
-                        ax.tick_params(top=False)
-                        ax.tick_params(labeltop=False)
-                    except:
-                        pass
-                    ax.set_ylim(np.min(s), np.max(s))
-                    #
-                    if index != (self.pagination.items_per_page - 1):
+                        ax = self.canvas.get_axe(index)
                         try:
-                            ax.tick_params(bottom=False)
+                            ax.spines["top"].set_visible(False)
+                            ax.spines["bottom"].set_visible(False)
+                            ax.tick_params(top=False)
+                            ax.tick_params(labeltop=False)
                         except:
                             pass
+                        ax.set_ylim(np.min(s), np.max(s))
+                        #
+                        if index != (self.pagination.items_per_page - 1):
+                            try:
+                                ax.tick_params(bottom=False)
+                            except:
+                                pass
 
-                    try:
-                        self.min_starttime[index] = min(t)
-                        self.max_endtime[index] = max(t)
-                    except:
-                        print("Empty traces")
+                        try:
+                            self.min_starttime[index] = min(t)
+                            self.max_endtime[index] = max(t)
+                        except:
+                            print("Empty traces")
 
-                    formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
-                    ax.xaxis.set_major_formatter(formatter)
+                        formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
+                        ax.xaxis.set_major_formatter(formatter)
 
-                    self.all_traces.append(tr)
+                        self.all_traces.append(tr)
 
-                self.st = Stream(self.all_traces)
+                    self.st = Stream(self.all_traces)
 
 
 
@@ -771,6 +780,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         num_current_seismograms = len(self.files_path)
         params = self.settings_dialog.getParameters()
         sharey = params["amplitudeaxis"]
+        self.concatanate = False
 
         if len(info) > 0 and num_current_seismograms > 0:
             self.workers = ParallelWorkers(os.cpu_count())
@@ -1023,14 +1033,15 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 st2 = ObspyUtil.rename_traces(st2)
                 st2.rotate(method='NE->RT', back_azimuth=bazim)
 
-                print("The GAC Rotation is not posible for", stations[k])
                 for tr in st2:
                     all_traces_rotated.append(tr)
 
             self.st = Stream(traces=all_traces_rotated)
             # plot
+            # 8-feb-2025 change to work with possible concatenation of files
+
             files_at_page = self.get_files_at_page()
-            for index, file_path in enumerate(files_at_page):
+            for index, file_path in enumerate(self.st):
                 tr = all_traces_rotated[index]
                 t = tr.times("matplotlib")
                 s = tr.data
@@ -1062,7 +1073,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     self.canvas.plot_date(t, s, index, color="steelblue", fmt='-', linewidth=0.5)
                     info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
                     self.canvas.set_plot_label(index, info)
-                    self.redraw_pickers(file_path, index)
+
+                    if self.concatanate:
+                        pass
+                    else:
+                       self.redraw_pickers(files_at_page[index], index)
+
                     # redraw_chop = 1 redraw chopped data, 2 update in case data chopped is modified
                     self.redraw_chop(tr, s, index)
                 else:
