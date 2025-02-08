@@ -1028,7 +1028,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                                                     self.event_info.event_depth)
                     bazim = bazim + 180
 
-                # I sum 180 degrees to be consisten with definition from station to point
+                # I sum 180 degrees to be consistent with definition from station to point
+                if bazim >= 360:
+                    bazim = bazim-360
+                
 
                 # rename channels to ensure rotation
                 st2 = ObspyUtil.rename_traces(st2)
@@ -1947,85 +1950,91 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self._stations_info.show()
 
     def cross(self):
-        self.cf = []
-        cfs = []
-        max_values = []
-        params = self.settings_dialog.getParameters()
-        sharey = params["amplitudeaxis"]
-        files_at_page = self.get_files_at_page()
-        self.canvas.clear()
-        self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1, sharey=sharey)
 
-        try:
-            if len(self.st) > 0 and self.trimCB.isChecked():
-                num = self.crossSB.value()
+        if self.trimCB.isChecked():
+            self.cf = []
+            cfs = []
+            max_values = []
+            params = self.settings_dialog.getParameters()
+            sharey = params["amplitudeaxis"]
+            # files_at_page = self.get_files_at_page()
+            self.canvas.clear()
+            self.canvas.set_new_subplot(nrows=len(self.st), ncols=1, sharey=sharey)
 
-                if num <= len(files_at_page):
-                    template = self.st[num - 1]
+            try:
+                if len(self.st) > 0 and self.trimCB.isChecked():
+                    num = self.crossSB.value()
+                    template = self.st[num-1]
+                    # if num <= len(files_at_page):
+                    #     template = self.st[num - 1]
+                    #
+                    # else:
+                    #     template = self.st[0]
 
-                else:
-                    template = self.st[0]
+                    for j, tr in enumerate(self.st):
+                        sampling_rates = []
+                        if self.crossCB.currentText() == "Auto":
+                            template = tr
+                            temp_stats = ObspyUtil.get_stats_from_trace(template)
+                            st_stats = ObspyUtil.get_stats_from_trace(tr)
+                            info = "Auto-Correlation {}.{}.{}".format(st_stats['net'], st_stats['station'],
+                                                                      st_stats['channel'])
+                        else:
+                            st_stats = ObspyUtil.get_stats_from_trace(tr)
+                            temp_stats = ObspyUtil.get_stats_from_trace(template)
+                            info = "Cross-Correlation {}.{}.{} --> {}.{}.{}".format(st_stats['net'], st_stats['station'],
+                                                                                    st_stats['channel'],
+                                                                                    temp_stats['net'],
+                                                                                    temp_stats['station'],
+                                                                                    temp_stats['channel'])
 
-                for j, tr in enumerate(self.st):
-                    sampling_rates = []
-                    if self.crossCB.currentText() == "Auto":
-                        template = tr
-                        temp_stats = ObspyUtil.get_stats_from_trace(template)
-                        st_stats = ObspyUtil.get_stats_from_trace(tr)
-                        info = "Auto-Correlation {}.{}.{}".format(st_stats['net'], st_stats['station'],
-                                                                  st_stats['channel'])
-                    else:
-                        st_stats = ObspyUtil.get_stats_from_trace(tr)
-                        temp_stats = ObspyUtil.get_stats_from_trace(template)
-                        info = "Cross-Correlation {}.{}.{} --> {}.{}.{}".format(st_stats['net'], st_stats['station'],
-                                                                                st_stats['channel'],
-                                                                                temp_stats['net'],
-                                                                                temp_stats['station'],
-                                                                                temp_stats['channel'])
+                        fs1 = tr.stats.sampling_rate
+                        fs2 = template.stats.sampling_rate
+                        sampling_rates.append(fs1)
+                        sampling_rates.append(fs2)
+                        max_sampling_rates = np.max(sampling_rates)
 
-                    fs1 = tr.stats.sampling_rate
-                    fs2 = template.stats.sampling_rate
-                    sampling_rates.append(fs1)
-                    sampling_rates.append(fs2)
-                    max_sampling_rates = np.max(sampling_rates)
+                        if fs1 != fs2:
+                            self.tr.resample(max_sampling_rates)
+                            self.template.resample(max_sampling_rates)
 
-                    if fs1 != fs2:
-                        self.tr.resample(max_sampling_rates)
-                        self.template.resample(max_sampling_rates)
+                        cc = correlate_maxlag(tr.data, template.data, maxlag=max([len(tr.data), len(template.data)]))
 
-                    cc = correlate_maxlag(tr.data, template.data, maxlag=max([len(tr.data), len(template.data)]))
+                        stats = {'network': st_stats['net'], 'station': st_stats['station'], 'location': '',
+                                 'channel': st_stats['channel'], 'npts': len(cc),
+                                 'sampling_rate': max_sampling_rates, 'mseed': {'dataquality': 'M'},
+                                 'starttime': temp_stats['starttime']}
 
-                    stats = {'network': st_stats['net'], 'station': st_stats['station'], 'location': '',
-                             'channel': st_stats['channel'], 'npts': len(cc),
-                             'sampling_rate': max_sampling_rates, 'mseed': {'dataquality': 'M'},
-                             'starttime': temp_stats['starttime']}
+                        values = [np.max(cc), np.min(cc)]
+                        values = np.abs(values)
 
-                    values = [np.max(cc), np.min(cc)]
-                    values = np.abs(values)
+                        if values[0] > values[1]:
+                            maximo = np.where(cc == np.max(cc))
+                        else:
+                            maximo = np.where(cc == np.min(cc))
 
-                    if values[0] > values[1]:
-                        maximo = np.where(cc == np.max(cc))
-                    else:
-                        maximo = np.where(cc == np.min(cc))
+                        max_values.append(maximo)
+                        self.canvas.plot(get_lags(cc) / max_sampling_rates, cc, j, clear_plot=True,
+                                         linewidth=0.5, color="black")
 
-                    max_values.append(maximo)
-                    self.canvas.plot(get_lags(cc) / max_sampling_rates, cc, j, clear_plot=True,
-                                     linewidth=0.5, color="black")
+                        max_line = ((maximo[0][0]) / max_sampling_rates) - 0.5 * (len(cc) / max_sampling_rates)
+                        print("Zero lag at: "+info+": ", max_line)
+                        self.canvas.draw_arrow(max_line, j, "max lag", color="red", linestyles='-', picker=False)
+                        self.canvas.set_plot_label(j, info)
+                        ax = self.canvas.get_axe(j)
+                        ax.set_xlim(min(get_lags(cc) / max_sampling_rates), max(get_lags(cc) / max_sampling_rates))
+                        # saving
+                        cfs.append(Trace(cc, stats))
 
-                    max_line = ((maximo[0][0]) / max_sampling_rates) - 0.5 * (len(cc) / max_sampling_rates)
-                    self.canvas.draw_arrow(max_line, j, "max lag", color="red", linestyles='-', picker=False)
-                    self.canvas.set_plot_label(j, info)
-                    ax = self.canvas.get_axe(j)
-                    ax.set_xlim(min(get_lags(cc) / max_sampling_rates), max(get_lags(cc) / max_sampling_rates))
-                    # saving
-                    cfs.append(Trace(cc, stats))
+                    self.canvas.set_xlabel(j, "Time [s] from zero lag")
 
-                self.canvas.set_xlabel(j, "Time [s] from zero lag")
-
-                self.cf = Stream(cfs)
-        except:
+                    self.cf = Stream(cfs)
+            except:
+                md = MessageDialog(self)
+                md.set_warning_message("Check correlation template and trim time is checked")
+        else:
             md = MessageDialog(self)
-            md.set_warning_message("Check correlation template and trim time")
+            md.set_warning_message("Check correlation template and trim time is checked")
 
     # TODO implement your logic here for multiple select
     # def on_multiple_select(self, ax_index, xmin, xmax):
