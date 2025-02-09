@@ -158,10 +158,6 @@ if [[ $OS_TYPE == "Darwin" ]]; then
         echo "Creating desktop shortcut at $SHORTCUT_PATH..."
         cat <<EOF > "$SHORTCUT_PATH"
 
-source ~/opt/anaconda3/etc/profile.d/conda.sh
-
-source activate isp
-
 ${ISP_DIR}/isp.sh
 
 EOF
