@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1250</width>
-    <height>916</height>
+    <height>888</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -568,6 +568,9 @@
                      <property name="prefix">
                       <string>Ref Longitude Max </string>
                      </property>
+                     <property name="suffix">
+                      <string> º</string>
+                     </property>
                      <property name="decimals">
                       <number>5</number>
                      </property>
@@ -590,6 +593,9 @@
                      <property name="prefix">
                       <string>Ref Latitude Max </string>
                      </property>
+                     <property name="suffix">
+                      <string> º</string>
+                     </property>
                      <property name="decimals">
                       <number>5</number>
                      </property>
@@ -608,6 +614,9 @@
                      </property>
                      <property name="prefix">
                       <string>Ref Latitude Min </string>
+                     </property>
+                     <property name="suffix">
+                      <string> º</string>
                      </property>
                      <property name="decimals">
                       <number>5</number>
@@ -630,6 +639,9 @@
                      </property>
                      <property name="prefix">
                       <string>Ref Longitude Min  </string>
+                     </property>
+                     <property name="suffix">
+                      <string> º</string>
                      </property>
                      <property name="decimals">
                       <number>5</number>

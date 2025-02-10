@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1280</width>
-    <height>899</height>
+    <height>871</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -73,6 +73,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="suffix">
+                <string> º</string>
                </property>
                <property name="decimals">
                 <number>4</number>
@@ -170,6 +173,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="suffix">
+                <string> º</string>
+               </property>
                <property name="decimals">
                 <number>4</number>
                </property>
@@ -189,6 +195,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="suffix">
+                <string> º</string>
+               </property>
                <property name="decimals">
                 <number>4</number>
                </property>
@@ -207,6 +216,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="suffix">
+                <string> º</string>
                </property>
                <property name="decimals">
                 <number>4</number>

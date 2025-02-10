@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1400</width>
-    <height>811</height>
+    <height>783</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -541,11 +541,6 @@
               </property>
               <item>
                <property name="text">
-                <string>Phase</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
                 <string>P</string>
                </property>
               </item>
@@ -561,6 +556,11 @@
               </item>
               <item>
                <property name="text">
+                <string>S</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string>Sg</string>
                </property>
               </item>
@@ -572,6 +572,11 @@
               <item>
                <property name="text">
                 <string>Lg</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Rg</string>
                </property>
               </item>
              </widget>
