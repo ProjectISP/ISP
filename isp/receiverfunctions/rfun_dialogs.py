@@ -3,7 +3,7 @@
 This file is part of Rfun, a toolbox for the analysis of teleseismic receiver
 functions.
 
-Copyright (C) 2020-2021 Andrés Olivar-Castaño
+Copyright (C) 2020-2025 Andrés Olivar-Castaño
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -25,14 +25,13 @@ import os
 from PyQt5 import uic, QtWidgets
 import obspy
 import pickle
+from pathlib import Path
 from functools import partial
 import isp.receiverfunctions.rfun_dialogs_utils as du
 import isp.receiverfunctions.rfun_main_window_utils as mwu
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib.colors import BoundaryNorm
 
 from isp.Gui.Frames import UiReceiverFunctionsCut, \
                            UiReceiverFunctionsCrossSection, UiReceiverFunctionsAbout, \
@@ -135,13 +134,20 @@ class CutEarthquakesDialog(QtWidgets.QDialog, UiReceiverFunctionsCut):
         super(CutEarthquakesDialog, self).__init__()
         self.setupUi(self)
 
-        # connectionsx
+        # connections
         self.pushButton_2.clicked.connect(partial(self.get_path, 2))
         self.pushButton_3.clicked.connect(partial(self.get_path, 3))
-        self.pushButton_4.clicked.connect(partial(self.get_path, 4))
         self.pushButton_5.clicked.connect(partial(self.get_path, 5))        
-        self.pushButton_6.clicked.connect(self.cut_earthquakes)
-        self.pushButton_7.clicked.connect(self.close)
+        self.pushButton_9.clicked.connect(self.cut_earthquakes)
+        self.pushButton_10.clicked.connect(self.close)
+        
+        # Add the custom model files to the corresponding combobox
+        tvel_files = Path(os.path.join(ROOT_DIR, "earth_models")).rglob("*.tvel")
+        self.custom_earth_models = []
+        for tvel in tvel_files:
+            model_name = str(tvel).split(os.sep)[-1].strip(".tvel")
+            self.comboBox_4.addItem(model_name)
+            self.custom_earth_models.append(model_name)
     
     def get_path(self, pushButton):
         if pushButton == 2:
@@ -152,10 +158,6 @@ class CutEarthquakesDialog(QtWidgets.QDialog, UiReceiverFunctionsCut):
             path = QtWidgets.QFileDialog.getOpenFileName()[0]
             if path:
                 self.lineEdit_3.setText(path)
-        elif pushButton == 4:
-            path = QtWidgets.QFileDialog.getExistingDirectory()
-            if path:
-                self.lineEdit_2.setText(path)
         elif pushButton == 5:
             path = QtWidgets.QFileDialog.getSaveFileName()[0]
             if path:
@@ -164,9 +166,8 @@ class CutEarthquakesDialog(QtWidgets.QDialog, UiReceiverFunctionsCut):
     def cut_earthquakes(self):
         data_path = self.lineEdit.text()
         format_ = self.comboBox_4.currentText()
-        station_metadata_path = self.lineEdit_3.text()
-        earthquake_output_path = self.lineEdit_2.text()
-        event_metadata_output_path = self.lineEdit_4.text()
+        stationxml = self.lineEdit_3.text()
+        output_dir = self.lineEdit_4.text()
         starttime = self.dateTimeEdit.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz000Z")
         endtime = self.dateTimeEdit_2.dateTime().toString("yyyy-MM-ddThh:mm:ss.zzz000Z")
         min_mag = self.doubleSpinBox_2.value()
@@ -174,27 +175,27 @@ class CutEarthquakesDialog(QtWidgets.QDialog, UiReceiverFunctionsCut):
         min_dist = self.doubleSpinBox_3.value()
         max_dist = self.doubleSpinBox_4.value()
         client = self.comboBox.currentText()
-        model = self.comboBox_2.currentText()
-        
-        if os.path.isfile(event_metadata_output_path):
-            arrivals = pickle.load(open(event_metadata_output_path, "rb"))
-        else:
-            catalog = du.get_catalog(starttime, endtime, client=client, min_magnitude=min_mag)
-            arrivals = du.taup_arrival_times(catalog, station_metadata_path, earth_model=model,
-                                                min_distance_degrees=min_dist,
-                                                max_distance_degrees=max_dist)
-            pickle.dump(arrivals, open(event_metadata_output_path, "wb"))
-        
-        data_map = du.map_data(data_path, format_=format_)
+        model = self.comboBox_4.currentText()
+        min_depth = self.doubleSpinBox_7.value()
+        max_depth = self.doubleSpinBox_8.value()
+        phase = self.comboBox_5.currentText()
+        noise_wlen = self.doubleSpinBox_10.value()
+        noise_start = self.doubleSpinBox_9.value()
         
         time_before = self.doubleSpinBox_5.value()
         time_after = self.doubleSpinBox_6.value()
-        rotation = self.comboBox_3.currentText()
-        remove_response = self.checkBox_2.isChecked()
-
-        du.cut_earthquakes(data_map, arrivals, time_before, time_after, min_snr,
-                    station_metadata_path, earthquake_output_path, rotation=rotation, remove_response=remove_response)
-
+        
+        catalog = du.get_catalog(starttime, endtime, client=client, min_magnitude=min_mag)
+        data_map = du.map_data(data_path, format_=format_)
+        du.cut_earthquakes(data_map, catalog, time_before, time_after, min_snr,
+                            min_mag, min_dist, max_dist, min_depth, max_depth,
+                            stationxml, output_dir, model, self.custom_earth_models,
+                            noise_wlen=noise_wlen, noise_before_P=noise_start,
+                            pre_filt=[1/200, 1/100, 45, 50],
+                            phase=phase)
+        
+        
+        
 # class SaveFigureDialog(QtWidgets.QDialog):
 #     def __init__(self, figure, preferred_size, preferred_margins, preferred_title,
 #                  preferred_xlabel, preferred_ylabel, preferred_fname):
@@ -245,7 +246,6 @@ class CrossSectionDialog(QtWidgets.QDialog, UiReceiverFunctionsCrossSection):
         self.y = y
         self.z = z
         
-        print(np.all(np.isnan(z)))
         z[np.isnan(z)] == 0
         
         # norm = colors.TwoSlopeNorm(vmin=np.min(z), vcenter=0, vmax=np.max(z))
@@ -395,7 +395,7 @@ class PreferencesDialog(QtWidgets.QDialog, UiReceiverFunctionsPreferences):
                                          'station_marker_color':self.lineEdit_13.text()},
                            'shapefiles':{'include':self.checkBox_5.isChecked(),
                                          'path':self.lineEdit_12.text()},
-                           'computation':{'earth_model':self.comboBox_7.currentText(),
+                           'computation':{#'earth_model':self.comboBox_7.currentText(), currently not in use
                                           'stacking_method':self.comboBox_8.currentText()}},
                     'rfs':{'appearance':{'line_color':self.lineEdit.text(),
                                          'line_width':self.doubleSpinBox.value(),
@@ -434,7 +434,7 @@ class PreferencesDialog(QtWidgets.QDialog, UiReceiverFunctionsPreferences):
             self.settings = mwu.read_preferences(return_defaults=True)
             self.read_settings()
 
-class AboutDialog(QtWidgets.QDialog):
+class AboutDialog(QtWidgets.QDialog, UiReceiverFunctionsAbout):
     def __init__(self):
         super(AboutDialog, self).__init__()
-        uic.loadUi('rfun/ui/RfunDialogsAbout.ui', self)
+        self.setupUi(self)

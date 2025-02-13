@@ -187,7 +187,7 @@
                     <double>0.000000000000000</double>
                    </property>
                    <property name="maximum">
-                    <double>20.000000000000000</double>
+                    <double>200.000000000000000</double>
                    </property>
                    <property name="value">
                     <double>5.000000000000000</double>
@@ -936,34 +936,6 @@
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_4">
                <item>
-                <widget class="QLabel" name="label_31">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="text">
-                  <string>Earth model</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QComboBox" name="comboBox_7">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <item>
-                  <property name="text">
-                   <string>iasp91</string>
-                  </property>
-                 </item>
-                </widget>
-               </item>
-               <item>
                 <widget class="QLabel" name="label_32">
                  <property name="text">
                   <string>Stacking method</string>
@@ -983,6 +955,19 @@
                   </property>
                  </item>
                 </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_2">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
                </item>
               </layout>
              </widget>

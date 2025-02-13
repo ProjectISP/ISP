@@ -3,7 +3,7 @@
 This file is part of Rfun, a toolbox for the analysis of teleseismic receiver
 functions.
 
-Copyright (C) 2020-2021 Andrés Olivar-Castaño
+Copyright (C) 2020-2025 Andrés Olivar-Castaño
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,21 +32,28 @@ import obspy.taup
 import obspy.clients.fdsn
 import obspy.geodetics.base
 import obspy.io.mseed.util
+import math
+import obspy.taup.taup_create
+
+import h5py
+
+from isp.receiverfunctions.definitions import ROOT_DIR, CONFIG_PATH
 
 def map_data(top_directory, format_):
     
     data_map = {}
-    
-    if format_ == "SAC":
-        rglob_arg = "*.[sS][aA][cC]"
-    else:
-        rglob_arg = "*.[mM][sS][eE][eE][dD]"
+
     # TODO: añadir cuadros de dialogo describiendo posibles errores. Por ejemplo
     # TODO: si los ficheros no tienen extension, no los lee
     # TODO: outputear un log de error
-    for path in Path(top_directory).rglob(rglob_arg):
+    for path in Path(top_directory).rglob("*"):
         str_path = str(path.absolute())
-        record_info = obspy.read(str_path, headonly=True, format=format_)
+        try:
+            record_info = obspy.read(str_path, headonly=True)
+        except Exception as e:
+            print(e)
+            print("The format of file {} could not be recognized.".format(str_path))
+            continue
         year = record_info[0].stats.starttime.year
         jday = record_info[0].stats.starttime.julday
         stnm = record_info[0].stats.station
@@ -151,95 +158,303 @@ def taup_arrival_times(catalog, stationxml, phase="P", earth_model="iasp91",
 
     return arrivals
 
-def cut_earthquakes(data_map, arrivals, time_before, time_after, min_snr,
-                    stationxml, output_dir, noise_wlen=300,
-                    remove_response=True, pre_filt=[1/200, 1/100, 45, 50],
-                    rotation='LQT'):
+def parse_event_picks(event):
+    picks = {}
+    for pick in event.picks:
+        picks.setdefault(pick.phase_hint.lower(), {})
+        picks[pick.phase_hint.lower()][pick.waveform_id.station_code] = pick.time
+    if not picks:
+        picks = {"p":{}, "s":{}}
+    return picks
 
+def azimuth(lat1, lon1, lat2, lon2):
+    lat1, lon1, lat2, lon2 = [np.radians(x) for x in [lat1, lon1, lat2, lon2]]
+    londiff = lon2 - lon1
+    az = np.arctan2(np.sin(londiff) * np.cos(lat2), np.cos(lat1)*np.sin(lat2) - np.sin(lat1) * np.cos(lat2) * np.cos(londiff))
+    az = (az*180/math.pi + 360) % 360
+    return az
+
+def distance_deg(stla, stlo, evla, evlo):
+    stla, stlo, evla, evlo = [np.radians(x) for x in [stla, stlo, evla, evlo]]
+    difflat = evla - stla
+    difflon = evlo - stlo
+    a = np.sin(difflat/2)**2 + np.cos(stla) * np.cos(evla) * np.sin(difflon/2)**2
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+    return np.degrees(c)
+
+def parse_taup_arrivals(arrivals):
+    phases = {}
+    for arrival in arrivals:
+        phases[arrival.name.lower()] = {"time":arrival.time, "incident_angle":arrival.incident_angle, "ray_param":arrival.ray_param_sec_degree}
+    return phases
+
+def cut_earthquakes(data_map, catalog, time_before, time_after, min_snr,
+                    min_magnitude, min_distance_degrees, max_distance_degrees, min_depth, max_depth,
+                    stationxml, output_dir, earth_model, custom_earth_models, noise_wlen=300, noise_before_P=10,
+                    pre_filt=[1/200, 1/100, 45, 50],
+                    phase="p", use_picks=False):
+    
+    ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
+
+    # Instance of TauPyModel
+    if earth_model in custom_earth_models:
+        try:
+            model = obspy.taup.TauPyModel(model=earth_model)
+        except FileNotFoundError:
+            obspy.taup.taup_create.build_taup_model(ROOT_DIR + "/earth_models/{}.tvel".format(earth_model))
+            model = obspy.taup.TauPyModel(model=earth_model)
+    else:
+        model = obspy.taup.TauPyModel(model=earth_model)
+    
     inv = obspy.core.inventory.read_inventory(stationxml)
     
-    for eq in arrivals["events"].keys():
-        otime = arrivals["events"][eq]['event_info']['origin_time']
-        year = otime.year
+    # Fetch station locations from the inventory
+    stations = {}
+    for ntwk in inv:
+        for stn in ntwk:
+            stnm = stn.code
+            stla = stn.latitude
+            stlo = stn.longitude
+            stev = stn.elevation
+            stations.setdefault(stnm, {'latitude':stla, 'longitude':stlo,
+                                       'elevation':stev})
+    
+    # Initialize h5py file
+    if os.path.isfile(output_dir):
+        mode = "a"
+    else:
+        mode = "w"
+    hdf5 = h5py.File(output_dir, mode)   
 
-        for stnm in data_map.keys():#arrivals["events"][eq]['arrivals'].keys():
-            
-            if not stnm in arrivals["events"][eq]['arrivals'].keys():
+    
+    # Loop over events
+    for i, event in enumerate(catalog):
+        event_magnitude = event.preferred_magnitude()
+        summary_card = str(event).split("\n")[0].split("Event:")[1]
+        if type(event_magnitude) is type(None):
+            # If there is no preferred magnitude, we take the first one
+            try:
+                event_magnitude = event.magnitudes[0]
+            except IndexError:
+                print("No magnitude defined for event {}, skipping...".format(summary_card))
                 continue
 
-            # Check if there is data for that year; else continue with next station
-            if not year in data_map[stnm].keys():
-                continue
-            
-            atime = otime + arrivals["events"][eq]['arrivals'][stnm]['arrival_time']
-            inc = arrivals["events"][eq]['arrivals'][stnm]['incident_angle']
-            baz = arrivals["events"][eq]['arrivals'][stnm]['back_azimuth']  
+        mag = event_magnitude.mag
+        if mag < min_magnitude:
+            print("Magnitude of event {} below threshold, skipping...".format(summary_card))
+            continue
 
-            # Determine start and end times for trimming
-            stime = atime - time_before
-            etime = atime + time_after            
+        # Try to get preferred origin info
+        event_origin_info = event.preferred_origin()
+        if type(event_origin_info) is type(None):
+            # If there is no preferred origin, we take the first one
+            try:
+                event_origin_info = event.origins[0]
+            except IndexError:
+                print("No origin defined for event {}, skipping...".format(summary_card))
+                continue # If there is no origin info, skip to the next event
+
+        depth = event_origin_info.depth
+        if min_depth == max_depth == 0:
+            if i == 0:
+                print("Both min_depth and max_depth are set to 0. No depth constraints are applied...")
+        else:
+            if min_depth > max_depth and i==0:
+                print("WARNING: min_depth is higher than max_depth, switching the values around...")
+                max_depth, min_depth = min_depth, max_depth
             
-            # Attempt to retrieve data
-            stime_jday = stime.julday
-            etime_jday = etime.julday
-            
-            # Check if there is data for this julday; else continue with next station
-            if not stime_jday in data_map[stnm][year].keys() or not etime_jday in data_map[stnm][year].keys():
+            if depth < min_depth or depth > max_depth:
+                print("Event {} outside of allowed depth range. Skipping...".format(summary_card))
                 continue
+        
+        # Fetch location info
+        evla, evlo, evdp, otime = (event_origin_info.latitude, event_origin_info.longitude,
+                                   event_origin_info.depth, event_origin_info.time)
+
+        for stnm in data_map.keys():
+            # Retrieve station information
+            stla, stlo, stel = (stations[stnm]["latitude"], stations[stnm]["longitude"],
+                                stations[stnm]["elevation"])
+            back_az = azimuth(stla, stlo, evla, evlo)
+            deg_dist = distance_deg(stla, stlo, evla, evlo)
             
-            stream = obspy.core.stream.Stream()
-            if stime_jday == etime_jday:
-                channels = data_map[stnm][year][stime_jday]
-                for chn in channels.keys():
-                    stream += obspy.read(channels[chn])
+            # Check event distance
+            if deg_dist < min_distance_degrees or deg_dist > max_distance_degrees:
+                print("Event {} outside of distance threshold for station {}, skipping...".format(summary_card, stnm))
+                continue
+
+            # We always trace the rays with TauP, even if we are using the picks
+            # in the catalog, because we need an estimation for the ray parameter
+            # and inclination angles
+            arrivals = []
+            
+            p_arrivals = model.get_travel_times(source_depth_in_km=evdp/1000,
+                                                distance_in_degree=deg_dist,
+                                                phase_list=["P", "p"],
+                                                receiver_depth_in_km=0)
+            if len(p_arrivals) == 0:
+                print("TauP traveltime computation failed for phase p, station {}, event {}. Skipping...".format(stnm, summary_card))
+                continue
             else:
-                channels1 = data_map[stnm][year][stime_jday]
-                channels2 = data_map[stnm][year][etime_jday]
-                for chn in channels1.keys():
-                    stream += obspy.read(channels1[chn])
-                for chn in channels2.keys():
-                    stream += obspy.read(channels2[chn])
-
-            stream.merge(fill_value=0)
-            noise = stream.copy()
+                arrivals.append(p_arrivals[0])
             
-            # Trim data and a noise window
-            if stime < stream[0].stats.starttime or etime > stream[0].stats.endtime:
+            if phase == "s":
+                s_arrivals = model.get_travel_times(source_depth_in_km=evdp/1000,
+                                                    distance_in_degree=deg_dist,
+                                                    phase_list=["S", "s"],
+                                                    receiver_depth_in_km=0)
+                if len(s_arrivals) == 0:
+                    print("TauP traveltime computation failed for phase s, station {}, event {}. Skipping...".format(stnm, summary_card))
+                    continue
+                else:
+                    arrivals.append(s_arrivals[0]) # take the first arrival
+                
+
+            phases = parse_taup_arrivals(arrivals)
+            # We need the p arrival incident angle in order to be able to rotate to P-SV
+            incident_angle = phases["p"]["incident_angle"]
+            ray_param = phases["p"]["ray_param"]
+            
+            # Now we get the start and end times for the rf and nosie segments
+            starttime = otime + phases[phase]["time"] - time_before
+            endtime = otime + phases[phase]["time"] + time_after
+            atime = phases[phase]["time"]
+            
+            noise_starttime = otime + phases["p"]["time"] - noise_before_P - noise_wlen
+            noise_endtime = otime + phases["p"]["time"] - noise_before_P
+            
+            # Now we read the data
+            try:
+                st = obspy.core.stream.Stream()
+                if noise_starttime.julday == endtime.julday:
+                    channels = data_map[stnm][noise_starttime.year][noise_starttime.julday]
+                    for chn in channels.keys():
+                        st += obspy.read(channels[chn])
+                else:
+                    channels1 = data_map[stnm][noise_starttime.year][noise_starttime.julday]
+                    channels2 = data_map[stnm][endtime.year][endtime.julday]
+                    for chn in channels1.keys():
+                        st += obspy.read(channels1[chn])
+                    for chn in channels2.keys():
+                        st += obspy.read(channels2[chn])
+            except KeyError:
+                print("No available data for station {} and event {}, skipping...".format(stnm, summary_card))
                 continue
             
-            noise.trim(starttime=stime - noise_wlen, endtime=stime)
-            noise.detrend(type="demean")
-            noise.detrend(type="linear")           
-            stream.trim(starttime=stime, endtime=etime)
-            stream.detrend(type="demean")
-            stream.detrend(type="linear")
+            # Detrend, merge
+            st.detrend()
+            st.merge(fill_value=0)
             
-            # Compute variance and check if the SNR criterium is fulfilled
-            if min_snr > 0: # Disable the SNR check if min_snr = 0
-                try:
-                    noise_var = np.var(noise.select(component="Z")[0].data)
-                    signal_var = np.var(stream.select(component="Z")[0].data)
-                    snr = (signal_var - noise_var)/noise_var
-                    if snr < min_snr:
-                        continue
-                except IndexError:
-                    continue
+            if st[0].stats.starttime > starttime or st[0].stats.endtime < endtime:
+                print("Incomplete data for station {} and event {}, skipping...".format(stnm, summary_card))
+                continue
             
-            # Remove response and rotate
-            if remove_response:
-                try:
-                    stream.remove_response(inventory=inv, pre_filt=pre_filt, output="DISP")
-                except ValueError:
-                    print("No matching response information found for {}. Skipping earthquake...".format(stnm))
-                    continue
+            # In case the station is not rotated to ZNE, try using the inventory
+            # components = sorted([tr.stats.channel[-1] for tr in st])
+            # if components != ["E", "N", "Z"]:
+            #     try:
+            #         st.rotate(method="->ZNE", inventory=inv)
+            #     except:
+            #         print("Could not rotate station {} to ZNE. Skipping...".format(stnm))
+            #         continue
 
-            if rotation == 'LQT':
-                stream.rotate('ZNE->{}'.format(rotation), back_azimuth=baz, inclination=inc)
-            elif rotation == 'ZRT':
-                stream.rotate('NE->RT', back_azimuth=baz)
+            # Trim
+            signal = st.copy()
+            signal.trim(starttime=starttime, endtime=endtime)
+            noise = st.copy()
+            noise.trim(starttime=noise_starttime, endtime=noise_endtime)
             
-            # Write file to disk
-            stn_output_dir = os.path.join(output_dir, stnm)
-            Path(stn_output_dir).mkdir(parents=True, exist_ok=True)
-            stream.write(os.path.join(stn_output_dir,"EQ{}_{}.mseed".format(eq, stnm)), format="MSEED")
+            # Check the length of the traces
+            expected_len_signal = int((time_before + time_after)/signal[0].stats.delta)
+            expected_len_noise = int((noise_wlen)/signal[0].stats.delta)
+            
+            for tr in signal:
+                tr.detrend(type="constant")
+                tr.detrend(type="linear")
+                if len(tr.data) < expected_len_signal:
+                    tr.data = np.pad(tr.data, (0, expected_len_signal - len(tr.data)))
+                elif len(tr.data) > expected_len_signal:
+                    tr.data = tr.data[:expected_len_signal]
+            
+            for tr in noise:
+                tr.detrend(type="constant")
+                tr.detrend(type="linear")
+                if len(tr.data) < expected_len_noise:
+                    tr.data = np.pad(tr.data, (0, expected_len_noise - len(tr.data)))
+                elif len(tr.data) > expected_len_noise:
+                    tr.data = tr.data[:expected_len_noise]
+            
+            # Check that there are no traces full of zeroes
+            all_zeroes = []
+            for tr in signal:
+                if np.all(tr.data == 0):
+                    all_zeroes.append(True)
+                else:
+                    all_zeroes.append(True)
+            
+            if np.any(all_zeroes):
+                print("One or more traces contains only zeros. Station {}, event {}. Skipping...".format(stnm, summary_card))
+            
+            # Compare RMS
+            rms_signal = np.sqrt(np.mean(np.square(signal.select(component="Z")[0].data)))
+            rms_noise = np.sqrt(np.mean(np.square(noise.select(component="Z")[0].data)))
+            RMS_ratio = rms_signal/rms_noise
+            if RMS_ratio < min_snr:
+                print("RMS ratio below threshold for station {}, event {}".format(stnm, summary_card))
+            
+            # RMS computation. It does not perform very well for discarding low quality data
+            # Use the vertical channel
+            signal_rms = np.sqrt(np.mean(np.square(signal.copy().select(component="Z")[0].data)))
+            noise_rms = np.sqrt(np.mean(np.square(noise.copy().select(component="Z")[0].data)))
+            snr = signal_rms/noise_rms            
+            
+            if snr <= min_snr:
+                print("Signal to noise ratio for station {} and event {} below threshold, skipping...".format(stnm, summary_card))
+                continue
+
+
+
+            # it = iter(eq_data)
+            # the_len = len(next(it))
+            # if not all(len(l) == the_len for l in it):
+            #     print("Warning: mismatch in the number of samples of the different components. Event {}, station {}. Correct by trimming or padding with zeros...".format(summary_card, stnm))
+            #     for tr in eq_data:
+            #         if len(tr) < the_len:
+            #             tr = np.pad(tr, (0, the_len - len(tr)))
+            #         else:
+            #             tr = tr[:the_len]
+
+            eq_data = [tr.data for tr in signal]
+            time = np.arange(0, len(eq_data[0])*signal[0].stats.delta, signal[0].stats.delta)
+            eq_data.append(time)
+
+            g = hdf5.require_group(stnm)
+            # These should not be modified if the group already exists, to be changed
+            g.attrs["stla"] = stations[stnm]["latitude"]
+            g.attrs["stlo"] = stations[stnm]["longitude"]
+            g.attrs["stel"] = stations[stnm]["elevation"]
+            d = g.create_dataset(str(i), data=np.array(eq_data))
+            d.attrs["data_structure"] = [tr.stats.channel[-1] for tr in signal] + ["time"]
+            d.attrs["otime"] = float(otime)
+            d.attrs["atime"] = float(atime)
+            d.attrs["time_before_phase_onset"] = time_before
+            d.attrs["dist_degrees"] = deg_dist
+            try:
+                d.attrs["mag"] = event.preferred_magnitude().mag
+            except AttributeError:
+                d.attrs["mag"] = event.magnitudes[0].mag
+            d.attrs["evlo"] = evlo
+            d.attrs["evla"] = evla
+            d.attrs["evdp"] = evdp
+            d.attrs["baz"] = back_az
+            d.attrs["incident_angle"] = incident_angle
+            d.attrs["ray_param"] = ray_param
+            d.attrs["phase"] = phase
+            d.attrs["SNR"] = snr
+
+    if isinstance(hdf5, h5py.File):   # Just HDF5 files
+        try:
+            hdf5.close()
+        except:
+            pass
 
