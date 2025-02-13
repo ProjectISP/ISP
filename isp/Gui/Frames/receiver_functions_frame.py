@@ -5,7 +5,7 @@ Created on Fri Apr  3 14:45:54 2020
 @author: olivar
 
 Rfun, a toolbox for the analysis of teleseismic receiver functions
-Copyright (C) 2020-2021 Andrés Olivar-Castaño
+Copyright (C) 2020-2025 Andrés Olivar-Castaño
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -47,6 +47,8 @@ from PyQt5 import QtWidgets
 import obspy.signal.filter
 import copy
 import scipy.interpolate as scint
+from pathlib import Path
+from isp.receiverfunctions.definitions import ROOT_DIR, CONFIG_PATH
 
 class RecfFrame(BaseFrame, UiReceiverFunctions):
     
@@ -58,6 +60,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
         # This should be maybe changed in the UI directly
         self.actionRead_waveforms.setEnabled(True)
+        self.actionClose_HDF5_file.setEnabled(False)
         
         # Set up RF analysis UI based on the chosen computation method
         # in self.settings
@@ -154,6 +157,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
     def connect_rf_analysis_gui_elements(self):
         # Menu actions
         self.actionRead_waveforms.triggered.connect(self.read_waveforms)
+        self.actionClose_HDF5_file.triggered.connect(self.close_waveforms)
         self.actionCut_earthquakes_from_raw_data.triggered.connect(self.cut_earthquakes_dialog)
         self.actionPreferences.triggered.connect(self.preferences_dialog)
         
@@ -232,6 +236,12 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         self.spinBox_5.valueChanged.connect(self.plot_ccp_stack)
     
         self.spinBox_6.valueChanged.connect(self.ccp_basemap)
+        
+        # Add the custom model files to the CCP Earth model combobox
+        tvel_files = Path(os.path.join(ROOT_DIR, "earth_models")).rglob("*.tvel")
+        for tvel in tvel_files:
+            model_name = str(tvel).split(os.sep)[-1].strip(".tvel")
+            self.comboBox_11.addItem(model_name)
     
     def preferences_dialog(self):
         dialog = dialogs.PreferencesDialog()
@@ -255,6 +265,13 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
             for stnm in sorted(list(self.hdf5_waveforms.keys())):
                 if len(self.hdf5_waveforms[stnm].keys()) > 0:
                     self.comboBox.addItem(stnm)
+        
+            self.actionClose_HDF5_file.setEnabled(True)
+    
+    def close_waveforms(self):
+        self.comboBox.clear() # This also resets the GUI as it's connected to the reset_rf_analysis_gui function
+        self.hdf5_waveforms.close()
+        self.actionClose_HDF5_file.setEnabled(False)
     
     def compute_rfs(self):
         """Compute and plot selected receiver functions
@@ -880,17 +897,20 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
     def update_hk_map(self):
         lons = (self.doubleSpinBox_35.value(),self.doubleSpinBox_36.value())
         lats = (self.doubleSpinBox_34.value(),self.doubleSpinBox_33.value())
-        self.mplwidget_6.figure.axes[0].set_extent([min(lons), max(lons), min(lats), max(lats)], crs=ccrs.PlateCarree())
-        try:
-            self.mplwidget_6_basemap_ax.set_extent([min(lons), max(lons), min(lats), max(lats)], crs=ccrs.PlateCarree())
-        except AttributeError:
+        try: # Try except due to persistence of interface changes in ISP
+            self.mplwidget_6.figure.axes[0].set_extent([min(lons), max(lons), min(lats), max(lats)], crs=ccrs.PlateCarree())
+            try:
+                self.mplwidget_6_basemap_ax.set_extent([min(lons), max(lons), min(lats), max(lats)], crs=ccrs.PlateCarree())
+            except AttributeError:
+                pass
+            try:
+                self.mplwidget_6_gridlines.set_extent([min(lons), max(lons), min(lats), max(lats)], crs=ccrs.PlateCarree())
+            except AttributeError:
+                pass
+            
+            self.mplwidget_6.figure.canvas.draw()
+        except:
             pass
-        try:
-            self.mplwidget_6_gridlines.set_extent([min(lons), max(lons), min(lats), max(lats)], crs=ccrs.PlateCarree())
-        except AttributeError:
-            pass
-        
-        self.mplwidget_6.figure.canvas.draw()
     
     def hk_basemap(self):
         
@@ -1082,6 +1102,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         max_depth = self.doubleSpinBox_16.value()
         dlat = self.doubleSpinBox_14.value()
         dlon = self.doubleSpinBox_13.value()
+        earth_model = self.comboBox_11.currentText()
         
         self.progressBar.setVisible(True)
         self.ccp_stack, self.ccp_x, self.ccp_y, self.ccp_z = mwu.ccp_stack(self.rfs_hdf5,
@@ -1093,7 +1114,7 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
                                                                            dlat,
                                                                            dz,
                                                                            max_depth,
-                                                                           model=self.settings['ccp']['computation']['earth_model'],
+                                                                           model=earth_model,
                                                                            stacking_method=self.settings['ccp']['computation']['stacking_method'],
                                                                            pbar=self.progressBar)      
         self.progressBar.setVisible(False)
@@ -1285,8 +1306,6 @@ class RecfFrame(BaseFrame, UiReceiverFunctions):
         
         start = (self.doubleSpinBox_17.value(), self.doubleSpinBox_20.value())
         end = (self.doubleSpinBox_19.value(), self.doubleSpinBox_18.value())
-        print(start)
-        print(end)
         newlats, newlons, dist_arr = mwu.compute_intermediate_points(start, end, 100)
     
         matrix = []

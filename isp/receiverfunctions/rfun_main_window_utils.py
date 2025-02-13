@@ -3,7 +3,7 @@
 This file is part of Rfun, a toolbox for the analysis of teleseismic receiver
 functions.
 
-Copyright (C) 2020-2021 Andrés Olivar-Castaño
+Copyright (C) 2020-2025 Andrés Olivar-Castaño
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ def read_preferences(file='rfun.conf', return_defaults=False):
                                              'station_marker_color':'#00FF00'},
                                'shapefiles':{'include':True,
                                              'path':None},
-                               'computation':{'earth_model':'iasp91',
+                               'computation':{#'earth_model':'iasp91', unused at the moment, option is changed directly in the CCP panel
                                               'stacking_method':'weighted mean'}},
                         'rfs':{'appearance':{'line_color':'#000000',
                                              'line_width':0.5,
@@ -163,6 +163,11 @@ def waterlevel_deconvolution(dcmp, scmp, delta, a, c, tshift, w0=0,
 ###############################################################################
 # https://github.com/trichter/rf/blob/master/rf/deconvolve.py #################
 ###############################################################################
+
+# Copyright 2013-2019 Tom Eulenfeld, MIT license
+# Copyright 2013-2019 Tom Eulenfeld, MIT license
+# Copyright 2013-2019 Tom Eulenfeld, MIT license
+
 from scipy.fftpack import fft, ifft, next_fast_len
 
 def _gauss_filter(dt, nft, f0, waterlevel=None):
@@ -293,32 +298,27 @@ def deconv_iterative(rsp, src, dt, tshift=10, gauss=0.5, itmax=400,
 
     return RF_out, it_out, rms_out
 
+# Copyright 2013-2019 Tom Eulenfeld, MIT license
+# Copyright 2013-2019 Tom Eulenfeld, MIT license
+# Copyright 2013-2019 Tom Eulenfeld, MIT license
+
 ###############################################################################
 # https://github.com/trichter/rf/blob/master/rf/deconvolve.py #################
 ###############################################################################
 
 def apply_hann_taper(arr):
-    """
-    CHATGPT bullshit
-    
-    Applies a 5% Hann taper to a numpy array.
-    
-    Parameters:
-    arr (numpy.ndarray): The input array to which the taper is applied.
-    
-    Returns:
-    numpy.ndarray: The tapered array.
+    """   
+    Applies a 5% Hann taper to a numpy array, similar to the one in SAC
     """
     n = len(arr)
     taper_length = int(0.05 * n)
     
     if taper_length == 0:
-        raise ValueError("Array too short for a 5% taper.")
+        raise ValueError("Array is empty.")
     
     # Create the Hann window
     hann_window = 0.5 * (1 - np.cos(2 * np.pi * np.arange(taper_length) / (2 * taper_length - 1)))
     
-    # Create the full taper
     taper = np.ones(n)
     taper[:taper_length] = hann_window
     taper[-taper_length:] = hann_window[::-1]
@@ -382,9 +382,16 @@ def compute_rfs(stnm, hdf5_file, method, method_settings, w0=0,
             elif component == "T":
                 dcmp = t
                 scmp = Z_or_L
-        elif phase[0] == "s":
-            dcmp = R_or_Q[::-1]
-            scmp = Z_or_L[::-1]
+        elif phase == "s":
+            if component == "R" or component == "Q":
+                scmp = R_or_Q
+                dcmp = Z_or_L
+            elif component == "Z" or component == "L":
+                scmp = Z_or_L
+                dcmp = Z_or_L
+            elif component == "T":
+                scmp = t
+                dcmp = Z_or_L
         
         dcmp = apply_hann_taper(dcmp)
         scmp = apply_hann_taper(scmp)
@@ -393,8 +400,7 @@ def compute_rfs(stnm, hdf5_file, method, method_settings, w0=0,
         ray_param = hdf5_file[stnm][event_id].attrs["ray_param"]
         distance = hdf5_file[stnm][event_id].attrs["dist_degrees"]
         data_structure = hdf5_file[stnm][event_id].attrs["data_structure"]
-        
-       
+
         # Pad data and perform deconvolution
         a = method_settings['gaussian_filter_width']
         if method == "Waterlevel":
@@ -417,7 +423,7 @@ def compute_rfs(stnm, hdf5_file, method, method_settings, w0=0,
             t = t[:len(rf)]
  
         if rotation == "LQT":
-            rf = -rf            
+            rf = -rf
         
         rfs.append([rf, t, baz, distance, ray_param, 1, event_id, eq_magnitude, snr]) # int 1 = accept this rf; 0 = discard (for use in the gui)
         done += 1
@@ -478,7 +484,7 @@ def moveout_correction(rfs, phase='Ps', p_ref=6.4):
     tref = np.concatenate((np.zeros(1), np.cumsum((np.sqrt(1/avg_vs**2 - p_ref**2) - np.sqrt(1/avg_vp**2 - p_ref**2)) * dz)))
     
     for i, rf in enumerate(rfs):
-        p = rf[4]/111.2 # Ray parameter in s/km
+        p = rf[4]/111.19 # Ray parameter in s/km
         tps = np.concatenate((np.zeros(1), np.cumsum((np.sqrt(1/avg_vs**2 - p**2) - np.sqrt(1/avg_vp**2 - p**2)) * dz))) # Ps delay time after P arrival
         # Create a function that y(x) that relates the reference delay times
         # with the theoretical ones for the given ray parameter and interpolate it
@@ -598,7 +604,6 @@ def compute_stack(rfs, bin_size=0, overlap=0, moveout_phase="Ps",
         if rf[5] != 0:
             full_linear_stack += rf[0]
     full_linear_stack /= len([x for x in moveout_corrected_rfs_copy2 if x[5] == 1])
-
     return full_linear_stack, stacks, y_coords
 
 def scale(X, x_min, x_max):
@@ -635,7 +640,7 @@ def compute_hk_stack(rfs, avg_vp=6.3, H_range=(25, 55), H_values=100, k_range=(1
         if rf_arr[5]:
             events += 1
             rf = scint.interp1d(rf_arr[1], rf_arr[0], bounds_error=False, fill_value=np.nan)
-            p = rf_arr[4]/6378.137
+            p = rf_arr[4]/111.19
             tps = np.einsum('i,j->ji', H_arr, (np.sqrt(1/(vs**2) - p**2) - np.sqrt(1/(avg_vp**2) - p**2)))
             tppps = np.einsum('i,j->ji', H_arr, (np.sqrt(1/(vs**2) - p**2) + np.sqrt(1/(avg_vp**2) - p**2)))
             tpsps = np.einsum('i,j->ji', H_arr, 2 * (np.sqrt(1/(vs**2) - p**2)))
@@ -672,7 +677,7 @@ def compute_hk_stack(rfs, avg_vp=6.3, H_range=(25, 55), H_values=100, k_range=(1
 
 def compute_theoretical_arrival_times(H, k, ref_slowness=6.4, avg_vp=6.4):
     vs = avg_vp / k
-    p = ref_slowness/111.2
+    p = ref_slowness/111.19
     
     tps = H * (np.sqrt(1/(vs**2) - p**2) - np.sqrt(1/(avg_vp**2) - p**2))
     tppps = H * (np.sqrt(1/(vs**2) - p**2) + np.sqrt(1/(avg_vp**2) - p**2))
@@ -706,7 +711,7 @@ def save_rfs_hdf5(stnm, stla, stlo, stel, method, method_settings, rfs, outfile)
     
     # 4. Add receiver functions as datasets
     for rf in rfs:
-        rf_data, t, baz, distance, ray_param, use, event_id, eq_magnitude = rf
+        rf_data, t, baz, distance, ray_param, use, event_id, eq_magnitude, snr = rf
         d = g.create_dataset(str(event_id), data=np.array([rf_data, t]))
         d.attrs["data_structure"] = ["receiver_function", "time"]
         d.attrs["back_azimuth"] = baz
@@ -734,8 +739,8 @@ def map_rfs(rfs_dir="rf"):
 
     return rfs_map
 
-def ccp_stack(rfs_hdf5, min_x, max_x, min_y, max_y, dx, dy, dz, max_depth,
-              model='iasp91', stacking_method='mean', pbar=None):
+def ccp_stack(rfs_hdf5, min_x, max_x, min_y, max_y, dx, dy, dz, max_depth, model,
+              stacking_method='mean', pbar=None):
 
     elevs = []
     for stnm in rfs_hdf5.keys():
@@ -752,33 +757,45 @@ def ccp_stack(rfs_hdf5, min_x, max_x, min_y, max_y, dx, dy, dz, max_depth,
     weights = np.zeros((len(z), len(x), len(y)))    
     
     # Read earth model:
-    path_model=os.path.join(os.path.dirname(os.path.abspath(__file__)), "earth_models")
-    with open(path_model+"/{}.csv".format(model), 'r') as f:
+    
+    path_model=os.path.join(ROOT_DIR + "/earth_models/{}.tvel".format(model))
+    with open(path_model, 'r') as f:
         model_lines = f.readlines()
+
+    model_lines = model_lines[2:] # remove the headers
     
-    radius_arr = []
-    vp_arr = []
-    vs_arr = []
+    earth_radius = 6378.
     
-    for line in model_lines:
-        depth, radius, vp, vs = line.split(',')
-        radius_arr.append(float(radius))
-        vp_arr.append(float(vp))
-        vs_arr.append(float(vs))
+    top_depths, top_vps, top_vss = [], [], []
+    bottom_depths, bottom_vps, bottom_vss = [], [], []
+       
+    for i in np.arange(0, len(model_lines), 2):
+        top_depth, top_vp, top_vs, top_density = [float(x) for x in model_lines[i].strip("\n").split(" ")]
+        top_depths.append(top_depth)
+        top_vps.append(top_vp)
+        top_vss.append(top_vs)
     
-    ivp = scint.interp1d(radius_arr, vp_arr, bounds_error=False, fill_value=(vp_arr[0], vp_arr[-1]))
-    ivs = scint.interp1d(radius_arr, vs_arr, bounds_error=False, fill_value=(vs_arr[0], vs_arr[-1]))
+        bottom_depth, bottom_vp, bottom_vs, bottom_density = [float(x) for x in model_lines[i+1].strip("\n").split(" ")]
+        bottom_depths.append(bottom_depth)
+        bottom_vps.append(bottom_vp)
+        bottom_vss.append(bottom_vs)
     
-    r_earth = float(model_lines[0].split(',')[1])
+    # radius_arr = []
+    # vp_arr = []
+    # vs_arr = []
     
+    # for line in model_lines[2:]:
+    #     depth, vp, vs, density = line.split(' ')
+    #     radius_arr.append(6378 - float(depth))
+    #     vp_arr.append(float(vp))
+    #     vs_arr.append(float(vs))
+       
     total_count = 0
     for stnm in rfs_hdf5.keys():
         for id_ in rfs_hdf5[stnm].keys():
             total_count += 1
             
     pbar.setRange(0, total_count)
-    
-    print(rfs_hdf5[stnm].attrs["stel"])
     
     done = 0
     for stnm in rfs_hdf5.keys():
@@ -796,25 +813,39 @@ def ccp_stack(rfs_hdf5, min_x, max_x, min_y, max_y, dx, dy, dz, max_depth,
             p = d.attrs["ray_param"]
             baz = d.attrs["back_azimuth"]
             tps = 0
-            r0 = radius_arr[0]+np.max(elevs)
-            r_sta = radius_arr[0]+stel
-            p_h = p/112
+            r0 = earth_radius+np.max(elevs)
+            r_sta = earth_radius+stel
+            
+            # ivp = scint.interp1d(radius_arr + stel, vp_arr, bounds_error=False, fill_value=(vp_arr[0], vp_arr[-1]))
+            # ivs = scint.interp1d(radius_arr + stel, vs_arr, bounds_error=False, fill_value=(vs_arr[0], vs_arr[-1]))
+            
+            p_h = p/111.19
             
             intp_rf = scint.interp1d(time, rf)
             lat = math.radians(stla)
             lon = math.radians(stlo)
             H = 0
-
             
-            T0 = 2 # hard-coded, change
+            T0 = 1 # hard-coded, change. Could be probably anything from 1 to 5 secs.
         
             for k in range(len(z)):
                 r = r0 - dz*k
                 if r > r_sta:
                     continue
+                
                 H += dz
-                vs = ivs(r)
-                vp = ivp(r)
+                # Find vp and vs for H
+                layer_index = np.where(H < np.array(top_depths))[0][0] - 1
+                top_depth = top_depths[layer_index]
+                bottom_depth = bottom_depths[layer_index]
+                top_vs = top_vss[layer_index]
+                top_vp = top_vps[layer_index]
+                bottom_vs = bottom_vss[layer_index]
+                bottom_vp = bottom_vps[layer_index]
+                
+                vp = np.interp([H], [top_depth, bottom_depth], [top_vp, bottom_vp])
+                vs = np.interp([H], [top_depth, bottom_depth], [top_vs, bottom_vs])
+                               
                 dt = (np.sqrt(vs**-2 - p_h**2) - np.sqrt(vp**-2 - p_h**2)) * dz
                 tps += dt
                 amp = intp_rf(tps)

@@ -2,7 +2,7 @@
 This file is part of Rfun, a toolbox for the analysis of teleseismic receiver
 functions.
 
-Copyright (C) 2020-2021 Andrés Olivar-Castaño
+Copyright (C) 2020-2025 Andrés Olivar-Castaño
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,5 +22,5 @@ olivar.ac@gmail.com.
 
 import os
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG_PATH = os.path.join(ROOT_DIR, 'rfun.conf')

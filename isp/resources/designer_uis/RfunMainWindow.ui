@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2048</width>
-    <height>986</height>
+    <width>2051</width>
+    <height>985</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -748,7 +748,7 @@
                   </font>
                  </property>
                  <property name="text">
-                  <string>Min. SNR</string>
+                  <string>Min. RMS ratio</string>
                  </property>
                 </widget>
                </item>
@@ -888,7 +888,7 @@
                   <number>1</number>
                  </property>
                  <property name="minimum">
-                  <double>-20.000000000000000</double>
+                  <double>-120.000000000000000</double>
                  </property>
                  <property name="maximum">
                   <double>120.000000000000000</double>
@@ -2413,290 +2413,296 @@
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_6">
                  <item>
-                  <layout class="QVBoxLayout" name="verticalLayout_7">
-                   <item>
-                    <layout class="QGridLayout" name="gridLayout">
-                     <item row="3" column="3">
-                      <widget class="QDoubleSpinBox" name="doubleSpinBox_13">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>63</width>
-                         <height>16777215</height>
-                        </size>
-                       </property>
-                       <property name="singleStep">
-                        <double>0.010000000000000</double>
-                       </property>
-                       <property name="value">
-                        <double>0.050000000000000</double>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="1" column="1">
-                      <widget class="QDoubleSpinBox" name="doubleSpinBox_9">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>63</width>
-                         <height>16777215</height>
-                        </size>
-                       </property>
-                       <property name="minimum">
-                        <double>-90.000000000000000</double>
-                       </property>
-                       <property name="maximum">
-                        <double>90.000000000000000</double>
-                       </property>
-                       <property name="singleStep">
-                        <double>0.010000000000000</double>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="3" column="2">
-                      <widget class="QLabel" name="label_20">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="text">
-                        <string>dlon</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="4" column="2">
-                      <widget class="QLabel" name="label_21">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="text">
-                        <string>dz</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="3" column="1">
-                      <widget class="QDoubleSpinBox" name="doubleSpinBox_14">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>63</width>
-                         <height>16777215</height>
-                        </size>
-                       </property>
-                       <property name="singleStep">
-                        <double>0.010000000000000</double>
-                       </property>
-                       <property name="value">
-                        <double>0.050000000000000</double>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="2" column="1">
-                      <widget class="QDoubleSpinBox" name="doubleSpinBox_11">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>63</width>
-                         <height>16777215</height>
-                        </size>
-                       </property>
-                       <property name="minimum">
-                        <double>-180.000000000000000</double>
-                       </property>
-                       <property name="maximum">
-                        <double>180.000000000000000</double>
-                       </property>
-                       <property name="singleStep">
-                        <double>0.010000000000000</double>
-                       </property>
-                       <property name="value">
-                        <double>0.000000000000000</double>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="1" column="3">
-                      <widget class="QDoubleSpinBox" name="doubleSpinBox_10">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>63</width>
-                         <height>16777215</height>
-                        </size>
-                       </property>
-                       <property name="minimum">
-                        <double>-90.000000000000000</double>
-                       </property>
-                       <property name="maximum">
-                        <double>90.000000000000000</double>
-                       </property>
-                       <property name="singleStep">
-                        <double>0.010000000000000</double>
-                       </property>
-                       <property name="value">
-                        <double>0.000000000000000</double>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="1" column="0">
-                      <widget class="QLabel" name="label_16">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="text">
-                        <string>Lat. range</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="4" column="1">
-                      <widget class="QDoubleSpinBox" name="doubleSpinBox_16">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>63</width>
-                         <height>16777215</height>
-                        </size>
-                       </property>
-                       <property name="maximum">
-                        <double>1000.000000000000000</double>
-                       </property>
-                       <property name="value">
-                        <double>100.000000000000000</double>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="2" column="0">
-                      <widget class="QLabel" name="label_17">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="text">
-                        <string>Lon. range</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="2" column="3">
-                      <widget class="QDoubleSpinBox" name="doubleSpinBox_12">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>63</width>
-                         <height>16777215</height>
-                        </size>
-                       </property>
-                       <property name="minimum">
-                        <double>-180.000000000000000</double>
-                       </property>
-                       <property name="maximum">
-                        <double>180.000000000000000</double>
-                       </property>
-                       <property name="singleStep">
-                        <double>0.010000000000000</double>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="4" column="3">
-                      <widget class="QDoubleSpinBox" name="doubleSpinBox_15">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>63</width>
-                         <height>16777215</height>
-                        </size>
-                       </property>
-                       <property name="minimum">
-                        <double>0.010000000000000</double>
-                       </property>
-                       <property name="maximum">
-                        <double>5.000000000000000</double>
-                       </property>
-                       <property name="value">
-                        <double>1.000000000000000</double>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="4" column="0">
-                      <widget class="QLabel" name="label_18">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="text">
-                        <string>Max. depth</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="3" column="0">
-                      <widget class="QLabel" name="label_19">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="text">
-                        <string>dlat</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
+                  <layout class="QGridLayout" name="gridLayout">
+                   <item row="1" column="1">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_9">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="minimum">
+                      <double>-90.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>90.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>0.010000000000000</double>
+                     </property>
+                    </widget>
                    </item>
-                   <item>
-                    <widget class="QPushButton" name="pushButton_11">
+                   <item row="4" column="2">
+                    <widget class="QLabel" name="label_21">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>dz</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_11">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="minimum">
+                      <double>-180.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>180.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>0.010000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>0.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_14">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="singleStep">
+                      <double>0.010000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>0.050000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="3">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_10">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="minimum">
+                      <double>-90.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>90.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>0.010000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>0.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_16">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="maximum">
+                      <double>1000.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>100.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_17">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Lon. range</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_18">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Max. depth</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="0">
+                    <widget class="QLabel" name="label_36">
+                     <property name="text">
+                      <string>Earth model</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="1">
+                    <widget class="QComboBox" name="comboBox_11"/>
+                   </item>
+                   <item row="2" column="3">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_12">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="minimum">
+                      <double>-180.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>180.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>0.010000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_19">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>dlat</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="2">
+                    <widget class="QLabel" name="label_20">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>dlon</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_16">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Lat. range</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="3">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_13">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="singleStep">
+                      <double>0.010000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>0.050000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="3">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_15">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="minimum">
+                      <double>0.010000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>5.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>1.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="6" column="0">
+                    <widget class="QPushButton" name="pushButton_11">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -2722,29 +2728,50 @@
                 <layout class="QVBoxLayout" name="verticalLayout_17">
                  <item>
                   <layout class="QGridLayout" name="gridLayout_3">
-                   <item row="0" column="2">
-                    <widget class="QLabel" name="label_55">
+                   <item row="2" column="1">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_17">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
-                     <property name="text">
-                      <string>Lon.</string>
+                     <property name="minimumSize">
+                      <size>
+                       <width>63</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="minimum">
+                      <double>-90.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>90.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>0.010000000000000</double>
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="0">
-                    <widget class="QLabel" name="label_26">
+                   <item row="5" column="0">
+                    <widget class="QPushButton" name="pushButton_25">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
                      <property name="text">
-                      <string>End point</string>
+                      <string>Manual selection</string>
+                     </property>
+                     <property name="checkable">
+                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>
@@ -2784,7 +2811,7 @@
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>63</width>
+                       <width>16777215</width>
                        <height>16777215</height>
                       </size>
                      </property>
@@ -2793,68 +2820,6 @@
                      </property>
                      <property name="maximum">
                       <double>180.000000000000000</double>
-                     </property>
-                     <property name="singleStep">
-                      <double>0.010000000000000</double>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="1">
-                    <widget class="QDoubleSpinBox" name="doubleSpinBox_17">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="minimumSize">
-                      <size>
-                       <width>63</width>
-                       <height>0</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>63</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="minimum">
-                      <double>-90.000000000000000</double>
-                     </property>
-                     <property name="maximum">
-                      <double>90.000000000000000</double>
-                     </property>
-                     <property name="singleStep">
-                      <double>0.010000000000000</double>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="2">
-                    <widget class="QDoubleSpinBox" name="doubleSpinBox_20">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="minimumSize">
-                      <size>
-                       <width>63</width>
-                       <height>0</height>
-                      </size>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>63</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="minimum">
-                      <double>-90.000000000000000</double>
-                     </property>
-                     <property name="maximum">
-                      <double>90.000000000000000</double>
                      </property>
                      <property name="singleStep">
                       <double>0.010000000000000</double>
@@ -2864,14 +2829,14 @@
                    <item row="3" column="1">
                     <widget class="QDoubleSpinBox" name="doubleSpinBox_19">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>63</width>
+                       <width>16777215</width>
                        <height>16777215</height>
                       </size>
                      </property>
@@ -2886,27 +2851,7 @@
                      </property>
                     </widget>
                    </item>
-                  </layout>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_25">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="text">
-                    <string>Manual selection</string>
-                   </property>
-                   <property name="checkable">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_39">
-                   <item>
+                   <item row="4" column="0">
                     <widget class="QLabel" name="label_53">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -2915,14 +2860,14 @@
                       </sizepolicy>
                      </property>
                      <property name="text">
-                      <string>N. interpolation points</string>
+                      <string>Points</string>
                      </property>
                     </widget>
                    </item>
-                   <item>
+                   <item row="4" column="1">
                     <widget class="QSpinBox" name="spinBox_9">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -2935,20 +2880,77 @@
                      </property>
                     </widget>
                    </item>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="label_55">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Lon.</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_26">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>End point</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="2">
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_20">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="minimum">
+                      <double>-90.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>90.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>0.010000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="6" column="0">
+                    <widget class="QPushButton" name="pushButton_26">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Show cross section</string>
+                     </property>
+                    </widget>
+                   </item>
                   </layout>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_26">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="text">
-                    <string>Show cross section</string>
-                   </property>
-                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -3133,13 +3135,6 @@
                 <layout class="QVBoxLayout" name="verticalLayout_15">
                  <item>
                   <layout class="QGridLayout" name="gridLayout_5">
-                   <item row="0" column="2">
-                    <widget class="QLabel" name="label_33">
-                     <property name="text">
-                      <string>Zoom level</string>
-                     </property>
-                    </widget>
-                   </item>
                    <item row="0" column="3">
                     <widget class="QSpinBox" name="spinBox_6">
                      <property name="maximum">
@@ -3147,13 +3142,6 @@
                      </property>
                      <property name="value">
                       <number>6</number>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="0">
-                    <widget class="QLabel" name="label_31">
-                     <property name="text">
-                      <string>Base map</string>
                      </property>
                     </widget>
                    </item>
@@ -3171,6 +3159,13 @@
                      </item>
                     </widget>
                    </item>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="label_33">
+                     <property name="text">
+                      <string>Zoom level</string>
+                     </property>
+                    </widget>
+                   </item>
                    <item row="1" column="2">
                     <widget class="QLabel" name="label_2">
                      <property name="text">
@@ -3185,6 +3180,13 @@
                      </property>
                      <property name="singleStep">
                       <double>0.100000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_31">
+                     <property name="text">
+                      <string>Base map</string>
                      </property>
                     </widget>
                    </item>
@@ -3271,8 +3273,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>2048</width>
-     <height>24</height>
+     <width>2051</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuInput">
@@ -3287,6 +3289,7 @@
       <string>RF Analysis</string>
      </property>
      <addaction name="actionRead_waveforms"/>
+     <addaction name="actionClose_HDF5_file"/>
     </widget>
     <widget class="QMenu" name="menuCCP_Stacking">
      <property name="title">
@@ -3340,7 +3343,7 @@
   </action>
   <action name="actionCut_earthquakes_from_raw_data">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>Cut earthquakes ...</string>
@@ -3421,6 +3424,11 @@
   <action name="actionOpen">
    <property name="text">
     <string>Open</string>
+   </property>
+  </action>
+  <action name="actionClose_HDF5_file">
+   <property name="text">
+    <string>Close HDF5 file ...</string>
    </property>
   </action>
  </widget>
