@@ -366,30 +366,30 @@ class Locate(BaseFrame, UiLocFlow):
 
     def add_earthquake_info(self, origin: Origin):
         self.EarthquakeInfoText.clear()
-        self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     {origin_time}     {standard_error:.3f} s".
+        self.EarthquakeInfoText.setPlainText("  Origin time and RMS:     {origin_time}     {standard_error:.2f} s".
                                              format(origin_time=origin.time,
                                                     standard_error=origin.quality.standard_error))
         self.EarthquakeInfoText.appendPlainText("  Hypocenter Geographic Coordinates:     "
                                                 "Latitude {lat:.3f}º "
-                                                "Longitude {long:.3f}º     Depth {depth:.3f} km    "
-                                                "Uncertainty {unc:.3f} km".
+                                                "Longitude {long:.3f}º     Depth {depth:.1f} km    "
+                                                "Uncertainty {unc:.1f} km".
                                                 format(lat=origin.latitude, long=origin.longitude,
                                                        depth=origin.depth / 1000,
                                                        unc=origin.depth_errors['uncertainty']))
-        self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err {:.3f} km     "
-                                                "Min Horizontal Err {:.3f} km    "
-                                                "Azimuth {:.3f} º"
+        self.EarthquakeInfoText.appendPlainText("  Horizontal Ellipse:     Max Horizontal Err {:.2f} km     "
+                                                "Min Horizontal Err {:.2f} km    "
+                                                "Azimuth {:.2f} º"
                                                 .format(origin.origin_uncertainty.max_horizontal_uncertainty,
                                                         origin.origin_uncertainty.min_horizontal_uncertainty,
                                                         origin.origin_uncertainty.azimuth_max_horizontal_uncertainty))
 
-        self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases {:.3f}     "
-                                                "Azimuthal GAP {:.3f} º     Minimum Distance {:.3f} km     "
-                                                "Maximum Distance {:.3f} km"
+        self.EarthquakeInfoText.appendPlainText("  Quality Parameters:     Number of Phases {:.0f}     "
+                                                "Azimuthal GAP {:.2f} º     Minimum Distance {:.2f} km     "
+                                                "Maximum Distance {:.2f} km"
                                                 .format(origin.quality.used_phase_count,
                                                         origin.quality.azimuthal_gap,
-                                                        origin.quality.minimum_distance,
-                                                        origin.quality.maximum_distance))
+                                                        origin.quality.minimum_distance*111.2,
+                                                        origin.quality.maximum_distance*111.2))
 
     def __get_last_hyp(self):
 
