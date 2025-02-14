@@ -309,7 +309,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 project_name = os.path.basename(selected[0])
                 info = MseedUtil.get_project_basic_info(self.project)
                 md.set_info_message("Project {} loaded  ".format(project_name))
-                if len(info) > 0:
+                if len(info) > 0 and len(self.project) > 0:
                     md.set_info_message("Project {} loaded  ".format(project_name),
                                         "Networks: " + ','.join(info["Networks"][0]) + "\n" +
                                         "Stations: " + ','.join(info["Stations"][0]) + "\n" +
@@ -320,16 +320,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                                         "Channels Number: " + str(info["Channels"][1]) + "\n" +
                                         "Num Files: " + str(info["num_files"]) + "\n" +
                                         "Start Project: " + info["Start"] + "\n" + "End Project: " + info["End"])
-
+                    self.get_now_files()
                 else:
                     md.set_warning_message("Empty Project ", "Please provide a root path "
-                                                             "with mseed files inside and check the wuery filters applied")
-
+                                                           "with mseed files inside and check the wuery filters applied")
             except:
                 md.set_error_message("Project couldn't be loaded ")
+
         else:
-            md.set_error_message("Project couldn't be loaded ")
-        self.get_now_files()
+            print("No file selected")
+            md.close()
+
 
     def reload_current_project(self):
 
@@ -2336,12 +2337,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.picked_at = {}
             command = "{} {}".format('rm', output_path)
             exc_cmd(command, cwd=ROOT_DIR)
-            md.set_info_message("Removed picks from file")
             self.canvas.remove_arrows(self.lines)
             self.pm = PickerManager()
+            md.set_info_message("Removed picks from file")
         except:
 
-            md.set_error_message("Coundn't remove pick file")
+            md.set_error_message("Coundn't remove pick file", "Please check path: " + output_path)
 
     def start_location(self):
         import glob

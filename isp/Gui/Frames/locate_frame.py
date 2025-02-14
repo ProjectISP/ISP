@@ -685,6 +685,11 @@ class Locate(BaseFrame, UiLocFlow):
 
         if isinstance(self.sp, SurfProject) and len(self.sp.project)>0:
             print(self.sp)
+            self.__send_run_automag()
+            self.progress_dialog.exec()
+            md = MessageDialog(self)
+            md.set_info_message("Source Parameters estimation finished, Please see output directory and press "
+                                "print results")
         else:
             # Add buttons
             msg_box = QMessageBox()
@@ -704,17 +709,15 @@ class Locate(BaseFrame, UiLocFlow):
                 selected = pw.QFileDialog.getOpenFileName(self, "Select file")
                 if isinstance(selected[0], str) and os.path.isfile(selected[0]):
                     self.sp = SurfProject.load_project(selected[0])
-
-        if len(self.sp.project) > 0:
-            self.__send_run_automag()
-            self.progress_dialog.exec()
-            md = MessageDialog(self)
-            md.set_info_message("Source Parameters estimation finished, Please see output directory and press "
-                                "print results")
-        else:
-            md = MessageDialog(self)
-            md.set_info_message("No Loaded a valid Project, please back to Earthquake Analysis and load a project \n, "
-                                "or try run source another time and then load a project")
+                    self.__send_run_automag()
+                    self.progress_dialog.exec()
+                    md = MessageDialog(self)
+                    md.set_info_message("Source Parameters estimation finished, Please see output directory and press "
+                                        "print results")
+            else:
+                md = MessageDialog(self)
+                md.set_info_message("No loaded a valid Project, please back to Earthquake Analysis and load a project \n, "
+                                    "or try run source another time and then load a project")
 
 
     @AsycTime.run_async()
