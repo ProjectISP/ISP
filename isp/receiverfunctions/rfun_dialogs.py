@@ -23,6 +23,7 @@ olivar.ac@gmail.com.
 
 import os
 from PyQt5 import uic, QtWidgets
+# from PyQt5.QtCore import QThread
 import obspy
 import pickle
 from pathlib import Path
@@ -133,6 +134,13 @@ class CutEarthquakesDialog(QtWidgets.QDialog, UiReceiverFunctionsCut):
     def __init__(self):
         super(CutEarthquakesDialog, self).__init__()
         self.setupUi(self)
+        
+        # Progressbar and text
+        p2 = self.progressBar_2.sizePolicy()
+        p2.setRetainSizeWhenHidden(True)
+        self.progressBar_2.setSizePolicy(p2)
+        self.progressBar_2.setVisible(False)
+        self.label_29.setText("")
 
         # connections
         self.pushButton_2.clicked.connect(partial(self.get_path, 2))
@@ -185,14 +193,32 @@ class CutEarthquakesDialog(QtWidgets.QDialog, UiReceiverFunctionsCut):
         time_before = self.doubleSpinBox_5.value()
         time_after = self.doubleSpinBox_6.value()
         
+        # Instrument response removel
+        remove_response = self.groupBox_2.isChecked()
+        units_output = self.comboBox_2.currentText()
+        corner_frequencies = [self.doubleSpinBox_11.value(), self.doubleSpinBox_12.value(),
+                              self.doubleSpinBox_13.value(), self.doubleSpinBox_14.value()]
+        water_level = self.doubleSpinBox_15.value()        
+        
+        self.label_29.setText("Downloading catalog...")
+        QtWidgets.QApplication.processEvents()
         catalog = du.get_catalog(starttime, endtime, client=client, min_magnitude=min_mag)
+        self.label_29.setText("Mapping local files...")
+        QtWidgets.QApplication.processEvents()
         data_map = du.map_data(data_path, format_=format_)
+        self.label_29.setText("Cutting earthquakes...")
+        QtWidgets.QApplication.processEvents()
+        self.progressBar_2.setVisible(True)
         du.cut_earthquakes(data_map, catalog, time_before, time_after, min_snr,
                             min_mag, min_dist, max_dist, min_depth, max_depth,
                             stationxml, output_dir, model, self.custom_earth_models,
+                            remove_response, units_output,
+                            corner_frequencies, water_level,
                             noise_wlen=noise_wlen, noise_before_P=noise_start,
                             pre_filt=[1/200, 1/100, 45, 50],
-                            phase=phase)
+                            phase=phase, pbar=self.progressBar_2)
+        self.label_29.setText("")
+        self.progressBar_2.setVisible(False)
         
         
         
