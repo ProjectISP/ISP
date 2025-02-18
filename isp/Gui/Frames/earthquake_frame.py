@@ -782,6 +782,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         end_project = UTCDateTime(info['End'])
         num_current_seismograms = len(self.files_path)
         params = self.settings_dialog.getParameters()
+        self.auto_refresh = params["auto_refresh"]
+        self.auto_resample = params["auto_resample"]
+
         sharey = params["amplitudeaxis"]
         self.concatanate = False
         self.start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
@@ -838,7 +841,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             self.check_end_time = self.end_time
             ##
             self.diff = self.end_time - self.start_time
-            if len(self.canvas.axes) != len(self.files_at_page) or self.autorefreshCB.isChecked():
+            if len(self.canvas.axes) != len(self.files_at_page) or self.auto_refresh:
                 self.canvas.set_new_subplot(nrows=len(self.files_at_page), ncols=1, sharey=sharey)
             self.last_index = 0
             self.min_starttime = []
@@ -911,11 +914,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         sd = SeismogramDataAdvanced(file_path)
 
-        if self.trimCB.isChecked() and self.diff >= 0 and self.fastCB.isChecked():
+        if self.trimCB.isChecked() and self.diff >= 0 and self.auto_resample:
 
             self.decimator = sd.resample_check(start_time=self.start_time, end_time=self.end_time)
 
-        elif self.trimCB.isChecked() == False and self.fastCB.isChecked() == True:
+        elif self.trimCB.isChecked() == False and self.auto_resample == True:
 
             self.decimator = sd.resample_check()
 

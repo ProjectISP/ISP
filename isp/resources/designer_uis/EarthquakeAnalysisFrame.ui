@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1659</width>
-    <height>912</height>
+    <width>1512</width>
+    <height>874</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,7 @@
        <attribute name="title">
         <string>Event Analysis</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
          <widget class="QWidget" name="widget_2" native="true">
           <property name="sizePolicy">
@@ -41,11 +41,249 @@
           </property>
           <layout class="QGridLayout" name="gridLayout_4">
            <item row="3" column="2">
-            <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,10">
+            <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,10">
              <item>
               <layout class="QGridLayout" name="gridLayout_2">
+               <item row="8" column="0" colspan="2">
+                <widget class="QGroupBox" name="plot">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="title">
+                  <string/>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_6">
+                  <item row="2" column="0">
+                   <widget class="QComboBox" name="comboBox_sort">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>30</height>
+                     </size>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>Distance</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Back Azimuth</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QCheckBox" name="sortCB">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Sort  Traces</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0" colspan="2">
+                   <widget class="QWidget" name="eventInfoWidget" native="true">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>415</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true"/>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_4">
+                     <property name="spacing">
+                      <number>0</number>
+                     </property>
+                     <property name="sizeConstraint">
+                      <enum>QLayout::SetMinimumSize</enum>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item row="7" column="0" colspan="2">
+                <widget class="QGroupBox" name="processing">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="title">
+                  <string>Processing Box</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                 <layout class="QGridLayout" name="gridLayout_3">
+                  <item row="1" column="1">
+                   <widget class="QDoubleSpinBox" name="rot_ang">
+                    <property name="suffix">
+                     <string> º</string>
+                    </property>
+                    <property name="decimals">
+                     <number>2</number>
+                    </property>
+                    <property name="maximum">
+                     <double>360.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QPushButton" name="rotateBtn">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>Rotate to the GAC and if &quot;Use this Ang checked&quot; to the angle sleected.</string>
+                    </property>
+                    <property name="text">
+                     <string>Rotate</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>false</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QPushButton" name="crossBtn">
+                    <property name="toolTip">
+                     <string>Cross correlate the waveform of the reference (Ref) with the rest. Trim waveforms first</string>
+                    </property>
+                    <property name="text">
+                     <string>Cross</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="2">
+                   <widget class="QSpinBox" name="crossSB">
+                    <property name="prefix">
+                     <string>Trace Reference </string>
+                    </property>
+                    <property name="minimum">
+                     <number>1</number>
+                    </property>
+                    <property name="maximum">
+                     <number>100</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QComboBox" name="crossCB">
+                    <item>
+                     <property name="text">
+                      <string>CC</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Auto</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item row="1" column="2">
+                   <widget class="QComboBox" name="angCB">
+                    <item>
+                     <property name="text">
+                      <string>to this angle</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>to GAC</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item row="0" column="0" colspan="2">
+                   <widget class="QPushButton" name="macroBtn">
+                    <property name="text">
+                     <string>Macro</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2">
+                   <widget class="QPushButton" name="runScriptBtn">
+                    <property name="toolTip">
+                     <string>Run python scripts taking ObsPy Stream Waveforms, Start, End and Event Info. Example at ./isp/Scripts</string>
+                    </property>
+                    <property name="text">
+                     <string>Run Script</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
                <item row="6" column="0" colspan="2">
                 <widget class="QGroupBox" name="Files">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
@@ -194,7 +432,14 @@
                    </widget>
                   </item>
                   <item row="6" column="4" colspan="2">
-                   <widget class="QLineEdit" name="channelForm"/>
+                   <widget class="QLineEdit" name="channelForm">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
                   </item>
                   <item row="6" column="0">
                    <widget class="QLineEdit" name="netForm">
@@ -322,246 +567,44 @@
                  </layout>
                 </widget>
                </item>
-               <item row="11" column="0" colspan="3">
-                <layout class="QHBoxLayout" name="horizontalLayout_5">
-                 <property name="spacing">
-                  <number>0</number>
-                 </property>
-                 <property name="sizeConstraint">
-                  <enum>QLayout::SetMinimumSize</enum>
-                 </property>
-                </layout>
-               </item>
-               <item row="8" column="0" colspan="2">
-                <widget class="QGroupBox" name="plot">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>0</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                 <property name="title">
-                  <string/>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                 <layout class="QGridLayout" name="gridLayout_6">
-                  <item row="2" column="0">
-                   <widget class="QComboBox" name="comboBox_sort">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>30</height>
-                     </size>
-                    </property>
-                    <item>
-                     <property name="text">
-                      <string>Distance</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>Back Azimuth</string>
-                     </property>
-                    </item>
-                   </widget>
-                  </item>
-                  <item row="2" column="1">
-                   <widget class="QCheckBox" name="sortCB">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="text">
-                     <string>Sort  Traces</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="0" column="0" colspan="2">
-                   <widget class="QWidget" name="eventInfoWidget" native="true">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>415</width>
-                      <height>150</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>16777215</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="styleSheet">
-                     <string notr="true"/>
-                    </property>
-                    <layout class="QHBoxLayout" name="horizontalLayout_4">
-                     <property name="spacing">
-                      <number>0</number>
-                     </property>
-                     <property name="sizeConstraint">
-                      <enum>QLayout::SetMinimumSize</enum>
-                     </property>
-                     <property name="leftMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="topMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="rightMargin">
-                      <number>0</number>
-                     </property>
-                     <property name="bottomMargin">
-                      <number>0</number>
-                     </property>
-                    </layout>
-                   </widget>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-               <item row="7" column="0" colspan="2">
-                <widget class="QGroupBox" name="processing">
-                 <property name="minimumSize">
-                  <size>
-                   <width>0</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                 <property name="title">
-                  <string>Processing Box</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                 <layout class="QGridLayout" name="gridLayout_3">
-                  <item row="1" column="1">
-                   <widget class="QDoubleSpinBox" name="rot_ang">
-                    <property name="suffix">
-                     <string> º</string>
-                    </property>
-                    <property name="decimals">
-                     <number>2</number>
-                    </property>
-                    <property name="maximum">
-                     <double>360.000000000000000</double>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="0">
-                   <widget class="QPushButton" name="rotateBtn">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="toolTip">
-                     <string>Rotate to the GAC and if &quot;Use this Ang checked&quot; to the angle sleected.</string>
-                    </property>
-                    <property name="text">
-                     <string>Rotate</string>
-                    </property>
-                    <property name="checkable">
-                     <bool>false</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="0">
-                   <widget class="QPushButton" name="crossBtn">
-                    <property name="toolTip">
-                     <string>Cross correlate the waveform of the reference (Ref) with the rest. Trim waveforms first</string>
-                    </property>
-                    <property name="text">
-                     <string>Cross</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="2">
-                   <widget class="QSpinBox" name="crossSB">
-                    <property name="prefix">
-                     <string>Trace Reference </string>
-                    </property>
-                    <property name="minimum">
-                     <number>1</number>
-                    </property>
-                    <property name="maximum">
-                     <number>100</number>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="1">
-                   <widget class="QComboBox" name="crossCB">
-                    <item>
-                     <property name="text">
-                      <string>CC</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>Auto</string>
-                     </property>
-                    </item>
-                   </widget>
-                  </item>
-                  <item row="1" column="2">
-                   <widget class="QComboBox" name="angCB">
-                    <item>
-                     <property name="text">
-                      <string>to this angle</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>to GAC</string>
-                     </property>
-                    </item>
-                   </widget>
-                  </item>
-                  <item row="0" column="0" colspan="2">
-                   <widget class="QPushButton" name="macroBtn">
-                    <property name="text">
-                     <string>Macro</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="0" column="2">
-                   <widget class="QPushButton" name="runScriptBtn">
-                    <property name="toolTip">
-                     <string>Run python scripts taking ObsPy Stream Waveforms, Start, End and Event Info. Example at ./isp/Scripts</string>
-                    </property>
-                    <property name="text">
-                     <string>Run Script</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-               <item row="0" column="0" colspan="2">
+              </layout>
+             </item>
+             <item>
+              <widget class="QScrollArea" name="plotMatWidget">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: rgb(255, 255, 255);</string>
+               </property>
+               <property name="widgetResizable">
+                <bool>true</bool>
+               </property>
+               <widget class="QWidget" name="scrollAreaWidgetContents_2">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>919</width>
+                  <height>610</height>
+                 </rect>
+                </property>
+               </widget>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="1" column="2">
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_2">
+               <item>
                 <widget class="QWidget" name="pagination_widget" native="true">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -603,29 +646,37 @@
               </layout>
              </item>
              <item>
-              <widget class="QScrollArea" name="plotMatWidget">
-               <property name="styleSheet">
-                <string notr="true">background-color: rgb(255, 255, 255);</string>
+              <spacer name="verticalSpacer">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
                </property>
-               <property name="widgetResizable">
-                <bool>true</bool>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
                </property>
-               <widget class="QWidget" name="scrollAreaWidgetContents_2">
-                <property name="geometry">
-                 <rect>
-                  <x>0</x>
-                  <y>0</y>
-                  <width>1072</width>
-                  <height>670</height>
-                 </rect>
-                </property>
-               </widget>
-              </widget>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>0</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
              </item>
-            </layout>
-           </item>
-           <item row="1" column="2">
-            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <spacer name="verticalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Preferred</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>45</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
              <item>
               <widget class="QPushButton" name="updateBtn">
                <property name="sizePolicy">
@@ -655,41 +706,6 @@
                </property>
                <property name="text">
                 <string>Particle Motion</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QCheckBox" name="autorefreshCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Checked to clean the plot every time Process and Plot is cklicked</string>
-               </property>
-               <property name="text">
-                <string>Auto-Refresh</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QCheckBox" name="fastCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Include autodecimation to 1 Hz and 5 Hz fro long span seismograms</string>
-               </property>
-               <property name="text">
-                <string>Auto-Resample</string>
-               </property>
-               <property name="checked">
-                <bool>false</bool>
                </property>
               </widget>
              </item>
@@ -849,7 +865,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1659</width>
+     <width>1512</width>
      <height>24</height>
     </rect>
    </property>

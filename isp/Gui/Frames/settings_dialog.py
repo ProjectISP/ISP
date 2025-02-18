@@ -23,5 +23,7 @@ class SettingsDialog(pw.QDialog, UiSettingsDialog):
         param_dict["lineColor"] = self.colorCB.currentText()
         param_dict["amplitudeaxis"] = self.amplitudeaxisCB.isChecked()
         param_dict["prs_phases"] = self.phasesLE.text().split(",")
+        param_dict["auto_resample"] = self.fastCB.isChecked()
+        param_dict["auto_refresh"] = self.autorefreshCB.isChecked()
         return param_dict
 
