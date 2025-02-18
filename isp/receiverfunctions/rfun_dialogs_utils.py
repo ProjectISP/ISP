@@ -38,6 +38,7 @@ import obspy.taup.taup_create
 import h5py
 
 from isp.receiverfunctions.definitions import ROOT_DIR, CONFIG_PATH
+from PyQt5.QtWidgets import QApplication
 
 def map_data(top_directory, format_):
     
@@ -190,9 +191,13 @@ def parse_taup_arrivals(arrivals):
 
 def cut_earthquakes(data_map, catalog, time_before, time_after, min_snr,
                     min_magnitude, min_distance_degrees, max_distance_degrees, min_depth, max_depth,
-                    stationxml, output_dir, earth_model, custom_earth_models, noise_wlen=300, noise_before_P=10,
+                    stationxml, output_dir, earth_model, custom_earth_models, remove_response, units_output,
+                    corner_frequencies, water_level, noise_wlen=300, noise_before_P=10,
                     pre_filt=[1/200, 1/100, 45, 50],
-                    phase="p", use_picks=False):
+                    phase="p", use_picks=False, pbar=None):
+    
+    pbar.setRange(0, len(catalog))
+    pbar.setValue(0)
     
     ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -229,6 +234,8 @@ def cut_earthquakes(data_map, catalog, time_before, time_after, min_snr,
     
     # Loop over events
     for i, event in enumerate(catalog):
+        pbar.setValue(i)
+        QApplication.processEvents()
         event_magnitude = event.preferred_magnitude()
         summary_card = str(event).split("\n")[0].split("Event:")[1]
         if type(event_magnitude) is type(None):
@@ -342,27 +349,39 @@ def cut_earthquakes(data_map, catalog, time_before, time_after, min_snr,
                 continue
             
             # Detrend, merge
-            st.detrend()
+            st.detrend(type="constant")
+            st.detrend(type="linear")
             st.merge(fill_value=0)
+            st.taper(max_percentage=0.05)
             
             if st[0].stats.starttime > starttime or st[0].stats.endtime < endtime:
                 print("Incomplete data for station {} and event {}, skipping...".format(stnm, summary_card))
                 continue
             
-            # In case the station is not rotated to ZNE, try using the inventory
-            # components = sorted([tr.stats.channel[-1] for tr in st])
-            # if components != ["E", "N", "Z"]:
-            #     try:
-            #         st.rotate(method="->ZNE", inventory=inv)
-            #     except:
-            #         print("Could not rotate station {} to ZNE. Skipping...".format(stnm))
-            #         continue
-
             # Trim
             signal = st.copy()
             signal.trim(starttime=starttime, endtime=endtime)
             noise = st.copy()
             noise.trim(starttime=noise_starttime, endtime=noise_endtime)
+            
+            # Remove response/rotate
+            for segment in [signal, noise]:
+                if remove_response:
+                    try:
+                        print(pre_filt, units_output, water_level)
+                        segment.remove_response(inventory=inv, pre_filt=pre_filt, output=units_output, water_level=water_level)
+                    except:
+                        print("WARNING: No response information found for station {}, event {}. Skipping...".format(stnm, summary_card))
+                        continue
+                
+                # In case the station is not rotated to ZNE, try using the inventory
+                components = sorted([tr.stats.channel[-1] for tr in st])
+                if components != ["E", "N", "Z"]:
+                    try:
+                        segment.rotate(method="->ZNE", inventory=inv)
+                    except:
+                        print("Could not rotate station {} to ZNE. Skipping...".format(stnm))
+                        continue
             
             # Check the length of the traces
             expected_len_signal = int((time_before + time_after)/signal[0].stats.delta)
