@@ -394,7 +394,14 @@ class DataDownloadFrame(BaseFrame, UiDataDownloadFrame):
 
         try:
 
-            self.inventory, self.client = self.retrivetool.get_inventory(self.URL_CB.currentText(), starttime, endtime,
+            if self.urlTx.text() != "":
+                server = self.urlTx.text()
+            else:
+                server = self.URL_CB.currentText()
+
+            print("Loading server at ", server)
+
+            self.inventory, self.client = self.retrivetool.get_inventory(server, starttime, endtime,
             self.networksLE.text(), self.stationsLE.text(), use_networks=self.netsCB.isChecked(),
                                                                          FDSN=self.FDSN_CB.isChecked())
 

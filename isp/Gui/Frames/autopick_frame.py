@@ -10,7 +10,7 @@ from isp.Gui.Frames.uis_frames import UiAutopick
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
 from isp.LocCore.plot_tool_loc import plot_real_map
 from isp.PolarCap.cnnFirstPolarity import Polarity
-from isp.Utils import AsycTime, obspy_utils
+from isp.Utils import AsycTime, obspy_utils, MseedUtil
 from isp.Utils.os_utils import OSutils
 from surfquakecore.phasenet.phasenet_handler import PhasenetISP, PhasenetUtils
 from surfquakecore.real.real_core import RealCore
@@ -212,6 +212,7 @@ class Autopick(BaseFrame, UiAutopick):
             md = MessageDialog(self)
             md.set_error_message("Metadata run Picking, Please load a project first")
         else:
+            info = MseedUtil.get_project_basic_info(self.project)
             self.send_phasenet()
             self.progress_dialog.exec()
             md = MessageDialog(self)

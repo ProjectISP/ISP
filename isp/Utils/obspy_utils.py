@@ -453,15 +453,16 @@ class MseedUtil:
     #
     #     return stations_channel, total_components
     @staticmethod
-    def get_project_basic_info(project):
+    def get_project_basic_info(project: dict) -> dict:
+
         """
-            Counts the number of unique stations in a dictionary where keys are in the format 'NET.STATION.CHANNEL'.
+        Counts the number of unique stations in a dictionary where keys are in the format 'NET.STATION.CHANNEL'.
 
-            Args:
-                data_dict (dict): The input dictionary with keys in the format 'NET.STATION.CHANNEL'.
+        Args:
+            data_dict (dict): The input dictionary with keys in the format 'NET.STATION.CHANNEL'.
 
-            Returns:
-                int: The number of unique stations and channels
+        Returns:
+            int: The number of unique stations and channels
         """
 
         ## Take the stations names and its number
