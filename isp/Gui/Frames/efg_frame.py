@@ -332,24 +332,17 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                                           filter_error_callback=self.filter_error_message, trace_number=0)
 
             if len(tr) > 0:
-                t = tr.times("matplotlib")
+                num = len(tr.data)
+                end = tr.times()[-1]//2
+                ini = -1*end
+                t = np.linspace(ini, end, num)
+
                 tr.detrend(type="simple")
                 s = (tr.data/np.max(tr.data))*self.amplificationDB.value()
                 geodetic = MseedUtil.get_geodetic(file_path)
                 s = (s+(geodetic[0]/1000))
-                self.canvas.plot_date(t, s, 0, clear_plot=False, color="black", fmt='-', alpha=0.5,
-                                      linewidth=0.5, label="")
-                num = len(tr.data)
-                if (num % 2) == 0:
-
-                    # print(“Thenumber is even”)
-                    c = int(np.ceil(num / 2.) + 1)
-                else:
-                    # print(“The provided number is odd”)
-                    c = int(np.ceil((num + 1) / 2))
-                #half_point = (tr.stats.starttime + int(len(tr.data) / (2 * tr.stats.sampling_rate))).matplotlib_date
-                half_point = (tr.stats.starttime+(c/tr.stats.sampling_rate)).matplotlib_date
-
+                self.canvas.plot(t, s, 0, linestyle='-', clear_plot=False, color="black", alpha=0.5, linewidth=0.5,
+                                 label="")
 
                 try:
                     min_starttime.append(min(t))
@@ -361,16 +354,12 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
             if min_starttime and max_endtime is not None:
                 auto_start = min(min_starttime)
                 auto_end = max(max_endtime)
-                self.auto_start = auto_start
-                self.auto_end = auto_end
+                ax = self.canvas.get_axe(0)
+                ax.set_xlim(auto_start, auto_end)
 
-            ax = self.canvas.get_axe(0)
-            ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
-            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
-            ax.xaxis.set_major_formatter(formatter)
-            self.canvas.set_xlabel(0, "Date")
+            self.canvas.set_xlabel(0, "Time [s]")
             self.canvas.set_ylabel(0, "Distance [km]")
-            self.canvas.draw_arrow(half_point,0, arrow_label="", color="blue")
+            self.canvas.draw_arrow(0, 0, arrow_label="", color="blue")
         except:
             pass
 
