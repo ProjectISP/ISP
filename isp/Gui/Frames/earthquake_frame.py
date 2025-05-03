@@ -2579,15 +2579,16 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
                 self.__locate = Locate(self.metadata_path_bind.value, sp)
 
+                self.__locate.show()
             else:
-                self.__locate = Locate("")
+
                 md = MessageDialog(self)
                 md.set_error_message(
                     "You have not selected any metadata to be export to locate",
                     "1. Click on Load metadata\n"
                     "2. Ensure that the metadata file is a valid Inventory\n")
 
-            self.__locate.show()
+
 
         else:
             # If the user cancels the choice dialog, do nothing
