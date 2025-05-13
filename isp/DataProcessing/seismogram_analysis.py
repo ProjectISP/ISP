@@ -5,9 +5,9 @@ from obspy.taup import TauPyModel
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, Filters
 import numpy as np
-
+from isp.cython_code.hampel import hampel
 from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise, \
-    smoothing, wiener_filter, hampel, downsample_trace
+    smoothing, wiener_filter, downsample_trace
 
 
 @unique
@@ -271,8 +271,8 @@ class SeismogramDataAdvanced:
                 tr = whiten(tr, parameters[j][1], taper_edge = parameters[j][2])
                 
             if parameters[j][0] == 'remove spikes':
-                tr = hampel(tr, parameters[j][1], parameters[j][2])
-
+                filtered, outliers, medians, mads, thresholds = hampel(tr.data, parameters[j][1]*tr.stats.sampling_rate, parameters[j][2])
+                tr.data = filtered
             if parameters[j][0] == 'time normalization':
                 tr = normalize(tr, norm_win=parameters[j][1], norm_method=parameters[j][2])
 

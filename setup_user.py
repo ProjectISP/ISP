@@ -10,6 +10,7 @@ import subprocess as sb
 from setuptools import setup, find_packages
 from isp import ROOT_DIR
 from sys import platform
+from setuptools.extension import Extension
 
 if platform == "linux" or platform == "linux2":
     system_path = os.path.join(ROOT_DIR,"linux_bin")
@@ -177,11 +178,21 @@ class CustomBuildExtCommand(build_ext):
             print(src_path, dst_path)
             shutil.copy(src_path, dst_path)
 
-    
+ext_modules = cythonize([
+    Extension(
+        name="isp.cython_code.hampel",
+        sources=[os.path.join(cy_path, "hampel.pyx")],
+        include_dirs=[numpy.get_include()],
+        language="c",
+    )
+])
+
 setup(
     cmdclass={'build_ext': CustomBuildExtCommand,},
     name='isp_package',
     version='2.0',
     description='ISP setup script',
     packages=find_packages(include=['isp', 'isp.*']),
-    include_dirs=[numpy.get_include()])
+    include_dirs=[numpy.get_include()],
+    ext_modules=ext_modules
+)
