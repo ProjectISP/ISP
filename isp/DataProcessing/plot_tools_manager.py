@@ -3,12 +3,13 @@ import os
 import pickle
 import numpy as np
 import nitime.algorithms as tsa
-from scipy import ndimage
 from isp import CLOCK_PATH
 from isp.seismogramInspector.signal_processing_advanced import spectrumelement
 from matplotlib.path import Path
 from matplotlib.widgets import LassoSelector
 from isp.ant.signal_processing_tools import noise_processing
+import matplotlib.pyplot as plt
+from isp.Gui.Frames import MatplotlibFrame
 
 class SelectFromCollection:
     """
@@ -79,12 +80,13 @@ class PlotToolsManager:
         self.__id = id
 
 
-    def plot_spectrum(self, freq, spec, jackknife_errors):
-        import matplotlib.pyplot as plt
-        from isp.Gui.Frames import MatplotlibFrame
+    def plot_spectrum(self, freq, spec, amplitude):
+
         fig, ax1 = plt.subplots(figsize=(6, 6))
         self.mpf = MatplotlibFrame(fig, window_title="Amplitude spectrum")
-        ax1.loglog(freq, spec, linewidth=1.0, color='steelblue', label=self.__id)
+
+        ax1.loglog(freq, amplitude, linewidth=1.0, alpha=0.75, color='orange', label=self.__id+" Amplitude")
+        ax1.loglog(freq, spec, linewidth=1.0, color='steelblue', label=self.__id + " Multitaper Amplitude")
         ax1.frequencies = freq
         ax1.spectrum = spec
         #ax1.fill_between(freq, jackknife_errors[0][:], jackknife_errors[1][:], facecolor="0.75",

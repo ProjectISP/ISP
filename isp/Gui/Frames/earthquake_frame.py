@@ -2180,9 +2180,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             [identified_chop, id] = self.find_chop_by_ax(self.ax_num)
             data = identified_chop[2]
             delta = 1 / identified_chop[0][6]
-            [spec, freq, _] = spectrumelement(data, delta, id)
+            [spec, freq, amplitude] = spectrumelement(data, delta, id)
             self.spectrum = PlotToolsManager(id)
-            self.spectrum.plot_spectrum(freq, spec, _)
+            self.spectrum.plot_spectrum(freq, spec, amplitude)
 
         if event.key == 'm':
             self.canvas.draw_selection_TF(self.ax_num)

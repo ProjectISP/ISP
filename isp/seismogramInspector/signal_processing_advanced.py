@@ -341,22 +341,49 @@ def dB(x, out=None):
         np.log10(x, out)
         np.multiply(out, 10, out)
 ###
-def spectrumelement(data,delta, sta):
+def spectrumelement(data, delta, sta=None):
     """
+    Return the amplitude spectrum using multitaper and compare with FFT.
 
-    Return the amplitude spectrum using multitaper aproach
+    Parameters:
+    - data: array-like, time-domain signal
+    - delta: float, sample spacing (1 / sampling rate)
+    - sta: unused (can be removed or kept for future use)
 
+    Returns:
+    - amplitude: amplitude spectrum from multitaper method (same units as input)
+    - freq: frequencies corresponding to the spectrum
+    - fft_vals: amplitude spectrum from FFT (same units as input)
     """
+    # PSD (amplitude²/Hz)	Amplitude (unit)	amplitude = sqrt(psd * df)
+
+    # Remove mean
+    data = data - np.mean(data)
+
+    # Pad data to next power of 2
+    N_orig = len(data)
+    D = 2 ** math.ceil(math.log2(N_orig))
+    data = np.pad(data, (0, D - N_orig), mode='constant')
     N = len(data)
-    D = 2 ** math.ceil(math.log2(N))
-    z = np.zeros(D - N)
-    data = np.concatenate((data, z), axis=0)
 
-    freq, spec, _ = tsa.multi_taper_psd(data, 1/delta, adaptive=True, jackknife=False, low_bias=True)
+    # Apply Hann taper (window)
+    taper = np.hanning(N)
+    data_tapered = data * taper
 
-    spec = np.sqrt(spec) #mtspec Amplitude spectrum
+    # Compute multitaper PSD
+    freq, psd, _ = tsa.multi_taper_psd(data, 1 / delta, adaptive=True, jackknife=False, low_bias=True)
+    df = freq[1] - freq[0]  # Frequency bin width
 
-    return spec, freq, _
+    # Convert PSD to amplitude spectrum
+    amplitude = np.sqrt(psd * df)
+
+    # Compute FFT amplitude spectrum for comparison
+    fft_vals = (2.0 / N) * np.abs(np.fft.rfft(data_tapered))
+    fft_vals[0] = fft_vals[0] / 2
+    if N % 2 == 0:
+        fft_vals[-1] = fft_vals[-1] / 2
+
+    return amplitude, freq, fft_vals
 
 
 def sta_lta(data, sampling_rate, STA = 1, LTA = 40):
