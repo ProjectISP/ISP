@@ -327,7 +327,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         ts, te = self.get_time_window()
         diff = te-ts
         if selection == "Multitaper Spectrogram":
-
+            self.res_factor = 1
             win = int(self.mt_window_lengthDB.value() * tr.stats.sampling_rate)
             overlap= 1-(self.overlapSB.value())/100
             f_min = self.freq_min_mtDB.value()

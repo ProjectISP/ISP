@@ -212,7 +212,14 @@ class Autopick(BaseFrame, UiAutopick):
             md = MessageDialog(self)
             md.set_error_message("Metadata run Picking, Please load a project first")
         else:
-            info = MseedUtil.get_project_basic_info(self.project)
+            info = MseedUtil.get_project_basic_info(self.sp)
+            print("Networks: ", info["Networks"])
+            print("Stations: ", info["Stations"])
+            print("Channel: ", info["Channels"])
+            print("Nume of Files: ", info["num_files"])
+            print("Start: ", info["Start"])
+            print("end: ", info["End"])
+
             self.send_phasenet()
             self.progress_dialog.exec()
             md = MessageDialog(self)
