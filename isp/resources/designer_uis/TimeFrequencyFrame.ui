@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1501</width>
-    <height>811</height>
+    <height>783</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -348,6 +348,27 @@
              <double>-100.000000000000000</double>
             </property>
            </widget>
+          </item>
+          <item row="0" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QRadioButton" name="radioBtnTime">
+              <property name="text">
+               <string>Time [s]</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="radioBtnDate">
+              <property name="text">
+               <string>Dates</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </item>

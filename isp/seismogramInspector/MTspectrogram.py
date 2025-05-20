@@ -12,7 +12,7 @@ from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, MseedUtil
 from isp.seismogramInspector.signal_processing_advanced import MTspectrum
-
+import matplotlib.dates as mdates
 class MTspectrogram:
 
     def __init__(self, file_path, win, f_min, f_max, overlap):
@@ -35,23 +35,32 @@ class MTspectrogram:
         return self.__stats
 
 
-    def __compute_spectrogram(self, tr, res):
+    def __compute_spectrogram(self, tr, res, dates=False):
 
         mt_spectrum, num_steps, t, f = MTspectrum(tr.data, self.win, tr.stats.delta,
                                                   self.f_min, self.f_max, self.overlap, res)
 
+
+
         log_spectrogram = 10. * np.log(mt_spectrum / np.max(mt_spectrum))
-        x, y = np.meshgrid(t, f)
+
+        if dates:
+
+            x_datetimes = [tr.stats.starttime + s for s in t]
+            x_datetimes = [dt.datetime for dt in x_datetimes]
+            x, y = np.meshgrid(mdates.date2num(x_datetimes), f)
+        else:
+            x, y = np.meshgrid(t, f)
 
         return x, y, log_spectrogram
 
 
 
-    def compute_spectrogram(self, tr, res = 1, start_time=None, end_time=None):
+    def compute_spectrogram(self, tr, res = 1, start_time=None, end_time=None, dates= False):
 
          tr.trim(starttime=start_time, endtime=end_time)
 
-         x, y, log_spectrogram = self.__compute_spectrogram(tr, res)
+         x, y, log_spectrogram = self.__compute_spectrogram(tr, res, dates=dates)
          return x, y, log_spectrogram
 
     def plot_spectrogram(self, tr, fig=None, show=False):

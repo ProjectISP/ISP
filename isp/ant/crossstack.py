@@ -35,14 +35,14 @@ class noisestack:
         self.overlap = overlap
 
 
+    def check_file(self, filename):
+
+        return os.path.isfile(filename)
     def check_path(self):
-    # Se crea la carpeta si no existe:
 
         self.stack_files_path = os.path.join(self.output_files_path, "stack")
         self.stack_rotated_files_path = os.path.join(self.output_files_path, "stack_rotated")
         self.stack_daily_files_path = os.path.join(self.output_files_path, "stack_daily")
-
-
 
         if not os.path.exists(self.stack_files_path):
            os.makedirs(self.stack_files_path)
@@ -62,7 +62,13 @@ class noisestack:
             for jj in range(len(self.channel)):
                 if self.channel[jj] in pickle_file:
                     self.pickle_files.append(pickle_file)
-        #print(self.pickle_files)
+
+        self.stack_files_path_done = []
+        for pickle_file in os.listdir(self.stack_files_path):
+            for jj in range(len(self.channel)):
+                self.stack_files_path_done.append(pickle_file)
+
+
     # Para cada pareja de ficheros, se cargan los ficheros y se multiplican las matrices de datos que contienen, sólo en los días comunes
     # Indices i,j: se refieren a ficheros de datos file_i, file_j que contiene las matrices que se multiplicarán.
 
@@ -89,6 +95,7 @@ class noisestack:
 
     def hard_process_simple_parallel(self, i):
         file_i = self.pickle_files[i]
+        x_station = len(file_i) - 3
         try:
             if file_i[-1] in ["N", "E", "X", "Y", "1", "2"]:
                 key1_i = "data_matrix" + "_" + file_i[-1]
@@ -100,7 +107,298 @@ class noisestack:
                 key3_i = 'date_list'
 
             for j, file_j in enumerate(self.pickle_files):
-                if i < j:
+                y_station = len(file_j) - 3
+                filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + \
+                           file_j[-1]
+                if filename not in self.stack_files_path_done:
+                    if i < j:
+                        if file_j[-1] in ["N", "E", "X", "Y", "1", "2"]:
+                            key1_j = "data_matrix" + "_" + file_j[-1]
+                            key2_j = 'metadata_list' + "_" + file_j[-1]
+                            key3_j = 'date_list' + "_" + file_j[-1]
+                        else:
+                            key1_j = "data_matrix"
+                            key2_j = 'metadata_list'
+                            key3_j = 'date_list'
+
+                        print("(i=" + str(i) + ",j=" + str(j) + ") -> (" + file_i + "," + file_j + ")")
+
+                        with open(os.path.join(self.output_files_path, file_i), 'rb') as h_i, open(
+                                os.path.join(self.output_files_path, file_j),
+                                'rb') as h_j:
+
+                            # Cada fichero file_i y file_i contiene:
+                            # dict_matrix ={ 'data_matrix': [] , 'metadata_list': [], 'date_list': []}
+                            dict_matrix_file_i = pickle.load(h_i)
+                            dict_matrix_file_j = pickle.load(h_j)
+
+                            normalization_i = dict_matrix_file_i["CC"]
+                            normalization_j = dict_matrix_file_j["CC"]
+                            if normalization_i == normalization_j and normalization_i == "PCC":
+                                normalization = "PCC"
+                            else:
+                                normalization = "CC"
+
+
+                            # 28-05-2024, important 2n - 1
+                            cross_length = int(dict_matrix_file_i["data_length"] +
+                                               dict_matrix_file_j["data_length"] - 1)
+
+                            data_matrix_file_i_corr = dict_matrix_file_i[key1_i]
+                            data_matrix_file_j_corr = dict_matrix_file_j[key1_j]
+                            metadata_list_file_i = dict_matrix_file_i[key2_i]
+                            metadata_list_file_j = dict_matrix_file_j[key2_j]
+                            date_list_file_i = dict_matrix_file_i[key3_i]
+                            date_list_file_j = dict_matrix_file_j[key3_j]
+                            # realease memory
+                            del dict_matrix_file_i
+                            del dict_matrix_file_j
+                            gc.collect()
+                            # coordinates
+                            net_i = metadata_list_file_i[0]
+                            net_j = metadata_list_file_j[0]
+                            sta_i = net_i[0]
+                            sta_j = net_j[0]
+                            lat_i = sta_i.latitude
+                            lon_i = sta_i.longitude
+                            lat_j = sta_j.latitude
+                            lon_j = sta_j.longitude
+
+                            # sampling rate
+
+                            self.sampling_rate = metadata_list_file_i[0][0][0].sample_rate
+
+                            dist, bazim, azim = self.__coords2azbazinc(lat_i, lon_i, lat_j, lon_j)
+                            if (dist/1000) <= self.min_dist:
+
+                                # Lista de días de cada fichero
+                                print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
+                                print("dict_matrix_file_j['date_list']: " + str(date_list_file_j))
+
+                                if (len(date_list_file_i) > 0 and len(date_list_file_j) > 0):
+                                    date_list_file_i = self.check_header(date_list_file_i)
+                                    date_list_file_j = self.check_header(date_list_file_j)
+
+                                    # check for duplicate days
+                                    elements_i_to_delete = self.checkIfDuplicates(date_list_file_i)
+                                    elements_j_to_delete = self.checkIfDuplicates(date_list_file_j)
+
+                                    # refress date_list without repeated days
+                                    if len(elements_i_to_delete) > 0:
+                                        index_set = set(elements_i_to_delete)
+                                        date_list_file_i_common = [x for i, x in enumerate(date_list_file_i) if i not in index_set]
+                                    else:
+                                        date_list_file_i_common = date_list_file_i
+
+
+                                    if len(elements_j_to_delete) > 0:
+                                        index_set = set(elements_j_to_delete)
+                                        date_list_file_j_common = [x for i, x in enumerate(date_list_file_j) if i not in index_set]
+                                    else:
+                                        date_list_file_j_common = date_list_file_j
+
+                                    # eliminate non common days
+                                    common_dates_list = [value for value in date_list_file_i_common if value in date_list_file_j_common]
+
+                                    for date_i in date_list_file_i:
+                                        if (not date_i in common_dates_list):
+                                            print("Delete day: " + str(date_i) + " from " + file_i)
+                                            elements_i_to_delete.append(date_list_file_i.index(date_i))
+
+                                    if len(elements_i_to_delete) > 0:
+                                        data_matrix_file_i_corr = np.delete(data_matrix_file_i_corr, elements_i_to_delete, 1)
+
+                                    for date_j in date_list_file_j:
+                                        if (not date_j in common_dates_list):
+                                            print("Delete day: " + str(date_j) + " from " + file_j)
+                                            elements_j_to_delete.append(date_list_file_j.index(date_j))
+
+                                    if len(elements_j_to_delete) > 0:
+                                        data_matrix_file_j_corr = np.delete(data_matrix_file_j_corr, elements_j_to_delete, 1)
+
+                                    # ###########
+                                    # Correlación: multiplicación de matrices elemento a elemento
+                                    # ###########
+
+                                    # introduce sort matrix columns
+                                    ######
+                                    common_dates_list, old_index, new_index = self.sort_dates(common_dates_list)
+                                    data_matrix_file_i_corr[:, [old_index], :] = data_matrix_file_i_corr[:, [new_index], :]
+                                    data_matrix_file_j_corr[:, [old_index], :] = data_matrix_file_j_corr[:, [new_index], :]
+                                    corr_ij_freq = data_matrix_file_i_corr * np.conj(data_matrix_file_j_corr)
+                                    ######
+
+                                    # La matriz resultante se pasa al dominio del tiempo
+                                    # Se reserva el espacio para la matriz de correlaciones en el dominio del tiempo
+                                    size_1d = corr_ij_freq.shape[0]
+                                    size_2d = corr_ij_freq.shape[1]
+                                    size_2d_all = size_1d + size_2d
+                                    corr_ij_freq[np.isnan(corr_ij_freq)] = 0.0 + 0.0j
+                                    zero_vectors = np.all(corr_ij_freq == 0.0 + 0.0j, axis=2)
+                                    count_zero_vectors = np.sum(zero_vectors)
+                                    size_2d_all = size_2d_all - count_zero_vectors
+
+                                    # Crop in time domain 16/01/2025
+
+                                    if normalization == "PCC":
+                                        corr_ij_time = np.real(np.fft.ifft(corr_ij_freq, axis=2))
+                                        corr_ij_time = np.fft.ifftshift(corr_ij_time)
+                                    else:
+
+                                        corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, axis=2))
+                                        corr_ij_time = np.fft.ifftshift(corr_ij_time)
+
+                                    # Crop in time domain 16/01/2025
+                                    pad_length = corr_ij_time.shape[2]
+
+                                    start_idx = (pad_length - cross_length) // 2
+                                    end_idx = start_idx + cross_length
+                                    corr_ij_time = corr_ij_time[:, :, start_idx:end_idx]
+
+                                    # save memory
+                                    if self.stack != "PWS":
+                                        try:
+                                            del data_matrix_file_i_corr
+                                            del data_matrix_file_j_corr
+                                            del corr_ij_freq
+                                            gc.collect()
+                                        except:
+                                            pass
+                                    else:
+                                        try:
+                                            del data_matrix_file_i_corr
+                                            del data_matrix_file_j_corr
+                                            gc.collect()
+                                        except:
+                                            pass
+
+                                    if self.stack == "nrooth":
+                                        corr_ij_time = (np.abs(corr_ij_time) ** (1 / self.power)) * np.sign(corr_ij_time)
+                                        c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
+
+                                    elif self.stack == "Linear":
+                                        c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
+
+
+                                    elif self.stack == "PWS":
+
+                                        # estimate the analytic function and then the instantaneous phase matrix
+                                        # analytic_signal = np.zeros((size_1d, size_2d, size_3d), dtype=np.complex64)
+                                    #if normalization == "CC":
+                                        f, c, d = corr_ij_freq.shape
+                                        dim_full = 2*d-1
+                                        non_real_dim = (dim_full - d)
+
+                                        c = np.zeros((f, c,  non_real_dim), dtype=np.complex64)
+                                        signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
+                                        signal_rfft_mod[((non_real_dim // 2) + 1):] = signal_rfft_mod[((non_real_dim
+                                                                                            // 2) + 1):] * 0
+                                        signal_rfft_mod[1:non_real_dim // 2] = 2 * signal_rfft_mod[1:non_real_dim // 2]
+
+                                        # Generate the analytic function matrix
+                                        analytic_signal = np.fft.ifft(signal_rfft_mod, axis=2)
+                                        analytic_signal = np.fft.ifftshift(analytic_signal)
+
+                                        # elif normalization != "CC":
+                                        #
+                                        #     # Generate the analytic function matrix
+                                        #     analytic_signal = np.fft.ifft(corr_ij_freq, cross_length, axis=2)
+                                        #     analytic_signal = np.fft.ifftshift(analytic_signal)
+
+                                        # Compute linear stack
+
+                                        # Crop the analytic signal 16/01/2025
+                                        analytic_signal = analytic_signal[:, :, start_idx:end_idx]
+
+                                        c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
+                                        c_stack_max = np.max(c_stack)
+
+                                        phase_stack = np.sum(np.sum(analytic_signal, axis=1), axis=0) / size_2d_all
+
+                                        # this point proceed to the PWS
+                                        phase_stack = (np.abs(phase_stack)) ** self.power
+                                        c_stack = c_stack * phase_stack
+                                        c_stack = (c_stack*c_stack_max)/np.max(c_stack)
+
+                                    # c_stack par, impar ...
+                                    # num = len(c_stack)
+                                    # if (num % 2) == 0:
+                                    #
+                                    #     #print(“Thenumber is even”)
+                                    #     c = int(np.ceil(num / 2.) + 1)
+                                    # else:
+                                    #     #print(“The providednumber is odd”)
+                                    #     c = int(np.ceil((num + 1)/2))
+                                    #
+                                    # c_stack = np.roll(c_stack, c)
+
+
+                                    print("stack[" + str(i) + "," + str(j) + "]:")
+                                    # print(c_stack)
+
+                                    # Guardar fichero
+                                    # print(metadata_list_file_i)
+                                    # print(metadata_list_file_j)
+                                    stats = {}
+                                    x_station = len(file_i)-3
+                                    y_station = len(file_j)-3
+                                    stats['network'] = file_i[:2]
+                                    stats['station'] = file_i[2:x_station] + "_" + file_j[2:y_station]
+                                    stats['channel'] = file_i[-1]+file_j[-1]
+                                    stats['sampling_rate'] = self.sampling_rate
+                                    stats['npts'] = len(c_stack)
+                                    stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim],
+                                                      'cross_channels': file_i[-1] + file_j[-1],
+                                                      'coordinates': [lat_i, lon_i, lat_j, lon_j]}
+                                    stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
+                                    # stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
+                                    st = Stream([Trace(data=c_stack, header=stats)])
+                                    # Nombre del fichero = XT.STA1_STA2.ZE
+                                    filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + file_j[-1]
+                                    path_name = os.path.join(self.stack_files_path, filename)
+                                    print(path_name)
+                                    st.write(path_name, format='H5')
+                                    #
+                                    if self.dailyStacks:
+                                        path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
+                                        dims = [corr_ij_time.shape[1], corr_ij_time.shape[2]]
+                                        stack_day = np.sum(corr_ij_time, axis=0)
+
+                                        # here I can delete corr_ij_time
+                                        del corr_ij_time
+                                        gc.collect()
+
+                                        clock = clock_process(stack_day, stats, path_name, common_dates_list, dims)
+                                        clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
+                                else:
+                                    print("Empty date_list.")
+                                print("-----")
+                            else:
+                                del metadata_list_file_i
+                                del metadata_list_file_j
+                                gc.collect()
+                                print("Excluded cross correlations for being out of maximum distance ", dist*1E-3, "<", self.min_dist)
+        except:
+            print("Something went wrong at:", file_i)
+
+    def hard_process_full_parallel(self, i):
+        file_i = self.pickle_files[i]
+        x_station = len(file_i) - 3
+        try:
+            if file_i[-1] in ["N", "E", "X", "Y", "1", "2"]:
+                key1_i = "data_matrix" + "_" + file_i[-1]
+                key2_i = 'metadata_list' + "_" + file_i[-1]
+                key3_i = 'date_list' + "_" + file_i[-1]
+            else:
+                key1_i = "data_matrix"
+                key2_i = 'metadata_list'
+                key3_i = 'date_list'
+
+            for j, file_j in enumerate(self.pickle_files):
+                y_station = len(file_j) - 3
+                filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + \
+                           file_j[-1]
+                if filename not in self.stack_files_path_done:
                     if file_j[-1] in ["N", "E", "X", "Y", "1", "2"]:
                         key1_j = "data_matrix" + "_" + file_j[-1]
                         key2_j = 'metadata_list' + "_" + file_j[-1]
@@ -127,7 +425,6 @@ class noisestack:
                             normalization = "PCC"
                         else:
                             normalization = "CC"
-                        
 
                         # 28-05-2024, important 2n - 1
                         cross_length = int(dict_matrix_file_i["data_length"] +
@@ -143,6 +440,7 @@ class noisestack:
                         del dict_matrix_file_i
                         del dict_matrix_file_j
                         gc.collect()
+
                         # coordinates
                         net_i = metadata_list_file_i[0]
                         net_j = metadata_list_file_j[0]
@@ -158,16 +456,17 @@ class noisestack:
                         self.sampling_rate = metadata_list_file_i[0][0][0].sample_rate
 
                         dist, bazim, azim = self.__coords2azbazinc(lat_i, lon_i, lat_j, lon_j)
+
                         if (dist/1000) <= self.min_dist:
 
                             # Lista de días de cada fichero
                             print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
                             print("dict_matrix_file_j['date_list']: " + str(date_list_file_j))
 
+
                             if (len(date_list_file_i) > 0 and len(date_list_file_j) > 0):
                                 date_list_file_i = self.check_header(date_list_file_i)
                                 date_list_file_j = self.check_header(date_list_file_j)
-
                                 # check for duplicate days
                                 elements_i_to_delete = self.checkIfDuplicates(date_list_file_i)
                                 elements_j_to_delete = self.checkIfDuplicates(date_list_file_j)
@@ -175,65 +474,67 @@ class noisestack:
                                 # refress date_list without repeated days
                                 if len(elements_i_to_delete) > 0:
                                     index_set = set(elements_i_to_delete)
-                                    date_list_file_i_common = [x for i, x in enumerate(date_list_file_i) if i not in index_set]
+                                    date_list_file_i_common = [x for i, x in enumerate(date_list_file_i) if
+                                                               i not in index_set]
                                 else:
                                     date_list_file_i_common = date_list_file_i
 
-
                                 if len(elements_j_to_delete) > 0:
                                     index_set = set(elements_j_to_delete)
-                                    date_list_file_j_common = [x for i, x in enumerate(date_list_file_j) if i not in index_set]
+                                    date_list_file_j_common = [x for i, x in enumerate(date_list_file_j) if
+                                                               i not in index_set]
                                 else:
                                     date_list_file_j_common = date_list_file_j
 
                                 # eliminate non common days
-                                common_dates_list = [value for value in date_list_file_i_common if value in date_list_file_j_common]
+
+                                common_dates_list = [value for value in date_list_file_i_common if
+                                                     value in date_list_file_j_common]
 
                                 for date_i in date_list_file_i:
-                                    if (not date_i in common_dates_list):
+                                    if not date_i in common_dates_list:
                                         print("Delete day: " + str(date_i) + " from " + file_i)
                                         elements_i_to_delete.append(date_list_file_i.index(date_i))
 
                                 if len(elements_i_to_delete) > 0:
-                                    data_matrix_file_i_corr = np.delete(data_matrix_file_i_corr, elements_i_to_delete, 1)
+                                    data_matrix_file_i_corr = np.delete(data_matrix_file_i_corr,
+                                                                        elements_i_to_delete, 1)
 
                                 for date_j in date_list_file_j:
-                                    if (not date_j in common_dates_list):
+                                    if not date_j in common_dates_list:
                                         print("Delete day: " + str(date_j) + " from " + file_j)
                                         elements_j_to_delete.append(date_list_file_j.index(date_j))
 
                                 if len(elements_j_to_delete) > 0:
                                     data_matrix_file_j_corr = np.delete(data_matrix_file_j_corr, elements_j_to_delete, 1)
 
+
                                 # ###########
                                 # Correlación: multiplicación de matrices elemento a elemento
                                 # ###########
 
-                                # introduce sort matrix columns
-                                ######
+                                # introduce sort columns
                                 common_dates_list, old_index, new_index = self.sort_dates(common_dates_list)
                                 data_matrix_file_i_corr[:, [old_index], :] = data_matrix_file_i_corr[:, [new_index], :]
                                 data_matrix_file_j_corr[:, [old_index], :] = data_matrix_file_j_corr[:, [new_index], :]
+
                                 corr_ij_freq = data_matrix_file_i_corr * np.conj(data_matrix_file_j_corr)
-                                ######
 
                                 # La matriz resultante se pasa al dominio del tiempo
                                 # Se reserva el espacio para la matriz de correlaciones en el dominio del tiempo
                                 size_1d = corr_ij_freq.shape[0]
                                 size_2d = corr_ij_freq.shape[1]
                                 size_2d_all = size_1d + size_2d
+
                                 corr_ij_freq[np.isnan(corr_ij_freq)] = 0.0 + 0.0j
                                 zero_vectors = np.all(corr_ij_freq == 0.0 + 0.0j, axis=2)
                                 count_zero_vectors = np.sum(zero_vectors)
                                 size_2d_all = size_2d_all - count_zero_vectors
 
-                                # Crop in time domain 16/01/2025
-
                                 if normalization == "PCC":
                                     corr_ij_time = np.real(np.fft.ifft(corr_ij_freq, axis=2))
                                     corr_ij_time = np.fft.ifftshift(corr_ij_time)
                                 else:
-
                                     corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, axis=2))
                                     corr_ij_time = np.fft.ifftshift(corr_ij_time)
 
@@ -266,39 +567,37 @@ class noisestack:
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
 
                                 elif self.stack == "Linear":
+                                    # Stack: Linear stack
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
-
 
                                 elif self.stack == "PWS":
 
                                     # estimate the analytic function and then the instantaneous phase matrix
                                     # analytic_signal = np.zeros((size_1d, size_2d, size_3d), dtype=np.complex64)
-                                #if normalization == "CC":
-                                    f, c, d = corr_ij_freq.shape
-                                    dim_full = 2*d-1
-                                    non_real_dim = (dim_full - d)
+                                    if normalization == "CC":
+                                        f, c, d = corr_ij_freq.shape
+                                        dim_full = 2 * d - 1
+                                        non_real_dim = (dim_full - d)
+                                        c = np.zeros((f, c, non_real_dim), dtype=np.complex64)
+                                        signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
+                                        signal_rfft_mod[((non_real_dim // 2) + 1):] = signal_rfft_mod[
+                                                                                      ((non_real_dim // 2) + 1):] * 0
+                                        signal_rfft_mod[1:non_real_dim // 2] = 2 * signal_rfft_mod[1:non_real_dim // 2]
 
-                                    c = np.zeros((f, c,  non_real_dim), dtype=np.complex64)
-                                    signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
-                                    signal_rfft_mod[((non_real_dim // 2) + 1):] = signal_rfft_mod[((non_real_dim
-                                                                                        // 2) + 1):] * 0
-                                    signal_rfft_mod[1:non_real_dim // 2] = 2 * signal_rfft_mod[1:non_real_dim // 2]
-
-                                    # Generate the analytic function matrix
-                                    analytic_signal = np.fft.ifft(signal_rfft_mod, axis=2)
-                                    analytic_signal = np.fft.ifftshift(analytic_signal)
+                                        # Generate the analytic function matrix
+                                        analytic_signal = np.fft.ifft(signal_rfft_mod, axis=2)
+                                        analytic_signal = np.fft.ifftshift(analytic_signal)
 
                                     # elif normalization != "CC":
                                     #
                                     #     # Generate the analytic function matrix
-                                    #     analytic_signal = np.fft.ifft(corr_ij_freq, cross_length, axis=2)
+                                    #     analytic_signal = np.fft.ifft(corr_ij_freq,  axis=2)
                                     #     analytic_signal = np.fft.ifftshift(analytic_signal)
-
-                                    # Compute linear stack
 
                                     # Crop the analytic signal 16/01/2025
                                     analytic_signal = analytic_signal[:, :, start_idx:end_idx]
 
+                                    # Compute linear stack
                                     c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
                                     c_stack_max = np.max(c_stack)
 
@@ -307,7 +606,7 @@ class noisestack:
                                     # this point proceed to the PWS
                                     phase_stack = (np.abs(phase_stack)) ** self.power
                                     c_stack = c_stack * phase_stack
-                                    c_stack = (c_stack*c_stack_max)/np.max(c_stack)
+                                    c_stack = (c_stack * c_stack_max) / np.max(c_stack)
 
                                 # c_stack par, impar ...
                                 # num = len(c_stack)
@@ -318,10 +617,8 @@ class noisestack:
                                 # else:
                                 #     #print(“The providednumber is odd”)
                                 #     c = int(np.ceil((num + 1)/2))
-                                #
-                                # c_stack = np.roll(c_stack, c)
 
-
+                                #c_stack = np.roll(c_stack, c)
                                 print("stack[" + str(i) + "," + str(j) + "]:")
                                 # print(c_stack)
 
@@ -329,332 +626,49 @@ class noisestack:
                                 # print(metadata_list_file_i)
                                 # print(metadata_list_file_j)
                                 stats = {}
-                                x_station = len(file_i)-3
-                                y_station = len(file_j)-3
+                                x_station = len(file_i) - 3
+                                y_station = len(file_j) - 3
                                 stats['network'] = file_i[:2]
                                 stats['station'] = file_i[2:x_station] + "_" + file_j[2:y_station]
                                 stats['channel'] = file_i[-1]+file_j[-1]
                                 stats['sampling_rate'] = self.sampling_rate
                                 stats['npts'] = len(c_stack)
+
                                 stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim],
                                                   'cross_channels': file_i[-1] + file_j[-1],
                                                   'coordinates': [lat_i, lon_i, lat_j, lon_j]}
                                 stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
                                 # stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
                                 st = Stream([Trace(data=c_stack, header=stats)])
-                                # Nombre del fichero = XT.STA1_STA2.ZE
-                                filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + file_j[-1]
+                                # Nombre del fichero = XT.STA1_STA2.BHZE
+                                filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + file_j[
+                                    -1]
                                 path_name = os.path.join(self.stack_files_path, filename)
                                 print(path_name)
                                 st.write(path_name, format='H5')
-                                #
-                                if self.dailyStacks:
-                                    path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
-                                    dims = [corr_ij_time.shape[1], corr_ij_time.shape[2]]
-                                    stack_day = np.sum(corr_ij_time, axis=0)
 
-                                    # here I can delete corr_ij_time
-                                    del corr_ij_time
-                                    gc.collect()
+                            if self.dailyStacks:
+                                path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
+                                dims = [corr_ij_time.shape[1], corr_ij_time.shape[2]]
+                                stack_day = np.sum(corr_ij_time, axis=0)
 
-                                    clock = clock_process(stack_day, stats, path_name, common_dates_list, dims)
-                                    clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
+                                # here I can delete corr_ij_time
+                                del corr_ij_time
+                                gc.collect()
+
+                                clock = clock_process(stack_day, stats, path_name, common_dates_list, dims)
+                                clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
+
                             else:
                                 print("Empty date_list.")
                             print("-----")
+
                         else:
                             del metadata_list_file_i
                             del metadata_list_file_j
                             gc.collect()
-                            print("Excluded cross correlations for being out of maximum distance ", dist*1E-3, "<", self.min_dist)
-        except:
-            print("Something went wrong at:", file_i)
-
-    def hard_process_full_parallel(self, i):
-        file_i = self.pickle_files[i]
-
-        try:
-            if file_i[-1] in ["N", "E", "X", "Y", "1", "2"]:
-                key1_i = "data_matrix" + "_" + file_i[-1]
-                key2_i = 'metadata_list' + "_" + file_i[-1]
-                key3_i = 'date_list' + "_" + file_i[-1]
-            else:
-                key1_i = "data_matrix"
-                key2_i = 'metadata_list'
-                key3_i = 'date_list'
-
-            for j, file_j in enumerate(self.pickle_files):
-
-                if file_j[-1] in ["N", "E", "X", "Y", "1", "2"]:
-                    key1_j = "data_matrix" + "_" + file_j[-1]
-                    key2_j = 'metadata_list' + "_" + file_j[-1]
-                    key3_j = 'date_list' + "_" + file_j[-1]
-                else:
-                    key1_j = "data_matrix"
-                    key2_j = 'metadata_list'
-                    key3_j = 'date_list'
-
-                print("(i=" + str(i) + ",j=" + str(j) + ") -> (" + file_i + "," + file_j + ")")
-
-                with open(os.path.join(self.output_files_path, file_i), 'rb') as h_i, open(
-                        os.path.join(self.output_files_path, file_j),
-                        'rb') as h_j:
-
-                    # Cada fichero file_i y file_i contiene:
-                    # dict_matrix ={ 'data_matrix': [] , 'metadata_list': [], 'date_list': []}
-                    dict_matrix_file_i = pickle.load(h_i)
-                    dict_matrix_file_j = pickle.load(h_j)
-
-                    normalization_i = dict_matrix_file_i["CC"]
-                    normalization_j = dict_matrix_file_j["CC"]
-                    if normalization_i == normalization_j and normalization_i == "PCC":
-                        normalization = "PCC"
-                    else:
-                        normalization = "CC"
-
-                    # 28-05-2024, important 2n - 1
-                    cross_length = int(dict_matrix_file_i["data_length"] +
-                                       dict_matrix_file_j["data_length"] - 1)
-
-                    data_matrix_file_i_corr = dict_matrix_file_i[key1_i]
-                    data_matrix_file_j_corr = dict_matrix_file_j[key1_j]
-                    metadata_list_file_i = dict_matrix_file_i[key2_i]
-                    metadata_list_file_j = dict_matrix_file_j[key2_j]
-                    date_list_file_i = dict_matrix_file_i[key3_i]
-                    date_list_file_j = dict_matrix_file_j[key3_j]
-                    # realease memory
-                    del dict_matrix_file_i
-                    del dict_matrix_file_j
-                    gc.collect()
-
-                    # coordinates
-                    net_i = metadata_list_file_i[0]
-                    net_j = metadata_list_file_j[0]
-                    sta_i = net_i[0]
-                    sta_j = net_j[0]
-                    lat_i = sta_i.latitude
-                    lon_i = sta_i.longitude
-                    lat_j = sta_j.latitude
-                    lon_j = sta_j.longitude
-
-                    # sampling rate
-
-                    self.sampling_rate = metadata_list_file_i[0][0][0].sample_rate
-
-                    dist, bazim, azim = self.__coords2azbazinc(lat_i, lon_i, lat_j, lon_j)
-
-                    if (dist/1000) <= self.min_dist:
-
-                        # Lista de días de cada fichero
-                        print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
-                        print("dict_matrix_file_j['date_list']: " + str(date_list_file_j))
-
-
-                        if (len(date_list_file_i) > 0 and len(date_list_file_j) > 0):
-                            date_list_file_i = self.check_header(date_list_file_i)
-                            date_list_file_j = self.check_header(date_list_file_j)
-                            # check for duplicate days
-                            elements_i_to_delete = self.checkIfDuplicates(date_list_file_i)
-                            elements_j_to_delete = self.checkIfDuplicates(date_list_file_j)
-
-                            # refress date_list without repeated days
-                            if len(elements_i_to_delete) > 0:
-                                index_set = set(elements_i_to_delete)
-                                date_list_file_i_common = [x for i, x in enumerate(date_list_file_i) if
-                                                           i not in index_set]
-                            else:
-                                date_list_file_i_common = date_list_file_i
-
-                            if len(elements_j_to_delete) > 0:
-                                index_set = set(elements_j_to_delete)
-                                date_list_file_j_common = [x for i, x in enumerate(date_list_file_j) if
-                                                           i not in index_set]
-                            else:
-                                date_list_file_j_common = date_list_file_j
-
-                            # eliminate non common days
-
-                            common_dates_list = [value for value in date_list_file_i_common if
-                                                 value in date_list_file_j_common]
-
-                            for date_i in date_list_file_i:
-                                if not date_i in common_dates_list:
-                                    print("Delete day: " + str(date_i) + " from " + file_i)
-                                    elements_i_to_delete.append(date_list_file_i.index(date_i))
-
-                            if len(elements_i_to_delete) > 0:
-                                data_matrix_file_i_corr = np.delete(data_matrix_file_i_corr,
-                                                                    elements_i_to_delete, 1)
-
-                            for date_j in date_list_file_j:
-                                if not date_j in common_dates_list:
-                                    print("Delete day: " + str(date_j) + " from " + file_j)
-                                    elements_j_to_delete.append(date_list_file_j.index(date_j))
-
-                            if len(elements_j_to_delete) > 0:
-                                data_matrix_file_j_corr = np.delete(data_matrix_file_j_corr, elements_j_to_delete, 1)
-
-
-                            # ###########
-                            # Correlación: multiplicación de matrices elemento a elemento
-                            # ###########
-                            
-                            # introduce sort columns
-                            common_dates_list, old_index, new_index = self.sort_dates(common_dates_list)
-                            data_matrix_file_i_corr[:, [old_index], :] = data_matrix_file_i_corr[:, [new_index], :]
-                            data_matrix_file_j_corr[:, [old_index], :] = data_matrix_file_j_corr[:, [new_index], :]
-
-                            corr_ij_freq = data_matrix_file_i_corr * np.conj(data_matrix_file_j_corr)
-
-                            # La matriz resultante se pasa al dominio del tiempo
-                            # Se reserva el espacio para la matriz de correlaciones en el dominio del tiempo
-                            size_1d = corr_ij_freq.shape[0]
-                            size_2d = corr_ij_freq.shape[1]
-                            size_2d_all = size_1d + size_2d
-
-                            corr_ij_freq[np.isnan(corr_ij_freq)] = 0.0 + 0.0j
-                            zero_vectors = np.all(corr_ij_freq == 0.0 + 0.0j, axis=2)
-                            count_zero_vectors = np.sum(zero_vectors)
-                            size_2d_all = size_2d_all - count_zero_vectors
-
-                            if normalization == "PCC":
-                                corr_ij_time = np.real(np.fft.ifft(corr_ij_freq, axis=2))
-                                corr_ij_time = np.fft.ifftshift(corr_ij_time)
-                            else:
-                                corr_ij_time = np.real(np.fft.irfft(corr_ij_freq, axis=2))
-                                corr_ij_time = np.fft.ifftshift(corr_ij_time)
-
-                            # Crop in time domain 16/01/2025
-                            pad_length = corr_ij_time.shape[2]
-
-                            start_idx = (pad_length - cross_length) // 2
-                            end_idx = start_idx + cross_length
-                            corr_ij_time = corr_ij_time[:, :, start_idx:end_idx]
-
-                            # save memory
-                            if self.stack != "PWS":
-                                try:
-                                    del data_matrix_file_i_corr
-                                    del data_matrix_file_j_corr
-                                    del corr_ij_freq
-                                    gc.collect()
-                                except:
-                                    pass
-                            else:
-                                try:
-                                    del data_matrix_file_i_corr
-                                    del data_matrix_file_j_corr
-                                    gc.collect()
-                                except:
-                                    pass
-
-                            if self.stack == "nrooth":
-                                corr_ij_time = (np.abs(corr_ij_time) ** (1 / self.power)) * np.sign(corr_ij_time)
-                                c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
-
-                            elif self.stack == "Linear":
-                                # Stack: Linear stack
-                                c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
-
-                            elif self.stack == "PWS":
-
-                                # estimate the analytic function and then the instantaneous phase matrix
-                                # analytic_signal = np.zeros((size_1d, size_2d, size_3d), dtype=np.complex64)
-                                if normalization == "CC":
-                                    f, c, d = corr_ij_freq.shape
-                                    dim_full = 2 * d - 1
-                                    non_real_dim = (dim_full - d)
-                                    c = np.zeros((f, c, non_real_dim), dtype=np.complex64)
-                                    signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
-                                    signal_rfft_mod[((non_real_dim // 2) + 1):] = signal_rfft_mod[
-                                                                                  ((non_real_dim // 2) + 1):] * 0
-                                    signal_rfft_mod[1:non_real_dim // 2] = 2 * signal_rfft_mod[1:non_real_dim // 2]
-
-                                    # Generate the analytic function matrix
-                                    analytic_signal = np.fft.ifft(signal_rfft_mod, axis=2)
-                                    analytic_signal = np.fft.ifftshift(analytic_signal)
-
-                                # elif normalization != "CC":
-                                #
-                                #     # Generate the analytic function matrix
-                                #     analytic_signal = np.fft.ifft(corr_ij_freq,  axis=2)
-                                #     analytic_signal = np.fft.ifftshift(analytic_signal)
-
-                                # Crop the analytic signal 16/01/2025
-                                analytic_signal = analytic_signal[:, :, start_idx:end_idx]
-
-                                # Compute linear stack
-                                c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
-                                c_stack_max = np.max(c_stack)
-
-                                phase_stack = np.sum(np.sum(analytic_signal, axis=1), axis=0) / size_2d_all
-
-                                # this point proceed to the PWS
-                                phase_stack = (np.abs(phase_stack)) ** self.power
-                                c_stack = c_stack * phase_stack
-                                c_stack = (c_stack * c_stack_max) / np.max(c_stack)
-
-                            # c_stack par, impar ...
-                            # num = len(c_stack)
-                            # if (num % 2) == 0:
-                            #
-                            #     #print(“Thenumber is even”)
-                            #     c = int(np.ceil(num / 2.) + 1)
-                            # else:
-                            #     #print(“The providednumber is odd”)
-                            #     c = int(np.ceil((num + 1)/2))
-
-                            #c_stack = np.roll(c_stack, c)
-                            print("stack[" + str(i) + "," + str(j) + "]:")
-                            # print(c_stack)
-
-                            # Guardar fichero
-                            # print(metadata_list_file_i)
-                            # print(metadata_list_file_j)
-                            stats = {}
-                            x_station = len(file_i) - 3
-                            y_station = len(file_j) - 3
-                            stats['network'] = file_i[:2]
-                            stats['station'] = file_i[2:x_station] + "_" + file_j[2:y_station]
-                            stats['channel'] = file_i[-1]+file_j[-1]
-                            stats['sampling_rate'] = self.sampling_rate
-                            stats['npts'] = len(c_stack)
-
-                            stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim],
-                                              'cross_channels': file_i[-1] + file_j[-1],
-                                              'coordinates': [lat_i, lon_i, lat_j, lon_j]}
-                            stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
-                            # stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
-                            st = Stream([Trace(data=c_stack, header=stats)])
-                            # Nombre del fichero = XT.STA1_STA2.BHZE
-                            filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + file_j[
-                                -1]
-                            path_name = os.path.join(self.stack_files_path, filename)
-                            print(path_name)
-                            st.write(path_name, format='H5')
-
-                        if self.dailyStacks:
-                            path_name = os.path.join(self.stack_daily_files_path, filename + "_daily")
-                            dims = [corr_ij_time.shape[1], corr_ij_time.shape[2]]
-                            stack_day = np.sum(corr_ij_time, axis=0)
-
-                            # here I can delete corr_ij_time
-                            del corr_ij_time
-                            gc.collect()
-
-                            clock = clock_process(stack_day, stats, path_name, common_dates_list, dims)
-                            clock.daily_stack_part(type=self.stack, power=self.power, overlap=self.overlap)
-
-                        else:
-                            print("Empty date_list.")
-                        print("-----")
-
-                    else:
-                        del metadata_list_file_i
-                        del metadata_list_file_j
-                        gc.collect()
-                        print("Excluded cross correlations for being out of maximum distance ", dist * 1E-3, "<",
-                              self.min_dist)
+                            print("Excluded cross correlations for being out of maximum distance ", dist * 1E-3, "<",
+                                  self.min_dist)
         except:
             print("Something went wrong at:", file_i)
 

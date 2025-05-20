@@ -1,5 +1,6 @@
 import math
 from PyQt5.QtCore import Qt
+from obspy import UTCDateTime
 from scipy import ndimage
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.metadata_manager import MetadataManager
@@ -17,6 +18,8 @@ from isp.seismogramInspector.MTspectrogram import MTspectrogram
 import numpy as np
 import os
 from sys import platform
+import matplotlib.dates as mdt
+import matplotlib.dates as mdates
 
 @add_save_load()
 class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
@@ -70,6 +73,12 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         # Time Frequency Advance
         #self.time_frequency_advance = TimeFrequencyAdvance()
         self.horizontalSlider.valueChanged.connect(self.valueChanged)
+        self.activate_xaxis = True
+
+        #self.radioBtnTime.clicked.connect(lambda self: self.activate_xaxis=True)
+        self.radioBtnTime.clicked.connect(lambda: setattr(self, 'activate_xaxis', True))
+        self.radioBtnDate.clicked.connect(lambda: setattr(self, 'activate_xaxis', False))
+
 
         # Resolution
         # Based on 100 Hz,
@@ -238,13 +247,23 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             self.tabWidget_TF.setCurrentIndex(0)
             self.canvas_plot1.clear()
             [self.tr1, t] = self.get_data()
-            self.canvas_plot1.plot(t, self.tr1.data, 0, clear_plot=True, color="black", linewidth=0.5)
-            self.canvas_plot1.set_xlabel(1, "Time (s)")
+            if not self.activate_xaxis:
+                self.canvas_plot1.plot_date(self.tr1.times("matplotlib"), self.tr1.data, 0, fmt='-', clear_plot=True, color="black", linewidth=0.5)
+                self.canvas_plot1.set_xlabel(1, "Date")
+            else:
+                self.canvas_plot1.plot(t, self.tr1.data, 0, clear_plot=True, color="black", linewidth=0.5)
+                self.canvas_plot1.set_xlabel(1, "Time (s)")
             self.canvas_plot1.set_ylabel(0, "Amplitude ")
             self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
             info = "{}.{}.{}".format(self.tr1.stats.network, self.tr1.stats.station, self.tr1.stats.channel)
             self.canvas_plot1.set_plot_label(0, info)
             self.__estimate_res(self.tr1.stats.npts)
+            if not self.activate_xaxis:
+                formatter = mdt.DateFormatter('%H:%M:%S')
+                ax1 = self.canvas_plot1.get_axe(0)
+                ax1.xaxis.set_major_formatter(formatter)
+                ax2 = self.canvas_plot1.get_axe(1)
+                ax2.xaxis.set_major_formatter(formatter)
             if self.time_frequencyChB.isChecked():
                 self.time_frequency(self.tr1, selection)
 
@@ -253,13 +272,25 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             self.tabWidget_TF.setCurrentIndex(0)
             self.canvas_plot2.clear()
             [self.tr2, t] = self.get_data()
-            self.canvas_plot2.plot(t, self.tr2.data, 0, clear_plot=True, color="black", linewidth=0.5)
+            if not self.activate_xaxis:
+                self.canvas_plot2.plot_date(self.tr2.times("matplotlib"), self.tr2.data, 0, fmt='-', clear_plot=True,
+                                            color="black", linewidth=0.5)
+                self.canvas_plot2.set_xlabel(1, "Date")
+            else:
+                self.canvas_plot2.plot(t, self.tr2.data, 0, clear_plot=True, color="black", linewidth=0.5)
+                self.canvas_plot2.set_xlabel(1, "Time (s)")
             self.canvas_plot2.set_xlabel(1, "Time (s)")
             self.canvas_plot2.set_ylabel(0, "Amplitude ")
             self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
             info = "{}.{}.{}".format(self.tr2.stats.network, self.tr2.stats.station, self.tr2.stats.channel)
             self.canvas_plot2.set_plot_label(0, info)
             self.__estimate_res(self.tr2.stats.npts)
+            if not self.activate_xaxis:
+                formatter = mdt.DateFormatter('%H:%M:%S')
+                ax1 = self.canvas_plot2.get_axe(0)
+                ax1.xaxis.set_major_formatter(formatter)
+                ax2 = self.canvas_plot2.get_axe(1)
+                ax2.xaxis.set_major_formatter(formatter)
             if self.time_frequencyChB.isChecked():
                 self.time_frequency(self.tr2, selection)
 
@@ -269,14 +300,25 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             self.tabWidget_TF.setCurrentIndex(1)
             self.canvas_plot3.clear()
             [self.tr3, t] = self.get_data()
-            self.canvas_plot3.plot(t, self.tr3.data, 0, clear_plot=True, color="black", linewidth=0.5)
-            self.canvas_plot3.set_xlabel(2, "Time (s)")
+            if not self.activate_xaxis:
+                self.canvas_plot3.plot_date(self.tr3.times("matplotlib"), self.tr3.data, 0, fmt='-', clear_plot=True,
+                                            color="black", linewidth=0.5)
+                self.canvas_plot3.set_xlabel(1, "Date")
+            else:
+                self.canvas_plot3.plot(t, self.tr3.data, 0, clear_plot=True, color="black", linewidth=0.5)
+                self.canvas_plot3.set_xlabel(1, "Time (s)")
             self.canvas_plot3.set_ylabel(0, "Amplitude ")
             self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")
             self.canvas_plot3.set_ylabel(2, "Period (s)")
             info = "{}.{}.{}".format(self.tr3.stats.network, self.tr3.stats.station, self.tr3.stats.channel)
             self.canvas_plot3.set_plot_label(0, info)
             self.__estimate_res(self.tr3.stats.npts)
+            if not self.activate_xaxis:
+                formatter = mdt.DateFormatter('%H:%M:%S')
+                ax1 = self.canvas_plot3.get_axe(0)
+                ax1.xaxis.set_major_formatter(formatter)
+                ax2 = self.canvas_plot3.get_axe(1)
+                ax2.xaxis.set_major_formatter(formatter)
             if self.time_frequencyChB.isChecked():
                 self.time_frequency_full(self.tr3, selection)
 
@@ -326,6 +368,12 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         selection = self.time_frequencyCB.currentText()
         ts, te = self.get_time_window()
         diff = te-ts
+
+        if self.activate_xaxis:
+            dates=False
+        else:
+            dates=True
+
         if selection == "Multitaper Spectrogram":
             self.res_factor = 1
             win = int(self.mt_window_lengthDB.value() * tr.stats.sampling_rate)
@@ -335,9 +383,10 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             mtspectrogram = MTspectrogram(self.file_selector.file_path, win, f_min, f_max, overlap)
 
             if self.trimCB.isChecked() and diff >= 0:
-                x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr, start_time=ts, end_time=te, res = self.res_factor)
+                x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr, start_time=ts, end_time=te,
+                                                                          res = self.res_factor, dates=dates)
             else:
-                x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr, res = self.res_factor)
+                x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr, res=self.res_factor)
 
             log_spectrogram = np.clip(log_spectrogram, a_min=self.minlevelCB.value(), a_max=0)
             min_log_spectrogram = self.minlevelCB.value()
@@ -358,9 +407,13 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 #elif self.typeCB.currentText() == 'imshow':
                 #    self.canvas_plot1.image(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
                 #                         cmap=self.colourCB.currentText())
-
-
-                self.canvas_plot1.set_xlabel(1, "Time (s)")
+                if not self.activate_xaxis:
+                    formatter = mdt.DateFormatter('%H:%M:%S')
+                    ax2 = self.canvas_plot1.get_axe(1)
+                    ax2.xaxis.set_major_formatter(formatter)
+                    self.canvas_plot1.set_xlabel(1, "Date")
+                else:
+                    self.canvas_plot1.set_xlabel(1, "Time (s)")
                 self.canvas_plot1.set_ylabel(0, "Amplitude ")
                 self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
 
@@ -375,13 +428,335 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                             cmap=self.colourCB.currentText(), vmin=min_log_spectrogram, vmax=max_log_spectrogram,
                                                  shading='nearest')
 
-                # elif self.typeCB.currentText() == 'imshow':
-                #     self.canvas_plot2.image(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                #                          cmap=self.colourCB.currentText())
+                if not self.activate_xaxis:
+                    formatter = mdt.DateFormatter('%H:%M:%S')
+                    ax2 = self.canvas_plot2.get_axe(1)
+                    ax2.xaxis.set_major_formatter(formatter)
+                    self.canvas_plot2.set_xlabel(1, "Date")
+                else:
+                    self.canvas_plot2.set_xlabel(1, "Time (s)")
 
-                self.canvas_plot2.set_xlabel(1, "Time (s)")
                 self.canvas_plot2.set_ylabel(0, "Amplitude ")
                 self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
+
+        elif selection == "Continuous Wavelet Transform":
+
+            fs = tr.stats.sampling_rate
+            nf = self.atomsSB.value()
+            f_min = self.freq_min_cwtDB.value()
+            f_max = self.freq_max_cwtDB.value()
+            wmin = self.wminSB.value()
+            wmax = self.wminSB.value()
+            #tt = int( self.wavelet_lenghtDB.value()*fs)
+            npts = len(tr.data)
+            t = np.linspace(0, tr.stats.delta * npts, npts)
+            #cw = ConvolveWaveletScipy(self.file_selector.file_path)
+            cw = ConvolveWaveletScipy(tr)
+            wavelet = self.wavelet_typeCB.currentText()
+
+            m = self.wavelets_param.value()
+            if self.trimCB.isChecked() and diff >= 0:
+
+                cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf,
+                                 use_wavelet = wavelet, m = m, decimate=False)
+            else:
+                cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf,
+                                 use_wavelet = wavelet, m = m, decimate=False)
+
+            scalogram2 = cw.scalogram_in_dbs()
+            scalogram2 = np.clip(scalogram2, a_min=self.minlevelCB.value(), a_max=0)
+            #cf = cw.cf_lowpass()
+
+            #freq = np.linspace(f_min, f_max, scalogram2.shape[0])
+
+
+            if self.res_factor > 1:
+
+                scalogram2 = ndimage.zoom(scalogram2, (1.0, 1/self.res_factor))
+                #tt = t[::factor]
+                tt = np.linspace(0, self.res_factor * tr.stats.delta * scalogram2.shape[1], scalogram2.shape[1])
+                freq = np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0])
+
+                if dates:
+                    x_datetimes = [tr.stats.starttime + s for s in tt]
+                    x_datetimes = [dt.datetime for dt in x_datetimes]
+                    x, y = np.meshgrid(mdates.date2num(x_datetimes), freq)
+                else:
+
+                    x, y = np.meshgrid(tt, freq)
+            else:
+
+                freq = np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0])
+
+                if dates:
+                    x_datetimes = [tr.stats.starttime + s for s in t]
+                    x_datetimes = [dt.datetime for dt in x_datetimes]
+                    x, y = np.meshgrid(mdates.date2num(x_datetimes), freq)
+                else:
+
+                    x, y = np.meshgrid(t, freq)
+
+            k = wmin / (2 * np.pi * freq)
+            # delay = int(fs*np.mean(k))
+            c_f = wmin / 2 * math.pi
+            f = np.linspace(f_min, f_max, scalogram2.shape[0])
+            pred = (math.sqrt(2) * c_f / f) - (math.sqrt(2) * c_f / f_max)
+
+            pred_comp = t[len(t)-1]-pred
+            min_cwt=self.minlevelCB.value()
+            max_cwt = 0
+
+            #norm = Normalize(vmin=min_cwt, vmax=max_cwt)
+
+            #tf=t[delay:len(t)]
+            #cf = cf[0:len(tf)]
+            if order == "Seismogram 1":
+
+                if self.res_factor <= 1:
+                     self.canvas_plot1.plot_contour(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
+                                                    cmap=self.colourCB.currentText(), vmin= min_cwt, vmax=max_cwt)
+                elif self.res_factor > 1:
+                     self.canvas_plot1.pcolormesh(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
+                                                  cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt,
+                                                  shading='nearest')
+
+
+                ax_cone = self.canvas_plot1.get_axe(1)
+                ax_cone.fill_between(pred, f, 0, color= "black", edgecolor="red", alpha=0.3)
+                ax_cone.fill_between(pred_comp, f, 0, color="black", edgecolor="red", alpha=0.3)
+                if not self.activate_xaxis:
+                    formatter = mdt.DateFormatter('%H:%M:%S')
+                    ax2 = self.canvas_plot1.get_axe(1)
+                    ax2.xaxis.set_major_formatter(formatter)
+                    self.canvas_plot1.set_xlabel(1, "Date")
+                else:
+                    self.canvas_plot1.set_xlabel(1, "Time (s)")
+                self.canvas_plot1.set_ylabel(0, "Amplitude ")
+                self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
+
+            if order == "Seismogram 2":
+
+                if self.res_factor <= 1:
+                     self.canvas_plot2.plot_contour(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
+                                                    cmap=self.colourCB.currentText(), vmin= min_cwt, vmax=max_cwt)
+                elif self.res_factor > 1:
+                     self.canvas_plot2.pcolormesh(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
+                                                  cmap=self.colourCB.currentText(), vmin= min_cwt, vmax=max_cwt,
+                                                  shading='nearest')
+                # elif self.typeCB.currentText() == 'imshow':
+                #     self.canvas_plot2.image(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
+                #                              cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt, yscale = 'log')
+                ax_cone2 = self.canvas_plot2.get_axe(1)
+                ax_cone2.fill_between(pred, f, 0, color="black", edgecolor="red", alpha=0.3)
+                ax_cone2.fill_between(pred_comp, f, 0, color="black", edgecolor="red", alpha=0.3)
+                if not self.activate_xaxis:
+                    formatter = mdt.DateFormatter('%H:%M:%S')
+                    ax2 = self.canvas_plot2.get_axe(1)
+                    ax2.xaxis.set_major_formatter(formatter)
+                    self.canvas_plot2.set_xlabel(1, "Date")
+                else:
+                    self.canvas_plot2.set_xlabel(1, "Time (s)")
+                self.canvas_plot2.set_ylabel(0, "Amplitude ")
+                self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
+
+        else:
+            pass
+
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
+
+
+    def time_frequency_full(self, tr, order):
+        self._time_frequency_full(tr, order)
+        self.progress_dialog.exec()
+
+    @AsycTime.run_async()
+    def _time_frequency_full(self, tr, order):
+        selection = self.time_frequencyCB.currentText()
+        ts, te = self.get_time_window()
+        diff = te - ts
+        if self.activate_xaxis:
+            dates=False
+        else:
+            dates=True
+        if selection == "Continuous Wavelet Transform":
+
+            fs = tr.stats.sampling_rate
+            nf = self.atomsSB.value()
+            f_min = self.freq_min_cwtDB.value()
+            f_max = self.freq_max_cwtDB.value()
+            if f_max < 1:
+                f_max = 1
+            wmin = self.wminSB.value()
+            wmax = self.wminSB.value()
+            npts = len(tr.data)
+            t = np.linspace(0, tr.stats.delta * npts, npts)
+            cw = ConvolveWaveletScipy(tr)
+            wavelet = self.wavelet_typeCB.currentText()
+
+            m = self.wavelets_param.value()
+            if self.trimCB.isChecked() and diff >= 0:
+
+                cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=int(fs / f_min), fmin=f_min, fmax=f_max, nf=nf,
+                                 use_wavelet=wavelet, m=m, decimate=False)
+            else:
+                cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=int(fs / f_min), fmin=f_min, fmax=f_max, nf=nf,
+                                 use_wavelet=wavelet, m=m, decimate=False)
+
+            scalogram2 = cw.scalogram_in_dbs()
+            scalogram2 = np.clip(scalogram2, a_min=self.minlevelCB.value(), a_max=0)
+
+            if self.res_factor > 1:
+
+                scalogram2 = ndimage.zoom(scalogram2, (1.0, 1 / self.res_factor))
+                tt = np.linspace(0, self.res_factor * tr.stats.delta * scalogram2.shape[1], scalogram2.shape[1])
+                freq = np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0])
+                if dates:
+                    x_datetimes = [tr.stats.starttime + s for s in tt]
+                    x_datetimes = [dt.datetime for dt in x_datetimes]
+                    x, y = np.meshgrid(mdates.date2num(x_datetimes), freq)
+                else:
+                    x, y = np.meshgrid(tt, freq)
+            else:
+                freq = np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0])
+                if dates:
+                    x_datetimes = [tr.stats.starttime + s for s in t]
+                    x_datetimes = [dt.datetime for dt in x_datetimes]
+                    x, y = np.meshgrid(mdates.date2num(x_datetimes), freq)
+                else:
+
+                    x, y = np.meshgrid(t, freq)
+
+
+            min_cwt = self.minlevelCB.value()
+            max_cwt = 0
+
+            value, idx = self.find_nearest(y[:,1], 1.0)
+            scalogram_period = scalogram2[0:idx, :]
+
+            scalogram2 = scalogram2[idx:, :]
+
+            x_period = x[0:idx,:]
+            y_period = 1/(y[0:idx, :])
+
+            x_freq = x[idx:, :]
+            y_freq = y[idx:, :]
+
+
+            if self.res_factor <= 1:
+                self.canvas_plot3.plot_contour(x_freq, y_freq, scalogram2, axes_index=1, levels=20, clear_plot=True,
+                                               clabel="Power [dB]",
+                                               cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
+
+                self.canvas_plot3.plot_contour(x_period, 10*np.log(y_period), scalogram_period, axes_index=2, levels=20,
+                                               clear_plot=True, clabel="Power [dB]",
+                                               cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
+
+            elif self.res_factor > 1:
+                self.canvas_plot3.pcolormesh(x_freq, y_freq, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
+                                             cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt,
+                                             shading='nearest')
+
+                self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, clear_plot=True,
+                                             clabel ="Power [dB]", cmap=self.colourCB.currentText(), vmin=min_cwt,
+                                             vmax=max_cwt, shading='nearest')
+
+            ax_period = self.canvas_plot3.get_axe(1)
+            ax_period.set_yscale('log')
+            ax_period = self.canvas_plot3.get_axe(2)
+            ax_period.invert_yaxis()
+            ax_period.set_yscale('log')
+
+            if not self.activate_xaxis:
+                formatter = mdt.DateFormatter('%H:%M:%S')
+                ax2 = self.canvas_plot3.get_axe(2)
+                ax2.xaxis.set_major_formatter(formatter)
+                self.canvas_plot3.set_xlabel(2, "Date")
+            else:
+                self.canvas_plot3.set_xlabel(2, "Time (s)")
+            self.canvas_plot3.set_ylabel(0, "Amplitude ")
+            self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")
+            self.canvas_plot3.set_ylabel(2, "Period (s)")
+
+        else:
+            pass
+
+        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
+
+    def key_pressed(self, event):
+        selection = self.selectCB.currentText()
+
+        if event.key == 'w':
+            self.plot_seismogram()
+
+        if event.key == 'q':
+            if selection == "Seismogram 1":
+                [tr, t] = self.get_data()
+                x1, y1 = event.xdata, event.ydata
+                if not self.activate_xaxis:
+                    tt = UTCDateTime(mdt.num2date(x1))
+                else:
+                    tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.starttime_date)
+                self.canvas_plot1.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
+            elif selection == "Seismogram 2":
+                [tr, t] = self.get_data()
+                x1, y1 = event.xdata, event.ydata
+                if not self.activate_xaxis:
+                    tt = UTCDateTime(mdt.num2date(x1))
+                else:
+                    tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.starttime_date)
+                self.canvas_plot2.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
+
+            elif selection == "Seismogram 3":
+                x1, y1 = event.xdata, event.ydata
+                [tr, t] = self.get_data()
+                if not self.activate_xaxis:
+                    tt = UTCDateTime(mdt.num2date(x1))
+                else:
+                    tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.starttime_date)
+                self.canvas_plot3.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
+
+        if event.key == 'e':
+
+            if selection == "Seismogram 1":
+                [tr, t] = self.get_data()
+                x1, y1 = event.xdata, event.ydata
+                if not self.activate_xaxis:
+                    tt = UTCDateTime(mdt.num2date(x1))
+                else:
+                    tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.endtime_date)
+                self.canvas_plot1.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--',
+                                              picker=False)
+            elif selection == "Seismogram 2":
+                [tr, t] = self.get_data()
+                x1, y1 = event.xdata, event.ydata
+                if not self.activate_xaxis:
+                    tt = UTCDateTime(mdt.num2date(x1))
+                else:
+                    tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.endtime_date)
+                self.canvas_plot2.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--',
+                                              picker=False)
+
+            elif selection == "Seismogram 3":
+                x1, y1 = event.xdata, event.ydata
+                [tr, t] = self.get_data()
+                if not self.activate_xaxis:
+                    tt = UTCDateTime(mdt.num2date(x1))
+                else:
+                    tt = tr.stats.starttime + x1
+                set_qdatetime(tt, self.endtime_date)
+                self.canvas_plot3.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--', picker=False)
+
+
+
+    def open_help(self):
+        open_url(self.url)
+
+
 
 
         # elif selection == "Wigner Spectrogram":
@@ -427,259 +802,3 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         #         self.canvas_plot2.set_ylabel(0, "Amplitude ")
         #         self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
         #
-
-        elif selection == "Continuous Wavelet Transform":
-
-            fs = tr.stats.sampling_rate
-            nf = self.atomsSB.value()
-            f_min = self.freq_min_cwtDB.value()
-            f_max = self.freq_max_cwtDB.value()
-            wmin = self.wminSB.value()
-            wmax = self.wminSB.value()
-            #tt = int( self.wavelet_lenghtDB.value()*fs)
-            npts = len(tr.data)
-            t = np.linspace(0, tr.stats.delta * npts, npts)
-            #cw = ConvolveWaveletScipy(self.file_selector.file_path)
-            cw = ConvolveWaveletScipy(tr)
-            wavelet = self.wavelet_typeCB.currentText()
-
-            m = self.wavelets_param.value()
-            if self.trimCB.isChecked() and diff >= 0:
-
-                cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf,
-                                 use_wavelet = wavelet, m = m, decimate=False)
-            else:
-                cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf,
-                                 use_wavelet = wavelet, m = m, decimate=False)
-
-            scalogram2 = cw.scalogram_in_dbs()
-            scalogram2 = np.clip(scalogram2, a_min=self.minlevelCB.value(), a_max=0)
-            #cf = cw.cf_lowpass()
-
-            #freq = np.linspace(f_min, f_max, scalogram2.shape[0])
-
-
-            if self.res_factor > 1:
-
-                scalogram2 = ndimage.zoom(scalogram2, (1.0, 1/self.res_factor))
-                #tt = t[::factor]
-                tt = np.linspace(0, self.res_factor * tr.stats.delta * scalogram2.shape[1], scalogram2.shape[1])
-                freq = np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0])
-                x, y = np.meshgrid(tt, freq)
-            else:
-                freq = np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0])
-                x, y = np.meshgrid(t, np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0]))
-
-            k = wmin / (2 * np.pi * freq)
-            # delay = int(fs*np.mean(k))
-            c_f = wmin / 2 * math.pi
-            f = np.linspace(f_min, f_max, scalogram2.shape[0])
-            pred = (math.sqrt(2) * c_f / f) - (math.sqrt(2) * c_f / f_max)
-
-            pred_comp = t[len(t)-1]-pred
-            min_cwt=self.minlevelCB.value()
-            max_cwt = 0
-
-            #norm = Normalize(vmin=min_cwt, vmax=max_cwt)
-
-            #tf=t[delay:len(t)]
-            #cf = cf[0:len(tf)]
-            if order == "Seismogram 1":
-
-                if self.res_factor <= 1:
-                     self.canvas_plot1.plot_contour(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                                                    cmap=self.colourCB.currentText(), vmin= min_cwt, vmax=max_cwt)
-                elif self.res_factor > 1:
-                     self.canvas_plot1.pcolormesh(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                                                  cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt,
-                                                  shading='nearest')
-
-                # elif self.typeCB.currentText() == 'imshow':
-                #
-                #     self.canvas_plot1.plot_contour(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                #                                    cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
-
-
-                ax_cone = self.canvas_plot1.get_axe(1)
-                ax_cone.fill_between(pred, f, 0, color= "black", edgecolor="red", alpha=0.3)
-                ax_cone.fill_between(pred_comp, f, 0, color="black", edgecolor="red", alpha=0.3)
-                self.canvas_plot1.set_xlabel(1, "Time (s)")
-                self.canvas_plot1.set_ylabel(0, "Amplitude ")
-                self.canvas_plot1.set_ylabel(1, "Frequency (Hz)")
-
-            if order == "Seismogram 2":
-
-                if self.res_factor <= 1:
-                     self.canvas_plot2.plot_contour(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                                                    cmap=self.colourCB.currentText(), vmin= min_cwt, vmax=max_cwt)
-                elif self.res_factor > 1:
-                     self.canvas_plot2.pcolormesh(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                                                  cmap=self.colourCB.currentText(), vmin= min_cwt, vmax=max_cwt,
-                                                  shading='nearest')
-                # elif self.typeCB.currentText() == 'imshow':
-                #     self.canvas_plot2.image(x, y, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                #                              cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt, yscale = 'log')
-                ax_cone2 = self.canvas_plot2.get_axe(1)
-                ax_cone2.fill_between(pred, f, 0, color="black", edgecolor="red", alpha=0.3)
-                ax_cone2.fill_between(pred_comp, f, 0, color="black", edgecolor="red", alpha=0.3)
-                self.canvas_plot2.set_xlabel(1, "Time (s)")
-                self.canvas_plot2.set_ylabel(0, "Amplitude ")
-                self.canvas_plot2.set_ylabel(1, "Frequency (Hz)")
-
-        else:
-            pass
-
-        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
-
-
-    def time_frequency_full(self, tr, order):
-        self._time_frequency_full(tr, order)
-        self.progress_dialog.exec()
-
-    @AsycTime.run_async()
-    def _time_frequency_full(self, tr, order):
-        selection = self.time_frequencyCB.currentText()
-        ts, te = self.get_time_window()
-        diff = te - ts
-
-        if selection == "Continuous Wavelet Transform":
-
-            fs = tr.stats.sampling_rate
-            nf = self.atomsSB.value()
-            f_min = self.freq_min_cwtDB.value()
-            f_max = self.freq_max_cwtDB.value()
-            if f_max < 1:
-                f_max = 1
-            wmin = self.wminSB.value()
-            wmax = self.wminSB.value()
-            npts = len(tr.data)
-            t = np.linspace(0, tr.stats.delta * npts, npts)
-            cw = ConvolveWaveletScipy(tr)
-            wavelet = self.wavelet_typeCB.currentText()
-
-            m = self.wavelets_param.value()
-            if self.trimCB.isChecked() and diff >= 0:
-
-                cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=int(fs / f_min), fmin=f_min, fmax=f_max, nf=nf,
-                                 use_wavelet=wavelet, m=m, decimate=False)
-            else:
-                cw.setup_wavelet(wmin=wmin, wmax=wmax, tt=int(fs / f_min), fmin=f_min, fmax=f_max, nf=nf,
-                                 use_wavelet=wavelet, m=m, decimate=False)
-
-            scalogram2 = cw.scalogram_in_dbs()
-            scalogram2 = np.clip(scalogram2, a_min=self.minlevelCB.value(), a_max=0)
-
-            if self.res_factor > 1:
-
-                scalogram2 = ndimage.zoom(scalogram2, (1.0, 1 / self.res_factor))
-                tt = np.linspace(0, self.res_factor * tr.stats.delta * scalogram2.shape[1], scalogram2.shape[1])
-                freq = np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0])
-                x, y = np.meshgrid(tt, freq)
-            else:
-                x, y = np.meshgrid(t, np.logspace(np.log10(f_min), np.log10(f_max), scalogram2.shape[0]))
-
-
-            min_cwt = self.minlevelCB.value()
-            max_cwt = 0
-
-            value, idx = self.find_nearest(y[:,1], 1.0)
-            scalogram_period = scalogram2[0:idx, :]
-
-            scalogram2 = scalogram2[idx:, :]
-
-            x_period = x[0:idx,:]
-            y_period = 1/(y[0:idx, :])
-
-            x_freq = x[idx:, :]
-            y_freq = y[idx:, :]
-
-
-            if self.res_factor <= 1:
-                self.canvas_plot3.plot_contour(x_freq, y_freq, scalogram2, axes_index=1, levels=20, clear_plot=True,
-                                               clabel="Power [dB]",
-                                               cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
-
-                self.canvas_plot3.plot_contour(x_period, 10*np.log(y_period), scalogram_period, axes_index=2, levels=20,
-                                               clear_plot=True, clabel="Power [dB]",
-                                               cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt)
-
-            elif self.res_factor > 1:
-                self.canvas_plot3.pcolormesh(x_freq, y_freq, scalogram2, axes_index=1, clear_plot=True, clabel="Power [dB]",
-                                             cmap=self.colourCB.currentText(), vmin=min_cwt, vmax=max_cwt,
-                                             shading='nearest')
-
-                self.canvas_plot3.pcolormesh(x_period, y_period, scalogram_period, axes_index=2, clear_plot=True,
-                                             clabel ="Power [dB]", cmap=self.colourCB.currentText(), vmin=min_cwt,
-                                             vmax=max_cwt, shading='nearest')
-
-            ax_period = self.canvas_plot3.get_axe(1)
-            ax_period.set_yscale('log')
-            ax_period = self.canvas_plot3.get_axe(2)
-            ax_period.invert_yaxis()
-            ax_period.set_yscale('log')
-
-            self.canvas_plot3.set_xlabel(2, "Time (s)")
-            self.canvas_plot3.set_ylabel(0, "Amplitude ")
-            self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")
-            self.canvas_plot3.set_ylabel(2, "Period (s)")
-
-        else:
-            pass
-
-        pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
-
-    def key_pressed(self, event):
-        selection = self.selectCB.currentText()
-
-        if event.key == 'w':
-            self.plot_seismogram()
-
-        if event.key == 'q':
-            if selection == "Seismogram 1":
-                [tr, t] = self.get_data()
-                x1, y1 = event.xdata, event.ydata
-                tt = tr.stats.starttime + x1
-                set_qdatetime(tt, self.starttime_date)
-                self.canvas_plot1.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
-            elif selection == "Seismogram 2":
-                [tr, t] = self.get_data()
-                x1, y1 = event.xdata, event.ydata
-                tt = tr.stats.starttime + x1
-                set_qdatetime(tt, self.starttime_date)
-                self.canvas_plot2.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
-
-            elif selection == "Seismogram 3":
-                x1, y1 = event.xdata, event.ydata
-                [tr, t] = self.get_data()
-                tt = tr.stats.starttime + x1
-                set_qdatetime(tt, self.starttime_date)
-                self.canvas_plot3.draw_arrow(x1, 0, arrow_label="st", color="purple", linestyles='--', picker=False)
-
-        if event.key == 'e':
-
-            if selection == "Seismogram 1":
-                [tr, t] = self.get_data()
-                x1, y1 = event.xdata, event.ydata
-                tt = tr.stats.starttime + x1
-                set_qdatetime(tt, self.endtime_date)
-                self.canvas_plot1.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--',
-                                              picker=False)
-            elif selection == "Seismogram 2":
-                [tr, t] = self.get_data()
-                x1, y1 = event.xdata, event.ydata
-                tt = tr.stats.starttime + x1
-                set_qdatetime(tt, self.endtime_date)
-                self.canvas_plot2.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--',
-                                              picker=False)
-
-            elif selection == "Seismogram 3":
-                x1, y1 = event.xdata, event.ydata
-                [tr, t] = self.get_data()
-                tt = tr.stats.starttime + x1
-                set_qdatetime(tt, self.endtime_date)
-                self.canvas_plot3.draw_arrow(x1, 0, arrow_label="et", color="purple", linestyles='--', picker=False)
-
-
-
-    def open_help(self):
-        open_url(self.url)
