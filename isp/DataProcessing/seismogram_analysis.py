@@ -5,7 +5,10 @@ from obspy.taup import TauPyModel
 from isp.Structures.structures import TracerStats
 from isp.Utils import ObspyUtil, Filters
 import numpy as np
-from isp.cython_code.hampel import hampel
+try:
+    from isp.cython_code.hampel import hampel
+except:
+    print("warning cannot import cython compiled hampel")
 from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise, \
     smoothing, wiener_filter, downsample_trace
 
