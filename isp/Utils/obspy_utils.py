@@ -3,8 +3,6 @@ import pickle
 from datetime import datetime
 from enum import unique, Enum
 from multiprocessing import Pool
-from os import listdir
-from os.path import isfile, join
 from typing import List
 import pandas as pd
 import numpy as np
@@ -17,7 +15,6 @@ from obspy.io.stationxml.core import _is_stationxml
 from obspy.io.xseed.parser import Parser
 from obspy.taup import TauPyModel
 from surfquakecore.project.surf_project import SurfProject
-
 from isp import PICKING_DIR
 from isp.Exceptions import InvalidFile
 from isp.Structures.structures import TracerStats
@@ -25,8 +22,9 @@ from isp.Utils.nllOrgErrors import computeOriginErrors
 import os
 import re
 from pathlib import Path
-from obspy.io.nlloc.core import read_nlloc_hyp
 from isp.Utils import read_nll_performance
+from scipy.signal import cheby1, cheby2, ellip, bessel, sosfilt, sosfiltfilt
+
 @unique
 class Filters(Enum):
 
@@ -226,16 +224,20 @@ class ObspyUtil:
     @staticmethod
     def filter_trace(trace, trace_filter, f_min, f_max, **kwargs):
         """
-        Filter a obspy Trace or Stream.
-        :param trace: The trace or stream to be filter.
-        :param trace_filter: The filter name or Filter enum, ie. Filter.BandPass or "bandpass".
-        :param f_min: The lower frequency.
-        :param f_max: The higher frequency.
-        :keyword kwargs:
-        :keyword corners: The number of poles, default = 4.
-        :keyword zerophase: True for keep the phase without shift, false otherwise, Default = True.
-        :return: False if bad frequency filter, True otherwise.
-        """
+            Filter an ObsPy Trace using standard and advanced filters.
+            Supports Butterworth, Chebyshev I & II, Elliptic, Bessel.
+
+            Parameters:
+                trace: ObsPy Trace object.
+                trace_filter: Filter type as string or enum.
+                f_min, f_max: Bandpass frequency limits (Hz).
+                corners: Number of poles (default: 4).
+                zerophase: Apply filter forward and backward (default: True).
+                ripple: Optional ripple for Chebyshev/Elliptic filters.
+
+            Returns:
+                True if success, False if bad parameters.
+            """
         if trace_filter != Filters.Default:
             if not (f_max - f_min) > 0:
                 print("Bad filter frequencies")
@@ -243,17 +245,40 @@ class ObspyUtil:
 
             corners = kwargs.pop("corners", 4)
             zerophase = kwargs.pop("zerophase", True)
+            ripple = kwargs.pop("ripple", 1)  # in dB
+            rp = kwargs.pop("rp", 0.5)  # Passband ripple
+            rs = kwargs.pop("rs", 60)  # Stopband attenuation
+            sr = trace.stats.sampling_rate
+            nyq = 0.5 * sr
+            wp = [f_min / nyq, f_max / nyq]  # normalized passband
+            trace.detrend(type="simple")
+            trace.taper(max_percentage=0.05, type="cosine")
 
-            trace.taper(max_percentage=0.05, type="blackman")
-
-            if trace_filter == Filters.BandPass or trace_filter == Filters.BandStop:
+            if trace_filter.lower() in ["bandpass", "highpass", "lowpass", "bandstop"]:
                 trace.filter(trace_filter, freqmin=f_min, freqmax=f_max, corners=corners, zerophase=zerophase)
 
-            elif trace_filter == Filters.HighPass:
-                trace.filter(trace_filter, freq=f_min, corners=corners, zerophase=zerophase)
+            elif trace_filter.lower() == "cheby1":
 
-            elif trace_filter == Filters.LowPass:
-                trace.filter(trace_filter, freq=f_max, corners=corners, zerophase=zerophase)
+                sos = cheby1(N=corners, rp=ripple, Wn=wp, btype='band', output='sos')
+
+                trace.data = sosfiltfilt(sos, trace.data) if zerophase else sosfilt(sos, trace.data)
+
+            elif trace_filter.lower() == "cheby2":
+                sos = cheby2(N=corners, rs=ripple, Wn=wp, btype='band', output='sos')
+                trace.data = sosfiltfilt(sos, trace.data) if zerophase else sosfilt(sos, trace.data)
+
+            elif trace_filter.lower() == "elliptic":
+                sos = ellip(N=corners, rp=rp, rs=rs, Wn=wp, btype='band', output='sos')
+                trace.data = sosfiltfilt(sos, trace.data) if zerophase else sosfilt(sos, trace.data)
+
+            elif trace_filter.lower() == "bessel":
+                # Warning: Bessel filters are not typically available in 'sos' format for all scipy versions
+                sos = bessel(N=corners, Wn=wp, btype='band', norm='phase', output='sos')
+                trace.data = sosfiltfilt(sos, trace.data) if zerophase else sosfilt(sos, trace.data)
+
+            else:
+                print(f"Unsupported filter type: {trace_filter}")
+                return False
 
         return True
 

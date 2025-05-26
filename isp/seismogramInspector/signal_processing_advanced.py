@@ -12,14 +12,18 @@ import math
 import scipy.signal
 import pywt  # this should be added on requirements.txt if is a necessary package
 from scipy import ndimage
+from scipy.signal import savgol_filter
+
 from isp.seismogramInspector.entropy import spectral_entropy
 import copy
 from obspy.signal.trigger import classic_sta_lta
 import obspy.signal
+from scipy.ndimage import uniform_filter1d, gaussian_filter1d
 
 try:
     # use numba as optional for improve performance
-    from numba import jit
+    from numba import jit, njit
+
     __use_numba = True
 except ImportError:
     __use_numba = False
@@ -633,52 +637,177 @@ def normalize(tr, clip_factor=6, clip_weight=10, norm_win=None, norm_method="1bi
     return tr
 
 # Denoise Section
+# Numba-accelerated 1D bilateral filter
+@jit(nopython=True, parallel=True)
+def bilateral_filter_1d_numba(signal, window_size, sigma_t, sigma_x):
+    """
+    Apply a bilateral filter on a 1D signal with Numba acceleration.
+
+    :param signal: Input 1D signal (trace data)
+    :param window_size: Size of the window in samples (odd number)
+    :param sigma_t: Temporal standard deviation (in samples)
+    :param sigma_x: Spatial standard deviation (signal amplitude)
+
+    :return: Filtered signal
+    """
+    filtered_signal = np.zeros_like(signal)
+    half_window = window_size // 2
+
+    # Iterate over the signal and apply the bilateral filter
+    for i in range(len(signal)):
+        # Define the window boundaries
+        start = max(i - half_window, 0)
+        end = min(i + half_window + 1, len(signal))
+
+        # Extract the local window of signal values
+        local_window = signal[start:end]
+
+        # Compute the temporal weights (Gaussian in time domain)
+        time_weights = np.exp(-0.5 * ((np.arange(len(local_window)) - half_window) / sigma_t) ** 2)
+
+        # Compute the spatial weights (Gaussian in amplitude domain)
+        amplitude_weights = np.exp(-0.5 * ((local_window - signal[i]) / sigma_x) ** 2)
+
+        # Combine the weights
+        weights = time_weights * amplitude_weights
+        weights /= weights.sum()  # Normalize weights to sum to 1
+
+        # Apply the filter (weighted average)
+        filtered_signal[i] = np.sum(local_window * weights)
+
+    return filtered_signal
+
+@njit
+def tv_denoise_numba(signal, weight=0.1, max_iter=100, tol=1e-4, step_size=0.1):
+    """
+    Total Variation (TV) denoising using gradient descent with Numba.
+
+    Args:
+        signal (np.array): Input 1D noisy signal.
+        weight (float): Regularization strength (higher = smoother).
+        max_iter (int): Maximum number of iterations.
+        tol (float): Stopping criterion (based on L2 norm).
+        step_size (float): Gradient descent step size.
+
+    Returns:
+        np.array: Denoised signal.
+    """
+    x = signal.copy()
+    n = len(signal)
+
+    for _ in range(max_iter):
+        x_old = x.copy()
+
+        # Gradient of the fidelity term
+        grad_data = x - signal
+
+        # Gradient of total variation term
+        grad_tv = np.zeros_like(x)
+        for i in range(1, n - 1):
+            dx_prev = x[i] - x[i - 1]
+            dx_next = x[i + 1] - x[i]
+            grad_tv[i] = -np.sign(dx_prev) + np.sign(dx_next)
+
+        # Handle endpoints
+        grad_tv[0] = -np.sign(x[1] - x[0])
+        grad_tv[-1] = np.sign(x[-1] - x[-2])
+
+        # Gradient update step
+        x -= step_size * (grad_data + weight * grad_tv)
+
+        # Convergence check
+        diff = np.sum((x - x_old) ** 2)
+        if np.sqrt(diff) < tol:
+            break
+
+    return x
 
 def smoothing(tr, type='gaussian', k=5, fwhm=0.05):
     # k window size in seconds
-
-    n = len(tr.data)
-
+    # fwhm in seconds
+    # Use a small FWHM, e.g., 0.01 – 0.05 sec --> Remove small noise but preserve sharpevents,
+    # yields a narrow Gaussian kernel, which has minimal blur
+    # Use a moderate FWHM, e.g., 0.1 – 0.5 sec, Works well for balancing denoising and detail preservation
+    # Use a larger FWHM, e.g., 0.5 – 1.5 sec or more, effectively acts like a lowpass filter in time domain
     if type == 'mean':
+        # new fast and simple implementation
         k = int(k * tr.stats.sampling_rate)
+        kernel = np.ones(k) / k
+        tr.data = np.convolve(tr.data, kernel, mode='same')
 
-        # initialize filtered signal vector
-        filtsig = np.zeros(n)
-        for i in range(k, n - k - 1):
-            # each point is the average of k surrounding points
-            # print(i - k,i + k)
-            filtsig[i] = np.mean(tr.data[i - k:i + k])
-
-        tr.data = filtsig
+        # k = int(k * tr.stats.sampling_rate)
+        #
+        # # initialize filtered signal vector
+        # filtsig = np.zeros(n)
+        # for i in range(k, n - k - 1):
+        #     # each point is the average of k surrounding points
+        #     # print(i - k,i + k)
+        #     filtsig[i] = np.mean(tr.data[i - k:i + k])
+        #
+        # tr.data = filtsig
 
     if type == 'gaussian':
-        ## create Gaussian kernel
-        # full-width half-maximum: the key Gaussian parameter in seconds
-        # normalized time vector in seconds
-        k = int(k * tr.stats.sampling_rate)
-        fwhm = int(fwhm * tr.stats.sampling_rate)
-        gtime = np.arange(-k, k)
-        # create Gaussian window
-        gauswin = np.exp(-(4 * np.log(2) * gtime ** 2) / fwhm ** 2)
-        # compute empirical FWHM
+        # new fast and simple implementation
 
-        pstPeakHalf = k + np.argmin((gauswin[k:] - .5) ** 2)
-        prePeakHalf = np.argmin((gauswin - .5) ** 2)
-        # empFWHM = gtime[pstPeakHalf] - gtime[prePeakHalf]
-        # show the Gaussian
-        # plt.plot(gtime/tr.stats.sampling_rate,gauswin)
-        # plt.plot([gtime[prePeakHalf],gtime[pstPeakHalf]],[gauswin[prePeakHalf],gauswin[pstPeakHalf]],'m')
-        # then normalize Gaussian to unit energy
-        gauswin = gauswin / np.sum(gauswin)
-        # implement the filter
-        # initialize filtered signal vector
-        filtsigG = copy.deepcopy(tr.data)
-        # implement the running mean filter
-        for i in range(k + 1, n - k - 1):
-            # each point is the weighted average of k surrounding points
-            filtsigG[i] = np.sum(tr.data[i - k:i + k] * gauswin)
+        sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
+        sigma_samples = sigma * tr.stats.sampling_rate
+        tr.data = gaussian_filter1d(tr.data, sigma=sigma_samples)
 
-        tr.data = filtsigG
+        # sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
+        # padded = np.pad(tr.data, pad_width=int(3 * sigma), mode='reflect')
+        # smoothed = gaussian_filter1d(padded, sigma=sigma)
+        # tr.data = smoothed[int(3 * sigma):-int(3 * sigma)]
+
+        # ## create Gaussian kernel
+        # # full-width half-maximum: the key Gaussian parameter in seconds
+        # # normalized time vector in seconds
+        # k = int(k * tr.stats.sampling_rate)
+        # fwhm = int(fwhm * tr.stats.sampling_rate)
+        # gtime = np.arange(-k, k)
+        # # create Gaussian window
+        # gauswin = np.exp(-(4 * np.log(2) * gtime ** 2) / fwhm ** 2)
+        # # compute empirical FWHM
+        #
+        # pstPeakHalf = k + np.argmin((gauswin[k:] - .5) ** 2)
+        # prePeakHalf = np.argmin((gauswin - .5) ** 2)
+        # # empFWHM = gtime[pstPeakHalf] - gtime[prePeakHalf]
+        # # show the Gaussian
+        # # plt.plot(gtime/tr.stats.sampling_rate,gauswin)
+        # # plt.plot([gtime[prePeakHalf],gtime[pstPeakHalf]],[gauswin[prePeakHalf],gauswin[pstPeakHalf]],'m')
+        # # then normalize Gaussian to unit energy
+        # gauswin = gauswin / np.sum(gauswin)
+        # # implement the filter
+        # # initialize filtered signal vector
+        # filtsigG = copy.deepcopy(tr.data)
+        # # implement the running mean filter
+        # for i in range(k + 1, n - k - 1):
+        #     # each point is the weighted average of k surrounding points
+        #     filtsigG[i] = np.sum(tr.data[i - k:i + k] * gauswin)
+        #
+        # tr.data = filtsigG
+
+    if type == "adaptive":
+        window_length =int(k*tr.stats.sampling_rate)
+        if window_length % 2 == 0:
+            window_length += 1  # Ensure odd window length
+        tr.data = savgol_filter(tr.data, window_length, polyorder=3, mode='nearest')
+
+    # if type == "adaptive":
+    #     bilateral_filter
+    #     sigma_t = 0.05
+    #     sigma_x = 0.1
+    #     sr = tr.stats.sampling_rate
+    #     window_size = int(k * sr)
+    #
+    #     # Ensure that window size is odd
+    #     if window_size % 2 == 0:
+    #         window_size += 1
+    #
+    #     # Convert sigma_t to samples
+    #     sigma_t_samples = sigma_t * sr
+    #
+    #     # Apply the bilateral filter to the trace data
+    #     tr.data = bilateral_filter_1d_numba(tr.data, window_size, sigma_t_samples, sigma_x)
 
     if type == 'tkeo':
         # extract needed variables
@@ -710,6 +839,9 @@ def smoothing(tr, type='gaussian', k=5, fwhm=0.05):
         tr.data = emgf
 
     return tr
+
+
+
 
 def wavelet_denoise(tr, threshold = 0.04, dwt = 'sym4' ):
     # Threshold for filtering

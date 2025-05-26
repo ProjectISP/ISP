@@ -203,7 +203,6 @@ class SeismogramDataAdvanced:
             if parameters[j][0] == "integrate":
                 tr.integrate(method = parameters[j][1] )
 
-
             if parameters[j][0] == 'filter':
                 filter_value = parameters[j][1]
                 f_min = parameters[j][2]

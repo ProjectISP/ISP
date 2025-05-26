@@ -232,11 +232,11 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.FILTER.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
             combo_param = pw.QComboBox()
-            combo_param.addItems(["bandpass", 'bandstop', 'lowpass', 'highpass', 'lowpass_cheby_2'])
+            combo_param.addItems(["bandpass", 'bandstop', 'lowpass', 'highpass', 'cheby1', 'cheby2', 'elliptic', 'bessel'])
 
             label_freqmin = pw.QLabel("Freq min")
             label_freqmax = pw.QLabel("Freq max")
-            label_number_poles =  pw.QLabel("Number of Poles")
+            label_number_poles = pw.QLabel("Number of Poles")
 
             freq_minDB = pw.QDoubleSpinBox()
             freq_minDB.setMinimum(0)
@@ -518,7 +518,7 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
             method_label = pw.QLabel("method")
             combo_param = pw.QComboBox()
-            combo_param.addItems(['mean', 'gaussian', 'tkeo'])
+            combo_param.addItems(['mean', 'gaussian', 'adaptive', 'tkeo'])
             k_label = pw.QLabel("Time window [s]")
 
             k_value = pw.QDoubleSpinBox()
