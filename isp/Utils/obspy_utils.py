@@ -239,9 +239,22 @@ class ObspyUtil:
                 True if success, False if bad parameters.
             """
         if trace_filter != Filters.Default:
-            if not (f_max - f_min) > 0:
-                print("Bad filter frequencies")
-                return False
+            tf = trace_filter.lower()
+
+            if tf in ["bandpass", "bandstop"]:
+                if not (f_max > f_min):
+                    print("Bad frequency range: f_max must be > f_min for band filters.")
+                    return False
+
+            elif tf in ["highpass"]:
+                if f_min <= 0:
+                    print("Invalid highpass cutoff: f_min must be > 0.")
+                    return False
+
+            elif tf in ["lowpass"]:
+                if f_max <= 0:
+                    print("Invalid lowpass cutoff: f_max must be > 0.")
+                    return False
 
             corners = kwargs.pop("corners", 4)
             zerophase = kwargs.pop("zerophase", True)
@@ -254,8 +267,14 @@ class ObspyUtil:
             trace.detrend(type="simple")
             trace.taper(max_percentage=0.05, type="cosine")
 
-            if trace_filter.lower() in ["bandpass", "highpass", "lowpass", "bandstop"]:
+            if trace_filter.lower() in ["bandpass", "bandstop"]:
                 trace.filter(trace_filter, freqmin=f_min, freqmax=f_max, corners=corners, zerophase=zerophase)
+
+            elif trace_filter.lower() in ["highpass"]:
+                trace.filter(trace_filter, freq=f_min, corners=corners, zerophase=zerophase)
+
+            elif trace_filter.lower() in ["lowpass"]:
+                trace.filter(trace_filter, freq=f_max, corners=corners, zerophase=zerophase)
 
             elif trace_filter.lower() == "cheby1":
 

@@ -928,6 +928,94 @@ def hampel(tr, window_size, n_sigmas=3):
 
     return tr
 
+
+def spectral_integration(trace, pad_to_pow2=True, taper_type='cosine', taper_pct=0.05):
+    """
+    Integrate a seismic signal in the frequency domain with preprocessing.
+
+    Parameters:
+        trace : ObsPy Trace object
+        lp_freq : Lowpass filter cutoff frequency (Hz) to suppress drift #No implemented
+        pad_to_pow2 : Zero-pad to next power of 2 (improves FFT efficiency)
+        taper_type : 'cosine', 'hann', etc. taper before FFT
+        taper_pct : Taper percentage (e.g., 0.05 = 5%)
+
+    Returns:
+        Modified trace (in-place)
+    """
+    # Copy original data for safety
+    tr = trace.copy()
+
+    # Remove mean and apply taper
+    tr.detrend(type='demean')
+    tr.taper(max_percentage=taper_pct, type=taper_type)
+
+    # Original parameters
+    n_orig = tr.stats.npts
+    dt = tr.stats.delta
+
+    # Zero-pad to next power of 2 for spectral resolution
+    n_pad = 2 ** int(np.ceil(np.log2(n_orig))) if pad_to_pow2 else n_orig
+    f = np.fft.rfftfreq(n_pad, d=dt)
+
+    # FFT and scale spectrum
+    spectrum = np.fft.rfft(tr.data, n=n_pad)
+    scale = np.ones_like(f, dtype=np.complex128)
+    scale[1:] = 1 / (1j * 2 * np.pi * f[1:])
+    scale[0] = 0.0  # remove DC
+
+    # Integrate in frequency domain
+    spectrum_integrated = spectrum * scale
+    tr.data = np.fft.irfft(spectrum_integrated, n=n_pad)[:n_orig]
+
+    # # Final lowpass filter to remove accumulated drift (e.g., from low-f noise)
+    # tr.filter("lowpass", freq=lp_freq, corners=4, zerophase=True)
+
+    return tr
+
+def spectral_derivative(trace, taper_pct=0.05, taper_type="cosine", pad_to_pow2=True):
+    """
+    Compute the first derivative of a signal in the frequency domain.
+
+    Parameters:
+        trace : ObsPy Trace object
+        hp_freq : Optional highpass cutoff frequency (Hz) to remove amplified high-frequency noise
+        taper_pct : Taper percentage (e.g., 0.05 = 5%)
+        taper_type : Taper window type ('cosine', 'hann', etc.)
+        pad_to_pow2 : Whether to zero-pad to next power of 2 before FFT
+
+    Returns:
+        Modified trace with differentiated signal
+    """
+    tr = trace.copy()
+
+    # Demean and taper
+    tr.detrend(type="demean")
+    tr.taper(max_percentage=taper_pct, type=taper_type)
+
+    # Set up time parameters
+    n_orig = tr.stats.npts
+    dt = tr.stats.delta
+    fs = 1 / dt
+    n_pad = 2 ** int(np.ceil(np.log2(n_orig))) if pad_to_pow2 else n_orig
+
+    # Frequency array
+    freqs = np.fft.rfftfreq(n_pad, d=dt)
+
+    # FFT of the signal
+    spectrum = np.fft.rfft(tr.data, n=n_pad)
+
+    # Differentiate in frequency domain: d/dt <-> i·2πf
+    spectrum_diff = (1j * 2 * np.pi * freqs) * spectrum
+    tr.data = np.fft.irfft(spectrum_diff, n=n_pad)[:n_orig]
+
+    # Optional post-highpass filter to reduce HF noise if needed
+    # if hp_freq is not None:
+    #     tr.filter("highpass", freq=hp_freq, corners=4, zerophase=True)
+
+    return tr
+
+
 # def hampel_old(tr, window_size=5, n=3, imputation=True):
 #
 #     """

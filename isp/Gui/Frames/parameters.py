@@ -333,7 +333,7 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.DIFFERENTIATE.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
             combo_param = pw.QComboBox()
-            combo_param.addItems(['gradient'])
+            combo_param.addItems(['spectral', 'gradient'])
 
             if len(params) > 0:
                 combo_param.setCurrentText(params[0])
@@ -346,7 +346,7 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, pw.QTableWidgetItem(ActionEnum.INTEGRATE.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
             combo_param = pw.QComboBox()
-            combo_param.addItems(['cumtrapz', 'spline'])
+            combo_param.addItems(['spectral', 'cumtrapz', 'spline'])
 
             if len(params) > 0:
                 combo_param.setCurrentText(params[0])
