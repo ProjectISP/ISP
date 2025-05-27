@@ -19,15 +19,19 @@ from scipy.signal import hilbert
 from scipy.fftpack import next_fast_len
 from obspy import Trace, Stream, UTCDateTime
 
+from isp.arrayanalysis.beamforming_tools import extract_coordinates, get_covariance_matrix, convert_to_array, \
+    get_noise_subspace, compute_music_spectrum
+
+
 class array:
 
     def __init__(self):
         """
         ARF, (FK and Multitaper) Coherence program and Vespagram.
+        MUSIC algorythm
 
         :param No params required to initialize the class
         """
-
 
     def arf(self, coords, fmin, flim, slim, sgrid):
 
@@ -39,16 +43,6 @@ class array:
 
         return transff
 
-    # def azimuth2mathangle(self, azimuth):
-    #     if azimuth <= 90:
-    #         mathangle = 90 - azimuth
-    #     elif 90 < azimuth <= 180:
-    #         mathangle = 270 + (180 - azimuth)
-    #     elif 180 < azimuth <= 270:
-    #         mathangle = 180 + (270 - azimuth)
-    #     else:
-    #         mathangle = 90 + (360 - azimuth)
-    #     return mathangle
 
     def azimuth2mathangle(self, azimuth):
         """
@@ -73,25 +67,6 @@ class array:
         return azimuth
 
 
-    # def gregorian2date(self, DT):
-    #     #####Convert start from Greogorian to actual date###############
-    #     Time = DT
-    #     Time = Time - int(Time)
-    #     d = date.fromordinal(int(DT))
-    #     date1 = d.isoformat()
-    #     H = (Time * 24)
-    #     H1 = int(H)  # Horas
-    #     minutes = (H - int(H)) * 60
-    #     minutes1 = int(minutes)
-    #     seconds = (minutes - int(minutes)) * 60
-    #     H1 = str(H1).zfill(2)
-    #     minutes1 = str(minutes1).zfill(2)
-    #     seconds = "%.2f" % seconds
-    #     seconds = str(seconds).zfill(2)
-    #     DATE = date1 + "T" + str(H1) + minutes1 + seconds
-    #     t1 = UTCDateTime(DATE)
-    #     return t1
-
     def FK(self, st, inv, stime, etime, fmin, fmax, slim, sres, win_len, win_frac):
 
         n = len(st)
@@ -113,7 +88,6 @@ class array:
 
         try:
             out = array_processing(st, **kwargs)
-
 
             T = out[:, 0]
             relpower = out[:, 1]
@@ -265,7 +239,42 @@ class array:
 
         return Pow, Sxpow, Sypow, coord
 
+    def run_music(self, st, inv,  starttime, linf, lsup, slim, win_len, sinc, n_signals=1):
 
+        t_start_utc = UTCDateTime(mdt.num2date(starttime))
+        t_end_utc = t_start_utc+win_len
+        st.detrend(type="linear")
+        st.taper(type="cosine", max_percentage=0.05)
+        st.filter(type="bandpass", freqmin=linf, freqmax=lsup, zerophase=True, corners=4)
+        st.detrend(type="linear")
+        st.trim(starttime=t_start_utc, endtime=t_end_utc + win_len)
+        st.sort()
+        n = len(st)
+        coords = {}
+        for i in range(n):
+            coords = inv.get_coordinates(st[i].id)
+            st[i].stats.coordinates = AttribDict(
+                {'latitude': coords['latitude'], 'elevation': coords['elevation'], 'longitude': coords['longitude']})
+
+        data_array, sensor_positions = convert_to_array(st, inv)
+
+        R = get_covariance_matrix(data_array)
+
+        En, signal_vec = get_noise_subspace(R, 1)
+
+        music_map = compute_music_spectrum(sensor_positions,  En, slim, sinc=sinc, freq_range = (linf, lsup))
+        music_map = np.fliplr(music_map)
+        music_map = np.flipud(music_map)
+        smax = slim
+        smin = -1 * smax
+        Sx = np.arange(smin, smax, sinc)[np.newaxis]
+        nx = len(Sx[0])
+        x = np.linspace(smin, smax, nx)
+        nn = len(x)
+        maximum_power = np.where(music_map == np.amax(music_map))
+        Sxpow = (maximum_power[1] - nn / 2) * sinc
+        Sypow = (maximum_power[0] - nn / 2) * sinc
+        return music_map, Sxpow, Sypow, coords
 
     def stack_stream(self, st_shift, sx, sy, coord, stack_type = 'Linear Stack'):
 

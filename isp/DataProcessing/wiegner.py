@@ -10,9 +10,48 @@ repository: https://github.com/ljbkusters/python-wigner-distribution
 
 import collections
 
-import numpy
+from numba import njit, prange
 from scipy import signal, linalg, ndimage
+import numpy as np
+from scipy.fftpack import hilbert
 
+
+@njit(parallel=True)
+def compute_wvd_kernel(x):
+    N = x.shape[0]
+    wvd = np.zeros((N, N), dtype=np.complex128)
+
+    for t in prange(N):
+        for tau in range(-min(t, N - t - 1), min(t, N - t - 1) + 1):
+            i1 = t + tau
+            i2 = t - tau
+            if 0 <= i1 < N and 0 <= i2 < N:
+                wvd[t, tau] = x[i1] * np.conj(x[i2])
+    return wvd
+
+def fast_wigner_distribution(x, sample_frequency=None, t_0=0, t_1=1, flip_frequency_range=True):
+    x = np.asarray(x)
+
+    if x.ndim != 1:
+        raise ValueError("Input must be 1D.")
+    if np.isrealobj(x):
+        x = hilbert(x)
+
+    N = x.shape[0]
+    kernel = compute_wvd_kernel(x)
+
+    # Perform FFT along tau axis (columns) to get Wigner distribution
+    wvd = np.real(np.fft.fft(kernel, axis=1)).T  # transpose for [freq, time]
+
+    if sample_frequency is None:
+        sample_frequency = N / (t_1 - t_0)
+
+    max_frequency = sample_frequency / 2
+
+    if flip_frequency_range:
+        wvd = np.flipud(wvd)
+
+    return wvd, max_frequency
 
 def wigner_distribution(x, use_analytic=True, sample_frequency=None,
                         t_0=0, t_1=1, flip_frequency_range=True):
@@ -38,14 +77,14 @@ def wigner_distribution(x, use_analytic=True, sample_frequency=None,
     """
 
     # Ensure the input array is a numpy array
-    if not isinstance(x, numpy.ndarray):
-        x = numpy.asarray(x)
+    if not isinstance(x, np.ndarray):
+        x = np.asarray(x)
     # Compute the autocorrelation function matrix
     if x.ndim != 1:
         raise ValueError("Input data should be one dimensional time series.")
     # Use analytic associate if set to True
     if use_analytic:
-        if all(numpy.isreal(x)):
+        if all(np.isreal(x)):
             x = signal.hilbert(x)
         else:
             raise RuntimeError("Keyword 'use_analytic' set to True but signal"
@@ -55,14 +94,14 @@ def wigner_distribution(x, use_analytic=True, sample_frequency=None,
 
     # calculate the wigner distribution
     N = x.shape[0]
-    bins = numpy.arange(N)
+    bins = np.arange(N)
     indices = linalg.hankel(bins, bins + N - (N % 2))
 
-    padded_x = numpy.pad(x, (N, N), 'constant')
+    padded_x = np.pad(x, (N, N), 'constant')
     wigner_integrand = \
-        padded_x[indices+N] * numpy.conjugate(padded_x[indices[::, ::-1]])
+        padded_x[indices+N] * np.conjugate(padded_x[indices[::, ::-1]])
 
-    wigner_distribution = numpy.real(numpy.fft.fft(wigner_integrand, axis=1)).T
+    wigner_distribution = np.real(np.fft.fft(wigner_integrand, axis=1)).T
 
     # calculate sample frequency
     if sample_frequency is None:
@@ -112,8 +151,8 @@ def interference_reduced_wigner_distribution(
         Intelligent Systems. 7. 1-5. 10.21307/ijssis-2019-101.
     """
     # Ensure the input array is a numpy array
-    if not isinstance(wigner_distribution, numpy.ndarray):
-        wigner_distribution = numpy.asarray(wigner_distribution)
+    if not isinstance(wigner_distribution, np.ndarray):
+        wigner_distribution = np.asarray(wigner_distribution)
     # Compute the autocorrelation function matrix
     if wigner_distribution.ndim != 2:
         raise ValueError("Input data should be a two dimensional discrete"
@@ -126,29 +165,29 @@ def interference_reduced_wigner_distribution(
     print(t_filt_max_percentage, f_filt_max_percentage)
 
     t_filter_widths = \
-        numpy.linspace(0, N_t * t_filt_max_percentage, number_smoothing_steps)
+        np.linspace(0, N_t * t_filt_max_percentage, number_smoothing_steps)
     f_filter_widths = \
-        numpy.linspace(N_f * f_filt_max_percentage, 0, number_smoothing_steps)
+        np.linspace(N_f * f_filt_max_percentage, 0, number_smoothing_steps)
 
     # filter at various filtration widths
     smoothed_wigner_distributions = \
-        numpy.zeros((number_smoothing_steps, N_f, N_t))
+        np.zeros((number_smoothing_steps, N_f, N_t))
     for i, (f_fw, t_fw) in enumerate(zip(t_filter_widths, f_filter_widths)):
         smoothed_wigner_distributions[i] = \
             ndimage.gaussian_filter(wigner_distribution, sigma=(f_fw, t_fw))
 
     # differential analysis per time-frequency bin
-    first_derivative = numpy.diff(smoothed_wigner_distributions, axis=0)
-    second_derivative = numpy.diff(first_derivative, axis=0)
-    smoothing_index_best_guess = numpy.argmax(second_derivative, axis=0)
+    first_derivative = np.diff(smoothed_wigner_distributions, axis=0)
+    second_derivative = np.diff(first_derivative, axis=0)
+    smoothing_index_best_guess = np.argmax(second_derivative, axis=0)
 
     # choose smoothing per time-frequency bin
     smoothing_steps, f_dim, t_dim = smoothed_wigner_distributions.shape
     interference_reduced_wigner_distribution = \
         smoothed_wigner_distributions[
                 smoothing_index_best_guess,
-                numpy.arange(f_dim)[::, numpy.newaxis],
-                numpy.arange(t_dim)[numpy.newaxis, ::]]
+                np.arange(f_dim)[::, np.newaxis],
+                np.arange(t_dim)[np.newaxis, ::]]
 
     return interference_reduced_wigner_distribution
 
@@ -173,14 +212,14 @@ class TimeSamples(__SampleBase):
     def from_sample_frequency(cls, sample_frequency, t0=0., t1=1.):
         time_delta = t1 - t0
         number_of_samples = int(float(sample_frequency) / float(time_delta))
-        time_samples = numpy.linspace(t0, t1, number_of_samples)
+        time_samples = np.linspace(t0, t1, number_of_samples)
         return cls(time_samples, number_of_samples, sample_frequency, t0, t1)
 
     @classmethod
     def from_sample_number(cls, number_of_samples, t0=0.1, t1=1.):
         time_delta = t1 - t0
         sample_frequency = float(float(number_of_samples) / float(time_delta))
-        time_samples = numpy.linspace(t0, t1, number_of_samples)
+        time_samples = np.linspace(t0, t1, number_of_samples)
         return cls(time_samples, number_of_samples, sample_frequency, t0, t1)
 
 
@@ -188,22 +227,22 @@ class TimeSamples(__SampleBase):
 DEFAULT_TIME_SAMPLES = TimeSamples.from_sample_frequency(sample_frequency=1024)
 
 
-def sine_wave(time_samples, frequency) -> numpy.ndarray:
+def sine_wave(time_samples, frequency) -> np.ndarray:
     """Wrapper for numpy.sin to generate pure sine"""
-    omega = 2 * numpy.pi * frequency
-    return numpy.sin(time_samples * omega)
+    omega = 2 * np.pi * frequency
+    return np.sin(time_samples * omega)
 
 
 def chirp(time_samples, start_frequency,
-          end_frequency, time_end=None) -> numpy.ndarray:
+          end_frequency, time_end=None) -> np.ndarray:
     """Wrapper for scipy.signal.chirp to generate linear chirps"""
     if time_end is None:
-        time_end = numpy.max(time_samples.samples)
+        time_end = np.max(time_samples.samples)
     return signal.chirp(time_samples.samples, f0=start_frequency,
                               t1=time_end, f1=end_frequency)
 
 
-def gaussian(x, mean, std, height=1., bias=0.) -> numpy.ndarray:
+def gaussian(x, mean, std, height=1., bias=0.) -> np.ndarray:
     """Gaussian function
 
     Parameters:
@@ -213,12 +252,12 @@ def gaussian(x, mean, std, height=1., bias=0.) -> numpy.ndarray:
         heigt, max height of gaussian (relative to bias), by default 1.
         bias, bias of gaussian, by default 0.
     """
-    exponential = numpy.exp(-0.5 * numpy.power((x - mean) / std, 2))
+    exponential = np.exp(-0.5 * np.power((x - mean) / std, 2))
     return height * exponential + bias
 
 
 def gaussian_kernel_sine(time_samples, frequency, envelope_mean, envelope_std)\
-        -> numpy.ndarray:
+        -> np.ndarray:
     """Guassian windowed sine
 
     Produces a guassian kernel in the time-frequency domain of a

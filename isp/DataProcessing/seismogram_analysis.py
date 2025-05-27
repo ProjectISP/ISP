@@ -10,7 +10,7 @@ try:
 except:
     print("warning cannot import cython compiled hampel")
 from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise, \
-    smoothing, wiener_filter, downsample_trace
+    smoothing, wiener_filter, downsample_trace, spectral_integration, spectral_derivative
 
 
 @unique
@@ -198,10 +198,16 @@ class SeismogramDataAdvanced:
                     tr.normalize(norm = parameters[j][1])
 
             if parameters[j][0] == "differentiate":
-                tr.differentiate(method = parameters[j][1])
+                if parameters[j][1] == "spectral":
+                    tr = spectral_derivative(tr)
+                else:
+                    tr.differentiate(method = parameters[j][1])
 
             if parameters[j][0] == "integrate":
-                tr.integrate(method = parameters[j][1] )
+                if parameters[j][1] == "spectral":
+                    tr = spectral_integration(tr)
+                else:
+                    tr.integrate(method = parameters[j][1] )
 
             if parameters[j][0] == 'filter':
                 filter_value = parameters[j][1]

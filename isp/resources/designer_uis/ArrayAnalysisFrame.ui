@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1400</width>
-    <height>783</height>
+    <height>755</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -33,7 +33,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="bpWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_3">
        <attribute name="title">
@@ -426,6 +426,11 @@
               <item>
                <property name="text">
                 <string>MTP.COHERENCE</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>MUSIC</string>
                </property>
               </item>
              </widget>
