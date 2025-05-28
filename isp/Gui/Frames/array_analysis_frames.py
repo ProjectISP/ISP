@@ -306,10 +306,17 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             # selection = self.inventory.select(station=self.stationLE.text(), channel=self.channelLE.text())
             selection = MseedUtil.filter_inventory_by_stream(self.st, self.inventory)
             x1, y1 = event.xdata, event.ydata
-            Z, Sxpow, Sypow, coord = wavenumber.FKCoherence(st, selection, x1,
-                                                            self.fminFK_bind.value, self.fmaxFK_bind.value,
-                                                            self.smaxFK_bind.value, self.timewindow_bind.value,
-                                                            self.slow_grid_bind.value, self.methodSB.currentText())
+            if self.methodSB.currentText() == "FK" or self.methodSB.currentText() == "MTP.COHERENCE":
+                Z, Sxpow, Sypow, coord = wavenumber.FKCoherence(st, selection, x1,
+                                                                self.fminFK_bind.value, self.fmaxFK_bind.value,
+                                                                self.smaxFK_bind.value, self.timewindow_bind.value,
+                                                                self.slow_grid_bind.value, self.methodSB.currentText())
+            else:
+
+                Z, Sxpow, Sypow, coord = wavenumber.run_music(st, selection, x1,
+                                                                self.fminFK_bind.value, self.fmaxFK_bind.value,
+                                                                self.smaxFK_bind.value, self.timewindow_bind.value,
+                                                                self.slow_grid_bind.value, self.methodSB.currentText())
 
             backacimuth = wavenumber.azimuth2mathangle(np.arctan2(Sypow, Sxpow) * 180 / np.pi)
             slowness = np.abs(Sxpow, Sypow)
@@ -317,6 +324,10 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
                 clabel = "Power"
             elif self.methodSB.currentText() == "MTP.COHERENCE":
                 clabel = "Magnitude Coherence"
+            elif self.methodSB.currentText() == "MUSIC":
+                clabel = "MUSIC Pseudospectrum"
+
+
 
             Sx = np.arange(-1 * self.smaxFK_bind.value, self.smaxFK_bind.value, self.slow_grid_bind.value)[np.newaxis]
             nx = len(Sx[0])
@@ -350,6 +361,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             # Call Stack and Plot###
             if st and self.showStackCB.isChecked():
                 st2 = self.st.copy()
+
                 # Align for the maximum power and give the data of the traces
                 self.st_shift, self.trace_stack = wavenumber.stack_stream(st2, Sxpow, Sypow,
                                                                 coord, stack_type=self.stackCB.currentText())
