@@ -306,7 +306,8 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
             # selection = self.inventory.select(station=self.stationLE.text(), channel=self.channelLE.text())
             selection = MseedUtil.filter_inventory_by_stream(self.st, self.inventory)
             x1, y1 = event.xdata, event.ydata
-            if self.methodSB.currentText() == "FK" or self.methodSB.currentText() == "MTP.COHERENCE":
+            if self.methodSB.currentText() == "FK" or self.methodSB.currentText() == "MTP.COHERENCE" \
+                    or self.methodSB.currentText() == "CAPON":
                 Z, Sxpow, Sypow, coord = wavenumber.FKCoherence(st, selection, x1,
                                                                 self.fminFK_bind.value, self.fmaxFK_bind.value,
                                                                 self.smaxFK_bind.value, self.timewindow_bind.value,
@@ -320,7 +321,7 @@ class ArrayAnalysisFrame(BaseFrame, UiArrayAnalysisFrame):
 
             backacimuth = wavenumber.azimuth2mathangle(np.arctan2(Sypow, Sxpow) * 180 / np.pi)
             slowness = np.abs(Sxpow, Sypow)
-            if self.methodSB.currentText() == "FK":
+            if self.methodSB.currentText() == "FK" or self.methodSB.currentText() == "CAPON":
                 clabel = "Power"
             elif self.methodSB.currentText() == "MTP.COHERENCE":
                 clabel = "Magnitude Coherence"

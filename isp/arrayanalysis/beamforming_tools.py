@@ -138,3 +138,14 @@ def compute_music_spectrum(positions,  En, slow_lim, sinc=100, freq_range = (0.8
 
     return music_map
 
+def regularize_covariance(R, loading_factor=1E-3):
+    M = R.shape[0]
+    delta = loading_factor * np.trace(R) / M
+    R = R + delta * np.eye(M)
+    try:
+        P = np.linalg.pinv(R)
+    except:
+        print("Unstable Matrix Inversion")
+        P = np.zeros(M)
+    return P
+

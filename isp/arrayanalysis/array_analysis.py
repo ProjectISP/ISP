@@ -20,7 +20,7 @@ from scipy.fftpack import next_fast_len
 from obspy import Trace, Stream, UTCDateTime
 
 from isp.arrayanalysis.beamforming_tools import extract_coordinates, get_covariance_matrix, convert_to_array, \
-    get_noise_subspace, compute_music_spectrum
+    get_noise_subspace, compute_music_spectrum, regularize_covariance
 
 
 class array:
@@ -205,13 +205,27 @@ class array:
                     cxcohe = out[value1:value2]
                     Cx[i, j, :] = cxcohe
 
+        if method == "CAPON":
+            for i in range(nr):
+                for j in range(nr):
+                    A = np.fft.rfft(m[:, i])
+                    B = np.fft.rfft(m[:, j])
+                    # Absolute Power
+                    out = (A * np.conjugate(B))
+                    cxcohe = out[value1:value2]
+                    Cx[i, j, :] = cxcohe
+
         r = np.zeros((nr, 2),dtype=np.complex128)
         S = np.zeros((1, 2),dtype=np.complex128)
         Pow = np.zeros((len(Sx[0]), len(Sy[0]), df))
+
         for n in range(nr):
             r[n, :] = coord[n][0:2]
 
         freq = freq[value1:value2]
+        if method == "CAPON":
+            for n in range(Cx.shape[2]):
+                Cx[:, :, n] = regularize_covariance(Cx[:, :, n], loading_factor=1E-3)
 
         for i in range(ny):
             for j in range(nx):
@@ -221,13 +235,18 @@ class array:
                 K = np.sum(k, axis=1)
                 n = 0
                 for f in freq:
-                    A = np.exp(-1j * 2 * pi * f * K)
-                    B = np.conjugate(np.transpose(A))
+                    A = np.exp(-1j * 2 * pi * f * K) # steering vector
+                    B = np.conjugate(np.transpose(A)) # steering vector transponse conjugate
                     D = np.matmul(B, Cx[:, :, n]) / nr
                     P = np.matmul(D, A) / nr
-                    Pow[i, j, n] = np.abs(P)
+
+                    if method == "CAPON":
+                        Pow[i, j, n] = 1/np.abs(P)
+                    elif method == "FK" or method == "MTP.COHERENCE":
+                        Pow[i, j, n] = np.abs(P)
                     n = n + 1
-        Pow =np.mean(Pow, axis = 2)
+
+        Pow = np.mean(Pow, axis = 2)
         #Pow = Pow / len(freq)
         Pow = np.fliplr(Pow)
         x = y = np.linspace(smin, smax, nx)
