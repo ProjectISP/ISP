@@ -2,6 +2,8 @@ import math
 from PyQt5.QtCore import Qt
 from obspy import UTCDateTime
 from scipy import ndimage
+import pandas as pd
+from isp import ROOT_DIR
 from isp.DataProcessing import SeismogramDataAdvanced, ConvolveWaveletScipy
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Exceptions import InvalidFile
@@ -31,6 +33,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.__stations_dir = None
         self.__metadata_manager = None
         self.url="https://projectisp.github.io/ISP_tutorial.github.io/tf/"
+        # picks
+        self.picks = {'ID': [], 'Time': [], 'Amplitude': [], 'Phase': []}
         self.inventory = {}
         self._stations_info = {}
         self.tr1 = []
@@ -47,6 +51,9 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.canvas_plot1.mpl_connect('key_press_event', self.key_pressed)
         self.canvas_plot2.mpl_connect('key_press_event', self.key_pressed)
         self.canvas_plot3.mpl_connect('key_press_event', self.key_pressed)
+        self.canvas_plot1.on_double_click(self.on_click_matplotlib)
+        self.canvas_plot2.on_double_click(self.on_click_matplotlib)
+        self.canvas_plot3.on_double_click(self.on_click_matplotlib)
 
         self.root_path_bind = BindPyqtObject(self.rootPathForm, self.onChange_root_path)
         self.dataless_path_bind = BindPyqtObject(self.datalessPathForm)
@@ -756,6 +763,52 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
     def open_help(self):
         open_url(self.url)
 
+    # mouse actions
+
+    def on_click_matplotlib(self, event, canvas):
+        #self.picks = {'ID': [], 'Time': [], 'Amplitude': [], 'Phase': []}
+        selection = self.selectCB.currentText()
+        output_dir = os.path.join(ROOT_DIR, 'picks_timefreq')
+        output_path = os.path.join(ROOT_DIR, 'picks_timefreq', 'picks.txt')
+
+        if os.path.isdir(output_dir):
+            pass
+        else:
+            os.makedirs(output_dir)
+
+        if isinstance(canvas, MatplotlibCanvas):
+            x1, y1 = event.xdata, event.ydata
+
+            [tr, t] = self.get_data()
+            # Save in a dataframe the pick value
+            if selection == "Seismogram 1":
+                self.canvas_plot1.draw_arrow(x1, 0, arrow_label=self.pickCB.currentText(), color="red", linestyles='--', picker=False)
+
+            elif selection == "Seismogram 2":
+                self.canvas_plot2.draw_arrow(x1, 0, arrow_label=self.pickCB.currentText(), color="red", linestyles='--', picker=False)
+
+            elif selection == "Seismogram 3":
+                self.canvas_plot3.draw_arrow(x1, 0, arrow_label=self.pickCB.currentText(), color="red", linestyles='--', picker=False)
+
+            if not self.activate_xaxis:
+                tt = UTCDateTime(mdt.num2date(x1))
+            else:
+                tt = tr.stats.starttime + x1
+
+            diff = tt - tr.stats.starttime #
+
+            idx_amplitude = int(tr.stats.sampling_rate * diff)
+            amplitude = tr.data[idx_amplitude]
+
+            self.picks['ID'].append(tr.id)
+            self.picks['Time'].append(tt.isoformat()[:-5])
+            self.picks['Amplitude'].append(amplitude)
+            self.picks['Phase'].append(self.pickCB.currentText())
+
+            df = pd.DataFrame(self.picks)
+            print("Output Pick at: ", output_path)
+            print(df)
+            df.to_csv(output_path, index=False, header=True)
 
 
 

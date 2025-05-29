@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1542</width>
-    <height>806</height>
+    <height>778</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -131,29 +131,7 @@
         </item>
         <item>
          <layout class="QGridLayout" name="gridLayout_5">
-          <item row="4" column="2">
-           <widget class="QComboBox" name="time_frequencyCB">
-            <property name="toolTip">
-             <string>Select which signal processing method you want to apply</string>
-            </property>
-            <item>
-             <property name="text">
-              <string>No Time-Frequency Process Selected</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Continuous Wavelet Transform</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Multitaper Spectrogram</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="3" column="2">
+          <item row="3" column="3" colspan="2">
            <widget class="QComboBox" name="selectCB">
             <property name="toolTip">
              <string>Select Semogram 1 to Process and Plot (Upper Panel), Seismogram 2 (Lower Panel)</string>
@@ -175,24 +153,33 @@
             </item>
            </widget>
           </item>
-          <item row="7" column="0" colspan="2" alignment="Qt::AlignRight">
+          <item row="5" column="3">
            <widget class="QLabel" name="label_15">
             <property name="text">
              <string>Min level</string>
             </property>
            </widget>
           </item>
-          <item row="4" column="0" colspan="2" alignment="Qt::AlignHCenter">
-           <widget class="QCheckBox" name="time_frequencyChB">
-            <property name="toolTip">
-             <string>Check is you want to apply a signal processing method</string>
+          <item row="5" column="4">
+           <widget class="QDoubleSpinBox" name="minlevelCB">
+            <property name="decimals">
+             <number>0</number>
             </property>
-            <property name="text">
-             <string>Time-Frequency Analysis</string>
+            <property name="minimum">
+             <double>-900.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>0.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>-100.000000000000000</double>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
+          <item row="1" column="2">
            <widget class="QDateTimeEdit" name="starttime_date">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
@@ -205,7 +192,133 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="0" colspan="2">
+          <item row="0" column="2" alignment="Qt::AlignHCenter">
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>Start Time             </string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QCheckBox" name="trimCB">
+            <property name="text">
+             <string>Trim</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1" colspan="2">
+           <widget class="QPushButton" name="plotBtn">
+            <property name="toolTip">
+             <string>Process the methods set in the Macro and Plot. Warning: Be careful, Computationally very demanding (use fow relative small time windows i.e window &lt; 30 min)</string>
+            </property>
+            <property name="text">
+             <string>Process and Plot</string>
+            </property>
+            <property name="shortcut">
+             <string>W</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QRadioButton" name="radioBtnTime">
+              <property name="text">
+               <string>Time [s]</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="radioBtnDate">
+              <property name="text">
+               <string>Dates</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="4" column="2">
+           <widget class="QCheckBox" name="time_frequencyChB">
+            <property name="toolTip">
+             <string>Check is you want to apply a signal processing method</string>
+            </property>
+            <property name="text">
+             <string>Time-Frequency Analysis</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="2">
+           <widget class="QComboBox" name="colourCB">
+            <item>
+             <property name="text">
+              <string>jet</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>cool</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>hsv</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>coolwarm</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="0" column="3" colspan="2">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>           End Time    </string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3" colspan="2">
+           <widget class="QComboBox" name="time_frequencyCB">
+            <property name="toolTip">
+             <string>Select which signal processing method you want to apply</string>
+            </property>
+            <item>
+             <property name="text">
+              <string>Continuous Wavelet Transform</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Multitaper Spectrogram</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>Colour palettes</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3" colspan="2">
+           <widget class="QDateTimeEdit" name="endtime_date">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="displayFormat">
+             <string>yyyy/MM/dd hh:mm:ss UTC</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
            <widget class="QSlider" name="horizontalSlider">
             <property name="mouseTracking">
              <bool>true</bool>
@@ -236,41 +349,7 @@
             </property>
            </widget>
           </item>
-          <item row="6" column="0" colspan="2" alignment="Qt::AlignRight">
-           <widget class="QLabel" name="label_17">
-            <property name="text">
-             <string>Colour palettes</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QDateTimeEdit" name="endtime_date">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="displayFormat">
-             <string>yyyy/MM/dd hh:mm:ss UTC</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_12">
-            <property name="text">
-             <string>Start Time             </string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="label_13">
-            <property name="text">
-             <string>           End Time    </string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="2">
+          <item row="6" column="2">
            <widget class="QSpinBox" name="resSB">
             <property name="suffix">
              <string>                  Decimation Factor</string>
@@ -286,89 +365,54 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QCheckBox" name="trimCB">
+          <item row="6" column="4">
+           <widget class="QComboBox" name="pickCB">
+            <property name="currentText">
+             <string>P</string>
+            </property>
+            <item>
+             <property name="text">
+              <string>P</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Pn</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Pg</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>S</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sn</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Sg</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Lg</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="6" column="3">
+           <widget class="QLabel" name="label_2">
             <property name="text">
-             <string>Trim</string>
+             <string>Picking Phase</string>
             </property>
            </widget>
-          </item>
-          <item row="6" column="2">
-           <widget class="QComboBox" name="colourCB">
-            <item>
-             <property name="text">
-              <string>jet</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>cool</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>hsv</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>coolwarm</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="3" column="0" colspan="2">
-           <widget class="QPushButton" name="plotBtn">
-            <property name="toolTip">
-             <string>Process the methods set in the Macro and Plot. Warning: Be careful, Computationally very demanding (use fow relative small time windows i.e window &lt; 30 min)</string>
-            </property>
-            <property name="text">
-             <string>Process and Plot</string>
-            </property>
-            <property name="shortcut">
-             <string>W</string>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="2">
-           <widget class="QDoubleSpinBox" name="minlevelCB">
-            <property name="decimals">
-             <number>0</number>
-            </property>
-            <property name="minimum">
-             <double>-900.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>0.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>1.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>-100.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <layout class="QHBoxLayout" name="horizontalLayout">
-            <item>
-             <widget class="QRadioButton" name="radioBtnTime">
-              <property name="text">
-               <string>Time [s]</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="radioBtnDate">
-              <property name="text">
-               <string>Dates</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
           </item>
          </layout>
         </item>
