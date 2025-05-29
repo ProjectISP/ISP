@@ -22,7 +22,7 @@ class ActionEnum (enum.Enum):
     INTEGRATE = "integrate"
     SHIFT = "shift"
     REMOVE_RESPONSE = "remove response"
-    ADD_WHITE_NOISE = "add white noise"
+    ADD_NOISE = "add noise"
     WHITENING = "whitening"
     TNOR = "time normalization"
     WAVELET_DENOISE = "wavelet denoise"
@@ -354,11 +354,13 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             param_layout.addWidget(combo_param)
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
 
-        elif action is ActionEnum.ADD_WHITE_NOISE:
+        elif action is ActionEnum.ADD_NOISE:
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1,
-                                     pw.QTableWidgetItem(ActionEnum.ADD_WHITE_NOISE.value))
+                                     pw.QTableWidgetItem(ActionEnum.ADD_NOISE.value))
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 0, order_widget)
+            combo_param = pw.QComboBox()
+            combo_param.addItems(['white', 'pink', 'brown', 'blue', 'violet'])
             label_power_Db = pw.QLabel("Noise Power [db]")
             power = pw.QDoubleSpinBox()
             power.setMinimum(1)
@@ -368,6 +370,7 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
             if len(params) > 0:
                 power.setValue(params[0])
 
+            param_layout.addWidget(combo_param)
             param_layout.addWidget(label_power_Db)
             param_layout.addWidget(power)
             self.tableWidget.setCellWidget(self.tableWidget.rowCount() - 1, 2, param_widget)
@@ -675,7 +678,8 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
                 spin_value4 = self.tableWidget.cellWidget(i, 2).layout().itemAt(5).widget().value()
                 spin_value5 = self.tableWidget.cellWidget(i, 2).layout().itemAt(7).widget().value()
                 combo_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(9).widget().currentText()
-                parameters.append([action, spin_value1, spin_value2, spin_value3, spin_value4, spin_value5,combo_value])
+                parameters.append([action, spin_value1, spin_value2, spin_value3, spin_value4, spin_value5,
+                                   combo_value])
 
             elif (action == ActionEnum.DIFFERENTIATE.value):
                 combo_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(0).widget().currentText()
@@ -685,9 +689,10 @@ class ParametersSettings(pw.QDialog, UiParametersFrame):
                 combo_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(0).widget().currentText()
                 parameters.append([action, combo_value])
 
-            elif (action == ActionEnum.ADD_WHITE_NOISE.value):
-                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()
-                parameters.append([action, spin_value1])
+            elif (action == ActionEnum.ADD_NOISE.value):
+                spin_value1 = self.tableWidget.cellWidget(i, 2).layout().itemAt(2).widget().value()
+                combo_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(0).widget().currentText()
+                parameters.append([action, combo_value, spin_value1])
 
             elif (action == ActionEnum.WHITENING.value):
                 spin_value = self.tableWidget.cellWidget(i, 2).layout().itemAt(1).widget().value()

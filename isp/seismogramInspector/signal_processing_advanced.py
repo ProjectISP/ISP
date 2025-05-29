@@ -430,6 +430,80 @@ def add_white_noise(tr, SNR_dB):
     return tr
 
 
+def add_frequency_domain_noise(trace, noise_type='white', SNR_dB=None, seed=None):
+    """
+    Adds white or colored noise (frequency-shaped) to an ObsPy Trace.
+
+    Parameters:
+    ----------
+    trace : obspy.Trace
+        Trace object to which noise will be added (in-place).
+    noise_type : str
+        Type of noise: 'white', 'pink', 'brown', 'blue' or 'violet'.
+    exponent : float
+        Exponent for custom noise: noise PSD ~ 1/f^exponent (used if noise_type='custom').
+        Examples:
+            - white  → 0
+            - pink   → 1
+            - brown  → 2
+            - blue   → -1
+            - violet → -2
+    SNR_dB : float or None
+        If given, the noise will be scaled to achieve the specified signal-to-noise ratio in dB.
+    seed : int or None
+        Seed for reproducibility.
+
+    Returns:
+    --------
+    trace : obspy.Trace
+        Trace object with added noise.
+    """
+
+    if seed is not None:
+        np.random.seed(seed)
+
+    # Get signal parameters
+    npts = len(trace.data)
+    delta = trace.stats.delta
+    signal = trace.data.astype(np.float64)
+    freqs = np.fft.rfftfreq(npts, d=delta)
+
+    # Choose exponent from predefined types
+    type_to_exponent = {
+        'white': 0,
+        'pink': 1,
+        'brown': 2,
+        'blue': -1,
+        'violet': -2
+    }
+
+    if noise_type not in type_to_exponent:
+        raise ValueError(f"Unsupported noise type: {noise_type}")
+
+    alpha = type_to_exponent[noise_type]
+
+    # Generate white noise
+    white = np.random.randn(npts)
+    white_fft = np.fft.rfft(white)
+
+    # Shape the spectrum
+    scale = np.where(freqs == 0, 1.0, freqs ** (alpha / 2))
+    shaped_fft = white_fft / scale
+
+    # Back to time domain
+    noise = np.fft.irfft(shaped_fft, n=npts)
+
+    # Match SNR if requested
+    if SNR_dB is not None:
+        signal_power = np.mean(signal**2)
+        noise_power = np.mean(noise**2)
+        target_noise_power = signal_power / (10 ** (SNR_dB / 10))
+        noise *= np.sqrt(target_noise_power / noise_power)
+
+    # Add to trace
+    trace.data = signal + noise
+    return trace
+
 def downsample_trace(trace, factor=10):
     """
     Downsamples an ObsPy Trace by selecting every `factor`-th sample,
@@ -442,7 +516,7 @@ def downsample_trace(trace, factor=10):
     Returns:
         obspy.Trace: Downsampled trace with corrected metadata.
     """
-    original_npts = trace.stats.npts
+
     downsampled_data = trace.data[::factor]
 
     # Compute new stats
@@ -1015,6 +1089,36 @@ def spectral_derivative(trace, taper_pct=0.05, taper_type="cosine", pad_to_pow2=
 
     return tr
 
+def safe_downsample(trace, target_rate, max_factor=10, pre_filter=True, tolerance=0.01):
+    """
+    Downsample a trace to target_rate in steps, applying filtering.
+
+    Parameters:
+    - trace: ObsPy Trace object
+    - target_rate: Final desired sampling rate (Hz)
+    - max_factor: Maximum downsample ratio per step (e.g., 10)
+    - pre_filter: Apply anti-aliasing lowpass filter before each step
+    - tolerance: Allowable fractional difference from target_rate
+    """
+    from obspy import Trace
+    import copy
+
+    tr = trace.copy()
+
+    while tr.stats.sampling_rate > target_rate * (1 + tolerance):
+        current_rate = tr.stats.sampling_rate
+        factor = min(current_rate / target_rate, max_factor)
+        new_rate = current_rate / factor
+        f_nyquist = new_rate * 0.5
+
+        if pre_filter:
+            tr.detrend("demean")
+            tr.taper(max_percentage=0.05, type="hamming")
+            tr.filter("lowpass", freq=0.9 * f_nyquist, corners=4, zerophase=True)
+
+        tr.resample(new_rate)
+
+    return tr
 
 # def hampel_old(tr, window_size=5, n=3, imputation=True):
 #

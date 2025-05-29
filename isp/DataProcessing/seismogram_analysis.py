@@ -9,8 +9,8 @@ try:
     from isp.cython_code.hampel import hampel
 except:
     print("warning cannot import cython compiled hampel")
-from isp.seismogramInspector.signal_processing_advanced import add_white_noise, whiten, normalize, wavelet_denoise, \
-    smoothing, wiener_filter, downsample_trace, spectral_integration, spectral_derivative
+from isp.seismogramInspector.signal_processing_advanced import add_frequency_domain_noise, whiten, normalize, wavelet_denoise, \
+    smoothing, wiener_filter, downsample_trace, spectral_integration, spectral_derivative, safe_downsample
 
 
 @unique
@@ -272,11 +272,11 @@ class SeismogramDataAdvanced:
                         print("Coudn't deconvolve", tr.stats)
                         tr.data = np.array([])
 
-            if parameters[j][0] == 'add white noise':
-                tr = add_white_noise(tr,parameters[j][1])
+            if parameters[j][0] == 'add noise':
+                tr = add_frequency_domain_noise(tr, noise_type=parameters[j][1], SNR_dB=parameters[j][2])
 
             if parameters[j][0] == 'whitening':
-                tr = whiten(tr, parameters[j][1], taper_edge = parameters[j][2])
+                tr = whiten(tr, parameters[j][1], taper_edge=parameters[j][2])
                 
             if parameters[j][0] == 'remove spikes':
                 filtered, outliers, medians, mads, thresholds = hampel(tr.data, parameters[j][1]*tr.stats.sampling_rate, parameters[j][2])
@@ -288,7 +288,8 @@ class SeismogramDataAdvanced:
                 tr = wavelet_denoise(tr, dwt = parameters[j][1], threshold=parameters[j][2])
 
             if parameters[j][0] == 'resample':
-                tr.resample(sampling_rate=parameters[j][1],window='hanning',no_filter=parameters[j][2])
+                #tr.resample(sampling_rate=parameters[j][1], window='hanning', no_filter=parameters[j][2])
+                tr = safe_downsample(tr, parameters[j][1], pre_filter=parameters[j][2])
 
             if parameters[j][0] == 'resample_simple':
                 tr = downsample_trace(tr, factor=parameters[j][1])
