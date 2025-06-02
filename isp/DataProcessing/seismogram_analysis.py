@@ -288,8 +288,12 @@ class SeismogramDataAdvanced:
                 tr = wavelet_denoise(tr, dwt = parameters[j][1], threshold=parameters[j][2])
 
             if parameters[j][0] == 'resample':
-                #tr.resample(sampling_rate=parameters[j][1], window='hanning', no_filter=parameters[j][2])
-                tr = safe_downsample(tr, parameters[j][1], pre_filter=parameters[j][2])
+                if tr.stats.sampling_rate < parameters[j][1]:
+                    tr.resample(sampling_rate=parameters[j][1], window='hanning', no_filter=parameters[j][2])
+                elif tr.stats.sampling_rate > parameters[j][1]:
+                    tr = safe_downsample(tr, parameters[j][1], pre_filter=parameters[j][2])
+                else:
+                    pass
 
             if parameters[j][0] == 'resample_simple':
                 tr = downsample_trace(tr, factor=parameters[j][1])
