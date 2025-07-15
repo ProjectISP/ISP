@@ -242,13 +242,14 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
     def stack(self):
         self.params = self.settings_dialog.getParameters()
         channels = self.params["channels"]
+        stations = self.params["stations"]
         stack_method = self.params["stack"]
         power = self.params["power"]
         autocorr = self.params["autocorr"]
         min_distance = self.params["max_distance"]
         dailyStacks = self.params["dailyStacks"]
         overlap = self.params["overlap"]
-        stack = noisestack(self.output_bind.value, channels, stack_method, power, autocorr=autocorr,
+        stack = noisestack(self.output_bind.value, stations, channels, stack_method, power, autocorr=autocorr,
                            min_distance=min_distance, dailyStacks=dailyStacks, overlap=overlap)
 
         stack.run_cross_stack()

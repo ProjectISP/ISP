@@ -13,9 +13,11 @@ from obspy.geodetics import gps2dist_azimuth
 from isp.ant.process_ant import clock_process
 import gc
 
+
 class noisestack:
 
-    def __init__(self, output_files_path, channels, stack, power, autocorr, min_distance, dailyStacks, overlap):
+    def __init__(self, output_files_path, stations, channels, stack, power, autocorr, min_distance,
+                 dailyStacks, overlap):
 
         """
                 Process ANT, Cross + Stack
@@ -26,6 +28,7 @@ class noisestack:
         self.__metadata_manager = None
         self.output_files_path = output_files_path
         self.channel = channels
+        self.stations_whitelist = stations
         self.stack = stack
         self.power = power
         self.year = 2000
@@ -34,10 +37,10 @@ class noisestack:
         self.dailyStacks = dailyStacks
         self.overlap = overlap
 
-
     def check_file(self, filename):
 
         return os.path.isfile(filename)
+
     def check_path(self):
 
         self.stack_files_path = os.path.join(self.output_files_path, "stack")
@@ -45,18 +48,16 @@ class noisestack:
         self.stack_daily_files_path = os.path.join(self.output_files_path, "stack_daily")
 
         if not os.path.exists(self.stack_files_path):
-           os.makedirs(self.stack_files_path)
+            os.makedirs(self.stack_files_path)
 
         if not os.path.exists(self.stack_rotated_files_path):
-
             os.makedirs(self.stack_rotated_files_path)
 
         if not os.path.exists(self.stack_daily_files_path):
-
             os.makedirs(self.stack_daily_files_path)
 
-    # Ficheros de datos
-        #self.pickle_files = [pickle_file for pickle_file in os.listdir(self.output_files_path) if self.channel in pickle_file]
+        # Ficheros de datos
+        # self.pickle_files = [pickle_file for pickle_file in os.listdir(self.output_files_path) if self.channel in pickle_file]
         self.pickle_files = []
         for pickle_file in os.listdir(self.output_files_path):
             for jj in range(len(self.channel)):
@@ -67,7 +68,6 @@ class noisestack:
         for pickle_file in os.listdir(self.stack_files_path):
             for jj in range(len(self.channel)):
                 self.stack_files_path_done.append(pickle_file)
-
 
     # Para cada pareja de ficheros, se cargan los ficheros y se multiplican las matrices de datos que contienen, sólo en los días comunes
     # Indices i,j: se refieren a ficheros de datos file_i, file_j que contiene las matrices que se multiplicarán.
@@ -96,6 +96,7 @@ class noisestack:
     def hard_process_simple_parallel(self, i):
         file_i = self.pickle_files[i]
         x_station = len(file_i) - 3
+
         try:
             if file_i[-1] in ["N", "E", "X", "Y", "1", "2"]:
                 key1_i = "data_matrix" + "_" + file_i[-1]
@@ -110,7 +111,13 @@ class noisestack:
                 y_station = len(file_j) - 3
                 filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + \
                            file_j[-1]
-                if filename not in self.stack_files_path_done:
+                if (
+                        filename not in self.stack_files_path_done
+                        and (
+                        not self.stations_whitelist  # no whitelist = allow all
+                        or x_station in self.stations_whitelist
+                        or y_station in self.stations_whitelist
+                )):
                     if i < j:
                         if file_j[-1] in ["N", "E", "X", "Y", "1", "2"]:
                             key1_j = "data_matrix" + "_" + file_j[-1]
@@ -138,7 +145,6 @@ class noisestack:
                                 normalization = "PCC"
                             else:
                                 normalization = "CC"
-
 
                             # 28-05-2024, important 2n - 1
                             cross_length = int(dict_matrix_file_i["data_length"] +
@@ -169,7 +175,7 @@ class noisestack:
                             self.sampling_rate = metadata_list_file_i[0][0][0].sample_rate
 
                             dist, bazim, azim = self.__coords2azbazinc(lat_i, lon_i, lat_j, lon_j)
-                            if (dist/1000) <= self.min_dist:
+                            if (dist / 1000) <= self.min_dist:
 
                                 # Lista de días de cada fichero
                                 print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
@@ -186,19 +192,21 @@ class noisestack:
                                     # refress date_list without repeated days
                                     if len(elements_i_to_delete) > 0:
                                         index_set = set(elements_i_to_delete)
-                                        date_list_file_i_common = [x for i, x in enumerate(date_list_file_i) if i not in index_set]
+                                        date_list_file_i_common = [x for i, x in enumerate(date_list_file_i) if
+                                                                   i not in index_set]
                                     else:
                                         date_list_file_i_common = date_list_file_i
 
-
                                     if len(elements_j_to_delete) > 0:
                                         index_set = set(elements_j_to_delete)
-                                        date_list_file_j_common = [x for i, x in enumerate(date_list_file_j) if i not in index_set]
+                                        date_list_file_j_common = [x for i, x in enumerate(date_list_file_j) if
+                                                                   i not in index_set]
                                     else:
                                         date_list_file_j_common = date_list_file_j
 
                                     # eliminate non common days
-                                    common_dates_list = [value for value in date_list_file_i_common if value in date_list_file_j_common]
+                                    common_dates_list = [value for value in date_list_file_i_common if
+                                                         value in date_list_file_j_common]
 
                                     for date_i in date_list_file_i:
                                         if (not date_i in common_dates_list):
@@ -206,7 +214,8 @@ class noisestack:
                                             elements_i_to_delete.append(date_list_file_i.index(date_i))
 
                                     if len(elements_i_to_delete) > 0:
-                                        data_matrix_file_i_corr = np.delete(data_matrix_file_i_corr, elements_i_to_delete, 1)
+                                        data_matrix_file_i_corr = np.delete(data_matrix_file_i_corr,
+                                                                            elements_i_to_delete, 1)
 
                                     for date_j in date_list_file_j:
                                         if (not date_j in common_dates_list):
@@ -214,7 +223,8 @@ class noisestack:
                                             elements_j_to_delete.append(date_list_file_j.index(date_j))
 
                                     if len(elements_j_to_delete) > 0:
-                                        data_matrix_file_j_corr = np.delete(data_matrix_file_j_corr, elements_j_to_delete, 1)
+                                        data_matrix_file_j_corr = np.delete(data_matrix_file_j_corr,
+                                                                            elements_j_to_delete, 1)
 
                                     # ###########
                                     # Correlación: multiplicación de matrices elemento a elemento
@@ -223,8 +233,10 @@ class noisestack:
                                     # introduce sort matrix columns
                                     ######
                                     common_dates_list, old_index, new_index = self.sort_dates(common_dates_list)
-                                    data_matrix_file_i_corr[:, [old_index], :] = data_matrix_file_i_corr[:, [new_index], :]
-                                    data_matrix_file_j_corr[:, [old_index], :] = data_matrix_file_j_corr[:, [new_index], :]
+                                    data_matrix_file_i_corr[:, [old_index], :] = data_matrix_file_i_corr[:, [new_index],
+                                                                                 :]
+                                    data_matrix_file_j_corr[:, [old_index], :] = data_matrix_file_j_corr[:, [new_index],
+                                                                                 :]
                                     corr_ij_freq = data_matrix_file_i_corr * np.conj(data_matrix_file_j_corr)
                                     ######
 
@@ -273,7 +285,8 @@ class noisestack:
                                             pass
 
                                     if self.stack == "nrooth":
-                                        corr_ij_time = (np.abs(corr_ij_time) ** (1 / self.power)) * np.sign(corr_ij_time)
+                                        corr_ij_time = (np.abs(corr_ij_time) ** (1 / self.power)) * np.sign(
+                                            corr_ij_time)
                                         c_stack = np.sum(np.sum(corr_ij_time, axis=1), axis=0) / size_2d_all
 
                                     elif self.stack == "Linear":
@@ -284,15 +297,15 @@ class noisestack:
 
                                         # estimate the analytic function and then the instantaneous phase matrix
                                         # analytic_signal = np.zeros((size_1d, size_2d, size_3d), dtype=np.complex64)
-                                    #if normalization == "CC":
+                                        # if normalization == "CC":
                                         f, c, d = corr_ij_freq.shape
-                                        dim_full = 2*d-1
+                                        dim_full = 2 * d - 1
                                         non_real_dim = (dim_full - d)
 
-                                        c = np.zeros((f, c,  non_real_dim), dtype=np.complex64)
+                                        c = np.zeros((f, c, non_real_dim), dtype=np.complex64)
                                         signal_rfft_mod = np.concatenate((corr_ij_freq, c), axis=2)
                                         signal_rfft_mod[((non_real_dim // 2) + 1):] = signal_rfft_mod[((non_real_dim
-                                                                                            // 2) + 1):] * 0
+                                                                                                        // 2) + 1):] * 0
                                         signal_rfft_mod[1:non_real_dim // 2] = 2 * signal_rfft_mod[1:non_real_dim // 2]
 
                                         # Generate the analytic function matrix
@@ -318,7 +331,7 @@ class noisestack:
                                         # this point proceed to the PWS
                                         phase_stack = (np.abs(phase_stack)) ** self.power
                                         c_stack = c_stack * phase_stack
-                                        c_stack = (c_stack*c_stack_max)/np.max(c_stack)
+                                        c_stack = (c_stack * c_stack_max) / np.max(c_stack)
 
                                     # c_stack par, impar ...
                                     # num = len(c_stack)
@@ -332,7 +345,6 @@ class noisestack:
                                     #
                                     # c_stack = np.roll(c_stack, c)
 
-
                                     print("stack[" + str(i) + "," + str(j) + "]:")
                                     # print(c_stack)
 
@@ -340,11 +352,11 @@ class noisestack:
                                     # print(metadata_list_file_i)
                                     # print(metadata_list_file_j)
                                     stats = {}
-                                    x_station = len(file_i)-3
-                                    y_station = len(file_j)-3
+                                    x_station = len(file_i) - 3
+                                    y_station = len(file_j) - 3
                                     stats['network'] = file_i[:2]
                                     stats['station'] = file_i[2:x_station] + "_" + file_j[2:y_station]
-                                    stats['channel'] = file_i[-1]+file_j[-1]
+                                    stats['channel'] = file_i[-1] + file_j[-1]
                                     stats['sampling_rate'] = self.sampling_rate
                                     stats['npts'] = len(c_stack)
                                     stats['mseed'] = {'dataquality': 'D', 'geodetic': [dist, bazim, azim],
@@ -354,7 +366,9 @@ class noisestack:
                                     # stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
                                     st = Stream([Trace(data=c_stack, header=stats)])
                                     # Nombre del fichero = XT.STA1_STA2.ZE
-                                    filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + file_j[-1]
+                                    filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[
+                                                                                              2:y_station] + "." + \
+                                               file_i[-1] + file_j[-1]
                                     path_name = os.path.join(self.stack_files_path, filename)
                                     print(path_name)
                                     st.write(path_name, format='H5')
@@ -377,7 +391,8 @@ class noisestack:
                                 del metadata_list_file_i
                                 del metadata_list_file_j
                                 gc.collect()
-                                print("Excluded cross correlations for being out of maximum distance ", dist*1E-3, "<", self.min_dist)
+                                print("Excluded cross correlations for being out of maximum distance ", dist * 1E-3,
+                                      "<", self.min_dist)
         except:
             print("Something went wrong at:", file_i)
 
@@ -398,7 +413,13 @@ class noisestack:
                 y_station = len(file_j) - 3
                 filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + \
                            file_j[-1]
-                if filename not in self.stack_files_path_done:
+                if (
+                        filename not in self.stack_files_path_done
+                        and (
+                        not self.stations_whitelist  # no whitelist = allow all
+                        or x_station in self.stations_whitelist
+                        or y_station in self.stations_whitelist
+                )):
                     if file_j[-1] in ["N", "E", "X", "Y", "1", "2"]:
                         key1_j = "data_matrix" + "_" + file_j[-1]
                         key2_j = 'metadata_list' + "_" + file_j[-1]
@@ -457,12 +478,11 @@ class noisestack:
 
                         dist, bazim, azim = self.__coords2azbazinc(lat_i, lon_i, lat_j, lon_j)
 
-                        if (dist/1000) <= self.min_dist:
+                        if (dist / 1000) <= self.min_dist:
 
                             # Lista de días de cada fichero
                             print("dict_matrix_file_i['date_list']: " + str(date_list_file_i))
                             print("dict_matrix_file_j['date_list']: " + str(date_list_file_j))
-
 
                             if (len(date_list_file_i) > 0 and len(date_list_file_j) > 0):
                                 date_list_file_i = self.check_header(date_list_file_i)
@@ -506,8 +526,8 @@ class noisestack:
                                         elements_j_to_delete.append(date_list_file_j.index(date_j))
 
                                 if len(elements_j_to_delete) > 0:
-                                    data_matrix_file_j_corr = np.delete(data_matrix_file_j_corr, elements_j_to_delete, 1)
-
+                                    data_matrix_file_j_corr = np.delete(data_matrix_file_j_corr, elements_j_to_delete,
+                                                                        1)
 
                                 # ###########
                                 # Correlación: multiplicación de matrices elemento a elemento
@@ -618,7 +638,7 @@ class noisestack:
                                 #     #print(“The providednumber is odd”)
                                 #     c = int(np.ceil((num + 1)/2))
 
-                                #c_stack = np.roll(c_stack, c)
+                                # c_stack = np.roll(c_stack, c)
                                 print("stack[" + str(i) + "," + str(j) + "]:")
                                 # print(c_stack)
 
@@ -630,7 +650,7 @@ class noisestack:
                                 y_station = len(file_j) - 3
                                 stats['network'] = file_i[:2]
                                 stats['station'] = file_i[2:x_station] + "_" + file_j[2:y_station]
-                                stats['channel'] = file_i[-1]+file_j[-1]
+                                stats['channel'] = file_i[-1] + file_j[-1]
                                 stats['sampling_rate'] = self.sampling_rate
                                 stats['npts'] = len(c_stack)
 
@@ -641,8 +661,9 @@ class noisestack:
                                 # stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
                                 st = Stream([Trace(data=c_stack, header=stats)])
                                 # Nombre del fichero = XT.STA1_STA2.BHZE
-                                filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + file_i[-1] + file_j[
-                                    -1]
+                                filename = file_i[:2] + "." + file_i[2:x_station] + "_" + file_j[2:y_station] + "." + \
+                                           file_i[-1] + file_j[
+                                               -1]
                                 path_name = os.path.join(self.stack_files_path, filename)
                                 print(path_name)
                                 st.write(path_name, format='H5')
@@ -688,11 +709,10 @@ class noisestack:
         if len(date_check[0]) == 4:
             for index, element in enumerate(list_files):
                 check_elem = element.split(".")
-                date = check_elem[1]+"."+check_elem[0]
+                date = check_elem[1] + "." + check_elem[0]
                 list_files_new.append(date)
         else:
             list_files_new = list_files
-
 
         return list_files_new
 
@@ -710,11 +730,10 @@ class noisestack:
                     elements_to_delete.append(index)
                 #    elements_to_delete.append(listOfElems[index])
 
-
         return elements_to_delete
 
     def rotate_horizontals(self):
-        #self.check_path()
+        # self.check_path()
 
         obsfiles = self.list_directory(self.stack_files_path)
         station_list = self.list_stations(self.stack_files_path)
@@ -737,10 +756,9 @@ class noisestack:
                         station_i = tr.stats.station
 
                         chn = tr.stats.mseed['cross_channels']
-                        #tr.stats['mseed']
+                        # tr.stats['mseed']
 
                         if station_i == station_pair and chn in channel_check:
-
                             data = tr.data
                             matrix_data["net"] = tr.stats.network
                             matrix_data[chn] = data
@@ -755,7 +773,6 @@ class noisestack:
             def_rotated["rotated_matrix"] = self.__rotate(matrix_data)
 
             if len(matrix_data) > 0 and def_rotated["rotated_matrix"] is not None:
-
                 def_rotated["geodetic"] = matrix_data['geodetic']
                 def_rotated["net"] = matrix_data["net"]
                 def_rotated["station_pair"] = station_pair
@@ -807,7 +824,7 @@ class noisestack:
                                 data.append(tr.data)
                             matrix_data[chn] = data
 
-                                # method to rotate the dictionary
+                            # method to rotate the dictionary
                     except:
                         pass
 
@@ -815,7 +832,6 @@ class noisestack:
 
                 try:
                     if len(matrix_data) > 0 and len(def_rotated["rotated_matrix"]) > 0:
-
                         def_rotated["geodetic"] = matrix_data['geodetic']
                         def_rotated["net"] = matrix_data["net"]
                         def_rotated["station_pair"] = station_pair
@@ -830,8 +846,6 @@ class noisestack:
                         print(station_pair, "saved")
                 except:
                     print("Coudn't save ", station_pair)
-
-
 
     def __validation(self, data_matrix, specific=False):
 
@@ -865,7 +879,6 @@ class noisestack:
 
         return check, dims
 
-
     def __rotate(self, data_matrix):
 
         rotated = None
@@ -879,7 +892,6 @@ class noisestack:
             data_array_ne[:, 1, 0] = data_matrix["EN"][:]
             data_array_ne[:, 2, 0] = data_matrix["NN"][:]
             data_array_ne[:, 3, 0] = data_matrix["NE"][:]
-
 
             rotate_matrix = self.__generate_matrix_rotate(data_matrix['geodetic'], dim)
 
@@ -911,24 +923,24 @@ class noisestack:
 
     def __generate_matrix_rotate(self, geodetic, dim):
 
-        baz = geodetic[1]*np.pi/180
-        az = geodetic[2]*np.pi/180
+        baz = geodetic[1] * np.pi / 180
+        az = geodetic[2] * np.pi / 180
 
-        rotate_matrix = np.zeros((4,4))
-        rotate_matrix[0, 0] = -1*np.cos(az)*np.cos(baz)
-        rotate_matrix[0, 1] = np.cos(az)*np.sin(baz)
-        rotate_matrix[0, 2] = -1*np.sin(az)*np.sin(baz)
-        rotate_matrix[0, 3] = np.sin(az)*np.cos(baz)
+        rotate_matrix = np.zeros((4, 4))
+        rotate_matrix[0, 0] = -1 * np.cos(az) * np.cos(baz)
+        rotate_matrix[0, 1] = np.cos(az) * np.sin(baz)
+        rotate_matrix[0, 2] = -1 * np.sin(az) * np.sin(baz)
+        rotate_matrix[0, 3] = np.sin(az) * np.cos(baz)
 
-        rotate_matrix[1, 0] = -1*np.sin(az)*np.sin(baz)
-        rotate_matrix[1, 1] = -1*np.sin(az)*np.cos(baz)
-        rotate_matrix[1, 2] = -1*np.cos(az)*np.cos(baz)
-        rotate_matrix[1, 3] = -1*np.cos(az)*np.sin(baz)
+        rotate_matrix[1, 0] = -1 * np.sin(az) * np.sin(baz)
+        rotate_matrix[1, 1] = -1 * np.sin(az) * np.cos(baz)
+        rotate_matrix[1, 2] = -1 * np.cos(az) * np.cos(baz)
+        rotate_matrix[1, 3] = -1 * np.cos(az) * np.sin(baz)
 
-        rotate_matrix[2, 0] = -1 * np.cos(az)*np.sin(baz)
-        rotate_matrix[2, 1] = -1 * np.cos(az)*np.cos(baz)
-        rotate_matrix[2, 2] = np.sin(az)*np.cos(baz)
-        rotate_matrix[2, 3] = np.sin(az)*np.sin(baz)
+        rotate_matrix[2, 0] = -1 * np.cos(az) * np.sin(baz)
+        rotate_matrix[2, 1] = -1 * np.cos(az) * np.cos(baz)
+        rotate_matrix[2, 2] = np.sin(az) * np.cos(baz)
+        rotate_matrix[2, 3] = np.sin(az) * np.sin(baz)
 
         rotate_matrix[3, 0] = -1 * np.sin(az) * np.cos(baz)
         rotate_matrix[3, 1] = np.sin(az) * np.sin(baz)
@@ -939,16 +951,15 @@ class noisestack:
 
         return rotate_matrix
 
-
     def list_stations(self, path):
-        stations =[]
+        stations = []
         files = self.list_directory(path)
         for file in files:
             try:
                 st = read(file)
                 name = st[0].stats.station
                 info = name.split("_")
-                flip_name = info[1]+"_"+info[0]
+                flip_name = info[1] + "_" + info[0]
                 if name not in stations and flip_name not in stations and info[0] != info[1]:
                     stations.append(name)
             except:
@@ -973,9 +984,8 @@ class noisestack:
 
         return stations
 
-
     def __coords2azbazinc(self, station1_latitude, station1_longitude, station2_latitude,
-                        station2_longitude):
+                          station2_longitude):
 
         """
         Returns azimuth, backazimuth and incidence angle from station coordinates
@@ -987,7 +997,6 @@ class noisestack:
                                              station2_longitude)
         return dist, bazim, azim
 
-
     def info_extract_name(self, path):
         name = os.path.basename(path)
         info = name.split("_")
@@ -997,7 +1006,7 @@ class noisestack:
         sta1 = list1[1]
         sta2 = list2[0]
         channels = list2[1]
-        return net,sta1,sta2,channels
+        return net, sta1, sta2, channels
 
     def save_rotated(self, def_rotated):
         stats = {}
@@ -1007,20 +1016,19 @@ class noisestack:
         stats['sampling_rate'] = def_rotated['sampling_rate']
         j = 0
         for chn in channels:
-
             stats['channel'] = chn
-            stats['npts'] = len(def_rotated["rotated_matrix"][:,j,0])
+            stats['npts'] = len(def_rotated["rotated_matrix"][:, j, 0])
             stats['mseed'] = {'dataquality': 'D', 'geodetic': def_rotated["geodetic"],
                               'cross_channels': def_rotated["station_pair"], 'coordinates': def_rotated['coordinates']}
             stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
             # stats['info'] = {'geodetic': [dist, bazim, azim],'cross_channels':file_i[-1]+file_j[-1]}
-            st = Stream([Trace(data=def_rotated["rotated_matrix"][:,j,0], header=stats)])
+            st = Stream([Trace(data=def_rotated["rotated_matrix"][:, j, 0], header=stats)])
             # Nombre del fichero = XT.STA1_STA2.BHZE
             filename = def_rotated["net"] + "." + def_rotated["station_pair"] + "." + chn
             path_name = os.path.join(self.stack_rotated_files_path, filename)
             print(path_name)
             st.write(path_name, format='H5')
-            j = j+1
+            j = j + 1
 
     def save_rotated_specific(self, def_rotated):
 
@@ -1034,26 +1042,24 @@ class noisestack:
         for i, chn in enumerate(channels):
             stack_partial = []
             stats['channel'] = chn
-            #stats['npts'] = len(def_rotated["rotated_matrix"][:, j, 0][0])
+            # stats['npts'] = len(def_rotated["rotated_matrix"][:, j, 0][0])
             stats['mseed'] = {'dataquality': 'D', 'geodetic': def_rotated["geodetic"],
-                          'cross_channels': def_rotated["station_pair"], "coordinates": def_rotated['coordinates']}
+                              'cross_channels': def_rotated["station_pair"], "coordinates": def_rotated['coordinates']}
             stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
 
             for iter in def_rotated["rotated_matrix"]:
-
                 data = iter[:, i, 0]
                 stack_partial.append(Trace(data=data, header=stats))
 
             st = Stream(stack_partial)
             # Nombre del fichero = XT.STA1_STA2.BHZE
-            filename = def_rotated["net"] + "." + def_rotated["station_pair"] + "." + chn+"_"+"daily"
+            filename = def_rotated["net"] + "." + def_rotated["station_pair"] + "." + chn + "_" + "daily"
             path_name = os.path.join(self.stack_daily_files_path, filename)
             print(path_name)
             data_to_save = {"dates": def_rotated['dates'], "stream": st}
 
             file_to_store = open(path_name, "wb")
             pickle.dump(data_to_save, file_to_store)
-
 
         # j = 0
         # for chn in channels:
@@ -1083,19 +1089,18 @@ class noisestack:
             julday = date[0]
             year = date[1]
             if year not in years.keys():
-                years[year] = [julday+"."+year]
+                years[year] = [julday + "." + year]
             else:
-                years[year].append(julday+"."+year)
+                years[year].append(julday + "." + year)
 
         for keys in years:
             date_index = years[keys]
             date_index = sorted(date_index, key=float)
-            all_years = all_years+date_index
+            all_years = all_years + date_index
 
         old_index, new_index = self.help_swap(all_years, list_iterate)
 
         return all_years, old_index, new_index
-
 
     def help_swap(self, sort_list, raw_list):
 
