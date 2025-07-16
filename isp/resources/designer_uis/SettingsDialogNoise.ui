@@ -109,6 +109,11 @@
           </property>
           <item>
            <property name="text">
+            <string>300</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
             <string>900</string>
            </property>
           </item>
