@@ -65,6 +65,7 @@ dependencies:
       - nvector==1.0.1
       - oauthlib==3.2.2
       - obspy==1.4.1
+      - obspyh5==0.6.0
       - opt-einsum==3.4.0
       - owslib==0.31.0
       - packaging==24.2
