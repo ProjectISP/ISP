@@ -86,7 +86,7 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.radioBtnTime.clicked.connect(lambda: setattr(self, 'activate_xaxis', True))
         self.radioBtnDate.clicked.connect(lambda: setattr(self, 'activate_xaxis', False))
 
-
+        self.time_frequencyCB.currentTextChanged.connect(self.hilight_params)
         # Resolution
         # Based on 100 Hz,
         self.very_low_res = 100*3600*0.5
@@ -102,6 +102,13 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
         self.progress_dialog.setWindowIcon(self.windowIcon())
         self.progress_dialog.setWindowTitle(self.windowTitle())
         self.progress_dialog.close()
+
+    def hilight_params(self):
+        selection = self.time_frequencyCB.currentText()
+        if selection == "Multitaper Spectrogram":
+            self.tabWidget.setCurrentIndex(0)
+        elif selection == "Continuous Wavelet Transform":
+            self.tabWidget.setCurrentIndex(1)
 
     def valueChanged(self):
         self.resSB.setValue(self.horizontalSlider.value())

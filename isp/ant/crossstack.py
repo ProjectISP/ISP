@@ -115,8 +115,8 @@ class noisestack:
                         filename not in self.stack_files_path_done
                         and (
                         not self.stations_whitelist  # no whitelist = allow all
-                        or x_station in self.stations_whitelist
-                        or y_station in self.stations_whitelist
+                        or file_i[2:x_station] in self.stations_whitelist
+                        or file_j[2:y_station] in self.stations_whitelist
                 )):
                     if i < j:
                         if file_j[-1] in ["N", "E", "X", "Y", "1", "2"]:
@@ -417,8 +417,8 @@ class noisestack:
                         filename not in self.stack_files_path_done
                         and (
                         not self.stations_whitelist  # no whitelist = allow all
-                        or x_station in self.stations_whitelist
-                        or y_station in self.stations_whitelist
+                        or file_i[2:x_station] in self.stations_whitelist
+                        or file_j[2:y_station] in self.stations_whitelist
                 )):
                     if file_j[-1] in ["N", "E", "X", "Y", "1", "2"]:
                         key1_j = "data_matrix" + "_" + file_j[-1]
