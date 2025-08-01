@@ -97,7 +97,7 @@ dependencies:
       - six==1.17.0
       - sourcespec==1.7
       - sqlalchemy==1.4.54
-      - surfquake==0.1.1
+      - surfquake==0.1.2
       - tensorboard==2.15.2
       - tensorboard-data-server==0.7.2
       - tensorflow==2.15.1
