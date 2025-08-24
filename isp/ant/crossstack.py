@@ -393,6 +393,8 @@ class noisestack:
                                 gc.collect()
                                 print("Excluded cross correlations for being out of maximum distance ", dist * 1E-3,
                                       "<", self.min_dist)
+                else:
+                    print("File already exists, jumping : ", filename)
         except:
             print("Something went wrong at:", file_i)
 
@@ -690,6 +692,8 @@ class noisestack:
                             gc.collect()
                             print("Excluded cross correlations for being out of maximum distance ", dist * 1E-3, "<",
                                   self.min_dist)
+                else:
+                    print("File already exists, jumping : ", filename)
         except:
             print("Something went wrong at:", file_i)
 
