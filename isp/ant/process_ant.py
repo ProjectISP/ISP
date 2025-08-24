@@ -749,6 +749,7 @@ class process_ant:
         """
         Return next power of 2 greater than or equal to n
         """
+        n = math.ceil(n)
         return 2 ** (n - 1).bit_length()
 
 
