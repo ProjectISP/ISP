@@ -262,6 +262,7 @@ def cut_earthquakes(data_map, catalog, time_before, time_after, min_snr,
                 continue # If there is no origin info, skip to the next event
 
         depth = event_origin_info.depth
+        summary_card = summary_card + " | Depth: {} km".format(depth)
         if min_depth == max_depth == 0:
             if i == 0:
                 print("Both min_depth and max_depth are set to 0. No depth constraints are applied...")
