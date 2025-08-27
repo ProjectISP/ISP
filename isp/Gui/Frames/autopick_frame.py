@@ -344,8 +344,9 @@ class Autopick(BaseFrame, UiAutopick):
     @AsycTime.run_async()
     def send_polarities(self):
 
-        arrivals_path = os.path.join(PICKING_DIR, "output.txt")
-        output_path = os.path.join(PICKING_DIR, "nll_picks_polarities.txt")
+        arrivals_path = os.path.join(self.picking_bind.value, "nll_picks.txt")
+        output_path = os.path.join(self.picking_bind.value, "nll_picks_polarities.txt")
+
         sp = SurfProject()
         sp.project = self.sp
         pol = Polarity(project=sp, model_path=POLARITY_NETWORK, arrivals_path=arrivals_path,
@@ -353,6 +354,6 @@ class Autopick(BaseFrame, UiAutopick):
                        output_path=output_path)
 
         pol.optimized_project_processing_pol()
-
-        OSutils.copy_and_rename_file(output_path, PICKING_DIR, "output.txt")
+        # copy_and_rename_file(src_path, dest_dir, new_name)
+        #OSutils.copy_and_rename_file(output_path, self.picking_bind.value, "nll_picks_polarities.txt")
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
