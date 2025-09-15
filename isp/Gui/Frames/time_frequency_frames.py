@@ -262,7 +262,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             self.canvas_plot1.clear()
             [self.tr1, t] = self.get_data()
             if not self.activate_xaxis:
-                self.canvas_plot1.plot_date(self.tr1.times("matplotlib"), self.tr1.data, 0, fmt='-', clear_plot=True, color="black", linewidth=0.5)
+                self.canvas_plot1.plot_date(self.tr1.times("matplotlib"), self.tr1.data, 0, fmt='-',
+                                            clear_plot=True, color="black", linewidth=0.5)
                 self.canvas_plot1.set_xlabel(1, "Date")
             else:
                 self.canvas_plot1.plot(t, self.tr1.data, 0, clear_plot=True, color="black", linewidth=0.5)

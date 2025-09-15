@@ -24,9 +24,10 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
 
         self.coherence_Widget_Canvas = MatplotlibCanvas(self.coherenceWidget, nrows=2, ncols=1, sharex=False,
                                                        constrained_layout=True)
-        self.cross_correlation_Widget_Canvas = MatplotlibCanvas(self.cross_correlationWidget, nrows = 3, ncols = 1)
+        self.cross_correlation_Widget_Canvas = MatplotlibCanvas(self.cross_correlationWidget, nrows=3, ncols=1,
+                                                                constrained_layout=True, sharex=True)
 
-        self.cross_spectrumWidget_Widget_Canvas = MatplotlibCanvas(self.cross_spectrumWidget,nrows = 2, ncols = 1,
+        self.cross_spectrumWidget_Widget_Canvas = MatplotlibCanvas(self.cross_spectrumWidget, nrows=2, ncols=1,
                                 sharex=True, constrained_layout=True)
 
 
@@ -182,6 +183,8 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
 
     def plot_correlation(self):
         self.specialWidget.setCurrentIndex(2)
+        self.cross_correlation_Widget_Canvas.clear()
+
         if len(self.tr1) > 0 and len(self.tr2) > 0:
             sampling_rates = []
             fs1=self.tr1.stats.sampling_rate
@@ -197,15 +200,27 @@ class TimeFrequencyAdvance(pw.QFrame, UiTimeFrequencyWidget):
             cc1 = correlate_maxlag(self.tr1.data, self.tr1.data, maxlag = max([len(self.tr1.data),len(self.tr2.data)]))
             cc2 = correlate_maxlag(self.tr2.data, self.tr2.data, maxlag = max([len(self.tr1.data),len(self.tr2.data)]))
             cc3 = correlate_maxlag(self.tr1.data, self.tr2.data, maxlag = max([len(self.tr1.data),len(self.tr2.data)]))
-            N1 = len(cc1)
-            N2 = len(cc2)
-            N3 = len(cc3)
+
             self.cross_correlation_Widget_Canvas.plot(get_lags(cc1)/max_sampling_rates, cc1, 0,
-                                                      clear_plot=True, linewidth=0.5,color='black')
+                                                      clear_plot=True, linewidth=0.5, color='black')
             self.cross_correlation_Widget_Canvas.plot(get_lags(cc2)/max_sampling_rates, cc2, 1,
-                                                      clear_plot=True, linewidth=0.5, color = 'black')
+                                                      clear_plot=True, linewidth=0.5, color='black')
             self.cross_correlation_Widget_Canvas.plot(get_lags(cc3)/max_sampling_rates, cc3, 2,
-                                                      clear_plot=True, linewidth=0.5, color = 'red')
+                                                      clear_plot=True, linewidth=0.5, color='steelblue')
+
+            cc1_label = "{}.{}.{}".format(self.tr1.stats.network, self.tr1.stats.station, self.tr1.stats.channel)
+            cc2_label = "{}.{}.{}".format(self.tr2.stats.network, self.tr2.stats.station, self.tr2.stats.channel)
+            inf_1 = "{} {}".format("Autocorr", cc1_label)
+            inf_2 = "{} {}".format("Autocorr", cc2_label)
+            inf_3 = "{} {} - {}".format("Cross Correlation", cc1_label, cc2_label)
+            self.cross_correlation_Widget_Canvas.set_plot_label(0, inf_1)
+            self.cross_correlation_Widget_Canvas.set_plot_label(1, inf_2)
+            self.cross_correlation_Widget_Canvas.set_plot_label(2, inf_3)
+
+            self.cross_correlation_Widget_Canvas.set_xlabel(2, "Time (s)")
+            self.cross_correlation_Widget_Canvas.set_ylabel(0, "Corr Coef. ")
+            self.cross_correlation_Widget_Canvas.set_ylabel(2, "Corr Coef. ")
+            self.cross_correlation_Widget_Canvas.set_ylabel(1, "Corr Coef. ")
 
     # def plot_cross_spectrogram(self):
     #     if len(self.tr1) > 0 and len(self.tr2) > 0:
