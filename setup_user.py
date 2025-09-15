@@ -1,6 +1,5 @@
 import os
 import shutil
-from distutils.core import setup
 from setuptools.command.build_ext import build_ext
 from os.path import isfile, join
 from os import listdir
@@ -9,16 +8,27 @@ from Cython.Build import cythonize
 import subprocess as sb
 from setuptools import setup, find_packages
 from isp import ROOT_DIR
-from sys import platform
+import platform
 from setuptools.extension import Extension
 
-if platform == "linux" or platform == "linux2":
-    system_path = os.path.join(ROOT_DIR,"linux_bin")
-    print(system_path)
-elif platform == "darwin":
-    system_path = os.path.join(ROOT_DIR,"mac_bin")
-    print(system_path)
+system_computer = platform.system().lower()
+machine_computer = platform.machine().lower()
 
+if system_computer in ("linux", "linux2"):
+    system_path = os.path.join(ROOT_DIR, "linux_bin")
+    print(system_path)
+elif system_computer == "darwin":
+    if machine_computer == "arm64":
+        # Apple Silicon (M1/M2/M3)
+        system_path = os.path.join(ROOT_DIR, "mac_m_bin")
+        print(system_path)
+    else:
+        # Intel Macs
+        system_path = os.path.join(ROOT_DIR, "mac_bin")
+        print(system_path)
+else:
+    #raise ValueError(f"Unsupported system: {system_computer} ({machine_computer})")
+    print(f"Unsupported system: {system_computer} ({machine_computer})")
 
 cy_path = os.path.join(ROOT_DIR, 'cython_code')
 

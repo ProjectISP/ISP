@@ -8,6 +8,8 @@ Created on Tue Dec 17 20:26:28 2019
 
 import shutil
 import subprocess
+from pathlib import Path
+
 import pandas as pd
 import os
 from obspy import read_events, Catalog
@@ -158,57 +160,122 @@ class FirstPolarity:
          command=os.path.join(self.get_foc_dir, 'rfocmec_UW')
          exc_cmd(command)
 
-    def run_focmec(self, input_focmec_path, num_wrong_polatities):
+    # def run_focmec(self, input_focmec_path, num_wrong_polatities):
+    #
+    #     # binary file
+    #     command = os.path.join(FOC_MEC_PATH, 'focmec')
+    #     dir_name = os.path.dirname(input_focmec_path)
+    #
+    #     # first_polarity/output
+    #     output_path = os.path.join(dir_name, "output")
+    #
+    #     # first_polarity path
+    #     focmec_bash_path = os.path.join(os.path.dirname(input_focmec_path), "focmec_run")
+    #
+    #     if os.path.isdir(output_path):
+    #         pass
+    #     else:
+    #         os.makedirs(output_path)
+    #
+    #     # edit number of accepted wrong polarities
+    #     self.edit_focmec_run(num_wrong_polatities, focmec_bash_path)
+    #
+    #     shutil.copy(input_focmec_path, '.')
+    #     with open(focmec_bash_path, 'r') as f, open('./log.txt', 'w') as log:
+    #         p = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=log)
+    #         f = open(focmec_bash_path, 'r')
+    #         string = f.read()
+    #         # This action has created focmec.lst at ./isp
+    #         out, errs = p.communicate(input=string.encode(), timeout=2.0)
+    #         # This action has created mechanism.out at ./isp
+    #     #time.sleep(5)
+    #     exec_path = os.path.dirname(ROOT_DIR)
+    #     mechanism_out = os.path.join(exec_path, "mechanism.out")
+    #     focmec_lst = os.path.join(exec_path, "focmec.lst")
+    #     log_file = os.path.join(exec_path, "log.txt")
+    #     test_inp = os.path.join(exec_path, "test.inp")
+    #     output_ref = FirstPolarity.extract_name(focmec_lst)
+    #     # Sanitize file name
+    #     file_output_name = (f"{output_ref['date'].replace('/', '-')}_"
+    #                         f"{output_ref['time'].replace(':', '_')}")
+    #
+    #     # Ensure output directory exists
+    #     os.makedirs(output_path, exist_ok=True)
+    #
+    #     # Move and rename files
+    #     if os.path.exists(mechanism_out):
+    #         shutil.move(mechanism_out, os.path.join(output_path, file_output_name + '.out'))
+    #     if os.path.exists(focmec_lst):
+    #         shutil.move(focmec_lst, os.path.join(output_path, file_output_name + '.lst'))
+    #     if os.path.exists(log_file):
+    #         shutil.move(log_file, os.path.join(output_path, file_output_name + '.txt'))
+    #     if os.path.exists(test_inp):
+    #         shutil.move(test_inp, os.path.join(output_path, file_output_name + '.inp'))
 
-        # binary file
+    def run_focmec(self, input_focmec_path, num_wrong_polatities, new_output_path=None):
+        input_focmec_path = Path(input_focmec_path).resolve()
+        workdir = input_focmec_path.parent  # run where the .inp and focmec_run live
+
+        # Binary
         command = os.path.join(FOC_MEC_PATH, 'focmec')
-        dir_name = os.path.dirname(input_focmec_path)
 
-        # first_polarity/output
-        output_path = os.path.join(dir_name, "output")
+        # Output dir
+        output_path = Path(new_output_path).resolve() if new_output_path else (workdir / "output")
+        output_path.mkdir(parents=True, exist_ok=True)
 
-        # first_polarity path
-        focmec_bash_path = os.path.join(os.path.dirname(input_focmec_path), "focmec_run")
+        # Script that feeds focmec (here-doc content)
+        focmec_bash_path = workdir / "focmec_run"
 
-        if os.path.isdir(output_path):
-            pass
-        else:
-            os.makedirs(output_path)
+        # Update the focmec_run with the desired wrong polarities
+        self.edit_focmec_run(num_wrong_polatities, str(focmec_bash_path))
 
-        # edit number of accepted wrong polarities
-        self.edit_focmec_run(num_wrong_polatities, focmec_bash_path)
+        # Ensure the input file is in the working directory (focmec typically expects relative names)
+        # If it's already there, this is a no-op.
+        if input_focmec_path.parent != workdir:
+            shutil.copy2(str(input_focmec_path), str(workdir))
 
-        shutil.copy(input_focmec_path, '.')
-        with open(focmec_bash_path, 'r') as f, open('./log.txt', 'w') as log:
-            p = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=log)
-            f = open(focmec_bash_path, 'r')
-            string = f.read()
-            # This action has created focmec.lst at ./isp
-            out, errs = p.communicate(input=string.encode(), timeout=2.0)
-            # This action has created mechanism.out at ./isp
-        #time.sleep(5)
-        exec_path = os.path.dirname(ROOT_DIR)
-        mechanism_out = os.path.join(exec_path, "mechanism.out")
-        focmec_lst = os.path.join(exec_path, "focmec.lst")
-        log_file = os.path.join(exec_path, "log.txt")
-        test_inp = os.path.join(exec_path, "test.inp")
-        output_ref = FirstPolarity.extract_name(focmec_lst)
-        # Sanitize file name
-        file_output_name = (f"{output_ref['date'].replace('/', '-')}_"
-                            f"{output_ref['time'].replace(':', '_')}")
+        # Run focmec with stdin = focmec_run, in a known cwd
+        log_file = workdir / "log.txt"
+        with open(focmec_bash_path, "rb") as stdin_f, open(log_file, "wb") as log:
+            p = subprocess.Popen(
+                [command],
+                stdin=stdin_f,
+                stdout=log,
+                stderr=subprocess.PIPE,
+                cwd=str(workdir)
+            )
+            # Let it run to completion; if you want a timeout, set it higher or catch the exception
+            _, errs = p.communicate()  # remove timeout for robustness
 
-        # Ensure output directory exists
-        os.makedirs(output_path, exist_ok=True)
+        if p.returncode != 0:
+            raise RuntimeError(
+                f"focmec exited with code {p.returncode}. Stderr:\n{errs.decode(errors='replace')}"
+            )
 
-        # Move and rename files
-        if os.path.exists(mechanism_out):
-            shutil.move(mechanism_out, os.path.join(output_path, file_output_name + '.out'))
-        if os.path.exists(focmec_lst):
-            shutil.move(focmec_lst, os.path.join(output_path, file_output_name + '.lst'))
-        if os.path.exists(log_file):
-            shutil.move(log_file, os.path.join(output_path, file_output_name + '.txt'))
-        if os.path.exists(test_inp):
-            shutil.move(test_inp, os.path.join(output_path, file_output_name + '.inp'))
+        # Files that focmec writes (IN THIS WORKDIR)
+        mechanism_out = workdir / "mechanism.out"
+        focmec_lst = workdir / "focmec.lst"
+        test_inp = workdir / "test.inp"  # if focmec writes/echoes an input copy
+
+        # Parse the .lst to build an output base name (this expects the file to be in workdir)
+        if not focmec_lst.exists():
+            # Provide a helpful message pointing to where we looked
+            raise FileNotFoundError(f"Expected focmec output not found: {focmec_lst}")
+
+        output_ref = FirstPolarity.extract_name(str(focmec_lst))
+        file_output_name = (
+            f"{output_ref['date'].replace('/', '-')}_"
+            f"{output_ref['time'].replace(':', '_')}"
+        )
+
+        # Move/rename if they exist
+        if mechanism_out.exists():
+            shutil.move(str(mechanism_out), str(output_path / f"{file_output_name}.out"))
+        shutil.move(str(focmec_lst), str(output_path / f"{file_output_name}.lst"))
+        if log_file.exists():
+            shutil.move(str(log_file), str(output_path / f"{file_output_name}.txt"))
+        if test_inp.exists():
+            shutil.move(str(test_inp), str(output_path / f"{file_output_name}.inp"))
 
     def extract_focmec_info(self, focmec_path):
         catalog: Catalog = focmecobspy._read_focmec(focmec_path)
