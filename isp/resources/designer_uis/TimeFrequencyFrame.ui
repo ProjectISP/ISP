@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1542</width>
-    <height>778</height>
+    <height>758</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -254,6 +254,11 @@
            <widget class="QComboBox" name="colourCB">
             <item>
              <property name="text">
+              <string>rainbow</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>jet</string>
              </property>
             </item>
@@ -456,26 +461,10 @@
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="2" column="1">
-            <widget class="QDoubleSpinBox" name="freq_min_mtDB">
-             <property name="decimals">
-              <number>3</number>
-             </property>
-             <property name="minimum">
-              <double>0.001000000000000</double>
-             </property>
-             <property name="maximum">
-              <double>500.000000000000000</double>
-             </property>
-             <property name="value">
-              <double>0.500000000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="2" alignment="Qt::AlignHCenter">
-            <widget class="QLabel" name="label_5">
+           <item row="2" column="0" alignment="Qt::AlignHCenter">
+            <widget class="QLabel" name="label_4">
              <property name="text">
-              <string>Freq Max</string>
+              <string>Freq Min</string>
              </property>
             </widget>
            </item>
@@ -495,10 +484,32 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="0" alignment="Qt::AlignHCenter">
-            <widget class="QLabel" name="label_4">
-             <property name="text">
-              <string>Freq Min</string>
+           <item row="2" column="1">
+            <widget class="QDoubleSpinBox" name="freq_min_mtDB">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>500.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.500000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <widget class="QSpinBox" name="overlapSB">
+             <property name="suffix">
+              <string> %</string>
+             </property>
+             <property name="singleStep">
+              <number>1</number>
+             </property>
+             <property name="value">
+              <number>50</number>
              </property>
             </widget>
            </item>
@@ -523,18 +534,25 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="3">
-            <widget class="QSpinBox" name="overlapSB">
-             <property name="suffix">
-              <string> %</string>
-             </property>
-             <property name="singleStep">
-              <number>1</number>
-             </property>
-             <property name="value">
-              <number>50</number>
+           <item row="2" column="2" alignment="Qt::AlignHCenter">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Freq Max</string>
              </property>
             </widget>
+           </item>
+           <item row="3" column="2">
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
            </item>
           </layout>
          </widget>
@@ -560,24 +578,46 @@
              </property>
             </widget>
            </item>
+           <item row="2" column="4">
+            <widget class="QLabel" name="label_10">
+             <property name="text">
+              <string>Freq Max</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="5">
+            <widget class="QDoubleSpinBox" name="freq_max_cwtDB">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>500.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>25.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <widget class="QSpinBox" name="atomsSB">
+             <property name="minimum">
+              <number>10</number>
+             </property>
+             <property name="maximum">
+              <number>500</number>
+             </property>
+             <property name="value">
+              <number>40</number>
+             </property>
+            </widget>
+           </item>
            <item row="1" column="3">
             <widget class="QSpinBox" name="wminSB">
              <property name="value">
               <number>6</number>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="4">
-            <widget class="QLabel" name="label_7">
-             <property name="text">
-              <string>w max</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QLabel" name="label_8">
-             <property name="text">
-              <string>w min</string>
              </property>
             </widget>
            </item>
@@ -604,26 +644,17 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="4">
-            <widget class="QLabel" name="label_10">
+           <item row="0" column="2">
+            <widget class="QLabel" name="label_6">
              <property name="text">
-              <string>Freq Max</string>
+              <string>Num of Atoms</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="5">
-            <widget class="QDoubleSpinBox" name="freq_max_cwtDB">
-             <property name="decimals">
-              <number>3</number>
-             </property>
-             <property name="minimum">
-              <double>0.001000000000000</double>
-             </property>
-             <property name="maximum">
-              <double>500.000000000000000</double>
-             </property>
-             <property name="value">
-              <double>25.000000000000000</double>
+           <item row="1" column="4" alignment="Qt::AlignHCenter">
+            <widget class="QLabel" name="label_7">
+             <property name="text">
+              <string>w max</string>
              </property>
             </widget>
            </item>
@@ -665,39 +696,28 @@
              </item>
             </widget>
            </item>
-           <item row="0" column="2">
-            <widget class="QLabel" name="label_6">
+           <item row="1" column="2" alignment="Qt::AlignHCenter">
+            <widget class="QLabel" name="label_8">
              <property name="text">
-              <string>Num of Atoms</string>
+              <string>w min</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="3">
-            <widget class="QSpinBox" name="atomsSB">
-             <property name="minimum">
-              <number>10</number>
+           <item row="3" column="4">
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
              </property>
-             <property name="maximum">
-              <number>500</number>
+             <property name="sizeType">
+              <enum>QSizePolicy::Expanding</enum>
              </property>
-             <property name="value">
-              <number>40</number>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
              </property>
-            </widget>
-           </item>
-           <item row="3" column="2">
-            <widget class="QLabel" name="label_16">
-             <property name="text">
-              <string>m</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="3">
-            <widget class="QSpinBox" name="wavelets_param">
-             <property name="value">
-              <number>30</number>
-             </property>
-            </widget>
+            </spacer>
            </item>
           </layout>
          </widget>

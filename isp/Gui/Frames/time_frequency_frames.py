@@ -400,11 +400,12 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr, start_time=ts, end_time=te,
                                                                           res = self.res_factor, dates=dates)
             else:
-                x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr, res=self.res_factor)
+                x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr, res=self.res_factor, dates=dates)
 
             log_spectrogram = np.clip(log_spectrogram, a_min=self.minlevelCB.value(), a_max=0)
             min_log_spectrogram = self.minlevelCB.value()
             max_log_spectrogram = 0
+
 
             if order == "Seismogram 1":
 
@@ -421,6 +422,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                 #elif self.typeCB.currentText() == 'imshow':
                 #    self.canvas_plot1.image(x, y, log_spectrogram, axes_index=1, clear_plot=True, clabel="Power [dB]",
                 #                         cmap=self.colourCB.currentText())
+
+
                 if not self.activate_xaxis:
                     formatter = mdt.DateFormatter('%H:%M:%S')
                     ax2 = self.canvas_plot1.get_axe(1)
@@ -467,8 +470,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             #cw = ConvolveWaveletScipy(self.file_selector.file_path)
             cw = ConvolveWaveletScipy(tr)
             wavelet = self.wavelet_typeCB.currentText()
-
-            m = self.wavelets_param.value()
+            m=6
+            #m = self.wavelets_param.value()
             if self.trimCB.isChecked() and diff >= 0:
 
                 cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=int(fs/f_min), fmin=f_min, fmax=f_max, nf=nf,
@@ -592,7 +595,48 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             dates=False
         else:
             dates=True
-        if selection == "Continuous Wavelet Transform":
+
+
+        if selection == "Multitaper Spectrogram":
+
+            self.res_factor = 1
+            win = int(self.mt_window_lengthDB.value() * tr.stats.sampling_rate)
+            overlap= 1-(self.overlapSB.value())/100
+            f_min = self.freq_min_mtDB.value()
+            f_max = self.freq_max_mtDB.value()
+            mtspectrogram = MTspectrogram(self.file_selector.file_path, win, f_min, f_max, overlap)
+
+            if self.trimCB.isChecked() and diff >= 0:
+                x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr, start_time=ts, end_time=te,
+                                                                          res = self.res_factor, dates=dates)
+            else:
+                x, y, log_spectrogram = mtspectrogram.compute_spectrogram(tr, res=self.res_factor, dates=dates)
+
+            log_spectrogram = np.clip(log_spectrogram, a_min=self.minlevelCB.value(), a_max=0)
+            min_log_spectrogram = self.minlevelCB.value()
+            max_log_spectrogram = 0
+
+            value, idx = self.find_nearest(y[:, 1], 1.0)
+            log_spectrogram_period = log_spectrogram[0:idx, :]
+
+            log_spectrogram = log_spectrogram[idx:, :]
+
+            x_period = x[0:idx, :]
+            y_period = 1 / (y[0:idx, :])
+
+            x_freq = x[idx:, :]
+            y_freq = y[idx:, :]
+
+            self.canvas_plot3.plot_contour(x_freq, y_freq, log_spectrogram, axes_index=1, levels=20, clear_plot=True,
+                                           clabel="Power [dB]",
+                                           cmap=self.colourCB.currentText(), vmin=min_log_spectrogram, vmax=max_log_spectrogram)
+
+            self.canvas_plot3.plot_contour(x_period, 10 * np.log(y_period), log_spectrogram_period, axes_index=2, levels=20,
+                                           clear_plot=True, clabel="Power [dB]",
+                                           cmap=self.colourCB.currentText(), vmin=min_log_spectrogram, vmax=max_log_spectrogram)
+
+
+        elif selection == "Continuous Wavelet Transform":
 
             fs = tr.stats.sampling_rate
             nf = self.atomsSB.value()
@@ -606,8 +650,8 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
             t = np.linspace(0, tr.stats.delta * npts, npts)
             cw = ConvolveWaveletScipy(tr)
             wavelet = self.wavelet_typeCB.currentText()
-
-            m = self.wavelets_param.value()
+            m=6
+            #m = self.wavelets_param.value()
             if self.trimCB.isChecked() and diff >= 0:
 
                 cw.setup_wavelet(ts, te, wmin=wmin, wmax=wmax, tt=int(fs / f_min), fmin=f_min, fmax=f_max, nf=nf,
@@ -674,25 +718,22 @@ class TimeFrequencyFrame(BaseFrame, UiTimeFrequencyFrame):
                                              clabel ="Power [dB]", cmap=self.colourCB.currentText(), vmin=min_cwt,
                                              vmax=max_cwt, shading='nearest')
 
-            ax_period = self.canvas_plot3.get_axe(1)
-            ax_period.set_yscale('log')
-            ax_period = self.canvas_plot3.get_axe(2)
-            ax_period.invert_yaxis()
-            ax_period.set_yscale('log')
+        ax_period = self.canvas_plot3.get_axe(1)
+        ax_period.set_yscale('log')
+        ax_period = self.canvas_plot3.get_axe(2)
+        ax_period.invert_yaxis()
+        ax_period.set_yscale('log')
 
-            if not self.activate_xaxis:
-                formatter = mdt.DateFormatter('%H:%M:%S')
-                ax2 = self.canvas_plot3.get_axe(2)
-                ax2.xaxis.set_major_formatter(formatter)
-                self.canvas_plot3.set_xlabel(2, "Date")
-            else:
-                self.canvas_plot3.set_xlabel(2, "Time (s)")
-            self.canvas_plot3.set_ylabel(0, "Amplitude ")
-            self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")
-            self.canvas_plot3.set_ylabel(2, "Period (s)")
-
+        if not self.activate_xaxis:
+            formatter = mdt.DateFormatter('%H:%M:%S')
+            ax2 = self.canvas_plot3.get_axe(2)
+            ax2.xaxis.set_major_formatter(formatter)
+            self.canvas_plot3.set_xlabel(2, "Date")
         else:
-            pass
+            self.canvas_plot3.set_xlabel(2, "Time (s)")
+        self.canvas_plot3.set_ylabel(0, "Amplitude ")
+        self.canvas_plot3.set_ylabel(1, "Frequency (Hz)")
+        self.canvas_plot3.set_ylabel(2, "Period (s)")
 
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
