@@ -1,8 +1,12 @@
 from __future__ import annotations
 import numpy as np
 from obspy.core.trace import Trace
-from isp.cython_code import rec_filter, lib_rec_hos, lib_rec_rms
-# from isp.cython_code import lib_rosenberger  # not used for 1C
+try:
+    from isp.cython_code import rec_filter, lib_rec_hos, lib_rec_rms
+    # from isp.cython_code import lib_rosenberger  # not used for 1C
+except:
+    print("Kurtosis is not installesd correcty. In your isp environment, from ./ISP, "
+          "try >>python setup_user.py build_ext --inplace")
 
 class CFMB:
 
