@@ -8,6 +8,7 @@ from obspy import UTCDateTime, Stream, Trace, Inventory
 from obspy.geodetics import gps2dist_azimuth, kilometers2degrees
 from surfquakecore.project.surf_project import SurfProject
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
+from isp.DataProcessing.cf_kurtosis import CFMB
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Exceptions import parse_excepts
@@ -1317,59 +1318,26 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         global_cf_max = float('-inf')
         self.cf = []
         cfs = []
-        #files_at_page = self.get_files_at_page()
         self.canvas.clear()
         self.canvas.set_new_subplot(nrows=len(self.st), ncols=1, sharey=sharey)
 
         start_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
         end_time = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
-        diff = end_time - start_time
 
+        index = 0
         for index, file_path in enumerate(self.st):
             tr = self.st[index]
-            st_stats = ObspyUtil.get_stats_from_trace(tr)
-            cw = ConvolveWaveletScipy(tr)
-            if self.trimCB.isChecked() and diff >= 0:
-
-                if fmin < fmax and cycles > 5:
-                    tt = int(tr.stats.sampling_rate / fmin)
-                    cw.setup_wavelet(start_time, end_time, wmin=cycles, wmax=cycles, tt=tt, fmin=fmin, fmax=fmax, nf=40,
-                                     use_rfft=False, decimate=False)
-
-                else:
-                    cw.setup_wavelet(start_time, end_time, wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40,
-                                     use_rfft=False,
-                                     decimate=False)
-
-            else:
-                if fmin < fmax and cycles > 5:
-                    tt = int(tr.stats.sampling_rate / fmin)
-                    cw.setup_wavelet(wmin=cycles, wmax=cycles, tt=tt, fmin=fmin, fmax=fmax, nf=40,
-                                     use_rfft=False, decimate=False)
-                else:
-                    cw.setup_wavelet(wmin=6, wmax=6, tt=10, fmin=0.2, fmax=10, nf=40, use_rfft=False, decimate=False)
-
-            delay = cw.get_time_delay()
-            start = tr.stats.starttime + delay
-            # f = np.logspace(np.log10(fmin), np.log10(fmax))
-            # k = cycles / (2 * np.pi * f) #one standar deviation
-            # delay = np.mean(k)
-
-            tr.stats.starttime = start
             t = tr.times("matplotlib")
+            st_stats = ObspyUtil.get_stats_from_trace(tr)
+            YN1, CF1, cf, Tn, Nb, freqs = CFMB.compute_tf(tr, fmin=fmin, fmax=fmax, filter_npoles=4,
+                                var_w=True, CF_type='kurtosis', CF_decay_win=4.0, hos_order=4, apply_taper=True)
 
             self.canvas.plot_date(t, tr.data, index, color="black", fmt='-', linewidth=0.5)
             info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
             self.canvas.set_plot_label(index, info)
             self.redraw_pickers(file_path, index)
             self.redraw_chop(tr, tr.data, index)
-            tr_kurt = cw.charachteristic_function_kurt(window_size_seconds=kurt_win)
-            cf = tr_kurt.data
-            # Normalize
-            # cf = cf / max(cf)
-            t = t[0:len(cf)]
-            # self.canvas.plot(t, cf, index, is_twinx=True, color="red",linewidth=0.5)
-            # self.canvas.set_ylabel_twinx(index, "CWT (CF)")
+
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
             ax2.plot(t, cf, color="red", linewidth=0.5, alpha=0.5)
@@ -1382,7 +1350,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             global_cf_max = max(global_cf_max, cf_max)
             #ax2.set_ylim(global_cf_min, global_cf_max)
 
-            last_index = index
             tr_cf = tr.copy()
             tr_cf.data = cf
             tr_cf.times = t
@@ -1397,7 +1364,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 # Re-enable right-side ticks (if needed)
                 ax2.tick_params(axis='y', which='both', left=False, right=True, labelleft=False, labelright=True)
 
-        ax = self.canvas.get_axe(last_index)
+        ax = self.canvas.get_axe(index)
         try:
             if self.trimCB.isChecked():
                 ax.set_xlim(start_time.matplotlib_date, end_time.matplotlib_date)
@@ -1405,7 +1372,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 ax.set_xlim(mdt.num2date(self.auto_start), mdt.num2date(self.auto_end))
             formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
-            self.canvas.set_xlabel(last_index, "Date")
+            self.canvas.set_xlabel(index, "Date")
         except:
             pass
         self.cf = Stream(traces=cfs)

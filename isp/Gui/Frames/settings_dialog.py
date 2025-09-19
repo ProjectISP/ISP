@@ -16,7 +16,7 @@ class SettingsDialog(pw.QDialog, UiSettingsDialog):
         param_dict["LTA"] = self.ltaDB.value()
         param_dict["Num Cycles"] = self.ncyclesDB.value()
         param_dict["Fmin"] = self.fminDB.value()
-        param_dict["Fmax"] = self.fminDB.value()
+        param_dict["Fmax"] = self.fmaxDB.value()
         param_dict["win_entropy"] = self.win_entropyDB.value()
         param_dict["stack type"] = self.typestackCB.currentText()
         param_dict["kurt_win"] = self.kurtosis_timewindowDB.value()
