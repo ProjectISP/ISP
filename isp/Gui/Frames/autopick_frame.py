@@ -22,7 +22,7 @@ from isp.associate_events.coincidence_trigger import CoincidenceTrigger
 @add_save_load()
 class Autopick(BaseFrame, UiAutopick):
 
-    signal = pyc.pyqtSignal()
+    signal = pyc.pyqtSignal(bool)
     signal2 = pyc.pyqtSignal()
     def __init__(self, project, metadata_path, starttime=None, endtime=None):
 
@@ -250,11 +250,11 @@ class Autopick(BaseFrame, UiAutopick):
             OSutils.create_symlink(origin_output, destination, overwrite=True)
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
-    def send_signal(self):
+    def send_signal(self, reset=False):
 
         # Connect end of picking with Earthquake Analysis
 
-        self.signal.emit()
+        self.signal.emit(reset)
 
     def send_signal2(self):
 
@@ -343,7 +343,7 @@ class Autopick(BaseFrame, UiAutopick):
         self.progress_dialog.exec()
         md = MessageDialog(self)
         md.set_info_message("Polarities determination Done")
-        self.send_signal()
+        self.send_signal(reset=True)
 
 
     @AsycTime.run_async()

@@ -416,7 +416,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.pick_times = MseedUtil.get_NLL_phase_picks_phase(phase)
         self.plot_seismogram()
 
-    def import_pick_from_file(self, default=True):
+    def import_pick_from_file(self, default=True, reset=False):
 
         if default:
             selected = [os.path.join(PICKING_DIR, "output.txt")]
@@ -425,6 +425,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         if isinstance(selected[0], str) and os.path.isfile(selected[0]):
             self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=selected[0])
+
+        if reset:
+            self.pm = PickerManager()
 
         # save data
         if len(self.pick_times_imported) > 0:
@@ -2505,9 +2508,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.__autopick.signal2.connect(self.slot2)
         self.__autopick.show()
 
-    @pyqtSlot()
-    def slot(self):
-        self.import_pick_from_file(default=True)
+    @pyqtSlot(bool)
+    def slot(self, reset):
+        self.import_pick_from_file(default=True, reset=reset)
 
     @pyqtSlot()
     def slot2(self):
