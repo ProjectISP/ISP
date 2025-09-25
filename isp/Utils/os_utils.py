@@ -23,3 +23,24 @@ class OSutils:
         # Copy the file to the new location with the new name
         shutil.copy(src_path, dest_path)
         print(f"File copied to {dest_path}")
+
+    @staticmethod
+    def create_symlink(target, link_path, overwrite=False):
+        """
+        Creates a symbolic link pointing to a target.
+
+        :param target: Path to the existing file or directory
+        :param link_path: Path for the symbolic link
+        :param overwrite: If True, overwrite existing link/file
+        """
+        # If overwrite is allowed, remove existing file/link first
+        if overwrite and os.path.lexists(link_path):
+            os.remove(link_path)
+
+        try:
+            os.symlink(target, link_path)
+            print(f"Symbolic link created: {link_path} -> {target}")
+        except FileExistsError:
+            print(f"Link already exists: {link_path}")
+        except OSError as e:
+            print(f"Error creating symlink: {e}")

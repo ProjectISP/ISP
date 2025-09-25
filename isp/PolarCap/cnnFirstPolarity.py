@@ -1,3 +1,4 @@
+import os
 from typing import Union
 from copy import deepcopy
 from obspy import UTCDateTime, read, Trace, Stream
@@ -34,7 +35,28 @@ class Polarity:
         return model_summary
 
     def import_picks(self):
-        self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=self.arrivals_path)
+        """
+        Imports picks from arrivals_path by checking for specific files.
+        Priority: nll_picks.txt > output.txt
+        """
+        candidates = ["nll_picks.txt", "output.txt"]
+
+        # Find the first file that exists (priority order)
+        input_file = None
+        for fname in candidates:
+            fpath = os.path.join(self.arrivals_path, fname)
+            if os.path.isfile(fpath):
+                input_file = fpath
+                break
+
+        if input_file is None:
+            raise FileNotFoundError(
+                f"No valid picks file found in {self.arrivals_path}. "
+                f"Expected one of: {', '.join(candidates)}"
+            )
+
+        # Import picks
+        self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=input_file)
         self.pick_times_imported_modify = deepcopy(self.pick_times_imported)
 
 

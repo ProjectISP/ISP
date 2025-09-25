@@ -230,6 +230,9 @@ class Autopick(BaseFrame, UiAutopick):
     def send_phasenet(self):
         print("Starting Picking")
 
+        origin_output = os.path.join(PICKING_DIR, "output.txt")
+        destination = os.path.join(self.picking_bind.value,"output.txt")
+
         phISP = PhasenetISP(self.sp, amplitude=True, min_p_prob=self.p_wave_picking_thresholdDB.value(),
                             min_s_prob=self.s_wave_picking_thresholdDB.value())
 
@@ -243,6 +246,8 @@ class Autopick(BaseFrame, UiAutopick):
 
         file_picks = os.path.join(self.picking_bind.value, "nll_picks.txt")
         OSutils.copy_and_rename_file(file_picks, PICKING_DIR, "output.txt")
+        if origin_output != destination:
+            OSutils.create_symlink(origin_output, destination, overwrite=True)
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
     def send_signal(self):
@@ -344,16 +349,19 @@ class Autopick(BaseFrame, UiAutopick):
     @AsycTime.run_async()
     def send_polarities(self):
 
-        arrivals_path = os.path.join(self.picking_bind.value, "nll_picks.txt")
-        output_path = os.path.join(self.picking_bind.value, "nll_picks_polarities.txt")
+        origin_pick_file = os.path.join(PICKING_DIR, "output.txt")
+        target_file = os.path.join(self.picking_bind.value, "output.txt")
 
         sp = SurfProject()
         sp.project = self.sp
-        pol = Polarity(project=sp, model_path=POLARITY_NETWORK, arrivals_path=arrivals_path,
+        pol = Polarity(project=sp, model_path=POLARITY_NETWORK, arrivals_path=self.picking_bind.value,
                        threshold=self.polaritiesProbDB.value(),
-                       output_path=output_path)
+                       output_path=origin_pick_file)
 
         pol.optimized_project_processing_pol()
+
         # copy_and_rename_file(src_path, dest_dir, new_name)
-        #OSutils.copy_and_rename_file(output_path, self.picking_bind.value, "nll_picks_polarities.txt")
+        OSutils.copy_and_rename_file(origin_pick_file, self.picking_bind.value, "nll_picks_polarities.txt")
+        if self.picking_bind.value != PICKING_DIR:
+            OSutils.create_symlink(origin_pick_file, target_file)
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
