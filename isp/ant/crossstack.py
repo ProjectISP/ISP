@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import collections
-import multiprocessing
 from multiprocessing import Pool
 from obspy import Trace, Stream
 from obspy.core import UTCDateTime
 import numpy as np
 import pickle
 import os
+from pathlib import Path
 from obspy import read
 from obspy.geodetics import gps2dist_azimuth
 from isp.ant.process_ant import clock_process
 import gc
+import re
 
 
 class noisestack:
@@ -786,70 +787,135 @@ class noisestack:
                 self.save_rotated(def_rotated)
                 print(station_pair, "saved")
 
+    def _parse_filename(self, fname: str):
+        FILENAME_RE = re.compile(
+            r"^(?P<net>[^.]+)\.(?P<sta1>[A-Z0-9]+)_(?P<sta2>[A-Z0-9]+)\.(?P<chn>[A-Z]{2})_daily$"
+        )
+        """Return (net, sta1, sta2, chn) or None if it doesn't match."""
+        m = FILENAME_RE.match(fname)
+        if not m:
+            return None
+        d = m.groupdict()
+        return d["net"], d["sta1"], d["sta2"], d["chn"]
+
+    def _normalize_pair(self, a: str, b: str) -> str:
+        """Return canonical 'sta1_sta2' with sorted ends so a_b == b_a."""
+        s1, s2 = sorted((a, b))
+        return f"{s1}_{s2}"
+
+    def _extract_matrix_from_pickle(self, pkl):
+        """Extract common metadata and channel data from a loaded pickle."""
+        st = pkl["stream"]
+        dates = pkl.get("dates")
+        # common meta from first trace
+        tr0 = st[0]
+        meta = {
+            "net": tr0.stats.network,
+            "geodetic": tr0.stats.mseed.get("geodetic"),
+            "sampling_rate": tr0.stats.sampling_rate,
+            "location": tr0.stats.location,
+            "coordinates": tr0.stats.mseed.get("coordinates"),
+            "dates": dates,
+        }
+        # collect data arrays for all traces in this pickle
+        data = [tr.data for tr in st]
+        chn = tr0.stats.mseed.get("cross_channels")
+        return meta, chn, data
+
     def rotate_specific_daily(self):
 
-        obsfiles = self.list_directory(self.stack_daily_files_path)
-        station_list = self.list_stations_daily(self.stack_daily_files_path)
-        channel_check = ["EE", "EN", "NN", "NE"]
-        matrix_data = {}
+        CHANNELS_WANTED = {"EE", "EN", "NN", "NE"}
+        # base = Path(self.stack_daily_files_path)
 
-        for station_pair in station_list:
+        # 1) Collect all files once
+        obsfiles = list(self.list_directory(self.stack_daily_files_path))  # keep your method
+        # If list_directory returns strings, turn into Path for parsing/display
+        obsfiles = [Path(p) for p in obsfiles]
 
-            def_rotated = {}
-            info = station_pair.split("_")
-            sta1 = info[0]
-            sta2 = info[1]
+        # 2) Build an index: {(pair_key, chn): filepath}
+        files_index = {}
+        for p in obsfiles:
+            key = self._parse_filename(p.name)
+            if not key:
+                continue  # skip files that don't match expected pattern
+            net, sta1, sta2, chn = key
+            if chn not in CHANNELS_WANTED:
+                continue
+            pair_key = self._normalize_pair(sta1, sta2)
+            files_index[(pair_key, chn)] = p
 
-            if sta1 != sta2:
-                for file in obsfiles:
-                    try:
-                        file_pickle = pickle.load(open(file, "rb"))
-                        st = file_pickle["stream"]
+        # 3) Deduplicate & normalize station pairs the user cares about
+        raw_pairs = self.list_stations_daily(self.stack_daily_files_path)
+        pair_keys = sorted({self._normalize_pair(*sp.split("_")) for sp in raw_pairs if "_" in sp})
 
-                        # just for checking
-                        station_i = st[0].stats.station
-                        chn = st[0].stats.mseed['cross_channels']
-                        net = st[0].stats.network
-                        geodetic = st[0].stats.mseed['geodetic']
-                        location = st[0].stats.location
-                        coordinates = st[0].stats.mseed['coordinates']
-                        fs = st[0].stats.sampling_rate
-                        if station_i == station_pair and chn in channel_check:
-                            dates = file_pickle["dates"]
-                            matrix_data["net"] = net
-                            matrix_data['geodetic'] = geodetic
-                            matrix_data["sampling_rate"] = fs
-                            matrix_data["location"] = location
-                            matrix_data["dates"] = dates
-                            matrix_data["coordinates"] = coordinates
-                            data = []
-                            for tr in st:
-                                # loop to take data from all traces
-                                data.append(tr.data)
-                            matrix_data[chn] = data
+        for pair_key in pair_keys:
+            sta1, sta2 = pair_key.split("_")
+            if sta1 == sta2:
+                # skip self-pairs if not meaningful
+                continue
 
-                            # method to rotate the dictionary
-                    except:
-                        pass
+            matrix_data = {}
+            meta_set = False
 
-                def_rotated["rotated_matrix"] = self.__rotate_specific(matrix_data)
+            # 4) Load the per-channel pickles only if they exist for this pair
+            for chn in CHANNELS_WANTED:
+                p = files_index.get((pair_key, chn))
+                if p is None:
+                    continue
 
                 try:
-                    if len(matrix_data) > 0 and len(def_rotated["rotated_matrix"]) > 0:
-                        def_rotated["geodetic"] = matrix_data['geodetic']
-                        def_rotated["net"] = matrix_data["net"]
-                        def_rotated["station_pair"] = station_pair
-                        def_rotated['sampling_rate'] = matrix_data["sampling_rate"]
-                        def_rotated['location'] = matrix_data['location']
-                        def_rotated['dates'] = matrix_data['dates']
-                        def_rotated['coordinates'] = matrix_data['coordinates']
-                        print(station_pair, "rotated")
+                    # Load once per needed file
+                    file_pickle = pickle.load(open(p, "rb"))
+                except (OSError, pickle.UnpicklingError) as e:
+                    # skip broken/unreadable file
+                    # (log if you have a logger)
+                    continue
 
-                        self.save_rotated_specific(def_rotated)
+                try:
+                    meta, chn_from_file, data = self._extract_matrix_from_pickle(file_pickle)
 
-                        print(station_pair, "saved")
-                except:
-                    print("Coudn't save ", station_pair)
+                    # Sanity: ensure channel matches expectation
+                    if chn_from_file not in CHANNELS_WANTED or chn_from_file != chn:
+                        # channel mismatch — skip
+                        continue
+
+                    # Set common meta once (all channels should agree)
+                    if not meta_set:
+                        matrix_data.update(meta)
+                        meta_set = True
+
+                    matrix_data[chn] = data
+
+                except Exception as e:
+                    # Narrowly skip this file if it doesn't have expected structure
+                    # (log if desired)
+                    continue
+
+            # 5) Rotate and save if we have enough data
+            try:
+                if meta_set and any(k in matrix_data for k in CHANNELS_WANTED):
+                    rotated = self.__rotate_specific(matrix_data)  # your rotation method
+                else:
+                    continue  # nothing to rotate for this pair
+
+                if rotated:
+                    payload = {
+                        "rotated_matrix": rotated,
+                        "geodetic": matrix_data.get("geodetic"),
+                        "net": matrix_data.get("net"),
+                        "station_pair": pair_key,  # canonical name
+                        "sampling_rate": matrix_data.get("sampling_rate"),
+                        "location": matrix_data.get("location"),
+                        "dates": matrix_data.get("dates"),
+                        "coordinates": matrix_data.get("coordinates"),
+                    }
+
+                    print(pair_key, "rotated")
+                    self.save_rotated_specific(payload)
+                    print(pair_key, "saved")
+
+            except Exception as e:
+                print("Couldn't rotate/save", pair_key, "->", e)
 
     def __validation(self, data_matrix, specific=False):
 
@@ -972,17 +1038,27 @@ class noisestack:
         return stations
 
     def list_stations_daily(self, path):
+
+        _DAILY_NAME_RE = re.compile(
+            r"^[^.]+\.(?P<sta1>[A-Z0-9]+)_(?P<sta2>[A-Z0-9]+)\.[A-Z]{2}_daily(?:\.[^.]+)?$"
+        )
         stations = []
         files = self.list_directory(path)
         for file in files:
             try:
-                file_pickle = pickle.load(open(file, "rb"))
-                st = file_pickle["stream"]
-                name = st[0].stats.station
-                info = name.split("_")
-                flip_name = info[1] + "_" + info[0]
-                if name not in stations and flip_name not in stations and info[0] != info[1]:
-                    stations.append(name)
+                base = os.path.basename(file)
+                if not (base.endswith("_daily") or "_daily." in base):
+                    continue
+                else:
+                    file_name = os.path.basename(file)
+                    name = file_name.split("_")
+                    sta1 = name[0].split(".")[1]
+                    sta2 = name[1].split(".")[0]
+                    name = sta1 + "_" + sta2
+                    flip_name = sta2 + "_" + sta1
+
+                    if name not in stations and flip_name not in stations and sta1 != sta2:
+                        stations.append(name)
             except:
                 pass
 
@@ -1064,24 +1140,6 @@ class noisestack:
 
             file_to_store = open(path_name, "wb")
             pickle.dump(data_to_save, file_to_store)
-
-        # j = 0
-        # for chn in channels:
-        #     stats['channel'] = chn
-        #     stats['npts'] = len(def_rotated["rotated_matrix"][:, j, 0])
-        #     stats['mseed'] = {'dataquality': 'D', 'geodetic': def_rotated["geodetic"],
-        #                       'cross_channels': def_rotated["station_pair"]}
-        #     stats['starttime'] = UTCDateTime("2000-01-01T00:00:00.0")
-        #
-        #     for data in def_rotated:
-        #
-        #     st = Stream([Trace(data=def_rotated["rotated_matrix"][:, j, 0], header=stats)])
-        #     # Nombre del fichero = XT.STA1_STA2.BHZE
-        #     filename = def_rotated["net"] + "." + def_rotated["station_pair"] + "." + chn
-        #     path_name = os.path.join(self.stack_rotated_files_path, filename)
-        #     print(path_name)
-        #     st.write(path_name, format='H5')
-        #     j = j + 1
 
     def sort_dates(self, common_date_list):
         # extract years
