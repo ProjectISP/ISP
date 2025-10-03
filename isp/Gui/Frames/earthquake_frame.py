@@ -92,6 +92,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.__metadata_manager = None
         self.st = None
         self.cf = None
+        self.numbers = ["1", "2", "3", "4", "5", "6"]
         self.chop = {'Body waves': {}, 'Surf Waves': {}, 'Coda': {}, 'Noise': {}}
         self.color = {'Body waves': 'orangered', 'Surf Waves': 'blue', 'Coda': 'purple', 'Noise': 'green'}
         self.dataless_not_found = set()  # a set of mseed files that the dataless couldn't find.
@@ -2238,6 +2239,60 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             ax.set_ylim(min(data), max(data))
             formatter = mdt.DateFormatter('%Y/%m/%d/%H:%M:%S')
             ax.xaxis.set_major_formatter(formatter)
+        if event.key in self.numbers:
+            self.number_press(event.key, event)
+
+    def number_press(self, number, event):
+
+        polarity, color = map_polarity_from_pressed_key(event.key)
+        if number == "1":
+            phase = "P"
+            polarity = "?"
+        elif number == "2":
+            phase = "P"
+            polarity = "+"
+        elif number == "3":
+            phase = "P"
+            polarity = "-"
+        elif number == "4":
+            phase = "S"
+            polarity = "?"
+        elif number == "5":
+            phase = "S"
+            polarity = "+"
+        elif number == "6":
+            phase = "S"
+            polarity = "-"
+        # click_at_index = event.inaxes.rowNum
+        click_at_index = self.ax_num
+        x1, y1 = event.xdata, event.ydata
+        # x2, y2 = event.x, event.y
+        stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
+        # Get amplitude from index
+        # x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
+        # amplitude = canvas.get_ydata(click_at_index).item(x_index)  # get y-data from index.
+        # amplitude = y1
+        label = "{} {}".format(phase, polarity)
+        tt = UTCDateTime(mdt.num2date(x1))
+        diff = tt - self.st[self.ax_num].stats.starttime
+        t = stats.StartTime + diff
+        if self.decimator[0] is not None:
+            idx_amplitude = int(self.decimator[0] * diff)
+        else:
+            idx_amplitude = int(stats.Sampling_rate * diff)
+        amplitudes = self.st[self.ax_num].data
+        amplitude = amplitudes[idx_amplitude]
+        uncertainty = self.uncertainities.getUncertainity()
+
+        line = self.canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
+        self.lines.append(line)
+        self.picked_at[str(line)] = PickerStructure(tt, stats.Station, x1, uncertainty, amplitude, color, label,
+                                                    self.get_file_at_index(click_at_index))
+        # print(self.picked_at)
+        # Add pick data to file.
+        self.pm.add_data(tt, uncertainty, amplitude, stats.Station, phase, Component=stats.Channel,
+                         First_Motion=polarity)
+        self.pm.save()  # maybe we can move this to when you press locate.
 
     def availability(self):
         MseedUtil.data_availability_new(self.files_path)
