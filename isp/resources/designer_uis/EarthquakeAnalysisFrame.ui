@@ -927,16 +927,10 @@
     <property name="title">
      <string>Compute</string>
     </property>
-    <widget class="QMenu" name="menuCWT_CFs">
-     <property name="title">
-      <string>CWT (CFs)</string>
-     </property>
-     <addaction name="actionlogarythmic_dff"/>
-     <addaction name="actionkurtosis"/>
-    </widget>
     <addaction name="actionSTA_LTA"/>
-    <addaction name="menuCWT_CFs"/>
     <addaction name="actionEnvelope"/>
+    <addaction name="actionCWT"/>
+    <addaction name="actionKurtosis"/>
     <addaction name="actionSpectral_Entropy"/>
     <addaction name="actionStack"/>
     <addaction name="actionPlot_All_Seismograms"/>
@@ -1362,6 +1356,16 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+M</string>
+   </property>
+  </action>
+  <action name="actionCWT">
+   <property name="text">
+    <string>CF CWT</string>
+   </property>
+  </action>
+  <action name="actionKurtosis">
+   <property name="text">
+    <string>CF Kurtosis</string>
    </property>
   </action>
  </widget>
