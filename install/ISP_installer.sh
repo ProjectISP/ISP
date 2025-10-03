@@ -95,17 +95,19 @@ echo "ISP environment process finished"
 pushd ${ISP_DIR} > /dev/null
 
 # Select installation type
-read -p 'Which type of installation would you prefer, conventional or advanced ? ' REPLY
+#read -p 'Which type of installation would you prefer, conventional or advanced ? ' REPLY
 
-if [[ $REPLY = 'conventional' ]]
-then
-    source activate isp
-    python3 ${ISP_DIR}/setup_user.py build_ext --inplace
-elif [[ $REPLY = 'advanced' ]]
-then
-    source activate isp
-    python3 ${ISP_DIR}/setup_developer.py build_ext --inplace
-fi
+#if [[ $REPLY = 'conventional' ]]
+#then
+#    source activate isp
+#    python3 ${ISP_DIR}/setup_user.py build_ext --inplace
+#elif [[ $REPLY = 'advanced' ]]
+#then
+#    source activate isp
+#    python3 ${ISP_DIR}/setup_developer.py build_ext --inplace
+#fi
+source activate isp
+python3 ${ISP_DIR}/setup_user.py build_ext --inplace
 popd > /dev/null
 
 # Create an alias for ISP in multiple shell configurations

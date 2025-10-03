@@ -196,18 +196,22 @@ def try_add_extension(modname, src):
     return []
 
 # Collect target .pyx modules (explicit list; add/remove as needed)
+# cy_modules = [
+#     ("isp.cython_code.hampel",         os.path.join(cy_path, "hampel.pyx")),
+#     # CF modules:
+#     ("isp.cython_code.rec_filter",     os.path.join(cy_path, "rec_filter.pyx")),
+#     ("isp.cython_code.lib_rec_hos",    os.path.join(cy_path, "lib_rec_hos.pyx")),
+#     ("isp.cython_code.lib_rec_rms",    os.path.join(cy_path, "lib_rec_rms.pyx")),
+#     ("isp.cython_code.lib_rosenberger",os.path.join(cy_path, "lib_rosenberger.pyx")),
+#     ("isp.cython_code.lib_rec_cc",     os.path.join(cy_path, "lib_rec_cc.pyx")),
+#     # Optional/problematic ones (won't break the build if they fail):
+#     ("isp.cython_code.ccwt_cy",        os.path.join(cy_path, "ccwt_cy.pyx")),
+#     ("isp.cython_code.whiten",         os.path.join(cy_path, "whiten.pyx")),
+# ]
 cy_modules = [
-    ("isp.cython_code.hampel",         os.path.join(cy_path, "hampel.pyx")),
-    # CF modules:
-    ("isp.cython_code.rec_filter",     os.path.join(cy_path, "rec_filter.pyx")),
-    ("isp.cython_code.lib_rec_hos",    os.path.join(cy_path, "lib_rec_hos.pyx")),
-    ("isp.cython_code.lib_rec_rms",    os.path.join(cy_path, "lib_rec_rms.pyx")),
-    ("isp.cython_code.lib_rosenberger",os.path.join(cy_path, "lib_rosenberger.pyx")),
-    ("isp.cython_code.lib_rec_cc",     os.path.join(cy_path, "lib_rec_cc.pyx")),
-    # Optional/problematic ones (won't break the build if they fail):
-    ("isp.cython_code.ccwt_cy",        os.path.join(cy_path, "ccwt_cy.pyx")),
-    ("isp.cython_code.whiten",         os.path.join(cy_path, "whiten.pyx")),
-]
+     ("isp.cython_code.hampel",         os.path.join(cy_path, "hampel.pyx")),
+     ("isp.cython_code.ccwt_cy",        os.path.join(cy_path, "ccwt_cy.pyx")),
+     ("isp.cython_code.whiten",         os.path.join(cy_path, "whiten.pyx"))]
 
 ext_list = []
 for modname, src in cy_modules:

@@ -1,17 +1,39 @@
 import os
-from os import listdir
-from os.path import isfile, join
 import shutil
-from distutils.core import setup
-from setuptools.command.build_ext import build_ext
-import numpy
-from Cython.Build import cythonize
+import warnings
+import platform
 import subprocess as sb
+from os.path import isfile, join
+from os import listdir
+import numpy
+from setuptools import setup, find_packages
+from setuptools.extension import Extension
+from setuptools.command.build_ext import build_ext
+from Cython.Build import cythonize
+from Cython.Compiler.Errors import CompileError
 
-from isp import ROOT_DIR
 
-cy_path = os.path.join(ROOT_DIR, 'cython_code')
+try:
+    from isp import ROOT_DIR
+except Exception as e:
+    raise RuntimeError(f"Could not import isp. Ensure ISP is importable. Error: {e}")
 
+system_computer = platform.system().lower()
+machine_computer = platform.machine().lower()
+
+if system_computer in ("linux", "linux2"):
+    system_path = os.path.join(ROOT_DIR, "linux_bin")
+elif system_computer == "darwin":
+    if machine_computer == "arm64":
+        system_path = os.path.join(ROOT_DIR, "mac_m_bin")  # Apple Silicon
+    else:
+        system_path = os.path.join(ROOT_DIR, "mac_bin")    # Intel mac
+else:
+    # Unsupported platforms won't stop the build; just print info.
+    print(f"Unsupported system: {system_computer} ({machine_computer})")
+    system_path = os.path.join(ROOT_DIR, "bin_unknown")
+
+cy_path = os.path.join(ROOT_DIR, "cython_code")
 
 def exc_cmd(cmd, **kwargs):
     """
@@ -193,13 +215,81 @@ class CustomBuildExtCommand(build_ext):
             shutil.copy(src_path, dst_path)
 
 
+# ----------------------------------------------------------------------
+# Build Cython extensions with per-module try/except
+# ----------------------------------------------------------------------
+extra_compile_args = ["/O2"] if system_computer == "windows" else ["-O3"]
+extra_link_args = []
+extra_libraries = [] if system_computer == "windows" else ["m"]  # libm on POSIX
+
+def try_add_extension(modname, src):
+    """
+    Try to cythonize a single extension. On failure, warn and continue.
+    Returns a list (possibly empty) of cythonized Extension objects.
+    """
+    try:
+        ext = Extension(
+            name=modname,
+            sources=[src],
+            include_dirs=[numpy.get_include(), cy_path],
+            language="c",
+            extra_compile_args=extra_compile_args,
+            extra_link_args=extra_link_args,
+            libraries=extra_libraries,
+        )
+        return cythonize(
+            [ext],
+            language_level=3,
+            compiler_directives={
+                "boundscheck": False,
+                "wraparound": False,
+                "cdivision": True,
+                "nonecheck": False,
+            },
+        )
+    except CompileError as e:
+        warnings.warn(f"Could not compile {modname}: {e}. Skipping.")
+    except Exception as e:
+        warnings.warn(f"Unexpected error compiling {modname}: {e}. Skipping.")
+    return []
+
+# Collect target .pyx modules (explicit list; add/remove as needed)
+# cy_modules = [
+#     ("isp.cython_code.hampel",         os.path.join(cy_path, "hampel.pyx")),
+#     # CF modules:
+#     ("isp.cython_code.rec_filter",     os.path.join(cy_path, "rec_filter.pyx")),
+#     ("isp.cython_code.lib_rec_hos",    os.path.join(cy_path, "lib_rec_hos.pyx")),
+#     ("isp.cython_code.lib_rec_rms",    os.path.join(cy_path, "lib_rec_rms.pyx")),
+#     ("isp.cython_code.lib_rosenberger",os.path.join(cy_path, "lib_rosenberger.pyx")),
+#     ("isp.cython_code.lib_rec_cc",     os.path.join(cy_path, "lib_rec_cc.pyx")),
+#     # Optional/problematic ones (won't break the build if they fail):
+#     ("isp.cython_code.ccwt_cy",        os.path.join(cy_path, "ccwt_cy.pyx")),
+#     ("isp.cython_code.whiten",         os.path.join(cy_path, "whiten.pyx")),
+# ]
+cy_modules = [
+     ("isp.cython_code.hampel",         os.path.join(cy_path, "hampel.pyx")),
+     ("isp.cython_code.ccwt_cy",        os.path.join(cy_path, "ccwt_cy.pyx")),
+     ("isp.cython_code.whiten",         os.path.join(cy_path, "whiten.pyx"))]
+
+ext_list = []
+for modname, src in cy_modules:
+    if os.path.isfile(src):
+        ext_list.extend(try_add_extension(modname, src))
+    else:
+        warnings.warn(f"Source not found for {modname}: {src}. Skipping.")
+
+# ----------------------------------------------------------------------
+# Setup
+# ----------------------------------------------------------------------
 setup(
-    cmdclass={'build_ext': CustomBuildExtCommand,},
+    cmdclass={'build_ext': CustomBuildExtCommand},
     name='isp_package',
     version='2.0',
     description='ISP setup script',
     packages=find_packages(include=['isp', 'isp.*']),
-    include_dirs=[numpy.get_include()])
+    include_dirs=[numpy.get_include()],
+    ext_modules=ext_list,
+)
 
 #setup(
 #    cmdclass={
