@@ -25,5 +25,7 @@ class SettingsDialog(pw.QDialog, UiSettingsDialog):
         param_dict["prs_phases"] = self.phasesLE.text().split(",")
         param_dict["auto_resample"] = self.fastCB.isChecked()
         param_dict["auto_refresh"] = self.autorefreshCB.isChecked()
+        param_dict["hos_order"] = self.hos_order_DB.value()
+        param_dict["CF_decay_win"] = self.CF_decay_win_DB.value()
         return param_dict
 

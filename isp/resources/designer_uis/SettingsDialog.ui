@@ -50,6 +50,33 @@
            </property>
           </widget>
          </item>
+         <item row="0" column="1" rowspan="3">
+          <widget class="Line" name="line">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QDoubleSpinBox" name="kurtosis_timewindowDB">
+           <property name="prefix">
+            <string>kurtosis win </string>
+           </property>
+           <property name="suffix">
+            <string> (s)</string>
+           </property>
+           <property name="value">
+            <double>5.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="4">
+          <widget class="Line" name="line_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
          <item row="1" column="3">
           <widget class="QDoubleSpinBox" name="fminDB">
            <property name="prefix">
@@ -62,7 +89,7 @@
             <number>4</number>
            </property>
            <property name="value">
-            <double>1.000000000000000</double>
+            <double>0.500000000000000</double>
            </property>
           </widget>
          </item>
@@ -79,10 +106,35 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="label_12">
-           <property name="text">
-            <string>Entropy</string>
+         <item row="5" column="3">
+          <widget class="QDoubleSpinBox" name="fminDB_2">
+           <property name="prefix">
+            <string>frequency max </string>
+           </property>
+           <property name="suffix">
+            <string> Hz</string>
+           </property>
+           <property name="decimals">
+            <number>4</number>
+           </property>
+           <property name="value">
+            <double>0.500000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QSpinBox" name="ncyclesDB">
+           <property name="suffix">
+            <string> Hz</string>
+           </property>
+           <property name="prefix">
+            <string>Num Cycles </string>
+           </property>
+           <property name="maximum">
+            <number>25</number>
+           </property>
+           <property name="value">
+            <number>6</number>
            </property>
           </widget>
          </item>
@@ -112,16 +164,10 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="2">
-          <widget class="QDoubleSpinBox" name="kurtosis_timewindowDB">
-           <property name="prefix">
-            <string>kurtosis win </string>
-           </property>
-           <property name="suffix">
-            <string> (s)</string>
-           </property>
-           <property name="value">
-            <double>5.000000000000000</double>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_12">
+           <property name="text">
+            <string>Entropy</string>
            </property>
           </widget>
          </item>
@@ -138,47 +184,78 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1" rowspan="3">
-          <widget class="Line" name="line">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
+         <item row="6" column="3">
+          <widget class="QDoubleSpinBox" name="fmaxDB_2">
+           <property name="prefix">
+            <string>frequency max </string>
+           </property>
+           <property name="suffix">
+            <string> Hz</string>
+           </property>
+           <property name="decimals">
+            <number>4</number>
+           </property>
+           <property name="maximum">
+            <double>250.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>8.000000000000000</double>
            </property>
           </widget>
          </item>
-         <item row="0" column="2">
+         <item row="4" column="2" colspan="2">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Kurtosis Detector</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2" colspan="2">
           <widget class="QLabel" name="label_7">
            <property name="text">
             <string>Wavelet Detector</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="2">
-          <widget class="QSpinBox" name="ncyclesDB">
+         <item row="6" column="2">
+          <widget class="QSpinBox" name="hos_order_DB">
            <property name="suffix">
-            <string> Hz</string>
+            <string/>
            </property>
            <property name="prefix">
-            <string>Num Cycles </string>
+            <string>hos_order </string>
+           </property>
+           <property name="minimum">
+            <number>2</number>
            </property>
            <property name="maximum">
-            <number>25</number>
+            <number>6</number>
            </property>
            <property name="value">
-            <number>6</number>
+            <number>4</number>
            </property>
           </widget>
          </item>
-         <item row="4" column="1" rowspan="2">
+         <item row="4" column="1" rowspan="3">
           <widget class="Line" name="line_3">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
           </widget>
          </item>
-         <item row="3" column="0" colspan="4">
-          <widget class="Line" name="line_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+         <item row="5" column="2">
+          <widget class="QDoubleSpinBox" name="CF_decay_win_DB">
+           <property name="prefix">
+            <string>CF_decay_win </string>
+           </property>
+           <property name="suffix">
+            <string> s</string>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+           <property name="value">
+            <double>4.000000000000000</double>
            </property>
           </widget>
          </item>

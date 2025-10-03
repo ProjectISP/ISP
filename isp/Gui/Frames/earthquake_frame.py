@@ -1312,10 +1312,10 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def cwt_kurt(self):
         params = self.settings_dialog.getParameters()
-        cycles = params["Num Cycles"]
+        hos_order = params["hos_order"]
         fmin = params["Fmin"]
         fmax = params["Fmax"]
-        kurt_win = params["kurt_win"]
+        CF_decay_win = params["CF_decay_win"]
         sharey = params["amplitudeaxis"]
         global_cf_min = float('inf')
         global_cf_max = float('-inf')
@@ -1330,11 +1330,13 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         index = 0
         for index, file_path in enumerate(self.st):
             tr = self.st[index]
+
             t = tr.times("matplotlib")
             st_stats = ObspyUtil.get_stats_from_trace(tr)
             #YN1, CF1, cf, Tn, Nb, freqs = CFMB.compute_tf(tr, fmin=fmin, fmax=fmax, filter_npoles=4,
             #                    var_w=True, CF_type='kurtosis', CF_decay_win=4.0, hos_order=4, apply_taper=True)
-            cf_kurt = CFKurtosis(self.st[index], 4, 4, fmin, fmax).run_kurtosis()[0]
+            cf_kurt = CFKurtosis(self.st[index], CF_decay_win=CF_decay_win, hos_order=hos_order, fmin=fmin,
+                                 fmax=fmax).run_kurtosis()[0]
 
             self.canvas.plot_date(t, tr.data, index, color="black", fmt='-', linewidth=0.5)
             info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
