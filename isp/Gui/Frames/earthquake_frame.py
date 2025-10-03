@@ -1,5 +1,4 @@
 import copy
-# from concurrent.futures.thread import ThreadPoolExecutor
 import matplotlib.dates as mdt
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QMessageBox
@@ -8,7 +7,7 @@ from obspy import UTCDateTime, Stream, Trace, Inventory
 from obspy.geodetics import gps2dist_azimuth, kilometers2degrees
 from surfquakecore.project.surf_project import SurfProject
 from isp.DataProcessing import DatalessManager, SeismogramDataAdvanced, ConvolveWaveletScipy
-from isp.DataProcessing.cf_kurtosis import CFMB
+from surfquakecore.coincidence_trigger.cf_kurtosis import CFKurtosis
 from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.DataProcessing.plot_tools_manager import PlotToolsManager
 from isp.Exceptions import parse_excepts
@@ -1332,8 +1331,9 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             tr = self.st[index]
             t = tr.times("matplotlib")
             st_stats = ObspyUtil.get_stats_from_trace(tr)
-            YN1, CF1, cf, Tn, Nb, freqs = CFMB.compute_tf(tr, fmin=fmin, fmax=fmax, filter_npoles=4,
-                                var_w=True, CF_type='kurtosis', CF_decay_win=4.0, hos_order=4, apply_taper=True)
+            #YN1, CF1, cf, Tn, Nb, freqs = CFMB.compute_tf(tr, fmin=fmin, fmax=fmax, filter_npoles=4,
+            #                    var_w=True, CF_type='kurtosis', CF_decay_win=4.0, hos_order=4, apply_taper=True)
+            cf_kurt = CFKurtosis(self.st[index], 4, 4, fmin, fmax).run_kurtosis()[0]
 
             self.canvas.plot_date(t, tr.data, index, color="black", fmt='-', linewidth=0.5)
             info = "{}.{}.{}".format(st_stats['net'], st_stats['station'], st_stats['channel'])
@@ -1343,20 +1343,18 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
             ax = self.canvas.get_axe(index)
             ax2 = ax.twinx()
-            ax2.plot(t, cf, color="red", linewidth=0.5, alpha=0.5)
+            ax2.plot(t, cf_kurt.data, color="red", linewidth=0.5, alpha=0.5)
             if sharey:
                 # Clean ticks on ax2
                 ax2.tick_params(axis='y', which='both', left=False, right=False, labelleft=False, labelright=False)
+
             # Update global y-limits for ax2
-            cf_min, cf_max = min(cf), max(cf)
+            cf_min, cf_max = min(cf_kurt.data), max(cf_kurt.data)
             global_cf_min = min(global_cf_min, cf_min)
             global_cf_max = max(global_cf_max, cf_max)
-            #ax2.set_ylim(global_cf_min, global_cf_max)
 
-            tr_cf = tr.copy()
-            tr_cf.data = cf
-            tr_cf.times = t
-            cfs.append(tr_cf)
+
+            cfs.append(cf_kurt)
 
         # After the loop, synchronize all ax2 y-limits
         if sharey:
