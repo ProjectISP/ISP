@@ -16,8 +16,9 @@ from surfquakecore.phasenet.phasenet_handler import PhasenetISP, PhasenetUtils
 from surfquakecore.real.real_core import RealCore
 from sys import platform
 from surfquakecore.project.surf_project import SurfProject
-from isp.associate_events.coincidence_trigger import CoincidenceTrigger
-
+from surfquakecore.coincidence_trigger.structures import CoincidenceConfig, Kurtosis, STA_LTA, Cluster
+from surfquakecore.coincidence_trigger.coincidence_trigger import CoincidenceTrigger
+from datetime import datetime, timedelta
 
 @add_save_load()
 class Autopick(BaseFrame, UiAutopick):
@@ -66,6 +67,9 @@ class Autopick(BaseFrame, UiAutopick):
 
         self.setDefaultPickPath.clicked.connect(self.setDefaultPick)
 
+        self.snr_btn.toggled.connect(self._set_snr_method)
+        self.kurtosis_btn.toggled.connect(self._set_kurt_method)
+        self._set_snr_method()
         ### Polarities Determination ####
         self.runPolaritiesBtn.clicked.connect(lambda: self.run_polarities())
 
@@ -78,29 +82,38 @@ class Autopick(BaseFrame, UiAutopick):
         self.progress_dialog.setWindowTitle(self.windowTitle())
         self.progress_dialog.close()
 
+    def _set_kurt_method(self):
+        self.staWinDB.setEnabled(False)
+        self.ltaWinDB.setEnabled(False)
+        self.kurtosisTimeWindowDB.setEnabled(True)
+
+    def _set_snr_method(self):
+        self.staWinDB.setEnabled(True)
+        self.ltaWinDB.setEnabled(True)
+        self.kurtosisTimeWindowDB.setEnabled(False)
 
     def _get_trigger_parameters(self):
-        self.trigger_parameters = {}
 
-        if self.decimateCB.isChecked():
-            decimate_sampling_rate = self.new_sampling_rateSB.value()
-        else:
-            decimate_sampling_rate = False
-
-        if self.methodTrigger.currentText() == "Classic STA/LTA":
-            method = "classicstalta"
-            self.trigger_parameters["sta"] = self.staWinDB.value()
-            self.trigger_parameters["lta"] = self.ltaWinDB.value()
-
+        if self.snr_btn.isChecked():
+            method = "SNR"
         else:
             method = "kurtosis"
 
-        self.trigger_parameters = {"method": method, "fmin": self.fminDB.value(), "fmax": self.fmaxDB.value(),
-                                   "the_on": self.threshold_onDB.value(), "the_off": self.threshold_offDB.value(),
-                                   "time_window": self.kurtosisTimeWindowDB.value(),
-                                   "coincidence": self.NumCoincidenceSB.value(),
-                                   "centroid_radio": self.clusterSizeDB.value(),
-                                   "decimate_sampling_rate": decimate_sampling_rate}
+        config = CoincidenceConfig(
+            kurtosis_configuration=Kurtosis(CF_decay_win=self.kurtosisTimeWindowDB.value()),
+            sta_lta_configuration=STA_LTA(method="classic", sta_win=self.staWinDB.value(), lta_win=self.ltaWinDB.value()),
+            cluster_configuration=Cluster(
+                method_preferred=method,
+                centroid_radio=self.clusterSizeDB.value(),
+                coincidence=self.NumCoincidenceSB.value(),
+                threshold_on=self.threshold_onDB.value(),
+                threshold_off=self.threshold_offDB.value(),
+                fmin=self.fminDB.value(),
+                fmax=self.fmaxDB.value()
+            )
+        )
+
+        return config
 
 
     def run_trigger(self):
@@ -114,6 +127,15 @@ class Autopick(BaseFrame, UiAutopick):
             md = MessageDialog(self)
             md.set_info_message("Coincidence Trigger Done")
 
+    def parse_datetime(self, dt_str: str) -> datetime:
+        # try with microseconds, fall back if not present
+        for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):
+            try:
+                return datetime.strptime(dt_str, fmt)
+            except ValueError:
+                continue
+        raise ValueError(f"Date string not in expected format: {dt_str}")
+
 
     @AsycTime.run_async()
     def send_trigger(self):
@@ -121,22 +143,40 @@ class Autopick(BaseFrame, UiAutopick):
         sp = SurfProject()
         sp.project = self.sp
 
-        self._get_trigger_parameters()
-        if self.pick_file_bind.value == "":
-            pick_file = None
-        if self.trigger_outpath_bind.value == "":
-            out_path = None
+        info = sp.get_project_basic_info()
+        min_date = info["Start"]
+        max_date = info["End"]
+        span_seconds = 86400
+        dt1 = self.parse_datetime(min_date)
+        dt2 = self.parse_datetime(max_date)
+
+        diff = abs(dt2 - dt1)
+        if diff < timedelta(days=1):
+            sp.get_data_files()
+            subprojects = [sp]
+
         else:
-            out_path = os.path.join(self.trigger_outpath_bind.value, "triggered_picks.txt")
+            print(f"[INFO] Splitting into subprojects every {span_seconds} seconds")
+            subprojects = sp.split_by_time_spans(
+                span_seconds=span_seconds,
+                min_date=min_date,
+                max_date=max_date,
+                file_selection_mode="overlap_threshold",
+                verbose=True)
 
-        if len(self.trigger_parameters)>0:
-            ct = CoincidenceTrigger(project=sp, parameters=self.trigger_parameters)
-            final_filtered_results, details = ct.optimized_project_processing(input_file=self.pick_file_bind.value,
-                                            output_file=out_path)
+        if self.pick_file_bind.value == "":
+            picking_file = None
+        else:
+            picking_file = self.pick_file_bind.value
 
-            self.final_filtered_results = final_filtered_results
-            self.send_signal2()
+        config = self._get_trigger_parameters()
+
+        ct = CoincidenceTrigger(subprojects, config, picking_file, self.trigger_outpath_bind.value, plot=False)
+        self.final_filtered_results = ct.optimized_project_processing()
+
+        self.send_signal2()
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
+
 
     def on_click_select_file(self, bind: BindPyqtObject):
         file_path = pw.QFileDialog.getOpenFileName(self, 'Select File', bind.value)
