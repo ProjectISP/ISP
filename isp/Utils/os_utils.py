@@ -33,9 +33,21 @@ class OSutils:
         :param link_path: Path for the symbolic link
         :param overwrite: If True, overwrite existing link/file
         """
+        # Resolve absolute paths
+        target = os.path.abspath(target)
+        link_path = os.path.abspath(link_path)
+
         # If overwrite is allowed, remove existing file/link first
         if overwrite and os.path.lexists(link_path):
             os.remove(link_path)
+
+        # Avoid trying to link a path to itself
+        try:
+            if os.path.exists(link_path) and os.path.samefile(target, link_path):
+                print(f"Skipping symlink: {link_path} and {target} are the same file.")
+                return
+        except FileNotFoundError:
+            pass  # link_path may not exist yet
 
         try:
             os.symlink(target, link_path)
