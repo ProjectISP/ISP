@@ -2567,10 +2567,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def slot(self, reset):
         self.import_pick_from_file(default=True, reset=reset)
 
-    @pyqtSlot()
-    def slot2(self):
+    @pyqtSlot(bool)
+    def slot2(self, reset):
         self.events_times = self.__autopick.final_filtered_results
-        self.plot_seismogram()
+        self.import_pick_from_file(default=True, reset=reset)
+
 
     def open_locate(self):
         # Add buttons

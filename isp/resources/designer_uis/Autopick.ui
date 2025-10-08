@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1250</width>
-    <height>855</height>
+    <width>1251</width>
+    <height>929</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -232,16 +232,6 @@
                    <string>Parameters</string>
                   </property>
                   <layout class="QGridLayout" name="gridLayout_12">
-                   <item row="10" column="1" colspan="2">
-                    <widget class="QPushButton" name="realCoincidenceTrigger">
-                     <property name="toolTip">
-                      <string>Associator</string>
-                     </property>
-                     <property name="text">
-                      <string>Run Coincidence Trigger</string>
-                     </property>
-                    </widget>
-                   </item>
                    <item row="5" column="1">
                     <widget class="QDoubleSpinBox" name="staWinDB">
                      <property name="prefix">
@@ -258,36 +248,55 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="1">
-                    <widget class="QDoubleSpinBox" name="threshold_offDB">
+                   <item row="9" column="0">
+                    <widget class="QLabel" name="label">
+                     <property name="text">
+                      <string>Frequency range</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QDoubleSpinBox" name="clusterSizeDB">
                      <property name="prefix">
-                      <string>Deactivate Threshold </string>
+                      <string>Cluster Size </string>
+                     </property>
+                     <property name="suffix">
+                      <string> (s)</string>
                      </property>
                      <property name="decimals">
                       <number>1</number>
                      </property>
-                     <property name="minimum">
-                      <double>-1000.000000000000000</double>
-                     </property>
                      <property name="maximum">
-                      <double>1000.000000000000000</double>
+                      <double>900.000000000000000</double>
                      </property>
                      <property name="value">
-                      <double>10.000000000000000</double>
+                      <double>60.000000000000000</double>
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="0" colspan="4">
-                    <widget class="Line" name="line_2">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="6" column="0">
-                    <widget class="QRadioButton" name="kurtosis_btn">
+                   <item row="10" column="3">
+                    <widget class="QCheckBox" name="saveplotsCB">
                      <property name="text">
-                      <string>Kurtosis</string>
+                      <string>Save Plots</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="9" column="1">
+                    <widget class="QDoubleSpinBox" name="fminDB">
+                     <property name="prefix">
+                      <string> Freq min </string>
+                     </property>
+                     <property name="suffix">
+                      <string> Hz</string>
+                     </property>
+                     <property name="decimals">
+                      <number>4</number>
+                     </property>
+                     <property name="maximum">
+                      <double>400.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>0.500000000000000</double>
                      </property>
                     </widget>
                    </item>
@@ -301,7 +310,7 @@
                    <item row="1" column="0">
                     <widget class="QDoubleSpinBox" name="threshold_onDB">
                      <property name="prefix">
-                      <string>Active Threshold </string>
+                      <string>Activated Threshold </string>
                      </property>
                      <property name="decimals">
                       <number>1</number>
@@ -317,13 +326,65 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="5" column="0">
-                    <widget class="QRadioButton" name="snr_btn">
-                     <property name="text">
-                      <string>Classic STA/LTA</string>
+                   <item row="2" column="0">
+                    <widget class="QSpinBox" name="NumCoincidenceSB">
+                     <property name="prefix">
+                      <string>Num of Coincidence </string>
                      </property>
-                     <property name="checked">
-                      <bool>true</bool>
+                     <property name="minimum">
+                      <number>4</number>
+                     </property>
+                     <property name="maximum">
+                      <number>100</number>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="6" column="0">
+                    <widget class="QRadioButton" name="kurtosis_btn">
+                     <property name="text">
+                      <string>Kurtosis</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QDoubleSpinBox" name="threshold_offDB">
+                     <property name="prefix">
+                      <string>Deactivated Threshold </string>
+                     </property>
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="minimum">
+                      <double>-1000.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>1000.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>10.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="2">
+                    <widget class="QDoubleSpinBox" name="ltaWinDB">
+                     <property name="prefix">
+                      <string>LTA Time window </string>
+                     </property>
+                     <property name="suffix">
+                      <string> (s)</string>
+                     </property>
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="value">
+                      <double>40.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0" colspan="4">
+                    <widget class="Line" name="line_2">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
                      </property>
                     </widget>
                    </item>
@@ -349,77 +410,23 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="0">
-                    <widget class="QSpinBox" name="NumCoincidenceSB">
-                     <property name="prefix">
-                      <string>Num of Coincidence </string>
-                     </property>
-                     <property name="minimum">
-                      <number>3</number>
-                     </property>
-                     <property name="maximum">
-                      <number>100</number>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="5" column="2">
-                    <widget class="QDoubleSpinBox" name="ltaWinDB">
-                     <property name="prefix">
-                      <string>LTA Time window </string>
-                     </property>
-                     <property name="suffix">
-                      <string> (s)</string>
-                     </property>
-                     <property name="decimals">
-                      <number>1</number>
-                     </property>
-                     <property name="value">
-                      <double>40.000000000000000</double>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="1">
-                    <widget class="QDoubleSpinBox" name="clusterSizeDB">
-                     <property name="prefix">
-                      <string>Cluster Size </string>
-                     </property>
-                     <property name="suffix">
-                      <string> (s)</string>
-                     </property>
-                     <property name="decimals">
-                      <number>1</number>
-                     </property>
-                     <property name="maximum">
-                      <double>900.000000000000000</double>
-                     </property>
-                     <property name="value">
-                      <double>60.000000000000000</double>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="9" column="0">
-                    <widget class="QLabel" name="label">
+                   <item row="5" column="0">
+                    <widget class="QRadioButton" name="snr_btn">
                      <property name="text">
-                      <string>Frequency range</string>
+                      <string>Classic STA/LTA</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>
-                   <item row="9" column="1">
-                    <widget class="QDoubleSpinBox" name="fminDB">
-                     <property name="prefix">
-                      <string> Freq min </string>
+                   <item row="10" column="1" colspan="2">
+                    <widget class="QPushButton" name="realCoincidenceTrigger">
+                     <property name="toolTip">
+                      <string>Associator</string>
                      </property>
-                     <property name="suffix">
-                      <string> Hz</string>
-                     </property>
-                     <property name="decimals">
-                      <number>4</number>
-                     </property>
-                     <property name="maximum">
-                      <double>400.000000000000000</double>
-                     </property>
-                     <property name="value">
-                      <double>8.000000000000000</double>
+                     <property name="text">
+                      <string>Run Coincidence Trigger</string>
                      </property>
                     </widget>
                    </item>
@@ -438,7 +445,7 @@
                       <double>400.000000000000000</double>
                      </property>
                      <property name="value">
-                      <double>0.500000000000000</double>
+                      <double>8.000000000000000</double>
                      </property>
                     </widget>
                    </item>
@@ -972,7 +979,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1250</width>
+     <width>1251</width>
      <height>24</height>
     </rect>
    </property>

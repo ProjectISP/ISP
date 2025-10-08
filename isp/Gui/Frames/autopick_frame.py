@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 class Autopick(BaseFrame, UiAutopick):
 
     signal = pyc.pyqtSignal(bool)
-    signal2 = pyc.pyqtSignal()
+    signal2 = pyc.pyqtSignal(bool)
     def __init__(self, project, metadata_path, starttime=None, endtime=None):
 
         super(Autopick, self).__init__()
@@ -97,7 +97,7 @@ class Autopick(BaseFrame, UiAutopick):
         if self.snr_btn.isChecked():
             method = "SNR"
         else:
-            method = "kurtosis"
+            method = "Kurtosis"
 
         config = CoincidenceConfig(
             kurtosis_configuration=Kurtosis(CF_decay_win=self.kurtosisTimeWindowDB.value()),
@@ -115,6 +115,14 @@ class Autopick(BaseFrame, UiAutopick):
 
         return config
 
+    def parse_datetime(self, dt_str: str) -> datetime:
+        # try with microseconds, fall back if not present
+        for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):
+            try:
+                return datetime.strptime(dt_str, fmt)
+            except ValueError:
+                continue
+        raise ValueError(f"Date string not in expected format: {dt_str}")
 
     def run_trigger(self):
 
@@ -126,16 +134,6 @@ class Autopick(BaseFrame, UiAutopick):
             self.progress_dialog.exec()
             md = MessageDialog(self)
             md.set_info_message("Coincidence Trigger Done")
-
-    def parse_datetime(self, dt_str: str) -> datetime:
-        # try with microseconds, fall back if not present
-        for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):
-            try:
-                return datetime.strptime(dt_str, fmt)
-            except ValueError:
-                continue
-        raise ValueError(f"Date string not in expected format: {dt_str}")
-
 
     @AsycTime.run_async()
     def send_trigger(self):
@@ -171,10 +169,15 @@ class Autopick(BaseFrame, UiAutopick):
 
         config = self._get_trigger_parameters()
 
-        ct = CoincidenceTrigger(subprojects, config, picking_file, self.trigger_outpath_bind.value, plot=False)
+        ct = CoincidenceTrigger(subprojects, config, picking_file, self.trigger_outpath_bind.value,
+                                plot=self.saveplotsCB.isChecked())
         self.final_filtered_results = ct.optimized_project_processing()
 
-        self.send_signal2()
+        if self.picking_bind.value != PICKING_DIR:
+            OSutils.copy_and_rename_file(picking_file, PICKING_DIR, "output.txt")
+            #OSutils.create_symlink(picking_file, target_file)
+
+        self.send_signal2(reset=True)
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
 
 
@@ -296,11 +299,11 @@ class Autopick(BaseFrame, UiAutopick):
 
         self.signal.emit(reset)
 
-    def send_signal2(self):
+    def send_signal2(self, reset=False):
 
         # Connect end of picking with Earthquake Analysis
 
-        self.signal2.emit()
+        self.signal2.emit(reset)
 
 
     ## End Picking ##
