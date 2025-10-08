@@ -1,3 +1,4 @@
+import copy
 import os.path
 from PyQt5.QtCore import Qt
 from obspy import Inventory
@@ -7,7 +8,7 @@ from isp.DataProcessing.metadata_manager import MetadataManager
 from isp.Gui import pyc, pw
 from isp.Gui.Frames import BaseFrame, MessageDialog
 from isp.Gui.Frames.uis_frames import UiAutopick
-from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
+from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.LocCore.plot_tool_loc import plot_real_map
 from isp.PolarCap.cnnFirstPolarity import Polarity
 from isp.Utils import AsycTime, obspy_utils, MseedUtil
@@ -25,7 +26,7 @@ class Autopick(BaseFrame, UiAutopick):
 
     signal = pyc.pyqtSignal(bool)
     signal2 = pyc.pyqtSignal(bool)
-    def __init__(self, project, metadata_path, starttime=None, endtime=None):
+    def __init__(self, project: SurfProject, metadata_path, starttime=None, endtime=None):
 
         super(Autopick, self).__init__()
         self.setupUi(self)
@@ -38,12 +39,26 @@ class Autopick(BaseFrame, UiAutopick):
         metadata_path: str
         """
 
-        self.sp = project
+        self.project_filtered = None
+        md = MessageDialog(self)
+        if isinstance(project, SurfProject) and len(project.project) >0:
+            self.project = project
+            print(self.project)
+            md.set_info_message("Project loaded, Ready to go!!!")
+
+        else:
+            md.set_info_message("Project NO loaded, First load a project in Earthquake Analysis")
+
         self.metadata_path = metadata_path
         self.starttime = starttime
         self.endtime = endtime
         self.inventory = None
         self.final_filtered_results = []
+
+        ############# Project - Filter ###############
+        # set project_path
+        self.filterProjectBtn.clicked.connect(lambda: self._convert_project())
+
         ############# Phasent - Picking ##############
         self.picking_bind = BindPyqtObject(self.picking_LE, self.onChange_root_path)
         self.output_path_pickBtn.clicked.connect(lambda: self.on_click_select_directory(self.picking_bind))
@@ -70,6 +85,7 @@ class Autopick(BaseFrame, UiAutopick):
         self.snr_btn.toggled.connect(self._set_snr_method)
         self.kurtosis_btn.toggled.connect(self._set_kurt_method)
         self._set_snr_method()
+
         ### Polarities Determination ####
         self.runPolaritiesBtn.clicked.connect(lambda: self.run_polarities())
 
@@ -81,6 +97,10 @@ class Autopick(BaseFrame, UiAutopick):
         self.progress_dialog.setWindowIcon(self.windowIcon())
         self.progress_dialog.setWindowTitle(self.windowTitle())
         self.progress_dialog.close()
+
+    def _convert_project(self):
+        self.project.get_data_files()
+        self.reload_current_project()
 
     def _set_kurt_method(self):
         self.staWinDB.setEnabled(False)
@@ -126,20 +146,22 @@ class Autopick(BaseFrame, UiAutopick):
 
     def run_trigger(self):
 
-        if self.sp is None:
+        if self.project is None and self.project_filtered:
             md = MessageDialog(self)
             md.set_error_message("Metadata run Picking, Please load a project first")
         else:
             self.send_trigger()
             self.progress_dialog.exec()
             md = MessageDialog(self)
-            md.set_info_message("Coincidence Trigger Done")
+            md.set_info_message("Coincidence Trigger Done, Review Files coincidence_*.txt ")
 
     @AsycTime.run_async()
     def send_trigger(self):
 
-        sp = SurfProject()
-        sp.project = self.sp
+        if self.project_filtered:
+            sp = self.project_filtered
+        else:
+            sp = self.project
 
         info = sp.get_project_basic_info()
         min_date = info["Start"]
@@ -150,7 +172,6 @@ class Autopick(BaseFrame, UiAutopick):
 
         diff = abs(dt2 - dt1)
         if diff < timedelta(days=1):
-            sp.get_data_files()
             subprojects = [sp]
 
         else:
@@ -174,8 +195,10 @@ class Autopick(BaseFrame, UiAutopick):
         self.final_filtered_results = ct.optimized_project_processing()
 
         if self.picking_bind.value != PICKING_DIR:
+            destination = os.path.join(self.trigger_outpath_bind.value, "output.txt")
+            origin_output = os.path.join(PICKING_DIR, "output.txt")
             OSutils.copy_and_rename_file(picking_file, PICKING_DIR, "output.txt")
-            #OSutils.create_symlink(picking_file, target_file)
+            OSutils.create_symlink(origin_output, destination, overwrite=True)
 
         self.send_signal2(reset=True)
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
@@ -251,11 +274,16 @@ class Autopick(BaseFrame, UiAutopick):
 
     def run_phasenet(self):
 
-        if self.sp is None:
+        if self.project is None and self.project_filtered is None:
             md = MessageDialog(self)
             md.set_error_message("Metadata run Picking, Please load a project first")
         else:
-            info = MseedUtil.get_project_basic_info(self.sp)
+            if self.project_filtered:
+                sp = self.project_filtered
+            else:
+                sp = self.project
+
+            info = sp.get_project_basic_info()
             print("Networks: ", info["Networks"])
             print("Stations: ", info["Stations"])
             print("Channel: ", info["Channels"])
@@ -276,7 +304,12 @@ class Autopick(BaseFrame, UiAutopick):
         origin_output = os.path.join(PICKING_DIR, "output.txt")
         destination = os.path.join(self.picking_bind.value,"output.txt")
 
-        phISP = PhasenetISP(self.sp, amplitude=True, min_p_prob=self.p_wave_picking_thresholdDB.value(),
+        if self.project_filtered:
+            project = self.project_filterd.project
+        else:
+            project = self.project.project
+
+        phISP = PhasenetISP(project, amplitude=True, min_p_prob=self.p_wave_picking_thresholdDB.value(),
                             min_s_prob=self.s_wave_picking_thresholdDB.value())
 
         picks = phISP.phasenet()
@@ -395,16 +428,62 @@ class Autopick(BaseFrame, UiAutopick):
         origin_pick_file = os.path.join(PICKING_DIR, "output.txt")
         target_file = os.path.join(self.picking_bind.value, "output.txt")
 
-        sp = SurfProject()
-        sp.project = self.sp
-        pol = Polarity(project=sp, model_path=POLARITY_NETWORK, arrivals_path=self.picking_bind.value,
+
+        pol = Polarity(project=self.project, model_path=POLARITY_NETWORK, arrivals_path=self.picking_bind.value,
                        threshold=self.polaritiesProbDB.value(),
                        output_path=origin_pick_file)
 
         pol.optimized_project_processing_pol()
 
         # copy_and_rename_file(src_path, dest_dir, new_name)
-        OSutils.copy_and_rename_file(origin_pick_file, self.picking_bind.value, "nll_picks_polarities.txt")
+        OSutils.copy_and_rename_file(origin_pick_file, self.picking_bind.value, "nll_picks.txt")
         if self.picking_bind.value != PICKING_DIR:
             OSutils.create_symlink(origin_pick_file, target_file)
         pyc.QMetaObject.invokeMethod(self.progress_dialog, 'accept', Qt.QueuedConnection)
+
+
+    def reload_current_project(self):
+
+        md = MessageDialog(self)
+
+        self.get_now_files()
+
+        if self.project_filtered:
+            info = self.project_filtered.get_project_basic_info()
+
+            if len(info) > 0:
+
+                md.set_info_message("New Project reloaded",
+                                    "Networks: " + ','.join(info["Networks"][0]) + "\n" +
+                                    "Stations: " + ','.join(info["Stations"][0]) + "\n" +
+                                    "Channels: " + ','.join(info["Channels"][0]) + "\n" + "\n" +
+
+                                    "Networks Number: " + str(info["Networks"][1]) + "\n" +
+                                    "Stations Number: " + str(info["Stations"][1]) + "\n" +
+                                    "Channels Number: " + str(info["Channels"][1]) + "\n" +
+                                    "Num Files: " + str(info["num_files"]) + "\n" +
+                                    "Start Project: " + info["Start"] + "\n" + "End Project: " + info["End"])
+
+            else:
+                md.set_warning_message("Empty Filtered Project ", "Please provide a root path "
+                                                                  "with mseed files inside and check the query filters applied")
+
+
+    def get_now_files(self):
+
+        self.project_filtered = copy.deepcopy(self.project)
+        start = convert_qdatetime_utcdatetime(self.dateTimeEdit_1)
+        end = convert_qdatetime_utcdatetime(self.dateTimeEdit_2)
+        diff = end - start
+        selection = [self.netForm.text(), self.stationForm.text(), self.channelForm.text()]
+
+        try:
+            self.project_filtered.filter_project_keys(net=selection[0], station=selection[1], channel=selection[2])
+        except:
+            self.project_filtered = None
+
+        if self.project_filtered and self.trimCB.isChecked() and diff > 0:
+            try:
+                self.project_filtered.filter_project_time(starttime=start, edntime=end)
+            except:
+                self.project_filtered = None

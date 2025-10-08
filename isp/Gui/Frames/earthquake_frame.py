@@ -2557,7 +2557,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         else:
             starttime = None
             endtime = None
-        self.__autopick = Autopick(self.project_filtered, self.metadata_path_bind.value, starttime=starttime,
+
+        sp = SurfProject()
+        sp.project = self.project_filtered
+        sp.get_data_files()
+
+        self.__autopick = Autopick(sp, self.metadata_path_bind.value, starttime=starttime,
                                    endtime=endtime)
         self.__autopick.signal.connect(self.slot)
         self.__autopick.signal2.connect(self.slot2)
