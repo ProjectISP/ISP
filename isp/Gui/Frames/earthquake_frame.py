@@ -96,6 +96,11 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.pick_times_imported = {}
         self.stations_info_picks = []
         self.already_imported_done = True
+        # initialize bridges (do this in __init__)
+        self.key_to_line = {}  # logical key -> str(line)
+        self.line_to_key = {}  # str(line)   -> logical key
+        self._pick_keys = set()
+        self.picked_at = {}
         self.numbers = ["1", "2", "3", "4", "5", "6"]
         self.chop = {'Body waves': {}, 'Surf Waves': {}, 'Coda': {}, 'Noise': {}}
         self.color = {'Body waves': 'orangered', 'Surf Waves': 'blue', 'Coda': 'purple', 'Noise': 'green'}
@@ -798,6 +803,14 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 md.set_warning_message("Your endtime is bigger than your starttime!!",
                                        "Please cancel this operation ")
 
+            if len(self.special_selection) > 0:
+                self.set_pagination_files(self.special_selection)
+                self.files_at_page = self.get_files_at_page()
+            else:
+                self.set_pagination_files(self.files_path)
+                self.files_at_page = self.get_files_at_page()
+
+            self.stations_info_picks = [None] * len(self.files_at_page)  # align 1:1 with files_at_page
             self.workers = ParallelWorkers(os.cpu_count())
 
             # Here we can disabled thing or make additional staff
@@ -824,12 +837,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     self.files_path.sort(key=self.sort_by_baz_advance)
                     self.message_dataless_not_found()
 
-            if len(self.special_selection) > 0:
-                self.set_pagination_files(self.special_selection)
-                self.files_at_page = self.get_files_at_page()
-            else:
-                self.set_pagination_files(self.files_path)
-                self.files_at_page = self.get_files_at_page()
 
             ##
 
@@ -912,7 +919,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         station_info = [sd.stats.Network, sd.stats.Station, sd.stats.Location, sd.stats.Channel, sd.stats.StartTime,
                    sd.stats.EndTime, sd.stats.Sampling_rate, sd.stats.Npts]
 
-        self.stations_info_picks.append(station_info)
+        self.stations_info_picks[index] = station_info
 
         if self.trimCB.isChecked() and self.diff >= 0 and self.auto_resample:
 
@@ -1493,27 +1500,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
         self.cf = Stream(traces=cfs)
 
-    # def write_files_page(self):
-    #
-    #     root_path = os.path.dirname(os.path.abspath(__file__))
-    #     if "darwin" == platform:
-    #         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path)
-    #     else:
-    #         dir_path = pw.QFileDialog.getExistingDirectory(self, 'Select Directory', root_path,
-    #                                                        pw.QFileDialog.DontUseNativeDialog)
-    #     if self.st:
-    #         n = len(self.st)
-    #         for j in range(n):
-    #             try:
-    #                 tr = self.st[j]
-    #                 t1 = tr.stats.starttime
-    #                 id = tr.id + "." + "D" + "." + str(t1.year) + "." + str(t1.julday)
-    #                 print(tr.id, "Writing data processed")
-    #                 path_output = os.path.join(dir_path, id)
-    #                 tr.write(path_output, format="MSEED")
-    #             except:
-    #                 print("File cannot be written:", self.files_at_page[j])
-
     def write_files_page(self):
 
         errors = False
@@ -1694,161 +1680,77 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
             md = MessageDialog(self)
             md.set_error_message("couldn't plot stations map, please check your metadata and the trace headers")
 
-    # def redraw_pickers(self, filredraw_pickerse_name: str, axe_index: int) -> None:
-    #     """Redraw arrows for all picks belonging to `file_name` onto axis `axe_index`.
-    #     Updates self.picked_at keys to the new line identifiers."""
-    #
-    #     new_picked_at = {}
-    #     draw_arrow = self.canvas.draw_arrow  # local binding for tiny speed/readability win
-    #
-    #     for key, ps in self.picked_at.items():
-    #         if ps.FileName == filredraw_pickerse_name:
-    #             new_line = draw_arrow(
-    #                 ps.XPosition, axe_index, ps.Label,
-    #                 amplitude=ps.Amplitude, color=ps.Color, picker=True
-    #             )
-    #             new_key = str(new_line)
-    #             new_picked_at[new_key] = ps
-    #         else:
-    #             # untouched entries carry over
-    #             new_picked_at[key] = ps
-    #
-    #     self.picked_at = new_picked_at
 
     def redraw_pickers(self, file_name, axe_index):
+        # draw any picks whose FilePath matches the subplot’s file
+        items = list(self.picked_at.items())
+        for key, ps in items:
+            if ps.FileName == file_name:  # <<<<<< match on FilePath
+                new_line = self.canvas.draw_arrow(
+                    ps.XPosition, axe_index, ps.Label,
+                    amplitude=ps.Amplitude, color=ps.Color, picker=True
+                )
+                self.lines.append(new_line)
+                line_str = str(new_line)
+                # keep logical keys; wire bridges if you’re using them
+                self.key_to_line[key] = line_str
+                self.line_to_key[line_str] = key
 
-        picked_at = {key: values for key, values in self.picked_at.items()}  # copy the dictionary.
-        for key, value in picked_at.items():
-            ps: PickerStructure = value
-            if file_name == ps.FileName:
-                # new_line = self.canvas.draw_arrow(ps.XPosition, axe_index, ps.Label,
-                #                                  amplitude=ps.Amplitude, color=ps.Color, picker=True)
-                new_line = self.canvas.draw_arrow(ps.XPosition, axe_index, ps.Label, amplitude=ps.Amplitude,
-                                                  color=ps.Color, picker=True)
-                # picked_at.pop(key)
-                self.picked_at.pop(key)
-                self.picked_at[str(new_line)] = ps
     def __incorporate_picks(self) -> None:
+        """Load imported picks into self.picked_at without plotting."""
+        # Safety: nothing to do if we don't have aligned rows/files
+        if not getattr(self, "stations_info_picks", None) or not getattr(self, "files_at_page", None):
+            return
 
-        """Bring in imported pick times once and render them."""
+        for row_index, station in enumerate(self.stations_info_picks):
+            if station is None:
+                continue  # worker may have failed; skip
 
-        #if self.already_imported_done:
-        #    return
+            if row_index >= len(self.files_at_page):
+                continue  # guard against any mismatch
 
-        stations_info = self.stations_info_picks
-        draw_arrow = self.canvas.draw_arrow
-        get_file_at_index = self.get_file_at_index
-        #removed = set(map(tuple, self.removed_picks))  # compare as tuples
+            file_path = self.files_at_page[row_index]
 
-        for row_index, station in enumerate(stations_info):
-            station_code = station[1]
-            station_net = station[3]
-            station_id = f"{station_code}.{station_net}"
+            station_code = station[1]  # e.g., Station
+            station_chan = station[3]  # e.g., Channel (you used this previously)
+            station_id = f"{station_code}.{station_chan}"
 
-            if station_id not in self.pick_times_imported:
+            picks = self.pick_times_imported.get(station_id)
+            if not picks:
                 continue
 
-            picks = self.pick_times_imported[station_id]
-
             for item in picks:
-                # item layout (based on your usage):
-                # [0]=phase, [1]=utcdatetime, [3]=polarity, [4]=?, [7]=amplitude
-                phase = item[0]
-                utc_dt = item[1]
-                polarity = item[3]
-                meta4 = item[4]
-                amplitude = item[7]
+                # [0]=phase, [1]=UTCDateTime, [3]=polarity, [4]=meta, [7]=amplitude
+                phase, utc_dt, polarity, meta4, amplitude = item[0], item[1], item[3], item[4], item[7]
 
-                # matplotlib date/time
-                x_pos = utc_dt.matplotlib_date
+                # honor removed picks
+                if [station_code, utc_dt] in getattr(self, "removed_picks", []):
+                    continue
 
-                # label
                 suffix = {"U": " +", "D": " -"}.get(polarity, " ?")
                 label = f"{phase}{suffix}"
+                key = self._pick_key(station_code, utc_dt, label)
 
-                # skip if removed
-                # if (station_code, utc_dt) in removed:
-                #     continue
+                if key in self.picked_at:
+                    continue  # already loaded
 
-                if [station_code, utc_dt] not in self.removed_picks:
-                    line = draw_arrow(
-                        x_pos, row_index, arrow_label=label,
-                        amplitude=amplitude, color="green", picker=True
-                    )
-                    self.lines.append(line)
-                    self.picked_at[str(line)] = PickerStructure(
-                        utc_dt,
-                        station_code,  # or station_id.split(".")[0] as before
-                        x_pos,
-                        meta4,
-                        amplitude,
-                        "green",
-                        label,
-                        get_file_at_index(row_index)
-                    )
-            self.pick_times_imported = {}
-        #self.already_imported_done = False
+                self.picked_at[key] = PickerStructure(
+                    utc_dt,  # Time
+                    station_code,  # Station
+                    utc_dt.matplotlib_date,  # XPosition
+                    meta4,  # Uncertainty/extra
+                    amplitude,  # Amplitude
+                    "green",  # Color
+                    label,  # Label
+                    file_path  # FilePath (the plotted file for this row)
+                )
 
+        # Only clear after successful incorporation
+        self.pick_times_imported = {}
 
-    # def __incorporate_picks(self) -> None:
-    #     """Bring in imported pick times once and render them."""
-    #     #if not self.pick_times_imported or self.already_imported_done:
-    #     #    return
-    #
-    #     stations_info = self.__stations_info_list()
-    #     draw_arrow = self.canvas.draw_arrow
-    #     get_file_at_index = self.get_file_at_index
-    #     removed = set(map(tuple, self.removed_picks))  # compare as tuples
-    #
-    #     for row_index, station in enumerate(stations_info):
-    #         station_code = station[1]
-    #         station_net = station[3]
-    #         station_id = f"{station_code}.{station_net}"
-    #
-    #         if station_id not in self.pick_times_imported:
-    #             continue
-    #
-    #         picks = self.pick_times_imported[station_id]
-    #
-    #         for item in picks:
-    #             # item layout (based on your usage):
-    #             # [0]=phase, [1]=utcdatetime, [3]=polarity, [4]=?, [7]=amplitude
-    #             phase = item[0]
-    #             utc_dt = item[1]
-    #             polarity = item[3]
-    #             meta4 = item[4]
-    #             amplitude = item[7]
-    #
-    #             # matplotlib date/time
-    #             x_pos = utc_dt.matplotlib_date
-    #
-    #             # label
-    #             suffix = {"U": " +", "D": " -"}.get(polarity, " ?")
-    #             label = f"{phase}{suffix}"
-    #
-    #             # skip if removed
-    #             if (station_code, utc_dt) in removed:
-    #                 continue
-    #
-    #             line = draw_arrow(
-    #                 x_pos, row_index, arrow_label=label,
-    #                 amplitude=amplitude, color="green", picker=True
-    #             )
-    #             self.lines.append(line)
-    #             self.picked_at[str(line)] = PickerStructure(
-    #                 utc_dt,
-    #                 station_code,  # or station_id.split(".")[0] as before
-    #                 x_pos,
-    #                 meta4,
-    #                 amplitude,
-    #                 "green",
-    #                 label,
-    #                 get_file_at_index(row_index)
-    #             )
-    #
-    #     # mark as done so we don't re-import
-    #     self.pick_times_imported = {}
-    #     self.already_imported_done = False
+    def _pick_key(self, station_code, utc_dt, label):
+        """Deterministic, plot-agnostic key (no matplotlib objects)."""
+        return (station_code, int(round(utc_dt.timestamp * 1000)), label)
 
     def redraw_event_times(self, index):
         if len(self.events_times) > 0:
@@ -1873,45 +1775,97 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         if isinstance(canvas, MatplotlibCanvas):
             polarity, color = map_polarity_from_pressed_key(event.key)
             phase = self.comboBox_phases.currentText()
-            # click_at_index = event.inaxes.rowNum
             click_at_index = self.ax_num
             x1, y1 = event.xdata, event.ydata
-            # x2, y2 = event.x, event.y
             stats = ObspyUtil.get_stats(self.get_file_at_index(click_at_index))
-            # Get amplitude from index
-            # x_index = int(round(x1 * stats.Sampling_rate))  # index of x-axes time * sample_rate.
-            # amplitude = canvas.get_ydata(click_at_index).item(x_index)  # get y-data from index.
-            # amplitude = y1
-            label = "{} {}".format(phase, polarity)
+
+            label = f"{phase} {polarity}"
             tt = UTCDateTime(mdt.num2date(x1))
             diff = tt - self.st[self.ax_num].stats.starttime
-            t = stats.StartTime + diff
+            t = stats.StartTime + diff  # if you still need it elsewhere
+
             if self.decimator[0] is not None:
                 idx_amplitude = int(self.decimator[0] * diff)
             else:
                 idx_amplitude = int(stats.Sampling_rate * diff)
-            amplitudes = self.st[self.ax_num].data
-            amplitude = amplitudes[idx_amplitude]
+            amplitude = self.st[self.ax_num].data[idx_amplitude]
             uncertainty = self.uncertainities.getUncertainity()
 
-            line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
-            self.lines.append(line)
-            self.picked_at[str(line)] = PickerStructure(tt, stats.Station, x1, uncertainty, amplitude, color, label,
-                                                        self.get_file_at_index(click_at_index))
-            # print(self.picked_at)
-            # Add pick data to file.
+            # logical key
+            key = self._pick_key(stats.Station, tt, label)
+            if key in self.picked_at:
+                # already exists logically; optionally just ensure it’s drawn
+                if key not in self.key_to_line:
+                    new_line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color,
+                                                 picker=True)
+                    self.lines.append(new_line)
+                    line_str = str(new_line)
+                    self.key_to_line[key] = line_str
+                    self.line_to_key[line_str] = key
+                return
+
+            # store logically
+            self.picked_at[key] = PickerStructure(
+                tt, stats.Station, x1, uncertainty, amplitude, color, label,
+                self.get_file_at_index(click_at_index)  # FilePath
+            )
+            # draw & wire maps
+            new_line = canvas.draw_arrow(x1, click_at_index, label, amplitude=amplitude, color=color, picker=True)
+            self.lines.append(new_line)
+            line_str = str(new_line)
+            self.key_to_line[key] = line_str
+            self.line_to_key[line_str] = key
+
+            # persist to file
             self.pm.add_data(tt, uncertainty, amplitude, stats.Station, phase, Component=stats.Channel,
                              First_Motion=polarity)
-            self.pm.save()  # maybe we can move this to when you press locate.
+            self.pm.save()
+
+    def remove_picker_structure(self, time: UTCDateTime, station: str):
+        keys_to_remove = [
+            key for key, picker in self.picked_at.items()
+            if picker.Time == time and picker.Station == station
+        ]
+        if not keys_to_remove:
+            raise ValueError(f"No PickerStructure found for time: {time} and station: {station}")
+
+        for key in keys_to_remove:
+            self.picked_at.pop(key, None)
+            # also clean any rendered line
+            line_str = self.key_to_line.pop(key, None)
+            if line_str:
+                self.line_to_key.pop(line_str, None)
+            self.removed_picks.append([station, time])
 
     def on_pick(self, event):
         line = event.artist
-        self.canvas.remove_arrow(line)
-        picker_structure: PickerStructure = self.picked_at.pop(str(line), None)
+        line_str = str(line)
 
+        # 1) remove visuals first (safe even if already gone)
+        self.canvas.remove_arrow(line)
+
+        # 2) translate line -> logical key
+        key = self.line_to_key.pop(line_str, None)
+
+        picker_structure = None
+        if key is not None:
+            # remove logical entry + reverse map
+            picker_structure = self.picked_at.pop(key, None)
+            self.key_to_line.pop(key, None)
+        else:
+            # legacy fallback if dict still keyed by str(line) somewhere
+            picker_structure = self.picked_at.pop(line_str, None)
+
+        # 3) persist + bookkeeping if we found it
         if picker_structure:
-            self.pm.remove_data(picker_structure.Time, picker_structure.Station)
-            self.remove_picker_structure(picker_structure.Time, picker_structure.Station)
+            try:
+                self.pm.remove_data(picker_structure.Time, picker_structure.Station)
+            except Exception:
+                # don't let persistence failures crash the UI removal
+                pass
+
+            # mark as removed to prevent re-import/re-draw
+            self.removed_picks.append([picker_structure.Station, picker_structure.Time])
 
     def remove_picker_structure(self, time: UTCDateTime, station: str):
         """
