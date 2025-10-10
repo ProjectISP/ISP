@@ -95,7 +95,6 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.cf = None
         self.pick_times_imported = {}
         self.stations_info_picks = []
-        self.already_imported_done = True
         # initialize bridges (do this in __init__)
         self.key_to_line = {}  # logical key -> str(line)
         self.line_to_key = {}  # str(line)   -> logical key
@@ -174,9 +173,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
         self.actionRun_autoloc.triggered.connect(lambda: self.picker_all())
         self.actionFrom_Phase_Pick.triggered.connect(lambda: self.alaign_picks())
         self.actionUsing_MCCC.triggered.connect(lambda: self.alaign_mccc())
-        self.actionDefaultPicks.triggered.connect(lambda: self.import_pick_from_file(default=True))
-        #self.actionPicksOther_file.triggered.connect(lambda: self.import_pick_from_file(default=False))
-        self.actionPicksOther_file.triggered.connect(lambda: self.open_load_picks())
+        self.actionImport_Picks.triggered.connect(lambda: self.open_load_picks())
         self.actionNew_Project.triggered.connect(lambda: self.new_project())
         self.newProjectBtn.clicked.connect(lambda: self.new_project())
         self.actionLoad_Project.triggered.connect(lambda: self.load_project())
@@ -280,10 +277,8 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     @pyqtSlot()
     def _load_picks(self):
-        print("Pick loaded")
         self.pm = self.load_picks_tool.pm
         self.pick_times_imported = self.load_picks_tool.pick_times_imported
-        self.already_imported_done = False
 
     def run_process(self):
 
@@ -1698,24 +1693,43 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
 
     def __incorporate_picks(self) -> None:
         """Load imported picks into self.picked_at without plotting."""
-        # Safety: nothing to do if we don't have aligned rows/files
-        if not getattr(self, "stations_info_picks", None) or not getattr(self, "files_at_page", None):
+        stations = getattr(self, "stations_info_picks", None)
+        files = getattr(self, "files_at_page", None)
+        if not stations or not files:
             return
 
-        for row_index, station in enumerate(self.stations_info_picks):
+        pick_times_imported = self.pick_times_imported
+        picked_at = self.picked_at
+        _pick_key = self._pick_key
+        PS = PickerStructure  # local alias
+
+        # ---- time normalization to avoid hashing UTCDateTime directly ----
+        # Use microsecond-precision integer so hashing is solid and comparisons are stable.
+        def _time_key(t):
+            # ObsPy UTCDateTime can be cast to float seconds since epoch
+            # Convert to integer microseconds for stability.
+            return int(round(float(t) * 1_000_000))
+
+        removed_pairs = getattr(self, "removed_picks", ())
+        # Build a set of (station_code, time_key) for O(1) membership without hashing UTCDateTime
+        if isinstance(removed_pairs, set):
+            # If user already passed a set, still normalize safely
+            removed_keys = {(s, _time_key(t)) for (s, t) in removed_pairs}
+        else:
+            removed_keys = {(s, _time_key(t)) for (s, t) in removed_pairs}
+
+        polarity_suffix = {"U": " +", "D": " -"}
+
+        new_items = {}
+        for station, file_path in zip(stations, files):
             if station is None:
-                continue  # worker may have failed; skip
+                continue
 
-            if row_index >= len(self.files_at_page):
-                continue  # guard against any mismatch
-
-            file_path = self.files_at_page[row_index]
-
-            station_code = station[1]  # e.g., Station
-            station_chan = station[3]  # e.g., Channel (you used this previously)
+            station_code = station[1]  # Station
+            station_chan = station[3]  # Channel
             station_id = f"{station_code}.{station_chan}"
 
-            picks = self.pick_times_imported.get(station_id)
+            picks = pick_times_imported.get(station_id)
             if not picks:
                 continue
 
@@ -1723,18 +1737,17 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                 # [0]=phase, [1]=UTCDateTime, [3]=polarity, [4]=meta, [7]=amplitude
                 phase, utc_dt, polarity, meta4, amplitude = item[0], item[1], item[3], item[4], item[7]
 
-                # honor removed picks
-                if [station_code, utc_dt] in getattr(self, "removed_picks", []):
+                # fast reject of removed picks using normalized time key
+                if (station_code, _time_key(utc_dt)) in removed_keys:
                     continue
 
-                suffix = {"U": " +", "D": " -"}.get(polarity, " ?")
-                label = f"{phase}{suffix}"
-                key = self._pick_key(station_code, utc_dt, label)
+                label = f"{phase}{polarity_suffix.get(polarity, ' ?')}"
+                key = _pick_key(station_code, utc_dt, label)
 
-                if key in self.picked_at:
-                    continue  # already loaded
+                if key in picked_at or key in new_items:
+                    continue
 
-                self.picked_at[key] = PickerStructure(
+                new_items[key] = PS(
                     utc_dt,  # Time
                     station_code,  # Station
                     utc_dt.matplotlib_date,  # XPosition
@@ -1742,11 +1755,12 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
                     amplitude,  # Amplitude
                     "green",  # Color
                     label,  # Label
-                    file_path  # FilePath (the plotted file for this row)
+                    file_path  # FilePath
                 )
 
-        # Only clear after successful incorporation
-        self.pick_times_imported = {}
+        if new_items:
+            picked_at.update(new_items)
+
 
     def _pick_key(self, station_code, utc_dt, label):
         """Deterministic, plot-agnostic key (no matplotlib objects)."""

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>699</width>
-    <height>267</height>
+    <width>809</width>
+    <height>239</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -32,13 +32,20 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="defaultpickBtn">
+            <property name="text">
+             <string>set default pick</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QLineEdit" name="pickpathTE"/>
           </item>
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
-          <item>
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="1" column="0">
            <widget class="QLabel" name="label">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -51,14 +58,7 @@
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QDateTimeEdit" name="dateTimeEdit1">
-            <property name="displayFormat">
-             <string>yyyy/M/d h:mm:ss</string>
-            </property>
-           </widget>
-          </item>
-          <item>
+          <item row="1" column="2">
            <widget class="QLabel" name="label_2">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -71,23 +71,34 @@
             </property>
            </widget>
           </item>
-          <item>
+          <item row="1" column="3">
            <widget class="QDateTimeEdit" name="dateTimeEdit2">
             <property name="displayFormat">
              <string>yyyy/M/d h:mm:ss</string>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QSpinBox" name="maxpicksSB">
-            <property name="suffix">
-             <string/>
+          <item row="1" column="1">
+           <widget class="QDateTimeEdit" name="dateTimeEdit1">
+            <property name="displayFormat">
+             <string>yyyy/M/d h:mm:ss</string>
             </property>
-            <property name="prefix">
-             <string>Max num picks </string>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QRadioButton" name="filterTimeRB">
+            <property name="text">
+             <string>Filter Time</string>
             </property>
-            <property name="maximum">
-             <number>100000</number>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QRadioButton" name="noFilterRB">
+            <property name="text">
+             <string>No Filter</string>
             </property>
            </widget>
           </item>
