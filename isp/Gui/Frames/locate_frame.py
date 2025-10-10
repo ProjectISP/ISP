@@ -694,7 +694,7 @@ class Locate(BaseFrame, UiLocFlow):
             # Add buttons
             msg_box = QMessageBox()
             msg_box.setWindowTitle("You need to load a project before run Source")
-            msg_box.setText("Do you want load now and run Source?")
+            msg_box.setText("No Project Loaded, Do you want load now and run Source?")
 
             yes_button = msg_box.addButton(pw.QMessageBox.Yes)
             no_button = msg_box.addButton(pw.QMessageBox.No)
