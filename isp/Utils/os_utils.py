@@ -1,8 +1,22 @@
 import os
 import shutil
+from pathlib import Path
 
 
 class OSutils:
+    @staticmethod
+    def delete_folder_contents(folder: str) -> None:
+        folder = Path(folder)
+        if not folder.exists():
+            return
+        for p in folder.iterdir():
+            try:
+                if p.is_file() or p.is_symlink():
+                    p.unlink()
+                elif p.is_dir():
+                    shutil.rmtree(p)
+            except FileNotFoundError:
+                pass  # already gone, fine
 
     @staticmethod
     def copy_and_rename_file(src_path, dest_dir, new_name):

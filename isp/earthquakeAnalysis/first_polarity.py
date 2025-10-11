@@ -9,12 +9,11 @@ Created on Tue Dec 17 20:26:28 2019
 import shutil
 import subprocess
 from pathlib import Path
-
 import pandas as pd
 import os
 from obspy import read_events, Catalog
 from obspy.core.event import Origin
-from isp import FOC_MEC_PATH, FOC_MEC_BASH_PATH, ROOT_DIR
+from isp import FOC_MEC_PATH, FOC_MEC_BASH_PATH
 from isp.Utils import ObspyUtil
 from isp.earthquakeAnalysis import focmecobspy
 from isp.Utils.subprocess_utils import exc_cmd
@@ -107,25 +106,61 @@ class FirstPolarity:
         else:
             raise FileNotFoundError("The file {} doesn't exist. Please, run location".format(location_file))
 
-    def create_input(self, file_last_hyp, header):
+    def _clean_focmec_workdir(self, dir_path):
+        """
+        Remove only transient files in the focmec working directory.
+        Keeps the 'output' subfolder and anything inside it.
+        """
+        workdir = Path(dir_path)
 
+        # Files focmec or your pipeline recreate every run
+        transient_files = [
+            "test.inp",  # your generated input
+            "focmec_run",  # the script you feed to focmec
+            "mechanism.out",  # focmec output in workdir
+            "focmec.lst",  # focmec output in workdir
+            "log.txt",  # your run log
+        ]
+
+        # Remove known transient files if present
+        for name in transient_files:
+            p = workdir / name
+            try:
+                if p.exists():
+                    p.unlink()
+            except Exception:
+                pass  # best-effort cleanup; ignore locked/missing files
+
+        # Optional: clear generic temp patterns in the workdir (but not in output/)
+        for pattern in ("*.tmp", "*.temp", "*~"):
+            for p in workdir.glob(pattern):
+                # be extra safe; don't touch subdirectories
+                if p.is_file():
+                    try:
+                        p.unlink()
+                    except Exception:
+                        pass
+
+        # IMPORTANT: do NOT remove the 'output' folder.
+        # If you previously had code like shutil.rmtree(workdir), delete it.
+
+    def create_input(self, file_last_hyp, header):
         Station, Az, Dip, Motion = self.get_dataframe(file_last_hyp)
 
         one_level_up = os.path.dirname(file_last_hyp)
         two_levels_up = os.path.dirname(one_level_up)
         dir_path = os.path.join(two_levels_up, "first_polarity")
 
-        if os.path.isdir(dir_path):
-            self.clean_output_folder_focmec(dir_path)
-        else:
-
+        if not os.path.isdir(dir_path):
             os.makedirs(dir_path)
+
+        # Clean only transient files; keep prior outputs
+        self._clean_focmec_workdir(dir_path)
 
         temp_file = os.path.join(dir_path, "test.inp")
         N = len(Station)
 
         with open(temp_file, 'wt') as f:
-            #f.write("\n")  # first line should be skipped!
             f.write(header)
             f.write("\n")
             for j in range(N):
@@ -160,83 +195,43 @@ class FirstPolarity:
          command=os.path.join(self.get_foc_dir, 'rfocmec_UW')
          exc_cmd(command)
 
-    # def run_focmec(self, input_focmec_path, num_wrong_polatities):
-    #
-    #     # binary file
-    #     command = os.path.join(FOC_MEC_PATH, 'focmec')
-    #     dir_name = os.path.dirname(input_focmec_path)
-    #
-    #     # first_polarity/output
-    #     output_path = os.path.join(dir_name, "output")
-    #
-    #     # first_polarity path
-    #     focmec_bash_path = os.path.join(os.path.dirname(input_focmec_path), "focmec_run")
-    #
-    #     if os.path.isdir(output_path):
-    #         pass
-    #     else:
-    #         os.makedirs(output_path)
-    #
-    #     # edit number of accepted wrong polarities
-    #     self.edit_focmec_run(num_wrong_polatities, focmec_bash_path)
-    #
-    #     shutil.copy(input_focmec_path, '.')
-    #     with open(focmec_bash_path, 'r') as f, open('./log.txt', 'w') as log:
-    #         p = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=log)
-    #         f = open(focmec_bash_path, 'r')
-    #         string = f.read()
-    #         # This action has created focmec.lst at ./isp
-    #         out, errs = p.communicate(input=string.encode(), timeout=2.0)
-    #         # This action has created mechanism.out at ./isp
-    #     #time.sleep(5)
-    #     exec_path = os.path.dirname(ROOT_DIR)
-    #     mechanism_out = os.path.join(exec_path, "mechanism.out")
-    #     focmec_lst = os.path.join(exec_path, "focmec.lst")
-    #     log_file = os.path.join(exec_path, "log.txt")
-    #     test_inp = os.path.join(exec_path, "test.inp")
-    #     output_ref = FirstPolarity.extract_name(focmec_lst)
-    #     # Sanitize file name
-    #     file_output_name = (f"{output_ref['date'].replace('/', '-')}_"
-    #                         f"{output_ref['time'].replace(':', '_')}")
-    #
-    #     # Ensure output directory exists
-    #     os.makedirs(output_path, exist_ok=True)
-    #
-    #     # Move and rename files
-    #     if os.path.exists(mechanism_out):
-    #         shutil.move(mechanism_out, os.path.join(output_path, file_output_name + '.out'))
-    #     if os.path.exists(focmec_lst):
-    #         shutil.move(focmec_lst, os.path.join(output_path, file_output_name + '.lst'))
-    #     if os.path.exists(log_file):
-    #         shutil.move(log_file, os.path.join(output_path, file_output_name + '.txt'))
-    #     if os.path.exists(test_inp):
-    #         shutil.move(test_inp, os.path.join(output_path, file_output_name + '.inp'))
+    def _avoid_clobber(self, dest: Path) -> Path:
+        """
+        Return a unique path by appending __N if 'dest' already exists.
+        Example: name.ext -> name__1.ext -> name__2.ext ...
+        """
+        if not dest.exists():
+            return dest
+        i = 1
+        while True:
+            candidate = dest.with_name(f"{dest.stem}__{i}{dest.suffix}")
+            if not candidate.exists():
+                return candidate
+            i += 1
 
-    def run_focmec(self, input_focmec_path, num_wrong_polatities, new_output_path=None):
+    def run_focmec(self, input_focmec_path, num_wrong_polarities, new_output_path=None):
         input_focmec_path = Path(input_focmec_path).resolve()
         workdir = input_focmec_path.parent  # run where the .inp and focmec_run live
 
         # Binary
         command = os.path.join(FOC_MEC_PATH, 'focmec')
+        if not Path(command).exists():
+            raise FileNotFoundError(f"focmec binary not found at: {command}")
 
         # Output dir
         output_path = Path(new_output_path).resolve() if new_output_path else (workdir / "output")
         output_path.mkdir(parents=True, exist_ok=True)
 
-        # Script that feeds focmec (here-doc content)
-        focmec_bash_path = workdir / "focmec_run"
-
         # Update the focmec_run with the desired wrong polarities
-        self.edit_focmec_run(num_wrong_polatities, str(focmec_bash_path))
+        self.edit_focmec_run(num_wrong_polarities, str(FOC_MEC_BASH_PATH))
 
-        # Ensure the input file is in the working directory (focmec typically expects relative names)
-        # If it's already there, this is a no-op.
+        # Ensure the input file is in the working directory (focmec expects relative names)
         if input_focmec_path.parent != workdir:
             shutil.copy2(str(input_focmec_path), str(workdir))
 
         # Run focmec with stdin = focmec_run, in a known cwd
         log_file = workdir / "log.txt"
-        with open(focmec_bash_path, "rb") as stdin_f, open(log_file, "wb") as log:
+        with open(FOC_MEC_BASH_PATH, "rb") as stdin_f, open(log_file, "wb") as log:
             p = subprocess.Popen(
                 [command],
                 stdin=stdin_f,
@@ -244,8 +239,7 @@ class FirstPolarity:
                 stderr=subprocess.PIPE,
                 cwd=str(workdir)
             )
-            # Let it run to completion; if you want a timeout, set it higher or catch the exception
-            _, errs = p.communicate()  # remove timeout for robustness
+            _, errs = p.communicate()  # no timeout for robustness
 
         if p.returncode != 0:
             raise RuntimeError(
@@ -257,25 +251,45 @@ class FirstPolarity:
         focmec_lst = workdir / "focmec.lst"
         test_inp = workdir / "test.inp"  # if focmec writes/echoes an input copy
 
-        # Parse the .lst to build an output base name (this expects the file to be in workdir)
+        # Parse the .lst to build an output base name (expects the file to be in workdir)
         if not focmec_lst.exists():
-            # Provide a helpful message pointing to where we looked
             raise FileNotFoundError(f"Expected focmec output not found: {focmec_lst}")
 
-        output_ref = FirstPolarity.extract_name(str(focmec_lst))
-        file_output_name = (
-            f"{output_ref['date'].replace('/', '-')}_"
-            f"{output_ref['time'].replace(':', '_')}"
-        )
+        try:
+            output_ref = FirstPolarity.extract_name(str(focmec_lst))
+            file_output_name = (
+                f"{output_ref['date'].replace('/', '-')}_"
+                f"{output_ref['time'].replace(':', '_')}"
+            )
+            # If you prefer location-based naming, replace the above stem accordingly.
+        except Exception as e:
+            raise ValueError(f"Failed to construct output name from {focmec_lst}: {e}")
 
-        # Move/rename if they exist
+        # -----------------------------
+        # SAFE MOVES (no overwriting)
+        # -----------------------------
+        moved_paths = {}
+
         if mechanism_out.exists():
-            shutil.move(str(mechanism_out), str(output_path / f"{file_output_name}.out"))
-        shutil.move(str(focmec_lst), str(output_path / f"{file_output_name}.lst"))
+            dest_out = self._avoid_clobber(output_path / f"{file_output_name}.out")
+            shutil.move(str(mechanism_out), str(dest_out))
+            moved_paths["out"] = dest_out
+
+        dest_lst = self._avoid_clobber(output_path / f"{file_output_name}.lst")
+        shutil.move(str(focmec_lst), str(dest_lst))
+        moved_paths["lst"] = dest_lst
+
         if log_file.exists():
-            shutil.move(str(log_file), str(output_path / f"{file_output_name}.txt"))
+            dest_log = self._avoid_clobber(output_path / f"{file_output_name}.txt")
+            shutil.move(str(log_file), str(dest_log))
+            moved_paths["log"] = dest_log
+
         if test_inp.exists():
-            shutil.move(str(test_inp), str(output_path / f"{file_output_name}.inp"))
+            dest_inp = self._avoid_clobber(output_path / f"{file_output_name}.inp")
+            shutil.move(str(test_inp), str(dest_inp))
+            moved_paths["inp"] = dest_inp
+
+        return moved_paths
 
     def extract_focmec_info(self, focmec_path):
         catalog: Catalog = focmecobspy._read_focmec(focmec_path)
