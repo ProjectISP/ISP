@@ -99,6 +99,7 @@ echo "ISP environment process finished"
 pushd ${ISP_DIR} > /dev/null
 
 # --- Key change: use conda run instead of source activate ---
+conda deactivate
 conda run -n isp python3 ${ISP_DIR}/setup_user.py build_ext --inplace
 
 popd > /dev/null
