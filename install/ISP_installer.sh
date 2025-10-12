@@ -30,6 +30,17 @@
 # * INTEGRATED SEISMIC PROGRAM INSTALLER USING CONDA ENVIRONMENT               *
 # ******************************************************************************
 
+set -euo pipefail
+
+# Ensure conda is available and load shell functions (activate/conda run)
+if ! command -v conda >/dev/null 2>&1; then
+  echo "conda not found in PATH. Please install Miniconda/Anaconda and ensure 'conda' is on PATH."
+  exit 1
+fi
+CONDA_BASE="$(conda info --base)"
+# shellcheck source=/dev/null
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+
 # Function to detect OS and create Conda environment
 create_isp_env() {
   OS_TYPE=$(uname -s)
@@ -37,8 +48,6 @@ create_isp_env() {
 
   if [[ $OS_TYPE == "Darwin" ]]; then
     echo "MacOS detected. Checking processor type..."
-    
-    # Determine processor type
     CPU_INFO=$(sysctl -n machdep.cpu.brand_string)
     echo "Processor Info: $CPU_INFO"
 
@@ -66,24 +75,19 @@ create_isp_env() {
 
 ISP_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/.."
 
-#echo "Updating Conda to the latest version..."
-#conda update -n base -c defaults conda -y
-
 # Check if the ISP environment exists
 if conda env list | grep -q '^isp\s'; then
   echo "'isp' environment already exists."
   read -p "Do you want to remove the existing environment and reinstall ISP? (Y/N): " CHOICE
-  case "$CHOICE" in
-    [Yy]* )
-      echo "Removing existing 'isp' environment..."
-      conda remove --name isp --all -y
-      echo "Reinstalling ISP environment..."
-      create_isp_env
-      ;;
-    * ) 
-      echo "Skipping environment reinstallation. Proceeding with the existing setup."
-      ;;
-  esac
+  CHOICE=$(echo "$CHOICE" | tr '[:upper:]' '[:lower:]')
+  if [[ "$CHOICE" == "y" ]]; then
+    echo "Removing existing 'isp' environment..."
+    conda remove --name isp --all -y
+    echo "Reinstalling ISP environment..."
+    create_isp_env
+  else
+    echo "Skipping environment reinstallation. Proceeding with the existing setup."
+  fi
 else
   echo "No 'isp' environment found. Proceeding to create one."
   create_isp_env
@@ -94,45 +98,35 @@ echo "ISP environment process finished"
 # Compile packages
 pushd ${ISP_DIR} > /dev/null
 
-# Select installation type
-#read -p 'Which type of installation would you prefer, conventional or advanced ? ' REPLY
+# --- Key change: use conda run instead of source activate ---
+conda run -n isp python3 ${ISP_DIR}/setup_user.py build_ext --inplace
 
-#if [[ $REPLY = 'conventional' ]]
-#then
-#    source activate isp
-#    python3 ${ISP_DIR}/setup_user.py build_ext --inplace
-#elif [[ $REPLY = 'advanced' ]]
-#then
-#    source activate isp
-#    python3 ${ISP_DIR}/setup_developer.py build_ext --inplace
-#fi
-source activate isp
-python3 ${ISP_DIR}/setup_user.py build_ext --inplace
 popd > /dev/null
 
 # Create an alias for ISP in multiple shell configurations
 read -p "Create alias for ISP in your shell configuration? [Y/n] " ALIAS_CHOICE
-echo    # Move to a new line
+ALIAS_CHOICE=$(echo "$ALIAS_CHOICE" | tr '[:upper:]' '[:lower:]')
+echo
 
-if [[ $ALIAS_CHOICE =~ ^[Yy]$ ]]; then
+if [[ "$ALIAS_CHOICE" == "y" || -z "$ALIAS_CHOICE" ]]; then
     CONFIG_FILES=(~/.bashrc ~/.bash_profile ~/.zshrc ~/.zprofile ~/.profile ~/.kshrc ~/.tcshrc ~/.cshrc ~/.config/fish/config.fish)
 
     for PROFILE in "${CONFIG_FILES[@]}"; do
         if [[ -f "$PROFILE" ]]; then
-            # Remove existing alias if present
-            sed -i '/# ISP Installation/,/# ISP Installation end/d' "$PROFILE"
-
-            # Add new alias
+            if [[ "$(uname -s)" == "Darwin" ]]; then
+                sed -i '' '/# ISP Installation/,/# ISP Installation end/d' "$PROFILE"
+            else
+                sed -i '/# ISP Installation/,/# ISP Installation end/d' "$PROFILE"
+            fi
             echo "# ISP Installation" >> "$PROFILE"
             if [[ "$PROFILE" == *fish* ]]; then
                 echo "alias isp '${ISP_DIR}/isp.sh'" >> "$PROFILE"
             elif [[ "$PROFILE" == *tcshrc* || "$PROFILE" == *cshrc* ]]; then
                 echo "alias isp '${ISP_DIR}/isp.sh'" >> "$PROFILE"
             else
-                echo "alias isp=${ISP_DIR}/isp.sh" >> "$PROFILE"
+                echo "alias isp='${ISP_DIR}/isp.sh'" >> "$PROFILE"
             fi
             echo "# ISP Installation end" >> "$PROFILE"
-
             echo "Updated alias in $PROFILE"
         fi
     done
@@ -153,10 +147,10 @@ if [[ $OS_TYPE == "Darwin" ]]; then
     echo "macOS Desktop shortcut creation"
 
     read -p "Do you want to create a desktop shortcut for ISP? [Y/n] " SHORTCUT
-    if [[ $SHORTCUT =~ ^[Yy]$ ]]; then
+    SHORTCUT=$(echo "$SHORTCUT" | tr '[:upper:]' '[:lower:]')
+    if [[ "$SHORTCUT" == "y" || -z "$SHORTCUT" ]]; then
         SHORTCUT_PATH=~/Desktop/ISP_Launcher.command
         
-        # Create the .command file
         echo "Creating desktop shortcut at $SHORTCUT_PATH..."
         cat <<EOF > "$SHORTCUT_PATH"
 
@@ -164,16 +158,13 @@ ${ISP_DIR}/isp.sh
 
 EOF
 
-        # Make it executable
         chmod +x "$SHORTCUT_PATH"
         echo "Shortcut created! You can now double-click 'ISP_Launcher.command' on your Desktop to launch ISP."
 
-        # Optional: Make it a macOS application using Automator
         read -p "Would you like to create a macOS application shortcut instead? [Y/n] " APP_SHORTCUT
-        if [[ $APP_SHORTCUT =~ ^[Yy]$ ]]; then
+        APP_SHORTCUT=$(echo "$APP_SHORTCUT" | tr '[:upper:]' '[:lower:]')
+        if [[ "$APP_SHORTCUT" == "y" || -z "$APP_SHORTCUT" ]]; then
             AUTOMATOR_SCRIPT_PATH=~/Desktop/ISP_Launcher.app
-
-            # Create AppleScript for Automator to make the app
             osascript <<EOF
 tell application "Automator"
     activate
@@ -191,4 +182,3 @@ EOF
 fi
 
 echo "Installation complete!"
-

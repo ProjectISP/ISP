@@ -1,23 +1,36 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 ISP_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-# Activate environment
-source $(conda info --base)/etc/profile.d/conda.sh
-
-if [[ `uname -s` == "Darwin" ]]; then
-    export OS="MacOSX"
-    source activate isp
+# Inicializar conda para shells no interactivos
+if command -v conda >/dev/null 2>&1; then
+  # Método recomendado por conda >=4.6
+  eval "$(conda shell.bash hook)"
+elif [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+  source "$HOME/miniconda3/etc/profile.d/conda.sh"
+elif [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
+  source "$HOME/anaconda3/etc/profile.d/conda.sh"
 else
-    export OS="Linux"
-    conda activate isp
+  echo "No installed Miniconda/Anaconda." >&2
+  exit 1
 fi
 
-# Detectar si estamos en una sesión Wayland
-if [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
-    export QT_QPA_PLATFORM=wayland
+# Detectar SO (solo por si lo usas en otra parte)
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  export OS="MacOSX"
+else
+  export OS="Linux"
 fi
 
-pushd ${ISP_DIR} > /dev/null
+# Wayland (no aplica en macOS, pero lo dejamos)
+if [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]]; then
+  export QT_QPA_PLATFORM=wayland
+fi
+
+# Activar entorno (usa sintaxis nueva)
+conda activate isp
+
+pushd "${ISP_DIR}" > /dev/null
 python start_isp.py
 popd > /dev/null

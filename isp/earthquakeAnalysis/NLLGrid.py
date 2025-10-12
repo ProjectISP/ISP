@@ -18,7 +18,12 @@ from scipy.ndimage import zoom
 from ctypes import Union, c_float, c_ushort
 from copy import deepcopy
 from pyproj import Proj
-from collections import Iterable
+try:
+    from collections.abc import Iterable
+except:
+    # Python < 3.11
+    from collections import Iterable
+
 from isp.earthquakeAnalysis import ellipsoid
 
 valid_grid_types = (
