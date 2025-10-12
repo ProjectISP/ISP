@@ -3,7 +3,7 @@ import pickle
 from datetime import datetime
 from enum import unique, Enum
 from multiprocessing import Pool
-from typing import List
+from typing import List, Optional, Dict, Union, Any, Tuple, Iterable
 import pandas as pd
 import numpy as np
 from obspy import Stream, read, Trace, UTCDateTime, read_events, Inventory
@@ -24,7 +24,7 @@ import re
 from pathlib import Path
 from isp.Utils import read_nll_performance
 from scipy.signal import cheby1, cheby2, ellip, bessel, sosfilt, sosfiltfilt
-
+TimeLike = Union[UTCDateTime, str, float, int, "datetime.datetime"]
 @unique
 class Filters(Enum):
 
@@ -485,17 +485,6 @@ class MseedUtil:
 
         return r
 
-    # @staticmethod
-    # def get_project_basic_info(project):
-    #
-    #     try:
-    #         total_components = sum(len(value_list) for value_list in project.values())
-    #         stations_channel = len(project)
-    #     except:
-    #         total_components = None
-    #         stations_channel = None
-    #
-    #     return stations_channel, total_components
     @staticmethod
     def get_project_basic_info(project: dict) -> dict:
 
@@ -828,45 +817,6 @@ class MseedUtil:
         return data_files
 
 
-
-    # old style filter time
-    # @classmethod
-    # def filter_time(cls, list_files, **kwargs):
-    #
-    #     #filter the list output of filter_project_keys by trimed times
-    #
-    #     result = []
-    #     st1 = kwargs.pop('starttime', None)
-    #     et1 = kwargs.pop('endtime', None)
-    #
-    #     if st1 is None and et1 is None:
-    #         for file in list_files:
-    #             result.append(file[0])
-    #
-    #     else:
-    #
-    #         for file in list_files:
-    #             pos_file = file[0]
-    #             st0 = file[1]
-    #             et0 = file[2]
-    #             # check times as a filter
-    #
-    #             if st1 >= st0 and et1 > et0 and (st1 - st0) <= 86400:
-    #                 result.append(pos_file)
-    #             elif st1 <= st0 and et1 >= et0:
-    #                 result.append(pos_file)
-    #             elif st1 <= st0 and et1 <= et0 and (et0 - et1) <= 86400:
-    #                 result.append(pos_file)
-    #             elif st1 >= st0 and et1 <= et0:
-    #                 result.append(pos_file)
-    #             else:
-    #                 pass
-    #
-    #     result.sort()
-    #
-    #     return result
-
-
     ###### New Project ###########
 
     def get_tree_hd5_files(self, root_dir: str, robust=True, **kwargs):
@@ -886,43 +836,6 @@ class MseedUtil:
 
         return pos_file
 
-
-    # @classmethod
-    # def get_tree_hd5_files(cls, root_dir: str, robust=True, **kwargs):
-    #     """
-    #     Get a list of valid mseed files inside all folder tree from the the root_dir.
-    #     If root_dir doesn't exists it returns a empty list.
-    #     :param root_dir: The full path of the dir or a file.
-    #     :return: A list of full path of mseed files.
-    #     """
-    #     cls.start = kwargs.pop('starttime', [])
-    #     cls.end = kwargs.pop('endtime', [])
-    #     cls.obsfiles = []
-    #     cls.pos_file = []
-    #     cls.robust = robust
-    #
-    #     for top_dir, sub_dir, files in os.walk(root_dir):
-    #         for file in files:
-    #             cls.pos_file.append(os.path.join(top_dir, file))
-    #
-    #     with Pool(processes=6) as pool:
-    #         r = pool.map(cls.loop_tree_h5, range(len(cls.pos_file)))
-    #
-    #     r = list(filter(None, r))
-    #     r.sort()
-    #
-    #     return r
-
-    # @classmethod
-    # def loop_tree_h5(cls, i):
-    #     result = None
-    #     try:
-    #         header = read(cls.pos_file[i], headlonly=True)
-    #         result = cls.pos_file[i]
-    #     except:
-    #         pass
-    #
-    #     return result
 
     @classmethod
     def get_geodetic(cls,file):
@@ -1130,79 +1043,212 @@ class MseedUtil:
                                                                                 UTCDateTime(tt)]
             return pick_times
 
+    @staticmethod
+    def _to_utc(t: Optional[TimeLike]) -> Optional[UTCDateTime]:
+        if t is None:
+            return None
+        if isinstance(t, UTCDateTime):
+            return t
+        try:
+            return UTCDateTime(t)
+        except Exception:
+            raise ValueError(f"Could not parse time value {t!r} into UTCDateTime")
+
+    @staticmethod
+    def _normalize_date_string(d: Any) -> str:
+        """
+        Accepts strings like '20250109' or '2025-01-09' and returns 'YYYY-MM-DD'.
+        If already 'YYYY-MM-DD', it’s returned unchanged.
+        """
+        s = str(d)
+        if "-" in s:
+            return s  # assume ISO date already
+        if len(s) == 8 and s.isdigit():
+            return f"{s[0:4]}-{s[4:6]}-{s[6:8]}"
+        # fallback: let UTCDateTime parse it and reformat
+        return UTCDateTime(s).strftime("%Y-%m-%d")
+
+    @staticmethod
+    def _hmm_to_h_m(hour_min: Any) -> Tuple[int, int]:
+        """
+        Converts HHMM (e.g., 934 -> 09:34) to (hour, minute).
+        Robust to strings/ints.
+        """
+        x = int(hour_min)
+        h, m = divmod(x, 100)
+        return h, m
+
     @classmethod
-    def get_NLL_phase_picks(cls, input_file=None, delimiter='\s+'):
+    def get_NLL_phase_picks(
+            cls,
+            input_file: str = None,
+            delimiter: str = r"\s+",
+            starttime: Optional[TimeLike] = None,
+            endtime: Optional[TimeLike] = None,
+    ) -> Dict[str, list]:
         """
-        Reads a NonLinLoc output file and returns a dictionary of phase picks.
+        Read a NonLinLoc output file and return a dict of phase picks.
 
-        Parameters:
-            input_file (str, optional): Path to the NonLinLoc output file.
-                                        If not provided, raises an error.
-            delimiter (str, optional): Delimiter used in the file (default is a space).
-            **kwargs: Additional arguments for customization.
+        Parameters
+        ----------
+        input_file : str
+            Path to the NonLinLoc output file.
+        delimiter : str
+            Delimiter used in the file (default: whitespace).
+        starttime, endtime : UTCDateTime | str | float | int | datetime | None
+            If provided, only picks inside [starttime, endtime] are returned.
+            Bounds are inclusive.
 
-        Returns:
-            dict: Dictionary of picks with the structure:
-              {
-                  "Station.Component": [
-                      ["Station_name", "Instrument", "Component", "P_phase_onset", "P_phase_descriptor",
-                            "First_Motion", "Date", "Hour_min", "Seconds", "Err", "ErrMag", "Coda_duration",
-                            "Amplitude", "Period"
-                  ],
-                  ...
-              }
+        Returns
+        -------
+        dict
+            { "Station.Component": [
+                [P_phase_descriptor, UTCDateTime, Component,
+                 First_Motion, Err, ErrMag, Coda_duration, Amplitude, Period],
+                ...
+              ],
+              ...
+            }
         """
-        if input_file is None:
+        if not input_file:
             raise ValueError("An input file must be provided.")
-
         if not os.path.isfile(input_file):
             raise FileNotFoundError(f"The file {input_file} does not exist.")
 
-        pick_times = {}
+        st = cls._to_utc(starttime)
+        et = cls._to_utc(endtime)
 
-        try:
-            # Load the file into a DataFrame
-            df = pd.read_csv(input_file, delimiter=delimiter)
+        # Load file
+        # Use engine="python" to support regex delimiters like \s+
+        df = pd.read_csv(input_file, delimiter=delimiter, engine="python")
 
-            # Validate necessary columns
+        required = [
+            "Station_name", "Instrument", "Component",
+            "P_phase_onset", "P_phase_descriptor", "First_Motion",
+            "Date", "Hour_min", "Seconds", "Err", "ErrMag",
+            "Coda_duration", "Amplitude", "Period",
+        ]
+        missing = [c for c in required if c not in df.columns]
+        if missing:
+            raise ValueError(f"The input file is missing required columns: {missing}")
 
-            required_columns = ["Station_name", "Instrument", "Component", "P_phase_onset", "P_phase_descriptor",
-                                "First_Motion", "Date", "Hour_min", "Seconds", "Err", "ErrMag", "Coda_duration",
-                                "Amplitude", "Period"]
+        # Vectorized timestamp construction
+        # Normalize date strings; split Hour_min into hour/minute
+        dates = [cls._normalize_date_string(v) for v in df["Date"].tolist()]
+        hm = [cls._hmm_to_h_m(v) for v in df["Hour_min"].tolist()]
+        hours = [h for h, _ in hm]
+        minutes = [m for _, m in hm]
+        seconds = df["Seconds"].astype(float).tolist()
 
-            missing_columns = [col for col in required_columns if col not in df.columns]
-            if missing_columns:
-                raise ValueError(f"The input file is missing required columns: {missing_columns}")
+        # Build ISO-like strings then UTCDateTime; this is fast and robust
+        tt = [
+            f"{d}T{h:02d}:{m:02d}:{s:06.3f}"
+            for d, h, m, s in zip(dates, hours, minutes, seconds)
+        ]
+        timestamps = [UTCDateTime(x) for x in tt]
+        df["_utc"] = timestamps
 
-            # Process each row
-            for _, row in df.iterrows():
-                try:
-                    # Construct timestamp
-                    tt = f"{row['Date']}T{str(row['Hour_min']).zfill(4)}:{float(row['Seconds']):06.3f}"
-                    timestamp = UTCDateTime(tt)
+        # Optional filtering (inclusive)
+        if st is not None:
+            df = df[df["_utc"] >= st]
+        if et is not None:
+            df = df[df["_utc"] <= et]
 
-                    # Construct ID
-                    id = f"{row['Station_name']}.{row['Component']}"
+        if df.empty:
+            return {}
 
-                    # Collect pick details
-                    pick_details = [
-                        row["P_phase_descriptor"], timestamp, row["Component"],
-                        row["First_Motion"], row["Err"], row["ErrMag"],
-                        row["Coda_duration"], row["Amplitude"], row["Period"]
-                    ]
+        # Build ID: Station.Component
+        ids = (df["Station_name"].astype(str) + "." + df["Component"].astype(str)).tolist()
+        df["_id"] = ids
 
-                    # Add to dictionary
-                    if id not in pick_times:
-                        pick_times[id] = []
-                    pick_times[id].append(pick_details)
+        # Select and rename columns to the output structure order
+        # [P_phase_descriptor, UTCDateTime, Component,
+        #  First_Motion, Err, ErrMag, Coda_duration, Amplitude, Period]
+        want_cols = [
+            "P_phase_descriptor", "_utc", "Component", "First_Motion",
+            "Err", "ErrMag", "Coda_duration", "Amplitude", "Period"
+        ]
+        sub = df[["_id"] + want_cols]
 
-                except Exception as e:
-                    print(f"Error processing row {row.to_dict()}: {e}")
+        # Group and materialize lists
+        out: Dict[str, list] = {}
+        for gid, g in sub.groupby("_id", sort=False):
+            # Convert rows to plain Python lists; keep UTCDateTime objects
+            rows = g[want_cols].values.tolist()
+            out[gid] = rows
 
-        except Exception as e:
-            raise RuntimeError(f"Error reading or processing the file {input_file}: {e}")
+        return out
 
-        return pick_times
+    @staticmethod
+    def summarize_picks(picks: Dict[str, Iterable[Iterable[Any]]]) -> Dict[str, Any]:
+        """
+        Extract basic information from the picks dict produced by get_NLL_phase_picks.
+
+        Returns
+        -------
+        dict with keys:
+            total_picks: int
+            stations: int
+            earliest_pick: UTCDateTime or None
+            latest_pick: UTCDateTime or None
+            span_seconds: float
+            span_readable: str
+            per_station_counts: {station_id: count}
+        """
+        total = 0
+        earliest = None
+        latest = None
+        per_station = {}
+
+        for sid, rows in picks.items():
+            cnt = 0
+            for r in rows:
+                # r layout: [descriptor, UTCDateTime, component, ...]
+                ts = r[1]
+                if earliest is None or ts < earliest:
+                    earliest = ts
+                if latest is None or ts > latest:
+                    latest = ts
+                cnt += 1
+            if cnt:
+                per_station[sid] = cnt
+                total += cnt
+
+        if total == 0:
+            return {
+                "total_picks": 0,
+                "stations": 0,
+                "earliest_pick": None,
+                "latest_pick": None,
+                "span_seconds": 0.0,
+                "span_readable": "0 s",
+                "per_station_counts": {},
+            }
+
+        span = float(latest) - float(earliest)
+
+        # simple human-ish formatting
+        def _fmt_span(sec: float) -> str:
+            sec = int(round(sec))
+            days, rem = divmod(sec, 86400)
+            hours, rem = divmod(rem, 3600)
+            minutes, seconds = divmod(rem, 60)
+            parts = []
+            if days: parts.append(f"{days} d")
+            if hours: parts.append(f"{hours} h")
+            if minutes: parts.append(f"{minutes} min")
+            parts.append(f"{seconds} s")
+            return " ".join(parts)
+
+        return {
+            "total_picks": total,
+            "stations": len(per_station),
+            "earliest_pick": earliest,
+            "latest_pick": latest,
+            "span_seconds": span,
+            "span_readable": _fmt_span(span),
+            "per_station_counts": dict(sorted(per_station.items(), key=lambda x: x[0])),
+        }
 
     @staticmethod
     def get_stream(files_path: str, selection: dict):

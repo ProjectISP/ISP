@@ -153,7 +153,8 @@ class Autopick(BaseFrame, UiAutopick):
             self.send_trigger()
             self.progress_dialog.exec()
             md = MessageDialog(self)
-            md.set_info_message("Coincidence Trigger Done, Review Files coincidence_*.txt ")
+            md.set_info_message("Coincidence Trigger Done, Review Files coincidence_*.txt, "
+                                "plot seismogram to overview  detected events ")
 
     @AsycTime.run_async()
     def send_trigger(self):
@@ -294,8 +295,8 @@ class Autopick(BaseFrame, UiAutopick):
             self.send_phasenet()
             self.progress_dialog.exec()
             md = MessageDialog(self)
-            md.set_info_message("Picking Done")
-            self.send_signal()
+            md.set_info_message("Picking Done, Import picks in Earthquake Analysis and plot seismograms to see the picks")
+            #self.send_signal()
 
     @AsycTime.run_async()
     def send_phasenet(self):
@@ -418,8 +419,8 @@ class Autopick(BaseFrame, UiAutopick):
         self.send_polarities()
         self.progress_dialog.exec()
         md = MessageDialog(self)
-        md.set_info_message("Polarities determination Done")
-        self.send_signal(reset=True)
+        md.set_info_message("Polarities determination Done, import picks in Earthquake Analysis")
+        #self.send_signal(reset=True)
 
 
     @AsycTime.run_async()

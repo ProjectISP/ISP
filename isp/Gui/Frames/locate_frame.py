@@ -32,6 +32,7 @@ from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject
 from isp.LocCore.pdf_plot import plot_scatter
 from isp.LocCore.plot_tool_loc import StationUtils
 from isp.Utils import ObspyUtil, AsycTime
+from isp.Utils.os_utils import OSutils
 from isp.earthquakeAnalysis import NllManager, FirstPolarity
 from isp.earthquakeAnalysis.run_nll import Nllcatalog
 from isp.earthquakeAnalysis.structures import TravelTimesConfiguration, LocationParameters, NLLConfig, \
@@ -522,17 +523,23 @@ class Locate(BaseFrame, UiLocFlow):
         nllcatalog = Nllcatalog(self.loc_work_bind.value)
         nllcatalog.find_files()
         files_list = nllcatalog.obsfiles
-        for file in files_list:
-            try:
-                header = FirstPolarity.set_head(file)
-                if file is not None:
-                    firstpolarity_manager = FirstPolarity()
-                    file_input = firstpolarity_manager.create_input(file, header)
 
-                    if FirstPolarity.check_no_empty(file_input):
-                        firstpolarity_manager.run_focmec(file_input, self.accepted_polarities.value())
-            except:
-                pass
+        if len(files_list) > 0:
+            path_output = os.path.join(self.loc_work_bind.value, "first_polarity", "output")
+            OSutils.delete_folder_contents(path_output)
+
+            for file in files_list:
+                try:
+                    header = FirstPolarity.set_head(file)
+                    if file is not None:
+                        firstpolarity_manager = FirstPolarity()
+                        file_input = firstpolarity_manager.create_input(file, header)
+
+                        if FirstPolarity.check_no_empty(file_input):
+                            firstpolarity_manager.run_focmec(file_input, self.accepted_polarities.value())
+
+                except:
+                    pass
         self.onChange_root_pathLoc("refress")
 
 
@@ -694,7 +701,7 @@ class Locate(BaseFrame, UiLocFlow):
             # Add buttons
             msg_box = QMessageBox()
             msg_box.setWindowTitle("You need to load a project before run Source")
-            msg_box.setText("Do you want load now and run Source?")
+            msg_box.setText("No Project Loaded, Do you want load now and run Source?")
 
             yes_button = msg_box.addButton(pw.QMessageBox.Yes)
             no_button = msg_box.addButton(pw.QMessageBox.No)

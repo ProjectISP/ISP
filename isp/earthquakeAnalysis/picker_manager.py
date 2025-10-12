@@ -58,6 +58,13 @@ class PickerManager:
     def output_path(self):
         return self.__output_path
 
+    def is_empty(self):
+        """Return True if all attributes are None, empty, or '?'."""
+        return all(
+            v in (None, "", "?")
+            for v in self.__dict__.values()
+        )
+
     def __setup_file(self) -> pd.DataFrame:
         df = pd.DataFrame(columns=self.columns)
         df.to_csv(self.output_path, sep=self.file_separator, columns=self.columns, index=False)

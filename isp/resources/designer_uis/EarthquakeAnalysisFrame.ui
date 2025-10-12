@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1512</width>
-    <height>874</height>
+    <height>818</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -588,8 +588,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>919</width>
-                  <height>610</height>
+                  <width>918</width>
+                  <height>560</height>
                  </rect>
                 </property>
                </widget>
@@ -954,14 +954,7 @@
     <property name="title">
      <string>Import</string>
     </property>
-    <widget class="QMenu" name="menuPicks_from_file">
-     <property name="title">
-      <string>Picks from file</string>
-     </property>
-     <addaction name="actionDefaultPicks"/>
-     <addaction name="actionPicksOther_file"/>
-    </widget>
-    <addaction name="menuPicks_from_file"/>
+    <addaction name="actionImport_Picks"/>
    </widget>
    <widget class="QMenu" name="menuSelections">
     <property name="title">
@@ -1366,6 +1359,11 @@
   <action name="actionKurtosis">
    <property name="text">
     <string>CF Kurtosis</string>
+   </property>
+  </action>
+  <action name="actionImport_Picks">
+   <property name="text">
+    <string>Import Picks from file</string>
    </property>
   </action>
  </widget>

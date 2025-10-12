@@ -208,6 +208,7 @@ def try_add_extension(modname, src):
 #     ("isp.cython_code.ccwt_cy",        os.path.join(cy_path, "ccwt_cy.pyx")),
 #     ("isp.cython_code.whiten",         os.path.join(cy_path, "whiten.pyx")),
 # ]
+
 cy_modules = [
      ("isp.cython_code.hampel",         os.path.join(cy_path, "hampel.pyx")),
      ("isp.cython_code.whiten",         os.path.join(cy_path, "whiten.pyx"))]
