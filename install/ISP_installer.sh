@@ -183,3 +183,5 @@ EOF
 fi
 
 echo "Installation complete!"
+echo  "Please  >> source .bashrc or source .zshrc, then type isp in your terminal"
+echo  "Alternatively close terminal and open it, then type isp in your terminal"
