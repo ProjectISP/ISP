@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1680</width>
-    <height>921</height>
+    <height>944</height>
    </rect>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,3">
@@ -220,7 +220,14 @@
       </widget>
      </item>
      <item row="8" column="0" colspan="5">
-      <widget class="QListWidget" name="listWidget"/>
+      <widget class="QListWidget" name="listWidget">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
      </item>
      <item row="2" column="0" colspan="2">
       <widget class="QPushButton" name="selectDatalessDirBtn">
@@ -471,21 +478,37 @@
         <string>Plot Correlations</string>
        </property>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="2" column="2">
-         <widget class="QLineEdit" name="channelLE"/>
+        <item row="3" column="2">
+         <widget class="QPushButton" name="updateBtn">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Process and Plot</string>
+          </property>
+         </widget>
         </item>
-        <item row="3" column="1">
-         <widget class="QComboBox" name="comboBox_sort">
-          <item>
-           <property name="text">
-            <string>Distance</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Back Azimuth</string>
-           </property>
-          </item>
+        <item row="6" column="1" alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>Amplification</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QPushButton" name="mapBtn">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Stations Map</string>
+          </property>
          </widget>
         </item>
         <item row="1" column="0" alignment="Qt::AlignHCenter">
@@ -505,23 +528,68 @@
         <item row="2" column="0">
          <widget class="QLineEdit" name="netLE"/>
         </item>
-        <item row="2" column="1">
-         <widget class="QLineEdit" name="stationLE"/>
+        <item row="2" column="2">
+         <widget class="QLineEdit" name="channelLE"/>
+        </item>
+        <item row="3" column="1">
+         <widget class="QComboBox" name="comboBox_sort">
+          <item>
+           <property name="text">
+            <string>Distance</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Back Azimuth</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="7" column="2">
+         <widget class="QDoubleSpinBox" name="maxDistSB">
+          <property name="prefix">
+           <string>max </string>
+          </property>
+          <property name="suffix">
+           <string> (km)</string>
+          </property>
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <double>10000000.000000000000000</double>
+          </property>
+          <property name="value">
+           <double>100.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1">
+         <widget class="QDoubleSpinBox" name="minDistSB">
+          <property name="prefix">
+           <string>min </string>
+          </property>
+          <property name="suffix">
+           <string> (km)</string>
+          </property>
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <double>10000000.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="0" column="2">
          <widget class="QLineEdit" name="rootPathForm2"/>
         </item>
-        <item row="0" column="0">
-         <widget class="QPushButton" name="readFilesBtn">
-          <property name="text">
-           <string>Read and Filter files</string>
-          </property>
-         </widget>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="stationLE"/>
         </item>
-        <item row="1" column="2" alignment="Qt::AlignHCenter">
-         <widget class="QLabel" name="label_8">
+        <item row="1" column="1" alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="label_7">
           <property name="text">
-           <string>Channels</string>
+           <string>Stations</string>
           </property>
          </widget>
         </item>
@@ -529,13 +597,6 @@
          <widget class="QPushButton" name="selectDirBtn2">
           <property name="text">
            <string>Set Path</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1" alignment="Qt::AlignHCenter">
-         <widget class="QLabel" name="label_7">
-          <property name="text">
-           <string>Stations</string>
           </property>
          </widget>
         </item>
@@ -562,36 +623,47 @@
           </property>
          </widget>
         </item>
-        <item row="6" column="1" alignment="Qt::AlignHCenter">
-         <widget class="QLabel" name="label_9">
+        <item row="1" column="2" alignment="Qt::AlignHCenter">
+         <widget class="QLabel" name="label_8">
           <property name="text">
-           <string>Amplification</string>
+           <string>Channels</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="2">
-         <widget class="QPushButton" name="updateBtn">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
+        <item row="0" column="0">
+         <widget class="QPushButton" name="readFilesBtn">
           <property name="text">
-           <string>Process and Plot</string>
+           <string>Read and Filter files</string>
           </property>
          </widget>
         </item>
-        <item row="4" column="0">
-         <widget class="QPushButton" name="mapBtn">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
+        <item row="7" column="0">
+         <widget class="QCheckBox" name="filterdistCB">
           <property name="text">
-           <string>Stations Map</string>
+           <string>Filter by distance</string>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="2">
+         <widget class="QDoubleSpinBox" name="secondsDB">
+          <property name="suffix">
+           <string> (s)</string>
+          </property>
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="minimum">
+           <double>0.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>10000000.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="0">
+         <widget class="QCheckBox" name="windowsSpanCB">
+          <property name="text">
+           <string>window span</string>
           </property>
          </widget>
         </item>
@@ -613,8 +685,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1025</width>
-        <height>895</height>
+        <width>1013</width>
+        <height>918</height>
        </rect>
       </property>
      </widget>

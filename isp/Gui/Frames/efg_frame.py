@@ -342,8 +342,15 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                 s = (tr.data/np.max(tr.data))*self.amplificationDB.value()
                 geodetic = MseedUtil.get_geodetic(file_path)
                 s = (s+(geodetic[0]/1000))
-                self.canvas.plot(t, s, 0, linestyle='-', clear_plot=False, color="black", alpha=0.5, linewidth=0.5,
-                                 label="")
+                dist = geodetic[0]/1000
+                if self.filterdistCB.isChecked():
+                    if self.minDistSB.value() <= dist <= self.maxDistSB.value():
+
+                        self.canvas.plot(t, s, 0, linestyle='-', clear_plot=False, color="black", alpha=0.5, linewidth=0.5,
+                                         label="")
+                else:
+                    self.canvas.plot(t, s, 0, linestyle='-', clear_plot=False, color="black", alpha=0.5, linewidth=0.5,
+                                     label="")
 
                 try:
                     min_starttime.append(min(t))
@@ -352,11 +359,16 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
                     print("Empty traces")
 
         try:
-            if min_starttime and max_endtime is not None:
-                auto_start = min(min_starttime)
-                auto_end = max(max_endtime)
+            if self.windowsSpanCB.isChecked():
                 ax = self.canvas.get_axe(0)
-                ax.set_xlim(auto_start, auto_end)
+                ax.set_xlim(-1*self.secondsDB.value(), self.secondsDB.value())
+            else:
+                if min_starttime and max_endtime is not None:
+                    auto_start = min(min_starttime)
+                    auto_end = max(max_endtime)
+                    ax = self.canvas.get_axe(0)
+                    ax.set_xlim(auto_start, auto_end)
+
 
             self.canvas.set_xlabel(0, "Time [s]")
             self.canvas.set_ylabel(0, "Distance [km]")
