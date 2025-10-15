@@ -4,6 +4,7 @@
 import os
 import shutil
 import warnings
+warnings.filterwarnings("ignore")
 import platform
 import subprocess as sb
 from os.path import isfile, join
