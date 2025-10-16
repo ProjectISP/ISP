@@ -32,6 +32,81 @@
 
 set -euo pipefail
 
+# --- System deps check (new): run BEFORE any conda steps ----------------------
+ensure_system_deps() {
+  local os="$(uname -s)"
+  if [[ "$os" != "Linux" ]]; then
+    echo "[deps] Non-Linux system detected ($os). Skipping system package checks."
+    return 0
+  fi
+
+  if ! command -v apt-get >/dev/null 2>&1; then
+    echo "[deps] Non-Debian/Ubuntu Linux (no apt-get found). Skipping system package checks."
+    return 0
+  fi
+
+  # Determine sudo usage
+  local SUDO=""
+  if [[ $EUID -ne 0 ]]; then
+    if command -v sudo >/dev/null 2>&1; then
+      SUDO="sudo"
+    else
+      echo "[deps] Need root privileges but 'sudo' not found. Please run this script as root."
+      exit 1
+    fi
+  fi
+
+  # Packages to check/install
+  local base_pkgs=(build-essential pkg-config xdg-utils libpulse-mainloop-glib0)
+  local xcb_pkgs=(libxcb-xinerama0 libxcb1 libx11-xcb1 libxext6 libxkbcommon-x11-0)
+
+  # Find missing packages
+  local missing=()
+  for p in "${base_pkgs[@]}" "${xcb_pkgs[@]}"; do
+    if ! dpkg -s "$p" >/dev/null 2>&1; then
+      missing+=("$p")
+    fi
+  done
+
+  if ((${#missing[@]})); then
+    echo "[deps] Missing system packages detected: ${missing[*]}"
+    read -r -p "Install missing system packages now? [Y/n] " resp
+    resp="${resp:-Y}"
+    case "${resp,,}" in
+      y|yes)
+        echo "[deps] Proceeding with installation (Y)."
+        export DEBIAN_FRONTEND=noninteractive
+        $SUDO apt-get update
+        $SUDO apt-get install -y "${missing[@]}"
+        ;;
+      n|no)
+        echo "[deps] Skipping installation (N). Some components may fail later."
+        ;;
+      *)
+        echo "[deps] Unrecognized response. Skipping installation."
+        ;;
+    esac
+  else
+    echo "[deps] All required system packages already installed."
+  fi
+
+  # Offer to force-reinstall XCB libs (helps when libs are present but broken)
+  read -r -p "Reinstall low-level XCB libraries to fix potential GUI issues? [y/N] " re_resp
+  re_resp="${re_resp:-N}"
+  if [[ "${re_resp,,}" =~ ^y ]]; then
+    echo "[deps] Reinstalling XCB libraries (Y)."
+    export DEBIAN_FRONTEND=noninteractive
+    $SUDO apt-get update
+    $SUDO apt-get install --reinstall -y libxcb-xinerama0
+    $SUDO apt-get install --reinstall -y libxcb1 libx11-xcb1 libxext6 libxkbcommon-x11-0
+  else
+    echo "[deps] Skipping XCB libraries reinstall (N)."
+  fi
+}
+
+ensure_system_deps
+# --- End System deps check (new) ---------------------------------------------
+
 # Ensure conda is available and load shell functions (activate/conda run)
 if ! command -v conda >/dev/null 2>&1; then
   echo "conda not found in PATH. Please install Miniconda/Anaconda and ensure 'conda' is on PATH."
@@ -99,7 +174,7 @@ echo "ISP environment process finished"
 pushd ${ISP_DIR} > /dev/null
 
 # --- Key change: use conda run instead of source activate ---
-conda deactivate
+conda deactivate || true
 conda run -n isp python3 ${ISP_DIR}/setup_user.py build_ext --inplace
 
 popd > /dev/null
