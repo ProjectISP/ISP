@@ -183,5 +183,20 @@ EOF
 fi
 
 echo "Installation complete!"
-echo  "Please  >> source .bashrc or source .zshrc, then type isp in your terminal"
-echo  "Alternatively close terminal and open it, then type isp in your terminal"
+
+# Detect shell type
+SHELL_NAME=$(basename "$SHELL")
+
+# Choose appropriate rc file
+if [ "$SHELL_NAME" = "zsh" ]; then
+    RC_FILE=".zshrc"
+elif [ "$SHELL_NAME" = "bash" ]; then
+    RC_FILE=".bashrc"
+elif [ "$SHELL_NAME" = "fish" ]; then
+    RC_FILE=".config/fish/config.fish"
+else
+    RC_FILE="your shell configuration file"
+fi
+
+echo "Please run: source ~/$RC_FILE"
+echo "Alternatively, close this terminal and reopen it, then type 'isp' to start."
