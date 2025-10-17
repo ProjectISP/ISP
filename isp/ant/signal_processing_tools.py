@@ -398,7 +398,7 @@ class noise_processing:
         return window
 
 
-    def whiten_new(self, freq_width=0.02):
+    def whiten_new(self, freq_width=0.02, taper=True):
 
         """"
         freq_width: Frequency smoothing windows [Hz] / both sides
@@ -406,14 +406,14 @@ class noise_processing:
 
         return: whithened trace (Phase is not modified)
         """""
-        tr = self.tr.copy()
+
         fs = self.tr.stats.sampling_rate
         N = self.tr.count()
         D = 2 ** math.ceil(math.log2(N))
         freq_res = 1 / (D / fs)
         # N_smooth = int(freq_width / (2 * freq_res))
         N_smooth = int(freq_width / (freq_res))
-
+        eps = 1e-12
         if N_smooth % 2 == 0:  # To have a central point
             N_smooth = N_smooth + 1
         else:
@@ -443,30 +443,38 @@ class noise_processing:
         for j in index:
 
             den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
-            if den != 0: # it can be 0 because rfft is padding to 0 data_f
+            den = max(den, eps)
+            #if den != 0: # it can be 0 because rfft is padding to 0 data_f
                 # den = np.mean(np.abs(data_f[j:j + 2 * half_width]))
-                data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
+            data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
 
         # Taper (optional) and remove mean diffs in edges of the frequency domain
+        if taper:
+            wf = (np.cos(np.linspace(np.pi / 2, np.pi, half_width)) ** 2)
+            wf_flip = np.flip(wf)
 
-        wf = (np.cos(np.linspace(np.pi / 2, np.pi, half_width)) ** 2)
-        mean_1 = np.mean(np.abs(data_f[0:half_width]))
-        mean_2 = np.mean(np.abs(data_f[(N_rfft - half_width):]))
-        wf_flip = np.flip(wf)
+            #mean_1 = np.mean(np.abs(data_f[0:half_width]))
+            #mean_2 = np.mean(np.abs(data_f[(N_rfft - half_width):]))
 
-        if mean_1 != 0:
-            data_f_whiten[0:half_width] = (data_f[0:half_width]/mean_1) * wf   # First part of spectrum
-        if mean_2 != 0:
-            data_f_whiten[(N_rfft - half_width):] = (data_f[(N_rfft - half_width):]/mean_2) * wf_flip # end of spectrum
+            # if mean_1 != 0:
+            #     data_f_whiten[0:half_width] = (data_f[0:half_width]/mean_1) * wf   # First part of spectrum
+            # if mean_2 != 0:
+            #     data_f_whiten[(N_rfft - half_width):] = (data_f[(N_rfft - half_width):]/mean_2) * wf_flip # end of spectrum
+
+            # Simply taper the whitened spectra at the edges (phase preserved)
+
+            data_f_whiten[:half_width] *= wf
+            data_f_whiten[-half_width:] *= wf_flip
 
         try:
             data = np.fft.irfft(data_f_whiten)
             data = data[0:N]
         except:
             print("whitenning cannot be done")
-
+            return
 
         self.tr.data = data
+        return
 
 # def whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos):
 #     return __whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos)
@@ -566,9 +574,6 @@ class noise_processing_horizontals:
             #     self.tr_E.taper(type="blackman", max_percentage=0.05)
 
 
-
-
-
     def get_window(self, N, alpha=0.2):
 
         window = np.ones(N)
@@ -580,7 +585,7 @@ class noise_processing_horizontals:
         return window
 
 
-    def whiten_new(self, freq_width=0.02):
+    def whiten_new(self, freq_width=0.02, taper=True):
 
         """"
         freq_width: Frequency smoothing windows [Hz] / both sides
@@ -593,6 +598,7 @@ class noise_processing_horizontals:
         N = self.tr_N.count()
         D = 2 ** math.ceil(math.log2(N))
         freq_res = 1 / (D / fs)
+        eps = 1e-12
         # N_smooth = int(freq_width / (2 * freq_res))
         N_smooth = int(freq_width / (freq_res))
 
@@ -617,58 +623,38 @@ class noise_processing_horizontals:
         data_f_whiten_E = data_f_E.copy()
         index = np.arange(0, N_rfft - half_width, 1)
 
-        # calling cython version faster
-        #data_f_whiten_N,data_f_whiten_E = whiten_aux_horizontals(data_f_N, data_f_whiten_N, data_f_E,
-        #                        data_f_whiten_E, index, half_width, avarage_window_width, half_width_pos)
-
-        # whitout cython
         for j in index:
             den = 0.5*(np.sum(np.abs(data_f_N[j:j + 2 * half_width]) + np.abs(data_f_E[j:j + 2 * half_width]))/avarage_window_width)
-            if den != 0:
-                data_f_whiten_N[j + half_width_pos] = data_f_whiten_N[j + half_width_pos] / den
-                data_f_whiten_E[j + half_width_pos] = data_f_whiten_E[j + half_width_pos] / den
+            den = max(den, eps)
+            data_f_whiten_N[j + half_width_pos] = data_f_N[j + half_width_pos] / den
+            data_f_whiten_E[j + half_width_pos] = data_f_E[j + half_width_pos] / den
 
         # Taper (optional) and remove mean diffs in edges of the frequency domain
+        if taper:
+            wf = (np.cos(np.linspace(np.pi / 2, np.pi, half_width)) ** 2)
+            wf_flip = np.flip(wf)
+            # Simply taper the whitened spectra at the edges (phase preserved)
+            data_f_whiten_N[:half_width] *= wf
+            data_f_whiten_E[:half_width] *= wf
+            data_f_whiten_N[-half_width:] *= wf_flip
+            data_f_whiten_E[-half_width:] *= wf_flip
 
-        wf = (np.cos(np.linspace(np.pi / 2, np.pi, half_width)) ** 2)
-        wf_flip = np.flip(wf)
-        mean_1_N = np.mean(np.abs(data_f_N[0:half_width]))
-        mean_1_E = np.mean(np.abs(data_f_N[0:half_width]))
-        mean_2_N = np.mean(np.abs(data_f_N[(N_rfft - half_width):]))
-        mean_2_E = np.mean(np.abs(data_f_E[(N_rfft - half_width):]))
+        try:
+            data_N = np.fft.irfft(data_f_whiten_N)
+            data_E = np.fft.irfft(data_f_whiten_E)
+        except Exception as e:
 
-        if mean_1_E !=0:
-            data_f_whiten_E[0:half_width] = (data_f_E[0:half_width] / mean_1_E) * wf
-        if mean_1_N != 0:
-            data_f_whiten_N[0:half_width] = (data_f_N[0:half_width] / mean_1_N) * wf
+            print(f"whitening failed: {e}")
 
-        if mean_2_E != 0:
-            data_f_whiten_E[(N_rfft - half_width):] = (data_f_E[(N_rfft - half_width):] / mean_2_E) * wf_flip
+            return
 
-        if mean_2_N != 0:
-            data_f_whiten_N[(N_rfft - half_width):] = (data_f_N[(N_rfft - half_width):] / mean_2_N) * wf_flip
-
-        data_N = np.fft.irfft(data_f_whiten_N)
-        data_E = np.fft.irfft(data_f_whiten_E)
         data_N = data_N[0:N]
         data_E = data_E[0:N]
 
         self.tr_N.data = data_N
         self.tr_E.data = data_E
 
-    # @jit(nopython=True, parallel=True)
-    # def whiten_aux_horizontals(self, data_f_N, data_f_whiten_N, data_f_E, data_f_whiten_E, index, half_width,
-    #                            avarage_window_width, half_width_pos):
-    #     for j in index:
-    #
-    #         den_N = np.sum(np.abs(data_f_N[j:j + 2 * half_width])) / avarage_window_width
-    #         den_E = np.sum(np.abs(data_f_E[j:j + 2 * half_width])) / avarage_window_width
-    #         mean = np.mean(den_N, den_E)
-    #         # den = np.mean(np.abs(data_f[j:j + 2 * half_width]))
-    #         data_f_whiten_N[j + half_width_pos] = data_f_whiten_N[j + half_width_pos] / mean
-    #         data_f_whiten_E[j + half_width_pos] = data_f_whiten_E[j + half_width_pos] / mean
-
-        return data_f_whiten_N, data_f_whiten_E
+        return # <- nothing
 
     def rotate2NE(self, baz):
 
