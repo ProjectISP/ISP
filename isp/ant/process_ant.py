@@ -227,7 +227,7 @@ class process_ant:
 
         # update the sampling_rate
         sampling_rate = info_N[1][0][0][0].sample_rate
-
+        #sampling_rate = 5  # Hacking_test
         # take the azimuth
         # TODO REVIEW IS TAKING THE CORRECT AZIMUTH CLOCKWISE FROM NORTH
         self.az = info_N[1][0][0][0].azimuth
@@ -433,24 +433,35 @@ class process_ant:
                         if self.time_normalizationCB and self.timenorm == "running avarage":
                             process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
                             if self.whitheningCB:
-                                Xw = process.whiten_new_band_freq_single(fmin=0.008,
-                                                                         fmax=0.4 * self.sampling_rate_new,
-                                                                         D=D,
-                                                                         freq_width=self.freqbandwidth,
-                                                                         taper=True,
-                                                                         outside_scale=1e-3)
+                                if self.preFilter:
+                                    Xw = process.whiten_new_band_freq_single(fmin=self.freqminFilter,
+                                                                             fmax=self.freqmaxFilter,
+                                                                             D=D,
+                                                                             freq_width=self.freqbandwidth,
+                                                                             taper=True,
+                                                                             outside_scale=1e-3)
+                                else:
+                                    Xw = process.whiten_new_band_freq_single(fmin=0.008,
+                                                                             fmax=0.4 * self.sampling_rate_new,
+                                                                             D=D,
+                                                                             freq_width=self.freqbandwidth,
+                                                                             taper=True, outside_scale=1e-3)
                                 res.append(Xw)  # already rFFT, complex64, length D//2+1
                                 continue  # skip the rFFT below
 
 
                         elif self.time_normalizationCB and self.timenorm == "1 bit":
                             if self.whitheningCB:
-                                Xw = process.whiten_new_band_freq_single(fmin=0.008,
-                                                                         fmax=0.4 * self.sampling_rate_new,
-                                                                         D=D,
-                                                                         freq_width=self.freqbandwidth,
-                                                                         taper=True,
-                                                                         outside_scale=1e-3)
+                                if self.preFilter:
+                                    Xw = process.whiten_new_band_freq_single(fmin=self.freqminFilter,
+                                                                             fmax=self.freqmaxFilter, D=D,
+                                                                             freq_width=self.freqbandwidth,
+                                                                             taper=True, outside_scale=1e-3)
+                                else:
+                                    Xw = process.whiten_new_band_freq_single(fmin=0.008,
+                                                                             fmax=0.4 * self.sampling_rate_new,
+                                                                             D=D, freq_width=self.freqbandwidth,
+                                                                             taper=True, outside_scale=1e-3)
                                 res.append(Xw)  # already rFFT, complex64, length D//2+1
                                 continue
                             if self.time_normalizationCB:
@@ -621,24 +632,41 @@ class process_ant:
                             if self.time_normalizationCB and self.timenorm == "running avarage":
                                 process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
                                 if self.whitheningCB:
-                                    XNw, XEw = process_horizontals.whiten_new_band_freq(fmin=0.008,
-                                                                                        fmax=0.4 * self.sampling_rate_new,
-                                                                                        D=D,
-                                                                                        freq_width=self.freqbandwidth,
-                                                                                        taper=True,
-                                                                                        outside_scale=1e-3)
+                                    if self.preFilter:
+                                        XNw, XEw = process_horizontals.whiten_new_band_freq(fmin=self.freqminFilter,
+                                                                                            fmax=self.freqmaxFilter,
+                                                                                            D=D,
+                                                                                            freq_width=self.freqbandwidth,
+                                                                                            taper=True,
+                                                                                            outside_scale=1e-3)
+                                    else:
+                                        XNw, XEw = process_horizontals.whiten_new_band_freq(fmin=0.008,
+                                                                                            fmax=0.4 * self.sampling_rate_new,
+                                                                                            D=D,
+                                                                                            freq_width=self.freqbandwidth,
+                                                                                            taper=True,
+                                                                                            outside_scale=1e-3)
                                     res_N.append(XNw)  # already rFFT, complex64, length D//2+1
                                     res_E.append(XEw)
                                     continue  # skip the rFFT below
 
                             elif self.time_normalizationCB and self.timenorm == "1 bit":
                                 if self.whitheningCB:
-                                    XNw, XEw = process_horizontals.whiten_new_band_freq(fmin=0.008,
-                                                                                        fmax=0.4 * self.sampling_rate_new,
-                                                                                        D=D,
-                                                                                        freq_width=self.freqbandwidth,
-                                                                                        taper=True,
-                                                                                        outside_scale=1e-3)
+                                    if self.preFilter:
+                                        XNw, XEw = process_horizontals.whiten_new_band_freq(fmin=self.freqminFilter,
+                                                                                            fmax=self.freqmaxFilter,
+                                                                                            D=D,
+                                                                                            freq_width=self.freqbandwidth,
+                                                                                            taper=True,
+                                                                                            outside_scale=1e-3)
+                                    else:
+                                        XNw, XEw = process_horizontals.whiten_new_band_freq(fmin=0.008,
+                                                                                            fmax=0.4 * self.sampling_rate_new,
+                                                                                            D=D,
+                                                                                            freq_width=self.freqbandwidth,
+                                                                                            taper=True,
+                                                                                            outside_scale=1e-3)
+
                                     res_N.append(XNw)  # already rFFT, complex64, length D//2+1
                                     res_E.append(XEw)
                                     continue  # skip the rFFT below
@@ -664,8 +692,8 @@ class process_ant:
                                 xaN = xaN[0:n]
                                 xaE = hilbert(process_horizontals.tr_E.data, N=D).astype(np.complex64)
                                 xaE = xaE[0:n]
-                                process_horizontals.tr_N.data = xaN / (np.abs(xaN)  + 1e-12) # normalize
-                                process_horizontals.tr_E.data = xaE / (np.abs(xaE)  + 1e-12) # normalize
+                                process_horizontals.tr_N.data = xaN / (np.abs(xaN) + 1e-12)  # normalize
+                                process_horizontals.tr_E.data = xaE / (np.abs(xaE) + 1e-12)  # normalize
 
                             try:
                                 if self.timenorm == "PCC":
