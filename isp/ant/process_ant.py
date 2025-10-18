@@ -30,6 +30,7 @@ class process_ant:
         self.list_item = None
         self.inc_time = None
         self.num_rows = None
+        self._warned_whitening_1bit = False
         self.data_domain = "frequency"
         self.save_files = "True"
         self.taper_max_percent = 0.05
@@ -200,11 +201,12 @@ class process_ant:
             # print("Saving Days", self.dict_matrix['date_list'])
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix, file_to_store)
-            # try:
-            #     del self.dict_matrix
-            #     gc.collect()
-            # except:
-            #     pass
+
+        try:
+            del self.dict_matrix
+            gc.collect()
+        except:
+            print("Cannot release memory space")
         # return self.dict_matrix
 
     def create_dict_matrix_horizontals(self, list_item_horizonrals, info_N, info_E):
@@ -219,27 +221,11 @@ class process_ant:
 
         # 1.- dict_matrix['date_list']
 
-        # date_ini_N = info_N[0][0].julday
-        # year_ini_N = info_N[0][0].year
-        #
-        # date_ini_E = info_E[0][0].julday
-        # year_ini_E = info_E[0][0].year
-        #
-        # date_end_N = info_N[0][1].julday
-        # year_end_N = info_N[0][1].year
-        #
-        # date_end_E = info_E[0][1].julday
-        # year_end_E = info_E[0][1].year
-
-        # self.dict_matrix_N['date_list_N'] = self.__list_days(year_ini_N, year_end_N, date_ini_N, date_end_N)
-        # self.dict_matrix_E['date_list_E'] = self.__list_days(year_ini_E, year_end_E, date_ini_E, date_end_E)
-
         # 2.- dict_matrix['metadata_list']
         self.dict_matrix_N['metadata_list_N'] = info_N[1]
         self.dict_matrix_E['metadata_list_E'] = info_E[1]
 
         # update the sampling_rate
-
         sampling_rate = info_N[1][0][0][0].sample_rate
 
         # take the azimuth
@@ -335,12 +321,12 @@ class process_ant:
             pickle.dump(self.dict_matrix_E, file_to_store)
             # free space
 
-            # try:
-            #     del self.dict_matrix_E
-            #     del self.dict_matrix_N
-            #     gc.collect()
-            # except:
-            #     pass
+        try:
+            del self.dict_matrix_E
+            del self.dict_matrix_N
+            gc.collect()
+        except:
+            print("Cannot release memory space")
 
         # return self.dict_matrix
 
@@ -369,6 +355,18 @@ class process_ant:
         # list_day = str(tr.stats.starttime.julday) + "." + str(tr.stats.starttime.year)
         print("Processing", tr.stats.station, tr.stats.channel,
               str(tr.stats.starttime.julday) + "." + str(tr.stats.starttime.year))
+
+        if (
+                getattr(self, "whitheningCB", False)
+                and getattr(self, "time_normalizationCB", False)
+                and getattr(self, "timenorm", "").lower() == "1 bit"
+                and not hasattr(self, "_warned_whitening_1bit")
+        ):
+            print("\n️  Warning: Both whitening and 1-bit normalization are selected.")
+            print("   → Whitening will be applied in the frequency domain (spectral flattening).")
+            print("   → 1-bit normalization will be skipped to avoid double amplitude normalization.")
+            print("   → The output will be complex frequency spectra, not time-domain traces.\n")
+            self._warned_whitening_1bit = True
 
         st = self.fill_gaps(Stream(traces=tr), tol=5 * self.gaps_tol)
 
@@ -413,15 +411,7 @@ class process_ant:
                 tr_test.trim(starttime=tr.stats.starttime + self.inc_time[i],
                              endtime=tr.stats.starttime + self.inc_time[i + 1])
 
-                # TODO "Make sense to check gaps every time window??"
-                #  if fill_gaps:
-                #      st = self.fill_gaps(Stream(traces=tr_test), tol=self.gaps_tol)
-                #      if st == []:
-                #          tr_test.data = np.zeros(len(tr_test.data), dtype=np.complex64)
-                #      else:
-                #          tr_test = st[0]
-
-                if (self.data_domain == "frequency") and len(tr[:]) > 0:
+                if (self.data_domain == "frequency") and (tr_test.count() > 0):
                     n = tr_test.count()
                     if n > 0:
 
@@ -438,17 +428,31 @@ class process_ant:
                                        zerophase=True, corners=4)
 
                         process = noise_processing(tr_test)
+                        process.tr.data = np.asarray(process.tr.data, dtype=np.float32)
 
                         if self.time_normalizationCB and self.timenorm == "running avarage":
                             process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
                             if self.whitheningCB:
-                                process.whiten_new_band_single(freq_width=self.freqbandwidth,fmin=0.005,
-                                                               fmax=0.4 * self.sampling_rate_new)
+                                Xw = process.whiten_new_band_freq_single(fmin=0.008,
+                                                                         fmax=0.4 * self.sampling_rate_new,
+                                                                         D=D,
+                                                                         freq_width=self.freqbandwidth,
+                                                                         taper=True,
+                                                                         outside_scale=1e-3)
+                                res.append(Xw)  # already rFFT, complex64, length D//2+1
+                                continue  # skip the rFFT below
+
 
                         elif self.time_normalizationCB and self.timenorm == "1 bit":
                             if self.whitheningCB:
-                                process.whiten_new_band_single(freq_width=self.freqbandwidth, fmin=0.005,
-                                                               fmax=0.4 * self.sampling_rate_new)
+                                Xw = process.whiten_new_band_freq_single(fmin=0.008,
+                                                                         fmax=0.4 * self.sampling_rate_new,
+                                                                         D=D,
+                                                                         freq_width=self.freqbandwidth,
+                                                                         taper=True,
+                                                                         outside_scale=1e-3)
+                                res.append(Xw)  # already rFFT, complex64, length D//2+1
+                                continue
                             if self.time_normalizationCB:
                                 process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
 
@@ -459,9 +463,9 @@ class process_ant:
                                               zerophase=True, corners=self.cornersFilter)
 
                         if self.timenorm == "PCC":
-                            xaZ = hilbert(process.tr.data, N=D)
+                            xaZ = hilbert(process.tr.data, N=D).astype(np.complex64)
                             xaZ = xaZ[0:n]
-                            process.tr.data = xaZ / np.abs(xaZ)  # normalize
+                            process.tr.data = xaZ / (np.abs(xaZ) + 1e-12)  # avoid div by zero # normalize
 
                         try:
                             if self.timenorm == "PCC":
@@ -469,7 +473,8 @@ class process_ant:
                                 res.append(fft)
                             else:
                                 res.append(np.fft.rfft(process.tr.data, D).astype(np.complex64))
-                        except:
+                        except Exception as e:
+                            print(f"FFT failed: {e}")
                             if self.timenorm == "PCC":
                                 res.append(np.zeros(D, dtype=np.complex64))
                             else:
@@ -494,16 +499,23 @@ class process_ant:
         tr_E_raw = obspy.read(self.list_item_E[1 + j])[0]
         tr_N, list_days_N = self.ensure_24(tr_N_raw)
         tr_E, list_days_E = self.ensure_24(tr_E_raw)
-        # print("Checking N", tr_N)
-        # print("Checking E", tr_E)
-
-        # list_days_N = str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year)
-        # list_days_E = str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year)
 
         print("Processing", tr_N.stats.station, tr_N.stats.channel, str(tr_N.stats.starttime.julday) + "." +
               str(tr_N.stats.starttime.year))
         print("Processing", tr_E.stats.station, tr_E.stats.channel,
               str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year))
+
+        if (
+                getattr(self, "whitheningCB", False)
+                and getattr(self, "time_normalizationCB", False)
+                and getattr(self, "timenorm", "").lower() == "1 bit"
+                and not hasattr(self, "_warned_whitening_1bit")
+        ):
+            print("\n️  Warning: Both whitening and 1-bit normalization are selected.")
+            print("   → Whitening will be applied in the frequency domain (spectral flattening).")
+            print("   → 1-bit normalization will be skipped to avoid double amplitude normalization.")
+            print("   → The output will be complex frequency spectra, not time-domain traces.\n")
+            self._warned_whitening_1bit = True
 
         st1 = self.fill_gaps(Stream(traces=tr_N), tol=5 * self.gaps_tol)
         st2 = self.fill_gaps(Stream(traces=tr_E), tol=5 * self.gaps_tol)
@@ -573,23 +585,9 @@ class process_ant:
                                    endtime=maxstart + self.inc_time[i + 1], pad=True, nearest_sample=True,
                                    fill_value=0)
 
-                    # print("Checking Test N", tr_test_N)
-                    # print("Checking Test E", tr_test_E)
-                    # TODO Make sense to check trim data?
-                    # if fill_gaps:
-                    #     st_N = self.fill_gaps(Stream(traces=tr_test_N), tol=self.gaps_tol)
-                    #     st_E = self.fill_gaps(Stream(traces=tr_test_E), tol=self.gaps_tol)
-                    #
-                    #     if st_N == []:
-                    #         tr_test_N.data = np.zeros(len(tr_test_N.data), dtype=np.complex64)
-                    #     elif st_E == []:
-                    #         tr_test_E.data = np.zeros(len(tr_test_E.data), dtype=np.complex64)
-                    #     else:
-                    #         tr_test_N = st_N[0]
-                    #         tr_test_E = st_E[0]
-
-                    if (self.data_domain == "frequency") and len(tr_N[:]) and len(tr_E[:]) > 0 and \
-                            len(tr_N[:]) == len(tr_E[:]):
+                    if (self.data_domain == "frequency") \
+                            and (tr_N.count() > 0) and (tr_E.count() > 0) \
+                            and (tr_N.count() == tr_E.count()):
                         n = tr_test_N.count()
                         if n > 0:
                             # Corrrection 16/01/2025 --> preparing data por later crop in time domain
@@ -617,27 +615,42 @@ class process_ant:
 
                             # rotate to N & E, designed specially for OBSs
                             process_horizontals.rotate2NE(self.az)
+                            process_horizontals.tr_N.data = np.asarray(process_horizontals.tr_N.data, dtype=np.float32)
+                            process_horizontals.tr_E.data = np.asarray(process_horizontals.tr_E.data, dtype=np.float32)
 
                             if self.time_normalizationCB and self.timenorm == "running avarage":
                                 process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
                                 if self.whitheningCB:
-                                    process_horizontals.whiten_new_band(freq_width=self.freqbandwidth, fmin=0.008,
-                                                                        fmax=0.4 * self.sampling_rate_new)
-
+                                    XNw, XEw = process_horizontals.whiten_new_band_freq(fmin=0.008,
+                                                                                        fmax=0.4 * self.sampling_rate_new,
+                                                                                        D=D,
+                                                                                        freq_width=self.freqbandwidth,
+                                                                                        taper=True,
+                                                                                        outside_scale=1e-3)
+                                    res_N.append(XNw)  # already rFFT, complex64, length D//2+1
+                                    res_E.append(XEw)
+                                    continue  # skip the rFFT below
 
                             elif self.time_normalizationCB and self.timenorm == "1 bit":
                                 if self.whitheningCB:
-                                    process_horizontals.whiten_new_band(freq_width=self.freqbandwidth, fmin=0.008,
-                                                                        fmax=0.4 * self.sampling_rate_new)
+                                    XNw, XEw = process_horizontals.whiten_new_band_freq(fmin=0.008,
+                                                                                        fmax=0.4 * self.sampling_rate_new,
+                                                                                        D=D,
+                                                                                        freq_width=self.freqbandwidth,
+                                                                                        taper=True,
+                                                                                        outside_scale=1e-3)
+                                    res_N.append(XNw)  # already rFFT, complex64, length D//2+1
+                                    res_E.append(XEw)
+                                    continue  # skip the rFFT below
 
-                                if self.time_normalizationCB:
+                                elif self.time_normalizationCB:
                                     process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
 
                             if self.preFilter:
                                 process_horizontals.tr_N.detrend(type='simple')
                                 process_horizontals.tr_E.detrend(type='simple')
                                 process_horizontals.tr_E.taper(max_percentage=0.05)
-                                process_horizontals.tr_E.taper(max_percentage=0.05)
+                                process_horizontals.tr_N.taper(max_percentage=0.05)
 
                                 process_horizontals.tr_N.filter(type="bandpass", freqmin=self.freqminFilter,
                                                                 freqmax=self.freqmaxFilter,
@@ -647,12 +660,12 @@ class process_ant:
                                                                 zerophase=True, corners=self.cornersFilter)
 
                             if self.time_normalizationCB and self.timenorm == "PCC":
-                                xaN = hilbert(process_horizontals.tr_N.data, N=D)
+                                xaN = hilbert(process_horizontals.tr_N.data, N=D).astype(np.complex64)
                                 xaN = xaN[0:n]
-                                xaE = hilbert(process_horizontals.tr_E.data, N=D)
+                                xaE = hilbert(process_horizontals.tr_E.data, N=D).astype(np.complex64)
                                 xaE = xaE[0:n]
-                                process_horizontals.tr_N.data = xaN / np.abs(xaN)  # normalize
-                                process_horizontals.tr_E.data = xaE / np.abs(xaE)  # normalize
+                                process_horizontals.tr_N.data = xaN / (np.abs(xaN)  + 1e-12) # normalize
+                                process_horizontals.tr_E.data = xaE / (np.abs(xaE)  + 1e-12) # normalize
 
                             try:
                                 if self.timenorm == "PCC":
