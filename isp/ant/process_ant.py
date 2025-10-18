@@ -240,8 +240,8 @@ class process_ant:
 
         # update the sampling_rate
 
-        # sampling_rate = info_N[1][0][0][0].sample_rate
-        sampling_rate = 5
+        sampling_rate = info_N[1][0][0][0].sample_rate
+
         # take the azimuth
         # TODO REVIEW IS TAKING THE CORRECT AZIMUTH CLOCKWISE FROM NORTH
         self.az = info_N[1][0][0][0].azimuth
