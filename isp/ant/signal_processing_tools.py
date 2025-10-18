@@ -397,84 +397,96 @@ class noise_processing:
         window[ind2] = 0.5 * (1 - np.cos(np.pi * (x[ind2] - 1) / alpha))
         return window
 
+    def whiten_new_band_single(self, fmin, fmax, freq_width=0.02,
+                               taper=True, outside_scale=1e-3, eps=1e-12):
+        """
+        Band-limited spectral whitening for a single ObsPy Trace (in-place).
+        - Preserves phase.
+        - Whitens only inside [fmin, fmax].
+        - Outside band keeps original phase with tiny magnitude (outside_scale).
 
-    def whiten_new(self, freq_width=0.02, taper=True):
+        Parameters
+        ----------
+        fmin, fmax : float
+            Whitening band in Hz.
+        freq_width : float, default 0.02
+            Smoothing width (Hz) for moving-average denominator inside the band.
+        taper : bool, default True
+            Apply cosine^2 tapers at the two band edges (on whitened spectrum).
+        outside_scale : float, default 1e-3
+            Magnitude outside band will be `outside_scale * median_inband_mag`
+            with original phase. Use 0.0 to hard-zero outside band.
+        eps : float
+            Small number to avoid divide-by-zero.
+        """
 
-        """"
-        freq_width: Frequency smoothing windows [Hz] / both sides
-        taper_edge: taper with cosine window  the low frequencies
-
-        return: whithened trace (Phase is not modified)
-        """""
-
-        fs = self.tr.stats.sampling_rate
-        N = self.tr.count()
-        D = 2 ** math.ceil(math.log2(N))
-        freq_res = 1 / (D / fs)
-        # N_smooth = int(freq_width / (2 * freq_res))
-        N_smooth = int(freq_width / (freq_res))
-        eps = 1e-12
-        if N_smooth % 2 == 0:  # To have a central point
-            N_smooth = N_smooth + 1
-        else:
-            pass
-
-        # avarage_window_width = (2 * N_smooth + 1) #Denominador
-        avarage_window_width = (N_smooth + 1)  # Denominador
-        half_width = int((N_smooth + 1) / 2)  # midpoint
-        half_width_pos = half_width - 1
-
-        # Prefilt
-        #self.tr.detrend(type='simple')
-        #self.tr.taper(max_percentage=0.05)
-
-        # ready to whiten
-        data = self.tr.data
-        data_f = np.fft.rfft(data, D)
-        #freq = np.fft.rfftfreq(D, 1. / fs)
-        N_rfft = len(data_f)
-        data_f_whiten = data_f.copy()
-        index = np.arange(0, N_rfft - half_width, 1)
-
-        # Calling Cython / numba version
-        # data_f_whiten = whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos)
-
-        # with no pre-compilation
-        for j in index:
-
-            den = np.sum(np.abs(data_f[j:j + 2 * half_width])) / avarage_window_width
-            den = max(den, eps)
-            #if den != 0: # it can be 0 because rfft is padding to 0 data_f
-                # den = np.mean(np.abs(data_f[j:j + 2 * half_width]))
-            data_f_whiten[j + half_width_pos] = data_f[j + half_width_pos] / den
-
-        # Taper (optional) and remove mean diffs in edges of the frequency domain
-        if taper:
-            wf = (np.cos(np.linspace(np.pi / 2, np.pi, half_width)) ** 2)
-            wf_flip = np.flip(wf)
-
-            #mean_1 = np.mean(np.abs(data_f[0:half_width]))
-            #mean_2 = np.mean(np.abs(data_f[(N_rfft - half_width):]))
-
-            # if mean_1 != 0:
-            #     data_f_whiten[0:half_width] = (data_f[0:half_width]/mean_1) * wf   # First part of spectrum
-            # if mean_2 != 0:
-            #     data_f_whiten[(N_rfft - half_width):] = (data_f[(N_rfft - half_width):]/mean_2) * wf_flip # end of spectrum
-
-            # Simply taper the whitened spectra at the edges (phase preserved)
-
-            data_f_whiten[:half_width] *= wf
-            data_f_whiten[-half_width:] *= wf_flip
-
-        try:
-            data = np.fft.irfft(data_f_whiten)
-            data = data[0:N]
-        except:
-            print("whitenning cannot be done")
+        fs = float(self.tr.stats.sampling_rate)
+        N = int(self.tr.count())
+        if N < 2:
             return
 
-        self.tr.data = data
-        return
+        # FFT length & resolution
+        D = 2 ** math.ceil(math.log2(N))
+        df = fs / D
+
+        # Frequency-domain data
+        x = np.asarray(self.tr.data, dtype=float)
+        X = np.fft.rfft(x, n=D)
+        f = np.fft.rfftfreq(D, d=1.0 / fs)
+
+        # Band mask
+        band = (f >= fmin) & (f <= fmax)
+        if not np.any(band):
+            # Nothing to do if band doesn't intersect spectrum
+            return
+
+        # Smoothing window (odd length, ~freq_width/df bins)
+        w = max(3, int(round(freq_width / df)))
+        if w % 2 == 0:
+            w += 1
+        halfw = (w - 1) // 2
+        win = np.ones(w, dtype=float)
+
+        # Joint (masked) moving average of magnitude inside the band only
+        mag = np.abs(X)
+        mask = band.astype(float)
+        num = np.convolve(mag * mask, win, mode="same")
+        denw = np.convolve(mask, win, mode="same")
+        denom = num / np.maximum(denw, eps)  # moving-average magnitude inside band
+
+        # Whiten only inside the band (phase preserved)
+        Xw = X.copy()
+        sel = band & (denom > 0)
+        Xw[sel] = X[sel] / np.maximum(denom[sel], eps)
+
+        # Outside the band: keep phase, tiny magnitude (or zero if outside_scale==0)
+        if outside_scale == 0.0:
+            Xw[~band] = 0.0
+        else:
+            # robust in-band reference magnitude (already whitened ~O(1))
+            inmag = np.median(np.abs(Xw[sel])) if np.any(sel) else 1.0
+            alpha = float(outside_scale) * max(inmag, eps)
+            unit_phase = X / (np.abs(X) + eps)  # avoids atan2
+            Xw[~band] = alpha * unit_phase[~band]
+
+        # Optional: smooth the two band edges (apply to WHITENED spectrum)
+        if taper:
+            i1 = np.argmax(band)  # first True
+            i2 = len(band) - 1 - np.argmax(band[::-1])  # last True
+            nsmo = min(halfw, max(1, i2 - i1 + 1))
+            left = (np.cos(np.linspace(np.pi / 2, np.pi, nsmo)) ** 2)
+            right = left[::-1]
+            Xw[i1:i1 + nsmo] *= left
+            Xw[i2 - nsmo + 1:i2 + 1] *= right
+
+        # Back to time domain (truncate to N) — phase preserved throughout
+        try:
+            y = np.fft.irfft(Xw, n=D)[:N]
+        except Exception as e:
+            print(f"whitening failed: {e}")
+            return
+
+        self.tr.data = y
 
 # def whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos):
 #     return __whiten_aux(data_f, data_f_whiten, index, half_width, avarage_window_width, half_width_pos)
@@ -501,7 +513,7 @@ class noise_processing_horizontals:
         self.tr_N = tr_N
         self.tr_E = tr_E
 
-    def normalize(self, clip_factor=6, clip_weight=10, norm_win=None, norm_method='ramn'):
+    def normalize(self, clip_factor=6, norm_win=None, norm_method='running avarage'):
 
         if norm_method == 'clipping':
             lim_N = clip_factor * np.std(self.tr_N.data)
@@ -511,38 +523,7 @@ class noise_processing_horizontals:
             self.tr_N.data[self.tr_N.data < -lim_N] = -lim_N
             self.tr_E.data[self.tr_N.data < -lim_E] = -lim_N
 
-        # elif norm_method == "clipping_iter":
-        #     lim_N = clip_factor * np.std(np.abs(self.tr_N.data))
-        #
-        #     # as long as still values left above the waterlevel, clip_weight
-        #     while self.tr.data[np.abs(self.tr.data) > lim_N] != []:
-        #         self.tr_N.data[self.tr.data > lim] /= clip_weight
-        #         self.tr_E.data[self.tr.data > lim] /= clip_weight
-        #
-        #         self.tr_N.data[self.tr.data < -lim] /= clip_weight
-        #         self.tr_E.data[self.tr.data < -lim] /= clip_weight
-
-        # modified to compare maximum of both means
-        if norm_method == 'ramn':
-            # lwin = int(self.tr_N.stats.sampling_rate * norm_win)
-            # st = 0  # starting point
-            # N = lwin  # ending point
-            #
-            # while N < self.tr_N.stats.npts and N < self.tr_E.stats.npts:
-            #     win_N = self.tr_N.data[st:N]
-            #     win_E = self.tr_E.data[st:N]
-            #
-            #     w_N = np.sum(np.abs(win_N)) / (2. * lwin + 1)
-            #     w_E = np.sum(np.abs(win_E)) / (2. * lwin + 1)
-            #     max_value = max(w_N, w_E)
-            #     # weight center of window
-            #     if max_value > 0.0:
-            #         self.tr_N.data[int(st + lwin / 2)] /= max_value
-            #         self.tr_E.data[int(st + lwin / 2)] /= max_value
-            #
-            #     # shift window
-            #     st += 1
-            #     N += 1
+        elif norm_method == 'running avarage':
             try:
                 fs = self.tr_N.stats.sampling_rate
                 norm_win = int(norm_win*fs)
@@ -557,21 +538,9 @@ class noise_processing_horizontals:
             except:
                 print("Cannot compute time normalization at", self.tr_N.id, self.tr_E.id)
 
-
-
-            # taper edges
-            #taper = self.get_window(self.tr_N.stats.npts)
-            #self.tr_N.data *= taper
-            #taper = self.get_window(self.tr_E.stats.npts)
-            #self.tr_E.data *= taper
-
-            if norm_method == "1 bit":
-                self.tr_N.data = np.sign(self.tr_N.data)
-                self.tr_E.data = np.float32(self.tr_E.data)
-
-            # if norm_method == 'running avarage' or "clipping_iter" or 'clipping':
-            #     self.tr_N.taper(type="blackman", max_percentage=0.05)
-            #     self.tr_E.taper(type="blackman", max_percentage=0.05)
+        elif norm_method == "1 bit":
+            self.tr_N.data = np.sign(self.tr_N.data)
+            self.tr_E.data = np.float32(self.tr_E.data)
 
 
     def get_window(self, N, alpha=0.2):
@@ -584,77 +553,81 @@ class noise_processing_horizontals:
         window[ind2] = 0.5 * (1 - np.cos(np.pi * (x[ind2] - 1) / alpha))
         return window
 
-
-    def whiten_new(self, freq_width=0.02, taper=True):
-
-        """"
-        freq_width: Frequency smoothing windows [Hz] / both sides
-        taper_edge: taper with cosine window  the low frequencies
-
-        return: whithened trace (Phase is not modified)
-        """""
-
-        fs = self.tr_N.stats.sampling_rate
-        N = self.tr_N.count()
+    def whiten_new_band(self, fmin, fmax, freq_width=0.02, taper=True,
+                        outside_scale=1e-3,  # set 0 to hard-zero outside band
+                        eps=1e-12):
+        fs = float(self.tr_N.stats.sampling_rate)
+        N = int(self.tr_N.count())
         D = 2 ** math.ceil(math.log2(N))
-        freq_res = 1 / (D / fs)
-        eps = 1e-12
-        # N_smooth = int(freq_width / (2 * freq_res))
-        N_smooth = int(freq_width / (freq_res))
+        df = fs / D
 
-        if N_smooth % 2 == 0:  # To have a central point
-            N_smooth = N_smooth + 1
-        else:
-            pass
+        xN = np.asarray(self.tr_N.data, dtype=float)
+        xE = np.asarray(self.tr_E.data, dtype=float)
+        XN = np.fft.rfft(xN, n=D)
+        XE = np.fft.rfft(xE, n=D)
 
-        # avarage_window_width = (2 * N_smooth + 1) #Denominador
-        avarage_window_width = (N_smooth + 1)  # Denominador
-        half_width = int((N_smooth + 1) / 2)  # midpoint
-        half_width_pos = half_width - 1
-
-        # ready to whiten
-        data_N = self.tr_N.data
-        data_E = self.tr_E.data
-        data_f_N = np.fft.rfft(data_N, D)
-        data_f_E = np.fft.rfft(data_E, D)
-        #freq = np.fft.rfftfreq(D, 1. / fs)
-        N_rfft = len(data_f_N)
-        data_f_whiten_N = data_f_N.copy()
-        data_f_whiten_E = data_f_E.copy()
-        index = np.arange(0, N_rfft - half_width, 1)
-
-        for j in index:
-            den = 0.5*(np.sum(np.abs(data_f_N[j:j + 2 * half_width]) + np.abs(data_f_E[j:j + 2 * half_width]))/avarage_window_width)
-            den = max(den, eps)
-            data_f_whiten_N[j + half_width_pos] = data_f_N[j + half_width_pos] / den
-            data_f_whiten_E[j + half_width_pos] = data_f_E[j + half_width_pos] / den
-
-        # Taper (optional) and remove mean diffs in edges of the frequency domain
-        if taper:
-            wf = (np.cos(np.linspace(np.pi / 2, np.pi, half_width)) ** 2)
-            wf_flip = np.flip(wf)
-            # Simply taper the whitened spectra at the edges (phase preserved)
-            data_f_whiten_N[:half_width] *= wf
-            data_f_whiten_E[:half_width] *= wf
-            data_f_whiten_N[-half_width:] *= wf_flip
-            data_f_whiten_E[-half_width:] *= wf_flip
-
-        try:
-            data_N = np.fft.irfft(data_f_whiten_N)
-            data_E = np.fft.irfft(data_f_whiten_E)
-        except Exception as e:
-
-            print(f"whitening failed: {e}")
-
+        f = np.fft.rfftfreq(D, d=1.0 / fs)
+        band = (f >= fmin) & (f <= fmax)
+        if not np.any(band):
             return
 
-        data_N = data_N[0:N]
-        data_E = data_E[0:N]
+        # smoothing window (odd)
+        w = max(3, int(round(freq_width / df)))
+        if w % 2 == 0:
+            w += 1
+        halfw = (w - 1) // 2
+        win = np.ones(w, dtype=float)
 
-        self.tr_N.data = data_N
-        self.tr_E.data = data_E
+        # joint moving-average restricted to band
+        mag_sum = np.abs(XN) + np.abs(XE)
+        mask = band.astype(float)
+        num = np.convolve(mag_sum * mask, win, mode="same")
+        denw = np.convolve(mask, win, mode="same")
+        denom = num / np.maximum(denw, eps)
 
-        return # <- nothing
+        # whiten only inside band (phase preserved)
+        XNw = XN.copy()
+        XEw = XE.copy()
+        sel = band & (denom > 0)
+        XNw[sel] = XN[sel] / np.maximum(denom[sel], eps)
+        XEw[sel] = XE[sel] / np.maximum(denom[sel], eps)
+
+        # scale to get a sensible reference magnitude for outside band
+        # in-band whitened magnitude is ~O(1); we compute its robust typical value
+        inband_mag = np.median(np.abs(XNw[sel]) + np.abs(XEw[sel])) / 2.0 if np.any(sel) else 1.0
+        alpha = float(outside_scale) * max(inband_mag, eps)
+
+        # --- outside-band handling: keep phase, tiny magnitude ---
+        if outside_scale == 0.0:
+            XNw[~band] = 0.0
+            XEw[~band] = 0.0
+        else:
+            # unit-phase times alpha
+            XNw[~band] = alpha * np.exp(1j * np.angle(XN[~band]))
+            XEw[~band] = alpha * np.exp(1j * np.angle(XE[~band]))
+
+        # optional smooth band edges on whitened spectra
+        if taper:
+            i1 = np.argmax(band)
+            i2 = len(band) - 1 - np.argmax(band[::-1])
+            nsmo = min(halfw, max(1, i2 - i1 + 1))
+            left = (np.cos(np.linspace(np.pi / 2, np.pi, nsmo)) ** 2)
+            right = left[::-1]
+            XNw[i1:i1 + nsmo] *= left
+            XEw[i1:i1 + nsmo] *= left
+            XNw[i2 - nsmo + 1:i2 + 1] *= right
+            XEw[i2 - nsmo + 1:i2 + 1] *= right
+
+        # back to time
+        try:
+            yN = np.fft.irfft(XNw, n=D)[:N]
+            yE = np.fft.irfft(XEw, n=D)[:N]
+        except Exception as e:
+            print(f"whitening failed: {e}")
+            return
+
+        self.tr_N.data = yN
+        self.tr_E.data = yE
 
     def rotate2NE(self, baz):
 

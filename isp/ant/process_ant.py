@@ -34,9 +34,9 @@ class process_ant:
         self.save_files = "True"
         self.taper_max_percent = 0.05
         self.timeWindowCB = param_dict["processing_window"]
-        self.num_minutes_dict_matrix = int(self.timeWindowCB/60)
+        self.num_minutes_dict_matrix = int(self.timeWindowCB / 60)
         self.gaps_tol = 120
-        self.cpuCount = os.cpu_count()-1
+        self.cpuCount = os.cpu_count() - 1
         self.output_files_path = output_files_path
         self.parameters = param_dict
         self.f1 = param_dict["f1"]
@@ -58,7 +58,6 @@ class process_ant:
         self.freqminFilter = param_dict["filter_freqmin"]
         self.freqmaxFilter = param_dict["filter_freqmax"]
         self.cornersFilter = param_dict["filter_corners"]
-
 
     def create_all_dict_matrix(self, list_raw, info):
         """
@@ -94,7 +93,7 @@ class process_ant:
                 # check both channels belongs to the same station
                 if channel[2] in ["N", "E", "1", "2", "Y", "X"] and station_check == station:
 
-                    #channels.append(list_item[0][2])
+                    # channels.append(list_item[0][2])
 
                     if channel[2] in ["N", "1", "Y"]:
                         key_info = list_item[0][0] + list_item[0][1] + list_item[0][2]
@@ -110,12 +109,12 @@ class process_ant:
 
                     if check_N and check_E:
                         # TODO VERY IMPORTANT TO CLEAN DAYS WITH NO SIMILAR STARTTIME IN BOTH COMPONENTS
-                        list_item_horizontals, info_N, info_E = noise_processing.clean_horizontals_unique(list_item_horizontals,
-                                                                                               info_N, info_E)
+                        list_item_horizontals, info_N, info_E = noise_processing.clean_horizontals_unique(
+                            list_item_horizontals,
+                            info_N, info_E)
                         self.create_dict_matrix_horizontals(list_item_horizontals, info_N, info_E)
                         check_N = False
                         check_E = False
-
 
         return all_dict_matrix
 
@@ -131,7 +130,7 @@ class process_ant:
         year_end = info_item[0][1].year
         date_ini = info_item[0][0].julday
         date_end = info_item[0][1].julday
-        #self.dict_matrix['date_list'] = self.__list_days(year_ini, year_end, date_ini, date_end)
+        # self.dict_matrix['date_list'] = self.__list_days(year_ini, year_end, date_ini, date_end)
 
         # 2.- dict_matrix['metadata_list']
         self.dict_matrix['metadata_list'] = info_item[1]
@@ -190,7 +189,6 @@ class process_ant:
 
             self.dict_matrix['date_list'].append(col[1])
 
-
         print("Finished", info_item)
 
         # compressing matrix
@@ -199,7 +197,7 @@ class process_ant:
             print(" -- File: " + self.output_files_path + '/' + list_item[0][0] + list_item[0][1] + list_item[0][2])
             path = self.output_files_path + '/' + list_item[0][0] + list_item[0][1] + list_item[0][2]
             print("Saving to ", path)
-            #print("Saving Days", self.dict_matrix['date_list'])
+            # print("Saving Days", self.dict_matrix['date_list'])
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix, file_to_store)
             # try:
@@ -207,7 +205,7 @@ class process_ant:
             #     gc.collect()
             # except:
             #     pass
-        #return self.dict_matrix
+        # return self.dict_matrix
 
     def create_dict_matrix_horizontals(self, list_item_horizonrals, info_N, info_E):
         # create an object to compress
@@ -233,8 +231,8 @@ class process_ant:
         # date_end_E = info_E[0][1].julday
         # year_end_E = info_E[0][1].year
 
-        #self.dict_matrix_N['date_list_N'] = self.__list_days(year_ini_N, year_end_N, date_ini_N, date_end_N)
-        #self.dict_matrix_E['date_list_E'] = self.__list_days(year_ini_E, year_end_E, date_ini_E, date_end_E)
+        # self.dict_matrix_N['date_list_N'] = self.__list_days(year_ini_N, year_end_N, date_ini_N, date_end_N)
+        # self.dict_matrix_E['date_list_E'] = self.__list_days(year_ini_E, year_end_E, date_ini_E, date_end_E)
 
         # 2.- dict_matrix['metadata_list']
         self.dict_matrix_N['metadata_list_N'] = info_N[1]
@@ -242,7 +240,8 @@ class process_ant:
 
         # update the sampling_rate
 
-        sampling_rate = info_N[1][0][0][0].sample_rate
+        # sampling_rate = info_N[1][0][0][0].sample_rate
+        sampling_rate = 5
         # take the azimuth
         # TODO REVIEW IS TAKING THE CORRECT AZIMUTH CLOCKWISE FROM NORTH
         self.az = info_N[1][0][0][0].azimuth
@@ -266,7 +265,7 @@ class process_ant:
         self.dict_matrix_N['data_length'] = N
         self.dict_matrix_E['data_length'] = N
         # correction 16/01/2025
-        #DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
+        # DD = 2 ** math.ceil(math.log2(N)) #Even Number of points
         DD = self.next_power_of_2(2 * N)
         self.list_item_N = list_item_horizonrals["North"]
         self.list_item_E = list_item_horizonrals["East"]
@@ -278,7 +277,7 @@ class process_ant:
 
         if self.timenorm == "PCC":
             self.dict_matrix_N['data_matrix_N'] = np.zeros((self.num_rows, num_columns_N, DD),
-                                                       dtype=np.complex64)
+                                                           dtype=np.complex64)
             self.dict_matrix_N['CC'] = "PCC"
 
             self.dict_matrix_E['data_matrix_E'] = np.zeros((self.num_rows, num_columns_E, DD),
@@ -295,8 +294,6 @@ class process_ant:
             self.dict_matrix_N['CC'] = "CC"
             self.dict_matrix_E['CC'] = "CC"
 
-
-
         self.inc_time = [i * 60 * num_minutes for i in range(self.num_rows + 1)]
         num_columns = min(num_columns_N, num_columns_E)
         with Pool(processes=self.cpuCount) as pool:
@@ -305,7 +302,7 @@ class process_ant:
         j = 0
         for pair in r:
             i = 0
-            for N, E in zip(pair[0],pair[1]):
+            for N, E in zip(pair[0], pair[1]):
                 if N is not None and N.size == self.DD_half_point and E is not None and E.size == self.DD_half_point:
                     self.dict_matrix_N['data_matrix_N'][i, j, :] = N
                     self.dict_matrix_E['data_matrix_E'][i, j, :] = E
@@ -318,12 +315,11 @@ class process_ant:
             # compressing matrix
         # dict_matrix['data_matrix']=xr.DataArray(dictmatrix)
         if self.save_files:
-
             print(" -- File: " + self.output_files_path + '/' + list_item_horizonrals["North"][0][0] +
                   list_item_horizonrals["North"][0][1] + list_item_horizonrals["North"][0][2])
 
             path = self.output_files_path + '/' + list_item_horizonrals["North"][0][0] + \
-                   list_item_horizonrals["North"][0][1] + (list_item_horizonrals["North"][0][2][0:2]+"N")
+                   list_item_horizonrals["North"][0][1] + (list_item_horizonrals["North"][0][2][0:2] + "N")
             print("Saving to ", path)
 
             file_to_store = open(path, "wb")
@@ -333,7 +329,7 @@ class process_ant:
                   list_item_horizonrals["East"][0][1] + list_item_horizonrals["East"][0][2])
 
             path = self.output_files_path + '/' + list_item_horizonrals["East"][0][0] + \
-                   list_item_horizonrals["East"][0][1] + (list_item_horizonrals["East"][0][2][0:2]+"E")
+                   list_item_horizonrals["East"][0][1] + (list_item_horizonrals["East"][0][2][0:2] + "E")
             print("Saving to ", path)
             file_to_store = open(path, "wb")
             pickle.dump(self.dict_matrix_E, file_to_store)
@@ -346,7 +342,7 @@ class process_ant:
             # except:
             #     pass
 
-        #return self.dict_matrix
+        # return self.dict_matrix
 
     def fftzeropad(self, data):
         current_size = len(data)
@@ -370,10 +366,11 @@ class process_ant:
         # ensure the starttime and endtime and to have 24 h
         tr, list_day = self.ensure_24(tr_raw)
 
-        #list_day = str(tr.stats.starttime.julday) + "." + str(tr.stats.starttime.year)
-        print("Processing", tr.stats.station, tr.stats.channel, str(tr.stats.starttime.julday)+"."+str(tr.stats.starttime.year))
+        # list_day = str(tr.stats.starttime.julday) + "." + str(tr.stats.starttime.year)
+        print("Processing", tr.stats.station, tr.stats.channel,
+              str(tr.stats.starttime.julday) + "." + str(tr.stats.starttime.year))
 
-        st = self.fill_gaps(Stream(traces=tr), tol=5*self.gaps_tol)
+        st = self.fill_gaps(Stream(traces=tr), tol=5 * self.gaps_tol)
 
         if st == []:
 
@@ -383,22 +380,21 @@ class process_ant:
             tr = st[0]
 
         if self.remove_responseCB and check_process:
-            #print("removing response ", tr.id)
+            # print("removing response ", tr.id)
             tr, check_process = self.__remove_response(tr, self.f1, self.f2, self.f3, self.f4, self.water_level,
                                                        self.unitsCB)
 
         if self.decimationCB and check_process:
-            #print("decimating ", tr.id)
+            # print("decimating ", tr.id)
             try:
                 # Anti-aliasing before decimation
                 tr.detrend(type="simple")
                 tr.taper(type="blackman", max_percentage=0.05)
                 tr.filter(type="lowpass", freq=0.4 * self.factor, zerophase=True, corners=4)
-                while (tr.stats.sampling_rate//self.factor) >= 16:
-
-                        tr.resample(sampling_rate=tr.stats.sampling_rate//(tr.stats.sampling_rate*0.1), no_filter=True)
-                        tr.detrend(type="simple")
-                        tr.taper(type="blackman", max_percentage=0.05)
+                while (tr.stats.sampling_rate // self.factor) >= 16:
+                    tr.resample(sampling_rate=tr.stats.sampling_rate // (tr.stats.sampling_rate * 0.1), no_filter=True)
+                    tr.detrend(type="simple")
+                    tr.taper(type="blackman", max_percentage=0.05)
 
                 tr.resample(sampling_rate=self.factor, no_filter=True)
                 tr.detrend(type="simple")
@@ -415,16 +411,15 @@ class process_ant:
             if check_process:
                 # ensure the start and end to have 24 h
                 tr_test.trim(starttime=tr.stats.starttime + self.inc_time[i],
-                                 endtime=tr.stats.starttime + self.inc_time[i + 1])
+                             endtime=tr.stats.starttime + self.inc_time[i + 1])
 
-
-               # TODO "Make sense to check gaps every time window??"
-               #  if fill_gaps:
-               #      st = self.fill_gaps(Stream(traces=tr_test), tol=self.gaps_tol)
-               #      if st == []:
-               #          tr_test.data = np.zeros(len(tr_test.data), dtype=np.complex64)
-               #      else:
-               #          tr_test = st[0]
+                # TODO "Make sense to check gaps every time window??"
+                #  if fill_gaps:
+                #      st = self.fill_gaps(Stream(traces=tr_test), tol=self.gaps_tol)
+                #      if st == []:
+                #          tr_test.data = np.zeros(len(tr_test.data), dtype=np.complex64)
+                #      else:
+                #          tr_test = st[0]
 
                 if (self.data_domain == "frequency") and len(tr[:]) > 0:
                     n = tr_test.count()
@@ -432,28 +427,28 @@ class process_ant:
 
                         # Corrrection 16/01/2025 --> preparing data por later crop in time domain
                         # D = 2 ** math.ceil(math.log2(n))
-                        D = self.next_power_of_2(2*n)
+                        D = self.next_power_of_2(2 * n)
 
                         # Automatic Pre-filt
                         # filter the signal between 150 seconds and 1/4 the sampling rate
 
                         tr_test.detrend(type='simple')
                         tr_test.taper(max_percentage=0.05)
-                        tr_test.filter(type="bandpass", freqmin=0.005, freqmax=0.4*self.sampling_rate_new,
+                        tr_test.filter(type="bandpass", freqmin=0.005, freqmax=0.4 * self.sampling_rate_new,
                                        zerophase=True, corners=4)
-
 
                         process = noise_processing(tr_test)
 
                         if self.time_normalizationCB and self.timenorm == "running avarage":
                             process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
                             if self.whitheningCB:
-                                process.whiten_new(freq_width=self.freqbandwidth)
-
+                                process.whiten_new_band_single(freq_width=self.freqbandwidth,fmin=0.005,
+                                                               fmax=0.4 * self.sampling_rate_new)
 
                         elif self.time_normalizationCB and self.timenorm == "1 bit":
                             if self.whitheningCB:
-                                process.whiten_new(freq_width=self.freqbandwidth)
+                                process.whiten_new_band_single(freq_width=self.freqbandwidth, fmin=0.005,
+                                                               fmax=0.4 * self.sampling_rate_new)
                             if self.time_normalizationCB:
                                 process.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
 
@@ -461,20 +456,19 @@ class process_ant:
                             process.tr.detrend(type='simple')
                             process.tr.taper(max_percentage=0.05)
                             process.tr.filter(type="bandpass", freqmin=self.freqminFilter, freqmax=self.freqmaxFilter,
-                                           zerophase=True, corners=self.cornersFilter)
+                                              zerophase=True, corners=self.cornersFilter)
 
                         if self.timenorm == "PCC":
-
                             xaZ = hilbert(process.tr.data, N=D)
                             xaZ = xaZ[0:n]
-                            process.tr.data = xaZ/np.abs(xaZ) # normalize
+                            process.tr.data = xaZ / np.abs(xaZ)  # normalize
 
                         try:
                             if self.timenorm == "PCC":
-                                fft = np.fft.fft(process.tr.data, D)
+                                fft = np.fft.fft(process.tr.data, D).astype(np.complex64)
                                 res.append(fft)
                             else:
-                                res.append(np.fft.rfft(process.tr.data, D))
+                                res.append(np.fft.rfft(process.tr.data, D).astype(np.complex64))
                         except:
                             if self.timenorm == "PCC":
                                 res.append(np.zeros(D, dtype=np.complex64))
@@ -491,7 +485,6 @@ class process_ant:
 
         return res, list_day
 
-
     def process_col_matrix_horizontals(self, j):
 
         check_process = True
@@ -499,13 +492,13 @@ class process_ant:
         res_E = []
         tr_N_raw = obspy.read(self.list_item_N[1 + j])[0]
         tr_E_raw = obspy.read(self.list_item_E[1 + j])[0]
-        tr_N, list_days_N  = self.ensure_24(tr_N_raw)
+        tr_N, list_days_N = self.ensure_24(tr_N_raw)
         tr_E, list_days_E = self.ensure_24(tr_E_raw)
-        #print("Checking N", tr_N)
-        #print("Checking E", tr_E)
+        # print("Checking N", tr_N)
+        # print("Checking E", tr_E)
 
-        #list_days_N = str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year)
-        #list_days_E = str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year)
+        # list_days_N = str(tr_N.stats.starttime.julday) + "." + str(tr_N.stats.starttime.year)
+        # list_days_E = str(tr_E.stats.starttime.julday) + "." + str(tr_E.stats.starttime.year)
 
         print("Processing", tr_N.stats.station, tr_N.stats.channel, str(tr_N.stats.starttime.julday) + "." +
               str(tr_N.stats.starttime.year))
@@ -526,14 +519,14 @@ class process_ant:
         if list_days_N == list_days_E:
 
             if self.remove_responseCB and check_process:
-                #print("removing response ", tr_N.id, tr_E.id)
+                # print("removing response ", tr_N.id, tr_E.id)
                 tr_N, check_process = self.__remove_response(tr_N, self.f1, self.f2, self.f3, self.f4, self.water_level,
                                                              self.unitsCB)
                 tr_E, check_process = self.__remove_response(tr_E, self.f1, self.f2, self.f3, self.f4, self.water_level,
                                                              self.unitsCB)
 
             if self.decimationCB and check_process:
-                #print("decimating ", tr_N.id, tr_E.id)
+                # print("decimating ", tr_N.id, tr_E.id)
                 try:
                     tr_N.detrend(type="simple")
                     tr_N.taper(type="blackman", max_percentage=0.05)
@@ -544,7 +537,7 @@ class process_ant:
 
                     while (tr_N.stats.sampling_rate // self.factor) >= 16:
                         tr_N.resample(sampling_rate=tr_N.stats.sampling_rate // (tr_N.stats.sampling_rate * 0.1),
-                                    no_filter=True)
+                                      no_filter=True)
                         tr_N.detrend(type="simple")
                         tr_N.taper(type="blackman", max_percentage=0.05)
 
@@ -570,19 +563,18 @@ class process_ant:
                     tr_test_N = tr_N.copy()
                     tr_test_E = tr_E.copy()
                     maxstart = np.max([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
-                    #minend = np.min([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
+                    # minend = np.min([tr_test_N.stats.starttime, tr_test_E.stats.starttime])
 
                     tr_test_N.trim(starttime=maxstart + self.inc_time[i],
-                                 endtime=maxstart + self.inc_time[i + 1], pad=True, nearest_sample=True,
+                                   endtime=maxstart + self.inc_time[i + 1], pad=True, nearest_sample=True,
                                    fill_value=0)
 
                     tr_test_E.trim(starttime=maxstart + self.inc_time[i],
                                    endtime=maxstart + self.inc_time[i + 1], pad=True, nearest_sample=True,
                                    fill_value=0)
 
-
-                    #print("Checking Test N", tr_test_N)
-                    #print("Checking Test E", tr_test_E)
+                    # print("Checking Test N", tr_test_N)
+                    # print("Checking Test E", tr_test_E)
                     # TODO Make sense to check trim data?
                     # if fill_gaps:
                     #     st_N = self.fill_gaps(Stream(traces=tr_test_N), tol=self.gaps_tol)
@@ -604,8 +596,7 @@ class process_ant:
                             # D = 2 ** math.ceil(math.log2(n))
                             D = self.next_power_of_2(2 * n)
 
-                            #TODO Autorotate to azimuth in metadata
-
+                            # TODO Autorotate to azimuth in metadata
 
                             # Prefilt
 
@@ -616,12 +607,11 @@ class process_ant:
                             tr_test_N.taper(max_percentage=0.05)
                             tr_test_E.taper(max_percentage=0.05)
 
-                            tr_test_N.filter(type="bandpass", freqmin=0.005, freqmax=0.4*self.sampling_rate_new,
+                            tr_test_N.filter(type="bandpass", freqmin=0.005, freqmax=0.4 * self.sampling_rate_new,
                                              zerophase=True, corners=4)
 
-                            tr_test_E.filter(type="bandpass", freqmin=0.005, freqmax=0.4*self.sampling_rate_new,
+                            tr_test_E.filter(type="bandpass", freqmin=0.005, freqmax=0.4 * self.sampling_rate_new,
                                              zerophase=True, corners=4)
-
 
                             process_horizontals = noise_processing_horizontals(tr_test_N, tr_test_E)
 
@@ -631,12 +621,15 @@ class process_ant:
                             if self.time_normalizationCB and self.timenorm == "running avarage":
                                 process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
                                 if self.whitheningCB:
-                                    process_horizontals.whiten_new(freq_width=self.freqbandwidth)
+                                    process_horizontals.whiten_new_band(freq_width=self.freqbandwidth, fmin=0.008,
+                                                                        fmax=0.4 * self.sampling_rate_new)
 
 
                             elif self.time_normalizationCB and self.timenorm == "1 bit":
                                 if self.whitheningCB:
-                                    process_horizontals.whiten_new(freq_width=self.freqbandwidth)
+                                    process_horizontals.whiten_new_band(freq_width=self.freqbandwidth, fmin=0.008,
+                                                                        fmax=0.4 * self.sampling_rate_new)
+
                                 if self.time_normalizationCB:
                                     process_horizontals.normalize(norm_win=self.timewindow, norm_method=self.timenorm)
 
@@ -647,14 +640,13 @@ class process_ant:
                                 process_horizontals.tr_E.taper(max_percentage=0.05)
 
                                 process_horizontals.tr_N.filter(type="bandpass", freqmin=self.freqminFilter,
-                                                 freqmax=self.freqmaxFilter,
-                                                 zerophase=True, corners=self.cornersFilter)
+                                                                freqmax=self.freqmaxFilter,
+                                                                zerophase=True, corners=self.cornersFilter)
                                 process_horizontals.tr_E.filter(type="bandpass", freqmin=self.freqminFilter,
-                                                 freqmax=self.freqmaxFilter,
-                                                 zerophase=True, corners=self.cornersFilter)
+                                                                freqmax=self.freqmaxFilter,
+                                                                zerophase=True, corners=self.cornersFilter)
 
                             if self.time_normalizationCB and self.timenorm == "PCC":
-
                                 xaN = hilbert(process_horizontals.tr_N.data, N=D)
                                 xaN = xaN[0:n]
                                 xaE = hilbert(process_horizontals.tr_E.data, N=D)
@@ -664,13 +656,13 @@ class process_ant:
 
                             try:
                                 if self.timenorm == "PCC":
-                                    fft = np.fft.fft(process_horizontals.tr_N.data, D)
+                                    fft = np.fft.fft(process_horizontals.tr_N.data, D).astype(np.complex64)
                                     res_N.append(fft)
-                                    fft = np.fft.fft(process_horizontals.tr_E.data, D)
+                                    fft = np.fft.fft(process_horizontals.tr_E.data, D).astype(np.complex64)
                                     res_E.append(fft)
                                 else:
-                                    res_N.append(np.fft.rfft(process_horizontals.tr_N.data, D))
-                                    res_E.append(np.fft.rfft(process_horizontals.tr_E.data, D))
+                                    res_N.append(np.fft.rfft(process_horizontals.tr_N.data, D).astype(np.complex64))
+                                    res_E.append(np.fft.rfft(process_horizontals.tr_E.data, D).astype(np.complex64))
                             except:
                                 if self.timenorm == "PCC":
                                     res_N.append(np.zeros(D, dtype=np.complex64))
@@ -689,7 +681,6 @@ class process_ant:
 
         res = [res_N, res_E, list_days_N, list_days_E]
         return res
-
 
     def get_all_values(self, nested_dictionary):
         list_raw = []
@@ -713,7 +704,6 @@ class process_ant:
         else:
             check = False
         return check
-
 
     def check_gaps(self, gaps, tol):
         time_gaps = []
@@ -752,7 +742,6 @@ class process_ant:
         n = math.ceil(n)
         return 2 ** (n - 1).bit_length()
 
-
     def temporal_window(self, channel_list):
         starts = []
         ends = []
@@ -788,13 +777,13 @@ class process_ant:
         tr.trim(starttime=check_starttime, endtime=check_endtime, pad=True, nearest_sample=False, fill_value=0)
         return tr, date
 
-
     def __remove_response(self, tr, f1, f2, f3, f4, water_level, units):
 
         done = True
 
         try:
-            tr.remove_response(inventory=self.inventory, pre_filt=(f1, f2, f3, f4), output=units, water_level=water_level)
+            tr.remove_response(inventory=self.inventory, pre_filt=(f1, f2, f3, f4), output=units,
+                               water_level=water_level)
         except:
             print("Coudn't deconvolve", tr.stats)
             done = False
@@ -829,28 +818,27 @@ class process_ant:
 
         return def_list
 
+
 class disp_maps_tools:
 
-      @classmethod
-      def disp_maps_availables(cls):
+    @classmethod
+    def disp_maps_availables(cls):
 
-          file_to_add = []
-          file_checked = []
+        file_to_add = []
+        file_checked = []
 
-          for top_dir, _, files in os.walk(DISP_MAPS):
-              for file in files:
-                  file_to_add.append(os.path.join(top_dir, file))
+        for top_dir, _, files in os.walk(DISP_MAPS):
+            for file in files:
+                file_to_add.append(os.path.join(top_dir, file))
 
-          for file in file_to_add:
-              if cls.is_valid_dsp_pickle(file):
-                     file_checked.append(file)
+        for file in file_to_add:
+            if cls.is_valid_dsp_pickle(file):
+                file_checked.append(file)
 
+        return file_checked
 
-          return file_checked
-
-
-      @staticmethod
-      def is_valid_file(file_path):
+    @staticmethod
+    def is_valid_file(file_path):
         """
         Return True if path is an existing regular file and a valid pickle. False otherwise.
         :param file_path: The full file's path.
@@ -859,26 +847,24 @@ class disp_maps_tools:
 
         return os.path.isfile(file_path)
 
-      @staticmethod
-      def is_valid_dsp_pickle(file_path):
+    @staticmethod
+    def is_valid_dsp_pickle(file_path):
 
-          try:
+        try:
 
             dsp_map = pickle.load(open(file_path, "rb"))
 
-
             items = ['period', 'paths', 'rejected_paths', 'ref_velocity', 'alpha0', 'alpha1', 'beta', 'sigma',
-                       'm_opt_relative',
-                       'm_opt_absolute', 'grid', 'resolution_map', 'cov_map', 'residuals', 'rms']
+                     'm_opt_relative',
+                     'm_opt_absolute', 'grid', 'resolution_map', 'cov_map', 'residuals', 'rms']
 
             check_list = []
             for key in dsp_map[0].keys():
                 check_list.append(key)
 
-
             return check_list == items
 
-          except:
+        except:
 
             return False
 
@@ -910,19 +896,18 @@ class clock_process:
             julday = date[0]
             year = date[1]
             if year not in years.keys():
-                years[year] = [julday+"."+year]
+                years[year] = [julday + "." + year]
             else:
-                years[year].append(julday+"."+year)
+                years[year].append(julday + "." + year)
 
         for keys in years:
             date_index = years[keys]
             date_index = sorted(date_index, key=float)
-            all_years = all_years+date_index
+            all_years = all_years + date_index
 
         old_index, new_index = self.help_swap(all_years, list_iterate)
 
         return all_years, old_index, new_index
-
 
     def help_swap(self, sort_list, raw_list):
 
@@ -954,7 +939,7 @@ class clock_process:
         stack_day[:, [old_index]] = stack_day[:, [new_index]]
         stack_day = stack_day.transpose()
         stack_partial = []
-        part_day_overlap = int(part_day*(1-overlap/100))
+        part_day_overlap = int(part_day * (1 - overlap / 100))
         numeration = [x for x in range(0, self.dims[0], part_day_overlap)]
         numeration_days = []
 
@@ -969,14 +954,14 @@ class clock_process:
                 if type == "PWS":
                     data_new = np.zeros((part_day, self.dims[1]))
                 index = 0
-                for day in range(days, part_day+days):
-                    if day <= self.dims[0]-1:
+                for day in range(days, part_day + days):
+                    if day <= self.dims[0] - 1:
                         if type == "Linear":
                             data = stack_day[day, :]
                             data_new = data_new + data
                         else:
-                            data_new[index , :] = stack_day[day, :]
-                            index = index +1
+                            data_new[index, :] = stack_day[day, :]
+                            index = index + 1
 
                 if type == "PWS":
                     stack_obj = array()
@@ -991,8 +976,8 @@ class clock_process:
                 #     # print(“The providednumber is odd”)
                 #     c = int(np.ceil((num + 1) / 2))
                 # data_new = (np.roll(data_new, c))/part_day
-                #data_new = (np.roll(data_new, int(len(data_new) / 2)))/part_day
-                self.metadata['location'] = str(days+int(part_day/2))
+                # data_new = (np.roll(data_new, int(len(data_new) / 2)))/part_day
+                self.metadata['location'] = str(days + int(part_day / 2))
                 stack_partial.append(Trace(data=data_new, header=self.metadata))
                 np.zeros(self.dims[1])
                 if type == "Linear":
@@ -1000,7 +985,7 @@ class clock_process:
 
         st = Stream(stack_partial)
         numeration_days = self.extract_list_days(numeration_days)
-        numeration_days = np.array(numeration_days) + int(part_day/2)
+        numeration_days = np.array(numeration_days) + int(part_day / 2)
         data_to_save = {"dates": numeration_days.tolist(), "stream": st}
 
         file_to_store = open(self.name, "wb")
@@ -1014,8 +999,6 @@ class clock_process:
         except:
             pass
 
-
-
     def check_listdays_gaps(self, dates, part_day, days):
 
         # check if there are day gaps in consecutive days
@@ -1026,20 +1009,18 @@ class clock_process:
         if len(dates) >= days[-1]:
 
             for day in days:
-                if day <= len(dates)-1:
+                if day <= len(dates) - 1:
                     all_dates.append(dates[day])
 
             all_dates = np.array(self.extract_list_days(all_dates))
             sum_all = np.sum(np.diff(all_dates))
 
-            if sum_all > 0.1*part_day:
+            if sum_all > 0.1 * part_day:
                 return True
             else:
                 return False
         else:
             return False
-
-
 
     def extract_list_days(self, dates):
         # transform julday + "." + year --> ini_julday and  consecutive days
