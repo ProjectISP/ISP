@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1512</width>
-    <height>818</height>
+    <height>762</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -439,6 +439,9 @@
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
+                    <property name="placeholderText">
+                     <string>BH?</string>
+                    </property>
                    </widget>
                   </item>
                   <item row="6" column="0">
@@ -448,6 +451,9 @@
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="placeholderText">
+                     <string>WM</string>
                     </property>
                    </widget>
                   </item>
@@ -515,6 +521,9 @@
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="placeholderText">
+                     <string>EMAL,SFS</string>
                     </property>
                    </widget>
                   </item>
@@ -589,7 +598,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>918</width>
-                  <height>560</height>
+                  <height>504</height>
                  </rect>
                 </property>
                </widget>

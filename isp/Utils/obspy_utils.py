@@ -21,6 +21,7 @@ from isp.Structures.structures import TracerStats
 from isp.Utils.nllOrgErrors import computeOriginErrors
 import os
 import re
+import fnmatch
 from pathlib import Path
 from isp.Utils import read_nll_performance
 from scipy.signal import cheby1, cheby2, ellip, bessel, sosfilt, sosfiltfilt
@@ -681,35 +682,37 @@ class MseedUtil:
 
     @classmethod
     def filter_project_keys(cls, project, **kwargs):
+        def make_patterns(value):
+            """Return list of compiled regexes from comma-separated globs."""
+            if not value:
+                value = '*'
+            patterns = [v.strip() for v in value.split(',') if v.strip()]
+            return [re.compile(fnmatch.translate(p)) for p in patterns]
 
-        # filter dict by python wilcards remind
+        # read all filters
+        nets = make_patterns(kwargs.get('net'))
+        stations = make_patterns(kwargs.get('station'))
+        channels = make_patterns(kwargs.get('channel'))
 
-        # * --> .+
-        # ? --> .
-
-        net = kwargs.pop('net', '.+')
-        station = kwargs.pop('station', '.+')
-        channel = kwargs.pop('channel', '.+')
-        if net == '':
-            net = '.+'
-        if station == '':
-            station = '.+'
-        if channel == '':
-            channel = '.+'
-
-        # filter for regular expresions
-        event = [net, station, channel]
-        project = cls.search(project, event)
-
+        filtered = {}
         data_files = []
-        project = {key: value for key, value in project.items() if value}
-        for item in project.items():
-            list_channel = item[1]
-            for file_path in list_channel:
-                data_files.append(file_path[0])
 
+        for key, channels_list in project.items():
+            if isinstance(key, tuple):
+                parts = key[:3]
+            else:
+                parts = str(key).split('.')[:3]
+                parts += [''] * (3 - len(parts))
 
-        return project, data_files
+            # check if any pattern in each list matches
+            if (any(p.match(parts[0]) for p in nets)
+                    and any(p.match(parts[1]) for p in stations)
+                    and any(p.match(parts[2]) for p in channels)):
+                filtered[key] = channels_list or []
+                for entry in filtered[key]:
+                    data_files.append(entry[0] if isinstance(entry, (list, tuple)) else entry)
+
+        return filtered, data_files
 
     @classmethod
     def filter_time(cls, project, starttime, endtime, tol=86400):
