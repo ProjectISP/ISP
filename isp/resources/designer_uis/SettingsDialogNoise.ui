@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>848</width>
-    <height>813</height>
+    <height>771</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -49,12 +49,18 @@
           <property name="text">
            <string/>
           </property>
+          <property name="placeholderText">
+           <string>IU</string>
+          </property>
          </widget>
         </item>
         <item row="2" column="2">
          <widget class="QLineEdit" name="lineEditStations">
           <property name="text">
            <string/>
+          </property>
+          <property name="placeholderText">
+           <string>ANMO,TUC</string>
           </property>
          </widget>
         </item>
@@ -67,7 +73,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>Filter Files</string>
+           <string>Filter Project</string>
           </property>
          </widget>
         </item>
@@ -75,6 +81,9 @@
          <widget class="QLineEdit" name="lineEditChannels">
           <property name="text">
            <string/>
+          </property>
+          <property name="placeholderText">
+           <string>HHZ,HHN,HHE</string>
           </property>
          </widget>
         </item>
@@ -106,6 +115,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="currentText">
+           <string>900</string>
           </property>
           <item>
            <property name="text">
@@ -744,6 +756,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="placeholderText">
+           <string>ANMO</string>
+          </property>
          </widget>
         </item>
         <item row="0" column="3" colspan="2">
@@ -756,6 +771,9 @@
           </property>
           <property name="text">
            <string/>
+          </property>
+          <property name="placeholderText">
+           <string>HHZ,HHN,HHE</string>
           </property>
          </widget>
         </item>

@@ -1,6 +1,9 @@
 from isp.Gui import pw
 from isp.Gui.Frames.uis_frames import UiSettingsDialogNoise
+from isp.Gui.Utils.pyqt_utils import add_save_load
 
+
+@add_save_load()
 class SettingsDialogNoise(pw.QDialog, UiSettingsDialogNoise):
     def __init__(self, parent=None):
         super(SettingsDialogNoise, self).__init__(parent)

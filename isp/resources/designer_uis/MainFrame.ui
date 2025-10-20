@@ -397,7 +397,6 @@
    <addaction name="actionRetrieve_data"/>
    <addaction name="actionPPSDs"/>
    <addaction name="actionReal_Time"/>
-   <addaction name="action_analog"/>
   </widget>
   <action name="actionOpen_Project">
    <property name="icon">
@@ -472,7 +471,7 @@
   </action>
   <action name="action_analog">
    <property name="icon">
-    <iconset>
+    <iconset resource="../resources.qrc">
      <normaloff>:/icons/analog.png</normaloff>:/icons/analog.png</iconset>
    </property>
    <property name="text">

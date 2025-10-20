@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1680</width>
-    <height>944</height>
+    <height>916</height>
    </rect>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,3">
@@ -198,7 +198,11 @@
       </widget>
      </item>
      <item row="1" column="2" colspan="3">
-      <widget class="QLineEdit" name="outPathForm"/>
+      <widget class="QLineEdit" name="outPathForm">
+       <property name="placeholderText">
+        <string>ROOT_PATH/output_folder</string>
+       </property>
+      </widget>
      </item>
      <item row="2" column="2" colspan="3">
       <widget class="QLineEdit" name="datalessPathForm">
@@ -216,6 +220,9 @@
        </property>
        <property name="readOnly">
         <bool>true</bool>
+       </property>
+       <property name="placeholderText">
+        <string>ROOT_PATH/metadata.xml</string>
        </property>
       </widget>
      </item>
@@ -255,6 +262,9 @@
        </property>
        <property name="readOnly">
         <bool>true</bool>
+       </property>
+       <property name="placeholderText">
+        <string>ROOT_PATH/files</string>
        </property>
       </widget>
      </item>
@@ -526,10 +536,18 @@
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="QLineEdit" name="netLE"/>
+         <widget class="QLineEdit" name="netLE">
+          <property name="placeholderText">
+           <string>WM</string>
+          </property>
+         </widget>
         </item>
         <item row="2" column="2">
-         <widget class="QLineEdit" name="channelLE"/>
+         <widget class="QLineEdit" name="channelLE">
+          <property name="placeholderText">
+           <string>HHZ</string>
+          </property>
+         </widget>
         </item>
         <item row="3" column="1">
          <widget class="QComboBox" name="comboBox_sort">
@@ -584,7 +602,11 @@
          <widget class="QLineEdit" name="rootPathForm2"/>
         </item>
         <item row="2" column="1">
-         <widget class="QLineEdit" name="stationLE"/>
+         <widget class="QLineEdit" name="stationLE">
+          <property name="placeholderText">
+           <string>*OBS01_*</string>
+          </property>
+         </widget>
         </item>
         <item row="1" column="1" alignment="Qt::AlignHCenter">
          <widget class="QLabel" name="label_7">
@@ -686,7 +708,7 @@
         <x>0</x>
         <y>0</y>
         <width>1013</width>
-        <height>918</height>
+        <height>890</height>
        </rect>
       </property>
      </widget>
