@@ -37,6 +37,7 @@ class noisestack:
         self.min_dist = min_distance
         self.dailyStacks = dailyStacks
         self.overlap = overlap
+        self.check_path()
 
     def check_file(self, filename):
 
@@ -85,12 +86,12 @@ class noisestack:
             print("End Cross & Stack")
 
     def hard_process_simple(self):
-        self.check_path()
+
         with Pool(processes=4) as pool:
             pool.map(self.hard_process_simple_parallel, range(len(self.pickle_files)))
 
     def hard_process_full(self):
-        self.check_path()
+
         with Pool(processes=4) as pool:
             pool.map(self.hard_process_full_parallel, range(len(self.pickle_files)))
 
@@ -396,8 +397,10 @@ class noisestack:
                                       "<", self.min_dist)
                 else:
                     print("File already exists, jumping : ", filename)
-        except:
+        except Exception as e:
             print("Something went wrong at:", file_i)
+            print(f"Exception type: {type(e).__name__}")
+            print(f"Exception message: {e}")
 
     def hard_process_full_parallel(self, i):
         file_i = self.pickle_files[i]
@@ -695,8 +698,10 @@ class noisestack:
                                   self.min_dist)
                 else:
                     print("File already exists, jumping : ", filename)
-        except:
+        except Exception as e:
             print("Something went wrong at:", file_i)
+            print(f"Exception type: {type(e).__name__}")
+            print(f"Exception message: {e}")
 
     def list_directory(self, path):
         obsfiles = []
@@ -774,7 +779,7 @@ class noisestack:
                             # method to rotate the dictionary
                     except:
                         pass
-
+            print("Rotate, ", station_pair)
             def_rotated["rotated_matrix"] = self.__rotate(matrix_data)
 
             if len(matrix_data) > 0 and def_rotated["rotated_matrix"] is not None:
@@ -950,18 +955,41 @@ class noisestack:
         return check, dims
 
     def __rotate(self, data_matrix):
-
         rotated = None
 
-        validation, dim = self.__validation((data_matrix))
+        # --- make sure cross components EN/NE exist and are consistent ---
+        has_en = "EN" in data_matrix
+        has_ne = "NE" in data_matrix
+        has_nn = "NN" in data_matrix
+        has_ee = "EE" in data_matrix
+
+        # assume 1D arrays [time] for simplicity; adapt axis if needed
+        if has_ne and not has_en:
+            # EN(t) = NE(-t)  -> reverse time
+            data_matrix["EN"] = data_matrix["NE"][::-1].copy()
+
+        elif has_en and not has_ne:
+            data_matrix["NE"] = data_matrix["EN"][::-1].copy()
+
+        # if neither exists you might want to fail fast:
+        if not has_en and not has_ne:
+            return None
+
+        if not has_nn or not has_ee:
+             return None
+
+        validation, dim = self.__validation(data_matrix)
 
         if validation:
             data_array_ne = np.zeros((dim[0], 4, 1))
 
-            data_array_ne[:, 0, 0] = data_matrix["EE"][:]
-            data_array_ne[:, 1, 0] = data_matrix["EN"][:]
-            data_array_ne[:, 2, 0] = data_matrix["NN"][:]
-            data_array_ne[:, 3, 0] = data_matrix["NE"][:]
+            # assuming dim[0] is the number of time samples
+            n = dim[0]
+
+            data_array_ne[:, 0, 0] = data_matrix["EE"][:n]
+            data_array_ne[:, 1, 0] = data_matrix["EN"][:n]
+            data_array_ne[:, 2, 0] = data_matrix["NN"][:n]
+            data_array_ne[:, 3, 0] = data_matrix["NE"][:n]
 
             rotate_matrix = self.__generate_matrix_rotate(data_matrix['geodetic'], dim)
 
@@ -1031,6 +1059,7 @@ class noisestack:
                 info = name.split("_")
                 flip_name = info[1] + "_" + info[0]
                 if name not in stations and flip_name not in stations and info[0] != info[1]:
+                    #print("Adding station ", name)
                     stations.append(name)
             except:
                 pass
