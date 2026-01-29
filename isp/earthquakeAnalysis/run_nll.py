@@ -889,4 +889,5 @@ class Nllcatalog:
     def __write_dict(self, events_dict):
         output = os.path.join(self.working_directory, "catalog.txt")
         df_magnitudes = pd.DataFrame.from_dict(events_dict)
+        print("Writing Catalog at: ", output)
         df_magnitudes.to_csv(output, sep=";", index=False)
