@@ -21,11 +21,14 @@ from isp.Structures.structures import TracerStats
 from isp.Utils.nllOrgErrors import computeOriginErrors
 import os
 import re
+import io
 import fnmatch
+from collections import defaultdict
 from pathlib import Path
 from isp.Utils import read_nll_performance
 from scipy.signal import cheby1, cheby2, ellip, bessel, sosfilt, sosfiltfilt
 TimeLike = Union[UTCDateTime, str, float, int, "datetime.datetime"]
+
 @unique
 class Filters(Enum):
 
@@ -1377,3 +1380,243 @@ class MseedUtil:
             print("Not matches with inventory")
             print(unmatched_traces)
             return False
+
+
+    @staticmethod
+    def _to_utc(t: Optional[TimeLike]) -> Optional[UTCDateTime]:
+        if t is None:
+            return None
+        return t if isinstance(t, UTCDateTime) else UTCDateTime(t)
+
+    @staticmethod
+    def _normalize_date_string(v: str) -> str:
+        s = str(v).strip()
+        if re.fullmatch(r"\d{8}", s):
+            return f"{s[0:4]}-{s[4:6]}-{s[6:8]}"
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", s):
+            return s
+        return s
+
+    @staticmethod
+    def _hmm_to_h_m(v) -> Tuple[int, int]:
+        s = str(v).strip()
+        s = re.sub(r"\D", "", s)
+        if len(s) < 3:
+            return 0, int(s) if s else 0
+        return int(s[:-2]), int(s[-2:])
+
+    @staticmethod
+    def _split_into_event_blocks(text: str):
+        lines = text.splitlines()
+        # IMPORTANT: match Event_1, Event 1, EventWhatever
+        event_line = re.compile(r"^\s*event", re.IGNORECASE)
+
+        blocks, cur = [], []
+
+        def flush():
+            nonlocal cur
+            if cur:
+                blocks.append("\n".join(cur))
+                cur = []
+
+        for ln in lines:
+            if event_line.match(ln) or ln.strip() == "":
+                flush()
+                continue
+            cur.append(ln)
+        flush()
+
+        # remove tiny blocks
+        return [b for b in blocks if len([x for x in b.splitlines() if x.strip()]) >= 2]
+
+    @staticmethod
+    def _fix_gau_shift(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        If header lacks GAU but data contains it as a separate token,
+        pandas will place 'GAU' inside Err column and shift everything.
+        Detect and fix by inserting a GAU column and shifting the rest.
+        """
+        # If GAU already present, nothing to do
+        if "GAU" in df.columns:
+            return df
+
+        needed = {"Seconds", "Err", "ErrMag", "Coda_duration", "Amplitude", "Period"}
+        if not needed.issubset(df.columns):
+            return df
+
+        # Detect: Err column contains strings like 'GAU' (or similar),
+        # and ErrMag looks numeric-ish.
+        err_as_str = df["Err"].astype(str).str.upper().str.strip()
+        looks_like_gau = err_as_str.eq("GAU").mean() > 0.5  # majority GAU
+
+        if not looks_like_gau:
+            return df
+
+        # Build fixed columns by shifting right:
+        # new_GAU = old Err
+        # new_Err = old ErrMag
+        # new_ErrMag = old Coda_duration
+        # new_Coda_duration = old Amplitude
+        # new_Amplitude = old Period
+        # new_Period = NaN (unless file has extra col beyond Period; then adapt)
+        df = df.copy()
+        df.insert(df.columns.get_loc("Err"), "GAU", df["Err"])
+
+        df["Err"] = df["ErrMag"]
+        df["ErrMag"] = df["Coda_duration"]
+        df["Coda_duration"] = df["Amplitude"]
+        df["Amplitude"] = df["Period"]
+
+        # If there is an extra unnamed column at end, use it as Period.
+        # Otherwise Period becomes NaN (better than wrong values).
+        extra_cols = [c for c in df.columns if str(c).startswith("Unnamed:")]
+        if extra_cols:
+            df["Period"] = df[extra_cols[0]]
+        else:
+            df["Period"] = pd.NA
+
+        # drop unnamed extras
+        if extra_cols:
+            df = df.drop(columns=extra_cols)
+
+        return df
+    @staticmethod
+    def _standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
+        # Hourmin vs Hour_min
+        if "Hourmin" in df.columns and "Hour_min" not in df.columns:
+            df = df.rename(columns={"Hourmin": "Hour_min"})
+
+        # Fix the GAU shift issue
+        df = MseedUtil._fix_gau_shift(df)
+        return df
+
+    @staticmethod
+    def _centroid_utc(times: List[UTCDateTime]) -> UTCDateTime:
+        """
+        Centroid (mean) time in epoch seconds; returns UTCDateTime.
+        """
+        if not times:
+            raise ValueError("Cannot compute centroid of empty times list.")
+        mean_epoch = sum(t.timestamp for t in times) / float(len(times))
+        return UTCDateTime(mean_epoch)
+
+    @staticmethod
+    def _merge_all_events(per_event_dicts):
+        merged = defaultdict(list)
+
+        for event_dict in per_event_dicts:
+            for key, rows in event_dict.items():
+                merged[key].extend(rows)
+
+        return dict(merged)
+
+    @classmethod
+    def get_NLL_phase_picks_multi_event(
+        cls,
+        input_file: str,
+        delimiter: str = r"\s+",
+        starttime: Optional[TimeLike] = None,
+        endtime: Optional[TimeLike] = None,
+        centroid_mode: str = "P",  # "P" or "ALL"
+    ) -> Tuple[Dict[str, list], List[UTCDateTime]]:
+
+        """
+        Returns:
+          - list of per-event pick dicts (your original structure)
+          - list of centroid UTCDateTime for each event block
+
+        centroid_mode:
+          - "P": centroid from P picks only (fallback to ALL if no P)
+          - "ALL": centroid from all picks
+        """
+
+
+
+        if not input_file:
+            raise ValueError("An input file must be provided.")
+        if not os.path.isfile(input_file):
+            raise FileNotFoundError(f"The file {input_file} does not exist.")
+
+        st = cls._to_utc(starttime)
+        et = cls._to_utc(endtime)
+
+        with open(input_file, "r", encoding="utf-8", errors="ignore") as f:
+            text = f.read()
+
+        blocks = cls._split_into_event_blocks(text)
+        if not blocks:
+            return [], []
+
+        required = [
+            "Station_name", "Component",
+            "P_phase_descriptor", "First_Motion",
+            "Date", "Hour_min", "Seconds",
+            "Err", "ErrMag", "Coda_duration", "Amplitude", "Period",
+        ]
+
+        per_event_dicts: List[Dict[str, list]] = []
+        per_event_centroids: List[UTCDateTime] = []
+
+        for block in blocks:
+            df = pd.read_csv(io.StringIO(block), delimiter=delimiter, engine="python")
+            df = cls._standardize_columns(df)
+
+            missing = [c for c in required if c not in df.columns]
+            if missing:
+                raise ValueError(f"Event block is missing required columns: {missing}")
+
+            # build _utc
+            dates = [cls._normalize_date_string(v) for v in df["Date"].tolist()]
+            hm = [cls._hmm_to_h_m(v) for v in df["Hour_min"].tolist()]
+            hours = [h for h, _ in hm]
+            minutes = [m for _, m in hm]
+            seconds = df["Seconds"].astype(float).tolist()
+
+            tt = [
+                f"{d}T{h:02d}:{m:02d}:{s:06.3f}"
+                for d, h, m, s in zip(dates, hours, minutes, seconds)
+            ]
+            df["_utc"] = [UTCDateTime(x) for x in tt]
+
+            # optional inclusive filtering
+            if st is not None:
+                df = df[df["_utc"] >= st]
+            if et is not None:
+                df = df[df["_utc"] <= et]
+            if df.empty:
+                continue
+
+            # centroid
+            if centroid_mode.upper() == "ALL":
+                times_for_centroid = df["_utc"].tolist()
+            else:
+                p_df = df[df["P_phase_descriptor"].astype(str).str.upper().str.startswith("P")]
+                times_for_centroid = p_df["_utc"].tolist() or df["_utc"].tolist()
+
+            per_event_centroids.append(cls._centroid_utc(times_for_centroid))
+
+            # build your original output dict
+            df["_id"] = df["Station_name"].astype(str) + "." + df["Component"].astype(str)
+
+            want_cols = [
+                "P_phase_descriptor", "_utc", "Component", "First_Motion",
+                "Err", "ErrMag", "Coda_duration", "Amplitude", "Period"
+            ]
+            sub = df[["_id"] + want_cols]
+
+            out: Dict[str, list] = {}
+            for gid, g in sub.groupby("_id", sort=False):
+                out[gid] = g[want_cols].values.tolist()
+
+            per_event_dicts.append(out)
+
+        per_event_dicts = cls._merge_all_events(per_event_dicts)
+
+        return per_event_dicts, per_event_centroids
+
+if __name__ == "__main__":
+    file = "/Users/robertocabiecesdiaz/Documents/ISP/Test/nll_input_single.txt"
+    file_full = "/Users/robertocabiecesdiaz/Documents/ISP/Test/nll_input.txt"
+    pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=file)
+    pick_times_imported_1, events = MseedUtil.get_NLL_phase_picks_multi_event(input_file=file_full)
+    print("Done")

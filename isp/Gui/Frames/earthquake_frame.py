@@ -279,6 +279,7 @@ class EarthquakeAnalysisFrame(BaseFrame, UiEarthquakeAnalysisFrame):
     def _load_picks(self):
         self.pm = self.load_picks_tool.pm
         self.pick_times_imported = self.load_picks_tool.pick_times_imported
+        self.events_times = self.load_picks_tool.event_times
 
     def run_process(self):
 

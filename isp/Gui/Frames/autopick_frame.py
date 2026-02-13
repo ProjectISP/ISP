@@ -485,6 +485,6 @@ class Autopick(BaseFrame, UiAutopick):
 
         if self.project_filtered and self.trimCB.isChecked() and diff > 0:
             try:
-                self.project_filtered.filter_project_time(starttime=start, edntime=end)
+                self.project_filtered.filter_project_time(starttime=start, endtime=end)
             except:
                 self.project_filtered = None
