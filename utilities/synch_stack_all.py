@@ -26,12 +26,12 @@ class SynchEnergy():
         self.black_list = ["UP26", "UP19", "OBS19", "OBS17"]
 
     def _convert_date_to_julday(self, date):
+        # example: '2022-08-11T00:00:00'
+        dt = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+        date_jul = dt.timetuple().tm_yday
 
-        # example of use date_end = '2022-08-11T00:00:00'
-        date_jul = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S').timetuple().tm_yday
-
-        if date_jul > 365:
-            date_jul = date_jul+365
+        if dt.year == 2022:
+            date_jul += 365
 
         return date_jul
 
@@ -46,12 +46,27 @@ class SynchEnergy():
 
         return skew, jul_day_ini, jul_day_end
 
-    def retrive_poly1d(self, sta):
+    def retrive_poly1d(self, sta, plot=True):
 
         skew, jul_day_ini, jul_day_end = self._retrieve_skews(sta)
         k = skew/(jul_day_end-jul_day_ini)
-        xo = k*jul_day_ini
-        poly = np.poly1d([k, -k*xo])
+        #xo = k*jul_day_ini
+        #poly = np.poly1d([k, -k*xo])
+        poly = np.poly1d([k, -k * jul_day_ini])
+        # Create x values (range where you want to evaluate the polynomial)
+
+        # Evaluate polynomial
+        # x = np.linspace(jul_day_ini, jul_day_end, jul_day_end-jul_day_ini)
+        # y = poly(x)
+        # # Plot
+        # plt.plot(x, y, label="poly1d fit")
+        # plt.xlabel("Julian Day")
+        # plt.ylabel("Value")
+        # plt.title("Polynomial Check")
+        # plt.legend()
+        # plt.grid()
+        #
+        # plt.show()
 
         return poly
 
@@ -111,8 +126,6 @@ class SynchEnergy():
             matching_path_sta2 = matching_paths_sta2[0]
             df2 = pd.read_pickle(matching_path_sta2)
             model2 = df2["model"]
-
-
 
         model = model1-model2
 
@@ -328,10 +341,10 @@ class SynchEnergy():
 if __name__ == "__main__":
     # best test using robust
     #root_path = "/Volumes/LaCie/UPFLOW_5HZ/matrix_z_upflow/stack_daily"
-    root_path = "/Volumes/LaCie/UPFLOW_NEW_MATRIX/upflow_new_horizontals/transverse_daily"
-    path_to_polynom = "/Volumes/LaCie/UPFLOW_5HZ/poly/"
-    plots = "/Volumes/LaCie/UPFLOW_NEW_MATRIX/upflow_new_horizontals/plots_transversal"
-    outputs = "/Volumes/LaCie/UPFLOW_NEW_MATRIX/upflow_new_horizontals/synch_transverse"
+    root_path = "/Volumes/LaCie/UPFLOW_NEW_MATRIX/upflow_vertical/test/data"
+    path_to_polynom = "/Volumes/LaCie/UPFLOW_NEW_MATRIX/poly"
+    plots = "/Volumes/LaCie/UPFLOW_NEW_MATRIX/upflow_vertical/test/plots"
+    outputs = "/Volumes/LaCie/UPFLOW_NEW_MATRIX/upflow_vertical/test/output"
     skew_path = "/Volumes/LaCie/UPFLOW_5HZ/poly/skews.txt"
 
     stack_type = "robust"
@@ -340,4 +353,4 @@ if __name__ == "__main__":
     #"cluster", "tfpws","tfpws-dost"
     #pe.create_matrix(filter=False, correct=True, plot=True, save=True,
     #                 trim=False, stack_type="robust", f1=0.033, f2=0.333, format="H5")
-    pe.run_all_synch(stack_type=stack_type, filter=False, plot=True, save=True)
+    pe.run_all_synch(stack_type=stack_type, filter=True, plot=True, save=False)
