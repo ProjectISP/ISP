@@ -50,7 +50,7 @@ class noise_organize(pyc.QObject):
 
             if _is_mseed(paths):
 
-                header = read(paths, headlonly=True)
+                header = read(paths, headonly=True)
                 print(paths)
                 #self.send_message.emit(header.id)
                 net = header[0].stats.network

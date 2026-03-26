@@ -787,8 +787,8 @@ class process_ant:
         starts = []
         ends = []
 
-        for path in range(len(channel_list)):
-            header = read(path, headlonly=True)
+        for path in channel_list:
+            header = read(path, headonly=True)
             starttime = header[0].stats.starttime
             endtime = header[0].stats.endtime
             starts.append(starttime)
