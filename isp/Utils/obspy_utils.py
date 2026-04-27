@@ -1513,12 +1513,12 @@ class MseedUtil:
 
     @classmethod
     def get_NLL_phase_picks_multi_event(
-        cls,
-        input_file: str,
-        delimiter: str = r"\s+",
-        starttime: Optional[TimeLike] = None,
-        endtime: Optional[TimeLike] = None,
-        centroid_mode: str = "P",  # "P" or "ALL"
+            cls,
+            input_file: str,
+            delimiter: str = r"\s+",
+            starttime: Optional[TimeLike] = None,
+            endtime: Optional[TimeLike] = None,
+            centroid_mode: str = "P",  # "P" or "ALL"
     ) -> Tuple[Dict[str, list], List[UTCDateTime]]:
 
         """
@@ -1530,8 +1530,6 @@ class MseedUtil:
           - "P": centroid from P picks only (fallback to ALL if no P)
           - "ALL": centroid from all picks
         """
-
-
 
         if not input_file:
             raise ValueError("An input file must be provided.")
@@ -1552,8 +1550,11 @@ class MseedUtil:
             "Station_name", "Component",
             "P_phase_descriptor", "First_Motion",
             "Date", "Hour_min", "Seconds",
-            "Err", "ErrMag", "Coda_duration", "Amplitude", "Period",
+            "Err", "Coda_duration", "Amplitude", "Period",
         ]
+        # ErrMag is present in the newer coincidence_pick format but absent
+        # in the older nll_input format (where the GAU token is a separate
+        # column and there is no ErrMag).  It is therefore treated as optional.
 
         per_event_dicts: List[Dict[str, list]] = []
         per_event_centroids: List[UTCDateTime] = []
@@ -1599,9 +1600,12 @@ class MseedUtil:
             # build your original output dict
             df["_id"] = df["Station_name"].astype(str) + "." + df["Component"].astype(str)
 
+            # ErrMag is optional: present in newer format, absent in older one
             want_cols = [
                 "P_phase_descriptor", "_utc", "Component", "First_Motion",
-                "Err", "ErrMag", "Coda_duration", "Amplitude", "Period"
+                "Err",
+                *(["ErrMag"] if "ErrMag" in df.columns else []),
+                "Coda_duration", "Amplitude", "Period"
             ]
             sub = df[["_id"] + want_cols]
 
@@ -1616,8 +1620,8 @@ class MseedUtil:
         return per_event_dicts, per_event_centroids
 
 if __name__ == "__main__":
-    file = "/Users/robertocabiecesdiaz/Documents/ISP/Test/nll_input_single.txt"
-    file_full = "/Users/robertocabiecesdiaz/Documents/ISP/Test/nll_input.txt"
-    pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=file)
-    pick_times_imported_1, events = MseedUtil.get_NLL_phase_picks_multi_event(input_file=file_full)
+    file = "/Users/roberto/Documents/ISP/Test/nll_input.txt"
+    file_full = "/Users/roberto/Documents/ISP/Test/coincidence_pick.txt"
+    #pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=file)
+    pick_times_imported_1, events = MseedUtil.get_NLL_phase_picks_multi_event(input_file=file)
     print("Done")
