@@ -11,7 +11,7 @@ from isp.Gui.Frames.uis_frames import UiAutopick
 from isp.Gui.Utils.pyqt_utils import add_save_load, BindPyqtObject, convert_qdatetime_utcdatetime
 from isp.LocCore.plot_tool_loc import plot_real_map
 from isp.PolarCap.cnnFirstPolarity import Polarity
-from isp.Utils import AsycTime, obspy_utils, MseedUtil
+from isp.Utils import AsycTime, obspy_utils
 from isp.Utils.os_utils import OSutils
 from surfquakecore.phasenet.phasenet_handler import PhasenetISP, PhasenetUtils
 from surfquakecore.real.real_core import RealCore
