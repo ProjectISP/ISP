@@ -884,10 +884,11 @@ class Nllcatalog:
                            'Min_Hor_Error': min_hor_errors,
                            'Ellipse_Az': ellipses_azs, 'No_phases': no_phases, 'Az_gap': azs_gap, 'Max_Dist': max_dists,
                            'Min Dist': min_dists}
+
+            self.__write_dict(events_dict)
+
         except:
             print("Seismic Catalog has not been created")
-
-        self.__write_dict(events_dict)
 
     def __write_dict(self, events_dict):
         output = os.path.join(self.working_directory, "catalog.txt")
