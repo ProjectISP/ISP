@@ -22,6 +22,7 @@ class LoadPick(pw.QDialog, UiLoadPick):
     def __init__(self, parent=None):
         super(LoadPick, self).__init__(parent)
         self.setupUi(self)
+        self.event_times = []
 
         if parent is not None:
             self.setWindowTitle(parent.windowTitle())
@@ -52,11 +53,13 @@ class LoadPick(pw.QDialog, UiLoadPick):
         if self.filterTimeRB.isChecked():
             starttime = convert_qdatetime_utcdatetime(self.dateTimeEdit1)
             endtime = convert_qdatetime_utcdatetime(self.dateTimeEdit2)
-            self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=self.pickpathTE.text(),
-                                                                     starttime=starttime,
-                                                                     endtime=endtime)
+
+            self.pick_times_imported, self.event_times = MseedUtil.get_NLL_phase_picks_multi_event(input_file=self.pickpathTE.text(),
+                                                        starttime=starttime, endtime=endtime)
+
         else:
-            self.pick_times_imported = MseedUtil.get_NLL_phase_picks(input_file=self.pickpathTE.text())
+
+            self.pick_times_imported, self.event_times = MseedUtil.get_NLL_phase_picks_multi_event(input_file=self.pickpathTE.text())
 
         info = MseedUtil.summarize_picks(self.pick_times_imported)
         earliest = info.get("earliest_pick")
@@ -112,6 +115,7 @@ class LoadPick(pw.QDialog, UiLoadPick):
                     body
                 )
 
+            # Connects with Earthquake Analysis _load_picks
             self.signal_picks.emit()
 
 

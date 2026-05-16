@@ -1,0 +1,1 @@
+It is compiled everything on Mac arm64 except mti_green binaries that needs to be run activating rosseta.

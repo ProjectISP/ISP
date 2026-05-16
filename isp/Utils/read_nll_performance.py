@@ -176,7 +176,13 @@ def _read_single_hypocenter(lines, coordinate_converter, original_picks):
     if date.startswith('run:'):
         date = date[4:]
     signature = signature.strip()
-    creation_time = UTCDateTime.strptime(date + time, str("%d%b%Y%Hh%Mm%S"))
+    try:
+        creation_time = UTCDateTime.strptime(date + time, "%d%b%Y%Hh%Mm%S")
+    except ValueError:
+        warnings.warn(
+            f"Failed to parse NLLOC creation time '{date + time}', "
+            "don´t worry using current UTC time instead.")
+        creation_time = UTCDateTime()
 
     if coordinate_converter:
         # maximum likelihood origin location in km info line

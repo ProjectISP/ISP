@@ -384,103 +384,114 @@ class EGFFrame(pw.QWidget, UiEGFFrame):
         ##
         self.nums_clicks = 0
         all_traces = []
+
         # filter
         FE = ManageEGF()
-        self.files_path = FE.filter_project_keys(self.files_path, net=self.netLE.text(), station=self.stationLE.text(),
-                                                 channel=self.channelLE.text())
+        self.files_path = FE.filter_project_keys(
+            self.files_path,
+            net=self.netLE.text(),
+            station=self.stationLE.text(),
+            channel=self.channelLE.text()
+        )
+
         if self.sortCB.isChecked():
             if self.comboBox_sort.currentText() == "Distance":
                 self.files_path.sort(key=self.sort_by_distance_advance)
-
         elif self.comboBox_sort.currentText() == "Back Azimuth":
             self.files_path.sort(key=self.sort_by_baz_advance)
 
         self.set_pagination_files(self.files_path)
         files_at_page = self.get_files_at_page()
-        ##
+
         if len(self.canvas.axes) != len(files_at_page):
             self.canvas.set_new_subplot(nrows=len(files_at_page), ncols=1)
+
         last_index = 0
-        min_starttime = []
-        max_endtime = []
         parameters = self.parameters.getParameters()
 
+        # We'll track the max half-duration across traces to set a consistent x-limit
+        max_half_time = None
+
         for index, file_path in enumerate(files_at_page):
-            if os.path.basename(file_path) != ".DS_Store":
-                sd = SeismogramDataAdvanced(file_path)
+            if os.path.basename(file_path) == ".DS_Store":
+                continue
 
-                tr = sd.get_waveform_advanced(parameters, self.inventory,
-                                              filter_error_callback=self.filter_error_message, trace_number=index)
+            sd = SeismogramDataAdvanced(file_path)
 
-                if len(tr) > 0:
-                    t = tr.times("matplotlib")
-                    s = tr.data
-                    self.canvas.plot_date(t, s, index, color="black", fmt='-', linewidth=0.5)
-                    if self.pagination.items_per_page >= 16:
-                        ax = self.canvas.get_axe(index)
-                        ax.spines["top"].set_visible(False)
-                        ax.spines["bottom"].set_visible(False)
-                        ax.tick_params(top=False)
-                        ax.tick_params(labeltop=False)
-                        if index != (self.pagination.items_per_page - 1):
-                            ax.tick_params(bottom=False)
+            tr = sd.get_waveform_advanced(
+                parameters,
+                self.inventory,
+                filter_error_callback=self.filter_error_message,
+                trace_number=index
+            )
 
-                    last_index = index
+            if len(tr) > 0:
+                # ---- TIME IN SECONDS, CENTERED AT 0 (EGF convention: -T/2 .. +T/2) ----
+                # Obspy: tr.times() -> seconds from trace start
+                t = tr.times()  # seconds
+                # Center at midpoint:
+                # For N samples at dt, the last time is (N-1)*dt. Half-span is last_time/2.
+                half_span = t[-1] / 2.0
+                t = t - half_span
 
-                    st_stats = ObspyUtil.get_stats(file_path)
+                s = tr.data
 
-                    if st_stats and self.sortCB.isChecked() == False:
-                        info = "{}.{}.{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
-                        self.canvas.set_plot_label(index, info)
+                # Plot as normal line plot (NOT plot_date)
+                self.canvas.plot(t, s, index, color="black", linewidth=0.5)
 
-                    elif st_stats and self.sortCB.isChecked() and self.comboBox_sort.currentText() == "Distance":
+                # UI cosmetics for many traces
+                if self.pagination.items_per_page >= 16:
+                    ax = self.canvas.get_axe(index)
+                    ax.spines["top"].set_visible(False)
+                    ax.spines["bottom"].set_visible(False)
+                    ax.tick_params(top=False)
+                    ax.tick_params(labeltop=False)
+                    if index != (self.pagination.items_per_page - 1):
+                        ax.tick_params(bottom=False)
 
-                        dist = self.sort_by_distance_advance(file_path)
-                        dist = "{:.1f}".format(dist / 1000.0)
-                        info = "{}.{}.{} Distance {} km".format(st_stats.Network, st_stats.Station, st_stats.Channel,
-                                                                str(dist))
-                        self.canvas.set_plot_label(index, info)
+                last_index = index
 
-                    elif st_stats and self.sortCB.isChecked() and self.comboBox_sort.currentText() == "Back Azimuth":
+                # Labels
+                st_stats = ObspyUtil.get_stats(file_path)
+                if st_stats and (self.sortCB.isChecked() == False):
+                    info = "{}.{}.{}".format(st_stats.Network, st_stats.Station, st_stats.Channel)
+                    self.canvas.set_plot_label(index, info)
 
-                        back = self.sort_by_baz_advance(file_path)
-                        back = "{:.1f}".format(back)
-                        info = "{}.{}.{} Back Azimuth {}".format(st_stats.Network, st_stats.Station, st_stats.Channel,
-                                                                 str(back))
-                        self.canvas.set_plot_label(index, info)
+                elif st_stats and self.sortCB.isChecked() and self.comboBox_sort.currentText() == "Distance":
+                    dist = self.sort_by_distance_advance(file_path)
+                    dist = "{:.1f}".format(dist / 1000.0)
+                    info = "{}.{}.{} Distance {} km".format(
+                        st_stats.Network, st_stats.Station, st_stats.Channel, str(dist)
+                    )
+                    self.canvas.set_plot_label(index, info)
 
-                    try:
-                        min_starttime.append(min(t))
-                        max_endtime.append(max(t))
-                    except:
-                        print("Empty traces")
+                elif st_stats and self.sortCB.isChecked() and self.comboBox_sort.currentText() == "Back Azimuth":
+                    back = self.sort_by_baz_advance(file_path)
+                    back = "{:.1f}".format(back)
+                    info = "{}.{}.{} Back Azimuth {}".format(
+                        st_stats.Network, st_stats.Station, st_stats.Channel, str(back)
+                    )
+                    self.canvas.set_plot_label(index, info)
 
-                num = len(tr.data)
-                if (num % 2) == 0:
+                # ---- Arrow at 0 seconds (midpoint) ----
+                self.canvas.draw_arrow(0.0, index, arrow_label="", color="blue")
 
-                    # print(“Thenumber is even”)
-                    c = int(np.ceil(num / 2.) + 1)
+                # Track global max half-time to set shared xlim later
+                if max_half_time is None:
+                    max_half_time = half_span
                 else:
-                    # print(“The provided number is odd”)
-                    c = int(np.ceil((num + 1) / 2))
-                #half_point = (tr.stats.starttime + int(len(tr.data) / (2 * tr.stats.sampling_rate))).matplotlib_date
-                half_point = (tr.stats.starttime+(c/tr.stats.sampling_rate)).matplotlib_date
-                self.canvas.draw_arrow(half_point, index, arrow_label="", color="blue")
+                    max_half_time = max(max_half_time, half_span)
+
                 all_traces.append(tr)
 
         self.st = Stream(traces=all_traces)
-        try:
-            if min_starttime and max_endtime is not None:
-                auto_start = min(min_starttime)
-                auto_end = max(max_endtime)
-                self.auto_start = auto_start
-                self.auto_end = auto_end
 
-            ax = self.canvas.get_axe(last_index)
-            ax.set_xlim(mdt.num2date(auto_start), mdt.num2date(auto_end))
-            formatter = mdt.DateFormatter('%y/%m/%d/%H:%M:%S.%f')
-            ax.xaxis.set_major_formatter(formatter)
-            self.canvas.set_xlabel(last_index, "Date")
+        # ---- Set x-axis limits and label in seconds ----
+        try:
+            if max_half_time is not None:
+                ax = self.canvas.get_axe(last_index)
+                ax.set_xlim(-max_half_time, max_half_time)
+                self.canvas.set_xlabel(last_index, "Time (s)")
         except:
             pass
 

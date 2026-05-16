@@ -859,34 +859,39 @@ class Nllcatalog:
         max_dists = []
         min_dists = []
         print("Creating Catalog")
-        self.find_files()
-        for event_file in self.obsfiles:
-            origin: Origin = ObspyUtil.reads_hyp_to_origin(event_file)
-            origin_time_formatted_string = origin.time.datetime.strftime("%m/%d/%Y, %H:%M:%S.%f")
-            dates.append(origin_time_formatted_string)
-            transformations.append("SIMPLE")
-            rmss.append(origin.quality.standard_error)
-            longs.append(origin.longitude)
-            lats.append(origin.latitude)
-            depths.append(origin.depth / 1000)
-            uncertainties.append(origin.depth_errors["uncertainty"])
-            max_hor_errors.append(origin.origin_uncertainty.max_horizontal_uncertainty)
-            min_hor_errors.append(origin.origin_uncertainty.min_horizontal_uncertainty)
-            ellipses_azs.append(origin.origin_uncertainty.azimuth_max_horizontal_uncertainty)
-            no_phases.append(origin.quality.used_phase_count)
-            azs_gap.append(origin.quality.azimuthal_gap)
-            max_dists.append(origin.quality.maximum_distance)
-            min_dists.append(origin.quality.minimum_distance)
+        try:
+            self.find_files()
+            for event_file in self.obsfiles:
+                origin: Origin = ObspyUtil.reads_hyp_to_origin(event_file, modified=True)
+                origin_time_formatted_string = origin.time.datetime.strftime("%m/%d/%Y, %H:%M:%S.%f")
+                dates.append(origin_time_formatted_string)
+                transformations.append("SIMPLE")
+                rmss.append(origin.quality.standard_error)
+                longs.append(origin.longitude)
+                lats.append(origin.latitude)
+                depths.append(origin.depth / 1000)
+                uncertainties.append(origin.depth_errors["uncertainty"])
+                max_hor_errors.append(origin.origin_uncertainty.max_horizontal_uncertainty)
+                min_hor_errors.append(origin.origin_uncertainty.min_horizontal_uncertainty)
+                ellipses_azs.append(origin.origin_uncertainty.azimuth_max_horizontal_uncertainty)
+                no_phases.append(origin.quality.used_phase_count)
+                azs_gap.append(origin.quality.azimuthal_gap)
+                max_dists.append(origin.quality.maximum_distance)
+                min_dists.append(origin.quality.minimum_distance)
 
-        events_dict = {'Origin Time': dates, 'RMS': rmss, 'lats': lats, 'longs': longs,
-                       'depths': depths, 'Uncertainty': uncertainties, 'Max_Hor_Error': max_hor_errors,
-                       'Min_Hor_Error': min_hor_errors,
-                       'Ellipse_Az': ellipses_azs, 'No_phases': no_phases, 'Az_gap': azs_gap, 'Max_Dist': max_dists,
-                       'Min Dist': min_dists}
+            events_dict = {'Origin Time': dates, 'RMS': rmss, 'lats': lats, 'longs': longs,
+                           'depths': depths, 'Uncertainty': uncertainties, 'Max_Hor_Error': max_hor_errors,
+                           'Min_Hor_Error': min_hor_errors,
+                           'Ellipse_Az': ellipses_azs, 'No_phases': no_phases, 'Az_gap': azs_gap, 'Max_Dist': max_dists,
+                           'Min Dist': min_dists}
 
-        self.__write_dict(events_dict)
+            self.__write_dict(events_dict)
+
+        except:
+            print("Seismic Catalog has not been created")
 
     def __write_dict(self, events_dict):
         output = os.path.join(self.working_directory, "catalog.txt")
         df_magnitudes = pd.DataFrame.from_dict(events_dict)
+        print("Writing Catalog at: ", output)
         df_magnitudes.to_csv(output, sep=";", index=False)
