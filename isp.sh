@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
+export LC_TIME=C
+export LANG=C
 # Dir del script
 ISP_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 && pwd -P )"
 
