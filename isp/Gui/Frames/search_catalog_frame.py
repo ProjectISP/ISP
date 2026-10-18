@@ -11,7 +11,8 @@ from obspy import UTCDateTime, read_events, Catalog, Inventory
 import numpy as np
 from isp.retrieve_events import retrieve
 from isp.seismogramInspector.signal_processing_advanced import find_nearest
-
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QApplication, QAbstractItemView
 
 @add_save_load()
 class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
@@ -27,7 +28,9 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
         def __init__(self, metadata: Union[Inventory, None]):
             super(SearchCatalogViewer, self).__init__()
             self.setupUi(self)
-
+            self.tableWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
+            self.tableWidget.setSelectionBehavior(QAbstractItemView.SelectItems)
+            self.tableWidget.installEventFilter(self)
             if isinstance(metadata, Inventory):
                 self.metadata = metadata
             else:
@@ -50,6 +53,38 @@ class SearchCatalogViewer(BaseFrame, UiSearch_Catalog):
             self.activated_colorbar = True
             self.df_catalog = None
             self.reLoadCatalogBtn.clicked.connect(self.get_catalog)
+
+        def eventFilter(self, source, event):
+            if source == self.tableWidget and event.type() == event.KeyPress:
+
+                # Ctrl+A
+                if event.matches(QKeySequence.SelectAll):
+                    self.tableWidget.selectAll()
+                    return True
+
+                # Ctrl+C
+                if event.matches(QKeySequence.Copy):
+                    self.copy_selection()
+                    return True
+
+            return super().eventFilter(source, event)
+
+        def copy_selection(self):
+            ranges = self.tableWidget.selectedRanges()
+            if not ranges:
+                return
+
+            text = []
+
+            for r in ranges:
+                for row in range(r.topRow(), r.bottomRow() + 1):
+                    row_data = []
+                    for col in range(r.leftColumn(), r.rightColumn() + 1):
+                        item = self.tableWidget.item(row, col)
+                        row_data.append(item.text() if item else "")
+                    text.append("\t".join(row_data))
+
+            QApplication.clipboard().setText("\n".join(text))
 
         def on_click_select_catalog_file(self, bind: BindPyqtObject):
             selected = pw.QFileDialog.getOpenFileName(self, "Select metadata file")
